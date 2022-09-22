@@ -1,0 +1,4 @@
+export enum TermsOfUseTypeEnum {
+  INNOVATOR = 'INNOVATOR',
+  SUPPORT_ORGANISATION = 'SUPPORT_ORGANISATION'
+}
