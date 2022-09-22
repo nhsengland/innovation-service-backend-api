@@ -7,7 +7,7 @@ Explanation here
 - Docker and Docker compose
 
 ### Instructions to install docker + docker compose on a linux ubuntu flavored environment.
-```bash
+``` bash
 $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 $ sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu RELEASE stable" # Check RELEASE in "cat /etc/os-release", UBUNTU_CODENAME
 $ sudo apt-get update
@@ -21,20 +21,18 @@ $ sudo usermod -a -G docker $USER # Optional command, if errors about permission
 ## Configuration
 ### 1. This project is prepared to run locally with a MSSQL DB served through Docker and Docker compose.
 ### 2. Install packages
-```bash
+``` bash
 $ npm install
 ```
 This instruction will also create the symbolic links within each app as necessary.
 
 ### 3. Optional: If you prefer a clean view of the project itself, use the vscode workspaces: File > Open Workspace from file..., and choose monorepo.code-workspace file.
 
-
-
-### 5. Environment variables
+### 4. Environment variables
 #### **Step 1**
 
 Create ".env" file on the root of the project. These variables are only needed for running migrations and tests locally.
-```
+``` js
 DB_HOST=localhost
 DB_USER=sa
 DB_PWD=Pass@word
@@ -51,7 +49,7 @@ ADMIN_OID={secret}
 #### **Step 2**
 Create "local.settings.json" on the root of the project.
 These files are needed to provide environment variables to the app function when running it. Request {secret} values from your manager.
-```
+``` json
 {
   "IsEncrypted": false,
   "Values": {
@@ -98,22 +96,44 @@ These files are needed to provide environment variables to the app function when
 }
 ```
 
-## Running the app
-### 1. Start the MSSQL DB server and Verdaccio (local NPM registry) through Docker and Docker compose.
+## Running an app
+### 1. Start the MSSQL DB server through docker and docker compose.
 ```bash
 $ docker-compose -f .docker/docker-compose.yml up
 ```
-#### **Note: When running for the first make sure that:**
+#### **Note: When running for the first time, make sure that:**
 1. Create a 2 DB's manually trought Microsoft SQL Server Managemente Studio. Create "innovationdb" and "tests" DB's.
 2. Run migrations and seeds trought the commands:
-```
-$ nx run migrations
-$ nx run seeds
+``` bash
+$ npm run migrations
+$ npm run seeds
 ```
 
-Press F5
+Choose and start the application trought the "Run and Debug" menu (when using vscode).
 ---
 
+## Linting an app
+``` bash 
+$ npm run app:lint --app=innovations
+$ npm run app:lint --app=users
+$ ...
 
-### New Migration
-TODO
+```
+
+## Testing an app
+``` bash
+$ npm run app:test --app=innovations
+$ npm run app:test --app=users
+$ ...
+
+```
+
+
+## Managing migrations
+``` bash
+$ npm run migrations                                # Run pending migrations.
+$ npm run seeds                                     # Run pending seeds.
+
+$ npm run migrations:new --name=new-migration-name  # Creates a new migration file.
+
+```

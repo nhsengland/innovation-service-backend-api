@@ -16,7 +16,8 @@
       "runtimeArgs": ["run-script", "app:watch", "--app=innovations", "--port=7071"],
       "runtimeVersion": "14",
       "skipFiles": ["<node_internals>/**"],
-      "console": "integratedTerminal"
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnSessionStart"
     }
   ]
 }
