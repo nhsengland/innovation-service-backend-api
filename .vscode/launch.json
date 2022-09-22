@@ -1,0 +1,22 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Users FA",
+      "type": "node",
+      "request": "attach",
+      "port": 5858,
+      "preLaunchTask": "runUsersFA"
+    },
+    {
+      "name": "Innovations FA",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "app:watch", "--app=innovations", "--port=7071"],
+      "runtimeVersion": "14",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal"
+    }
+  ]
+}

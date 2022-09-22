@@ -1,0 +1,53 @@
+trigger:
+  branches:
+    exclude:
+      - '*'
+  tags:
+    include:
+    - innovations.v1.*
+    exclude:
+    - innovations.v1.0
+
+pr:
+  branches:
+    include:
+      - refs/tags/innovations.v1.*
+    exclude:
+      - 'refs/tags/innovations.v1.0'
+      - '*'
+
+name: InnovationsAPI_$(SourceBranchName)_1.0.0_$(Date:yyyyMMdd)_$(Rev:.r)
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  displayName: 'Install Node 14'
+  inputs:
+    versionSpec: '14.x'
+
+- task: CmdLine@2
+  displayName: 'Build APP'
+  inputs:
+    script: |
+      npm install
+      npm run app:configure --app=innovations
+      npm run app:build --app=innovations
+      cp -r node_modules dist/apps/innovations
+
+- task: ArchiveFiles@2
+  displayName: 'Archive files'
+  inputs:
+    rootFolderOrFile: 'dist/apps/innovations'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/innovations.zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/innovations.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
