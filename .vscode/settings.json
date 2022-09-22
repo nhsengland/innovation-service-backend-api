@@ -1,0 +1,16 @@
+{
+  "azureFunctions.projectRuntime": "~2",
+  "azureFunctions.projectLanguage": "JavaScript",
+  "azureFunctions.templateFilter": "Verified",
+  "azureFunctions.deploySubpath": ".",
+  "azureFunctions.preDeployTask": "installExtensions",
+  // "files.exclude": {
+  //   "obj": true,
+  //   "bin": true,
+  //   "node_modules": true
+  // },
+  "debug.internalConsoleOptions": "neverOpen",
+  "files.associations": {
+    "**/azure-pipelines.yml": "azure-pipelines"
+  }
+}

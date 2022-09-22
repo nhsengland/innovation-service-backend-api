@@ -1,0 +1,14 @@
+{
+  "extends": [
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "plugins": ["@typescript-eslint/eslint-plugin"],
+  "overrides": [],
+  "rules": {
+    "@typescript-eslint/explicit-function-return-type": ["error", { "allowExpressions": true }],
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { "vars": "all", "args": "none", "ignoreRestSiblings": false }],
+    "quotes": ["warn", "single", { "avoidEscape": true, "allowTemplateLiterals": true }]
+  }
+}
