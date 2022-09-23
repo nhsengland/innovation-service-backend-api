@@ -1,13 +1,10 @@
 import { inject, injectable } from 'inversify';
 
-import {
-  LoggerServiceSymbol, LoggerServiceType,
-  StorageQueueServiceSymbol, StorageQueueServiceType
-} from '../../interfaces/services.interfaces';
-import { QueuesEnum } from './storage-queue.service';
+import type { NotifierTypeEnum, UserTypeEnum } from '../../enums';
+import type { NotifierTemplatesType } from '../../types';
 
-import type { NotifierTemplatesType, NotifierTypeEnum } from '../../config/notifier.config';
-import type { UserTypeEnum } from '../../enums/user.enums';
+import { LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
+import { QueuesEnum } from './storage-queue.service';
 
 
 @injectable()

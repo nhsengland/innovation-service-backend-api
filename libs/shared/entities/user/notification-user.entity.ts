@@ -13,12 +13,12 @@ export class NotificationUserEntity extends BaseEntity {
   readAt: Date;
 
 
-  @PrimaryColumn({ type: 'uniqueidentifier', nullable: false })
+  @PrimaryColumn({ name: 'notification_id', type: 'uniqueidentifier' })
   @ManyToOne(() => NotificationEntity)
   @JoinColumn({ name: 'notification_id' })
   notification: NotificationEntity;
 
-  @PrimaryColumn({ type: 'uniqueidentifier', nullable: false })
+  @PrimaryColumn({ name: 'user_id', type: 'uniqueidentifier' })
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;

@@ -1,9 +1,8 @@
 import { inject, injectable } from 'inversify';
 import axios, { AxiosResponse } from 'axios';
 
-import { NotFoundError, ServiceUnavailableError, UnauthorizedError } from '../../config';
-import { LoggerServiceSymbol, LoggerServiceType } from '../../interfaces/services.interfaces';
-import { GenericErrorsEnum, UserErrorsEnum } from '../../enums/error.enums';
+import { NotFoundError, ServiceUnavailableError, UnauthorizedError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
+import { LoggerServiceSymbol, LoggerServiceType } from '../interfaces';
 
 
 type b2cGetUserInfoDTO = {

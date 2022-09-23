@@ -1,9 +1,13 @@
 {
-  "folders": [{
-      "path": "apps/users"
-    },
+  "folders": [
     {
       "path": "apps/innovations"
+    },
+    {
+      "path": "apps/notifications"
+    },
+    {
+      "path": "apps/users"
     },
     {
       "path": "libs/shared"

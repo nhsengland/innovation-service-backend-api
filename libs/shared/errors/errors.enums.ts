@@ -11,6 +11,8 @@ export enum GenericErrorsEnum {
 
   SLS_AUTHORIZATION = 'GEN.0200',
 
+  INTERNAL_CONFIGURATION_ERROR = 'GEN.0300',
+
   UNKNOWN_ERROR = 'ERR.1000'
 }
 

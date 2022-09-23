@@ -1,8 +1,7 @@
 import jwt_decode from 'jwt-decode';
 import type { HttpRequest } from '@azure/functions';
 
-import { UnauthorizedError } from '../config';
-import { UserErrorsEnum } from '../enums/error.enums';
+import { UnauthorizedError, UserErrorsEnum } from '../errors';
 import { ResponseHelper } from '../helpers';
 import type { CustomContextType } from '../types';
 

@@ -1,12 +1,11 @@
-import type { Repository } from 'typeorm';
+import type { DataSource, Repository } from 'typeorm';
 
-import { InternalServerError, NotFoundError, SQLDB_DATASOURCE } from '../../config';
-import { UserEntity } from '../../entities/user/user.entity';
-import { GenericErrorsEnum, UserErrorsEnum } from '../../enums/error.enums';
+import type { UserTypeEnum } from '../../enums';
+import { UserEntity } from '../../entities';
+import { InternalServerError, NotFoundError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
+import type { DomainUserInfoType } from '../../types';
 
-import type { IdentityProviderServiceType } from '../../interfaces/services.interfaces';
-import type { DomainUserInfoType } from './domain.types';
-import type { UserTypeEnum } from '../../enums/user.enums';
+import type { IdentityProviderServiceType } from '../interfaces';
 
 
 export class DomainUsersService {
@@ -14,9 +13,10 @@ export class DomainUsersService {
   userRepository: Repository<UserEntity>;
 
   constructor(
+    private sqlConnection: DataSource,
     private identityProviderService: IdentityProviderServiceType
   ) {
-    this.userRepository = SQLDB_DATASOURCE.getRepository<UserEntity>(UserEntity);
+    this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
 
 

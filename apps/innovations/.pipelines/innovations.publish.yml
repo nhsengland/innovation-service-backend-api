@@ -1,22 +1,4 @@
-trigger:
-  branches:
-    exclude:
-      - '*'
-  tags:
-    include:
-    - innovations.v1.*
-    exclude:
-    - innovations.v1.0
-
-pr:
-  branches:
-    include:
-      - refs/tags/innovations.v1.*
-    exclude:
-      - 'refs/tags/innovations.v1.0'
-      - '*'
-
-name: InnovationsAPI_$(SourceBranchName)_1.0.0_$(Date:yyyyMMdd)_$(Rev:.r)
+name: FA_Innovations_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:.r)
 
 pool:
   vmImage: ubuntu-latest

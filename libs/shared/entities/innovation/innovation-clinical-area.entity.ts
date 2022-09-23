@@ -19,7 +19,7 @@ export class InnovationClinicalAreaEntity extends BaseEntity {
   type: InnovationClinicalAreaCatalogueEnum;
 
 
-  @PrimaryColumn({ type: 'uniqueidentifier', nullable: false })
+  @PrimaryColumn({ name: 'innovation_id', type: 'uniqueidentifier' })
   @ManyToOne(() => InnovationEntity)
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;

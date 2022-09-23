@@ -1,13 +1,17 @@
 import type { Repository } from 'typeorm';
 
-import { ForbiddenError, SQLDB_DATASOURCE } from '../../config';
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import { InnovationStatusEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import { AccessorOrganisationRoleEnum } from '../../enums/organisation.enums';
-import { ServiceRoleEnum, UserTypeEnum } from '../../enums/user.enums';
+import { SQLDB_DATASOURCE } from '../../config';
+import { InnovationEntity } from '../../entities';
+import {
+  InnovationStatusEnum, InnovationSupportStatusEnum,
+  AccessorOrganisationRoleEnum,
+  ServiceRoleEnum, UserTypeEnum
+} from '../../enums';
+import { ForbiddenError } from '../../errors';
+import type { DomainUserInfoType } from '../../types';
 
-import type { DomainServiceType } from '../../interfaces/services.interfaces';
-import type { DomainUserInfoType } from '../domain/domain.types';
+import type { DomainServiceType } from '../interfaces';
+
 
 export enum AuthErrorsEnum {
   AUTH_USER_NOT_LOADED = 'AUTH.0001',

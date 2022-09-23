@@ -1,6 +1,6 @@
-import type { InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../../enums/organisation.enums';
-import type { ServiceRoleEnum, UserTypeEnum } from '../../enums/user.enums';
+import type { InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
+import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
 
 
 // User domain types.

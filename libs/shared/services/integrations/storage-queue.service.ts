@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import { QueueClient, QueueSendMessageOptions, QueueSendMessageResponse, QueueServiceClient } from '@azure/storage-queue';
 
-import { STORAGE_QUEUE_CONFIG } from '../../config/storage-queue.config';
+import { STORAGE_QUEUE_CONFIG } from '../../config';
 
 
 export enum QueuesEnum {

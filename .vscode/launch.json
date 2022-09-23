@@ -1,19 +1,33 @@
 {
   "version": "0.2.0",
-  "configurations": [
-    {
-      "name": "Users FA",
-      "type": "node",
-      "request": "attach",
-      "port": 5858,
-      "preLaunchTask": "runUsersFA"
-    },
-    {
-      "name": "Innovations FA",
+  "configurations": [{
+      "name": "FA. Innovations",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run-script", "app:watch", "--app=innovations", "--port=7071"],
+      "runtimeArgs": ["run-script", "app:watch", "--app=innovations", "--port=7072"],
+      "runtimeVersion": "14",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "FA. Notifications",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "app:watch", "--app=notifications", "--port=7073"],
+      "runtimeVersion": "14",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
+      "name": "FA. Users",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "app:watch", "--app=users", "--port=7074"],
       "runtimeVersion": "14",
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal",

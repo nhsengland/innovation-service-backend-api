@@ -4,7 +4,7 @@
   "description": "A port of the famous node-insult insult generator service to Azure Functions",
   "scripts": {
     "app:configure": "ln -s ../../../libs/shared ./apps/$npm_config_app/.symlinks/shared",
-    "app:lint": "eslint apps/npm_config_app/**/*.ts",
+    "app:lint": "eslint apps/$npm_config_app/**/*.ts",
     "app:build": "rimraf dist/apps/$npm_config_app && tsc -p apps/$npm_config_app/tsconfig.json && tsc-alias -p apps/$npm_config_app/tsconfig.json && npm run app:postbuild",
     "app:postbuild": "copyfiles -u 1 apps/$npm_config_app/**/function.json dist/apps && copyfiles package.json host.json local.settings.json dist/apps/$npm_config_app",
     "app:watch": "npm run app:build && npm-run-all --parallel app:watch:*",
@@ -16,7 +16,7 @@
     "migrations:new": "ts-node ./node_modules/typeorm/cli.js migration:create ./libs/data-access/migrations/$npm_config_name",
     "migrations:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d libs/data-access/config/migrations-connection.config.ts",
     "seeds": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/seeds-connection.config.ts",
-    "postinstall": "npm run app:configure --app=innovations && npm run app:configure --app=users"
+    "postinstall": "npm run app:configure --app=innovations && npm run app:configure --app=notifications && npm run app:configure --app=users"
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",
@@ -30,12 +30,16 @@
     "jwt-decode": "^3.1.2",
     "mongoose": "^6.6.0",
     "mssql": "^9.0.1",
-    "typeorm": "^0.3.9"
+    "reflect-metadata": "^0.1.13",
+    "typeorm": "^0.3.9",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@azure/functions": "^3.2.0",
     "@types/jest": "^29.0.0",
+    "@types/jsonwebtoken": "^8.5.9",
     "@types/node": "^18.7.13",
+    "@types/uuid": "^8.3.4",
     "@typescript-eslint/eslint-plugin": "^5.35.1",
     "@typescript-eslint/parser": "^5.35.1",
     "copyfiles": "^2.1.0",

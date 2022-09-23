@@ -1,4 +1,4 @@
-import type { GenericErrorsEnum, UserErrorsEnum, OrganisationErrorsEnum, InnovationErrorsEnum, EmailErrorsEnum } from '../enums/error.enums';
+import type { GenericErrorsEnum, UserErrorsEnum, OrganisationErrorsEnum, InnovationErrorsEnum, EmailErrorsEnum } from '../errors/errors.enums';
 import type { AuthErrorsEnum } from '../services/auth/authorization-validation.model';
 
 
