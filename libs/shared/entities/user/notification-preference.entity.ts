@@ -17,7 +17,7 @@ export class NotificationPreferenceEntity extends BaseEntity {
   preference: EmailNotificationPreferenceEnum;
 
 
-  @PrimaryColumn({ type: 'uniqueidentifier', nullable: false })
+  @PrimaryColumn({ name: 'user_id', type: 'uniqueidentifier' })
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;

@@ -1,19 +1,11 @@
-import type { EntityManager, Repository } from 'typeorm';
+import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { SQLDB_DATASOURCE, UnprocessableEntityError } from '../../config';
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
-import { InnovationActionEntity } from '../../entities/innovation/innovation-action.entity';
-import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
-import { InnovationFileEntity } from '../../entities/innovation/innovation-file.entity';
-import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
-import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
-import { InnovationErrorsEnum } from '../../enums/error.enums';
-import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import { ActivityEnum, ActivityTypeEnum } from '../../enums/activity.enums';
+import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums';
+import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity } from '../../entities';
+import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
+import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from '../../types';
 
-import type { FileStorageServiceType } from '../../interfaces/services.interfaces';
-import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from './domain.types';
+import type { FileStorageServiceType } from '../interfaces';
 
 
 export class DomainInnovationsService {
@@ -23,11 +15,12 @@ export class DomainInnovationsService {
   activityLogRepository: Repository<ActivityLogEntity>;
 
   constructor(
+    private sqlConnection: DataSource,
     private fileStorageService: FileStorageServiceType
   ) {
-    this.innovationRepository = SQLDB_DATASOURCE.getRepository(InnovationEntity);
-    this.innovationSupportRepository = SQLDB_DATASOURCE.getRepository(InnovationSupportEntity);
-    this.activityLogRepository = SQLDB_DATASOURCE.getRepository(ActivityLogEntity);
+    this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
+    this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
+    this.activityLogRepository = this.sqlConnection.getRepository(ActivityLogEntity);
   }
 
 

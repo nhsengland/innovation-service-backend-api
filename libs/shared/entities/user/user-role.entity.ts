@@ -16,7 +16,7 @@ export class UserRoleEntity extends BaseEntity {
   activeSince: Date;
 
 
-  @PrimaryColumn({ type: 'uniqueidentifier', nullable: false })
+  @PrimaryColumn({ name: 'role_id', type: 'uniqueidentifier', nullable: false })
   @OneToOne(() => RoleEntity)
   @JoinColumn({ name: 'role_id' })
   role: RoleEntity;

@@ -6,6 +6,7 @@ const jestBaseConfig: Config = {
   // 'setupFilesAfterEnv': ['<rootDir>/jest.setup.ts'],
   moduleNameMapper: {
     '@innovations/shared/(.*)': '<rootDir>/apps/innovations/.symlinks/shared/$1',
+    '@notifications/shared/(.*)': '<rootDir>/apps/notifications/.symlinks/shared/$1',
     '@users/shared/(.*)': '<rootDir>/apps/innovations/.symlinks/shared/$1'
   }
 };

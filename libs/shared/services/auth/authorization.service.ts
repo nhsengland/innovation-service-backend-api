@@ -1,17 +1,11 @@
 import { inject, injectable } from 'inversify';
 import { randomBytes, scrypt } from 'crypto';
 
-import { ForbiddenError, ServiceUnavailableError } from '../../config';
+import { NotifierTypeEnum } from '../../enums';
+import { ForbiddenError, ServiceUnavailableError, GenericErrorsEnum } from '../../errors';
 import { SLSEventTypeEnum, SLSModel } from '../../schemas/sls.schema';
-import {
-  DomainServiceSymbol, DomainServiceType,
-  NotifierServiceSymbol, NotifierServiceType
-} from '../../interfaces/services.interfaces';
-
-import { GenericErrorsEnum } from '../../enums/error.enums';
-
+import {  DomainServiceSymbol, DomainServiceType,  NotifierServiceSymbol, NotifierServiceType} from '../interfaces';
 import { AuthorizationValidationModel } from './authorization-validation.model';
-import { NotifierTypeEnum } from '../../config/notifier.config';
 
 
 @injectable()

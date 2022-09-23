@@ -2,11 +2,8 @@ import { BlobClient, BlobDeleteIfExistsResponse, BlobSASPermissions, BlobSASSign
 import { injectable } from 'inversify';
 import { extname, join } from 'path';
 
-import { ServiceUnavailableError } from '../../config';
-
 import { FILE_STORAGE_CONFIG } from '../../config/file-storage.config';
-
-import { GenericErrorsEnum } from '../../enums/error.enums';
+import { ServiceUnavailableError, GenericErrorsEnum } from '../../errors';
 
 
 enum StoragePermissionsEnum {

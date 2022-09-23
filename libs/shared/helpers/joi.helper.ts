@@ -1,10 +1,7 @@
 import Joi, { Context } from 'joi';
-
 import type { Root, Schema } from 'joi';
 
-import { BadRequestError } from '../config';
-
-import { GenericErrorsEnum } from '../enums/error.enums';
+import { BadRequestError, GenericErrorsEnum } from '../errors';
 
 
 export type PaginationQueryParamsType<T extends string> = {

@@ -1,0 +1,38 @@
+variables:
+  appName: notifications
+
+name: FA_Notifications_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:.r)
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: NodeTool@0
+  displayName: 'Install Node 14'
+  inputs:
+    versionSpec: '14.x'
+
+- task: CmdLine@2
+  displayName: 'Build APP'
+  inputs:
+    script: |
+      npm install
+      npm run app:configure --app=$(appName)
+      npm run app:build --app=$(appName)
+      cp -r node_modules dist/apps/$(appName)
+
+- task: ArchiveFiles@2
+  displayName: 'Archive files'
+  inputs:
+    rootFolderOrFile: 'dist/apps/$(appName)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(appName).zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(appName).zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

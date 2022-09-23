@@ -1,6 +1,8 @@
 import type { Context, HttpRequest } from '@azure/functions';
 import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+
 
 class V1Endpoint01 {
 
@@ -9,10 +11,9 @@ class V1Endpoint01 {
     context.log(`Request Headers = ${JSON.stringify(req.headers)}`);
     context.log(`Request Body = ${JSON.stringify(req.body)}`);
 
-    console.log('coiso');
 
     context.res = {
-      body: { some: 'value2222' }
+      body: { some: 'value2222', linit: TEXTAREA_LENGTH_LIMIT }
     };
     // context.done();
   }

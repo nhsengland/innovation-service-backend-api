@@ -1,5 +1,4 @@
-import { GenericErrorsEnum } from '../enums/error.enums';
-
+import { GenericErrorsEnum } from '../errors';
 import type { AppResponse } from '../types';
 
 
