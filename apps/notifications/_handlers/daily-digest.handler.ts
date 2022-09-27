@@ -26,7 +26,6 @@ export class DailyDigestHandler extends BaseHandler<
   async run(): Promise<this> {
 
     await this.notifyDailyDigest();
-    await this.notifyIdleInnovators();
 
     return this;
 
@@ -51,21 +50,4 @@ export class DailyDigestHandler extends BaseHandler<
     }
 
   }
-
-  private async notifyIdleInnovators(): Promise<void> {
-
-    const idleInnovators = await this.recipientsService.incompleteInnovationRecordOwners();
-
-    for (const user of idleInnovators) {
-      this.emails.push({
-        templateId: EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
-        params: {
-          innovation_name: user.innovationName,
-        }
-      });
-    }
-
-  }
-
 }

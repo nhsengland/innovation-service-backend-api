@@ -19,6 +19,18 @@ class V1SystemSchedule {
       {}
     );
 
+    await notifierService.send(
+      { id: 'F4D75573-47CF-EC11-B656-0050F25A2AF6', identityId: 'f4d75573-47cf-ec11-b656-0050f25a2af6', type: UserTypeEnum.ADMIN },
+      NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD,
+      {}
+    );
+
+    await notifierService.send(
+      { id: 'F4D75573-47CF-EC11-B656-0050F25A2AF6', identityId: 'f4d75573-47cf-ec11-b656-0050f25a2af6', type: UserTypeEnum.ADMIN },
+      NotifierTypeEnum.IDLE_SUPPORT,
+      {}
+    );
+
   }
 
 }
