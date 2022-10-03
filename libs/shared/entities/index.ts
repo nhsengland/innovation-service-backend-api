@@ -72,6 +72,7 @@ export { OrganisationEntity } from './organisation/organisation.entity';
 
 // User.
 import { CommentEntity } from './user/comment.entity';
+import { NotificationLogEntity } from './user/notification-log.entity';
 import { NotificationPreferenceEntity } from './user/notification-preference.entity';
 import { NotificationUserEntity } from './user/notification-user.entity';
 import { NotificationEntity } from './user/notification.entity';
@@ -86,6 +87,9 @@ export { RoleEntity } from './user/role.entity';
 export { UserRoleEntity } from './user/user-role.entity';
 export { UserEntity } from './user/user.entity';
 
+// Views
+import { IdleSupportViewEntity } from './views/idle-support.view.entity';
+export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 
 export const GENERAL_ENTITIES = [
   TermsOfUseEntity,
@@ -131,6 +135,7 @@ export const ORGANISATION_ENTITIES = [
 
 export const USER_ENTITIES = [
   CommentEntity,
+  NotificationLogEntity,
   NotificationPreferenceEntity,
   NotificationUserEntity,
   NotificationEntity,
@@ -138,3 +143,7 @@ export const USER_ENTITIES = [
   UserRoleEntity,
   UserEntity
 ];
+
+export const VIEW_ENTITIES = [
+  IdleSupportViewEntity,
+]

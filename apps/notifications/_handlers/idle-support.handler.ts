@@ -1,4 +1,5 @@
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotificationLogTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { UserErrorsEnum } from '@notifications/shared/errors';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
@@ -33,22 +34,36 @@ export class IdleSupportHandler extends BaseHandler<
 
   private async notifyIdleAccessors(): Promise<void> {
 
-    const idleInnovators = await this.recipientsService.incompleteInnovationRecordOwners();
+    const idleSupportsByInnovation = await this.recipientsService.idleSupportsByInnovation();
 
-    for (const user of idleInnovators) {
-      //TODO: Refactor this to just call B2C once and then do a dictionary search instead
-      const innovator = await this.recipientsService.userInfo(user.id);
+    const ownerIds = [...new Set(idleSupportsByInnovation.flatMap(is => is.values.map(i => i.ownerId)))];
+    const ownerIdentities = await this.recipientsService.usersIdentityInfo(ownerIds);
 
-      this.emails.push({
-        templateId: EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
-        params: {
-          innovation_name: user.innovationName,
-          innovator_name: innovator.name,
-        }
-      });
+    for (const innovation of idleSupportsByInnovation) {
+      const ownerId = innovation.values.find(_ => true)?.ownerId;
+
+      if (!ownerId) {
+        throw new Error(UserErrorsEnum.USER_SQL_NOT_FOUND);
+      }
+
+      for (const details of innovation.values) {
+        this.emails.push({
+          templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
+          to: { type: 'identityId', value: details.identityId, displayNameParam: 'display_name'},
+          params: {
+            innovation_name: innovation.values.find(_ => true)?.innovationName || '',
+            innovator_name: ownerIdentities.find(i => i.identityId === details.ownerIdentityId)?.displayName || '',
+          },
+          log: {
+            type: NotificationLogTypeEnum.QA_A_IDLE_SUPPORT,
+            params: {
+              innovationId: details.innovationId,
+              unitId: details.unitId,
+            }
+          }
+        })
+      }
     }
-
   }
 
 }

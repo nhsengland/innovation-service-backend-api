@@ -1,10 +1,12 @@
 import { inject, injectable } from 'inversify';
 import { IdentityProviderServiceType, IdentityProviderServiceSymbol } from '@notifications/shared/services';
-import { InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationTransferEntity, InnovationThreadEntity, InnovationThreadMessageEntity, CommentEntity, NotificationEntity, OrganisationEntity, UserEntity } from '@notifications/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationTransferStatusEnum, EmailNotificationTypeEnum, EmailNotificationPreferenceEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationTransferEntity, InnovationThreadEntity, InnovationThreadMessageEntity, CommentEntity, NotificationEntity, OrganisationEntity, UserEntity, IdleSupportViewEntity } from '@notifications/shared/entities';
+import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationTransferStatusEnum, EmailNotificationTypeEnum, EmailNotificationPreferenceEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum, InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import { NotFoundError, UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, UserErrorsEnum } from '@notifications/shared/errors';
 
 import { BaseService } from './base.service';
+
+import * as _ from 'lodash';
 
 
 @injectable()
@@ -75,6 +77,27 @@ export class RecipientsService extends BaseService {
         preference: item.preference
       }))
     };
+
+  }
+
+  async usersIdentityInfo(userIds: string[]): Promise<{
+    identityId: string;
+    displayName: string;
+    email: string;
+    isActive: boolean;
+  }[]> {
+    try {
+      const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
+        .where(`users.id IN (:...userIds)`, { userIds })
+        .andWhere(`users.locked_at IS NULL`)
+        .getMany();
+
+      const identityInfos = await this.identityProviderService.getUsersList(dbUsers.map(u => u.identityId));
+
+      return identityInfos;
+    } catch (error) {
+      throw error
+    }
 
   }
 
@@ -447,4 +470,135 @@ export class RecipientsService extends BaseService {
 
   }
 
+
+  /**
+   * @description Looks for Innovations actively supported by organisation units (ENGAGING, FURTHER INFO) whose assigned accessors have not interacted with the innovations for a given amount of time.
+   * @description Inactivity is measured by:
+   * @description - The last time an Innovation Support was updated (change the status from A to B) AND;
+   * @description - The last time an Innovation Action was completed by an Innovator (Changed its status from REQUESTED to IN_REVIEW) OR no Innovation Actions are found AND;
+   * @description - The last message posted on a thread or a thread was created (which also creates a message, so checking thread messages is enough) OR no messages or threads are found.
+   * @param idlePeriod How many days are considered to be idle
+   * @returns Promise<{userId: string; identityId: string, latestInteractionDate: Date}[]>
+   */
+  async idleOrganisationUnitsPerInnovation(idlePeriod = 90): Promise<{ userId: string; identityId: string, latestInteractionDate: Date }[]> {
+
+    const latestSupportQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
+      .select('u.id', 'unitId')
+      .addSelect('i.id', 'innovationId')
+      .addSelect('MAX(s.id)', 'supportId')
+      .addSelect('MAX(s.updated_at)', 'latest')
+      .innerJoinAndSelect('i.innovationSupports', 's')
+      .innerJoinAndSelect('s.organisationUnit', 'u')
+      .groupBy('u.id')
+      .addGroupBy('i.id')
+
+    const latestActionQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
+      .select('u.id', 'unitId')
+      .addSelect('i.id', 'innovationId')
+      .addSelect('MAX(s.id)', 'supportId')
+      .addSelect('MAX(actions.updated_at)', 'latest')
+      .innerJoin('i.innovationSupports', 's')
+      .innerJoin('s.organisationUnit', 'u')
+      .leftJoin('s.action', 'actions')
+      .where(`actions.status = '${InnovationActionStatusEnum.IN_REVIEW}'`)
+      .groupBy('u.id')
+      .addGroupBy('i.id')
+
+
+    const latestMessageQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
+      .select('u.id', 'unitId')
+      .addSelect('i.id', 'innovationId')
+      .addSelect('MAX(s.id)', 'supportId')
+      .addSelect('MAX(s.updated_at)', 'latest')
+      .innerJoin('i.innovationSupports', 's')
+      .innerJoin('s.organisationUnit', 'u')
+      .innerJoin(InnovationThreadEntity, 'threads', 'threads.innovation_id = i.id')
+      .innerJoin(InnovationThreadMessageEntity, 'messages', 'threads.id = messages.innovation_thread_id')
+      .groupBy('u.id')
+      .addGroupBy('i.id')
+
+
+    const mainQuery =
+      this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+
+        .select('users.id', 'userId')
+        .addSelect('users.external_id', 'identityId')
+
+        /**
+         * maxSupports 01/01/2022 10:00:00
+         * maxActions 02/01/2022 09:00:00
+         * maxMessages 02/01/2022 09:01:00
+         * 
+         * latestInteractionDate = maxMessages = 02/01/2022 09:01:00
+        */
+        .addSelect('(SELECT MAX(v) FROM (VALUES (MAX(L.latest)), (MAX(l2.latest)), (MAX(l3.latest))) as value(v))', 'latestInteractionDate')
+
+        .innerJoin('innovations.innovationSupports', 'supports')
+        .innerJoin('supports.organisationUnitUsers', 'unitUsers')
+        .innerJoin('unitUsers.organisationUser', 'organisationUsers')
+        .innerJoin('organisationUsers.user', 'users')
+        .innerJoin(
+          _ => latestSupportQuery,
+          'maxSupports',
+          'maxSupports.innovationId = innovations.id and maxSupports.supportId = supports.id'
+        )
+        .leftJoin(
+          _ => latestActionQuery,
+          'maxActions',
+          'maxActions.innovationId = innovations.id and maxActions.supportId = supports.id'
+        )
+        .leftJoin(
+          _ => latestMessageQuery,
+          'maxMessages',
+          'maxMessages.innovationId = innovations.id and maxMessages.supportId = supports.id'
+        )
+        .where(`supports.status in ('${InnovationSupportStatusEnum.ENGAGING}','${InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED}')`)
+        .andWhere(`DATEDIFF(day, maxSupports.latest, GETDATE()) >= ${idlePeriod}`)
+        .andWhere(`(DATEDIFF(day, maxActions.latest, GETDATE()) >= ${idlePeriod} OR maxActions IS NULL)`)
+        .andWhere(`(DATEDIFF(day, maxMessages.latest, GETDATE()) >= ${idlePeriod} OR maxMessages IS NULL)`)
+        .groupBy('users.id')
+        .addGroupBy('users.external_id')
+
+    const result = await mainQuery.getRawMany<{ userId: string, identityId: string; latestInteractionDate: Date }>();
+
+    return result;
+
+  }
+
+  async idleSupportsByInnovation() {
+    try {
+
+      const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
+
+      return _.reduce(_.groupBy(idleSupports, 'innovationId'), (res: { innovationId: string; values: { identityId: string, innovationId: string, ownerId: string; ownerIdentityId: string; unitId: string, unitName: string, innovationName: string }[] }[], val, key) => {
+        res.push({
+          innovationId: key,
+          values: val.map(v => ({
+            identityId: v.identityId,
+            innovationName: v.innovationName,
+            innovationId: v.innovationId,
+            ownerId: v.ownerId,
+            ownerIdentityId: v.ownerIdentityId,
+            unitId: v.organisationUnitId,
+            unitName: v.organisationUnitName,
+          }))
+        });
+        return res;
+      }, []);
+
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // private mapIdleSupports(idleSupports: IdleSupportViewEntity[]) {
+  //   const groupedByInnovation = _.reduce(
+  //     _.groupBy(idleSupports, 'innovationId'),
+  //     (result: any, value, key) => {
+  //       result[key] = _.groupBy(value, 'organisationUnitId');
+  //       return result;
+  //     }, {});
+
+  //   return groupedByInnovation;
+  // }
 }

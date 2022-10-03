@@ -7,6 +7,7 @@ import { container, EmailTypeEnum } from '../_config';
 import { DispatchServiceSymbol, DispatchServiceType } from '../_services/interfaces';
 
 import { MessageSchema, MessageType } from './validation.schemas';
+import type { NotificationLogTypeEnum } from '@notifications/shared/enums';
 
 
 class V1SendEmailListener {
@@ -17,7 +18,11 @@ class V1SendEmailListener {
       data: {
         type: EmailTypeEnum,
         to: { type: 'email' | 'identityId', value: string, displayNameParam?: string },
-        params: { [key: string]: string | number }
+        params: { [key: string]: string | number },
+        log: {
+          type: NotificationLogTypeEnum,
+          params: Record<string, string | number>,
+        }
       }
     }
   ): Promise<void> {
@@ -34,7 +39,8 @@ class V1SendEmailListener {
       await dispatchService.sendEmail(
         message.data.type,
         message.data.to,
-        message.data.params
+        message.data.params,
+        message.data.log,
       );
 
       context.res = { done: true };

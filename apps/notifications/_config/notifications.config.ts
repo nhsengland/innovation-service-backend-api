@@ -25,7 +25,8 @@ import {
   IdleInnovatorsHandler,
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler
+  UnitInactivationSupportStatusCompletedHandler,
+  IdleSupportHandler
 } from '../_handlers';
 
 
@@ -202,7 +203,7 @@ export const NOTIFICATIONS_CONFIG: {
   },
 
   [NotifierTypeEnum.IDLE_SUPPORT]: {
-    handler: IdleInnovatorsHandler,
+    handler: IdleSupportHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
   },
 

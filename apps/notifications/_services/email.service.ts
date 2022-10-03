@@ -5,9 +5,12 @@ import { v4 as uuid } from 'uuid';
 
 import { ServiceUnavailableError, UnprocessableEntityError, EmailErrorsEnum, GenericErrorsEnum } from '@notifications/shared/errors';
 
+import type { NotificationLogTypeEnum } from '@notifications/shared/enums/notification.enums';
+
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
 import { BaseService } from './base.service';
+import { NotificationLogEntity } from '@notifications/shared/entities/user/notification-log.entity';
 
 
 type apiResponseDTO = {
@@ -79,7 +82,11 @@ export class EmailService extends BaseService {
   async sendEmail<T extends EmailTypeEnum>(
     templateId: T,
     toEmail: string,
-    properties: EmailTemplatesType[T]
+    properties: EmailTemplatesType[T],
+    log?: {
+      type: NotificationLogTypeEnum,
+      params: Record<string, string | number>,
+    }
   ): Promise<boolean> {
 
     // Validate if the template exists.
@@ -97,6 +104,27 @@ export class EmailService extends BaseService {
       personalisation: properties
     };
 
+    await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
+
+    if (log) {
+
+      const notificationLogEntity = NotificationLogEntity.new({
+        notificationType: log.type,
+        notificationParams: log.params,
+      });
+
+      try {
+        await this.sqlConnection.manager.insert(NotificationLogEntity, notificationLogEntity);
+      } catch (error) {
+        this.logger.error(`Failed to create Notification Log for type ${log.type}`, { error, params: log.params })
+      }
+    }
+
+    return true;
+  }
+
+
+  private async sendEmailNotifyNHS<T extends EmailTypeEnum>(apiProperties: apiClientParamsType<EmailTemplatesType[T]>, toEmail: string) {
     const response = await axios.post<apiResponseDTO>(
       new URL(this.apiEmailPath, this.apiBaseUrl).toString(),
       apiProperties,
@@ -111,9 +139,5 @@ export class EmailService extends BaseService {
       templateId: response.data.template.id,
       response: response.data
     });
-
-    return true;
-
   }
-
 }

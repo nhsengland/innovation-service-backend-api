@@ -33,3 +33,8 @@ export enum EmailNotificationPreferenceEnum {
   INSTANTLY = 'INSTANTLY',
   DAILY = 'DAILY'
 }
+
+
+export enum NotificationLogTypeEnum {
+  QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT',
+}

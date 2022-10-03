@@ -45,7 +45,8 @@ class V1NotificationsListener {
           data: {
             type: item.templateId,
             to: item.to,
-            params: item.params
+            params: item.params,
+            log: item.log,
           }
         });
 
