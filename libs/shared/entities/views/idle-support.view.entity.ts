@@ -1,9 +1,7 @@
 import { ViewColumn, ViewEntity } from "typeorm";
-import expression from './idle-support.view.definition';
+//import expression from './idle-support.view.definition';
 
-@ViewEntity({
-  expression,
-})
+@ViewEntity()
 export class IdleSupportViewEntity {
   @ViewColumn()
   innovationId: string;
