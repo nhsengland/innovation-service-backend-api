@@ -107,16 +107,25 @@ export class EmailService extends BaseService {
     await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
 
     if (log) {
+      
 
-      const notificationLogEntity = NotificationLogEntity.new({
-        notificationType: log.type,
-        notificationParams: log.params,
-      });
+      const logDbQuery = this.sqlConnection.createQueryBuilder(NotificationLogEntity, 'notificationLog')
+      .where(`notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(log.params)}' and FORMAT(notificationLog.created_at, 'yyyyMMdd') = '${new Date().toLocaleDateString('sv').replace(/-/g, '')}'`)
+      
+      const logDb = await logDbQuery.getOne();
 
-      try {
-        await this.sqlConnection.manager.insert(NotificationLogEntity, notificationLogEntity);
-      } catch (error) {
-        this.logger.error(`Failed to create Notification Log for type ${log.type}`, { error, params: log.params })
+      if (!logDb) {
+
+        const notificationLogEntity = NotificationLogEntity.new({
+          notificationType: log.type,
+          notificationParams: log.params,
+        });
+
+        try {
+          await this.sqlConnection.manager.insert(NotificationLogEntity, notificationLogEntity);
+        } catch (error) {
+          this.logger.error(`Failed to create Notification Log for type ${log.type}`, { error, params: log.params })
+        }
       }
     }
 
