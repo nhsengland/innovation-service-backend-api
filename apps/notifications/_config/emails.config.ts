@@ -27,6 +27,7 @@ export enum EmailTypeEnum {
   INNOVATOR_DAILY_DIGEST = '1f2f2f06-5d6a-424e-8c05-65b9c072d20d',
   UNIT_INACTIVATION_SUPPORT_COMPLETED = '1fbe19f7-2be8-4959-b53c-debe5add86a6',
   INNOVATOR_INCOMPLETE_RECORD = 'afb9c395-b7ff-4a4f-adee-e0c3bec2e9f3',
+  QA_A_IDLE_SUPPORT= '420a22ac-b052-4180-8a48-daf787db3f7f'
 }
 
 
@@ -61,5 +62,6 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.ACCESSOR_DAILY_DIGEST]: { display_name?: string, actions_count: string, messages_count: string, supports_count: string },
   [EmailTypeEnum.INNOVATOR_DAILY_DIGEST]: { display_name?: string, actions_count: string, messages_count: string, supports_count: string },
   [EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: { display_name?: string, unit_name: string, innovation_name: string, support_url: string },
-  [EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD]: { display_name?: string, innovation_name: string }
+  [EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD]: { display_name?: string, innovation_name: string },
+  [EmailTypeEnum.QA_A_IDLE_SUPPORT]: { display_name?: string, innovation_name: string, innovator_name: string },
 }

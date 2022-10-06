@@ -1,6 +1,6 @@
 import {
   EmailNotificationPreferenceEnum, EmailNotificationTypeEnum,
-  NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum,
+  NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum, NotifierTypeEnum,
   UserTypeEnum
 } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -12,6 +12,10 @@ type HandlerEmailResponseType<T> = Array<{
   templateId: EmailTypeEnum;
   to: { type: 'email' | 'identityId', value: string, displayNameParam?: string };
   params: T;
+  log?: {
+    type: NotificationLogTypeEnum,
+    params: Record<string, string | number>,
+  }
 }>;
 
 type HandlerInAppResponseType<T> = Array<{

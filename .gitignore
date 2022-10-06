@@ -32,3 +32,6 @@ apps/**/.symlinks/shared
 # Env
 .env
 local.settings.json
+
+__*
+/**/*__*

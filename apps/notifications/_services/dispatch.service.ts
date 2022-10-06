@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import type { NotificationContextTypeEnum, NotificationContextDetailEnum } from '@notifications/shared/enums';
+import type { NotificationContextTypeEnum, NotificationContextDetailEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { InnovationEntity, NotificationEntity, NotificationUserEntity, UserEntity } from '@notifications/shared/entities';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
@@ -24,7 +24,11 @@ export class DispatchService extends BaseService {
   async sendEmail<T extends EmailTypeEnum>(
     type: EmailTypeEnum,
     to: { type: 'email' | 'identityId', value: string, displayNameParam?: string },
-    params: EmailTemplatesType[T]
+    params: EmailTemplatesType[T],
+    log?: {
+      type: NotificationLogTypeEnum,
+      params: Record<string, string | number>,
+    }
   ): Promise<boolean> {
 
     let email: string = to.type === 'email' ? to.value : '';
@@ -44,7 +48,7 @@ export class DispatchService extends BaseService {
 
     // TODO: Does it make sense to verify if user is active here?
 
-    return this.emailService.sendEmail(type, email, params);
+    return this.emailService.sendEmail(type, email, params, log);
 
   }
 

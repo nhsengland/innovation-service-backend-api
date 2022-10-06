@@ -89,6 +89,8 @@ export type NotifierTemplatesType = {
     unitId: string
   },
 
-  [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>
+  [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
+  [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
+  [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,
 
 }

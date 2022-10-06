@@ -1,7 +1,8 @@
 import {
   EmailNotificationTypeEnum,
   NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum,
-  UserTypeEnum
+  UserTypeEnum,
+  EmailNotificationPreferenceEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -11,6 +12,39 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 
 import { BaseHandler } from './base.handler';
 
+
+type EmailNotificationPreferenceTypeAlias = {
+  type: EmailNotificationTypeEnum;
+  preference: EmailNotificationPreferenceEnum;
+};
+
+type ThreadIntervinientUserTypeAlias = {
+  id: string;
+  identityId: string;
+  type: UserTypeEnum;
+  emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
+};
+
+type InnovationTypeAlias = {
+  name: string;
+  owner: {
+    id: string;
+    identityId: string;
+    type: UserTypeEnum;
+    emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
+  };
+};
+
+type ThreadTypeAlias = {
+  id: string;
+  subject: string;
+  author: {
+    id: string;
+    identityId: string;
+    type: UserTypeEnum;
+    emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
+  };
+};
 
 export class ThreadMessageCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_MESSAGE_CREATION,
@@ -66,17 +100,37 @@ export class ThreadMessageCreationHandler extends BaseHandler<
       });
     }
 
-    if (threadIntervenientUsers.length > 0) {
-      this.inApp.push({
-        innovationId: this.inputData.innovationId,
-        context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, id: this.inputData.threadId },
-        userIds: threadIntervenientUsers.map(item => item.id),
-        params: { subject: thread.subject, messageId: this.inputData.messageId }
-      });
-    }
+
+    this.pushInAppNotifications(threadIntervenientUsers, innovation, thread);
 
     return this;
 
   }
 
+
+  private pushInAppNotifications( threadIntervenientUsers: ThreadIntervinientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) {
+    
+    const inAppRecipients = threadIntervenientUsers.map(item => item.id);
+
+    // Always include Innovation owner in the notification center recipients
+    const owner = innovation.owner;
+
+    // Check is the innovation owner is already part of the recipients list to avoid duplicated notifications
+    const ownerIncluded = threadIntervenientUsers.find(i => i.id === owner.id);
+
+    // In the case the owner is not on the recipients list and the creator of the reply is not the owner her/himself
+    // Add her/him to the recipients list of in app notifications
+    if (!ownerIncluded && owner.id !== this.requestUser.id) {
+      inAppRecipients.push(owner.id);
+    }
+
+    if (inAppRecipients.length > 0) {
+      this.inApp.push({
+        innovationId: this.inputData.innovationId,
+        context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, id: this.inputData.threadId },
+        userIds: inAppRecipients,
+        params: { subject: thread.subject, messageId: this.inputData.messageId }
+      });
+    }
+  }
 }

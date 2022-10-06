@@ -5,7 +5,7 @@ import type { DataSourceOptions } from 'typeorm';
 
 import { TypeORMCustomStrategy } from './custom-strategy.config';
 
-import { GENERAL_ENTITIES, INNOVATION_ENTITIES, ORGANISATION_ENTITIES, USER_ENTITIES } from '../../entities';
+import { GENERAL_ENTITIES, INNOVATION_ENTITIES, ORGANISATION_ENTITIES, USER_ENTITIES, VIEW_ENTITIES } from '../../entities';
 
 
 dotenv.config();
@@ -29,7 +29,7 @@ export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
   username: process.env['DB_USER'] || '',
   password: process.env['DB_PWD'] || '',
   database: process.env['DB_NAME'] || '',
-  entities: [...GENERAL_ENTITIES, ...INNOVATION_ENTITIES, ...ORGANISATION_ENTITIES, ...USER_ENTITIES],
+  entities: [...GENERAL_ENTITIES, ...INNOVATION_ENTITIES, ...ORGANISATION_ENTITIES, ...USER_ENTITIES, ...VIEW_ENTITIES],
   namingStrategy: new TypeORMCustomStrategy(),
   synchronize: false,
   extra: {

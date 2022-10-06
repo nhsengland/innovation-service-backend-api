@@ -22,9 +22,11 @@ import {
   NeedsAssessmentCompletedHandler,
   SLSValidationHandler,
   DailyDigestHandler,
+  IdleInnovatorsHandler,
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler
+  UnitInactivationSupportStatusCompletedHandler,
+  IdleSupportHandler
 } from '../_handlers';
 
 
@@ -181,17 +183,28 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.DAILY_DIGEST]: {
-    handler: DailyDigestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]>({})
-  },
-
   [NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: {
     handler: UnitInactivationSupportStatusCompletedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]>({
       innovationId: Joi.string().guid().required(),
       unitId: Joi.string().guid().required()
     }).required()
-  }
+  },
+
+  // RECURRENT
+  [NotifierTypeEnum.DAILY_DIGEST]: {
+    handler: DailyDigestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]>({})
+  },
+
+  [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: {
+    handler: IdleInnovatorsHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]>({})
+  },
+
+  [NotifierTypeEnum.IDLE_SUPPORT]: {
+    handler: IdleSupportHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
+  },
 
 }
