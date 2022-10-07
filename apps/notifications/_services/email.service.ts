@@ -110,7 +110,7 @@ export class EmailService extends BaseService {
       
 
       const logDbQuery = this.sqlConnection.createQueryBuilder(NotificationLogEntity, 'notificationLog')
-      .where(`notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(log.params)}' and DATEDIFF(day, notificationLog.updated_at, GETDATE()) <= 30`)
+      .where(`notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(log.params)}' and DATEDIFF(day, notificationLog.created_at, GETDATE()) <= 30`)
       
       const logDb = await logDbQuery.getOne();
 
