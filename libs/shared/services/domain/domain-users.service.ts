@@ -78,7 +78,7 @@ export class DomainUsersService {
 
         }),
         firstTimeSignInAt: dbUser.firstTimeSignInAt,
-        surveyId: dbUser.surveyId,
+        surveyId: dbUser.surveyId
       };
 
       return userInfo;
