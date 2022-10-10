@@ -18,7 +18,5 @@ export class IdleSupportViewEntity {
   @ViewColumn()
   identityId: string;
   @ViewColumn()
-  supportId: string;
-  @ViewColumn()
   latestActivity: Date;  
 }

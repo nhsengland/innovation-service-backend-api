@@ -104,14 +104,30 @@ export class EmailService extends BaseService {
       personalisation: properties
     };
 
-    await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
+    try {
+      await this.sendEmailNotifyNHS<T>(apiProperties, toEmail);
+      await this.createRecurrentNotificationLog(log);
+    } catch (error) {
 
-    if (log) {
+      // API KEY TEAM ONLY ERROR. User no longer exists on AZURE B2C
+      if (error instanceof Error && error['name'] === 'EM.0003') {
+        await this.createRecurrentNotificationLog(log);
+      }
       
+    }
+
+
+    return true;
+  }
+
+
+  private async createRecurrentNotificationLog(log: { type: NotificationLogTypeEnum; params: Record<string, string | number>; } | undefined) {
+    if (log) {
+
 
       const logDbQuery = this.sqlConnection.createQueryBuilder(NotificationLogEntity, 'notificationLog')
-      .where(`notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(log.params)}' and DATEDIFF(day, notificationLog.created_at, GETDATE()) <= 30`)
-      
+        .where(`notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(log.params)}' and DATEDIFF(day, notificationLog.created_at, GETDATE()) <= 30`);
+
       const logDb = await logDbQuery.getOne();
 
       if (!logDb) {
@@ -124,14 +140,11 @@ export class EmailService extends BaseService {
         try {
           await this.sqlConnection.manager.insert(NotificationLogEntity, notificationLogEntity);
         } catch (error) {
-          this.logger.error(`Failed to create Notification Log for type ${log.type}`, { error, params: log.params })
+          this.logger.error(`Failed to create Notification Log for type ${log.type}`, { error, params: log.params });
         }
       }
     }
-
-    return true;
   }
-
 
   private async sendEmailNotifyNHS<T extends EmailTypeEnum>(apiProperties: apiClientParamsType<EmailTemplatesType[T]>, toEmail: string) {
     const response = await axios.post<apiResponseDTO>(
@@ -139,6 +152,12 @@ export class EmailService extends BaseService {
       apiProperties,
       { headers: { Authorization: `Bearer ${this.accessToken}` } }
     ).catch((error) => {
+      const badAPIKey =  error.response?.data?.errors.find( (e: {error: string, message: string}) => e.message === 'Can’t send to this recipient using a team-only API key');
+      if(badAPIKey) {
+        this.logger.error(`Error sending email to ${toEmail} due to bad api key`, {error});
+        throw new ServiceUnavailableError(EmailErrorsEnum.EMAIL_BAD_API_KEY);
+      }
+      
       this.logger.error(`Error sending email to ${toEmail}`, { error });
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_EMAIL_UNAVAILABLE);
     });
