@@ -1,6 +1,6 @@
 
 import { model, Model, models, Schema } from 'mongoose';
-import { HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasMarketResearchCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationSupportTypeCatalogueEnum, MainPurposeCatalogueEnum } from '../enums/catalog.enums';
+import type { HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasMarketResearchCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationSupportTypeCatalogueEnum, MainPurposeCatalogueEnum } from '../enums/catalog.enums';
 
 type SurveyInfo = {
   mainCategory: MainPurposeCatalogueEnum | null | undefined;
@@ -31,4 +31,4 @@ const SurveySchema = new Schema<SurveySchemaType>(
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );
 
-export const SurveyModel: Model<SurveySchemaType> = models.Survey || model<SurveySchemaType>('Survey', SurveySchema);
+export const SurveyModel: Model<SurveySchemaType> = models['SurveyModel'] || model<SurveySchemaType>('Survey', SurveySchema);
