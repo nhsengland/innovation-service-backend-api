@@ -11,3 +11,13 @@ services:
       - MSSQL_USER=sa
     ports:
       - "1433:1433"
+
+  mongodb:
+    container_name: mongo
+    image: mongo:latest
+    environment:
+      "MONGO_INITDB_ROOT_USERNAME": root
+      "MONGO_INITDB_ROOT_PASSWORD": Password
+    ports:
+      - 8081:8081
+      - 27017:27017
