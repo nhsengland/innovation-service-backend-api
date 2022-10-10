@@ -1,38 +1,24 @@
 import { injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import {
-  OrganisationEntity
-} from '@users/shared/entities';
+import { OrganisationEntity } from '@users/shared/entities';
+import { OrganisationTypeEnum } from '@users/shared/enums';
+import { GenericErrorsEnum, InternalServerError } from '@users/shared/errors';
 
-import {
-  OrganisationTypeEnum,
-} from '@users/shared/enums';
-
-import {
-  GenericErrorsEnum,
-  InternalServerError
-} from '@users/shared/errors';
-
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 
 
 @injectable()
-export class OrganisationsService extends BaseAppService {
+export class OrganisationsService extends BaseService {
 
   organisationRepository: Repository<OrganisationEntity>;
 
   constructor() {
     super();
-    this.organisationRepository = this.sqlConnection.manager.getRepository<OrganisationEntity>(OrganisationEntity);
+    this.organisationRepository = this.sqlConnection.getRepository(OrganisationEntity);
   }
 
-
-  async getOrganisationsList(): Promise<{
-    id: string;
-    name: string;
-    acronym: string;
-  }[]> {
+  async getOrganisationsList(): Promise<{ id: string, name: string, acronym: string }[]> {
 
     try {
 
@@ -56,10 +42,8 @@ export class OrganisationsService extends BaseAppService {
 
 
   async getOrganisationsWithUnitsList(): Promise<{
-    id: string;
-    name: string;
-    acronym: string;
-    organisationUnits: { id: string; name: string; acronym: string; }[];
+    id: string, name: string, acronym: string,
+    organisationUnits: { id: string; name: string; acronym: string; }[]
   }[]> {
 
     try {

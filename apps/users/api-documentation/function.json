@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/user-endpoint01"
+      "route": "api-documentation"
     },
     {
       "type": "http",
