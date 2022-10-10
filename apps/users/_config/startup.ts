@@ -1,6 +1,11 @@
 import { container } from './inversify.config';
 
-import { SQLConnectionServiceType, SQLConnectionServiceSymbol } from '@users/shared/services'
+import {
+  NOSQLConnectionServiceSymbol,
+  NOSQLConnectionServiceType,
+  SQLConnectionServiceSymbol,
+  SQLConnectionServiceType,
+} from '@users/shared/services';
 
 
 export const startup = async (): Promise<void> => {
@@ -8,10 +13,12 @@ export const startup = async (): Promise<void> => {
   console.log('Initializing Users app function');
 
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
 
   try {
 
     await sqlConnectionService.init();
+    await noSqlConnectionService.init();
 
     console.log('Initialization complete');
 

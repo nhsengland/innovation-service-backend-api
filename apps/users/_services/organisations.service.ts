@@ -18,7 +18,6 @@ export class OrganisationsService extends BaseService {
     this.organisationRepository = this.sqlConnection.getRepository(OrganisationEntity);
   }
 
-
   async getOrganisationsList(): Promise<{ id: string, name: string, acronym: string }[]> {
 
     try {
