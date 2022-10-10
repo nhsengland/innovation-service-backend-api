@@ -83,4 +83,5 @@ export enum InnovationErrorsEnum {
 export enum EmailErrorsEnum {
   EMAIL_TEMPLATE_NOT_FOUND = 'EM.0001',
   EMAIL_TEMPLATE_WITH_INVALID_PROPERTIES = 'EM.0002',
+  EMAIL_BAD_API_KEY = 'EM.0003',
 }

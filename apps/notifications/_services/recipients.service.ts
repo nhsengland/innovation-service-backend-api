@@ -574,13 +574,13 @@ export class RecipientsService extends BaseService {
         res.push({
           innovationId: key,
           values: val.map(v => ({
-            identityId: v.identityId,
-            innovationName: v.innovationName,
-            innovationId: v.innovationId,
-            ownerId: v.ownerId,
-            ownerIdentityId: v.ownerIdentityId,
-            unitId: v.organisationUnitId,
-            unitName: v.organisationUnitName,
+            identityId: v['identityId'],
+            innovationName: v['innovationName'],
+            innovationId: v['innovationId'],
+            ownerId: v['ownerId'],
+            ownerIdentityId: v['ownerIdentityId'],
+            unitId: v['organisationUnitId'],
+            unitName: v['organisationUnitName'],
           }))
         });
         return res;
