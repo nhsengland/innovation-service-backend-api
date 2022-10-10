@@ -1,6 +1,6 @@
 import Joi = require("joi");
 
-const payloadSchema = Joi.object()
+export const SurveyBodySchema = Joi.object()
   .pattern(
     Joi.string().max(50),
     Joi.alternatives(
@@ -11,6 +11,3 @@ const payloadSchema = Joi.object()
   )
   .required();
 
-export const ValidatePayload = (data: any): any => {
-  return payloadSchema.validate(data);
-};
