@@ -1,10 +1,12 @@
-import type { HttpRequest } from '@azure/functions';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+
 import { JwtDecoder } from '@users/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
-import { SurveyServiceSymbol, SurveyServiceType } from '../_interfaces/services.interfaces';
-import { SurveyBodySchema } from './validation';
+import { SurveyServiceSymbol, SurveyServiceType } from '../_services/interfaces';
+import { ResponseDTO, SurveyBodySchema } from './transformation.dtos';
 /**
  * TODO: Rework this into a service
  */
@@ -22,8 +24,8 @@ class V1SurveyPOST {
       const surveyService = container.get<SurveyServiceType>(SurveyServiceSymbol);
       const result = await surveyService.save(surveyItem);
 
-      context.res = ResponseHelper.Ok({ id: surveyService.getId(result) });
-
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: surveyService.getId(result) });
+      return;
     } catch (error) {
       context.log.error(error);
       context.res = ResponseHelper.Error(error);
@@ -32,4 +34,25 @@ class V1SurveyPOST {
   }
 }
 
-export default V1SurveyPOST.httpTrigger;
+export default openApi(V1SurveyPOST.httpTrigger as AzureFunction, '/v1/survey', {
+  post: {
+    parameters: [],
+    responses: {
+      200: {
+        description: 'Successful operation',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', description: 'Unique identifier for survey object' },
+              }
+            }
+          }
+        }
+      },
+      400: { description: 'Invalida survey payload' }
+    }
+  }
+
+});

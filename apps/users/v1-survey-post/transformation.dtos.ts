@@ -11,3 +11,7 @@ export const SurveyBodySchema = Joi.object()
   )
   .required();
 
+export type ResponseDTO = {
+  id: string,
+};
+
