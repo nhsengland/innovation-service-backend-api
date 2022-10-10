@@ -5,6 +5,9 @@ import {
   AuthorizationService, AuthorizationServiceSymbol, AuthorizationServiceType,
   DomainService, DomainServiceSymbol, DomainServiceType,
   FileStorageService, FileStorageServiceSymbol, FileStorageServiceType,
+  HttpService,
+  HttpServiceSymbol,
+  HttpServiceType,
   IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
   LoggerService, LoggerServiceSymbol, LoggerServiceType,
   NOSQLConnectionService,
@@ -19,10 +22,13 @@ import { OrganisationsService } from '../_services/organisations.service';
 import { UsersService } from '../_services/users.service';
 import {
   OrganisationsServiceSymbol, OrganisationsServiceType,
+  SurveyServiceSymbol,
+  SurveyServiceType,
   UsersServiceSymbol, UsersServiceType
 } from '../_services/interfaces';
 
 import { startup } from './startup';
+import { SurveyService } from '../_services/survey.service';
 
 
 export const container: Container = new Container();
@@ -35,7 +41,9 @@ container.bind<LoggerServiceType>(LoggerServiceSymbol).to(LoggerService).inSingl
 container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).inSingletonScope();
 container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionService).inSingletonScope();
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
+container.bind<HttpServiceType>(HttpServiceSymbol).to(HttpService).inSingletonScope();
 
+container.bind<SurveyServiceType>(SurveyServiceSymbol).to(SurveyService).inSingletonScope();
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 
