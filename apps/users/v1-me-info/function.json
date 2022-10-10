@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/user-endpoint02"
+      "route": "v1/me"
     },
     {
       "type": "http",

@@ -7,7 +7,7 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
-- task: bldeTool@0
+- task: NodeTool@0
   displayName: 'Install Node 14'
   inputs:
     versionSpec: '14.x'
