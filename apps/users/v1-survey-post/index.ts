@@ -1,33 +1,44 @@
 import type { HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
-import { NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType } from '@users/shared/services';
+import { ResponseHelper } from '@users/shared/helpers';
 import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
-
+import { SurveyServiceSymbol, SurveyServiceType } from '../_interfaces/services.interfaces';
+import { ValidatePayload } from './validation';
 /**
  * TODO: Rework this into a service
  */
-import { SurveyModel } from '@users/shared/schemas/survey.schema';
-import { Document } from 'mongoose';
-import { Data } from 'applicationinsights/out/Declarations/Contracts';
 
 class V1SurveyPOST {
 
-    @JwtDecoder()
-    static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-        
-        const data = request.body;
-        const survey = new SurveyModel({
-            answers: {
-                ...data,
-            }
-        })
+  @JwtDecoder()
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const surveyItem = request.body;
+    const validation = ValidatePayload(surveyItem);
 
-        const result = await survey.save();
+    if (validation.error) {
+      context.res = ResponseHelper.UnprocessableEntity({
+        error: 'Payload validation failed'
+      });
 
-        const docId = result.get('_id').toString();
-
+      return;
     }
+
+    try {
+
+      const surveyService = container.get<SurveyServiceType>(SurveyServiceSymbol);
+      const result = await surveyService.save(request.body);
+
+      context.res = ResponseHelper.Ok({ id: surveyService.getId(result) });
+
+    } catch (error) {
+      context.log.error(error);
+      context.res = ResponseHelper.Internal({
+        error: "Error occured while saving to the datastore.",
+      });
+      return;
+    }
+  }
 }
 
 export default V1SurveyPOST.httpTrigger;
