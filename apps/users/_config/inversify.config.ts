@@ -14,8 +14,8 @@ import {
   NOSQLConnectionServiceSymbol,
   NOSQLConnectionServiceType,
   NotifierService, NotifierServiceSymbol, NotifierServiceType,
-  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType,
-  // StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType
+  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
+  StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType,
 } from '@users/shared/services';
 
 import { OrganisationsService } from '../_services/organisations.service';
