@@ -1,5 +1,5 @@
 import type { AzureFunction } from '@azure/functions';
-import { mapOpenApi as openApi } from '@users/shared/openapi';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
@@ -47,7 +47,17 @@ class GetMe {
 
 export default openApi(GetMe.httpTrigger as AzureFunction, '/v1/me', {
   get: {
-    parameters: [],
+    parameters: [
+      {
+        name: 'gameId',
+        in: 'path',
+        required: true,
+        description: `Gets a game that's being played`,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
     responses: {
       200: {
         description: 'Successful operation',
