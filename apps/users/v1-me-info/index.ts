@@ -47,17 +47,7 @@ class GetMe {
 
 export default openApi(GetMe.httpTrigger as AzureFunction, '/v1/me', {
   get: {
-    parameters: [
-      {
-        name: 'gameId',
-        in: 'path',
-        required: true,
-        description: `Gets a game that's being played`,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: [],
     responses: {
       200: {
         description: 'Successful operation',
