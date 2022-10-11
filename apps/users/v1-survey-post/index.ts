@@ -1,5 +1,5 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi as openApi } from '@users/shared/openapi';
 
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import type { CustomContextType } from '@users/shared/types';

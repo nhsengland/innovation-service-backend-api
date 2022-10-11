@@ -4,8 +4,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get"],
-      "route": "v1/inno-endpoint02"
+      "methods": ["put"],
+      "route": "v1/management/me"
     },
     {
       "type": "http",
