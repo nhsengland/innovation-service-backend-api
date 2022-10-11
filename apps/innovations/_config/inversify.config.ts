@@ -9,7 +9,7 @@ import {
   IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
   LoggerService, LoggerServiceSymbol, LoggerServiceType,
   SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
-  NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionService
+  NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionService, NotifierServiceType, NotifierServiceSymbol, NotifierService, StorageQueueServiceType, StorageQueueServiceSymbol, StorageQueueService
 } from '@innovations/shared/services';
 
 import { InnovationsService } from '../_services/innovations.service';
@@ -30,7 +30,8 @@ container.bind<IdentityProviderServiceType>(IdentityProviderServiceSymbol).to(Id
 container.bind<LoggerServiceType>(LoggerServiceSymbol).to(LoggerService).inSingletonScope();
 container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionService).inSingletonScope();
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
-
+container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).inSingletonScope();
+container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
 
 startup();

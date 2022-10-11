@@ -1,4 +1,4 @@
-import { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@nhse/shared';
+import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 
 export interface InnovationSectionModel {
   id: string | null;

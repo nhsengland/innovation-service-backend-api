@@ -37,8 +37,7 @@ export class InnovationsService extends BaseAppService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(EmailServiceSymbol) private emailService: EmailServiceType,
-    @inject(NotificationServiceSymbol) private notificationService: NotificationServiceType,
+    // @inject(NotifierServiceSymbol) private notifService: NotifierServiceType,
   ) {
     super();
     this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
@@ -99,8 +98,6 @@ export class InnovationsService extends BaseAppService {
         { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.INNOVATION_CREATION },
         {}
       );
-
-      await this.notificationService.notify<NotificationTemplateEnum.INNOVATIONS_CREATED>(NotificationTemplateEnum.INNOVATIONS_CREATED, { innovationId: savedInnovation.id });
 
       return { id: savedInnovation.id };
 

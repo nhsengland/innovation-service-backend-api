@@ -35,12 +35,11 @@ export class UsersService extends BaseAppService {
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
   ) {
     super();
-    const getRepository = this.sqlConnection.manager.getRepository;
 
-    this.userRepository = getRepository<UserEntity>(UserEntity);
-    this.organisationRepository = getRepository<OrganisationEntity>(OrganisationEntity);
-    this.organisationUnitUserRepository = getRepository<OrganisationUnitUserEntity>(OrganisationUnitUserEntity);
-    this.innovationRepository = getRepository<InnovationEntity>(InnovationEntity);
+    this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
+    this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
+    this.organisationUnitUserRepository = this.sqlConnection.getRepository<OrganisationUnitUserEntity>(OrganisationUnitUserEntity);
+    this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
   }
 
 
@@ -195,7 +194,7 @@ export class UsersService extends BaseAppService {
       user.deletedAt = new Date();
       user.deleteReason = reason || '';
 
-      return await transactionManager.save(user);
+      return transactionManager.save(user);
 
     });
 

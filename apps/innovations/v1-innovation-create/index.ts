@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import {
   AuthorizationServiceSymbol, AuthorizationServiceType,
@@ -50,4 +51,35 @@ class CreateInnovation {
 
 }
 
-export default CreateInnovation.httpTrigger;
+export default openApi(CreateInnovation.httpTrigger as AzureFunction, '/v1/innovations', {
+  post: {
+    description: 'Create an innovation',
+    operationId: 'createInnovation',
+    parameters: [],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+          },
+        },
+      }
+    },
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', description: 'Unique identifier for innovation object' },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid innovation payload' },
+    },
+  },
+});

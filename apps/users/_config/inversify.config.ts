@@ -14,7 +14,7 @@ import {
   NOSQLConnectionServiceSymbol,
   NOSQLConnectionServiceType,
   NotifierService, NotifierServiceSymbol, NotifierServiceType,
-  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
+  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType,
   // StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType
 } from '@users/shared/services';
 
@@ -42,6 +42,7 @@ container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).i
 container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionService).inSingletonScope();
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<HttpServiceType>(HttpServiceSymbol).to(HttpService).inSingletonScope();
+container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 
 container.bind<SurveyServiceType>(SurveyServiceSymbol).to(SurveyService).inSingletonScope();
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();

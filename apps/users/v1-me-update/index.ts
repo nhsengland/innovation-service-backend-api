@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { UserTypeEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
@@ -73,4 +74,91 @@ class PutMe {
   }
 }
 
-export default PutMe.httpTrigger;
+export default openApi(PutMe.httpTrigger as AzureFunction, '/v1/me', {
+  put: {
+    summary: 'Update user information',
+    description: 'Update user information',
+    operationId: 'v1-me-update',
+    tags: ['v1'],
+    parameters: [],
+    requestBody: {
+      description: 'Update user information',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              displayName: {
+                type: 'string',
+                description: 'The display name of the user',
+                example: 'John Doe',
+              },
+              mobilePhone: {
+                type: 'string',
+                description: 'The mobile phone number of the user',
+                example: '07777777777',
+              },
+              organisation: {
+                type: 'object',
+                properties: {
+                  id: {
+                    type: 'string',
+                    description: 'The ID of the organisation',
+                    example: '12345678-1234-1234-1234-123456789012',
+                  },
+                  name: {
+                    type: 'string',
+                    description: 'The name of the organisation',
+                    example: 'Example Organisation',
+                  },
+                  isShadow: {
+                    type: 'boolean',
+                    description: 'Whether the organisation is a shadow organisation',
+                    example: false,
+                  },
+                  size: {
+                    type: 'string',
+                    description: 'The size of the organisation',
+                    example: 'small',
+                  },
+                },
+              }
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User information updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+              },
+
+            },
+          },
+        },
+      },
+      400: {
+        description: 'Bad request',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                code: { type: 'string' },
+                message: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+    }
+
+  }
+});
