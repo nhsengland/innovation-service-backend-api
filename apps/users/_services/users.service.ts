@@ -7,16 +7,16 @@ import {
 } from '@users/shared/services';
 
 import {
-    UserTypeEnum,
-  } from '@users/shared/enums';
+  UserTypeEnum,
+} from '@users/shared/enums';
 
-  import {
-    UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationEntity,
-  } from '@users/shared/entities';
+import {
+  UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationEntity,
+} from '@users/shared/entities';
 
-  import {
-    NotFoundError, UserErrorsEnum,
-  } from '@users/shared/errors';
+import {
+  NotFoundError, UserErrorsEnum,
+} from '@users/shared/errors';
 
 import { BaseAppService } from './base-app.service';
 import type { DomainUserInfoType } from '@users/shared/types';
@@ -125,9 +125,9 @@ export class UsersService extends BaseAppService {
     user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: Date | null },
     data: {
       displayName: string,
-      mobilePhone?: string,
-      organisation?: { id: string; isShadow: boolean; name?: string; size?: string; }
-  }
+      mobilePhone?: string | undefined,
+      organisation?: { id: string; isShadow: boolean; name?: string; size?: string; } | undefined
+    }
   ): Promise<{ id: string }> {
 
     await this.identityProviderService.updateUser(user.identityId, {
@@ -147,8 +147,8 @@ export class UsersService extends BaseAppService {
           organisationData.name = user.id;
           organisationData.size = null;
         } else {
-            if (data.organisation.name) { organisationData.name = data.organisation.name; }
-            if (data.organisation.size) { organisationData.size = data.organisation.size; }
+          if (data.organisation.name) { organisationData.name = data.organisation.name; }
+          if (data.organisation.size) { organisationData.size = data.organisation.size; }
         }
 
         await this.organisationRepository.update(data.organisation.id, organisationData);
