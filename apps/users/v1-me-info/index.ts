@@ -1,5 +1,5 @@
 import type { AzureFunction } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi as openApi } from '@users/shared/openapi';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
