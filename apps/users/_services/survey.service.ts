@@ -1,7 +1,6 @@
-
 import { injectable } from 'inversify';
 
-import { SurveyModel } from '@users/shared/schemas/survey.schema';
+import { SurveyAnswersType, SurveyModel } from '@users/shared/schemas';
 
 import { BaseAppService } from "./base-app.service";
 
@@ -13,13 +12,10 @@ export class SurveyService extends BaseAppService {
 		super();
 	}
 
-	// TODO: Remove this ANY!
-	async saveSurvey(data: any): Promise<{ id: string }> {
 
-		const survey = new SurveyModel({ answers: data });
+	async saveSurvey(data: SurveyAnswersType): Promise<{ id: string }> {
 
-		//TODO: remove this any. check mongoose version, etc.
-		const result = survey.save() as any;
+		const result = await new SurveyModel({ answers: data }).save();
 
 		return {
 			id: result.get('_id').toString()

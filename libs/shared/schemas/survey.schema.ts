@@ -1,23 +1,27 @@
 
 import { model, Model, models, Schema } from 'mongoose';
-import type { HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasMarketResearchCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationSupportTypeCatalogueEnum, MainPurposeCatalogueEnum } from '../enums/catalog.enums';
 
-type SurveyInfo = {
-  mainCategory: MainPurposeCatalogueEnum | null | undefined;
-  otherMainCategoryDescription: string;
-  hasProblemTackleKnowledge: HasProblemTackleKnowledgeCatalogueEnum;
-  hasMarketResearch: HasMarketResearchCatalogueEnum;
-  hasBenefits: HasBenefitsCatalogueEnum;
-  hasTests: HasTestsCatalogueEnum;
-  hasEvidence: HasEvidenceCatalogueEnum;
-  otherCategoryDescription: string;
-  categories: InnovationCategoryCatalogueEnum[];
-  supportTypes: InnovationSupportTypeCatalogueEnum[];
+import type { HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasMarketResearchCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationSupportTypeCatalogueEnum, YesNotYetNotSureCatalogueEnum } from '../enums/catalog.enums';
+
+export type SurveyAnswersType = {
+  categories: InnovationCategoryCatalogueEnum[],
+  otherCategoryDescription: null | string,
+  mainCategory: InnovationCategoryCatalogueEnum,
+  otherMainCategoryDescription: null | string,
+  hasProblemTackleKnowledge: HasProblemTackleKnowledgeCatalogueEnum,
+  hasMarketResearch: HasMarketResearchCatalogueEnum,
+  hasWhoBenefitsKnowledge: YesNotYetNotSureCatalogueEnum,
+  hasBenefits: HasBenefitsCatalogueEnum,
+  hasTests: HasTestsCatalogueEnum,
+  hasRelevantCertifications: 'YES' | 'NOT_YET' | 'NO_KNOWLEDGE' | 'NOT_APPLICABLE',
+  hasEvidence: HasEvidenceCatalogueEnum,
+  hasCostEvidence: 'YES' | 'IN_PROGRESS' | 'NOT_YET',
+  supportTypes: InnovationSupportTypeCatalogueEnum[]
 };
 
 type SurveySchemaType = {
   id: string;
-  answers: SurveyInfo;
+  answers: SurveyAnswersType;
   createdAt: string;
   updatedAt: string;
 };
@@ -26,7 +30,7 @@ type SurveySchemaType = {
 const SurveySchema = new Schema<SurveySchemaType>(
   {
     id: Schema.Types.ObjectId,
-    answers: new Schema<SurveyInfo>(),
+    answers: new Schema<SurveyAnswersType>(),
   },
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );

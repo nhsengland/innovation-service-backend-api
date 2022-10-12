@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { In, Repository } from 'typeorm';
 
-import { OrganisationEntity, OrganisationUnitUserEntity, UserEntity } from '@users/shared/entities';
+import { OrganisationEntity, OrganisationUnitUserEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum, UserTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, InternalServerError } from '@users/shared/errors';
 import { DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
