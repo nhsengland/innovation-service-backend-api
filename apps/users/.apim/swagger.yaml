@@ -1,0 +1,70 @@
+openapi: "3.0.3"
+info:
+  title: "Innovation Service - Users API"
+  version: "1.0.0"
+servers:
+  - url: 'https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api'
+
+paths:
+  "/v1/survey":
+    post:
+      tags:
+        - "v1"
+        - "Survey"
+      description: "Creates a Survey object with answers"
+      operationId: "v1-survey-create"
+      responses:
+        "201":
+          description: "Created"
+        "400":
+          description: "Bad Request"
+        "422":
+          description: "Unprocessable Entity"
+  "/v1/me":
+    get:
+      tags:
+        - "v1"
+        - "Users"
+      description: "Retrieves the user profile information"
+      operationId: "v1-me-info"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "401":
+          description: "Unauthorized"
+        "404":
+          description: "Not Found"
+    put:
+      tags:
+        - "v1"
+        - "Users"
+      description: "User profile information update"
+      operationId: "v1-me-update"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "400":
+          description: "Bad Request"
+    post:
+      tags:
+        - "v1"
+        - "Users"
+      description: "Creates the user profile"
+      operationId: "v1-me-create"
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
