@@ -105,6 +105,8 @@ export class InnovationsService extends BaseAppService {
 
   }
 
+
+
   /**
   * Extracts information about the initial survey taken by the Innovator from CosmosDb
   */
