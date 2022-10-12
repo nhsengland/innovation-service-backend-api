@@ -5,12 +5,14 @@ import { BaseEntity } from '../base.entity';
 import { NotificationEntity } from './notification.entity';
 import { UserEntity } from './user.entity';
 
+import type { DateISOType } from '../../types/date.types';
+
 
 @Entity('notification_user')
 export class NotificationUserEntity extends BaseEntity {
 
   @Column({ name: 'read_at', nullable: true })
-  readAt: Date;
+  readAt: DateISOType;
 
 
   @PrimaryColumn({ name: 'notification_id', type: 'uniqueidentifier' })

@@ -1,6 +1,6 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import type { UserTypeEnum } from '../../enums';
+import { UserTypeEnum } from '../../enums';
 import { UserEntity } from '../../entities';
 import { InternalServerError, NotFoundError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
 import type { DomainUserInfoType } from '../../types';
@@ -32,7 +32,8 @@ export class DomainUsersService {
       .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
       .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('user.serviceRoles', 'serviceRoles')
-      .leftJoinAndSelect('serviceRoles.role', 'role');
+      .leftJoinAndSelect('serviceRoles.role', 'role')
+      .leftJoinAndSelect('user.termsOfUseUser', 'termsOfUseUser', 'accepted_at IS NULL')
 
     if (data.userId) { query.where('user.id = :userId', { userId: data.userId }); }
     else if (data.identityId) { query.where('user.external_id = :identityId', { identityId: data.identityId }); }
@@ -48,7 +49,9 @@ export class DomainUsersService {
     try {
 
       const userOrganisations = await dbUser.userOrganisations;
-      const userInfo: DomainUserInfoType = {
+      const termsOfUseAccepted = UserTypeEnum.ADMIN ? true : (await dbUser.termsOfUseUser).length === 0;
+
+      return {
         id: dbUser.id,
         identityId: authUser.identityId,
         email: authUser.email,
@@ -57,7 +60,10 @@ export class DomainUsersService {
         roles: dbUser.serviceRoles.map(item => item.role.name),
         phone: authUser.phone,
         isActive: !dbUser.lockedAt,
-        passwordResetOn: authUser.passwordResetOn,
+        termsOfUseAccepted,
+        passwordResetAt: authUser.passwordResetAt,
+        firstTimeSignInAt: dbUser.firstTimeSignInAt,
+        surveyId: dbUser.surveyId,
         organisations: userOrganisations.map(userOrganisation => {
 
           const organisation = userOrganisation.organisation;
@@ -76,12 +82,8 @@ export class DomainUsersService {
             }))
           }
 
-        }),
-        firstTimeSignInAt: dbUser.firstTimeSignInAt,
-        surveyId: dbUser.surveyId
+        })
       };
-
-      return userInfo;
 
     } catch (error) {
       throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);

@@ -61,7 +61,7 @@ export class DomainInnovationsService {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
           innovationSupport.organisationUnitUsers = [];
           innovationSupport.updatedBy = user.id;
-          innovationSupport.deletedAt = new Date();
+          innovationSupport.deletedAt = new Date().toISOString();
           await transactionManager.save(InnovationSupportEntity, innovationSupport);
         }
 
@@ -70,7 +70,7 @@ export class DomainInnovationsService {
         innovation.updatedBy = user.id;
         innovation.organisationShares = [];
         innovation.archiveReason = innovations.find(item => item.id === innovation.id)?.reason || null;
-        innovation.deletedAt = new Date();
+        innovation.deletedAt = new Date().toISOString();
         await transactionManager.save(InnovationEntity, innovation);
 
         toReturn.push({

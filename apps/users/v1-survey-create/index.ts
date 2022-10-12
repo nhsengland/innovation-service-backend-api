@@ -1,37 +1,43 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi as openApi } from '@users/shared/openapi';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import type { CustomContextType } from '@users/shared/types';
+
 import { container } from '../_config';
 import { SurveyServiceSymbol, SurveyServiceType } from '../_services/interfaces';
-import { ResponseDTO, SurveyBodySchema } from './transformation.dtos';
-/**
- * TODO: Rework this into a service
- */
+
+import { BodySchema, BodyType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
+
 
 class V1SurveyPOST {
 
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
+    const surveyService = container.get<SurveyServiceType>(SurveyServiceSymbol);
+
     try {
 
-      const surveyBody = request.body;
-      const surveyItem = JoiHelper.Validate(SurveyBodySchema, surveyBody);
+      const surveyItem = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const surveyService = container.get<SurveyServiceType>(SurveyServiceSymbol);
-      const result = await surveyService.save(surveyItem);
+      const result = await surveyService.saveSurvey(surveyItem);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: surveyService.getId(result) });
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
+
     } catch (error) {
-      context.log.error(error);
+
       context.res = ResponseHelper.Error(error);
       return;
+
     }
+
   }
+
 }
 
+// TODO: Improve parameters
 export default openApi(V1SurveyPOST.httpTrigger as AzureFunction, '/v1/survey', {
   post: {
     parameters: [],

@@ -5,6 +5,8 @@ import { BaseEntity } from '../base.entity';
 import { RoleEntity } from './role.entity';
 import { UserEntity } from './user.entity';
 
+import type { DateISOType } from '../../types/date.types';
+
 
 @Entity('user_role')
 export class UserRoleEntity extends BaseEntity {
@@ -13,7 +15,7 @@ export class UserRoleEntity extends BaseEntity {
   id: string;
 
   @Column({ name: 'active_since' })
-  activeSince: Date;
+  activeSince: DateISOType;
 
 
   @PrimaryColumn({ name: 'role_id', type: 'uniqueidentifier', nullable: false })
