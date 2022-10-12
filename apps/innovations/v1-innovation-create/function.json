@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["post"],
-      "route": "v1/innovations"
+      "route": "v1"
     },
     {
       "type": "http",

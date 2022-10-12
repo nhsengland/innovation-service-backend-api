@@ -51,7 +51,7 @@ class CreateInnovation {
 
 }
 
-export default openApi(CreateInnovation.httpTrigger as AzureFunction, '/v1/innovations', {
+export default openApi(CreateInnovation.httpTrigger as AzureFunction, '/v1', {
   post: {
     description: 'Create an innovation',
     operationId: 'createInnovation',
