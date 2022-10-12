@@ -1,12 +1,14 @@
 import type { AzureFunction } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types'
 
 import { container } from '../_config';
+import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+
 import type { ResponseDTO } from './transformation.dtos';
 
 
@@ -15,22 +17,28 @@ class GetMe {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
 
-    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-
-    const requestUserId = context.auth.user.identityId;
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
 
     try {
 
-      const result = await domainService.users.getUserInfo({ identityId: requestUserId });
+      const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
+      const requestUser = authInstance.getUserInfo();
+
+      const userInnovationTransfers = await usersService.getUserPendingInnovationTransfers(requestUser.email);
+
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-        email: result.email,
-        displayName: result.displayName,
-        type: result.type,
-        roles: result.roles,
-        phone: result.phone,
-        passwordResetOn: result.passwordResetOn,
-        organisations: result.organisations
+        id: requestUser.id,
+        email: requestUser.email,
+        displayName: requestUser.displayName,
+        type: requestUser.type,
+        roles: requestUser.roles,
+        phone: requestUser.phone,
+        passwordResetAt: requestUser.passwordResetAt,
+        firstTimeSignInAt: requestUser.firstTimeSignInAt,
+        termsOfUseAccepted: requestUser.termsOfUseAccepted,
+        hasInnovationTransfers: userInnovationTransfers.length > 0,
+        organisations: requestUser.organisations
       });
       return;
 
@@ -40,11 +48,13 @@ class GetMe {
       return;
 
     }
+
   }
+
 }
 
 
-
+// TODO: Improve response
 export default openApi(GetMe.httpTrigger as AzureFunction, '/v1/me', {
   get: {
     parameters: [],
@@ -66,6 +76,4 @@ export default openApi(GetMe.httpTrigger as AzureFunction, '/v1/me', {
       404: { description: 'Unable to find a game with that id' }
     }
   }
-
 });
-

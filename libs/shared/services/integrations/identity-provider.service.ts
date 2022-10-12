@@ -3,6 +3,7 @@ import axios, { AxiosResponse } from 'axios';
 
 import { NotFoundError, ServiceUnavailableError, UnauthorizedError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
 import { LoggerServiceSymbol, LoggerServiceType } from '../interfaces';
+import type { DateISOType } from '../../types/date.types';
 
 
 type b2cGetUserInfoDTO = {
@@ -125,7 +126,7 @@ export class IdentityProviderService {
     displayName: string,
     email: string,
     phone: null | string,
-    passwordResetOn: null | string
+    passwordResetAt: null | DateISOType
   }> {
 
     await this.verifyAccessToken();
@@ -142,7 +143,7 @@ export class IdentityProviderService {
       displayName: response.data.displayName,
       email: response.data.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
       phone: response.data.mobilePhone ?? null,
-      passwordResetOn: (response.data as any)[`extension_${this.tenantExtensionId}_passwordResetOn`] || null
+      passwordResetAt: (response.data as any)[`extension_${this.tenantExtensionId}_passwordResetOn`] || null
     };
 
   }

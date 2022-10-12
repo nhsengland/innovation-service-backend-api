@@ -7,6 +7,7 @@ import { UserEntity } from '../user/user.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import type { MaturityLevelCatalogueEnum, YesPartiallyNoCatalogueEnum } from '../../enums/catalog.enums';
+import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('innovation_assessment')
@@ -28,7 +29,7 @@ export class InnovationAssessmentEntity extends BaseEntity {
   maturityLevelComment: null | string;
 
   @Column({ name: 'finished_at', type: 'datetime2', nullable: true })
-  finishedAt: null | Date;
+  finishedAt: null | DateISOType;
 
   @Column({ name: 'has_regulatory_approvals', type: 'nvarchar', nullable: true, length: 20 })
   hasRegulatoryApprovals: null | YesPartiallyNoCatalogueEnum;

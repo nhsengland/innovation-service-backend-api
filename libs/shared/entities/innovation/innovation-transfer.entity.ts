@@ -4,6 +4,7 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { InnovationTransferStatusEnum } from '../../enums/innovation.enums';
+import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('innovation_transfer')
@@ -31,7 +32,7 @@ export class InnovationTransferEntity extends BaseEntity {
   innovation: InnovationEntity;
 
   @Column({ name: 'finished_at', nullable: true })
-  finishedAt: Date;
+  finishedAt: DateISOType;
 
 
   static new(data: Partial<InnovationTransferEntity>): InnovationTransferEntity {

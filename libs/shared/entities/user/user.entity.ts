@@ -3,10 +3,12 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 import { UserRoleEntity } from './user-role.entity';
+import { NotificationPreferenceEntity } from './notification-preference.entity';
+import { TermsOfUseUserEntity } from '../general/terms-of-use-user.entity';
 import { OrganisationUserEntity } from '../organisation/organisation-user.entity';
 
 import { UserTypeEnum } from '../../enums/user.enums';
-import { NotificationPreferenceEntity } from '../user/notification-preference.entity';
+import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('user')
@@ -25,10 +27,10 @@ export class UserEntity extends BaseEntity {
   surveyId: null | string;
 
   @Column({ name: 'first_time_sign_in_at', type: 'datetime2', nullable: true })
-  firstTimeSignInAt: null | Date;
+  firstTimeSignInAt: null | DateISOType;
 
   @Column({ name: 'locked_at', type: 'datetime2', nullable: true })
-  lockedAt: null | Date;
+  lockedAt: null | DateISOType;
 
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;
@@ -42,6 +44,10 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => NotificationPreferenceEntity, record => record.user, { lazy: true })
   notificationPreferences: Promise<NotificationPreferenceEntity[]>;
+
+  @OneToMany(() => TermsOfUseUserEntity, record => record.user, { lazy: true })
+  termsOfUseUser: Promise<TermsOfUseUserEntity[]>;
+
 
   static new(data: Partial<UserEntity>): UserEntity {
     const instance = new UserEntity();

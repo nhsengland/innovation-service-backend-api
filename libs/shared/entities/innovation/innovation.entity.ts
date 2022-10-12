@@ -43,6 +43,8 @@ import type {
   YesOrNoCatalogueEnum,
 } from '../../enums/catalog.enums';
 
+import type { DateISOType } from '../../types/date.types';
+
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -70,7 +72,7 @@ export class InnovationEntity extends BaseEntity {
   postcode: null | string;
 
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
-  submittedAt: null | Date;
+  submittedAt: null | DateISOType;
 
   @Column({ name: 'other_main_category_description', type: 'nvarchar', nullable: true })
   otherMainCategoryDescription: null | string;

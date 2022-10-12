@@ -7,6 +7,7 @@ import { InnovationActionEntity } from './innovation-action.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
 
 import { InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
+import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('innovation_section')
@@ -31,7 +32,7 @@ export class InnovationSectionEntity extends BaseEntity {
   status: InnovationSectionStatusEnum;
 
   @Column({ name: 'submitted_at', nullable: true })
-  submittedAt: Date;
+  submittedAt: DateISOType;
 
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
