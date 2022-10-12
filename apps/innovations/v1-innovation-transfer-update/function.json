@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/innovations/transfers/{transferId}"
+      "route": "v1/transfers/{transferId}"
     },
     {
       "type": "http",

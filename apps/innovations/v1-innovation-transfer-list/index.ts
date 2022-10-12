@@ -45,7 +45,7 @@ class GetInnovationTransferList {
 
 }
 
-export default openApi(GetInnovationTransferList.httpTrigger as AzureFunction, '/v1/innovation-transfers', {
+export default openApi(GetInnovationTransferList.httpTrigger as AzureFunction, '/v1/transfers', {
   get: {
     description: 'Get innovation transfer list',
     operationId: 'getInnovationTransferList',

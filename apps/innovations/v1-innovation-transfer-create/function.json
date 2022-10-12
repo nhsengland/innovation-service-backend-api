@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": [ "post" ],
-      "route": "v1/innovations/transfers"
+      "route": "v1/transfers"
     },
     {
       "type": "http",

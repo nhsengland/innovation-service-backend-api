@@ -52,7 +52,7 @@ class GetInnovationTransfer {
 
 }
 
-export default openApi(GetInnovationTransfer.httpTrigger as AzureFunction, '/v1/innovation-transfers/{transferId}', {
+export default openApi(GetInnovationTransfer.httpTrigger as AzureFunction, '/v1/transfers/{transferId}', {
   get: {
     description: 'Get an innovation transfer',
     operationId: 'getInnovationTransfer',

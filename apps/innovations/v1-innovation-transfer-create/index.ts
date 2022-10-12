@@ -53,7 +53,7 @@ class CreateInnovationTransfer {
   }
 }
 
-export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/v1/innovation-transfers', {
+export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/v1/transfers', {
   post: {
     description: 'Create an innovation transfer',
     operationId: 'createInnovationTransfer',
