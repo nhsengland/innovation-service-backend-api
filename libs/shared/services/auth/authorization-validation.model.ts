@@ -238,7 +238,7 @@ export class AuthorizationValidationModel {
 
   private async fetchInnovationData(user: DomainUserInfoType, innovationId: string): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
 
-    const query = this.innovationRepository.createQueryBuilder('innovation');
+    const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation');
     query.where('innovation.id = :innovationId', { innovationId });
 
     if (user.type === UserTypeEnum.INNOVATOR) {
