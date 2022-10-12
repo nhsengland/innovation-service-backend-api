@@ -1,5 +1,5 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { UserTypeEnum } from '@users/shared/enums';

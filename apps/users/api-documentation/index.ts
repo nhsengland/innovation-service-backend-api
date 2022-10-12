@@ -1,4 +1,4 @@
-import { generateOpenApi3_1Spec as index } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { generateOpenApi3Spec as index } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 export default index({
   info: {
