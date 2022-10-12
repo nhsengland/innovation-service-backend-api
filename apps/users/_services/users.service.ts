@@ -1,8 +1,8 @@
 import { injectable, inject } from 'inversify';
-import { In, Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 
-import { InnovationTransferStatusEnum, UserTypeEnum } from '@users/shared/enums';
-import { UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationEntity, InnovationTransferEntity } from '@users/shared/entities';
+import { InnovationTransferStatusEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationTransferEntity, TermsOfUseEntity, TermsOfUseUserEntity } from '@users/shared/entities';
 import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
@@ -16,7 +16,7 @@ export class UsersService extends BaseAppService {
   userRepository: Repository<UserEntity>;
   organisationRepository: Repository<OrganisationEntity>;
   organisationUnitUserRepository: Repository<OrganisationUnitUserEntity>;
-  innovationRepository: Repository<InnovationEntity>;
+
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
@@ -26,7 +26,6 @@ export class UsersService extends BaseAppService {
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
     this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.organisationUnitUserRepository = this.sqlConnection.getRepository<OrganisationUnitUserEntity>(OrganisationUnitUserEntity);
-    this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
   }
 
 
@@ -56,8 +55,6 @@ export class UsersService extends BaseAppService {
   }
 
 
-
-
   async getUserPendingInnovationTransfers(email: string): Promise<{ id: string, innovation: { id: string, name: string } }[]> {
 
     const dbUserTransfers = await this.sqlConnection.createQueryBuilder(InnovationTransferEntity, 'innovationTransfer')
@@ -77,61 +74,39 @@ export class UsersService extends BaseAppService {
 
   }
 
+  async createUserInnovator(
+    user: { identityId: string },
+    data: { surveyId: string }
+  ): Promise<{ id: string }> {
 
+    return this.sqlConnection.transaction(async transactionManager => {
 
+      const dbUser = await transactionManager.save(UserEntity.new({
+        identityId: user.identityId,
+        surveyId: data.surveyId,
+        type: UserTypeEnum.INNOVATOR
+      }));
 
+      // Accept last terms of use released.
+      const lastTermsOfUse = await this.sqlConnection.createQueryBuilder(TermsOfUseEntity, 'termsOfUse')
+        .where('termsOfUse.touType = :type', { type: TermsOfUseTypeEnum.INNOVATOR })
+        .orderBy('termsOfUse.releasedAt', 'DESC')
+        .getOne();
 
-  async getOrganisationUnitAccessors(organisationUnit: string): Promise<{
-    id: string,
-    organisationUnitUserId: string,
-    name: string,
-    email: string,
-    type: UserTypeEnum,
-    isActive: boolean
-  }[]> {
-
-    // Get all users from the organisation unit.
-    const organisationUnitUsers = await this.organisationUnitUserRepository.find({
-      relations: ['organisationUser', 'organisationUser.user'],
-      where: { organisationUnit: In([organisationUnit]) }
-    });
-
-    // If 0 users, no more work need to be done!
-    if (organisationUnitUsers.length === 0) {
-      return [];
-    }
-
-    const userIds = organisationUnitUsers.map(item => item.organisationUser.user.id);
-    const authUsers = await this.domainService.users.getUsersList({ userIds });
-
-    return this.organisationUserReducer(organisationUnitUsers, authUsers);
-
-  }
-
-  private organisationUserReducer(organisationUnitUsers: OrganisationUnitUserEntity[], authUsers: { id: string; identityId: string; email: string; displayName: string; type: UserTypeEnum; isActive: boolean; }[]): { id: string; organisationUnitUserId: string; name: string; email: string; type: UserTypeEnum; isActive: boolean; }[] | PromiseLike<{ id: string; organisationUnitUserId: string; name: string; email: string; type: UserTypeEnum; isActive: boolean; }[]> {
-    return organisationUnitUsers.reduce((acc: { id: string; organisationUnitUserId: string; name: string; email: string; type: UserTypeEnum; isActive: boolean; }[], organisationUnitUser) => {
-
-      const dbUser: UserEntity /** TODO: Remove this type initializer */ = organisationUnitUser.organisationUser.user;
-      const authUser = authUsers.find(item => ((item.id === dbUser.id) && item.isActive));
-
-      if (authUser) { // Filters by existing AND active users on Identity provider.
-        return [
-          ...acc,
-          ...[{
-            id: dbUser.id,
-            organisationUnitUserId: organisationUnitUser.id,
-            name: authUser.displayName,
-            type: dbUser.type,
-            email: authUser.email,
-            isActive: authUser.isActive
-          }]
-        ];
-      } else {
-        return acc;
+      if (lastTermsOfUse) {
+        await transactionManager.save(TermsOfUseUserEntity.new({
+          termsOfUse: TermsOfUseEntity.new({ id: lastTermsOfUse.id }),
+          user: UserEntity.new({ id: dbUser.id }),
+          acceptedAt: new Date().toISOString()
+        }));
       }
 
-    }, []);
+      return { id: dbUser.id };
+
+    });
+
   }
+
 
   async updateUserInfo(
     user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
@@ -181,7 +156,7 @@ export class UsersService extends BaseAppService {
 
   async deleteUserInfo(userId: string, reason?: string): Promise<{ id: string }> {
 
-    const result = await this.sqlConnection.transaction(async transactionManager => {
+    return this.sqlConnection.transaction(async transactionManager => {
 
       const user = await this.userRepository.findOne({
         where: { identityId: userId }
@@ -209,13 +184,12 @@ export class UsersService extends BaseAppService {
       user.deletedAt = new Date().toISOString();
       user.deleteReason = reason || '';
 
-      return transactionManager.save(user);
+      const result = await transactionManager.save(user);
+
+      return { id: result.id }
 
     });
 
-    return {
-      id: result.id,
-    }
   }
 
 }
