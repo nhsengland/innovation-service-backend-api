@@ -1,11 +1,12 @@
 {
-  "bindings": [{
+  "bindings": [
+    {
       "authLevel": "anonymous",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["post"],
-      "route": "v1"
+      "methods": [ "post" ],
+      "route": "v1/transfers"
     },
     {
       "type": "http",

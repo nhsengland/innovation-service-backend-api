@@ -1,28 +1,24 @@
 import { inject, injectable } from 'inversify';
 
 import {
-  FileStorageServiceSymbol, FileStorageServiceType,
-  IdentityProviderServiceSymbol, IdentityProviderServiceType,
-  SQLConnectionServiceSymbol, SQLConnectionServiceType
+  DomainInnovationsServiceSymbol,
+  DomainInnovationsServiceType,
+  DomainUsersServiceSymbol,
+  DomainUsersServiceType
 } from '../interfaces';
-
-import { DomainInnovationsService } from './domain-innovations.service';
-import { DomainUsersService } from './domain-users.service';
-
 
 @injectable()
 export class DomainService {
 
-  users: DomainUsersService;
-  innovations: DomainInnovationsService;
+  users: DomainUsersServiceType;
+  innovations: DomainInnovationsServiceType;
 
   constructor(
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
-    @inject(SQLConnectionServiceSymbol) private sqlConnectionService: SQLConnectionServiceType,
+    @inject(DomainUsersServiceSymbol) usersService: DomainUsersServiceType,
+    @inject(DomainInnovationsServiceSymbol) innovationsService: DomainInnovationsServiceType
   ) {
-    this.users = new DomainUsersService(this.sqlConnectionService.getConnection(), this.identityProviderService);
-    this.innovations = new DomainInnovationsService(this.sqlConnectionService.getConnection(), this.fileStorageService);
+    this.users = usersService;
+    this.innovations = innovationsService;
   }
 
 }

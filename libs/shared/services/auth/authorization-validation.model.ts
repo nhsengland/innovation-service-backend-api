@@ -1,7 +1,5 @@
-import type { Repository } from 'typeorm';
+import 'reflect-metadata';
 
-import { SQLDB_DATASOURCE } from '../../config';
-import { InnovationEntity } from '../../entities';
 import {
   InnovationStatusEnum, InnovationSupportStatusEnum,
   AccessorOrganisationRoleEnum,
@@ -49,13 +47,9 @@ export class AuthorizationValidationModel {
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
 
-  private innovationRepository: Repository<InnovationEntity>;
-
   constructor(
     private domainService: DomainServiceType
-  ) {
-    this.innovationRepository = SQLDB_DATASOURCE.getRepository(InnovationEntity);
-  }
+  ) { }
 
 
   setUser(identityId: string): this {
@@ -238,7 +232,7 @@ export class AuthorizationValidationModel {
 
   private async fetchInnovationData(user: DomainUserInfoType, innovationId: string): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
 
-    const query = this.innovationRepository.createQueryBuilder('innovation');
+    const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation');
     query.where('innovation.id = :innovationId', { innovationId });
 
     if (user.type === UserTypeEnum.INNOVATOR) {

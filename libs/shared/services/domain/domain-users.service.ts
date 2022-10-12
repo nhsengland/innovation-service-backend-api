@@ -1,4 +1,4 @@
-import type { DataSource, Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 
 import { UserTypeEnum } from '../../enums';
 import { UserEntity } from '../../entities';
@@ -6,17 +6,22 @@ import { InternalServerError, NotFoundError, GenericErrorsEnum, UserErrorsEnum }
 import type { DomainUserInfoType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
+import { inject, injectable } from 'inversify';
+import { IdentityProviderServiceSymbol, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@innovations/shared/services';
 
 
+@injectable()
 export class DomainUsersService {
 
   userRepository: Repository<UserEntity>;
 
   constructor(
-    private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderServiceType
+    @inject(SQLConnectionServiceSymbol) private sqlConnectionService: SQLConnectionServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
   ) {
-    this.userRepository = this.sqlConnection.getRepository(UserEntity);
+
+    const sqlConnection = this.sqlConnectionService.getConnection();
+    this.userRepository = sqlConnection.getRepository(UserEntity);
   }
 
 
