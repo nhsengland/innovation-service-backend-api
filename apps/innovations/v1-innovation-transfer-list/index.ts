@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import {
   AuthorizationServiceSymbol, AuthorizationServiceType,
@@ -44,4 +45,25 @@ class GetInnovationTransferList {
 
 }
 
-export default GetInnovationTransferList.httpTrigger;
+export default openApi(GetInnovationTransferList.httpTrigger as AzureFunction, '/v1/innovation-transfers', {
+  get: {
+    description: 'Get innovation transfer list',
+    operationId: 'getInnovationTransferList',
+    parameters: [],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: {
+                type: 'object',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+});

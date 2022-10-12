@@ -1,4 +1,6 @@
 import type { HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+
 import {
   AuthorizationServiceSymbol, AuthorizationServiceType,
 } from '@innovations/shared/services';
@@ -44,4 +46,48 @@ class UpdateInnovationTransfer {
   }
 }
 
-export default UpdateInnovationTransfer.httpTrigger;
+export default openApi(UpdateInnovationTransfer.httpTrigger as any, '/v1/innovation-transfers/{transferId}', {
+  put: {
+    description: 'Update an innovation transfer status',
+    operationId: 'updateInnovationTransferStatus',
+    parameters: [
+      {
+        name: 'transferId',
+        in: 'path',
+        required: true,
+        description: 'The innovation transfer id',
+        schema: {
+          type: 'string',
+        },
+      },
+    ],
+    requestBody: {
+      description: 'The innovation transfer status',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+          },
+        },
+      },
+    },
+    responses: {
+      204: {
+        description: 'The innovation transfer status has been updated',
+      },
+      400: {
+        description: 'The innovation transfer status is invalid',
+      },
+      401: {
+        description: 'The user is not authorized to update the innovation transfer status',
+      },
+      404: {
+        description: 'The innovation transfer does not exist',
+      },
+      500: {
+        description: 'An error occurred while updating the innovation transfer status',
+      },
+    },
+  },
+});

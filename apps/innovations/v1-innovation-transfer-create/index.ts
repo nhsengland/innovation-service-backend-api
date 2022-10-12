@@ -1,4 +1,6 @@
-import type { HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+
 import { container } from '../_config';
 import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
@@ -51,4 +53,41 @@ class CreateInnovationTransfer {
   }
 }
 
-export default CreateInnovationTransfer.httpTrigger;
+export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/v1/innovation-transfers', {
+  post: {
+    description: 'Create an innovation transfer',
+    operationId: 'createInnovationTransfer',
+    parameters: [],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+            },
+          },
+        },
+      },
+      400: {
+        description: 'Bad Request',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+            },
+          },
+        },
+      },
+    },
+  },
+});
