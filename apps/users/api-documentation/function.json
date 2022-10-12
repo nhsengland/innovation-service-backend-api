@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "api-documentation"
+      "route": "api-documentation.json"
     },
     {
       "type": "http",
