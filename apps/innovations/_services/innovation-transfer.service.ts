@@ -57,7 +57,8 @@ export class InnovationTransferService extends BaseAppService {
     const transfers = await this.createGetTransferQuery(filter).getMany();
 
     const result = await Promise.all(transfers.map(async transfer => {
-      const identiyProviderUser = await this.identityProviderService.getUserInfo(transfer.createdBy);
+      const createdBy = await this.domainService.users.getUserInfo({ userId: transfer.createdBy });
+      const identiyProviderUser = await this.identityProviderService.getUserInfo(createdBy.identityId);
       return {
         id: transfer.id,
         email: transfer.email,

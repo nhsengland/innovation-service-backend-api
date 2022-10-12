@@ -1,4 +1,4 @@
-import type { DataSource, EntityManager, Repository } from 'typeorm';
+import type { EntityManager, Repository } from 'typeorm';
 
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums';
 import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity } from '../../entities';
@@ -6,8 +6,10 @@ import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
 import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from '../../types';
 
 import type { FileStorageServiceType } from '../interfaces';
+import { inject, injectable } from 'inversify';
+import { FileStorageServiceSymbol, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@innovations/shared/services';
 
-
+@injectable()
 export class DomainInnovationsService {
 
   innovationRepository: Repository<InnovationEntity>;
@@ -15,12 +17,14 @@ export class DomainInnovationsService {
   activityLogRepository: Repository<ActivityLogEntity>;
 
   constructor(
-    private sqlConnection: DataSource,
-    private fileStorageService: FileStorageServiceType
+    @inject(SQLConnectionServiceSymbol) private sqlConnectionService: SQLConnectionServiceType,
+    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType
   ) {
-    this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
-    this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
-    this.activityLogRepository = this.sqlConnection.getRepository(ActivityLogEntity);
+    const sqlConnection = this.sqlConnectionService.getConnection();
+
+    this.innovationRepository = sqlConnection.getRepository(InnovationEntity);
+    this.innovationSupportRepository = sqlConnection.getRepository(InnovationSupportEntity);
+    this.activityLogRepository = sqlConnection.getRepository(ActivityLogEntity);
   }
 
 
