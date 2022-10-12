@@ -1,8 +1,12 @@
-import { ViewColumn, ViewEntity } from "typeorm";
+import { ViewColumn, ViewEntity } from 'typeorm';
 //import expression from './idle-support.view.definition';
+
+import type { DateISOType } from '../../types/date.types';
+
 
 @ViewEntity()
 export class IdleSupportViewEntity {
+
   @ViewColumn()
   innovationId: string;
   @ViewColumn()
@@ -18,5 +22,6 @@ export class IdleSupportViewEntity {
   @ViewColumn()
   identityId: string;
   @ViewColumn()
-  latestActivity: Date;  
+  latestActivity: DateISOType;
+
 }

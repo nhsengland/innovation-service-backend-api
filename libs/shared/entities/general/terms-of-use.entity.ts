@@ -3,6 +3,7 @@ import { Column, Entity, PrimaryGeneratedColumn, Index } from 'typeorm';
 import { BaseEntity } from '../base.entity';
 
 import { TermsOfUseTypeEnum } from '../../enums/general.enums';
+import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('terms_of_use')
@@ -22,7 +23,7 @@ export class TermsOfUseEntity extends BaseEntity {
   summary: string;
 
   @Column({ name: 'released_at', nullable: true })
-  releasedAt: Date;
+  releasedAt: DateISOType;
 
 
   static new(data: Partial<TermsOfUseEntity>): TermsOfUseEntity {

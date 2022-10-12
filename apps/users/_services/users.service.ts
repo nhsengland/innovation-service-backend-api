@@ -1,25 +1,13 @@
 import { injectable, inject } from 'inversify';
 import { In, Repository } from 'typeorm';
 
-import {
-  DomainServiceSymbol, DomainServiceType,
-  IdentityProviderServiceSymbol, IdentityProviderServiceType,
-} from '@users/shared/services';
-
-import {
-  UserTypeEnum,
-} from '@users/shared/enums';
-
-import {
-  UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationEntity,
-} from '@users/shared/entities';
-
-import {
-  NotFoundError, UserErrorsEnum,
-} from '@users/shared/errors';
+import { InnovationTransferStatusEnum, UserTypeEnum } from '@users/shared/enums';
+import { UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationEntity, InnovationTransferEntity } from '@users/shared/entities';
+import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
+import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseAppService } from './base-app.service';
-import type { DomainUserInfoType } from '@users/shared/types';
 
 
 @injectable()
@@ -35,7 +23,6 @@ export class UsersService extends BaseAppService {
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
   ) {
     super();
-
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
     this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.organisationUnitUserRepository = this.sqlConnection.getRepository<OrganisationUnitUserEntity>(OrganisationUnitUserEntity);
@@ -67,6 +54,32 @@ export class UsersService extends BaseAppService {
     }
 
   }
+
+
+
+
+  async getUserPendingInnovationTransfers(email: string): Promise<{ id: string, innovation: { id: string, name: string } }[]> {
+
+    const dbUserTransfers = await this.sqlConnection.createQueryBuilder(InnovationTransferEntity, 'innovationTransfer')
+      .innerJoinAndSelect('innovationTransfer.innovation', 'innovation')
+      .where('DATEDIFF(day, innovationTransfer.created_at, GETDATE()) < 31')
+      .andWhere('innovationTransfer.status = :status', { status: InnovationTransferStatusEnum.PENDING })
+      .andWhere('innovationTransfer.email = :email', { email: email })
+      .getMany() || [];
+
+    return dbUserTransfers.map(item => ({
+      id: item.id,
+      innovation: {
+        id: item.innovation.id,
+        name: item.innovation.name
+      }
+    }));
+
+  }
+
+
+
+
 
   async getOrganisationUnitAccessors(organisationUnit: string): Promise<{
     id: string,
@@ -121,11 +134,11 @@ export class UsersService extends BaseAppService {
   }
 
   async updateUserInfo(
-    user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: Date | null },
+    user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
     data: {
       displayName: string,
-      mobilePhone?: string | undefined,
-      organisation?: { id: string; isShadow: boolean; name?: string; size?: string; } | undefined
+      mobilePhone?: string,
+      organisation?: { id: string; isShadow: boolean; name?: string; size?: string; }
     }
   ): Promise<{ id: string }> {
 
@@ -137,7 +150,14 @@ export class UsersService extends BaseAppService {
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
     if (user.type === UserTypeEnum.INNOVATOR) {
 
+      // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
+      // Updates the firstTimeSignInAt with the current date.
+      if (!user.firstTimeSignInAt) {
+        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() })
+      }
+
       if (data.organisation) {
+
         const organisationData: { isShadow: boolean, name?: string, size?: null | string } = {
           isShadow: data.organisation.isShadow
         };
@@ -151,12 +171,7 @@ export class UsersService extends BaseAppService {
         }
 
         await this.organisationRepository.update(data.organisation.id, organisationData);
-      }
 
-      // if user does not have firstTimeSignInAt with a date, it means this is the first time the user is signing in
-      // Updates the firstTimeSignInAt with the current date.
-      if (!user.firstTimeSignInAt) {
-        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date() })
       }
 
     }
@@ -191,7 +206,7 @@ export class UsersService extends BaseAppService {
 
       await this.identityProviderService.deleteUser(userId);
 
-      user.deletedAt = new Date();
+      user.deletedAt = new Date().toISOString();
       user.deleteReason = reason || '';
 
       return transactionManager.save(user);

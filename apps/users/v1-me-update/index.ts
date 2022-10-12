@@ -1,17 +1,16 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+
 import { JwtDecoder } from '@users/shared/decorators';
 import { UserTypeEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
-
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
-} from '@users/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+
 import type { ResponseDTO } from './transformation.dtos';
 import { AccessorBodySchema, AccessorBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
 
@@ -53,7 +52,11 @@ class PutMe {
 
         const innovatorResult = await usersService.updateUserInfo(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, firstTimeSignInAt: requestUser.firstTimeSignInAt },
-          { displayName: innovatorBody.displayName, mobilePhone: innovatorBody.mobilePhone, organisation: innovatorBody.organisation }
+          {
+            displayName: innovatorBody.displayName,
+            ...(innovatorBody.mobilePhone ? { mobilePhone: innovatorBody.mobilePhone } : {}),
+            organisation: innovatorBody.organisation
+          }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });

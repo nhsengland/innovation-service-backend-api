@@ -1,3 +1,4 @@
+export * from './date.types';
 export * from './domain.types';
 export * from './error.types';
 export * from './notifier.types';

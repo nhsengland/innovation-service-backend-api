@@ -1,29 +1,31 @@
 import type { InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
+import type { DateISOType } from './date.types';
 
 
 // User domain types.
 export type DomainUserInfoType = {
-  id: string;
-  identityId: string;
-  email: string;
-  displayName: string;
-  type: UserTypeEnum;
-  roles: ServiceRoleEnum[];
-  phone: null | string;
-  isActive: boolean;
-  passwordResetOn: null | string;
+  id: string,
+  identityId: string,
+  email: string,
+  displayName: string,
+  type: UserTypeEnum,
+  roles: ServiceRoleEnum[],
+  phone: null | string,
+  isActive: boolean,
+  termsOfUseAccepted: boolean,
+  passwordResetAt: null | DateISOType,
+  firstTimeSignInAt: null | DateISOType,
+  surveyId: null | string,
   organisations: {
-    id: string;
-    name: string;
-    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
-    isShadow: boolean;
-    size: null | string;
-    organisationUnits: { id: string; name: string; acronym: string; }[];
-  }[];
-  firstTimeSignInAt: null | Date;
-  surveyId: null | string;
+    id: string,
+    name: string,
+    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
+    isShadow: boolean,
+    size: null | string,
+    organisationUnits: { id: string, name: string, acronym: string }[]
+  }[]
 }
 
 
