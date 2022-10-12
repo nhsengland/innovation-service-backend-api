@@ -19,6 +19,7 @@ steps:
       npm install
       npm run app:configure --app=$(appName)
       npm run app:build --app=$(appName)
+      cp -r apps/users/.apim dist/apps/$(appName)
       cp -r node_modules dist/apps/$(appName)
 
 - task: ArchiveFiles@2
