@@ -17,7 +17,6 @@ export class UsersService extends BaseAppService {
   organisationRepository: Repository<OrganisationEntity>;
   organisationUnitUserRepository: Repository<OrganisationUnitUserEntity>;
 
-
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType

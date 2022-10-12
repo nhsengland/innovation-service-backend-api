@@ -9,6 +9,12 @@ export enum YesPartiallyNoCatalogueEnum {
   NO = 'NO'
 }
 
+export enum YesNotYetNotSureCatalogueEnum {
+  YES = 'YES',
+  NOT_YET = 'NOT_YET',
+  NOT_SURE = 'NOT_SURE'
+}
+
 export enum YesNoNotRelevantCatalogueEnum {
   YES = 'YES',
   NO = 'NO',
