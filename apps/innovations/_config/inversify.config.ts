@@ -14,10 +14,11 @@ import {
 
 import { InnovationsService } from '../_services/innovations.service';
 import {
-  InnovationsServiceSymbol, InnovationsServiceType,
+  InnovationsServiceSymbol, InnovationsServiceType, InnovationTransferServiceSymbol, InnovationTransferServiceType,
 } from '../_services/interfaces';
 
 import { startup } from './startup';
+import { InnovationTransferService } from '../_services/innovation-transfer.service';
 
 
 export const container: Container = new Container();
@@ -33,5 +34,6 @@ container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQ
 container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
+container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
 
 startup();

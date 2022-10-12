@@ -212,7 +212,7 @@ export class InnovationTransferService extends BaseAppService {
 
       transfer.status = status;
       transfer.updatedBy = requestUser.id;
-      transfer.finishedAt = new Date();
+      transfer.finishedAt = new Date().toISOString();
 
       await transactionManager.save(
         InnovationTransferEntity,

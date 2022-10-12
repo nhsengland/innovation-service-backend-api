@@ -1,7 +1,5 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-
-import { container } from '../_config';
 import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 
@@ -13,6 +11,8 @@ import {
 import {
   JwtDecoder,
 } from '@innovations/shared/decorators'
+
+import { container } from '../_config';
 
 import { BodySchema, BodyType } from './validations.schema';
 
