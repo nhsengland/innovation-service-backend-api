@@ -10,7 +10,7 @@ import {
   NotifierService, NotifierServiceSymbol, NotifierServiceType,
   NOSQLConnectionService, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
   SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
-  StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType
+  StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType,
 } from '@users/shared/services';
 
 import { OrganisationsService } from '../_services/organisations.service';
@@ -23,7 +23,6 @@ import {
 } from '../_services/interfaces';
 
 import { startup } from './startup';
-
 
 export const container: Container = new Container();
 
