@@ -1,3 +1,9 @@
+trigger:
+- develop
+
+variables:
+  appName: innovations
+
 name: FA_Innovations_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:.r)
 
 pool:
@@ -14,22 +20,23 @@ steps:
   inputs:
     script: |
       npm install
-      npm run app:configure --app=innovations
-      npm run app:build --app=innovations
-      cp -r node_modules dist/apps/innovations
+      npm run app:configure --app=$(appName)
+      npm run app:build --app=$(appName)
+      cp -r apps/$(appName)/.apim dist/apps/$(appName)
+      cp -r node_modules dist/apps/$(appName)
 
 - task: ArchiveFiles@2
   displayName: 'Archive files'
   inputs:
-    rootFolderOrFile: 'dist/apps/innovations'
+    rootFolderOrFile: 'dist/apps/$(appName)'
     includeRootFolder: false
     archiveType: 'zip'
-    archiveFile: '$(Build.ArtifactStagingDirectory)/innovations.zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/$(appName).zip'
     replaceExistingArchive: true
 
 - task: PublishBuildArtifacts@1
   displayName: 'Publish artifact'
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)/innovations.zip'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(appName).zip'
     ArtifactName: 'drop'
     publishLocation: 'Container'
