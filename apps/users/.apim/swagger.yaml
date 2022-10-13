@@ -63,6 +63,12 @@ paths:
         - "Users"
       description: "Creates the user profile"
       operationId: "v1-me-create"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
       responses:
         "200":
           description: "OK"
