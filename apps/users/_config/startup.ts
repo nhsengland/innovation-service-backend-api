@@ -1,10 +1,8 @@
 import { container } from './inversify.config';
 
 import {
-  NOSQLConnectionServiceSymbol,
-  NOSQLConnectionServiceType,
-  SQLConnectionServiceSymbol,
-  SQLConnectionServiceType,
+  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
+  SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@users/shared/services';
 
 
