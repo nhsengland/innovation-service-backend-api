@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "management/organisations"
+      "route": "v1/management/organisations"
     },
     {
       "type": "http",
