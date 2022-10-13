@@ -1,3 +1,4 @@
+import { inject, injectable } from 'inversify';
 import type { EntityManager, Repository } from 'typeorm';
 
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums';
@@ -5,9 +6,8 @@ import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, Innovation
 import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
 import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from '../../types';
 
-import type { FileStorageServiceType } from '../interfaces';
-import { inject, injectable } from 'inversify';
-import { FileStorageServiceSymbol, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@innovations/shared/services';
+import { FileStorageServiceSymbol, FileStorageServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '../interfaces';
+
 
 @injectable()
 export class DomainInnovationsService {

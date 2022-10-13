@@ -1,3 +1,4 @@
+import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
 import { UserTypeEnum } from '../../enums';
@@ -5,9 +6,7 @@ import { UserEntity } from '../../entities';
 import { InternalServerError, NotFoundError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
 import type { DomainUserInfoType } from '../../types';
 
-import type { IdentityProviderServiceType } from '../interfaces';
-import { inject, injectable } from 'inversify';
-import { IdentityProviderServiceSymbol, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@innovations/shared/services';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '../interfaces';
 
 
 @injectable()

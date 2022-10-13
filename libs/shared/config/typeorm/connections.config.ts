@@ -17,10 +17,8 @@ if (!process.env['DB_HOST']) {
 
 
 export const NOSQLDB_DEFAULT_CONNECTION = Object.freeze({
-  host: `mongodb://${process.env['COSMOSDB_ACCOUNT']}:${escape(process.env['COSMOSDB_KEY'] || '')}@${process.env['COSMODB_HOST']}:${process.env['COSMOSDB_PORT']}/${process.env['COSMOSDB_DB']}?ssl=true&retryWrites=false`,
-  database: process.env['COSMOS_DB_NAME']
-})
-
+  host: `mongodb://${process.env['COSMOSDB_ACCOUNT']}:${escape(process.env['COSMOSDB_KEY'] || '')}@${process.env['COSMOSDB_HOST']}:${process.env['COSMOSDB_PORT']}/${process.env['COSMOSDB_DB']}?ssl=true&retryWrites=false`
+});
 
 export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
   name: 'default',
