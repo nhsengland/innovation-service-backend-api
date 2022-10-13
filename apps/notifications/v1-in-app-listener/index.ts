@@ -47,8 +47,7 @@ class V1SendInAppListener {
 
     } catch (error) {
       loggerService.error('ERROR: Unexpected error parsing notification', error);
-      context.res = { done: false, error };
-      return;
+      throw error;
     }
 
   }
