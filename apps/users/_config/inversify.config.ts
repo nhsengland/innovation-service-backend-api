@@ -7,10 +7,10 @@ import {
   FileStorageService, FileStorageServiceSymbol, FileStorageServiceType,
   IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
   LoggerService, LoggerServiceSymbol, LoggerServiceType,
-  NotifierService, NotifierServiceSymbol, NotifierServiceType,
-  NOSQLConnectionService, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
+  NotifierServiceType, NotifierServiceSymbol, NotifierService,
   SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
-  StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType,
+  NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionService,
+  StorageQueueServiceType, StorageQueueServiceSymbol, StorageQueueService
 } from '@users/shared/services';
 
 import { OrganisationsService } from '../_services/organisations.service';
@@ -32,8 +32,8 @@ container.bind<FileStorageServiceType>(FileStorageServiceSymbol).to(FileStorageS
 container.bind<IdentityProviderServiceType>(IdentityProviderServiceSymbol).to(IdentityProviderService).inSingletonScope();
 container.bind<LoggerServiceType>(LoggerServiceSymbol).to(LoggerService).inSingletonScope();
 container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).inSingletonScope();
-container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionService).inSingletonScope();
+container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();

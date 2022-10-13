@@ -9,13 +9,6 @@ export class NOSQLConnectionService {
 
   private connection: Mongoose;
 
-
-  constructor() {
-
-    this.init();
-
-  }
-
   async init(): Promise<void> {
 
     if (!this.connection) {

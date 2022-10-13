@@ -1,6 +1,8 @@
 export { AuthorizationService } from './auth/authorization.service';
 
 export { DomainService } from './domain/domain.service';
+export { DomainUsersService } from './domain/domain-users.service';
+export { DomainInnovationsService } from './domain/domain-innovations.service';
 
 export { HttpService } from './integrations/http.service';
 export { IdentityProviderService } from './integrations/identity-provider.service';
