@@ -1,8 +1,6 @@
 import type { AuthorizationService } from '../services/auth/authorization.service';
 
 import type { DomainService } from '../services/domain/domain.service';
-import type { DomainUsersService } from '../services/domain/domain-users.service';
-import type { DomainInnovationsService } from '../services/domain/domain-innovations.service';
 
 import type { HttpService } from '../services/integrations/http.service';
 import type { IdentityProviderService } from '../services/integrations/identity-provider.service';
@@ -47,9 +45,3 @@ export const SQLConnectionServiceSymbol = Symbol('SQLConnectionService');
 
 export type NOSQLConnectionServiceType = typeof NOSQLConnectionService.prototype;
 export const NOSQLConnectionServiceSymbol = Symbol('NOSQLConnectionService');
-
-export type DomainUsersServiceType = typeof DomainUsersService.prototype;
-export const DomainUsersServiceSymbol = Symbol('DomainUsersService');
-
-export type DomainInnovationsServiceType = typeof DomainInnovationsService.prototype;
-export const DomainInnovationsServiceSymbol = Symbol('DomainInnovationsService');

@@ -7,20 +7,20 @@ import {
 
 import { BaseAppService } from './base-app.service';
 import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { type MainPurposeCatalogueEnum, type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum } from '@innovations/shared/enums';
+import { type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum, InnovationCategoryCatalogueEnum } from '@innovations/shared/enums';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum } from '@innovations/shared/errors';
 
 import { SurveyModel } from '@innovations/shared/schemas/survey.schema';
 
 type SurveyInfo = {
-  mainCategory: MainPurposeCatalogueEnum | null | undefined;
-  otherMainCategoryDescription: string;
+  mainCategory: InnovationCategoryCatalogueEnum | null | undefined;
+  otherMainCategoryDescription: string | null;
   hasProblemTackleKnowledge: HasProblemTackleKnowledgeCatalogueEnum;
   hasMarketResearch: HasMarketResearchCatalogueEnum;
   hasBenefits: HasBenefitsCatalogueEnum;
   hasTests: HasTestsCatalogueEnum;
   hasEvidence: HasEvidenceCatalogueEnum;
-  otherCategoryDescription: string;
+  otherCategoryDescription: string | null;
   categories: InnovationCategoryEntity[];
   supportTypes: InnovationSupportTypeEntity[];
 };
