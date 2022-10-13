@@ -82,7 +82,7 @@ paths:
         "401":
           description: "Unauthorized"
 
-  "v1/organisations":
+  "/v1/organisations":
     get:
       tags:
         - "v1"
