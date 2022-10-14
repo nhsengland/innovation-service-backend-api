@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import {
   AuthorizationServiceSymbol, AuthorizationServiceType,
@@ -14,7 +15,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 
-class GetInnovations {
+class SubmitInnovation {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -50,4 +51,62 @@ class GetInnovations {
 
 }
 
-export default GetInnovations.httpTrigger;
+export default openApi(SubmitInnovation.httpTrigger as AzureFunction, 'v1/{innovationId}/submit', {
+  patch: {
+    summary: 'Submit an innovation',
+    description: 'Submit an innovation for assessment.',
+    operationId: 'submitInnovation',
+    tags: ['Innovation'],
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation ID',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Innovation submitted successfully.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Innovation ID',
+                },
+                status: {
+                  type: 'string',
+                  description: 'Innovation status',
+                },
+              },
+            },
+          },
+        },
+      },
+      400: {
+        description: 'Bad request.',
+      },
+      401: {
+        description: 'Unauthorized.',
+      },
+      403: {
+        description: 'Forbidden.',
+      },
+      404: {
+        description: 'Not found.',
+      },
+      500: {
+        description: 'Internal server error.',
+      },
+    },
+  },
+});
+
+
+

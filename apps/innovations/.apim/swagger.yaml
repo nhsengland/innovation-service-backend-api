@@ -9,8 +9,7 @@ paths:
   "/v1":
     post:
       tags:
-        - "v1"
-        - "Innovations"
+        - "[v1] Innovations"
       description: "Creates an innovation"
       operationId: "v1-innovation-create"
       parameters:
@@ -32,8 +31,7 @@ paths:
   "/v1/transfers":
     get:
       tags:
-        - "v1"
-        - "Transfers"
+        - "[v1] Transfers"
       description: "Retrieves innovation transfer list"
       operationId: "v1-innovation-transfer-list"
       parameters:
@@ -51,8 +49,7 @@ paths:
           description: "Not Found"
     post:
       tags:
-        - "v1"
-        - "Transfers"
+        - "[v1] Transfers"
       description: "Creates a transfer"
       operationId: "v1-innovation-transfer-create"
       parameters:
@@ -74,8 +71,7 @@ paths:
   "/v1/transfers/{transferId}":
     get:
       tags:
-        - "v1"
-        - "Transfers"
+        - "[v1] Transfers"
       description: "Retrieves the innovation transfer information"
       operationId: "v1-innovation-transfer-info"
       parameters:
@@ -98,8 +94,7 @@ paths:
           description: "Not Found"
     put:
       tags:
-        - "v1"
-        - "Transfers"
+        - "[v1] Transfers"
       description: "Updates innovation transfer information"
       operationId: "v1-innovation-transfer-update"
       parameters:
@@ -124,8 +119,7 @@ paths:
   "/v1/{innovationId}/sections/{sectionId}":
     get:
       tags:
-        - "v1"
-        - "Sections"
+        - "[v1] Sections"
       description: "Get an innovation section info."
       operationId: "getInnovationSectionInfo"
       parameters:
@@ -155,8 +149,7 @@ paths:
   "/v1/{innovationId}/sections":
     get:
       tags:
-        - "v1"
-        - "Sections"
+        - "[v1] Sections"
       description: "Get an innovation sections list."
       operationId: "getInnovationSections"
       parameters:
@@ -181,8 +174,7 @@ paths:
   "/v1/{innovationId}/sections/{sectionKey}":
     put:
       tags:
-        - "v1"
-        - "Sections"
+        - "[v1] Sections"
       description: "Updates an innovation section"
       operationId: "putInnovationSection"
       parameters:
@@ -210,8 +202,7 @@ paths:
           description: "Unauthorized"
     patch:
       tags:
-        - "v1"
-        - "Sections"
+        - "[v1] Sections"
       description: "Submits an innovation section"
       operationId: "patchInnovationSection"
       parameters:
@@ -237,4 +228,28 @@ paths:
           description: "Bad Request"
         "401":
           description: "Unauthorized"
-           
+          
+  "/v1/{innovationId}/submit":
+    patch:
+      tags:
+        - "[v1] Innovations"
+      description: "Submit innovation for assessment"
+      operationId: "submitInnovation"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
