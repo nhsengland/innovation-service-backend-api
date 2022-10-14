@@ -6,11 +6,12 @@ import {
 } from '@innovations/shared/services';
 
 import { BaseAppService } from './base-app.service';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum, InnovationCategoryCatalogueEnum } from '@innovations/shared/enums';
+import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, InnovationSupportEntity } from '@innovations/shared/entities';
+import { type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum, InnovationCategoryCatalogueEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum } from '@innovations/shared/errors';
 
 import { SurveyModel } from '@innovations/shared/schemas/survey.schema';
+import type { DomainUserInfoType } from '@innovations/shared/types';
 
 type SurveyInfo = {
   mainCategory: InnovationCategoryCatalogueEnum | null | undefined;
@@ -105,7 +106,78 @@ export class InnovationsService extends BaseAppService {
 
   }
 
+  async getInnovationShares(innovationId: string, requestUser: DomainUserInfoType): Promise<{ id: string; status: InnovationSupportStatusEnum; }[] | undefined> {
 
+    const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.organisationShares', 'organisationShares')
+      .leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('innovationSupports.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .where('innovation.id = :innovationId', { innovationId });
+
+    switch (requestUser.type) {
+      case UserTypeEnum.INNOVATOR: {
+        baseQuery.andWhere('innovation.owner_id = :ownerId', { ownerId: requestUser.id });
+        break;
+      }
+      case UserTypeEnum.ACCESSOR: {
+        const organisation = requestUser.organisations[0];
+
+        if (organisation!.role === AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR) {
+          baseQuery.andWhere('organisationShares.organisation_id = :organisationId', { organisationId: organisation!.id });
+        } else {
+          baseQuery.andWhere('innovationSupports.organisation_unit_id = :organisationUnitId', { organisationUnitId: organisation!.organisationUnits[0]!.id });
+        }
+
+        break;
+      }
+
+      case UserTypeEnum.ASSESSMENT: {
+        baseQuery.loadAllRelationIds();
+        break;
+      }
+      default:
+        break;
+    }
+
+
+    const innovation = await baseQuery.getOne();
+
+    const supports = innovation?.innovationSupports;
+    const shares = innovation?.organisationShares;
+
+    const result = shares?.map((os: OrganisationEntity) => {
+      const organisationSupports = supports?.filter(
+        (is: InnovationSupportEntity) => is.organisationUnit.organisation.id === os.id
+      ) || [];
+
+      let status: InnovationSupportStatusEnum = InnovationSupportStatusEnum.UNASSIGNED;
+      if (organisationSupports?.length === 1) {
+        status = organisationSupports[0]!.status;
+      } else if (organisationSupports?.length > 1) {
+        const idx = organisationSupports.findIndex(
+          (is: InnovationSupportEntity) =>
+            is.status != InnovationSupportStatusEnum.COMPLETE &&
+            is.status != InnovationSupportStatusEnum.WITHDRAWN &&
+            is.status != InnovationSupportStatusEnum.UNSUITABLE
+        );
+
+        if (idx !== -1) {
+          status = organisationSupports[idx]!.status;
+        } else {
+          status = organisationSupports[0]!.status;
+        }
+      }
+
+      return {
+        id: os.id,
+        status,
+      };
+    });
+
+    return result;
+  }
 
   /**
   * Extracts information about the initial survey taken by the Innovator from CosmosDb
