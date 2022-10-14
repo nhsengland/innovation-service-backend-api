@@ -1,19 +1,20 @@
 import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import type { DateISOType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
   id: string | null;
   section: InnovationSectionCatalogueEnum | null;
   status: InnovationSectionStatusEnum | null;
   actionStatus: InnovationActionStatusEnum | null;
-  updatedAt: Date | null;
-  submittedAt: Date | null;
+  updatedAt: DateISOType | null;
+  submittedAt: DateISOType | null;
 }
 
 export type InnovationAssessmentType = {
   id: string;
   summary: null | string;
   description: null | string;
-  finishedAt: null | Date;
+  finishedAt: null | DateISOType;
   assignTo: { id: string, name: string };
   maturityLevel: null | string;
   maturityLevelComment: null | string;
