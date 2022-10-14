@@ -1,6 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-
 import {
   AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
@@ -19,7 +18,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsType, ParamsSchema } from './validation.schema';
 
 
-class CreateInnovationAssessment {
+class UpdateInnovationAssessment {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -35,13 +34,14 @@ class CreateInnovationAssessment {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
-        .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
+        .checkInnovation({ status: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationAssessmentsService.createInnovationAssessment(
+      const result = await innovationAssessmentsService.updateInnovationAssessment(
         { id: requestUser.id },
         params.innovationId,
+        params.assessmentId,
         body
       );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
@@ -54,17 +54,25 @@ class CreateInnovationAssessment {
   }
 }
 
-export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments', {
-  post: {
-    summary: 'Create an innovation assessment',
-    description: 'Create an innovation assessment.',
-    operationId: 'createInnovationAssessment',
-    tags: ['Innovation Assessment'],
+export default openApi(UpdateInnovationAssessment.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments/{assessmentId}', {
+  put: {
+    summary: 'Update an innovation assessment',
+    description: 'Update an innovation assessment.',
     parameters: [
       {
         name: 'innovationId',
         in: 'path',
-        description: 'The innovation id.',
+        description: 'Innovation ID',
+        required: true,
+        schema: {
+          type: 'string',
+          format: 'uuid'
+        }
+      },
+      {
+        name: 'assessmentId',
+        in: 'path',
+        description: 'Assessment ID',
         required: true,
         schema: {
           type: 'string',
@@ -73,26 +81,30 @@ export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 
       }
     ],
     requestBody: {
-      description: 'The innovation assessment data.',
+      description: 'Innovation assessment update request body.',
       required: true,
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
+              status: {
+                type: 'string',
+                enum: ['APPROVED', 'REJECTED']
+              },
               comment: {
                 type: 'string',
-                description: 'The comment for the assessment.'
-              },
+                maxLength: 1000
+              }
             },
-            required: ['comment']
+            required: ['status']
           }
         }
       }
     },
     responses: {
       200: {
-        description: 'The innovation assessment has been created.',
+        description: 'Returns the updated innovation assessment.',
         content: {
           'application/json': {
             schema: {
@@ -100,29 +112,51 @@ export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 
               properties: {
                 id: {
                   type: 'string',
-                  format: 'uuid',
-                  description: 'The innovation assessment id.'
+                  format: 'uuid'
                 },
-              },
-              required: ['id']
+                innovationId: {
+                  type: 'string',
+                  format: 'uuid'
+                },
+                assessmentId: {
+                  type: 'string',
+                  format: 'uuid'
+                },
+                status: {
+                  type: 'string',
+                  enum: ['APPROVED', 'REJECTED']
+                },
+                comment: {
+                  type: 'string',
+                  maxLength: 1000
+                },
+                createdAt: {
+                  type: 'string',
+                  format: 'date-time'
+                },
+                updatedAt: {
+                  type: 'string',
+                  format: 'date-time'
+                }
+              }
             }
           }
         }
       },
       400: {
-        description: 'The innovation assessment has not been created.',
+        description: 'Bad request. Validation error.',
       },
       401: {
-        description: 'The user is not authenticated.',
+        description: 'Unauthorized. Invalid authentication credentials.',
       },
       403: {
-        description: 'The user is not authorized to create an innovation assessment.',
+        description: 'Forbidden. User does not have permission to update the innovation assessment.',
       },
       404: {
-        description: 'The innovation does not exist.',
+        description: 'Not found. Innovation or assessment not found.',
       },
       500: {
-        description: 'An error occurred while creating the innovation assessment.',
+        description: 'Internal server error.',
       }
     }
   }
