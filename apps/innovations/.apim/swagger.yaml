@@ -96,7 +96,7 @@ paths:
           description: "Unauthorized"
         "404":
           description: "Not Found"
-    put:
+    patch:
       tags:
         - "v1"
         - "Transfers"
