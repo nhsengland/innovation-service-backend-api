@@ -121,7 +121,7 @@ paths:
       tags:
         - "[v1] Sections"
       description: "Get an innovation section info."
-      operationId: "getInnovationSectionInfo"
+      operationId: "v1-get-innovation-section-info"
       parameters:
         - name: Authorization
           in: header
@@ -151,7 +151,7 @@ paths:
       tags:
         - "[v1] Sections"
       description: "Get an innovation sections list."
-      operationId: "getInnovationSections"
+      operationId: "v1-get-innovation-sections"
       parameters:
         - name: Authorization
           in: header
@@ -176,7 +176,7 @@ paths:
       tags:
         - "[v1] Sections"
       description: "Updates an innovation section"
-      operationId: "putInnovationSection"
+      operationId: "v1-update-innovation-section"
       parameters:
         - name: Authorization
           in: header
@@ -204,7 +204,7 @@ paths:
       tags:
         - "[v1] Sections"
       description: "Submits an innovation section"
-      operationId: "patchInnovationSection"
+      operationId: "v1-submit-innovation-section"
       parameters:
         - name: Authorization
           in: header
@@ -234,7 +234,7 @@ paths:
       tags:
         - "[v1] Innovations"
       description: "Submit innovation for assessment"
-      operationId: "submitInnovation"
+      operationId: "v1-submit-innovation"
       parameters:
         - name: Authorization
           in: header
@@ -242,6 +242,89 @@ paths:
             type: string
           required: true
         - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
+  "/v1/{innovationId}/assessments":
+    post:
+      tags:
+        - "[v1] Innovations"
+      description: "Initiate innovation assessment"
+      operationId: "v1-initiate-innovation-assessment"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
+  "/v1/{innovationId}/assessments/{assessmentId}":
+    get:
+      tags:
+        - "[v1] Innovations"
+      description: "get innovation assessment info"
+      operationId: "v1-get-innovation-assessment-info"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+    post:
+      tags:
+        - "[v1] Innovations"
+      description: "update innovation assessment"
+      operationId: "v1-update-innovation-assessment"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: assessmentId
           in: path
           required: true
           schema:
