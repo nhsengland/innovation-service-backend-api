@@ -1,0 +1,23 @@
+version: '3.7'
+
+services:
+  mssql:
+    container_name: mssql
+    image: mcr.microsoft.com/azure-sql-edge
+    environment:
+      - MSSQL_SA_PASSWORD=Pass@word
+      - ACCEPT_EULA=1
+      - MSSQL_PID=Developer
+      - MSSQL_USER=sa
+    ports:
+      - "1433:1433"
+
+  mongodb:
+    container_name: mongo
+    image: mongo:latest
+    environment:
+      "MONGO_INITDB_ROOT_USERNAME": root
+      "MONGO_INITDB_ROOT_PASSWORD": Password
+    ports:
+      - 8081:8081
+      - 27017:27017

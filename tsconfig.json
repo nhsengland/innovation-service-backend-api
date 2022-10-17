@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+
+    "rootDir": "./",
+    "baseUrl": ".",
+    "paths": {
+      "@innovations/shared/*": ["apps/innovations/.symlinks/shared/*"],
+      "@notifications/shared/*": ["apps/notifications/.symlinks/shared/*"],
+      "@users/shared/*": ["apps/users/.symlinks/shared/*"]
+    },
+    "outDir": "./dist",
+
+    "strict": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    "checkJs": true,
+    "declaration": false,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    // "importHelpers": true,
+    "exactOptionalPropertyTypes": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": true,
+    "importsNotUsedAsValues": "error",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "preserveConstEnums": true,
+    "skipLibCheck": true,
+    "strictPropertyInitialization": false, //  TODO: Review this in the future...
+
+    "moduleResolution": "node",
+    "target": "es2020",
+    "module": "commonjs",
+    "lib": ["es2020", "dom"],
+    // "types": [
+    //   "reflect-metadata",
+    //   "node"
+    // ],
+  },
+  // "include": [
+  //   "innovations/**/*",
+  //   "__tests__/**/*"
+  // ],
+  "exclude": [
+    "node_modules"
+  ]
+}
