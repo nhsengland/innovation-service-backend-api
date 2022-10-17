@@ -23,7 +23,7 @@ export type ResponseDTO = {
   hasScaleResource: null | string;
   hasScaleResourceComment: null | string;
   suggestedOrganisations: {
-    id: string; name: string; acronym: string;
+    id: string; name: string; acronym: null | string;
     units: { id: string; name: string; acronym: string; }[]
   }[];
 };

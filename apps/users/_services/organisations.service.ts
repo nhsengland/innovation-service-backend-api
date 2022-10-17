@@ -28,8 +28,7 @@ export class OrganisationsService extends BaseService {
 
     try {
 
-      const dbOrganisations = await this.organisationRepository
-        .createQueryBuilder('organisation')
+      const dbOrganisations = await this.organisationRepository.createQueryBuilder('organisation')
         .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR })
         .orderBy('organisation.name', 'ASC')
         .getMany();
@@ -37,7 +36,7 @@ export class OrganisationsService extends BaseService {
       return dbOrganisations.map(organisation => ({
         id: organisation.id,
         name: organisation.name,
-        acronym: organisation.acronym
+        acronym: organisation.acronym ?? ''
       }));
 
     } catch (error) {
@@ -65,11 +64,11 @@ export class OrganisationsService extends BaseService {
         dbOrganisations.map(async organisation => ({
           id: organisation.id,
           name: organisation.name,
-          acronym: organisation.acronym,
+          acronym: organisation.acronym ?? '',
           organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
             id: organisationUnit.id,
             name: organisationUnit.name,
-            acronym: organisationUnit.acronym,
+            acronym: organisationUnit.acronym
           }))
         }))
       );

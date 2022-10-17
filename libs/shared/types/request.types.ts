@@ -4,8 +4,8 @@ export type CustomContextType = Context & {
   auth: {
     user: {
       identityId: string,
-      name: string,
-      surveyId?: string
+      name: string
+      // surveyId?: string
     }
   }
 }

@@ -11,7 +11,7 @@ import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
 
-class V1SurveyPOST {
+class V1SurveyCreate {
 
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
@@ -38,7 +38,7 @@ class V1SurveyPOST {
 }
 
 // TODO: Improve parameters
-export default openApi(V1SurveyPOST.httpTrigger as AzureFunction, '/v1/survey', {
+export default openApi(V1SurveyCreate.httpTrigger as AzureFunction, '/v1/survey', {
   post: {
     parameters: [],
     responses: {

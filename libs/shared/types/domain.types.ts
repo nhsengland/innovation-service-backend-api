@@ -31,8 +31,8 @@ export type DomainUserInfoType = {
 
 // Organisations types.
 export type OrganisationWithUnitsType = {
-  id: string; name: string; acronym: string;
-  units: { id: string; name: string; acronym: string; }[];
+  id: string, name: string, acronym: null | string,
+  units: { id: string, name: string, acronym: string }[]
 }
 
 
