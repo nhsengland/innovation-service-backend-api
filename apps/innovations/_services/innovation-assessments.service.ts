@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { DomainServiceType, DomainServiceSymbol } from '@innovations/shared/services';
+import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 
 import {
   InnovationEntity,
@@ -19,6 +19,8 @@ import type {
 import {
   InnovationStatusEnum,
   ActivityEnum,
+  NotifierTypeEnum,
+  UserTypeEnum,
 } from '@innovations/shared/enums'
 
 import {
@@ -44,7 +46,8 @@ export class InnovationAssessmentsService extends BaseAppService {
   organisationUnitRepository: Repository<OrganisationUnitEntity>;
 
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType
+    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
   ) {
     super();
     this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
@@ -163,7 +166,7 @@ export class InnovationAssessmentsService extends BaseAppService {
 
 
   async updateInnovationAssessment(
-    user: { id: string },
+    user: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     assessmentId: string,
     data: Partial<Omit<InnovationAssessmentType, 'id'>> & { isSubmission: boolean, suggestedOrganisationUnitsIds?: string[] }
@@ -260,101 +263,13 @@ export class InnovationAssessmentsService extends BaseAppService {
 
     });
 
-    // TODO: Recheck when notification are in place!
-    // if (assessment.isSubmission) {
-    //   try {
-    //     await this.notificationService.create(
-    //       requestUser,
-    //       NotificationAudience.QUALIFYING_ACCESSORS,
-    //       innovationId,
-    //       NotificationContextType.INNOVATION,
-    //       innovationId,
-    //       `Innovation with id ${innovationId} is now available for Qualifying Accessors`
-    //     );
-    //   } catch (error) {
-    //     this.logService.error(
-    //       `An error has occured while creating a notification of type ${NotificationContextType.INNOVATION} from ${requestUser.id}`,
-    //       error
-    //     );
-    //   }
-
-    //   // send email to Qualifying Accessors
-    //   try {
-    //     // maps the units object to only the unit id
-    //     const units = suggestedOrganisationUnits.map((u) => u.id);
-
-    //     // gets the qualifying accessors from the organisation units
-    //     const qualifyingAccessors = await this.organisationService.findQualifyingAccessorsFromUnits(
-    //       units,
-    //       innovationId
-    //     );
-
-    //     // sends an email notification to those Qualifying Accessors
-    //     await this.notificationService.sendEmail(
-    //       requestUser,
-    //       EmailNotificationTemplate.QA_ORGANISATION_SUGGESTED,
-    //       innovationId,
-    //       dbAssessment.id,
-    //       qualifyingAccessors
-    //     );
-    //   } catch (error) {
-    //     this.logService.error(
-    //       `An error has occured while sending an email of type ${EmailNotificationTemplate.QA_ORGANISATION_SUGGESTED}`,
-    //       error
-    //     );
-    //   }
-
-    //   // send email to innovator
-    //   try {
-    //     const innovation = await this.innovationService.find(innovationId, {
-    //       relations: ["owner"],
-    //     });
-
-    //     // sends an email notification to the innovation owner
-    //     await this.notificationService.sendEmail(
-    //       requestUser,
-    //       EmailNotificationTemplate.INNOVATORS_NEEDS_ASSESSMENT_COMPLETED,
-    //       innovationId,
-    //       dbAssessment.id,
-    //       [innovation.owner.id],
-    //       {
-    //         innovation_name: innovation.name,
-    //       }
-    //     );
-    //   } catch (error) {
-    //     this.logService.error(
-    //       `An error has occured while sending an email of type ${EmailNotificationTemplate.INNOVATORS_NEEDS_ASSESSMENT_COMPLETED}`,
-    //       error
-    //     );
-    //   }
-
-    //   // removes the units that the Innovator agreed to share his innovation with from the suggestions
-    //   organisationSuggestionsDiff = organisationSuggestionsDiff.filter(
-    //     (ou) => !innovationOrganisationUnitShares.includes(ou)
-    //   );
-
-    //   // if there are still any suggestions unmatched with the innovation data sharing, then create a notification for the innovator.
-    //   if (
-    //     organisationSuggestionsDiff &&
-    //     organisationSuggestionsDiff.length > 0
-    //   ) {
-    //     try {
-    //       await this.notificationService.create(
-    //         requestUser,
-    //         NotificationAudience.INNOVATORS,
-    //         innovationId,
-    //         NotificationContextType.DATA_SHARING,
-    //         innovationId,
-    //         `Innovation with id ${innovationId} has received Data sharing suggestions from the needs assessment team`
-    //       );
-    //     } catch (error) {
-    //       this.logService.error(
-    //         `An error has occured while creating a notification of type ${NotificationContextType.DATA_SHARING} from ${requestUser.id}`,
-    //         error
-    //       );
-    //     }
-    //   }
-    // }
+    this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED>({
+      id: user.id, identityId: user.identityId, type: user.type
+    }, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
+      innovationId: innovationId,
+      assessmentId: result.id,
+      organisationUnitIds: data.suggestedOrganisationUnitsIds || [],
+    });
 
     return { id: result['id'] };
 

@@ -34,7 +34,7 @@ class PatchInnovationSectionSubmit {
       const requestUser = authInstance.getUserInfo();
 
       const result = await innovationSectionsService.submitInnovationSection(
-        { id: requestUser.id, name: requestUser.displayName },
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         params.innovationId,
         params.sectionKey
       );
