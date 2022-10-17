@@ -1,21 +1,19 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions'
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
-} from '@innovations/shared/services';
-import {
-  JwtDecoder,
-} from '@innovations/shared/decorators'
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
-import type { CustomContextType } from '@innovations/shared/types';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-class GetInnovationTransferList {
+import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
+
+
+class V1InnovationTransferList {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -45,7 +43,7 @@ class GetInnovationTransferList {
 
 }
 
-export default openApi(GetInnovationTransferList.httpTrigger as AzureFunction, '/v1/transfers', {
+export default openApi(V1InnovationTransferList.httpTrigger as AzureFunction, '/v1/transfers', {
   get: {
     description: 'Get innovation transfer list',
     operationId: 'getInnovationTransferList',

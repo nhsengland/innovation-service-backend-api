@@ -1,5 +1,5 @@
 import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import jwtDecode, { JwtPayload } from "jwt-decode";
 
 import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
@@ -9,6 +9,7 @@ import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import { BodySchema, BodyType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
 class V1MeCreate {
@@ -38,9 +39,9 @@ class V1MeCreate {
       }
 
 
-      await usersService.createUserInnovator({ identityId }, { surveyId: body.surveyId })
+      const result = await usersService.createUserInnovator({ identityId }, { surveyId: body.surveyId ?? null });
 
-      context.res = ResponseHelper.NoContent();
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
     } catch (error) {

@@ -6,11 +6,11 @@ export class InnovationHelper {
   */
   static parseOrganisationUnitsToOrganisationsFormat(organisationUnits: {
     id: string, name: string, acronym: string,
-    organisation: { id: string, name: string, acronym: string }
-  }[]): { id: string, name: string, acronym: string, units: { id: string, name: string, acronym: string }[] }[] {
+    organisation: { id: string, name: string, acronym: null | string }
+  }[]): { id: string, name: string, acronym: null | string, units: { id: string, name: string, acronym: string }[] }[] {
 
     const toReturn: {
-      id: string, name: string, acronym: string,
+      id: string, name: string, acronym: null | string,
       units: { id: string, name: string, acronym: string }[]
     }[] = [];
 

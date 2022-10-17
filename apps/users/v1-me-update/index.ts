@@ -11,11 +11,11 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import type { ResponseDTO } from './transformation.dtos';
 import { AccessorBodySchema, AccessorBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class PutMe {
+class V1MeUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -29,8 +29,11 @@ class PutMe {
       const requestUser = authInstance.getUserInfo();
 
       if (requestUser.type === UserTypeEnum.ACCESSOR) {
+
         const accessorBody = JoiHelper.Validate<AccessorBodyType>(AccessorBodySchema, request.body);
+
         authInstance
+          .checkSelfUser(context.auth.user.identityId)
           .checkAccessorType()
           .verify();
 
@@ -47,6 +50,7 @@ class PutMe {
         const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(InnovatorBodySchema, request.body);
 
         await authInstance
+          .checkSelfUser(context.auth.user.identityId)
           .checkInnovatorType({ organisationId: innovatorBody.organisation.id })
           .verify();
 
@@ -77,7 +81,7 @@ class PutMe {
   }
 }
 
-export default openApi(PutMe.httpTrigger as AzureFunction, '/v1/me', {
+export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
   put: {
     summary: 'Update user information',
     description: 'Update user information',

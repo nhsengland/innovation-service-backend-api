@@ -1,31 +1,17 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import {
-  DomainServiceType, DomainServiceSymbol,
-} from '@innovations/shared/services';
-
-import { BaseAppService } from './base-app.service';
+import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum, InnovationCategoryCatalogueEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionStatusEnum, InnovationSectionCatalogueEnum } from '@innovations/shared/enums';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-
-import { SurveyModel } from '@innovations/shared/schemas/survey.schema';
+import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
+import { DomainServiceType, DomainServiceSymbol } from '@innovations/shared/services';
 import type { DomainUserInfoType } from '@innovations/shared/types';
+
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
-type SurveyInfo = {
-  mainCategory: InnovationCategoryCatalogueEnum | null | undefined;
-  otherMainCategoryDescription: string | null;
-  hasProblemTackleKnowledge: HasProblemTackleKnowledgeCatalogueEnum;
-  hasMarketResearch: HasMarketResearchCatalogueEnum;
-  hasBenefits: HasBenefitsCatalogueEnum;
-  hasTests: HasTestsCatalogueEnum;
-  hasEvidence: HasEvidenceCatalogueEnum;
-  otherCategoryDescription: string | null;
-  categories: InnovationCategoryEntity[];
-  supportTypes: InnovationSupportTypeEntity[];
-};
+import { BaseAppService } from './base-app.service';
+
 
 @injectable()
 export class InnovationsService extends BaseAppService {
@@ -50,10 +36,29 @@ export class InnovationsService extends BaseAppService {
     this.organisationUnitRepository = this.sqlConnection.getRepository<OrganisationUnitEntity>(OrganisationUnitEntity);
   }
 
+
+  /**
+  * Extracts information about the initial survey taken by the Innovator from CosmosDb
+  */
+  private async getSurveyInfo(surveyId: null | string): Promise<null | SurveyAnswersType> {
+
+    if (!surveyId) { return null; }
+
+    const survey = await SurveyModel.findById(surveyId).exec();
+
+    if (!survey) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SURVEY_ID_NOT_FOUND)
+    }
+
+    return survey.answers;
+
+  }
+
+
   async createInnovation(
     user: { id: string },
     data: { name: string, description: string, countryName: string, postcode: null | string, organisationShares: string[] },
-    surveyId?: string | null,
+    surveyId: null | string
   ): Promise<{ id: string }> {
 
     // Sanity check if innovation name already exists (for the same user).
@@ -73,27 +78,68 @@ export class InnovationsService extends BaseAppService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND, { details: { error: 'Unknown organisations' } });
     }
 
-    // either gets a survey object or an empty object.
-    // If an empty object is returned this means that a null surveyId was passed in as input. Which means this innovation shouldn't contain survey answers.
-    // If a survey id is passed in as argument, it will return a survey object or it will throw an error.
-    const surveyInfo = await this.getSurveyInfo(user.id, surveyId);
+    // If a surveyId is passed, take that survey answers.
+    const surveyInfo = surveyId ? await this.getSurveyInfo(surveyId) : null;
 
     return this.sqlConnection.transaction(async transaction => {
 
       const savedInnovation = await transaction.save(InnovationEntity, InnovationEntity.new({
-        categories: Promise.resolve(surveyInfo?.categories || []),
-        supportTypes: Promise.resolve(surveyInfo?.supportTypes || []),
+
+        // Survey information.
+        categories: Promise.resolve((surveyInfo?.categories || []).map(item => InnovationCategoryEntity.new({ type: item }))),
+        otherCategoryDescription: surveyInfo?.otherCategoryDescription ?? null,
+        mainCategory: surveyInfo?.mainCategory ?? null,
+        otherMainCategoryDescription: surveyInfo?.otherMainCategoryDescription ?? null,
+        hasProblemTackleKnowledge: surveyInfo?.hasProblemTackleKnowledge ?? null,
+        hasMarketResearch: surveyInfo?.hasMarketResearch ?? null,
+        // hasWhoBenefitsKnowledge: surveyInfo?.hasWhoBenefitsKnowledge ?? null,
         hasBenefits: surveyInfo?.hasBenefits || null,
+        hasTests: surveyInfo?.hasTests ?? null,
+        // hasRelevantCertifications: surveyInfo.hasRelevantCertifications ?? null,
+        hasEvidence: surveyInfo?.hasEvidence ?? null,
+        // hasCostEvidence: surveyInfo.hasCostEvidence ?? null,
+        supportTypes: Promise.resolve((surveyInfo?.supportTypes || []).map((e) => InnovationSupportTypeEntity.new({ type: e }))),
+
+        // Remaining information.
         name: data.name,
         description: data.description,
+        status: InnovationStatusEnum.CREATED,
         countryName: data.countryName,
         postcode: data.postcode,
+        organisationShares: data.organisationShares.map(id => OrganisationEntity.new({ id })),
         owner: UserEntity.new({ id: user.id }),
         createdBy: user.id,
-        updatedBy: user.id,
-        status: InnovationStatusEnum.CREATED,
-        organisationShares: data.organisationShares.map(id => OrganisationEntity.new({ id }))
+        updatedBy: user.id
+
       }));
+
+
+      // Mark some section to status DRAFT.
+      let sectionsToBeInDraft: InnovationSectionCatalogueEnum[] = [];
+
+      if (surveyInfo) {
+        sectionsToBeInDraft = [
+          InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION,
+          InnovationSectionCatalogueEnum.VALUE_PROPOSITION,
+          InnovationSectionCatalogueEnum.UNDERSTANDING_OF_BENEFITS,
+          InnovationSectionCatalogueEnum.EVIDENCE_OF_EFFECTIVENESS,
+          InnovationSectionCatalogueEnum.MARKET_RESEARCH,
+          InnovationSectionCatalogueEnum.TESTING_WITH_USERS
+        ];
+      } else {
+        sectionsToBeInDraft = [InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION];
+      }
+
+      for (const sectionKey of sectionsToBeInDraft) {
+        await transaction.save(InnovationSectionEntity, InnovationSectionEntity.new({
+          innovation: savedInnovation,
+          section: InnovationSectionCatalogueEnum[sectionKey],
+          status: InnovationSectionStatusEnum.DRAFT,
+          createdBy: savedInnovation.createdBy,
+          updatedBy: savedInnovation.updatedBy
+        }));
+      }
+
 
       await this.domainService.innovations.addActivityLog<'INNOVATION_CREATION'>(
         transaction,
@@ -214,46 +260,7 @@ export class InnovationsService extends BaseAppService {
     };
 
   }
-  /**
-  * Extracts information about the initial survey taken by the Innovator from CosmosDb
-  */
 
-  private async getSurveyInfo(userId: string, surveyId?: string | null): Promise<SurveyInfo | undefined> {
-
-    if (!surveyId) return;
-
-    const survey = await SurveyModel.findById(surveyId).exec()
-
-    // if a surveyId was passed in as argument and is not null/undefined, then it is expected to be found on CosmosDb.
-    if (!survey) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SURVEY_ID_NOT_FOUND)
-    }
-
-    const answers = survey.answers
-    const surveyInfo = {
-      mainCategory: answers.mainCategory,
-      otherMainCategoryDescription: answers.otherMainCategoryDescription,
-      hasProblemTackleKnowledge: answers.hasProblemTackleKnowledge,
-      hasMarketResearch: answers.hasMarketResearch,
-      hasBenefits: answers.hasBenefits,
-      hasTests: answers.hasTests,
-      hasEvidence: answers.hasEvidence,
-      otherCategoryDescription: answers.otherCategoryDescription,
-      categories: (answers.categories || []).map((e) => InnovationCategoryEntity.new({
-        type: e,
-        createdBy: userId,
-        updatedBy: userId
-      })),
-      supportTypes: (answers.supportTypes || []).map((e) => InnovationSupportTypeEntity.new({
-        type: e,
-        createdBy: userId,
-        updatedBy: userId
-      }))
-    }
-
-    return surveyInfo;
-
-  }
 
   private async findInnovationSections(innovationId: string): Promise<InnovationSectionEntity[] | undefined> {
 
@@ -315,4 +322,5 @@ export class InnovationsService extends BaseAppService {
 
     return result;
   }
+
 }

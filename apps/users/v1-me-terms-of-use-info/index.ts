@@ -7,18 +7,18 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types'
 
 import { container } from '../_config';
-import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
 
 
-class GetMe {
+class V1MeTermsOfUse {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
 
     try {
 
@@ -27,20 +27,14 @@ class GetMe {
         .verify();
       const requestUser = authInstance.getUserInfo();
 
-      const userInnovationTransfers = await usersService.getUserPendingInnovationTransfers(requestUser.email);
+      const result = await termsOfUseService.getTermsOfUseInfo({ id: requestUser.id, type: requestUser.type });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: requestUser.id,
-        email: requestUser.email,
-        displayName: requestUser.displayName,
-        type: requestUser.type,
-        roles: requestUser.roles,
-        phone: requestUser.phone,
-        passwordResetAt: requestUser.passwordResetAt,
-        firstTimeSignInAt: requestUser.firstTimeSignInAt,
-        termsOfUseAccepted: requestUser.termsOfUseAccepted,
-        hasInnovationTransfers: userInnovationTransfers.length > 0,
-        organisations: requestUser.organisations
+        id: result.id,
+        name: result.name,
+        summary: result.summary,
+        releasedAt: result.releasedAt,
+        isAccepted: result.isAccepted
       });
       return;
 
@@ -57,7 +51,7 @@ class GetMe {
 
 
 // TODO: Improve response
-export default openApi(GetMe.httpTrigger as AzureFunction, '/v1/me', {
+export default openApi(V1MeTermsOfUse.httpTrigger as AzureFunction, '/v1/me/terms-of-use', {
   get: {
     parameters: [],
     responses: {

@@ -29,11 +29,7 @@ const SLSSchema = new Schema<SLSSchemaType>(
     id: Schema.Types.ObjectId,
     userId: Schema.Types.String,
     code: Schema.Types.String,
-    eventType: {
-      type: String,
-      enum: Object.values(SLSEventTypeEnum),
-      default: 'LOGIN'
-    },
+    eventType: { type: String, enum: SLSEventTypeEnum, default: 'LOGIN' },
     validatedAt: { type: Date }
   },
   { timestamps: true }
@@ -41,4 +37,4 @@ const SLSSchema = new Schema<SLSSchemaType>(
 
 SLSSchema.index({ _ts: 1 }, { expireAfterSeconds: ttl });
 
-export const SLSModel: Model<SLSSchemaType> = models['TTL2ls'] || model('SLS', SLSSchema);
+export const SLSModel: Model<SLSSchemaType> = models['SLS'] || model('SLS', SLSSchema);

@@ -45,8 +45,8 @@ export function JwtDecoder() {
         context.auth = {
           user: {
             identityId: jwt.oid,
-            name: jwt.name,
-            surveyId: jwt.extension_surveyId
+            name: jwt.name
+            // surveyId: jwt.extension_surveyId
           }
         };
 

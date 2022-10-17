@@ -1,338 +1,541 @@
-openapi: "3.0.3"
+openapi: 3.0.3
 info:
-  title: "Innovation Service - Innovations API"
-  version: "1.0.0"
+  title: NHS Innovation Service API - Innovations module
+  version: 1.0.0
 servers:
-  - url: 'https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api'
-
+- url: https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api
 paths:
+  v1/{innovationId}/submit:
+    patch:
+      summary: Submit an innovation
+      description: Submit an innovation for assessment.
+      operationId: submitInnovation
+      tags:
+      - Innovation
+      parameters:
+      - name: innovationId
+        in: path
+        description: Innovation ID
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Innovation submitted successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation ID
+                  status:
+                    type: string
+                    description: Innovation status
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        '404':
+          description: Not found.
+        '500':
+          description: Internal server error.
+  v1/{innovationId}/assessments:
+    post:
+      summary: Create an innovation assessment
+      description: Create an innovation assessment.
+      operationId: createInnovationAssessment
+      tags:
+      - Innovation Assessment
+      parameters:
+      - name: innovationId
+        in: path
+        description: The innovation id.
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: The innovation assessment data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: The comment for the assessment.
+              required:
+              - comment
+      responses:
+        '200':
+          description: The innovation assessment has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The innovation assessment id.
+                required:
+                - id
+        '400':
+          description: The innovation assessment has not been created.
+        '401':
+          description: The user is not authenticated.
+        '403':
+          description: The user is not authorized to create an innovation assessment.
+        '404':
+          description: The innovation does not exist.
+        '500':
+          description: An error occurred while creating the innovation assessment.
+  v1/{innovationId}/assessments/{assessmentId}:
+    put:
+      summary: Update an innovation assessment
+      description: Update an innovation assessment.
+      parameters:
+      - name: innovationId
+        in: path
+        description: Innovation ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: assessmentId
+        in: path
+        description: Assessment ID
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        description: Innovation assessment update request body.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - APPROVED
+                  - REJECTED
+                comment:
+                  type: string
+                  maxLength: 1000
+              required:
+              - status
+      responses:
+        '200':
+          description: Returns the updated innovation assessment.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  innovationId:
+                    type: string
+                    format: uuid
+                  assessmentId:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                    - APPROVED
+                    - REJECTED
+                  comment:
+                    type: string
+                    maxLength: 1000
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedAt:
+                    type: string
+                    format: date-time
+        '400':
+          description: Bad request. Validation error.
+        '401':
+          description: Unauthorized. Invalid authentication credentials.
+        '403':
+          description: Forbidden. User does not have permission to update the innovation
+            assessment.
+        '404':
+          description: Not found. Innovation or assessment not found.
+        '500':
+          description: Internal server error.
   "/v1":
     post:
-      tags:
-        - "[v1] Innovations"
-      description: "Creates an innovation"
-      operationId: "v1-innovation-create"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
+      description: Create an innovation
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
-        "201":
-          description: "Created"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "422":
-          description: "Unprocessable Entity"
-
-  "/v1/transfers":
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for innovation object
+        '400':
+          description: Invalid innovation payload
+  v1/{innovationId}/sections/{sectionKey}/info:
     get:
+      description: Get an innovation section info.
       tags:
-        - "[v1] Transfers"
-      description: "Retrieves innovation transfer list"
-      operationId: "v1-innovation-transfer-list"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
+      - Innovation
+      summary: Get an innovation section info.
+      operationId: getInnovationSectionInfo
+      parameters: []
       responses:
-        "200":
-          description: "Ok"
-        "401":
-          description: "Unauthorized"
-        "404":
-          description: "Not Found"
+        '200':
+          description: Innovation section info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation section id.
+                    example: '1'
+                  section:
+                    type: string
+                    description: Innovation section key.
+                    example: access
+                  status:
+                    type: string
+                    description: Innovation section status.
+                    example: COMPLETED
+                  submittedAt:
+                    type: string
+                    description: Innovation section submission date.
+                    example: '2021-01-01T00:00:00.000Z'
+                  data:
+                    type: object
+                    description: Innovation section data.
+                    properties:
+                      name:
+                        type: string
+                        description: Innovation section name.
+                        example: Access
+                      description:
+                        type: string
+                        description: Innovation section description.
+                        example: Access description
+                      questions:
+                        type: array
+                        description: Innovation section questions.
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: Innovation section question id.
+                              example: '1'
+                            text:
+                              type: string
+                              description: Innovation section question text.
+                              example: Question text
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+        '500':
+          description: Internal server error
+    put:
+      description: Update an innovation section info.
+      tags:
+      - Innovation
+      summary: Update an innovation section info.
+      operationId: updateInnovationSectionInfo
+      parameters: []
+      requestBody:
+        description: Innovation section info update request body.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+      responses:
+        '200':
+          description: Innovation section info updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        '404':
+          description: Not found.
+        '500':
+          description: Internal server error.
+  v1/{innovationId}/sections/{sectionKey}/submit:
     post:
+      description: Submit an innovation section.
       tags:
-        - "[v1] Transfers"
-      description: "Creates a transfer"
-      operationId: "v1-innovation-transfer-create"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
+      - Innovation
+      summary: Submit an innovation section.
+      operationId: submitInnovationSection
+      parameters: []
+      requestBody:
+        description: Innovation section submit request body.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Innovation section id.
+                  example: '1'
       responses:
-        "201":
-          description: "Created"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "422":
-          description: "Unprocessable Entity"
-
+        '200':
+          description: Innovation section submit response.
+  v1/{innovationId}/sections:
+    get:
+      description: Get an innovation sections list.
+      tags:
+      - Innovation
+      summary: Get an innovation sections list.
+      operationId: getInnovationSectionsList
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation id.
+                  name:
+                    type: string
+                    description: Innovation name.
+                  status:
+                    type: string
+                    description: Innovation status.
+                  sections:
+                    type: array
+                    description: Innovation sections.
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Innovation section id.
+                        section:
+                          type: string
+                          description: Innovation section name.
+                        status:
+                          type: string
+                          description: Innovation section status.
+                        submittedAt:
+                          type: string
+                          description: Innovation section submitted date.
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+  v1/{innovationId}/shares:
+    get:
+      description: Get all the shares for an innovation.
+      tags:
+      - Innovation
+      summary: Get all the shares for an innovation.
+      operationId: getInnovationShares
+      parameters: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The unique identifier of the share.
+                    innovationId:
+                      type: string
+                      description: The unique identifier of the innovation.
+                    organisationId:
+                      type: string
+                      description: The unique identifier of the organisation.
+                    organisationName:
+                      type: string
+                      description: The name of the organisation.
+                    organisationUnitId:
+                      type: string
+                      description: The unique identifier of the organisation unit.
+                    organisationUnitName:
+                      type: string
+                      description: The name of the organisation unit.
+                    status:
+                      type: string
+                      description: The status of the share.
+                    createdAt:
+                      type: string
+                      description: The date and time when the share was created.
+                    updatedAt:
+                      type: string
+                      description: The date and time when the share was last updated.
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+  "/v1/innovation-transfers/{transferId}/check":
+    get:
+      description: Get details of pending innovations transfers
+      parameters:
+      - in: path
+        name: transferId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userExists:
+                    type: boolean
+                    description: User exists in service
+        '404':
+          description: The innovation transfer does not exist
+  "/v1/transfers":
+    post:
+      description: Create an innovation transfer
+      operationId: createInnovationTransfer
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+    get:
+      description: Get innovation transfer list
+      operationId: getInnovationTransferList
+      parameters: []
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
   "/v1/transfers/{transferId}":
     get:
-      tags:
-        - "[v1] Transfers"
-      description: "Retrieves the innovation transfer information"
-      operationId: "v1-innovation-transfer-info"
+      description: Get an innovation transfer
+      operationId: getInnovationTransfer
       parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: transferId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: transferId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
-          description: "Ok"
-        "401":
-          description: "Unauthorized"
-        "404":
-          description: "Not Found"
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: object
+  "/v1/innovation-transfers/{transferId}":
     patch:
-      tags:
-        - "[v1] Transfers"
-      description: "Updates innovation transfer information"
-      operationId: "v1-innovation-transfer-update"
+      description: Update an innovation transfer status
+      operationId: updateInnovationTransferStatus
       parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: transferId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: transferId
+        in: path
+        required: true
+        description: The innovation transfer id
+        schema:
+          type: string
+      requestBody:
+        description: The innovation transfer status
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
-        "200":
-          description: "Ok"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  "/v1/{innovationId}/sections/{sectionId}":
-    get:
-      tags:
-        - "[v1] Sections"
-      description: "Get an innovation section info."
-      operationId: "v1-get-innovation-section-info"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: sectionId
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  "/v1/{innovationId}/sections":
-    get:
-      tags:
-        - "[v1] Sections"
-      description: "Get an innovation sections list."
-      operationId: "v1-get-innovation-sections"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  "/v1/{innovationId}/sections/{sectionKey}":
-    put:
-      tags:
-        - "[v1] Sections"
-      description: "Updates an innovation section"
-      operationId: "v1-update-innovation-section"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: sectionKey
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-    patch:
-      tags:
-        - "[v1] Sections"
-      description: "Submits an innovation section"
-      operationId: "v1-submit-innovation-section"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: sectionKey
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "204":
-          description: "No Content"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-          
-  "/v1/{innovationId}/submit":
-    patch:
-      tags:
-        - "[v1] Innovations"
-      description: "Submit innovation for assessment"
-      operationId: "v1-submit-innovation"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  "/v1/{innovationId}/assessments":
-    post:
-      tags:
-        - "[v1] Innovations"
-      description: "Initiate innovation assessment"
-      operationId: "v1-initiate-innovation-assessment"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  "/v1/{innovationId}/assessments/{assessmentId}":
-    get:
-      tags:
-        - "[v1] Innovations"
-      description: "get innovation assessment info"
-      operationId: "v1-get-innovation-assessment-info"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: assessmentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-    post:
-      tags:
-        - "[v1] Innovations"
-      description: "update innovation assessment"
-      operationId: "v1-update-innovation-assessment"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: assessmentId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '204':
+          description: The innovation transfer status has been updated
+        '400':
+          description: The innovation transfer status is invalid
+        '401':
+          description: The user is not authorized to update the innovation transfer
+            status
+        '404':
+          description: The innovation transfer does not exist
+        '500':
+          description: An error occurred while updating the innovation transfer status

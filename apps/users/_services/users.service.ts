@@ -1,10 +1,10 @@
 import { injectable, inject } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { InnovationTransferStatusEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
-import { UserEntity, OrganisationEntity, OrganisationUnitUserEntity, InnovationTransferEntity, TermsOfUseEntity, TermsOfUseUserEntity } from '@users/shared/entities';
+import { InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { UserEntity, OrganisationEntity, InnovationTransferEntity, TermsOfUseEntity, TermsOfUseUserEntity, OrganisationUserEntity } from '@users/shared/entities';
 import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
-import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseAppService } from './base-app.service';
@@ -15,16 +15,15 @@ export class UsersService extends BaseAppService {
 
   userRepository: Repository<UserEntity>;
   organisationRepository: Repository<OrganisationEntity>;
-  organisationUnitUserRepository: Repository<OrganisationUnitUserEntity>;
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
   ) {
     super();
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
     this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
-    this.organisationUnitUserRepository = this.sqlConnection.getRepository<OrganisationUnitUserEntity>(OrganisationUnitUserEntity);
   }
 
 
@@ -73,10 +72,7 @@ export class UsersService extends BaseAppService {
 
   }
 
-  async createUserInnovator(
-    user: { identityId: string },
-    data: { surveyId: string }
-  ): Promise<{ id: string }> {
+  async createUserInnovator(user: { identityId: string }, data: { surveyId: null | string }): Promise<{ id: string }> {
 
     return this.sqlConnection.transaction(async transactionManager => {
 
@@ -85,6 +81,26 @@ export class UsersService extends BaseAppService {
         surveyId: data.surveyId,
         type: UserTypeEnum.INNOVATOR
       }));
+
+      // Creates default organisation.
+      const dbOrganisation = await transactionManager.save(OrganisationEntity.new({
+        name: user.identityId,
+        acronym: null,
+        type: OrganisationTypeEnum.INNOVATOR,
+        size: null,
+        isShadow: true,
+        createdBy: dbUser.id,
+        updatedBy: dbUser.id
+      }));
+
+      await transactionManager.save(OrganisationUserEntity.new({
+        organisation: dbOrganisation,
+        user: dbUser,
+        role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+        createdBy: dbUser.id,
+        updatedBy: dbUser.id
+      }));
+
 
       // Accept last terms of use released.
       const lastTermsOfUse = await this.sqlConnection.createQueryBuilder(TermsOfUseEntity, 'termsOfUse')
@@ -96,9 +112,17 @@ export class UsersService extends BaseAppService {
         await transactionManager.save(TermsOfUseUserEntity.new({
           termsOfUse: TermsOfUseEntity.new({ id: lastTermsOfUse.id }),
           user: UserEntity.new({ id: dbUser.id }),
-          acceptedAt: new Date().toISOString()
+          acceptedAt: new Date().toISOString(),
+          createdBy: dbUser.id,
+          updatedBy: dbUser.id
         }));
       }
+
+      this.notifierService.send(
+        { id: dbUser.id, identityId: dbUser.identityId, type: dbUser.type },
+        NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
+        {}
+      );
 
       return { id: dbUser.id };
 
@@ -112,7 +136,7 @@ export class UsersService extends BaseAppService {
     data: {
       displayName: string,
       mobilePhone?: string,
-      organisation?: { id: string; isShadow: boolean; name?: string; size?: string; }
+      organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string }
     }
   ): Promise<{ id: string }> {
 
@@ -137,7 +161,7 @@ export class UsersService extends BaseAppService {
         };
 
         if (organisationData.isShadow) {
-          organisationData.name = user.id;
+          organisationData.name = user.identityId;
           organisationData.size = null;
         } else {
           if (data.organisation.name) { organisationData.name = data.organisation.name; }

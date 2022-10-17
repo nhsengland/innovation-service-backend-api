@@ -1,9 +1,9 @@
 export type ResponseDTO = {
-  id: string;
-  email: string;
+  id: string,
+  email: string,
   innovation: {
-    id: string;
-    name: string;
-    owner: string;
-  };
+    id: string,
+    name: string,
+    owner: string
+  }
 }[];

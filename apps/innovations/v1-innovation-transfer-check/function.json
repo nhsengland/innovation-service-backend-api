@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "swagger.json"
+      "route": "v1/transfers/{transferId}/check"
     },
     {
       "type": "http",

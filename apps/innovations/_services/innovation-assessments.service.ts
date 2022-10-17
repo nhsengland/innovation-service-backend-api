@@ -1,10 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import {
-  DomainServiceType,
-  DomainServiceSymbol,
-} from '@innovations/shared/services';
+import { DomainServiceType, DomainServiceSymbol } from '@innovations/shared/services';
 
 import {
   InnovationEntity,
@@ -97,7 +94,12 @@ export class InnovationAssessmentsService extends BaseAppService {
         hasImplementationPlanComment: assessment.hasImplementationPlanComment,
         hasScaleResource: assessment.hasScaleResource,
         hasScaleResourceComment: assessment.hasScaleResourceComment,
-        suggestedOrganisations: InnovationHelper.parseOrganisationUnitsToOrganisationsFormat(assessment.organisationUnits)
+        suggestedOrganisations: InnovationHelper.parseOrganisationUnitsToOrganisationsFormat(
+          assessment.organisationUnits.map(item => ({
+            id: item.id, name: item.name, acronym: item.acronym,
+            organisation: { id: item.organisation.id, name: item.organisation.name, acronym: item.organisation.acronym }
+          }))
+        )
       };
 
     } catch (error) {
