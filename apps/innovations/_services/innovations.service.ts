@@ -6,12 +6,13 @@ import {
 } from '@innovations/shared/services';
 
 import { BaseAppService } from './base-app.service';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, InnovationSupportEntity } from '@innovations/shared/entities';
-import { type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum, InnovationCategoryCatalogueEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { type HasProblemTackleKnowledgeCatalogueEnum, type HasMarketResearchCatalogueEnum, type HasBenefitsCatalogueEnum, type HasTestsCatalogueEnum, type HasEvidenceCatalogueEnum, InnovationStatusEnum, ActivityEnum, InnovationCategoryCatalogueEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionStatusEnum, InnovationSectionCatalogueEnum } from '@innovations/shared/enums';
+import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 
 import { SurveyModel } from '@innovations/shared/schemas/survey.schema';
 import type { DomainUserInfoType } from '@innovations/shared/types';
+import type { InnovationSectionModel } from '../_types/innovation.types';
 
 type SurveyInfo = {
   mainCategory: InnovationCategoryCatalogueEnum | null | undefined;
@@ -179,6 +180,40 @@ export class InnovationsService extends BaseAppService {
     return result;
   }
 
+  async submitInnovation(innovationId: string, updatedById: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
+
+    const sections = await this.findInnovationSections(innovationId)
+
+    if (!sections) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);
+    }
+
+    const canSubmit = !(await this.hasIncompleteSections(sections));
+
+    if (!canSubmit) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_INCOMPLETE);
+    }
+
+    await this.sqlConnection.transaction(async transaction => {
+
+      return transaction.update(
+        InnovationEntity,
+        { id: innovationId },
+        {
+          submittedAt: new Date().toISOString(),
+          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          updatedBy: updatedById,
+        }
+      );
+
+    });
+
+    return {
+      id: innovationId,
+      status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT
+    };
+
+  }
   /**
   * Extracts information about the initial survey taken by the Innovator from CosmosDb
   */
@@ -220,4 +255,64 @@ export class InnovationsService extends BaseAppService {
 
   }
 
+  private async findInnovationSections(innovationId: string): Promise<InnovationSectionEntity[] | undefined> {
+
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .leftJoinAndSelect('innovations.sections', 'sections')
+      .where('innovations.id = :innovationId', { innovationId })
+      .getOne()
+
+    const sections = innovation?.sections;
+
+    return sections;
+  }
+
+  private async hasIncompleteSections(sections: InnovationSectionEntity[]): Promise<boolean> {
+
+    const innovationSections = this.getInnovationSectionsMetadata(sections);
+
+    return innovationSections.some(
+      (x) => x.status !== InnovationSectionStatusEnum.SUBMITTED
+    );
+
+  }
+
+  private getInnovationSectionsMetadata(sections: InnovationSectionEntity[]): InnovationSectionModel[] {
+
+    const innovationSections: InnovationSectionModel[] = [];
+
+    for (const key in InnovationSectionCatalogueEnum) {
+      const section = sections.find((sec) => sec.section === key);
+      innovationSections.push(this.getInnovationSectionMetadata(key, section));
+    }
+
+    return innovationSections;
+  }
+
+  private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {
+
+    let result: InnovationSectionModel;
+
+    if (section) {
+      result = {
+        id: section.id,
+        section: section.section,
+        status: section.status,
+        updatedAt: section.updatedAt,
+        submittedAt: section.submittedAt,
+        actionStatus: null,
+      };
+    } else {
+      result = {
+        id: null,
+        section: InnovationSectionCatalogueEnum[key as keyof typeof InnovationSectionCatalogueEnum],
+        status: InnovationSectionStatusEnum.NOT_STARTED,
+        updatedAt: null,
+        submittedAt: null,
+        actionStatus: null,
+      };
+    }
+
+    return result;
+  }
 }

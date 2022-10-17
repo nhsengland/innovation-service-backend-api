@@ -1,16 +1,6 @@
-import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
-export interface InnovationSectionModel {
-  id: string | null;
-  section: InnovationSectionCatalogueEnum | null;
-  status: InnovationSectionStatusEnum | null;
-  actionStatus: InnovationActionStatusEnum | null;
-  updatedAt: DateISOType | null;
-  submittedAt: DateISOType | null;
-}
-
-export type InnovationAssessmentType = {
+export type ResponseDTO = {
   id: string;
   summary: null | string;
   description: null | string;
@@ -32,4 +22,8 @@ export type InnovationAssessmentType = {
   hasImplementationPlanComment: null | string;
   hasScaleResource: null | string;
   hasScaleResourceComment: null | string;
-}
+  suggestedOrganisations: {
+    id: string; name: string; acronym: string;
+    units: { id: string; name: string; acronym: string; }[]
+  }[];
+};
