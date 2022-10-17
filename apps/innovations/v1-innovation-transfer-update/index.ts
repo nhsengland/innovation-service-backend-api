@@ -47,7 +47,7 @@ class UpdateInnovationTransfer {
 }
 
 export default openApi(UpdateInnovationTransfer.httpTrigger as any, '/v1/innovation-transfers/{transferId}', {
-  put: {
+  patch: {
     description: 'Update an innovation transfer status',
     operationId: 'updateInnovationTransferStatus',
     parameters: [
