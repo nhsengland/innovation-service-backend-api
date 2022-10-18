@@ -14,7 +14,6 @@ export type DomainUserInfoType = {
   roles: ServiceRoleEnum[],
   phone: null | string,
   isActive: boolean,
-  termsOfUseAccepted: boolean,
   passwordResetAt: null | DateISOType,
   firstTimeSignInAt: null | DateISOType,
   surveyId: null | string,

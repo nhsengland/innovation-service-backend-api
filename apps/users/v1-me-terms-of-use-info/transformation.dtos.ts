@@ -4,6 +4,6 @@ export type ResponseDTO = {
   id: string,
   name: string,
   summary: string,
-  releasedAt: DateISOType,
+  releasedAt: null | DateISOType,
   isAccepted: boolean
 };

@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 
 import { SurveyAnswersType, SurveyModel } from '@users/shared/schemas';
 
-import { BaseAppService } from "./base-app.service";
+import { BaseAppService } from './base-app.service';
 
 
 @injectable()

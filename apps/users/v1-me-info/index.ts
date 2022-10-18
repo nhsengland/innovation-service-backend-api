@@ -7,7 +7,7 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types'
 
 import { container } from '../_config';
-import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
 
@@ -19,12 +19,14 @@ class V1MeInfo {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
 
     try {
 
       const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
       const requestUser = authInstance.getUserInfo();
 
+      const userTermsOfUse = await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type });
       const userInnovationTransfers = await usersService.getUserPendingInnovationTransfers(requestUser.email);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -36,7 +38,7 @@ class V1MeInfo {
         phone: requestUser.phone,
         passwordResetAt: requestUser.passwordResetAt,
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
-        termsOfUseAccepted: requestUser.termsOfUseAccepted,
+        termsOfUseAccepted: userTermsOfUse.isAccepted,
         hasInnovationTransfers: userInnovationTransfers.length > 0,
         organisations: requestUser.organisations
       });
