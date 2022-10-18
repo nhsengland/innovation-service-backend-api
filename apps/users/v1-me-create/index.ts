@@ -1,6 +1,6 @@
 import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import jwtDecode, { JwtPayload } from "jwt-decode";
+import jwtDecode, { JwtPayload } from 'jwt-decode';
 
 import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
@@ -22,7 +22,7 @@ class V1MeCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      let identityId: string = '';
+      let identityId = '';
 
       try {
 

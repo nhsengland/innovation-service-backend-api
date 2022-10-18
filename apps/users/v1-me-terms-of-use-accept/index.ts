@@ -12,7 +12,7 @@ import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/int
 import type { ResponseDTO } from './transformation.dtos';
 
 
-class V1MeTermsOfUseInfo {
+class V1MeTermsOfUseAccept {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
@@ -29,15 +29,9 @@ class V1MeTermsOfUseInfo {
         .verify();
       const requestUser = authInstance.getUserInfo();
 
-      const result = await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type });
+      const result = await termsOfUseService.acceptActiveTermsOfUse({ id: requestUser.id, type: requestUser.type });
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-        name: result.name,
-        summary: result.summary,
-        releasedAt: result.releasedAt,
-        isAccepted: result.isAccepted
-      });
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
     } catch (error) {
@@ -53,8 +47,8 @@ class V1MeTermsOfUseInfo {
 
 
 // TODO: Improve response
-export default openApi(V1MeTermsOfUseInfo.httpTrigger as AzureFunction, '/v1/me/terms-of-use', {
-  get: {
+export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/me/terms-of-use', {
+  patch: {
     parameters: [],
     responses: {
       200: {
@@ -64,8 +58,7 @@ export default openApi(V1MeTermsOfUseInfo.httpTrigger as AzureFunction, '/v1/me/
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for the game' },
-                state: { type: 'string', description: 'The status of the game', enum: ['WaitingForPlayers', 'Started', 'Complete'] }
+                id: { type: 'string', description: 'Operation identifier' }
               }
             }
           }
