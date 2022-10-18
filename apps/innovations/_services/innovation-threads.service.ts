@@ -71,6 +71,29 @@ export class InnovationThreadsService extends BaseAppService {
     };
   }
 
+  async createEditableThread(
+    requestUser: DomainUserInfoType,
+    innovationId: string,
+    subject: string,
+    message: string,
+    sendNotification: boolean
+  ): Promise<{
+    thread: InnovationThreadEntity;
+    messageCount: number;
+  }> {
+    return this.createThread(
+      requestUser,
+      innovationId,
+      subject,
+      message,
+      sendNotification,
+      undefined,
+      undefined,
+      undefined,
+      true,
+    );
+  }
+
   async createThread(
     requestUser: DomainUserInfoType,
     innovationId: string,
