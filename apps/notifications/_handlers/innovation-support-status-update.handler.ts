@@ -16,7 +16,7 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
-  EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+  EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
   { organisationUnitName: string, supportStatus: InnovationSupportStatusEnum }
 > {
 
@@ -26,6 +26,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private data: {
     innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
     requestUserAdditionalInfo?: {
+      displayName?: string,
       organisation: { id: string, name: string },
       organisationUnit: { id: string, name: string }
     }
@@ -45,6 +46,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
 
     this.data.requestUserAdditionalInfo = {
+      displayName: requestUserInfo.displayName,
       organisation: { id: requestUserInfo.organisations[0]?.id ?? '', name: requestUserInfo.organisations[0]?.name ?? '' },
       organisationUnit: {
         id: requestUserInfo.organisations[0]?.organisationUnits[0]?.id ?? '', name: requestUserInfo.organisations[0]?.organisationUnits[0]?.name ?? ''
@@ -70,6 +72,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
       await this.prepareInAppForAccessorsWhenEngaging();
+      await this.prepareEmailForNewAccessors(this.inputData.innovationSupport.newAssignedAccessors);
     }
 
     return this;
@@ -100,6 +103,22 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     }
 
+  }
+
+  private async prepareEmailForNewAccessors(accessors?: {id: string}[]): Promise<void> {
+    for (const accessor of accessors ?? []) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
+        to: { type: 'identityId', value: accessor.id, displayNameParam: 'display_name' },
+        params: {
+          qa_name: this.data.requestUserAdditionalInfo?.displayName ?? 'qualified accessor', // what should the default be, believe it will never happen
+          innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('assessment/innovations/:innovationId')
+          .setPathParams({ innovationId: this.inputData.innovationId })
+          .buildUrl()
+        }
+      });
+    }
   }
 
   private async prepareInAppForInnovator(): Promise<void> {

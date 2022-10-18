@@ -66,6 +66,7 @@ export const NOTIFICATIONS_CONFIG: {
         id: Joi.string().guid().required(),
         status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
         statusChanged: Joi.boolean().strict().required(),
+        newAssignedAccessors: Joi.array().items(Joi.object({id: Joi.string().guid().required()}))
       }).required()
     }).required()
   },
