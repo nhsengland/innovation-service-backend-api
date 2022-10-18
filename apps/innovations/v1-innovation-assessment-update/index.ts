@@ -39,7 +39,7 @@ class UpdateInnovationAssessment {
       const requestUser = auth.getUserInfo();
 
       const result = await innovationAssessmentsService.updateInnovationAssessment(
-        { id: requestUser.id },
+        requestUser,
         params.innovationId,
         params.assessmentId,
         body

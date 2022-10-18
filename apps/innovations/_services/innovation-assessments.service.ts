@@ -1,24 +1,26 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { DomainServiceType, DomainServiceSymbol } from '@innovations/shared/services';
+import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 
 import {
   InnovationEntity,
   InnovationAssessmentEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  CommentEntity,
   UserEntity,
 } from '@innovations/shared/entities';
 
 import type {
+  DomainUserInfoType,
   OrganisationWithUnitsType,
 } from '@innovations/shared/types';
 
 import {
   InnovationStatusEnum,
   ActivityEnum,
+  ThreadContextTypeEnum,
+  NotifierTypeEnum,
 } from '@innovations/shared/enums'
 
 import {
@@ -33,6 +35,7 @@ import { BaseAppService } from './base-app.service';
 import { InnovationHelper } from '../_helpers/innovation.helper';
 
 import type { InnovationAssessmentType } from '../_types/innovation.types';
+import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 
 @injectable()
@@ -44,7 +47,9 @@ export class InnovationAssessmentsService extends BaseAppService {
   organisationUnitRepository: Repository<OrganisationUnitEntity>;
 
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType
+    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
+    @inject(InnovationThreadsServiceSymbol) private threadService: InnovationThreadsServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
   ) {
     super();
     this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
@@ -110,7 +115,7 @@ export class InnovationAssessmentsService extends BaseAppService {
 
 
   async createInnovationAssessment(
-    user: { id: string },
+    user: DomainUserInfoType,
     innovationId: string,
     data: { comment: string }
   ): Promise<{ id: string }> {
@@ -125,13 +130,17 @@ export class InnovationAssessmentsService extends BaseAppService {
 
     return this.sqlConnection.transaction(async transaction => {
 
-      const comment = await transaction.save(CommentEntity, CommentEntity.new({
-        user: UserEntity.new({ id: user.id }),
-        innovation: InnovationEntity.new({ id: innovationId }),
-        message: data.comment,
-        createdBy: user.id,
-        updatedBy: user.id
-      }));
+      const thread = await this.threadService.createThread(
+        user,
+        innovationId,
+        'Needs Assessment started',
+        data.comment,
+        true,
+        ActivityEnum.NEEDS_ASSESSMENT_START,
+        ThreadContextTypeEnum.NEEDS_ASSESSMENT,
+        transaction,
+        false,
+      )
 
       await transaction.update(InnovationEntity,
         { id: innovationId },
@@ -150,7 +159,7 @@ export class InnovationAssessmentsService extends BaseAppService {
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START },
         {
-          comment: { id: comment['id'], value: comment['message'] }
+          comment: { id: thread.thread.id, value: data.comment }
         }
       );
 
@@ -163,7 +172,7 @@ export class InnovationAssessmentsService extends BaseAppService {
 
 
   async updateInnovationAssessment(
-    user: { id: string },
+    user: DomainUserInfoType,
     innovationId: string,
     assessmentId: string,
     data: Partial<Omit<InnovationAssessmentType, 'id'>> & { isSubmission: boolean, suggestedOrganisationUnitsIds?: string[] }
@@ -176,19 +185,6 @@ export class InnovationAssessmentsService extends BaseAppService {
     if (!dbAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
-
-    // TODO: this code was used for notifications.
-    // Keeping it here for now!
-    // Current organisation Units suggested on the assessment
-    // const currentUnits = dbAssessment.organisationUnits.map(item => item.id);
-
-    // gets the difference between the currentUnits on the assessment and the units being suggested by this assessment update
-    // most of the times it will be a 100% diff.
-    // let organisationSuggestionsDiff = [];
-    // if (dbAssessment.organisationUnits) {
-    // const organisationSuggestionsDiff = dbAssessment.organisationUnits.filter(ou => !currentUnits.includes(ou.id));
-    // }
-
 
     // Obtains organisation's units that the innovator agreed to share his innovation with
     let innovationOrganisationUnitShares: string[] = [];
@@ -244,7 +240,9 @@ export class InnovationAssessmentsService extends BaseAppService {
       // If any was suggested on a previous update, should it also be logged here?
       if (dbAssessment.organisationUnits.length > 0) {
 
-        const organisationUnits = await this.organisationUnitRepository.findByIds(dbAssessment.organisationUnits.map(ou => ou.id));
+        const organisationUnits = await this.sqlConnection.createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')
+          .where('organisationUnit.id IN (:...ids)', { ids: dbAssessment.organisationUnits.map(ou => ou.id) })
+          .getMany();
 
         await this.domainService.innovations.addActivityLog<'ORGANISATION_SUGGESTION'>(
           transaction,
@@ -260,101 +258,13 @@ export class InnovationAssessmentsService extends BaseAppService {
 
     });
 
-    // TODO: Recheck when notification are in place!
-    // if (assessment.isSubmission) {
-    //   try {
-    //     await this.notificationService.create(
-    //       requestUser,
-    //       NotificationAudience.QUALIFYING_ACCESSORS,
-    //       innovationId,
-    //       NotificationContextType.INNOVATION,
-    //       innovationId,
-    //       `Innovation with id ${innovationId} is now available for Qualifying Accessors`
-    //     );
-    //   } catch (error) {
-    //     this.logService.error(
-    //       `An error has occured while creating a notification of type ${NotificationContextType.INNOVATION} from ${requestUser.id}`,
-    //       error
-    //     );
-    //   }
-
-    //   // send email to Qualifying Accessors
-    //   try {
-    //     // maps the units object to only the unit id
-    //     const units = suggestedOrganisationUnits.map((u) => u.id);
-
-    //     // gets the qualifying accessors from the organisation units
-    //     const qualifyingAccessors = await this.organisationService.findQualifyingAccessorsFromUnits(
-    //       units,
-    //       innovationId
-    //     );
-
-    //     // sends an email notification to those Qualifying Accessors
-    //     await this.notificationService.sendEmail(
-    //       requestUser,
-    //       EmailNotificationTemplate.QA_ORGANISATION_SUGGESTED,
-    //       innovationId,
-    //       dbAssessment.id,
-    //       qualifyingAccessors
-    //     );
-    //   } catch (error) {
-    //     this.logService.error(
-    //       `An error has occured while sending an email of type ${EmailNotificationTemplate.QA_ORGANISATION_SUGGESTED}`,
-    //       error
-    //     );
-    //   }
-
-    //   // send email to innovator
-    //   try {
-    //     const innovation = await this.innovationService.find(innovationId, {
-    //       relations: ["owner"],
-    //     });
-
-    //     // sends an email notification to the innovation owner
-    //     await this.notificationService.sendEmail(
-    //       requestUser,
-    //       EmailNotificationTemplate.INNOVATORS_NEEDS_ASSESSMENT_COMPLETED,
-    //       innovationId,
-    //       dbAssessment.id,
-    //       [innovation.owner.id],
-    //       {
-    //         innovation_name: innovation.name,
-    //       }
-    //     );
-    //   } catch (error) {
-    //     this.logService.error(
-    //       `An error has occured while sending an email of type ${EmailNotificationTemplate.INNOVATORS_NEEDS_ASSESSMENT_COMPLETED}`,
-    //       error
-    //     );
-    //   }
-
-    //   // removes the units that the Innovator agreed to share his innovation with from the suggestions
-    //   organisationSuggestionsDiff = organisationSuggestionsDiff.filter(
-    //     (ou) => !innovationOrganisationUnitShares.includes(ou)
-    //   );
-
-    //   // if there are still any suggestions unmatched with the innovation data sharing, then create a notification for the innovator.
-    //   if (
-    //     organisationSuggestionsDiff &&
-    //     organisationSuggestionsDiff.length > 0
-    //   ) {
-    //     try {
-    //       await this.notificationService.create(
-    //         requestUser,
-    //         NotificationAudience.INNOVATORS,
-    //         innovationId,
-    //         NotificationContextType.DATA_SHARING,
-    //         innovationId,
-    //         `Innovation with id ${innovationId} has received Data sharing suggestions from the needs assessment team`
-    //       );
-    //     } catch (error) {
-    //       this.logService.error(
-    //         `An error has occured while creating a notification of type ${NotificationContextType.DATA_SHARING} from ${requestUser.id}`,
-    //         error
-    //       );
-    //     }
-    //   }
-    // }
+    if (data.isSubmission && dbAssessment.finishedAt) {
+      this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED>(
+        user,
+        NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
+        { innovationId: innovationId, assessmentId: assessmentId, organisationUnitIds: data.suggestedOrganisationUnitsIds || [] }
+      )
+    }
 
     return { id: result['id'] };
 
