@@ -34,8 +34,9 @@ class SubmitInnovation {
         .verify();
 
       const innovationId = auth.getInnovationInfo();
+      const requestUser = auth.getUserInfo();
 
-      const result = await innovationsService.submitInnovation(innovationId.id, context.auth.user.identityId)
+      const result = await innovationsService.submitInnovation(requestUser, innovationId.id, context.auth.user.identityId)
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         status: result.status,
@@ -55,7 +56,7 @@ export default openApi(SubmitInnovation.httpTrigger as AzureFunction, 'v1/{innov
   patch: {
     summary: 'Submit an innovation',
     description: 'Submit an innovation for assessment.',
-    operationId: 'submitInnovation',
+    operationId: 'v1-submit-innovation',
     tags: ['Innovation'],
     parameters: [
       {

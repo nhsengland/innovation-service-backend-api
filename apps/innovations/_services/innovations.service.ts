@@ -1,11 +1,11 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
 import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
-import { DomainServiceType, DomainServiceSymbol } from '@innovations/shared/services';
+import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
@@ -25,7 +25,7 @@ export class InnovationsService extends BaseAppService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    // @inject(NotifierServiceSymbol) private notifService: NotifierServiceType,
+    @inject(NotifierServiceSymbol) private notifService: NotifierServiceType,
   ) {
     super();
     this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
@@ -226,7 +226,7 @@ export class InnovationsService extends BaseAppService {
     return result;
   }
 
-  async submitInnovation(innovationId: string, updatedById: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
+  async submitInnovation(requestUser: DomainUserInfoType, innovationId: string, updatedById: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
 
     const sections = await this.findInnovationSections(innovationId)
 
@@ -253,6 +253,10 @@ export class InnovationsService extends BaseAppService {
       );
 
     });
+
+    this.notifService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
+      id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
+    }, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
 
     return {
       id: innovationId,

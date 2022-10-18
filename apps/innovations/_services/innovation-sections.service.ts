@@ -2,13 +2,13 @@ import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
 import {
-  DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol,
+  DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol, NotifierServiceSymbol, NotifierServiceType,
 } from '@innovations/shared/services';
 
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 import { BaseAppService } from './base-app.service';
 import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { DateISOType } from '@innovations/shared/types/date.types';
 
@@ -20,7 +20,8 @@ export class InnovationSectionsService extends BaseAppService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType
+    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
   ) {
     super();
     this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
@@ -227,7 +228,7 @@ export class InnovationSectionsService extends BaseAppService {
   }
 
 
-  async submitInnovationSection(user: { id: string, name: string }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{ id: string }> {
+  async submitInnovationSection(user: { id: string, identityId: string; type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{ id: string }> {
 
     const dbInnovation = await this.innovationRepository.createQueryBuilder('innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
@@ -279,47 +280,21 @@ export class InnovationSectionsService extends BaseAppService {
           { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
+
+        this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+          {
+            id: user.id, identityId: user.identityId, type: user.type,
+          },
+          NotifierTypeEnum.ACTION_UPDATE,
+          {
+            innovationId: dbInnovation.id,
+            action: {
+              id: requestedStatusActions[0]!.id,
+              section: savedSection.section,
+              status: InnovationActionStatusEnum.IN_REVIEW,
+            }
+          });
       }
-
-
-      //for (const action of requestedStatusActions) {
-      // for (let index = 0; index < updatedActions.length; index++) {
-
-      // const element = updatedActions[index];
-      // targetNotificationUsers = [element.createdBy];
-
-      // TODO: Update when notifications are in place.
-      // try {
-      //   await this.notificationService.create(
-      //     requestUser,
-      //     NotificationAudience.ACCESSORS,
-      //     innovationId,
-      //     NotificationContextType.ACTION,
-      //     element.id,
-      //     `The action with id ${element.id} was updated by the innovator with id ${requestUser.id} for the innovation with id ${innovationId}`,
-      //     targetNotificationUsers
-      //   );
-      // } catch (error) {
-      //   this.logService.error(
-      //     `An error has occured while creating a notification of type ${NotificationContextType.ACTION} from ${requestUser.id}`,
-      //     error
-      //   );
-      // }
-
-
-      // Send e-mail to accessor.
-      // TODO: Should we stop operaiton if email fails??????
-      // const usersInfo = await this.domainService.users.getUsersList({ userIds: [action.createdBy] });
-      // for (const userInfo of usersInfo) { // UsersInfo will have only 1 item!
-      //   // TODO: TECH DEBT: the action_url must be filled! Need to implement an easy solution for this!
-      //   await this.emailService.sendEmail<'ACCESSORS_ACTION_TO_REVIEW'>(
-      //     'ACCESSORS_ACTION_TO_REVIEW',
-      //     userInfo.email,
-      //     { innovator_name: user.name, innovation_name: dbInnovation.name, action_url: '' }
-      //   )
-      // }
-
-      //}
 
       return { id: savedSection.id };
 
