@@ -13,7 +13,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema } from './validation.schemas';
 
 
-class V1InnovationThreadCreate {
+class V1InnovationThreadMessageList {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -24,7 +24,7 @@ class V1InnovationThreadCreate {
     try {
 
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .checkInnovatorType()
@@ -34,35 +34,39 @@ class V1InnovationThreadCreate {
 
       const requestUser = auth.getUserInfo();
 
-      const result = await threadsService.getInnovationThreads(
+      const result = await threadsService.getThreadMessagesList(
         requestUser,
-        pathParams.innovationId,
-        query.skip,
-        query.take,
-        query.order,
+        pathParams.threadId,
+        queryParams.skip,
+        queryParams.take,
+        queryParams.order,
       )
+
+
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
-        threads: result.threads.map(thread => ({
-          id: thread.id,
-          subject: thread.subject,
-          messageCount: thread.messageCount,
-          createdAt: thread.createdAt,
-          isNew: thread.isNew,
-          lastMessage: {
-            id: thread.lastMessage.id,
-            createdAt: thread.lastMessage.createdAt,
-            createdBy: {
-              id: thread.lastMessage.createdBy.id,
-              name: thread.lastMessage.createdBy.name,
-              type: thread.lastMessage.createdBy.type,
-              organisationUnit: {
-                id: thread.lastMessage.createdBy.organisationUnit?.id!, // if the organisationUnit exists, then all props are ensured to exist
-                name: thread.lastMessage.createdBy.organisationUnit?.name!, // if the organisationUnit exists, then all props are ensured to exist
-                acronym: thread.lastMessage.createdBy.organisationUnit?.acronym!, // if the organisationUnit exists, then all props are ensured to exist
-              },
+        messages: result.messages.map(message => ({
+          id: message.id,
+          createdAt: message.createdAt,
+          createdBy: {
+            id: message.createdBy.id,
+            name: message.createdBy.name,
+            type: message.createdBy.type,
+            organisationUnit: {
+              id: message.createdBy.organisationUnit?.id!, // if the organisationUnit exists, then all props are ensured to exist
+              name: message.createdBy.organisationUnit?.name!,
+              acronym: message.createdBy.organisationUnit?.acronym!,
+            },
+            organisation: {
+              id: message.createdBy.organisation?.id!, // if the organisation exists, then all props are ensured to exist
+              name: message.createdBy.organisation?.name!,
+              acronym: message.createdBy.organisation?.acronym!,
             },
           },
+          isEditable: message.isEditable,
+          isNew: message.isNew,
+          message: message.message,
+          updatedAt: message.updatedAt,
         })),
       });
 
@@ -77,4 +81,4 @@ class V1InnovationThreadCreate {
 
 }
 
-export default V1InnovationThreadCreate.httpTrigger;
+export default V1InnovationThreadMessageList.httpTrigger;

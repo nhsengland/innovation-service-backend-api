@@ -158,6 +158,21 @@ export class InnovationThreadsService extends BaseAppService {
     return result;
   }
 
+  async createEditableMessage(
+    requestUser: DomainUserInfoType,
+    threadId: string,
+    message: string,
+    sendNotification: boolean
+  ): Promise<{ threadMessage: InnovationThreadMessageEntity }> {
+    return this.createThreadMessage(
+      requestUser,
+      threadId,
+      message,
+      sendNotification,
+      true,
+    );
+  }
+
   async createThreadMessage(
     requestUser: DomainUserInfoType,
     threadId: string,
