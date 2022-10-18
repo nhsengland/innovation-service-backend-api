@@ -6,6 +6,7 @@ import { GenericErrorsEnum, InnovationErrorsEnum, UserErrorsEnum } from "@innova
 import { injectable, inject } from "inversify";
 import { BaseAppService } from './base-app.service'
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from "@innovations/shared/services";
+import type { ThreadListModel } from "../_types/innovation.types";
 
 @injectable()
 export class InnovationThreadsService extends BaseAppService {
@@ -527,6 +528,154 @@ export class InnovationThreadsService extends BaseAppService {
     return {
       count,
       messages: messageResult,
+    };
+  }
+
+  async getInnovationThreads(
+    requestUser: DomainUserInfoType,
+    innovationId: string,
+    skip = 0,
+    take = 10,
+    order?: {
+      subject?: "ASC" | "DESC";
+      createdAt?: "ASC" | "DESC";
+      messageCount?: "ASC" | "DESC";
+    }
+  ): Promise<ThreadListModel> {
+    const messageCountQuery = this.sqlConnection
+      .createQueryBuilder()
+      .addSelect("COUNT(messagesSQ.id)", "messageCount")
+      .from(InnovationThreadEntity, "threadSQ")
+      .leftJoin("threadSQ.messages", "messagesSQ")
+      .andWhere("threadSQ.id = thread.id")
+      .groupBy("messagesSQ.innovation_thread_id");
+
+    const countQuery = this.sqlConnection
+      .createQueryBuilder()
+      .addSelect("COUNT(threadSQ.id)", "count")
+      .from(InnovationThreadEntity, "threadSQ")
+      .where("threadSQ.innovation_id = :innovationId", { innovationId });
+
+    const query = this.sqlConnection
+      .createQueryBuilder(InnovationThreadEntity, "thread")
+      .distinct(false)
+      .innerJoinAndSelect("thread.author", "author")
+      .addSelect(`(${messageCountQuery.getSql()})`, "messageCount")
+      .addSelect(`(${countQuery.getSql()})`, "count");
+
+    query.where("thread.innovation_id = :innovationId", { innovationId });
+
+    if (order) {
+      if (order.createdAt) {
+        query.addOrderBy("thread.created_at", order.createdAt);
+      } else if (order.messageCount) {
+        query.addOrderBy("messageCount", order.messageCount);
+      } else if (order.subject) {
+        query.addOrderBy("thread.subject", order.subject);
+      } else {
+        query.addOrderBy("thread.created_at", "DESC");
+      }
+    } else {
+      query.addOrderBy("thread.created_at", "DESC");
+    }
+
+    query.offset(skip);
+    query.limit(take);
+
+    const threads = await query.getRawMany();
+
+    if (threads.length === 0) {
+      return {
+        count: 0,
+        threads: [],
+      };
+    }
+
+    const threadIds = threads.map((t) => t.thread_id) as string[];
+
+    const threadMessagesQuery = this.sqlConnection
+      .createQueryBuilder(InnovationThreadMessageEntity, "messages")
+      .innerJoinAndSelect("messages.author", "author")
+      .innerJoinAndSelect("messages.thread", "thread")
+      .leftJoinAndSelect("author.userOrganisations", "userOrgs")
+      .leftJoinAndSelect("userOrgs.userOrganisationUnits", "userOrgUnits")
+      .leftJoinAndSelect("userOrgUnits.organisationUnit", "unit")
+      .where("thread.id IN (:...threadIds)", { threadIds })
+      .orderBy("messages.created_at", "DESC");
+
+    const threadMessages = await threadMessagesQuery.getMany();
+
+    const userIds = [...new Set(threadMessages.map((tm) => tm.author.id))];
+    const messageAuthors = await this.domainService.users.getUsersList({
+      userIds,
+    });
+
+    const count = threads.find((_) => true)?.count || 0;
+
+    const notificationsQuery = this.sqlConnection
+      .createQueryBuilder(NotificationEntity, "notifications")
+      .innerJoinAndSelect(
+        "notifications.notificationUsers",
+        "notificationUsers"
+      )
+      .innerJoinAndSelect("notificationUsers.user", "users")
+      .where("notifications.context_id IN (:...threadIds)", { threadIds })
+      .andWhere("users.id = :userId", { userId: requestUser.id })
+
+      .andWhere("notificationUsers.read_at IS NULL");
+
+    const notifications = await notificationsQuery.getMany();
+
+    const result = await Promise.all(
+      threads.map(async (t) => {
+        const message = threadMessages.find(
+          (tm) => tm.thread.id === t.thread_id
+        );
+
+        const authorDB = message?.author;
+        const authorIdP = messageAuthors.find(
+          (ma) => ma.id === message?.author.id
+        );
+
+        const userOrganisations = await message?.author.userOrganisations || [];
+
+        const organisationUnit = userOrganisations
+          ?.find((_) => true)
+          ?.userOrganisationUnits?.find((_) => true)?.organisationUnit;
+
+        const hasUnreadNotification = notifications.find(
+          (n) => n.contextId === t.thread_id
+        );
+
+        return {
+          id: t.thread_id,
+          subject: t.thread_subject,
+          messageCount: t.messageCount,
+          createdAt: t.thread_created_at.toISOString(),
+          isNew: hasUnreadNotification ? true : false,
+          lastMessage: {
+            id: message!.id,
+            createdAt: message!.createdAt,
+            createdBy: {
+              id: authorDB!.id,
+              name: authorIdP?.displayName || "unknown user",
+              type: authorDB!.type,
+              organisationUnit: organisationUnit
+                ? {
+                  id: organisationUnit.id,
+                  name: organisationUnit.name,
+                  acronym: organisationUnit.acronym,
+                }
+                : null,
+            },
+          },
+        };
+      })
+    );
+
+    return {
+      count,
+      threads: result,
     };
   }
 
