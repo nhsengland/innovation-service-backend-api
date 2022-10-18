@@ -132,7 +132,7 @@ export class RecipientsService extends BaseService {
   }
 
   async innovationSharedOrganisationsWithUnits(innovationId: string): Promise<{
-    id: string, name: string, acronym: string, organisationUnits: { id: string, name: string, acronym: string }[]
+    id: string, name: string, acronym: null | string, organisationUnits: { id: string, name: string, acronym: string }[]
   }[]> {
 
     const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
@@ -365,7 +365,7 @@ export class RecipientsService extends BaseService {
   }
 
   async organisationUnitInfo(organisationUnitId: string): Promise<{
-    organisation: { id: string, name: string, acronym: string },
+    organisation: { id: string, name: string, acronym: null | string },
     organisationUnit: { id: string, name: string, acronym: string }
   }> {
 

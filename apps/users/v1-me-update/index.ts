@@ -33,7 +33,6 @@ class V1MeUpdate {
         const accessorBody = JoiHelper.Validate<AccessorBodyType>(AccessorBodySchema, request.body);
 
         authInstance
-          .checkSelfUser(context.auth.user.identityId)
           .checkAccessorType()
           .verify();
 
@@ -50,7 +49,6 @@ class V1MeUpdate {
         const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(InnovatorBodySchema, request.body);
 
         await authInstance
-          .checkSelfUser(context.auth.user.identityId)
           .checkInnovatorType({ organisationId: innovatorBody.organisation.id })
           .verify();
 
@@ -83,13 +81,8 @@ class V1MeUpdate {
 
 export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
   put: {
-    summary: 'Update user information',
-    description: 'Update user information',
-    operationId: 'v1-me-update',
-    tags: ['v1'],
     parameters: [],
     requestBody: {
-      description: 'Update user information',
       required: true,
       content: {
         'application/json': {

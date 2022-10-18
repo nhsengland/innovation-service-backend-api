@@ -12,7 +12,7 @@ import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 
 
-class GetMe {
+class V1MeInfo {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
@@ -22,9 +22,7 @@ class GetMe {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
-        .checkSelfUser(context.auth.user.identityId)
-        .verify();
+      const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
       const requestUser = authInstance.getUserInfo();
 
       const userInnovationTransfers = await usersService.getUserPendingInnovationTransfers(requestUser.email);
@@ -57,7 +55,7 @@ class GetMe {
 
 
 // TODO: Improve response
-export default openApi(GetMe.httpTrigger as AzureFunction, '/v1/me', {
+export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
   get: {
     parameters: [],
     responses: {
