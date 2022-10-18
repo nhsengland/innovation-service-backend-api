@@ -524,9 +524,9 @@ export class InnovationThreadsService extends BaseAppService {
       const messages = await result.messages;
       const messageId = messages.find((_: any) => true)!.id; // all threads have at least one message
 
-      await this.domainService.innovations.addActivityLog<'INNOVATTION_THREAD_CREATE'>(
+      await this.domainService.innovations.addActivityLog<'THREAD_CREATION'>(
         transaction,
-        { userId: requestUser.id, innovationId: innovation.id, activity: ActivityEnum.INNOVATTION_THREAD_CREATE },
+        { userId: requestUser.id, innovationId: innovation.id, activity: ActivityEnum.THREAD_CREATION },
         {
           thread: { id: result.id, subject: result.subject },
           message: { id: messageId }
@@ -534,7 +534,7 @@ export class InnovationThreadsService extends BaseAppService {
       );
     } catch (error) {
       this.logger.error(
-        `An error has occured while creating activity log from ${requestUser.id} for the Activity ${ActivityEnum.INNOVATTION_THREAD_CREATE}`,
+        `An error has occured while creating activity log from ${requestUser.id} for the Activity ${ActivityEnum.THREAD_CREATION}`,
         error
       );
       throw error;
@@ -554,9 +554,9 @@ export class InnovationThreadsService extends BaseAppService {
     );
 
     try {
-      await this.domainService.innovations.addActivityLog<'INNOVATTION_THREAD_MESSAGE_CREATE'>(
+      await this.domainService.innovations.addActivityLog<'THREAD_MESSAGE_CREATION'>(
         transaction,
-        { userId: requestUser.id, innovationId: thread.innovation.id, activity: ActivityEnum.INNOVATTION_THREAD_MESSAGE_CREATE },
+        { userId: requestUser.id, innovationId: thread.innovation.id, activity: ActivityEnum.THREAD_MESSAGE_CREATION },
         {
           thread: { id: thread.id, subject: thread.subject },
           message: { id: result.id },
@@ -564,7 +564,7 @@ export class InnovationThreadsService extends BaseAppService {
       );
     } catch (error) {
       this.logger.error(
-        `An error has occured while creating activity log from ${requestUser.id} for the Activity ${ActivityEnum.INNOVATTION_THREAD_MESSAGE_CREATE}`,
+        `An error has occured while creating activity log from ${requestUser.id} for the Activity ${ActivityEnum.THREAD_MESSAGE_CREATION}`,
         error
       );
       throw error;
@@ -694,11 +694,11 @@ export class InnovationThreadsService extends BaseAppService {
       innovation,
       contextId,
       contextType,
-      messages: Promise.resolve([InnovationThreadMessageEntity.new({
+      messages: [InnovationThreadMessageEntity.new({
         author,
         message,
         isEditable: editableMessage,
-      })]),
+      })] as any,
       createdBy: author.id,
     });
 

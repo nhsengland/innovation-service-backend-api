@@ -136,7 +136,7 @@ export class InnovationAssessmentsService extends BaseAppService {
         'Needs Assessment started',
         data.comment,
         true,
-        ActivityEnum.NEEDS_ASSESSMENT_START,
+        innovationId,
         ThreadContextTypeEnum.NEEDS_ASSESSMENT,
         transaction,
         false,
