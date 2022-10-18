@@ -42,7 +42,7 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
-          transfer_url: ENV.webBaseUrl
+          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath(`transfers/${transfer.id}`).buildUrl()
         }
       });
 
