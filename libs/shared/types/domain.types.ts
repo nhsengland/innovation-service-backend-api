@@ -108,5 +108,11 @@ export type ActivityLogTemplatesType = {
   },
   COMMENT_CREATION: {
     params: { comment: { id: string, value: string } }
+  },
+  INNOVATTION_THREAD_CREATE: {
+    params: { thread: { id: string, subject: string }, message: { id: string } }
+  }
+  INNOVATTION_THREAD_MESSAGE_CREATE: {
+    params: { thread: { id: string, subject: string }, message: { id: string } }
   }
 }
