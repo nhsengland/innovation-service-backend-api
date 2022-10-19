@@ -36,7 +36,6 @@ import { InnovationHelper } from '../_helpers/innovation.helper';
 
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
-import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
 
 @injectable()
