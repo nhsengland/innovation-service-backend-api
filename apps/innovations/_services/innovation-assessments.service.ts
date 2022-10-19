@@ -117,7 +117,7 @@ export class InnovationAssessmentsService extends BaseAppService {
   async createInnovationAssessment(
     user: DomainUserInfoType,
     innovationId: string,
-    data: { comment: string }
+    data: { message: string }
   ): Promise<{ id: string }> {
 
     const assessmentsCount = await this.innovationAssessmentRepository.createQueryBuilder('assessment')
@@ -134,7 +134,7 @@ export class InnovationAssessmentsService extends BaseAppService {
         user,
         innovationId,
         'Needs Assessment started',
-        data.comment,
+        data.message,
         true,
         innovationId,
         ThreadContextTypeEnum.NEEDS_ASSESSMENT,
@@ -159,7 +159,7 @@ export class InnovationAssessmentsService extends BaseAppService {
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START },
         {
-          comment: { id: thread.thread.id, value: data.comment }
+          comment: { id: thread.thread.id, value: data.message }
         }
       );
 
