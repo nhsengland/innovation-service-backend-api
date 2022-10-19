@@ -197,6 +197,9 @@ export class DomainInnovationsService {
       case ActivityEnum.COMMENT_CREATION:
         return ActivityTypeEnum.COMMENTS;
 
+      case ActivityEnum.THREAD_CREATION:
+      case ActivityEnum.THREAD_MESSAGE_CREATION:
+        return ActivityTypeEnum.THREADS;
 
       case ActivityEnum.ACTION_CREATION:
       case ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE:

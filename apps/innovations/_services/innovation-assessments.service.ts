@@ -8,19 +8,19 @@ import {
   InnovationAssessmentEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  CommentEntity,
   UserEntity,
 } from '@innovations/shared/entities';
 
 import type {
+  DomainUserInfoType,
   OrganisationWithUnitsType,
 } from '@innovations/shared/types';
 
 import {
   InnovationStatusEnum,
   ActivityEnum,
+  ThreadContextTypeEnum,
   NotifierTypeEnum,
-  UserTypeEnum,
 } from '@innovations/shared/enums'
 
 import {
@@ -35,6 +35,7 @@ import { BaseAppService } from './base-app.service';
 import { InnovationHelper } from '../_helpers/innovation.helper';
 
 import type { InnovationAssessmentType } from '../_types/innovation.types';
+import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 
 @injectable()
@@ -47,6 +48,7 @@ export class InnovationAssessmentsService extends BaseAppService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
+    @inject(InnovationThreadsServiceSymbol) private threadService: InnovationThreadsServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
   ) {
     super();
@@ -113,7 +115,7 @@ export class InnovationAssessmentsService extends BaseAppService {
 
 
   async createInnovationAssessment(
-    user: { id: string },
+    user: DomainUserInfoType,
     innovationId: string,
     data: { comment: string }
   ): Promise<{ id: string }> {
@@ -128,13 +130,17 @@ export class InnovationAssessmentsService extends BaseAppService {
 
     return this.sqlConnection.transaction(async transaction => {
 
-      const comment = await transaction.save(CommentEntity, CommentEntity.new({
-        user: UserEntity.new({ id: user.id }),
-        innovation: InnovationEntity.new({ id: innovationId }),
-        message: data.comment,
-        createdBy: user.id,
-        updatedBy: user.id
-      }));
+      const thread = await this.threadService.createThread(
+        user,
+        innovationId,
+        'Needs Assessment started',
+        data.comment,
+        true,
+        innovationId,
+        ThreadContextTypeEnum.NEEDS_ASSESSMENT,
+        transaction,
+        false,
+      )
 
       await transaction.update(InnovationEntity,
         { id: innovationId },
@@ -153,7 +159,7 @@ export class InnovationAssessmentsService extends BaseAppService {
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START },
         {
-          comment: { id: comment['id'], value: comment['message'] }
+          comment: { id: thread.thread.id, value: data.comment }
         }
       );
 
@@ -166,7 +172,7 @@ export class InnovationAssessmentsService extends BaseAppService {
 
 
   async updateInnovationAssessment(
-    user: { id: string, identityId: string, type: UserTypeEnum },
+    user: DomainUserInfoType,
     innovationId: string,
     assessmentId: string,
     data: Partial<Omit<InnovationAssessmentType, 'id'>> & { isSubmission: boolean, suggestedOrganisationUnitsIds?: string[] }
@@ -179,19 +185,6 @@ export class InnovationAssessmentsService extends BaseAppService {
     if (!dbAssessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
-
-    // TODO: this code was used for notifications.
-    // Keeping it here for now!
-    // Current organisation Units suggested on the assessment
-    // const currentUnits = dbAssessment.organisationUnits.map(item => item.id);
-
-    // gets the difference between the currentUnits on the assessment and the units being suggested by this assessment update
-    // most of the times it will be a 100% diff.
-    // let organisationSuggestionsDiff = [];
-    // if (dbAssessment.organisationUnits) {
-    // const organisationSuggestionsDiff = dbAssessment.organisationUnits.filter(ou => !currentUnits.includes(ou.id));
-    // }
-
 
     // Obtains organisation's units that the innovator agreed to share his innovation with
     let innovationOrganisationUnitShares: string[] = [];
@@ -247,7 +240,9 @@ export class InnovationAssessmentsService extends BaseAppService {
       // If any was suggested on a previous update, should it also be logged here?
       if (dbAssessment.organisationUnits.length > 0) {
 
-        const organisationUnits = await this.organisationUnitRepository.findByIds(dbAssessment.organisationUnits.map(ou => ou.id));
+        const organisationUnits = await this.sqlConnection.createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')
+          .where('organisationUnit.id IN (:...ids)', { ids: dbAssessment.organisationUnits.map(ou => ou.id) })
+          .getMany();
 
         await this.domainService.innovations.addActivityLog<'ORGANISATION_SUGGESTION'>(
           transaction,
@@ -263,13 +258,13 @@ export class InnovationAssessmentsService extends BaseAppService {
 
     });
 
-    this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED>({
-      id: user.id, identityId: user.identityId, type: user.type
-    }, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
-      innovationId: innovationId,
-      assessmentId: result.id,
-      organisationUnitIds: data.suggestedOrganisationUnitsIds || [],
-    });
+    if (data.isSubmission && dbAssessment.finishedAt) {
+      this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED>(
+        user,
+        NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
+        { innovationId: innovationId, assessmentId: assessmentId, organisationUnitIds: data.suggestedOrganisationUnitsIds || [] }
+      )
+    }
 
     return { id: result['id'] };
 

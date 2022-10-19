@@ -20,11 +20,12 @@ import { InnovationSectionsService } from '../_services/innovation-sections.serv
 import {
   InnovationsServiceSymbol, InnovationsServiceType,
   InnovationTransferServiceSymbol, InnovationTransferServiceType,
-  InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationAssessmentsServiceType, InnovationAssessmentsServiceSymbol,
+  InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationAssessmentsServiceType, InnovationAssessmentsServiceSymbol, InnovationThreadsServiceType, InnovationThreadsServiceSymbol,
 } from '../_services/interfaces';
 
 import { startup } from './startup';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
+import { InnovationThreadsService } from '../_services/innovation-threads.service';
 
 
 export const container: Container = new Container();
@@ -44,4 +45,7 @@ container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsS
 container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
 container.bind<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol).to(InnovationSectionsService).inSingletonScope();
 container.bind<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol).to(InnovationAssessmentsService).inSingletonScope();
+container.bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol).to(InnovationThreadsService).inSingletonScope();
+
+
 startup();

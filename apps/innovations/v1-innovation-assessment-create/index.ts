@@ -40,7 +40,7 @@ class CreateInnovationAssessment {
       const requestUser = auth.getUserInfo();
 
       const result = await innovationAssessmentsService.createInnovationAssessment(
-        { id: requestUser.id },
+        requestUser,
         params.innovationId,
         body
       );
