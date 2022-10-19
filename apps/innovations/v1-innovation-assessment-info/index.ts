@@ -63,7 +63,9 @@ class GetInnovationAssessmentInfo {
         suggestedOrganisations: result.suggestedOrganisations.map(item => ({
           id: item.id, name: item.name, acronym: item.acronym,
           units: item.units
-        }))
+        })),
+        updatedAt: result.updatedAt,
+        updatedBy: result.updatedBy
       });
       return;
 
@@ -167,7 +169,15 @@ export default openApi(GetInnovationAssessmentInfo.httpTrigger as AzureFunction,
                       }
                     }
                   }
-                }
+                },
+                updatedAt: { type: 'string', format: 'date-time' },
+                updatedBy: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    name: { type: 'string' }
+                  }
+                },
               }
             }
           }

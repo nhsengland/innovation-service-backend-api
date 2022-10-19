@@ -73,7 +73,7 @@ export class InnovationAssessmentsService extends BaseAppService {
     }
 
     // Fetch users names.
-    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [assessment.assignTo.id] }));
+    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [assessment.assignTo.id, assessment.updatedBy] }));
 
     try {
 
@@ -104,7 +104,9 @@ export class InnovationAssessmentsService extends BaseAppService {
             id: item.id, name: item.name, acronym: item.acronym,
             organisation: { id: item.organisation.id, name: item.organisation.name, acronym: item.organisation.acronym }
           }))
-        )
+        ),
+        updatedAt: assessment.updatedAt,
+        updatedBy: { id: assessment.updatedBy, name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || '' }
       };
 
     } catch (error) {
