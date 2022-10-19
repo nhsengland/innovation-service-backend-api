@@ -1,14 +1,14 @@
 import { inject, injectable } from 'inversify';
-import type { EntityManager, FindManyOptions, Repository } from 'typeorm';
+import type { EntityManager, Repository } from 'typeorm';
 
 import {
   DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType,
 } from '@innovations/shared/services';
 
 import { BaseAppService } from './base-app.service';
-import { InnovationActionEntity, InnovationEntity, UserEntity, CommentEntity, OrganisationUnitEntity, NotificationEntity, InnovationSectionEntity, InnovationSupportEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationEntity, UserEntity, NotificationEntity, InnovationSectionEntity, InnovationSupportEntity } from '@innovations/shared/entities';
 import { type InnovationSectionCatalogueEnum, InnovationActionStatusEnum, AccessorOrganisationRoleEnum, type InnovatorOrganisationRoleEnum, InnovationSectionAliasCatalogueEnum, ActivityEnum, UserTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
-import { NotFoundError, InnovationErrorsEnum, UnprocessableEntityError, UserErrorsEnum, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { NotFoundError, InnovationErrorsEnum, UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
