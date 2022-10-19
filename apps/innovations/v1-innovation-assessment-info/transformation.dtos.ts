@@ -26,4 +26,6 @@ export type ResponseDTO = {
     id: string; name: string; acronym: null | string;
     units: { id: string; name: string; acronym: string; }[]
   }[];
+  updatedAt: null | DateISOType,
+  updatedBy: { id: string, name: string };
 };

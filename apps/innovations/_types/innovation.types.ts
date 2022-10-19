@@ -32,6 +32,8 @@ export type InnovationAssessmentType = {
   hasImplementationPlanComment: null | string;
   hasScaleResource: null | string;
   hasScaleResourceComment: null | string;
+  updatedAt: null | DateISOType;
+  updatedBy: { id: string, name: string };
 }
 
 export type ThreadListModel = {
