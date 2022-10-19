@@ -10,6 +10,7 @@ import { container } from '../_config';
 import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
+import { UserTypeEnum } from '@users/shared/enums';
 
 
 class V1MeInfo {
@@ -26,8 +27,16 @@ class V1MeInfo {
       const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
       const requestUser = authInstance.getUserInfo();
 
-      const userTermsOfUse = await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type });
-      const userInnovationTransfers = await usersService.getUserPendingInnovationTransfers(requestUser.email);
+      let termsOfUseAccepted = false;
+      let hasInnovationTransfers = false;
+
+      if (requestUser.type === UserTypeEnum.ADMIN) {
+        termsOfUseAccepted = true;
+        hasInnovationTransfers = false;
+      } else {
+        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type })).isAccepted;
+        hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
+      }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: requestUser.id,
@@ -38,8 +47,8 @@ class V1MeInfo {
         phone: requestUser.phone,
         passwordResetAt: requestUser.passwordResetAt,
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
-        termsOfUseAccepted: userTermsOfUse.isAccepted,
-        hasInnovationTransfers: userInnovationTransfers.length > 0,
+        termsOfUseAccepted,
+        hasInnovationTransfers,
         organisations: requestUser.organisations
       });
       return;
