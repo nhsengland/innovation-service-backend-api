@@ -1,5 +1,5 @@
-import type { HttpRequest } from '@azure/functions'
-
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
@@ -52,4 +52,91 @@ class V1InnovationThreadMessageUpdate {
 
 }
 
-export default V1InnovationThreadMessageUpdate.httpTrigger;
+export default openApi(V1InnovationThreadMessageUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads/{threadId}/messages/{messageId}', {
+  put: {
+    summary: 'Update a thread message',
+    description: 'Update a thread message',
+    tags: ['Innovation Thread'],
+    operationId: 'v1-innovation-thread-message-update',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation Id',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+      {
+        name: 'threadId',
+        in: 'path',
+        description: 'Thread Id',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+      {
+        name: 'messageId',
+        in: 'path',
+        description: 'Message Id',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+    ],
+    requestBody: {
+      description: 'Message',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string',
+                description: 'Message',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Message Id',
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'Bad Request',
+      },
+      '401': {
+        description: 'Unauthorized',
+      },
+      '403': {
+        description: 'Forbidden',
+      },
+      '404': {
+        description: 'Not Found',
+      },
+      '500': {
+        description: 'Internal Server Error',
+      },
+    },
+  },
+});
+

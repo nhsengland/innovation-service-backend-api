@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -65,4 +66,110 @@ class V1InnovationThreadMessageCreate {
 
 }
 
-export default V1InnovationThreadMessageCreate.httpTrigger;
+export default openApi(V1InnovationThreadMessageCreate.httpTrigger as AzureFunction, '/v1/innovation/{innovationId}/threads/{threadId}/messages', {
+  post: {
+    description: 'Creates a new message in a thread.',
+    operationId: 'v1-innovation-thread-message-create',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation ID',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+      {
+        name: 'threadId',
+        in: 'path',
+        description: 'Thread ID',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+    ],
+    requestBody: {
+      description: 'Message to be created.',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              message: {
+                type: 'string',
+                description: 'Message to be created.',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Message created.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                threadMessage: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'string',
+                      description: 'Message ID.',
+                    },
+                    message: {
+                      type: 'string',
+                      description: 'Message.',
+                    },
+                    createdBy: {
+                      type: 'object',
+                      properties: {
+                        id: {
+                          type: 'string',
+                          description: 'User ID.',
+                        },
+                        identityId: {
+                          type: 'string',
+                          description: 'User identity ID.',
+                        },
+                      },
+                    },
+                    createdAt: {
+                      type: 'string',
+                      description: 'Date when the message was created.',
+                    },
+                    isEditable: {
+                      type: 'boolean',
+                      description: 'Flag to indicate if the message can be edited.',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: {
+        description: 'Bad request.',
+      },
+      401: {
+        description: 'Unauthorized.',
+      },
+      403: {
+        description: 'Forbidden.',
+      },
+      404: {
+        description: 'Not found.',
+      },
+      500: {
+        description: 'Internal server error.',
+      },
+    },
+  },
+});
+

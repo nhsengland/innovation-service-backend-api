@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -8,10 +9,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from '../_services/interfaces';
 
-import { ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { ParamsType, QueryParamsSchema, QueryParamsType, ParamsSchema } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema } from './validation.schemas';
-
 
 class V1InnovationThreadCreate {
 
@@ -77,4 +76,140 @@ class V1InnovationThreadCreate {
 
 }
 
-export default V1InnovationThreadCreate.httpTrigger;
+export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, 'v1/{innovationId}/threads', {
+  get: {
+    summary: 'Get Innovation Threads',
+    description: 'Get Innovation Threads',
+    tags: ['Innovation Threads'],
+    operationId: 'v1-innovation-thread-list',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation Id',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+      {
+        name: 'skip',
+        in: 'query',
+        description: 'Skip',
+        required: false,
+        schema: {
+          type: 'number',
+        },
+      },
+      {
+        name: 'take',
+        in: 'query',
+        description: 'Take',
+        required: false,
+        schema: {
+          type: 'number',
+        },
+      },
+      {
+        name: 'order',
+        in: 'query',
+        description: 'Order',
+        required: false,
+        schema: {
+          type: 'string',
+        },
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                count: {
+                  type: 'number',
+                },
+                threads: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: {
+                        type: 'string',
+                      },
+                      subject: {
+                        type: 'string',
+                      },
+                      messageCount: {
+                        type: 'number',
+                      },
+                      createdAt: {
+                        type: 'string',
+                      },
+                      isNew: {
+                        type: 'boolean',
+                      },
+                      lastMessage: {
+                        type: 'object',
+                        properties: {
+                          id: {
+                            type: 'string',
+                          },
+                          createdAt: {
+                            type: 'string',
+                          },
+                          createdBy: {
+                            type: 'object',
+                            properties: {
+                              id: {
+                                type: 'string',
+                              },
+                              name: {
+                                type: 'string',
+                              },
+                              type: {
+                                type: 'string',
+                              },
+                              organisationUnit: {
+                                type: 'object',
+                                properties: {
+                                  id: {
+                                    type: 'string',
+                                  },
+                                  name: {
+                                    type: 'string',
+                                  },
+                                  acronym: {
+                                    type: 'string',
+                                  },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+      },
+      403: {
+        description: 'Forbidden',
+      },
+      404: {
+        description: 'Not Found',
+      },
+      500: {
+        description: 'Internal Server Error',
+      },
+    },
+  },
+});

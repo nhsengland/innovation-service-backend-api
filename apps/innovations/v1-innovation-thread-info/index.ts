@@ -1,4 +1,5 @@
-import type { HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions'
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -13,7 +14,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema } from './validation.schemas';
 
 
-class V1InnovationThreadCreate {
+class V1InnovationThreadInfo {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -56,4 +57,80 @@ class V1InnovationThreadCreate {
 
 }
 
-export default V1InnovationThreadCreate.httpTrigger;
+export default openApi(V1InnovationThreadInfo.httpTrigger as AzureFunction, '/v1/innovation/{innovationId}/thread/{threadId}', {
+  get: {
+    summary: 'Get Innovation Thread Info',
+    description: 'Get Innovation Thread Info',
+    tags: ['Innovation Thread'],
+    operationId: 'v1-innovation-thread-info',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation Id',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+      {
+        name: 'threadId',
+        in: 'path',
+        description: 'Thread Id',
+        required: true,
+        schema: {
+          type: 'string',
+        },
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                },
+                subject: {
+                  type: 'string',
+                },
+                createdAt: {
+                  type: 'string',
+                },
+                createdBy: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'string',
+                    },
+                    name: {
+                      type: 'string',
+                    },
+                    type: {
+                      type: 'string',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: {
+        description: 'Unauthorized',
+      },
+      403: {
+        description: 'Forbidden',
+      },
+      404: {
+        description: 'Not Found',
+      },
+      500: {
+        description: 'Internal Server Error',
+      },
+    },
+  },
+});

@@ -3,7 +3,7 @@ info:
   title: "Innovation Service - Innovations API"
   version: "1.0.0"
 servers:
-  - url: 'https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api'
+  - url: "https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api"
 
 paths:
   "/v1":
@@ -403,3 +403,508 @@ paths:
           description: "Bad Request"
         "401":
           description: "Unauthorized"
+
+  "/v1/{innovationId}/threads":
+    post:
+      summary: Create a new editable thread
+      description: Create a new editable thread.
+      tags:
+        - "[v1] Innovation Threads"
+      operationId: v1-innovation-thread-create
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The thread details.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                  description: The thread subject.
+                  example: Subject
+                message:
+                  type: string
+                  description: The thread message.
+                  example: Message
+              required:
+                - subject
+                - message
+      responses:
+        "200":
+          description: The thread was created successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  thread:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: The thread id.
+                        example: 00000000-0000-0000-0000-000000000000
+                      subject:
+                        type: string
+                        description: The thread subject.
+                        example: Subject
+                      createdBy:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            description: The user id.
+                            example: 00000000-0000-0000-0000-000000000000
+                      createdAt:
+                        type: string
+                        description: The thread creation date.
+                        example: "2021-01-01T00:00:00.000Z"
+        "400":
+          description: The request was invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create a thread.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the thread.
+    get:
+      summary: Get Innovation Threads
+      description: Get Innovation Threads
+      tags:
+        - "[v1] Innovation Threads"
+      operationId: v1-innovation-thread-list
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation Id
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          description: Skip
+          required: false
+          schema:
+            type: number
+        - name: take
+          in: query
+          description: Take
+          required: false
+          schema:
+            type: number
+        - name: order
+          in: query
+          description: Order
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  threads:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        subject:
+                          type: string
+                        messageCount:
+                          type: number
+                        createdAt:
+                          type: string
+                        isNew:
+                          type: boolean
+                        lastMessage:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            createdAt:
+                              type: string
+                            createdBy:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                type:
+                                  type: string
+                                organisationUnit:
+                                  type: object
+                                  properties:
+                                    id:
+                                      type: string
+                                    name:
+                                      type: string
+                                    acronym:
+                                      type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+
+  "/v1/{innovationId}/threads/{threadId}":
+    get:
+      summary: Get Innovation Thread Info
+      description: Get Innovation Thread Info
+      tags:
+        - "[v1] Innovation Threads"
+      operationId: v1-innovation-thread-info
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation Id
+          required: true
+          schema:
+            type: string
+        - name: threadId
+          in: path
+          description: Thread Id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  subject:
+                    type: string
+                  createdAt:
+                    type: string
+                  createdBy:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      type:
+                        type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+
+  "/v1/{innovationId}/threads/{threadId}/messages":
+    post:
+      description: Creates a new message in a thread.
+      operationId: v1-innovation-thread-message-create
+      tags:
+        - "[v1] Innovation Threads"
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation ID
+          required: true
+          schema:
+            type: string
+        - name: threadId
+          in: path
+          description: Thread ID
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Message to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Message to be created.
+      responses:
+        '200':
+          description: Message created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  threadMessage:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: Message ID.
+                      message:
+                        type: string
+                        description: Message.
+                      createdBy:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            description: User ID.
+                          identityId:
+                            type: string
+                            description: User identity ID.
+                      createdAt:
+                        type: string
+                        description: Date when the message was created.
+                      isEditable:
+                        type: boolean
+                        description: Flag to indicate if the message can be edited.
+        '400':
+          description: Bad request.
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden.
+        '404':
+          description: Not found.
+        '500':
+          description: Internal server error.
+    get:
+      summary: Get a list of messages from a thread
+      description: Get a list of messages from a thread
+      operationId: v1-innovation-thread-message-list
+      tags:
+        - "[v1] Innovation Threads"
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation ID
+          required: true
+          schema:
+            type: string
+        - name: threadId
+          in: path
+          description: Thread ID
+          required: true
+          schema:
+            type: string
+        - name: skip
+          in: query
+          description: Number of records to skip
+          required: false
+          schema:
+            type: number
+        - name: take
+          in: query
+          description: Number of records to take
+          required: false
+          schema:
+            type: number
+        - name: order
+          in: query
+          description: Order of the records
+          required: false
+          schema:
+            type: string
+            enum:
+              - ASC
+              - DESC
+      responses:
+        '200':
+          description: Returns a list of messages from a thread
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  messages:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        createdAt:
+                          type: string
+                        createdBy:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            type:
+                              type: string
+                              enum:
+                                - INNOVATOR
+                                - ASSESSOR
+                                - ACCESSOR
+                            organisationUnit:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                acronym:
+                                  type: string
+                            organisation:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                                acronym:
+                                  type: string
+                        isEditable:
+                          type: boolean
+                        isNew:
+                          type: boolean
+                        message:
+                          type: string
+                        updatedAt:
+                          type: string
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not found
+        '500':
+          description: Internal server error
+
+  "/v1/{innovationId}/threads/{threadId}/messages/{messageId}":
+    get:
+      summary: Get a thread message info
+      description: Get a thread message info
+      operationId: v1-innovation-thread-message-info
+      tags:
+        - "[v1] Innovation Threads"
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation ID
+          required: true
+          schema:
+            type: string
+        - name: threadId
+          in: path
+          description: Thread ID
+          required: true
+          schema:
+            type: string
+        - name: messageId
+          in: path
+          description: Message ID
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Message ID
+                  message:
+                    type: string
+                    description: Message
+                  createdAt:
+                    type: string
+                    description: Message creation date
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
+    put:
+      summary: Update a thread message
+      description: Update a thread message
+      tags:
+        - "[v1] Innovation Threads"
+      operationId: v1-innovation-thread-message-update
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation Id
+          required: true
+          schema:
+            type: string
+        - name: threadId
+          in: path
+          description: Thread Id
+          required: true
+          schema:
+            type: string
+        - name: messageId
+          in: path
+          description: Message Id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Message
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  description: Message
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Message Id
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+        '500':
+          description: Internal Server Error
