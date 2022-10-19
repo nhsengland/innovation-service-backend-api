@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
@@ -33,3 +33,24 @@ export type InnovationAssessmentType = {
   hasScaleResource: null | string;
   hasScaleResourceComment: null | string;
 }
+
+export type ThreadListModel = {
+  count: number;
+  threads: {
+    id: string;
+    subject: string;
+    messageCount: number;
+    createdAt: string;
+    isNew: boolean;
+    lastMessage: {
+      id: string;
+      createdAt: string;
+      createdBy: {
+        id: string;
+        name: string;
+        type: UserTypeEnum;
+        organisationUnit: { id: string; name: string; acronym: string } | null;
+      };
+    };
+  }[];
+};

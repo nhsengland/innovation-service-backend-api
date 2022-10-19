@@ -19,3 +19,8 @@ export enum InnovationFileUploadContextEnum {
   REGULATIONS_AND_STANDARDS = 'REGULATIONS_AND_STANDARDS',
   IMPLEMENTATION_PLAN = 'IMPLEMENTATION_PLAN'
 }
+
+export enum InnovationThreadSubjectEnum {
+  NEEDS_ASSESSMENT_START = 'Needs assessment process started',
+  NEEDS_ASSESSMENT_COMPLETE = 'Needs assessment process completed',
+}

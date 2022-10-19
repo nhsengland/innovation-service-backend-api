@@ -36,6 +36,7 @@ import { InnovationHelper } from '../_helpers/innovation.helper';
 
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
+import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
 
 @injectable()
@@ -133,7 +134,7 @@ export class InnovationAssessmentsService extends BaseAppService {
       const thread = await this.threadService.createThread(
         user,
         innovationId,
-        'Needs Assessment started',
+        InnovationThreadSubjectEnum.NEEDS_ASSESSMENT_START,
         data.message,
         true,
         innovationId,
