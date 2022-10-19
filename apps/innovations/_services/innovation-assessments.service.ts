@@ -130,18 +130,6 @@ export class InnovationAssessmentsService extends BaseAppService {
 
     return this.sqlConnection.transaction(async transaction => {
 
-      const thread = await this.threadService.createThread(
-        user,
-        innovationId,
-        'Needs Assessment started',
-        data.message,
-        true,
-        innovationId,
-        ThreadContextTypeEnum.NEEDS_ASSESSMENT,
-        transaction,
-        false,
-      )
-
       await transaction.update(InnovationEntity,
         { id: innovationId },
         { status: InnovationStatusEnum.NEEDS_ASSESSMENT }
@@ -154,6 +142,17 @@ export class InnovationAssessmentsService extends BaseAppService {
         createdBy: user.id,
         updatedBy: user.id
       }));
+
+      const thread = await this.threadService.createThreadOrMessage(
+        user,
+        innovationId,
+        'Needs Assessment started',
+        data.message,
+        assessment.id,
+        ThreadContextTypeEnum.NEEDS_ASSESSMENT,
+        transaction,
+        true,
+      )
 
       await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_START'>(
         transaction,
