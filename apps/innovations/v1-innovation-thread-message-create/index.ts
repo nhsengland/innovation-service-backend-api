@@ -66,7 +66,7 @@ class V1InnovationThreadMessageCreate {
 
 }
 
-export default openApi(V1InnovationThreadMessageCreate.httpTrigger as AzureFunction, '/v1/innovation/{innovationId}/threads/{threadId}/messages', {
+export default openApi(V1InnovationThreadMessageCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads/{threadId}/messages', {
   post: {
     description: 'Creates a new message in a thread.',
     operationId: 'v1-innovation-thread-message-create',

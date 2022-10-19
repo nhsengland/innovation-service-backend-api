@@ -65,7 +65,7 @@ class V1InnovationThreadCreate {
 
 }
 
-export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, 'v1/{innovationId}/threads', {
+export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads', {
   post: {
     summary: 'Create a new editable thread',
     description: 'Create a new editable thread.',

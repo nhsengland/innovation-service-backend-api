@@ -76,7 +76,7 @@ class V1InnovationThreadCreate {
 
 }
 
-export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, 'v1/{innovationId}/threads', {
+export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads', {
   get: {
     summary: 'Get Innovation Threads',
     description: 'Get Innovation Threads',

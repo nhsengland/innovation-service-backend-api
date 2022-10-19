@@ -52,7 +52,7 @@ class V1InnovationThreadMessageInfo {
 
 }
 
-export default openApi(V1InnovationThreadMessageInfo.httpTrigger as AzureFunction, '/v1/innovation/{innovationId}/threads/{threadId}/messages/{messageId}', {
+export default openApi(V1InnovationThreadMessageInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/threads/{threadId}/messages/{messageId}', {
   get: {
     summary: 'Get a thread message info',
     description: 'Get a thread message info',
