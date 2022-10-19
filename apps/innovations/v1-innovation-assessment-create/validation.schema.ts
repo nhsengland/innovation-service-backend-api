@@ -11,8 +11,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  comment: string;
+  message: string;
 }
 export const BodySchema = Joi.object<BodyType>({
-  comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
 }).required();
