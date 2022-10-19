@@ -19,19 +19,11 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type QueryParamsType = {
   skip?: number;
   take?: number;
-  order?: {
-    subject?: 'ASC' | 'DESC';
-    createdAt?: 'ASC' | 'DESC';
-    messageCount?: 'ASC' | 'DESC';
-  }
+  order?: string;
 }
 
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
   skip: Joi.number().integer().min(0).default(0),
   take: Joi.number().integer().min(1).max(50).default(50),
-  order: Joi.object({
-    subject: Joi.string().valid('ASC', 'DESC').default('DESC').optional(),
-    createdAt: Joi.string().valid('ASC', 'DESC').default('DESC').optional(),
-    messageCount: Joi.string().valid('ASC', 'DESC').default('DESC').optional(),
-  }).optional(),
+  order: Joi.string().optional(),
 });

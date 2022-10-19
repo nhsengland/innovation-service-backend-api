@@ -23,7 +23,7 @@ class V1InnovationThreadCreate {
     try {
 
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .checkInnovatorType()
@@ -33,12 +33,18 @@ class V1InnovationThreadCreate {
 
       const requestUser = auth.getUserInfo();
 
+      let orderBy;
+
+      if (queryParams.order) {
+        orderBy = JSON.parse(queryParams.order);
+      }
+
       const result = await threadsService.getInnovationThreads(
         requestUser,
         pathParams.innovationId,
-        query.skip,
-        query.take,
-        query.order,
+        queryParams.skip,
+        queryParams.take,
+        orderBy,
       )
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,

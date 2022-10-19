@@ -439,7 +439,7 @@ export class InnovationThreadsService extends BaseAppService {
 
     const direction = order?.createdAt || 'DESC';
 
-    threadMessageQuery.addOrderBy('messages.created_at', direction);
+    threadMessageQuery.addOrderBy('createdAt', direction);
 
     threadMessageQuery.skip(skip);
     threadMessageQuery.take(take);

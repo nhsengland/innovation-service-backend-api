@@ -35,12 +35,19 @@ class V1InnovationThreadMessageList {
 
       const requestUser = auth.getUserInfo();
 
+
+      let orderBy;
+
+      if (queryParams.order) {
+        orderBy = JSON.parse(queryParams.order);
+      }
+
       const result = await threadsService.getThreadMessagesList(
         requestUser,
         pathParams.threadId,
         queryParams.skip,
         queryParams.take,
-        queryParams.order,
+        orderBy,
       )
 
 
