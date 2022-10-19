@@ -13,6 +13,7 @@ export type ResponseDTO = {
     postCode: null | string,
     mainCategory: null | InnovationCategoryCatalogueEnum,
     otherMainCategoryDescription: null | string,
+    isAssessmentOverdue?: boolean,
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } },
     supports?: {
       id: string,

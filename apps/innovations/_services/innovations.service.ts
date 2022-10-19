@@ -84,14 +84,14 @@ export class InnovationsService extends BaseAppService {
     filters: {
       status: InnovationStatusEnum[],
       name?: string,
-      mainCategories?: InnovationCategoryCatalogueEnum[];
-      locations?: InnovationLocationEnum[];
+      mainCategories?: InnovationCategoryCatalogueEnum[],
+      locations?: InnovationLocationEnum[],
       assessmentSupportStatus?: AssessmentSupportFilterEnum,
       supportStatuses?: InnovationSupportStatusEnum[],
-      engagingOrganisations?: string[];
-      assignedToMe?: boolean;
-      suggestedOnly?: boolean;
-      fields?: ('assessment' | 'supports')[];
+      engagingOrganisations?: string[],
+      assignedToMe?: boolean,
+      suggestedOnly?: boolean,
+      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt' | 'engagingEntities'>
   ): Promise<{
@@ -105,6 +105,7 @@ export class InnovationsService extends BaseAppService {
       postCode: null | string;
       mainCategory: null | InnovationCategoryCatalogueEnum;
       otherMainCategoryDescription: null | string;
+      isAssessmentOverdue?: boolean,
       assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
       supports?: {
         id: string;
@@ -120,10 +121,10 @@ export class InnovationsService extends BaseAppService {
     }[]
   }> {
 
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations').distinct();
+    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations');
 
     // Assessment relations.
-    if (filters.fields?.includes('assessment') || filters.suggestedOnly) {
+    if (filters.fields?.includes('assessment') || filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
       query.leftJoinAndSelect('innovations.assessments', 'assessments');
       query.leftJoinAndSelect('assessments.assignTo', 'assignTo');
     }
@@ -257,7 +258,7 @@ export class InnovationsService extends BaseAppService {
           let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
 
           if (filters.fields?.includes('assessment')) {
-            switch (innovation.assessments?.length || 0) {
+            switch (innovation.assessments.length) {
               case 0:
                 assessment = null;
                 break;
@@ -288,7 +289,8 @@ export class InnovationsService extends BaseAppService {
             mainCategory: innovation.mainCategory,
             otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
-            ...(assessment ?? {}),
+            isAssessmentOverdue: false,
+            ...(assessment === undefined ? {} : { assessment }),
 
             ...(!filters.fields?.includes('supports') ? {} : {
               supports: (innovation.innovationSupports || []).map(support => ({

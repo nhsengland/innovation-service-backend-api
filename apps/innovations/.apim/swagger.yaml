@@ -53,7 +53,7 @@ paths:
       tags:
         - "[v1] Innovations"
       description: "Get assessment overdue innovations"
-      operationId: "v1-innovations-list"
+      operationId: "v1-innovations-overdue-assessments"
       parameters:
         - name: Authorization
           in: header

@@ -46,6 +46,7 @@ class V1InnovationsOverdueAssessments {
 
 export default openApi(V1InnovationsOverdueAssessments.httpTrigger as AzureFunction, '/v1/overdue-assessments', {
   get: {
+    operationId: 'v1-innovations-overdue-assessments',
     description: 'Get assessment overdue innovations',
     parameters: [],
     responses: {
