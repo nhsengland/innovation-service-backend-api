@@ -57,15 +57,15 @@ class V1InnovationsList {
           postCode: item.postCode,
           mainCategory: item.mainCategory,
           otherMainCategoryDescription: item.otherMainCategoryDescription,
-          ...(item.assessment ? { assessment: item.assessment } : {}),
-          ...(item.supports ? {
+          ...(item.isAssessmentOverdue === undefined ? {} : { isAssessmentOverdue: item.isAssessmentOverdue }),
+          ...(item.assessment === undefined ? {} : { assessment: item.assessment }),
+          ...(item.supports === undefined ? {} : {
             supports: item.supports.map(s => ({
               id: s.id,
               status: s.status,
               organisation: s.organisation
             }))
-          } : {})
-
+          })
         }))
       });
       return;
@@ -82,6 +82,7 @@ class V1InnovationsList {
 
 export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
   get: {
+    operationId: 'v1-innovations-list',
     description: 'Get innovations list',
     parameters: [],
     responses: {

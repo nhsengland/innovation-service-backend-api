@@ -28,7 +28,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   engagingOrganisations?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
-  fields?: ('assessment' | 'supports')[]
+  fields?: ('isAssessmentOverdue' | 'assessment' | 'supports')[]
 }
 
 
@@ -54,5 +54,5 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   }),
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('assessment', 'supports')).optional()
+  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('isAssessmentOverdue', 'assessment', 'supports')).optional()
 }).required();
