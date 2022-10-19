@@ -329,7 +329,7 @@ export class InnovationActionService extends BaseAppService {
       throw new Error(InnovationErrorsEnum.INNOVATION_ACTION_FORBIDDEN_ACCESS)
     }
 
-    const result = await this.updateAction(requestUser, innovationId, innovationAction, actionData, organisationUnit);
+    const result = await this.updateAction(requestUser, innovationId, innovationAction, actionData);
 
     return result;
   }
@@ -351,7 +351,7 @@ export class InnovationActionService extends BaseAppService {
     return result;
   }
 
-  private async updateAction(requestUser: DomainUserInfoType, innovationId: string, innovationAction: InnovationActionEntity, actionData: { message: string; status: InnovationActionStatusEnum }, organisationUnit?: { id: string; name: string; acronym: string; }): Promise<InnovationActionEntity> {
+  private async updateAction(requestUser: DomainUserInfoType, innovationId: string, innovationAction: InnovationActionEntity, actionData: { message: string; status: InnovationActionStatusEnum }): Promise<InnovationActionEntity> {
     return await this.sqlConnection.transaction(async (trs) => {
 
       let thread;
