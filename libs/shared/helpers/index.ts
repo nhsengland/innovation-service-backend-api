@@ -1,2 +1,2 @@
 export { ResponseHelper } from './response.helper';
-export { JoiHelper } from './joi.helper';
+export { JoiHelper, PaginationQueryParamsType } from './joi.helper';
