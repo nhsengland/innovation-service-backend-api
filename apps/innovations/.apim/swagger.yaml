@@ -7,11 +7,53 @@ servers:
 
 paths:
   "/v1":
+    get:
+      tags:
+        - "[v1] Innovations"
+      description: "Get innovations list "
+      operationId: "v1-innovations-list"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "201":
+          description: "Created"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+        "422":
+          description: "Unprocessable Entity"
     post:
       tags:
         - "[v1] Innovations"
       description: "Creates an innovation"
       operationId: "v1-innovation-create"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "201":
+          description: "Created"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+        "422":
+          description: "Unprocessable Entity"
+
+  "/v1/overdue-assessments":
+    get:
+      tags:
+        - "[v1] Innovations"
+      description: "Get assessment overdue innovations"
+      operationId: "v1-innovations-list"
       parameters:
         - name: Authorization
           in: header
