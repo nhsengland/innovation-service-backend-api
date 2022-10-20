@@ -64,7 +64,6 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'description', type: 'nvarchar', nullable: true })
   description: null | string;
 
-
   @Column({ name: 'country_name', length: 100 })
   countryName: string;
 

@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
-import type { Repository, SelectQueryBuilder } from 'typeorm';
+import type { SelectQueryBuilder } from 'typeorm';
 
 import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum } from '@innovations/shared/enums';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, InnovationAssessmentEntity, InnovationSupportLogEntity, ActivityLogEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError, InternalServerError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -18,25 +18,10 @@ import { BaseAppService } from './base-app.service';
 @injectable()
 export class InnovationsService extends BaseAppService {
 
-  innovationRepository: Repository<InnovationEntity>;
-  innovationAssessmentRepository: Repository<InnovationAssessmentEntity>;
-  innovationSupportLogRepository: Repository<InnovationSupportLogEntity>;
-  activityLogRepository: Repository<ActivityLogEntity>;
-  organisationRepository: Repository<OrganisationEntity>;
-  organisationUnitRepository: Repository<OrganisationUnitEntity>;
-
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifService: NotifierServiceType,
-  ) {
-    super();
-    this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
-    this.innovationAssessmentRepository = this.sqlConnection.getRepository<InnovationAssessmentEntity>(InnovationAssessmentEntity);
-    this.innovationSupportLogRepository = this.sqlConnection.getRepository<InnovationSupportLogEntity>(InnovationSupportLogEntity);
-    this.activityLogRepository = this.sqlConnection.getRepository<ActivityLogEntity>(ActivityLogEntity);
-    this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
-    this.organisationUnitRepository = this.sqlConnection.getRepository<OrganisationUnitEntity>(OrganisationUnitEntity);
-  }
+  ) { super(); }
 
 
   /**
@@ -110,6 +95,7 @@ export class InnovationsService extends BaseAppService {
       supports?: {
         id: string;
         status: InnovationSupportStatusEnum;
+        updatedAt: DateISOType,
         organisation: {
           id: string, name: string, acronym: null | string,
           unit: {
@@ -289,13 +275,14 @@ export class InnovationsService extends BaseAppService {
             mainCategory: innovation.mainCategory,
             otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
-            isAssessmentOverdue: false,
+            ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays(innovation.submittedAt, new Date().toISOString()) > 7) }),
             ...(assessment === undefined ? {} : { assessment }),
 
             ...(!filters.fields?.includes('supports') ? {} : {
               supports: (innovation.innovationSupports || []).map(support => ({
                 id: support.id,
                 status: support.status,
+                updatedAt: support.updatedAt,
                 organisation: {
                   id: support.organisationUnit.organisation.id,
                   name: support.organisationUnit.organisation.name,
@@ -332,15 +319,13 @@ export class InnovationsService extends BaseAppService {
   async getNeedsAssessmentOverdueInnovations(innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[], supportFilter?: AssessmentSupportFilterEnum): Promise<number> {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .distinct()
       .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .where('innovation.status IN (:...innovationStatus)', { innovationStatus })
+      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`);
 
     if (supportFilter) {
       this.addInnovationSupportFilterSQL(query, supportFilter);
     }
-
-    query.andWhere('innovation.status IN (:...innovationStatus)', { innovationStatus });
-    query.andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`);
 
     return query.getCount();
 
@@ -354,7 +339,7 @@ export class InnovationsService extends BaseAppService {
   ): Promise<{ id: string }> {
 
     // Sanity check if innovation name already exists (for the same user).
-    const repeatedNamesCount = await this.innovationRepository.createQueryBuilder('innovation')
+    const repeatedNamesCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.owner_id = :ownerId', { ownerId: user.id })
       .andWhere('TRIM(LOWER(innovation.name)) = :innovationName', { innovationName: data.name.trim().toLowerCase() })
       .getCount();
@@ -363,7 +348,7 @@ export class InnovationsService extends BaseAppService {
     }
 
     // Sanity check if all organisation units exists.
-    const organisationsCount = await this.organisationRepository.createQueryBuilder('organisation')
+    const organisationsCount = await this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
       .where('organisation.id IN (:...organisationIds)', { organisationIds: data.organisationShares })
       .getCount();
     if (organisationsCount != data.organisationShares.length) {

@@ -63,6 +63,7 @@ class V1InnovationsList {
             supports: item.supports.map(s => ({
               id: s.id,
               status: s.status,
+              updatedAt: s.updatedAt,
               organisation: s.organisation
             }))
           })

@@ -18,6 +18,7 @@ export type ResponseDTO = {
     supports?: {
       id: string,
       status: InnovationSupportStatusEnum,
+      updatedAt: DateISOType,
       organisation: {
         id: string, name: string, acronym: null | string,
         unit: {
