@@ -34,10 +34,7 @@ class V1PutInnovationSupportUpdate {
 
       // request user is always an accessor. It is ensured he has at least one organisation and one unit.
       const result = await innovationSupportsService.updateInnovationSupport(
-        {
-          id: requestUser.id,
-          organisationUnit: { id: requestUser.organisations[0]!.organisationUnits[0]!.id, name: requestUser.organisations[0]!.organisationUnits[0]!.name }
-        },
+        requestUser,
         params.innovationId,
         params.supportId,
         body

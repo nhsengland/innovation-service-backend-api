@@ -249,11 +249,15 @@ export class InnovationSupportsService extends BaseAppService {
 
 
   async updateInnovationSupport(
-    user: { id: string, organisationUnit: { id: string, name: string } },
+    user: DomainUserInfoType,
     innovationId: string,
     supportId: string,
     data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
   ): Promise<{ id: string }> {
+
+    // Accessor type users always have organisations and units.
+    const organisationUnit = user.organisations.find(_ => true)!.organisationUnits.find(_ => true)!;
+
 
     const query = this.innovationSupportRepository.createQueryBuilder('support').where('support.id = :supportId ', { supportId })
     const dbSupport = await query.getOne();
@@ -269,7 +273,7 @@ export class InnovationSupportsService extends BaseAppService {
         message: data.message,
         createdBy: user.id,
         updatedBy: user.id,
-        organisationUnit: OrganisationUnitEntity.new({ id: user.organisationUnit.id })
+        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id })
       }));
 
 
@@ -308,7 +312,7 @@ export class InnovationSupportsService extends BaseAppService {
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
         {
           innovationSupportStatus: savedSupport.status,
-          organisationUnit: user.organisationUnit.name,
+          organisationUnit: organisationUnit.name,
           comment: { id: comment.id, value: comment.message }
         }
       );
@@ -319,109 +323,34 @@ export class InnovationSupportsService extends BaseAppService {
 
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: user.id, organisationUnitId: user.organisationUnit.id },
+          { id: user.id, organisationUnitId: organisationUnit.id },
           { id: innovationId },
           { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: comment.message, suggestedOrganisationUnits: [] }
         );
       }
 
-      return { id: savedSupport.id };
-
-      // TODO: All code below is regarding notifications!
-      // Review when they are implemented
-      // if (
-      //   [
-      //     InnovationSupportStatus.WITHDRAWN,
-      //     InnovationSupportStatus.NOT_YET,
-      //     InnovationSupportStatus.WAITING,
-      //   ].includes(innovationSupport.status)
-      // ) {
-      //   try {
-      //     await this.notificationService.create(
-      //       requestUser,
-      //       NotificationAudience.ASSESSMENT_USERS,
-      //       innovationId,
-      //       NotificationContextType.INNOVATION,
-      //       innovationId,
-      //       `The innovation with id ${innovationId} has had its support status changed to ${innovationSupport.status}`
-      //     );
-      //   } catch (error) {
-      //     this.logService.error(
-      //       `An error has occured while creating a notification of type ${NotificationContextType.INNOVATION} from ${requestUser.id}`,
-      //       error
-      //     );
-      //   }
-      // }
-
-      // if (
-      //   innovationSupport.status === InnovationSupportStatus.ENGAGING ||
-      //   innovationSupport.status === InnovationSupportStatus.COMPLETE
-      // ) {
-      //   try {
-      //     await this.notificationService.create(
-      //       requestUser,
-      //       NotificationAudience.ACCESSORS,
-      //       innovationId,
-      //       NotificationContextType.INNOVATION,
-      //       innovationId,
-      //       `The innovation with id ${innovationId} has had its support status changed to ${innovationSupport.status}`
-      //     );
-      //   } catch (error) {
-      //     this.logService.error(
-      //       `An error has occured while creating a notification of type ${NotificationContextType.INNOVATION} from ${requestUser.id}`,
-      //       error
-      //     );
-      //   }
-
-      //   try {
-      //     const targetUsers = await this.organisationService.findUserFromUnitUsers(
-      //       innovationSupport.organisationUnitUsers.map((u) => u.id)
-      //     );
-
-      //     await this.notificationService.sendEmail(
-      //       requestUser,
-      //       EmailNotificationTemplate.ACCESSORS_ASSIGNED_TO_INNOVATION,
-      //       innovationId,
-      //       innovationId,
-      //       targetUsers
-      //     );
-      //   } catch (error) {
-      //     this.logService.error(
-      //       `An error has occured while sending an email with template ${EmailNotificationTemplate.ACCESSORS_ASSIGNED_TO_INNOVATION} from ${requestUser.id}`,
-      //       error
-      //     );
-      //   }
-      // }
-
-      // try {
-      //   const innovation = await this.innovationService.find(innovationId, {
-      //     relations: ["owner"],
-      //   });
-
-      //   const owner = innovation.owner.id;
-      //   await this.notificationService.sendEmail(
-      //     requestUser,
-      //     EmailNotificationTemplate.INNOVATORS_SUPPORT_STATUS_UPDATE,
-      //     innovationId,
-      //     innovationId,
-      //     [owner],
-      //     {
-      //       organisation_name: organisationUnit.name,
-      //       innovation_name: innovation.name,
-      //     }
-      //   );
-      // } catch (error) {
-      //   this.logService.error(
-      //     `An error has occured while sending an email with template ${EmailNotificationTemplate.INNOVATORS_SUPPORT_STATUS_UPDATE} from ${requestUser.id}`,
-      //     error
-      //   );
-      // }
-      // const result = await transactionManager.save(
-      //   InnovationSupport,
-      //   innovationSupport
-      // );
+      return {
+        id: savedSupport.id,
+        status: savedSupport.status,
+        statusChanged: savedSupport.status !== dbSupport.status,
+        newAssignedAccessors: data.accessors || []
+      };
 
     });
+
+    this.notifierService.send(
+      user,
+      NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
+      {
+        innovationId,
+        innovationSupport: {
+          id: result.id,
+          status: result.status,
+          statusChanged: result.statusChanged,
+          newAssignedAccessors: result.newAssignedAccessors,
+        },
+      }
+    );
 
     return result;
 

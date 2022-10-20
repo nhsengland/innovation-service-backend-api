@@ -424,7 +424,7 @@ export class InnovationActionService extends BaseAppService {
         }
       }
 
-      return await trs.save(InnovationActionEntity, innovationAction);
+      return trs.save(InnovationActionEntity, innovationAction);
     });
   }
   private getFilterStatusList(openActions: boolean): InnovationActionStatusEnum[] {
