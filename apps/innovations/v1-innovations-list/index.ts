@@ -51,6 +51,7 @@ class V1InnovationsList {
         data: result.data.map(item => ({
           id: item.id,
           name: item.name,
+          description: item.description,
           status: item.status,
           submittedAt: item.submittedAt,
           countryName: item.countryName,
@@ -63,6 +64,7 @@ class V1InnovationsList {
             supports: item.supports.map(s => ({
               id: s.id,
               status: s.status,
+              updatedAt: s.updatedAt,
               organisation: s.organisation
             }))
           })

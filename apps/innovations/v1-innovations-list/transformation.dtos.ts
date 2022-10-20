@@ -7,6 +7,7 @@ export type ResponseDTO = {
   data: {
     id: string,
     name: string,
+    description: null | string,
     status: InnovationStatusEnum,
     submittedAt: null | DateISOType,
     countryName: null | string,
@@ -18,6 +19,7 @@ export type ResponseDTO = {
     supports?: {
       id: string,
       status: InnovationSupportStatusEnum,
+      updatedAt: DateISOType,
       organisation: {
         id: string, name: string, acronym: null | string,
         unit: {

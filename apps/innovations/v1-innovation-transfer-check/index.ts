@@ -1,4 +1,4 @@
-import type { Context, HttpRequest } from '@azure/functions'
+import type { AzureFunction, Context, HttpRequest } from '@azure/functions'
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -32,7 +32,7 @@ class V1InnovationTransferCheck {
   }
 }
 
-export default openApi(V1InnovationTransferCheck.httpTrigger as any, '/v1/innovation-transfers/{transferId}/check', {
+export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, '/v1/transfers/{transferId}/check', {
   get: {
     description: 'Get details of pending innovations transfers',
     parameters: [
