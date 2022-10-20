@@ -294,7 +294,7 @@ export class InnovationThreadsService extends BaseAppService {
   }
 
   async updateThreadMessage(
-    //requestUser: DomainUserInfoType,
+    requestUser: DomainUserInfoType,
     messageId: string,
     payload: { message: string }
   ): Promise<{ id: string }> {
@@ -311,11 +311,14 @@ export class InnovationThreadsService extends BaseAppService {
       throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
     }
 
-    // this.validationService
-    //   .checkThreadMessageSync(requestUser, message)
-    //   .checkMessageAuthor()
-    //   .checkCanEdit()
-    //   .validateSync();
+
+    if (message.isEditable === false) {
+      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_EDITABLE);
+    }
+
+    if (message.author.id !== requestUser.id) {
+      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_EDIT_UNAUTHORIZED);
+    }
 
     message.message = payload.message;
 
