@@ -322,7 +322,7 @@ paths:
           description: "Unauthorized"
 
   "/v1/{innovationId}/shares":
-    patch:
+    get:
       tags:
         - "[v1] Innovations"
       description: "Get all the shares for an innovation."
