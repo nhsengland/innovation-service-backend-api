@@ -252,7 +252,7 @@ export class InnovationSupportsService extends BaseAppService {
     user: { id: string, organisationUnit: { id: string, name: string } },
     innovationId: string,
     supportId: string,
-    data: { status: InnovationSupportStatusEnum, comment: string, accessors?: { id: string, organisationUnitUserId: string }[] }
+    data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
   ): Promise<{ id: string }> {
 
     const query = this.innovationSupportRepository.createQueryBuilder('support').where('support.id = :supportId ', { supportId })
@@ -266,7 +266,7 @@ export class InnovationSupportsService extends BaseAppService {
       const comment = await transaction.save(CommentEntity, CommentEntity.new({
         user: UserEntity.new({ id: user.id }),
         innovation: InnovationEntity.new({ id: innovationId }),
-        message: data.comment,
+        message: data.message,
         createdBy: user.id,
         updatedBy: user.id,
         organisationUnit: OrganisationUnitEntity.new({ id: user.organisationUnit.id })
