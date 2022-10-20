@@ -351,7 +351,12 @@ export class InnovationActionService extends BaseAppService {
     return result;
   }
 
-  private async updateAction(requestUser: DomainUserInfoType, innovationId: string, innovationAction: InnovationActionEntity, actionData: { message: string; status: InnovationActionStatusEnum }): Promise<InnovationActionEntity> {
+  private async updateAction(
+    requestUser: DomainUserInfoType,
+    innovationId: string,
+    innovationAction: InnovationActionEntity,
+    actionData: { message: string; status: InnovationActionStatusEnum },
+  ): Promise<InnovationActionEntity> {
     return await this.sqlConnection.transaction(async (trs) => {
 
       let thread;

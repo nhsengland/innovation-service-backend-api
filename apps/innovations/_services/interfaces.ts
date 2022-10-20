@@ -3,6 +3,7 @@ import type { InnovationTransferService } from './innovation-transfer.service'
 import type { InnovationSectionsService } from './innovation-sections.service';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
+import type { InnovationActionService } from './innovation-action.service';
 import type { InnovationSupportsService } from './innovation-supports.service';
 
 export type InnovationsServiceType = typeof InnovationsService.prototype;
@@ -22,3 +23,6 @@ export const InnovationThreadsServiceSymbol = Symbol('InnovationThreadsService')
 
 export type InnovationSupportsServiceType = typeof InnovationSupportsService.prototype;
 export const InnovationSupportsServiceSymbol = Symbol('InnovationSupportsService');
+
+export type InnovationActionServiceType = typeof InnovationActionService.prototype;
+export const InnovationActionServiceSymbol = Symbol('InnovationActionService');
