@@ -321,6 +321,31 @@ paths:
         "401":
           description: "Unauthorized"
 
+  "/v1/{innovationId}/shares":
+    get:
+      tags:
+        - "[v1] Innovations"
+      description: "Get all the shares for an innovation."
+      operationId: "v1-innovation-shares"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
   "/v1/{innovationId}/assessments":
     post:
       tags:
