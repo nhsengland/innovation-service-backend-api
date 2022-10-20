@@ -92,14 +92,15 @@ export class InnovationActionService extends BaseAppService {
     if (filters.innovationId) {
       const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
         .where('i.id = :innovationId', { innovationId: filters.innovationId })
+        .getOne();
 
       if (!innovation) {
         throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
       }
 
       innovationActions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
-        .leftJoinAndSelect('ia.innovationSection', 'is')
-        .where('ia.innovation_id = :innovationId', { innovationId: filters.innovationId })
+        .innerJoinAndSelect('ia.innovationSection', 'is')
+        .where('is.innovation_id = :innovationId', { innovationId: filters.innovationId })
         .getManyAndCount();
     }
 
@@ -176,7 +177,7 @@ export class InnovationActionService extends BaseAppService {
       .innerJoinAndSelect('nu.user', 'u')
       .where('n.context_id in (:...actions)', { actions: innovationActions[0].map((action) => action.id) })
       .andWhere('u.id = :userId', { userId: user.id })
-      .andWhere('nu.is_read = :isRead', { isRead: false })
+      .andWhere('nu.read_at IS NULL')
       .getMany();
 
     return {
@@ -216,7 +217,7 @@ export class InnovationActionService extends BaseAppService {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
       .innerJoinAndSelect('i.owner', 'o')
-      .leftJoinAndSelect('i.sections', 'is')
+      .leftJoinAndSelect('i.sections', 's')
       .leftJoinAndSelect('i.innovationSupports', 'is')
       .leftJoinAndSelect('is.organisationUnit', 'ou')
       .where('i.id = :innovationId', { innovationId })

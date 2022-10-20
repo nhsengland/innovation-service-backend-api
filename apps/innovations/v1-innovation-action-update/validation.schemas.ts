@@ -12,9 +12,9 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type BodyType = {
   status: string;
-  comment: string;
+  message: string;
 }
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.string().valid(...Object.values(InnovationActionStatusEnum)).required(),
-  comment: Joi.string().max(500).allow(null).allow('').required(),
+  message: Joi.string().max(500).allow(null).allow('').required(),
 }).required();
