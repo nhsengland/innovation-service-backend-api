@@ -82,26 +82,27 @@ export class InnovationsService extends BaseAppService {
   ): Promise<{
     count: number;
     data: {
-      id: string;
-      name: string;
+      id: string,
+      name: string,
+      description: null | string,
       status: InnovationStatusEnum,
-      submittedAt: null | DateISOType;
-      countryName: null | string;
-      postCode: null | string;
-      mainCategory: null | InnovationCategoryCatalogueEnum;
-      otherMainCategoryDescription: null | string;
+      submittedAt: null | DateISOType,
+      countryName: null | string,
+      postCode: null | string,
+      mainCategory: null | InnovationCategoryCatalogueEnum,
+      otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
-      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
+      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } },
       supports?: {
-        id: string;
-        status: InnovationSupportStatusEnum;
+        id: string,
+        status: InnovationSupportStatusEnum,
         updatedAt: DateISOType,
         organisation: {
           id: string, name: string, acronym: null | string,
           unit: {
             id: string, name: string, acronym: string,
             users?: { name: string, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum }[]
-          };
+          }
         }
       }[]
     }[]
@@ -268,6 +269,7 @@ export class InnovationsService extends BaseAppService {
           return {
             id: innovation.id,
             name: innovation.name,
+            description: innovation.description,
             status: innovation.status,
             submittedAt: innovation.submittedAt,
             countryName: innovation.countryName,
