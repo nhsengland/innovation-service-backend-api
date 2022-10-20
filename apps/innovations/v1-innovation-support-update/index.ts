@@ -136,4 +136,3 @@ export default openApi(V1PutInnovationSupportUpdate.httpTrigger as AzureFunction
     }
   }
 });
-

@@ -295,7 +295,7 @@ paths:
           description: "Bad Request"
         "401":
           description: "Unauthorized"
-          
+
   "/v1/{innovationId}/submit":
     patch:
       tags:
@@ -588,7 +588,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
@@ -610,13 +610,13 @@ paths:
                         type: string
                       type:
                         type: string
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
-        '404':
+        "404":
           description: Not Found
-        '500':
+        "500":
           description: Internal Server Error
 
   "/v1/{innovationId}/threads/{threadId}/messages":
@@ -650,7 +650,7 @@ paths:
                   type: string
                   description: Message to be created.
       responses:
-        '200':
+        "200":
           description: Message created.
           content:
             application/json:
@@ -681,15 +681,15 @@ paths:
                       isEditable:
                         type: boolean
                         description: Flag to indicate if the message can be edited.
-        '400':
+        "400":
           description: Bad request.
-        '401':
+        "401":
           description: Unauthorized.
-        '403':
+        "403":
           description: Forbidden.
-        '404':
+        "404":
           description: Not found.
-        '500':
+        "500":
           description: Internal server error.
     get:
       summary: Get a list of messages from a thread
@@ -732,7 +732,7 @@ paths:
               - ASC
               - DESC
       responses:
-        '200':
+        "200":
           description: Returns a list of messages from a thread
           content:
             application/json:
@@ -789,15 +789,15 @@ paths:
                           type: string
                         updatedAt:
                           type: string
-        '400':
+        "400":
           description: Bad request
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
-        '404':
+        "404":
           description: Not found
-        '500':
+        "500":
           description: Internal server error
 
   "/v1/{innovationId}/threads/{threadId}/messages/{messageId}":
@@ -827,7 +827,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
@@ -843,13 +843,13 @@ paths:
                   createdAt:
                     type: string
                     description: Message creation date
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
-        '404':
+        "404":
           description: Not Found
-        '500':
+        "500":
           description: Internal Server Error
     put:
       summary: Update a thread message
@@ -888,7 +888,7 @@ paths:
                   type: string
                   description: Message
       responses:
-        '200':
+        "200":
           description: Success
           content:
             application/json:
@@ -898,13 +898,459 @@ paths:
                   id:
                     type: string
                     description: Message Id
-        '400':
+        "400":
           description: Bad Request
-        '401':
+        "401":
           description: Unauthorized
-        '403':
+        "403":
           description: Forbidden
-        '404':
+        "404":
           description: Not Found
-        '500':
+        "500":
           description: Internal Server Error
+
+  "/v1/{innovationId}/actions":
+    post:
+      description: Create a new innovation action.
+      operationId: v1-innovation-action-create
+      tags:
+        - "[v1] Innovation Actions"
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation action to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: The description of the action.
+                  example: This is a description of the action.
+                sectionKey:
+                  type: string
+                  description: The section key.
+                  example: ACCESS
+              required:
+                - description
+                - sectionKey
+      responses:
+        "200":
+          description: The innovation action has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The innovation action id.
+                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                required:
+                  - id
+        "400":
+          description: The innovation action could not be created.
+        "401":
+          description: The user is not authorized to create an innovation action.
+        "403":
+          description: The user is not allowed to create an innovation action.
+        "404":
+          description: The innovation could not be found.
+        "500":
+          description: An unexpected error occurred while creating the innovation action.
+
+  "/v1/actions":
+    get:
+      description: Get a list of innovation actions.
+      operationId: v1-innovation-actions-list
+      tags:
+        - "[v1] Innovation Actions"
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          description: The number of records to skip.
+          schema:
+            type: integer
+            minimum: 0
+        - name: take
+          in: query
+          required: false
+          description: The number of records to take.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: order
+          in: query
+          required: false
+          description: The order of the records.
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: The status of the action.
+          schema:
+            type: string
+        - name: section
+          in: query
+          required: false
+          description: The section of the action.
+          schema:
+            type: string
+        - name: innovationId
+          in: query
+          required: false
+          description: The innovation id of the action.
+          schema:
+            type: string
+        - name: innovationName
+          in: query
+          required: false
+          description: The innovation name of the action.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The list of innovation actions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: The total number of records.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The id of the action.
+                        displayId:
+                          type: string
+                          description: The display id of the action.
+                        status:
+                          type: string
+                          description: The status of the action.
+                        description:
+                          type: string
+                          description: The description of the action.
+                        section:
+                          type: string
+                          description: The section of the action.
+                        createdAt:
+                          type: string
+                          description: The date the action was created.
+                        updatedAt:
+                          type: string
+                          description: The date the action was last updated.
+                        innovation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: The id of the innovation.
+                            name:
+                              type: string
+                              description: The name of the innovation.
+                        notifications:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                              description: The number of notifications for the action.
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+
+  "/v1/{innovationId}/actions/{actionId}":
+    get:
+      description: Get an innovation action.
+      operationId: v1-innovation-action-info
+      tags:
+        - "[v1] Innovation Actions"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          description: The innovation id.
+          schema:
+            type: string
+            format: uuid
+        - name: actionId
+          in: path
+          required: true
+          description: The innovation action id.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The innovation action.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  displayId:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - DRAFT
+                      - SUBMITTED
+                      - APPROVED
+                      - REJECTED
+                  description:
+                    type: string
+                  section:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  createdBy:
+                    type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    put:
+      description: Update an innovation action.
+      operationId: v1-innovation-action-update
+      tags:
+        - "[v1] Innovation Actions"
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+        - name: actionId
+          in: path
+          description: The innovation action id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The innovation action data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the action.
+                description:
+                  type: string
+                  description: The description of the action.
+                status:
+                  type: string
+                  description: The status of the action.
+                assignee:
+                  type: string
+                  description: The assignee of the action.
+                dueDate:
+                  type: string
+                  description: The due date of the action.
+                comment:
+                  type: string
+                  description: The comment of the action.
+      responses:
+        "200":
+          description: The innovation action has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The innovation action id.
+                  name:
+                    type: string
+                    description: The name of the action.
+                  description:
+                    type: string
+                    description: The description of the action.
+                  status:
+                    type: string
+                    description: The status of the action.
+                  assignee:
+                    type: string
+                    description: The assignee of the action.
+                  dueDate:
+                    type: string
+                    description: The due date of the action.
+                  comment:
+                    type: string
+                    description: The comment of the action.
+                  createdAt:
+                    type: string
+                    description: The date when the action was created.
+                  updatedAt:
+                    type: string
+                    description: The date when the action was updated.
+        "400":
+          description: The innovation action data is invalid.
+        "401":
+          description: The user is not authorized to update the innovation action.
+        "404":
+          description: The innovation action does not exist.
+        "500":
+          description: An error occurred while updating the innovation action.
+
+  "/v1/{innovationId}/supports":
+    post:
+      description: Create support in innovation.
+      operationId: v1-innovation-create-support
+      tags:
+        - "[v1] Innovation Supports"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description:
+            Creates a new innovation support request for the innovation identified
+            by the supplied 'Innovation ID'.
+        "401":
+          description: Unauthorised.
+    get:
+      description: Get a list with all Innovation's Supports.
+      operationId: v1-innovations-supports-list
+      tags:
+        - "[v1] Innovation Supports"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Not found
+  "/v1/{innovationId}/supports/{supportId}":
+    get:
+      description: Get supporting information for an Innovation.
+      operationId: v1-innovation-support-info
+      tags:
+        - "[v1] Innovation Supports"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: supportId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
+    patch:
+      description: Update support on innovation.
+      operationId: v1-innovation-update-support
+      tags:
+        - "[v1] Innovation Supports"
+      parameters:
+        - in: path
+          name: innovationId
+          schema:
+            type: string
+
+          description: Unique innovation ID
+          required: true
+        - in: path
+          name: supportId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: ""
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - FURTHER_INFO_REQUIRED
+                    - WAITING
+                    - NOT_YET
+                    - UNSUITABLE
+                    - COMPLETE
+                message:
+                  type: string
+                  maxLength: 400
+                accessors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      accessorId:
+                        type: string
+                        format: uuid
+                      organisationalUnitId:
+                        type: string
+                        format: uuid
+              required:
+                - status
+                - message
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
