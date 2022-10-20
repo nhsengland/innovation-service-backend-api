@@ -66,7 +66,7 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionCatalogueEnu
       areas: Joi.array().items(Joi.string().valid(...Object.values(InnovationAreaCatalogueEnum))),
       careSettings: Joi.array().items(Joi.string().valid(...Object.values(InnovationCareSettingCatalogueEnum))),
       otherCareSetting: Joi.string().max(100).allow(null),
-      mainPurpose: Joi.array().items(Joi.string().valid(...Object.values(MainPurposeCatalogueEnum))),
+      mainPurpose: Joi.string().valid(...Object.values(MainPurposeCatalogueEnum)),
       supportTypes: Joi.array().items(Joi.string().valid(...Object.values(InnovationSupportTypeCatalogueEnum))),
       moreSupportDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium)
     }).required().min(1)
