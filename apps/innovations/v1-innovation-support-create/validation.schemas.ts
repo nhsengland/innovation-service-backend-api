@@ -14,7 +14,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type BodyType = {
   status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED' | 'WITHDRAWN'>;
-  comment: string;
+  message: string;
   accessors: { id: string, organisationUnitUserId: string }[];
 }
 export const BodySchema = Joi.object<BodyType>({
@@ -26,7 +26,7 @@ export const BodySchema = Joi.object<BodyType>({
     InnovationSupportStatusEnum.UNSUITABLE,
     InnovationSupportStatusEnum.COMPLETE
   ).required(),
-  comment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).trim().required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).trim().required(),
   accessors: Joi.when('status', {
     is: InnovationSupportStatusEnum.ENGAGING,
     then: Joi.array().items(Joi.object({ id: Joi.string().guid().required(), organisationUnitUserId: Joi.string().guid().required() })).required(),

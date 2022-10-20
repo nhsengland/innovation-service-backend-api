@@ -134,7 +134,7 @@ export class InnovationSupportsService extends BaseAppService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const innovationSupport = innovation.innovationSupports.find(item => item.id === innovationSupportId);
+    const innovationSupport = innovation.innovationSupports.find(item => item.id.toLocaleLowerCase() === innovationSupportId.toLocaleLowerCase());
     if (!innovationSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
@@ -165,7 +165,7 @@ export class InnovationSupportsService extends BaseAppService {
   async createInnovationSupport(
     requestUser: DomainUserInfoType,
     innovationId: string,
-    data: { status: InnovationSupportStatusEnum, comment: string, accessors?: { id: string, organisationUnitUserId: string }[] }
+    data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
   ): Promise<{ id: string }> {
 
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true);
@@ -187,7 +187,7 @@ export class InnovationSupportsService extends BaseAppService {
       const comment = await transaction.save(CommentEntity, CommentEntity.new({
         user: UserEntity.new({ id: requestUser.id }),
         innovation: InnovationEntity.new({ id: innovationId }),
-        message: data.comment,
+        message: data.message,
         createdBy: requestUser.id,
         updatedBy: requestUser.id,
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit!.id })
