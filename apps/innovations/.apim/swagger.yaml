@@ -431,7 +431,6 @@ paths:
 
   "/v1/{innovationId}/threads":
     post:
-      summary: Create a new editable thread
       description: Create a new editable thread.
       tags:
         - "[v1] Innovation Threads"
@@ -503,7 +502,6 @@ paths:
         "500":
           description: An error occurred while creating the thread.
     get:
-      summary: Get Innovation Threads
       description: Get Innovation Threads
       tags:
         - "[v1] Innovation Threads"
@@ -594,7 +592,6 @@ paths:
 
   "/v1/{innovationId}/threads/{threadId}":
     get:
-      summary: Get Innovation Thread Info
       description: Get Innovation Thread Info
       tags:
         - "[v1] Innovation Threads"
@@ -717,7 +714,6 @@ paths:
         "500":
           description: Internal server error.
     get:
-      summary: Get a list of messages from a thread
       description: Get a list of messages from a thread
       operationId: v1-innovation-thread-message-list
       tags:
@@ -827,7 +823,6 @@ paths:
 
   "/v1/{innovationId}/threads/{threadId}/messages/{messageId}":
     get:
-      summary: Get a thread message info
       description: Get a thread message info
       operationId: v1-innovation-thread-message-info
       tags:
@@ -877,7 +872,6 @@ paths:
         "500":
           description: Internal Server Error
     put:
-      summary: Update a thread message
       description: Update a thread message
       tags:
         - "[v1] Innovation Threads"
