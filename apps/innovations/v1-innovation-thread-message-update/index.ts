@@ -26,13 +26,16 @@ class V1InnovationThreadMessageUpdate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context.auth.user.identityId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .verify();
 
+      const requestUser = auth.getUserInfo();
+
       const result = await threadsService.updateThreadMessage(
+        requestUser,
         pathParams.messageId,
         { message: body.message },
       );
