@@ -23,4 +23,5 @@ export enum InnovationFileUploadContextEnum {
 export enum InnovationThreadSubjectEnum {
   NEEDS_ASSESSMENT_START = 'Needs assessment process started',
   NEEDS_ASSESSMENT_COMPLETE = 'Needs assessment process completed',
+  INNOVATION_SUPPORT_UPDATE = 'Innovation support updated',
 }
