@@ -1,13 +1,15 @@
 
 
 import { InnovationEntity, InnovationSupportEntity, CommentEntity, UserEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, InnovationActionEntity } from '@innovations/shared/entities';
-import { InnovationSupportStatusEnum, type UserTypeEnum, ActivityEnum, InnovationSupportLogTypeEnum, InnovationActionStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
+import { InnovationSupportStatusEnum, type UserTypeEnum, ActivityEnum, InnovationSupportLogTypeEnum, InnovationActionStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { NotFoundError, InnovationErrorsEnum, InternalServerError, GenericErrorsEnum, UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
 import type { DomainUserInfoType } from '@innovations/shared/types';
 import { injectable, inject } from 'inversify';
 import type { Repository } from 'typeorm';
+import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import { BaseAppService } from './base-app.service';
+import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 
 @injectable()
@@ -19,6 +21,7 @@ export class InnovationSupportsService extends BaseAppService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(InnovationThreadsServiceSymbol) private innovationThreadsService: InnovationThreadsServiceType,
   ) {
     super();
     this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
@@ -267,20 +270,24 @@ export class InnovationSupportsService extends BaseAppService {
 
     const result = await this.sqlConnection.transaction(async transaction => {
 
-      const comment = await transaction.save(CommentEntity, CommentEntity.new({
-        user: UserEntity.new({ id: user.id }),
-        innovation: InnovationEntity.new({ id: innovationId }),
-        message: data.message,
-        createdBy: user.id,
-        updatedBy: user.id,
-        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id })
-      }));
-
+      const thread = await this.innovationThreadsService.createThreadOrMessage(
+        user,
+        innovationId,
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
+        data.message,
+        supportId,
+        ThreadContextTypeEnum.SUPPORT,
+        transaction,
+        true,
+      )
 
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
 
-        dbSupport.organisationUnitUsers = (data.accessors || []).map(item => OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId }))
+        const accessors = await this.sqlConnection.createQueryBuilder(OrganisationUnitUserEntity, 'organisationUnitUser')
+          .where('organisationUnitUser.id IN (:...ids)', { ids: data.accessors?.map(item => item.organisationUnitUserId) || [] })
+          .getMany();
 
+        dbSupport.organisationUnitUsers = accessors;
       } else { // In the case that previous support was ENGAGING, cleanup several relations!
 
         dbSupport.organisationUnitUsers = [];
@@ -313,7 +320,7 @@ export class InnovationSupportsService extends BaseAppService {
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: organisationUnit.name,
-          comment: { id: comment.id, value: comment.message }
+          comment: { id: thread.message!.id, value: thread.message!.message }
         }
       );
 
@@ -325,7 +332,7 @@ export class InnovationSupportsService extends BaseAppService {
           transaction,
           { id: user.id, organisationUnitId: organisationUnit.id },
           { id: innovationId },
-          { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: comment.message, suggestedOrganisationUnits: [] }
+          { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: thread.message!.message, suggestedOrganisationUnits: [] }
         );
       }
 
