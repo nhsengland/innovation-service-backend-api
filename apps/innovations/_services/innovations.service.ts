@@ -51,9 +51,8 @@ export class InnovationsService extends BaseAppService {
         query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
         break;
       case AssessmentSupportFilterEnum.NOT_ENGAGING:
-        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status NOT IN ('${InnovationSupportStatusEnum.ENGAGING}','${InnovationSupportStatusEnum.ENGAGING}') AND t_is.deleted_at IS NULL)`);
-        // query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status NOT IN ('${InnovationSupportStatusEnum.ENGAGING}') AND t_is.deleted_at IS NULL)`);
-        // query.andWhere(`NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
+        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status NOT IN ('${InnovationSupportStatusEnum.ENGAGING}') AND t_is.deleted_at IS NULL)`);
+        query.andWhere(`NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
         break;
       default:
         break;
@@ -76,9 +75,9 @@ export class InnovationsService extends BaseAppService {
       engagingOrganisations?: string[],
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
-      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports')[]
+      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications')[]
     },
-    pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt' | 'engagingEntities'>
+    pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
   ): Promise<{
     count: number;
     data: {
@@ -104,7 +103,8 @@ export class InnovationsService extends BaseAppService {
             users?: { name: string, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum }[]
           }
         }
-      }[]
+      }[],
+      notifications?: number
     }[]
   }> {
 
@@ -124,6 +124,12 @@ export class InnovationsService extends BaseAppService {
       query.leftJoinAndSelect('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
       query.leftJoinAndSelect('supportingOrganisationUser.user', 'supportingUsers');
     }
+    // Notifications.
+    if (filters.fields?.includes('notifications')) {
+      query.leftJoinAndSelect('innovations.notifications', 'notifications')
+      query.leftJoinAndSelect('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
+    }
+
 
     if (user.type === UserTypeEnum.INNOVATOR) {
       query.andWhere('innovations.owner_id = :innovatorUserId', { innovatorUserId: user.id });
@@ -136,16 +142,17 @@ export class InnovationsService extends BaseAppService {
     if (user.type === UserTypeEnum.ACCESSOR) {
 
       query.innerJoin('innovations.organisationShares', 'share');
-      query.innerJoin('innovations.innovationSupports', 'accessorSupports')
-      query.andWhere('share.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
+      query.leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organizationUnitId });
       query.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
+      query.andWhere('share.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
 
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
-        query.andWhere('accessorSupports.status IN (:...supportStatuses)', { supportStatuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
-        query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organizationUnitId });
+        query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
+        // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organizationUnitId });
       }
+
       if (filters.supportStatuses && filters.supportStatuses.length > 0) {
-        query.andWhere(`(accessorSupports.status IN (:...supportStatuses) ${filters.supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED) ? ' OR accessorSupports.status IS NULL' : ''})`, { supportStatuses: filters.supportStatuses });
+        query.andWhere(`(accessorSupports.status IN (:...accessorSupportsSupportStatuses02) ${filters.supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED) ? ' OR accessorSupports.status IS NULL' : ''})`, { accessorSupportsSupportStatuses02: filters.supportStatuses });
       }
 
     }
@@ -188,7 +195,14 @@ export class InnovationsService extends BaseAppService {
     }
 
     if (filters.engagingOrganisations && filters.engagingOrganisations.length > 0) {
-      query.andWhere('supportingOrganisationUnit.organisation_id IN (:...organisations)', { organisations: filters.engagingOrganisations });
+      query.andWhere(
+        `EXISTS (
+          SELECT eofilter_is.id
+          FROM innovation_support eofilter_is
+          INNER JOIN organisation_unit eofilter_ou ON eofilter_ou.id = eofilter_is.organisation_unit_id AND inactivated_at IS NULL AND eofilter_ou.deleted_at IS NULL
+          WHERE eofilter_is.innovation_id = innovations.id AND eofilter_ou.organisation_id IN (:...engagingOrganisationsFilterSupportStatuses) AND eofilter_is.deleted_at IS NULL)`,
+        { engagingOrganisationsFilterSupportStatuses: filters.engagingOrganisations }
+      );
     }
 
     if (filters.assignedToMe) {
@@ -214,12 +228,13 @@ export class InnovationsService extends BaseAppService {
         case 'updatedAt': field = 'innovations.updatedAt'; break;
         case 'assessmentStartedAt': field = 'assessments.createdAt'; break;
         case 'assessmentFinishedAt': field = 'assessments.finishedAt'; break;
-        case 'engagingEntities': field = 'supportingOrganisationUnit.name'; break;
         default:
           field = 'innovations.createdAt'; break;
       }
       query.addOrderBy(field, order);
     }
+
+    // console.log('SQL', query.getQueryAndParameters());
 
     const result = await query.getManyAndCount();
 
@@ -240,30 +255,33 @@ export class InnovationsService extends BaseAppService {
 
       return {
         count: result[1],
-        data: result[0].map(innovation => {
+        data: await Promise.all(result[0].map(async innovation => {
 
+          // Assessment parsing.
           let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
 
           if (filters.fields?.includes('assessment')) {
-            switch (innovation.assessments.length) {
-              case 0:
-                assessment = null;
-                break;
-              case 1:
-                if (innovation.assessments[0]) {
-                  assessment = {
-                    id: innovation.assessments[0].id,
-                    createdAt: innovation.assessments[0].createdAt,
-                    finishedAt: innovation.assessments[0].finishedAt,
-                    assignedTo: {
-                      name: usersInfo.find(item => (item.id === innovation.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? ''
-                    }
-                  };
-                }
-                break;
-              default:
-                throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WITH_INVALID_ASSESSMENTS);
+
+            if (innovation.assessments.length === 0) { assessment = null; }
+            else {
+
+              if (innovation.assessments.length > 1) { // This should never happen, but...
+                this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
+              }
+
+              if (innovation.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
+                assessment = {
+                  id: innovation.assessments[0].id,
+                  createdAt: innovation.assessments[0].createdAt,
+                  finishedAt: innovation.assessments[0].finishedAt,
+                  assignedTo: {
+                    name: usersInfo.find(item => (item.id === innovation.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? ''
+                  }
+                };
+              }
+
             }
+
           }
 
           return {
@@ -303,10 +321,19 @@ export class InnovationsService extends BaseAppService {
                   }
                 }
               }))
+            }),
+
+            ...(!filters.fields?.includes('notifications') ? {} : {
+              notifications: await Promise.resolve(
+                (await innovation.notifications).reduce(async (acc, item) =>
+                  (await acc) + (await item.notificationUsers).length,
+                  Promise.resolve(0)
+                )
+              )
             })
           };
 
-        })
+        }))
       };
 
     } catch (error: any) {
