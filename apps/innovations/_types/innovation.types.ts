@@ -42,11 +42,11 @@ export type ThreadListModel = {
     id: string;
     subject: string;
     messageCount: number;
-    createdAt: string;
+    createdAt: DateISOType;
     isNew: boolean;
     lastMessage: {
       id: string;
-      createdAt: string;
+      createdAt: DateISOType;
       createdBy: {
         id: string;
         name: string;

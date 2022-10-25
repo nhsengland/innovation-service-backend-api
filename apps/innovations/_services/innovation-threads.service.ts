@@ -188,8 +188,11 @@ export class InnovationThreadsService extends BaseAppService {
     let author: UserEntity;
     if (!transaction) {
       try {
-        author = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-          .where('locked_at IS NULL').getOneOrFail();
+        author = await this.sqlConnection
+          .createQueryBuilder(UserEntity, 'user')
+          .where("user.id = :userId", { userId: requestUser.id })
+          .andWhere("user.locked_at IS NULL")
+          .getOneOrFail();
       } catch (error) {
         throw new Error(UserErrorsEnum.USER_SQL_NOT_FOUND);
       }
@@ -471,7 +474,7 @@ export class InnovationThreadsService extends BaseAppService {
     // );
 
     const authorsMap = await this.domainService.users.getUsersList({
-      userIds: authors,
+      identityIds: authors,
     });
 
     const messageAuthorOrgsanisationsPromises = await Promise.all(
@@ -503,7 +506,7 @@ export class InnovationThreadsService extends BaseAppService {
       )?.organisationUnit;
 
       const author = authorsMap.find(
-        (author) => author.id === tm.author.identityId
+        (author) => author.identityId === tm.author.identityId
       );
 
       let organisation;
