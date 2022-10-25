@@ -15,7 +15,7 @@ export class TermsOfUseUserEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @UpdateDateColumn({ name: 'accepted_at', nullable: false })
+  @UpdateDateColumn({ name: 'accepted_at', type: 'datetime2', nullable: false })
   acceptedAt: DateISOType;
 
 

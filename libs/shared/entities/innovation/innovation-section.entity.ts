@@ -31,7 +31,7 @@ export class InnovationSectionEntity extends BaseEntity {
   })
   status: InnovationSectionStatusEnum;
 
-  @Column({ name: 'submitted_at', nullable: true })
+  @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
   submittedAt: DateISOType;
 
 

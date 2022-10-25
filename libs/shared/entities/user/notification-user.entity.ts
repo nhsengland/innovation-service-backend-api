@@ -11,7 +11,7 @@ import type { DateISOType } from '../../types/date.types';
 @Entity('notification_user')
 export class NotificationUserEntity extends BaseEntity {
 
-  @Column({ name: 'read_at', nullable: true })
+  @Column({ name: 'read_at', type: 'datetime2', nullable: true })
   readAt: DateISOType;
 
 

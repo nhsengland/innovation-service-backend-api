@@ -31,7 +31,7 @@ export class InnovationTransferEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @Column({ name: 'finished_at', nullable: true })
+  @Column({ name: 'finished_at', type: 'datetime2', nullable: true })
   finishedAt: DateISOType;
 
 
