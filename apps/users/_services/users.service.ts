@@ -3,7 +3,7 @@ import type { Repository } from 'typeorm';
 
 import { InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
 import { UserEntity, OrganisationEntity, InnovationTransferEntity, TermsOfUseEntity, TermsOfUseUserEntity, OrganisationUserEntity } from '@users/shared/entities';
-import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
+import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
@@ -73,6 +73,17 @@ export class UsersService extends BaseAppService {
   }
 
   async createUserInnovator(user: { identityId: string }, data: { surveyId: null | string }): Promise<{ id: string }> {
+
+    const authUser = await this.identityProviderService.getUserInfo(user.identityId);
+    if (!authUser) {
+      throw new UnprocessableEntityError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    }
+
+    const identityIdExists = !!this.userRepository.createQueryBuilder('users').where('external_id = :userId', { userId: authUser.identityId }).getCount();
+    if (identityIdExists) {
+      throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
+    }
+
 
     return this.sqlConnection.transaction(async transactionManager => {
 
