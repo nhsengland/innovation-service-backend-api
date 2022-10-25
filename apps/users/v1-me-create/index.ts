@@ -22,24 +22,25 @@ class V1MeCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      let identityId = '';
+      if (!body.identityId) { // If identityId not supplied, try go get it from the token.
 
-      try {
+        try {
 
-        const decodedToken = jwtDecode<JwtPayload>(body.token);
+          const decodedToken = jwtDecode<JwtPayload>(body.token ?? '');
 
-        if (decodedToken.sub) {
-          identityId = decodedToken.sub;
-        } else {
+          if (decodedToken.sub) {
+            body.identityId = decodedToken.sub;
+          } else {
+            throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
+          }
+
+        } catch (error) {
           throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
         }
 
-      } catch (error) {
-        throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
       }
 
-
-      const result = await usersService.createUserInnovator({ identityId }, { surveyId: body.surveyId ?? null });
+      const result = await usersService.createUserInnovator({ identityId: body.identityId }, { surveyId: body.surveyId ?? null });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
