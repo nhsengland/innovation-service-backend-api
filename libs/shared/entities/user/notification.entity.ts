@@ -5,8 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { NotificationUserEntity } from './notification-user.entity';
 
-import { NotificationContextTypeEnum } from '../../enums/notification.enums';
-import { NotificationContextDetailEnum } from '../../enums/notification.enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 
 
 @Entity('notification')
@@ -30,7 +29,7 @@ export class NotificationEntity extends BaseEntity {
   @Column({ name: 'params' })
   params: string;
 
-  @ManyToOne(() => InnovationEntity, { eager: true })
+  @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 

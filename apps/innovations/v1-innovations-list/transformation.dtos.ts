@@ -28,6 +28,7 @@ export type ResponseDTO = {
           users?: { name: string, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum }[]
         }
       }
-    }[]
+    }[],
+    notifications?: number
   }[]
 }

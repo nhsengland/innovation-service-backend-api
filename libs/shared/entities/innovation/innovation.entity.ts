@@ -19,6 +19,7 @@ import { InnovationSubgroupEntity } from './innovation-subgroup.entity';
 import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationSupportTypeEntity } from './innovation-support-type.entity';
 import { InnovationUserTestEntity } from './innovation-user-test.entity';
+import { NotificationEntity } from '../user/notification.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
 import { CommentEntity } from '../user/comment.entity';
 import { UserEntity } from '../user/user.entity';
@@ -335,7 +336,7 @@ export class InnovationEntity extends BaseEntity {
   })
   environmentalBenefits: Promise<InnovationEnvironmentalBenefitEntity[]>;
 
-  @OneToMany(() => InnovationPatientsCitizensBenefitEntity, (record) => record.innovation, {
+  @OneToMany(() => InnovationPatientsCitizensBenefitEntity, record => record.innovation, {
     lazy: true,
     cascade: ['insert', 'update']
   })
@@ -344,10 +345,11 @@ export class InnovationEntity extends BaseEntity {
   @OneToMany(() => CommentEntity, record => record.innovation, { lazy: true })
   comments: Promise<CommentEntity[]>;
 
-  @OneToMany(() => InnovationSupportEntity, record => record.innovation, {
-    cascade: ['insert', 'update']
-  })
+  @OneToMany(() => InnovationSupportEntity, record => record.innovation, { cascade: ['insert', 'update'] })
   innovationSupports: InnovationSupportEntity[];
+
+  @OneToMany(() => NotificationEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  notifications: Promise<NotificationEntity[]>;
 
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {

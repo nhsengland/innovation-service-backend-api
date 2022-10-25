@@ -68,6 +68,7 @@ export class JoiHelper {
         // This validates if the format is { field: 'ASC' | 'DESC' } (and uppercase 'asc' to 'ASC').
         .pattern(Joi.string().valid(...data.orderKeys), Joi.string().valid('ASC', 'DESC').uppercase())
         .optional()
+        .default({})
     });
 
   }
