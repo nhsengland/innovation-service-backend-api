@@ -238,6 +238,36 @@ paths:
         "401":
           description: "Unauthorized"
 
+  "/v1/{innovationId}/sections/{sectionKey}/submit":
+    patch:
+      tags:
+        - "[v1] Sections"
+      description: "Submits an innovation section"
+      operationId: "v1-innovation-section-submit"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: sectionKey
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "204":
+          description: "No Content"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
   "/v1/{innovationId}/sections/{sectionKey}":
     put:
       tags:
@@ -263,34 +293,6 @@ paths:
       responses:
         "200":
           description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-    patch:
-      tags:
-        - "[v1] Sections"
-      description: "Submits an innovation section"
-      operationId: "v1-innovation-section-submit"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: sectionKey
-          in: path
-          schema:
-            type: string
-          required: true
-      responses:
-        "204":
-          description: "No Content"
         "400":
           description: "Bad Request"
         "401":
