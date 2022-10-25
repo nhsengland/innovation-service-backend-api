@@ -79,7 +79,7 @@ export class UsersService extends BaseAppService {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    const identityIdExists = !!this.userRepository.createQueryBuilder('users').where('external_id = :userId', { userId: authUser.identityId }).getCount();
+    const identityIdExists = !!(await this.sqlConnection.createQueryBuilder(UserEntity, 'users').where('external_id = :userId', { userId: authUser.identityId }).getCount());
     if (identityIdExists) {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
     }
