@@ -174,12 +174,12 @@ export class InnovationSupportsService extends BaseAppService {
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true);
 
     if (!organisationUnit) {
-      new Error(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      throw new Error(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     const query = this.innovationSupportRepository.createQueryBuilder('support')
       .where('support.innovation.id = :innovationId ', { innovationId, })
-      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId: organisationUnit!.id });
+      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId: organisationUnit.id });
     const support = await query.getOne();
     if (support) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
@@ -193,7 +193,7 @@ export class InnovationSupportsService extends BaseAppService {
         message: data.message,
         createdBy: requestUser.id,
         updatedBy: requestUser.id,
-        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit!.id })
+        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id })
       }));
 
       const innovationSupport = InnovationSupportEntity.new({
@@ -201,7 +201,7 @@ export class InnovationSupportsService extends BaseAppService {
         createdBy: requestUser.id,
         updatedBy: requestUser.id,
         innovation: InnovationEntity.new({ id: innovationId }),
-        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit!.id }),
+        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
         organisationUnitUsers: (data.accessors || []).map(item => OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId }))
       });
 
@@ -212,7 +212,7 @@ export class InnovationSupportsService extends BaseAppService {
         { userId: requestUser.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
         {
           innovationSupportStatus: savedSupport.status,
-          organisationUnit: organisationUnit!.name,
+          organisationUnit: organisationUnit.name,
           comment: { id: comment.id, value: comment.message }
         }
       );
@@ -222,7 +222,7 @@ export class InnovationSupportsService extends BaseAppService {
       if (data.status === InnovationSupportStatusEnum.ENGAGING || data.status === InnovationSupportStatusEnum.COMPLETE) {
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: requestUser.id, organisationUnitId: organisationUnit!.id },
+          { id: requestUser.id, organisationUnitId: organisationUnit.id },
           { id: innovationId },
           { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: comment.message, suggestedOrganisationUnits: [] }
         );
@@ -241,7 +241,7 @@ export class InnovationSupportsService extends BaseAppService {
           id: result.id,
           status: result.status,
           statusChanged: true,
-          newAssignedAccessors: data.accessors || [],
+          newAssignedAccessors: data.accessors?.map(a => ({id: a.id})) ?? [],
         }
       }
     );
@@ -262,13 +262,16 @@ export class InnovationSupportsService extends BaseAppService {
     const organisationUnit = user.organisations.find(_ => true)!.organisationUnits.find(_ => true)!;
 
 
-    const query = this.innovationSupportRepository.createQueryBuilder('support').where('support.id = :supportId ', { supportId })
+    const query = this.innovationSupportRepository.createQueryBuilder('support')
+      .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUsers')
+      .where('support.id = :supportId ', { supportId })
     const dbSupport = await query.getOne();
     if (!dbSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
     const result = await this.sqlConnection.transaction(async transaction => {
+    const previousUsers = new Set(dbSupport.organisationUnitUsers.map(item => item.id.toUpperCase()));
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         user,
@@ -340,7 +343,7 @@ export class InnovationSupportsService extends BaseAppService {
         id: savedSupport.id,
         status: savedSupport.status,
         statusChanged: savedSupport.status !== dbSupport.status,
-        newAssignedAccessors: data.accessors || []
+        newAssignedAccessors: data.accessors?.filter(a => !previousUsers.has(a.organisationUnitUserId.toUpperCase())).map(a => ({id: a.id})) ?? []
       };
 
     });
@@ -354,7 +357,7 @@ export class InnovationSupportsService extends BaseAppService {
           id: result.id,
           status: result.status,
           statusChanged: result.statusChanged,
-          newAssignedAccessors: result.newAssignedAccessors,
+          newAssignedAccessors: result.status === InnovationSupportStatusEnum.ENGAGING ? result.newAssignedAccessors : [],
         },
       }
     );
