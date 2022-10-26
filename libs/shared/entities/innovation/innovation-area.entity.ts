@@ -11,12 +11,10 @@ import { InnovationAreaCatalogueEnum } from '../../enums/catalog.enums';
 @Index(['type', 'innovation'], { unique: true })
 export class InnovationAreaEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: InnovationAreaCatalogueEnum })
+  @PrimaryColumn({ type: 'simple-enum', enum: InnovationAreaCatalogueEnum, nullable: false })
   type: InnovationAreaCatalogueEnum;
 
-
-  @PrimaryColumn({ name: 'innovation_id', type: 'uniqueidentifier' })
-  @ManyToOne(() => InnovationEntity)
+  @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
