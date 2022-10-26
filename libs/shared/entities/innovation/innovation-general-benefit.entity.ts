@@ -11,12 +11,10 @@ import { GeneralBenefitCatalogueEnum } from '../../enums/catalog.enums';
 @Index(['type', 'innovation'], { unique: true })
 export class InnovationGeneralBenefitEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: GeneralBenefitCatalogueEnum })
+  @PrimaryColumn({ type: 'simple-enum', enum: GeneralBenefitCatalogueEnum, nullable: false })
   type: GeneralBenefitCatalogueEnum;
 
-
-  @PrimaryColumn({ name: 'innovation_id', type: 'uniqueidentifier' })
-  @ManyToOne(() => InnovationEntity)
+  @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
