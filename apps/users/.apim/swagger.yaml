@@ -118,6 +118,24 @@ paths:
         "404":
           description: "Not Found"
 
+  "/v1":
+    get:
+      tags:
+        - "[v1] Users"
+      description: "Get users list"
+      operationId: "v1-users-list"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "401":
+          description: "Unauthorized"
+
   "/v1/organisations":
     get:
       tags:

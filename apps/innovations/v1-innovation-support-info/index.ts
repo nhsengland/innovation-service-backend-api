@@ -1,16 +1,19 @@
-import type { AzureFunction, HttpRequest } from "@azure/functions";
-import { mapOpenApi3_1 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import { JwtDecoder } from "@innovations/shared/decorators";
-import { JoiHelper, ResponseHelper } from "@innovations/shared/helpers";
-import { type AuthorizationServiceType, AuthorizationServiceSymbol } from "@innovations/shared/services";
-import type { CustomContextType } from "@innovations/shared/types";
-import { container } from "../_config";
-import { type InnovationSupportsServiceType, InnovationSupportsServiceSymbol } from "../_services/interfaces";
-import type { ResponseDTO } from "./transformation.dtos";
-import { type ParamsType, ParamsSchema } from "./validation.schemas";
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { type AuthorizationServiceType, AuthorizationServiceSymbol } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
-class V1GetInnovationSupportInfo {
+import { container } from '../_config';
+import { type InnovationSupportsServiceType, InnovationSupportsServiceSymbol } from '../_services/interfaces';
+
+import { type ParamsType, ParamsSchema } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
+
+
+class V1InnovationSupportInfo {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -31,7 +34,7 @@ class V1GetInnovationSupportInfo {
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         status: result.status,
-        engagingAccessors: result.engagingAccessors
+        ...(result.engagingAccessors === undefined ? {} : { engagingAccessors: result.engagingAccessors })
       });
       return;
 
@@ -44,37 +47,37 @@ class V1GetInnovationSupportInfo {
 
 }
 
-export default openApi(V1GetInnovationSupportInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/support/{supportId}', {
+export default openApi(V1InnovationSupportInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/support/{supportId}', {
   get: {
-    description: "Get supporting information for an Innovation.",
-    operationId: "v1-innovation-support-info",
-    tags: ["Innovation Support"],
+    description: 'Get supporting information for an Innovation',
+    operationId: 'v1-innovation-support-info',
+    tags: ['Innovation Support'],
     parameters: [
       {
-        in: "path",
-        name: "innovationId",
+        in: 'path',
+        name: 'innovationId',
         required: true,
         schema: {
-          type: "string",
+          type: 'string',
         }
       }, {
-        in: "path",
-        name: "supportId",
+        in: 'path',
+        name: 'supportId',
         required: true,
         schema: {
-          type: "string",
+          type: 'string',
         }
       },
     ],
     responses: {
       200: {
-        description: "OK",
+        description: 'OK',
       },
       400: {
-        description: "Bad Request",
+        description: 'Bad Request',
       },
       404: {
-        description: "Not Found",
+        description: 'Not Found',
       },
     }
   }

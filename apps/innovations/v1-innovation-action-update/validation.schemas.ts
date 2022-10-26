@@ -1,5 +1,7 @@
+import Joi from 'joi';
+
 import { InnovationActionStatusEnum } from '@innovations/shared/enums';
-import * as Joi from 'joi';
+
 
 export type ParamsType = {
   innovationId: string;
