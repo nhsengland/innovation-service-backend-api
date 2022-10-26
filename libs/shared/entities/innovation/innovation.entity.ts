@@ -320,7 +320,7 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationSupportTypeEntity, record => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   supportTypes: Promise<InnovationSupportTypeEntity[]>;
 

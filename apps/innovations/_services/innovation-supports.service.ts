@@ -137,7 +137,7 @@ export class InnovationSupportsService extends BaseAppService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const innovationSupport = innovation.innovationSupports.find(item => item.id.toLocaleLowerCase() === innovationSupportId.toLocaleLowerCase());
+    const innovationSupport = innovation.innovationSupports.find(item => item.id === innovationSupportId);
     if (!innovationSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
@@ -241,7 +241,7 @@ export class InnovationSupportsService extends BaseAppService {
           id: result.id,
           status: result.status,
           statusChanged: true,
-          newAssignedAccessors: data.accessors?.map(a => ({id: a.id})) ?? [],
+          newAssignedAccessors: data.accessors?.map(a => ({ id: a.id })) ?? [],
         }
       }
     );
@@ -271,7 +271,7 @@ export class InnovationSupportsService extends BaseAppService {
     }
 
     const result = await this.sqlConnection.transaction(async transaction => {
-    const previousUsers = new Set(dbSupport.organisationUnitUsers.map(item => item.id.toUpperCase()));
+      const previousUsers = new Set(dbSupport.organisationUnitUsers.map(item => item.id.toUpperCase()));
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         user,
@@ -343,7 +343,7 @@ export class InnovationSupportsService extends BaseAppService {
         id: savedSupport.id,
         status: savedSupport.status,
         statusChanged: savedSupport.status !== dbSupport.status,
-        newAssignedAccessors: data.accessors?.filter(a => !previousUsers.has(a.organisationUnitUserId.toUpperCase())).map(a => ({id: a.id})) ?? []
+        newAssignedAccessors: data.accessors?.filter(a => !previousUsers.has(a.organisationUnitUserId.toUpperCase())).map(a => ({ id: a.id })) ?? []
       };
 
     });
