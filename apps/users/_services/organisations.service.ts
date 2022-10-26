@@ -16,52 +16,37 @@ export class OrganisationsService extends BaseService {
   ) { super(); }
 
 
-  async getOrganisationsList(): Promise<{ id: string, name: string, acronym: string }[]> {
+  async getOrganisationsList(filters: { fields?: ('organisationUnits')[] }): Promise<{ id: string, name: string, acronym: string, organisationUnits?: { id: string; name: string; acronym: string; }[] }[]> {
 
     try {
 
-      const dbOrganisations = await this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
-        .where('organisation.type = :type AND organisation.inactivated_at IS NULL', { type: OrganisationTypeEnum.ACCESSOR })
-        .orderBy('organisation.name', 'ASC')
-        .getMany();
+      const query = this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
+        .where('organisation.type = :type AND organisation.inactivated_at IS NULL', { type: OrganisationTypeEnum.ACCESSOR });
 
-      return dbOrganisations.map(organisation => ({
-        id: organisation.id,
-        name: organisation.name,
-        acronym: organisation.acronym ?? ''
-      }));
+      if (filters.fields?.includes('organisationUnits')) {
+        query.innerJoinAndSelect('organisation.organisationUnits', 'organisationUnits');
+        query.andWhere('organisationUnits.inactivated_at IS NULL');
+      }
 
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
+      query.orderBy('organisation.name', 'ASC');
 
-  }
+      const dbOrganisations = await query.getMany();
 
-
-  async getOrganisationsWithUnitsList(): Promise<{
-    id: string, name: string, acronym: string,
-    organisationUnits: { id: string; name: string; acronym: string; }[]
-  }[]> {
-
-    try {
-
-      const dbOrganisations = await this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
-        .innerJoinAndSelect('organisation.organisationUnits', 'organisationUnits')
-        .where('organisation.type = :type AND organisation.inactivated_at IS NULL', { type: OrganisationTypeEnum.ACCESSOR })
-        .andWhere('organisationUnits.inactivated_at IS NULL')
-        .orderBy('organisation.name', 'ASC')
-        .getMany();
 
       return Promise.all(
         dbOrganisations.map(async organisation => ({
           id: organisation.id,
           name: organisation.name,
           acronym: organisation.acronym ?? '',
-          organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
-            id: organisationUnit.id,
-            name: organisationUnit.name,
-            acronym: organisationUnit.acronym
-          }))
+
+          ...(!filters.fields?.includes('organisationUnits') ? {} : {
+            organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
+              id: organisationUnit.id,
+              name: organisationUnit.name,
+              acronym: organisationUnit.acronym
+            }))
+          })
+
         }))
       );
 

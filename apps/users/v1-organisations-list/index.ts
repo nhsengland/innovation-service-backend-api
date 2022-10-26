@@ -29,32 +29,14 @@ class V1OrganisationsList {
         .checkInnovatorType()
         .verify();
 
-      if (queryParams.fields?.includes('organisationUnits')) {
-
-        const result = await organisationsService.getOrganisationsWithUnitsList();
-        context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
-          id: item.id,
-          name: item.name,
-          acronym: item.acronym,
-          organisationUnits: item.organisationUnits.map(unit => ({
-            id: unit.id,
-            name: unit.name,
-            acronym: unit.acronym
-          }))
-        })));
-        return;
-
-      } else {
-
-        const result = await organisationsService.getOrganisationsList();
-        context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
-          id: item.id,
-          name: item.name,
-          acronym: item.acronym
-        })));
-        return;
-
-      }
+      const result = await organisationsService.getOrganisationsList(queryParams);
+      context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
+        id: item.id,
+        name: item.name,
+        acronym: item.acronym,
+        ...(item.organisationUnits === undefined ? {} : { organisationUnits: item.organisationUnits }),
+      })));
+      return;
 
     } catch (error) {
       context.res = ResponseHelper.Error(error);
