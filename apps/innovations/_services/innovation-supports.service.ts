@@ -286,11 +286,8 @@ export class InnovationSupportsService extends BaseAppService {
 
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
 
-        const accessors = await this.sqlConnection.createQueryBuilder(OrganisationUnitUserEntity, 'organisationUnitUser')
-          .where('organisationUnitUser.id IN (:...ids)', { ids: data.accessors?.map(item => item.organisationUnitUserId) || [] })
-          .getMany();
+        dbSupport.organisationUnitUsers = (data.accessors || []).map(item => OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId }));
 
-        dbSupport.organisationUnitUsers = accessors;
       } else { // In the case that previous support was ENGAGING, cleanup several relations!
 
         dbSupport.organisationUnitUsers = [];
