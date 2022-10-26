@@ -7,5 +7,5 @@ export type ResponseDTO = Array<{
     id: string, name: string, acronym: string,
     unit: { id: string, name: string, acronym: string }
   },
-  engagingAccessors?: { id: string, organisationUnitUserId: string, name: string }[] | undefined
+  engagingAccessors?: { id: string, organisationUnitUserId: string, name: string }[]
 }>;
