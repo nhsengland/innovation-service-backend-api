@@ -1,5 +1,4 @@
 import { injectable, inject } from 'inversify';
-import type { Repository } from 'typeorm';
 
 import { InnovationEntity, InnovationSupportEntity, CommentEntity, UserEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, InnovationActionEntity } from '@innovations/shared/entities';
 import { InnovationSupportStatusEnum, type UserTypeEnum, ActivityEnum, InnovationSupportLogTypeEnum, InnovationActionStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
@@ -16,21 +15,14 @@ import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './
 @injectable()
 export class InnovationSupportsService extends BaseService {
 
-  innovationRepository: Repository<InnovationEntity>;
-  innovationSupportRepository: Repository<InnovationSupportEntity>;
-
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
     @inject(InnovationThreadsServiceSymbol) private innovationThreadsService: InnovationThreadsServiceType,
-  ) {
-    super();
-    this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
-    this.innovationSupportRepository = this.sqlConnection.getRepository<InnovationSupportEntity>(InnovationSupportEntity);
-  }
+  ) { super(); }
 
 
-  async getInnovationSupportsList(innovationId: string, filters: { fields?: ('engagingAccessors')[] }): Promise<{
+  async getInnovationSupportsList(innovationId: string, filters: { fields: ('engagingAccessors')[] }): Promise<{
     id: string,
     status: InnovationSupportStatusEnum,
     organisation: {
@@ -40,13 +32,13 @@ export class InnovationSupportsService extends BaseService {
     engagingAccessors?: { id: string, organisationUnitUserId: string, name: string }[]
   }[]> {
 
-    const query = this.innovationRepository.createQueryBuilder('innovation')
+    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
       .where('innovation.id = :innovationId', { innovationId });
 
-    if (filters.fields?.includes('engagingAccessors')) {
+    if (filters.fields.includes('engagingAccessors')) {
       query.leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser');
       query.leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser');
       query.leftJoinAndSelect('organisationUser.user', 'user');
@@ -62,7 +54,7 @@ export class InnovationSupportsService extends BaseService {
     // Fetch users names.
     let usersInfo: { id: string, identityId: string, email: string, displayName: string, type: UserTypeEnum, isActive: boolean }[] = [];
 
-    if (filters.fields?.includes('engagingAccessors')) {
+    if (filters.fields.includes('engagingAccessors')) {
 
       const assignedAccessorsIds = innovationSupports
         .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
@@ -78,7 +70,7 @@ export class InnovationSupportsService extends BaseService {
 
         let engagingAccessors: { id: string, organisationUnitUserId: string, name: string }[] | undefined = undefined;
 
-        if (filters.fields?.includes('engagingAccessors')) {
+        if (filters.fields.includes('engagingAccessors')) {
           engagingAccessors = support.organisationUnitUsers.map(su => ({
             id: su.organisationUser.user.id,
             organisationUnitUserId: su.id,
@@ -114,19 +106,18 @@ export class InnovationSupportsService extends BaseService {
   async getInnovationSupportInfo(innovationSupportId: string): Promise<{
     id: string,
     status: InnovationSupportStatusEnum,
-    engagingAccessors?: { id: string, organisationUnitUserId: string, name: string }[]
+    engagingAccessors: { id: string, organisationUnitUserId: string, name: string }[]
   }> {
 
-    const query = this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.innovationSupports', 'support')
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
       .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
       .leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
       .leftJoinAndSelect('organisationUser.user', 'user')
-      .where('support.id = :innovationSupportId', { innovationSupportId });
-
-    const innovation = await query.getOne();
+      .where('support.id = :innovationSupportId', { innovationSupportId })
+      .getOne();
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
@@ -251,10 +242,10 @@ export class InnovationSupportsService extends BaseService {
     data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
   ): Promise<{ id: string }> {
 
-    const query = this.innovationSupportRepository.createQueryBuilder('support')
+    const dbSupport = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUsers')
       .where('support.id = :supportId ', { supportId })
-    const dbSupport = await query.getOne();
+      .getOne();
     if (!dbSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
