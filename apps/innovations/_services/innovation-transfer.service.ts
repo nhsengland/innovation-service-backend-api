@@ -6,7 +6,7 @@ import { ActivityEnum, InnovationTransferStatusEnum, NotifierTypeEnum, UserTypeE
 import { UnprocessableEntityError, InnovationErrorsEnum, BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { IdentityProviderServiceSymbol, type IdentityProviderServiceType, DomainServiceSymbol, type DomainServiceType, NotifierServiceSymbol, type NotifierServiceType } from '@innovations/shared/services';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 
 
 type TransferQueryFilterType = {
@@ -19,7 +19,7 @@ type TransferQueryFilterType = {
 
 
 @injectable()
-export class InnovationTransferService extends BaseAppService {
+export class InnovationTransferService extends BaseService {
 
   constructor(
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,

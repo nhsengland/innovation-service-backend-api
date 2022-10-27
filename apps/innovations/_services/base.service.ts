@@ -13,7 +13,7 @@ import {
 import { container } from '../_config'
 
 @injectable()
-export class BaseAppService {
+export class BaseService {
 
   noSqlConnection: Mongoose;
   logger: LoggerServiceType;

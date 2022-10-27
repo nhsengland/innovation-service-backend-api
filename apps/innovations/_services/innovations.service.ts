@@ -12,11 +12,11 @@ import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types'
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 
 
 @injectable()
-export class InnovationsService extends BaseAppService {
+export class InnovationsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,

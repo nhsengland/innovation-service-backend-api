@@ -5,11 +5,11 @@ import { TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/share
 import { BadRequestError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { DateISOType } from '@users/shared/types';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 
 
 @injectable()
-export class TermsOfUseService extends BaseAppService {
+export class TermsOfUseService extends BaseService {
 
 	constructor() {
 		super();

@@ -4,12 +4,12 @@ import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } f
 import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, UserEntity } from "@innovations/shared/entities";
 import { GenericErrorsEnum, InnovationErrorsEnum, UserErrorsEnum } from "@innovations/shared/errors";
 import { injectable, inject } from "inversify";
-import { BaseAppService } from './base-app.service'
+import { BaseService } from './base.service'
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from "@innovations/shared/services";
 import type { ThreadListModel } from "../_types/innovation.types";
 
 @injectable()
-export class InnovationThreadsService extends BaseAppService {
+export class InnovationThreadsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,

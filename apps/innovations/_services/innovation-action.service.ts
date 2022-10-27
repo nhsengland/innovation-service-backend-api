@@ -5,7 +5,7 @@ import {
   DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType,
 } from '@innovations/shared/services';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 import { InnovationActionEntity, InnovationEntity, UserEntity, NotificationEntity, InnovationSectionEntity, InnovationSupportEntity } from '@innovations/shared/entities';
 import { type InnovationSectionCatalogueEnum, InnovationActionStatusEnum, AccessorOrganisationRoleEnum, type InnovatorOrganisationRoleEnum, InnovationSectionAliasCatalogueEnum, ActivityEnum, UserTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { NotFoundError, InnovationErrorsEnum, UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
@@ -30,7 +30,7 @@ type ActionResponseDTO = {
 }
 
 @injectable()
-export class InnovationActionService extends BaseAppService {
+export class InnovationActionService extends BaseService {
 
   innovationActionRepository: Repository<InnovationActionEntity>;
   innovationRepository: Repository<InnovationEntity>;

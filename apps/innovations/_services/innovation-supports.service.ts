@@ -9,12 +9,12 @@ import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 
 @injectable()
-export class InnovationSupportsService extends BaseAppService {
+export class InnovationSupportsService extends BaseService {
 
   innovationRepository: Repository<InnovationEntity>;
   innovationSupportRepository: Repository<InnovationSupportEntity>;
