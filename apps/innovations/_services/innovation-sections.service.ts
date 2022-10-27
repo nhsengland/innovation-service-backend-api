@@ -1,31 +1,24 @@
 import { inject, injectable } from 'inversify';
-import type { Repository } from 'typeorm';
 
-import {
-  DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol, NotifierServiceSymbol, NotifierServiceType,
-} from '@innovations/shared/services';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
+
 import { BaseAppService } from './base-app.service';
-import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
-import type { DateISOType } from '@innovations/shared/types/date.types';
 
 
 @injectable()
 export class InnovationSectionsService extends BaseAppService {
 
-  innovationRepository: Repository<InnovationEntity>;
-
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
-  ) {
-    super();
-    this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
-  }
+  ) { super(); }
 
 
   async getInnovationSectionsList(innovationId: string): Promise<{
@@ -40,10 +33,9 @@ export class InnovationSectionsService extends BaseAppService {
     }[]
   }> {
 
-    const innovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
-
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
@@ -93,7 +85,7 @@ export class InnovationSectionsService extends BaseAppService {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('sections.files', 'sectionFiles')
       .where('innovation.id = :innovationId', { innovationId })
@@ -146,7 +138,7 @@ export class InnovationSectionsService extends BaseAppService {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('sections.files', 'sectionFiles')
       .where('innovation.id = :innovationId AND innovation.owner_id = :userId', { innovationId, userId: user.id })
@@ -230,7 +222,7 @@ export class InnovationSectionsService extends BaseAppService {
 
   async submitInnovationSection(user: { id: string, identityId: string; type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{ id: string }> {
 
-    const dbInnovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId AND innovation.owner_id = :userId', { innovationId, userId: user.id })
       .getOne();
@@ -309,9 +301,9 @@ export class InnovationSectionsService extends BaseAppService {
     entity: { [key: string]: any }, // This variable should hold an TypeORM entity.
     config: {
       fields: string[],
-      lookupTables?: string[] | undefined,
-      dependencies?: { table: string; fields: string[]; lookupTables?: string[]; }[] | undefined
-      allowFileUploads?: boolean | undefined
+      lookupTables?: undefined | string[],
+      dependencies?: undefined | { table: string, fields: string[], lookupTables?: string[] }[]
+      allowFileUploads?: undefined | boolean
     },
     dataToUpdate: { [key: string]: any }
   ): Promise<{ [key: string]: any }> {

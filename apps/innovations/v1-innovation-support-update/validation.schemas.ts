@@ -1,7 +1,7 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import Joi from 'joi';
 
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 
 
 export type ParamsType = {

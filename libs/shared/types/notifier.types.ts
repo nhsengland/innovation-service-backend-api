@@ -20,8 +20,8 @@ export type NotifierTemplatesType = {
     innovationId: string,
     innovationSupport: {
       id: string, status: InnovationSupportStatusEnum, statusChanged: boolean,
-      newAssignedAccessors?: {id: string}[] // Newly assigned accessors
-    },
+      newAssignedAccessors?: { id: string }[] // Newly assigned accessors
+    }
   },
 
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {

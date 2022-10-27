@@ -1,6 +1,6 @@
-export type ResponseDTO = Array<{
+export type ResponseDTO = {
   id: string;
   name: string;
   acronym: string;
   organisationUnits?: { id: string; name: string; acronym: string; }[];
-}>
+}[]

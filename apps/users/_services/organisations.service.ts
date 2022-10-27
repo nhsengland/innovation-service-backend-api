@@ -1,8 +1,7 @@
 import { inject, injectable } from 'inversify';
-import { In, Repository } from 'typeorm';
 
 import { OrganisationEntity, OrganisationUnitUserEntity } from '@users/shared/entities';
-import { OrganisationTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { OrganisationTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, InternalServerError } from '@users/shared/errors';
 import { DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
 
@@ -12,64 +11,42 @@ import { BaseService } from './base.service';
 @injectable()
 export class OrganisationsService extends BaseService {
 
-  organisationRepository: Repository<OrganisationEntity>;
-  organisationUnitUserRepository: Repository<OrganisationUnitUserEntity>;
-
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-  ) {
-    super();
-    this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
-    this.organisationUnitUserRepository = this.sqlConnection.getRepository<OrganisationUnitUserEntity>(OrganisationUnitUserEntity);
-  }
+    @inject(DomainServiceSymbol) private domainService: DomainServiceType
+  ) { super(); }
 
 
-  async getOrganisationsList(): Promise<{ id: string, name: string, acronym: string }[]> {
+  async getOrganisationsList(filters: { fields?: ('organisationUnits')[] }): Promise<{ id: string, name: string, acronym: string, organisationUnits?: { id: string; name: string; acronym: string; }[] }[]> {
 
     try {
 
-      const dbOrganisations = await this.organisationRepository.createQueryBuilder('organisation')
-        .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR })
-        .orderBy('organisation.name', 'ASC')
-        .getMany();
+      const query = this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
+        .where('organisation.type = :type AND organisation.inactivated_at IS NULL', { type: OrganisationTypeEnum.ACCESSOR });
 
-      return dbOrganisations.map(organisation => ({
-        id: organisation.id,
-        name: organisation.name,
-        acronym: organisation.acronym ?? ''
-      }));
+      if (filters.fields?.includes('organisationUnits')) {
+        query.innerJoinAndSelect('organisation.organisationUnits', 'organisationUnits');
+        query.andWhere('organisationUnits.inactivated_at IS NULL');
+      }
 
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
+      query.orderBy('organisation.name', 'ASC');
 
-  }
+      const dbOrganisations = await query.getMany();
 
-
-  async getOrganisationsWithUnitsList(): Promise<{
-    id: string, name: string, acronym: string,
-    organisationUnits: { id: string; name: string; acronym: string; }[]
-  }[]> {
-
-    try {
-
-      const dbOrganisations = await this.organisationRepository
-        .createQueryBuilder('organisation')
-        .leftJoinAndSelect('organisation.organisationUnits', 'organisationUnits')
-        .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR })
-        .orderBy('organisation.name', 'ASC')
-        .getMany();
 
       return Promise.all(
         dbOrganisations.map(async organisation => ({
           id: organisation.id,
           name: organisation.name,
           acronym: organisation.acronym ?? '',
-          organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
-            id: organisationUnit.id,
-            name: organisationUnit.name,
-            acronym: organisationUnit.acronym
-          }))
+
+          ...(!filters.fields?.includes('organisationUnits') ? {} : {
+            organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
+              id: organisationUnit.id,
+              name: organisationUnit.name,
+              acronym: organisationUnit.acronym
+            }))
+          })
+
         }))
       );
 
@@ -80,20 +57,15 @@ export class OrganisationsService extends BaseService {
   }
 
 
-  async getOrganisationUnitAccessors(organisationUnit: string): Promise<{
-    id: string,
-    organisationUnitUserId: string,
-    name: string,
-    email: string,
-    type: UserTypeEnum,
-    isActive: boolean
-  }[]> {
+  async getOrganisationUnitAccessors(organisationUnitId: string): Promise<{ id: string, organisationUnitUserId: string, name: string }[]> {
 
-    // Get all users from the organisation unit.
-    const organisationUnitUsers = await this.organisationUnitUserRepository.find({
-      relations: ['organisationUser', 'organisationUser.user'],
-      where: { organisationUnit: In([organisationUnit]) }
-    });
+    const organisationUnitUsers = await this.sqlConnection.createQueryBuilder(OrganisationUnitUserEntity, 'organisationUnitUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
+      .innerJoinAndSelect('organisationUser.user', 'user')
+      // TODO: Does it make sense to inner join to validate if organisation and unit are active?
+      .where('organisationUnitUser.organisation_unit_id = :organisationUnitId', { organisationUnitId })
+      .getMany() || [];
+
 
     // If 0 users, no more work need to be done!
     if (organisationUnitUsers.length === 0) {
@@ -103,21 +75,18 @@ export class OrganisationsService extends BaseService {
     const userIds = organisationUnitUsers.map(item => item.organisationUser.user.id);
     const authUsers = await this.domainService.users.getUsersList({ userIds });
 
-    return organisationUnitUsers.reduce((acc: { id: string; organisationUnitUserId: string; name: string; email: string; type: UserTypeEnum; isActive: boolean; }[], organisationUnitUser) => {
+    return organisationUnitUsers.reduce((acc: { id: string, organisationUnitUserId: string, name: string }[], organisationUnitUser) => {
 
       const dbUser = organisationUnitUser.organisationUser.user;
       const authUser = authUsers.find(item => ((item.id === dbUser.id) && item.isActive));
 
-      if (authUser) { // Filters by existing AND active users on Identity provider.
+      if (authUser) { // Filters by existing AND active users on identity provider.
         return [
           ...acc,
           ...[{
             id: dbUser.id,
             organisationUnitUserId: organisationUnitUser.id,
-            name: authUser.displayName,
-            type: dbUser.type,
-            email: authUser.email,
-            isActive: authUser.isActive
+            name: authUser.displayName
           }]
         ];
       } else {

@@ -1,16 +1,19 @@
-import type { AzureFunction, HttpRequest } from "@azure/functions";
-import { mapOpenApi3_1 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import { JwtDecoder } from "@innovations/shared/decorators";
-import { JoiHelper, ResponseHelper } from "@innovations/shared/helpers";
-import { type AuthorizationServiceType, AuthorizationServiceSymbol } from "@innovations/shared/services";
-import type { CustomContextType } from "@innovations/shared/types";
-import { container } from "../_config";
-import { type InnovationSupportsServiceType, InnovationSupportsServiceSymbol } from "../_services/interfaces";
-import type { ResponseDTO } from "./transformation.dtos";
-import { type ParamsType, ParamsSchema, type QueryParamsType, QueryParamsSchema } from "./validation.schemas";
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { type AuthorizationServiceType, AuthorizationServiceSymbol } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
-class V1GetInnovationSupportsList {
+import { container } from '../_config';
+import { type InnovationSupportsServiceType, InnovationSupportsServiceSymbol } from '../_services/interfaces';
+
+import { type ParamsType, ParamsSchema, type QueryParamsType, QueryParamsSchema } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
+
+
+class V1InnovationSupportsList {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -39,7 +42,7 @@ class V1GetInnovationSupportsList {
           id: item.organisation.id, name: item.organisation.name, acronym: item.organisation.acronym!,
           unit: { id: item.organisation.unit.id, name: item.organisation.unit.name, acronym: item.organisation.unit.acronym! }
         },
-        engagingAccessors: item.engagingAccessors
+        ...(item.engagingAccessors === undefined ? {} : { engagingAccessors: item.engagingAccessors })
       })));
       return;
 
@@ -52,35 +55,34 @@ class V1GetInnovationSupportsList {
 
 }
 
-export default openApi(V1GetInnovationSupportsList.httpTrigger as AzureFunction, '/v1/{innovationId}/support', {
+export default openApi(V1InnovationSupportsList.httpTrigger as AzureFunction, '/v1/{innovationId}/supports', {
   get: {
-    description: "Get a list with all Innovation's Supports.",
-    operationId: "v1-innovations-supports-list",
-    tags: ["Innovation Support"],
+    description: `Get a list with all Innovation's Supports.`,
+    operationId: 'v1-innovations-supports-list',
+    tags: ['Innovation Support'],
     parameters: [
       {
-        in: "path",
-        name: "innovationId",
+        in: 'path',
+        name: 'innovationId',
         required: true,
         schema: {
-          type: "string",
+          type: 'string',
         }
       }, {
-        in: "query",
-        name: "status",
+        in: 'query',
+        name: 'status',
         required: false,
         schema: {
-          type: "string",
+          type: 'string',
         }
       }],
     responses: {
       200: {
-        description: "Success",
+        description: 'Success',
       },
       404: {
-        description: "Not found",
+        description: 'Not found',
       }
     },
   },
 })
-
