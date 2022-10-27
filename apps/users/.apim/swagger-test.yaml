@@ -1,0 +1,183 @@
+info:
+  title: NHS Innovation Service API - Users module
+  version: 1.0.0
+servers:
+  - url: https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api
+openapi: 3.0.3
+paths:
+  /v1/me:
+    post:
+      summary: Create a new user on DB
+      operationId: v1-me-create
+      tags:
+        - v1
+      responses:
+        "200":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+    get:
+      parameters: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for the game
+                  state:
+                    type: string
+                    description: The status of the game
+                    enum:
+                      - WaitingForPlayers
+                      - Started
+                      - Complete
+        "404":
+          description: Unable to find a game with that id
+    put:
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                displayName:
+                  type: string
+                  description: The display name of the user
+                  example: John Doe
+                mobilePhone:
+                  type: string
+                  description: The mobile phone number of the user
+                  example: "07777777777"
+                organisation:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The ID of the organisation
+                      example: 12345678-1234-1234-1234-123456789012
+                    name:
+                      type: string
+                      description: The name of the organisation
+                      example: Example Organisation
+                    isShadow:
+                      type: boolean
+                      description: Whether the organisation is a shadow organisation
+                      example: false
+                    size:
+                      type: string
+                      description: The size of the organisation
+                      example: small
+      responses:
+        "200":
+          description: User information updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+  /v1/me/terms-of-use:
+    patch:
+      parameters: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Operation identifier
+        "404":
+          description: Unable to find a game with that id
+    get:
+      parameters: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for the game
+                  state:
+                    type: string
+                    description: The status of the game
+                    enum:
+                      - WaitingForPlayers
+                      - Started
+                      - Complete
+        "404":
+          description: Unable to find a game with that id
+  /v1/survey:
+    post:
+      parameters: []
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for survey object
+        "400":
+          description: Invalida survey payload
+  /v1:
+    get:
+      operationId: v1-users-list
+      description: Get users list
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for user object

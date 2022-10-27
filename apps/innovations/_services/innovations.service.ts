@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
 import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum } from '@innovations/shared/enums';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError, InternalServerError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -459,77 +459,24 @@ export class InnovationsService extends BaseAppService {
 
   }
 
-  async getInnovationShares(innovationId: string, requestUser: DomainUserInfoType): Promise<{ id: string; status: InnovationSupportStatusEnum; }[] | undefined> {
+  async getInnovationShares(innovationId: string): Promise<{ organisation: { id: string, name: string, acronym: null | string } }[]> {
 
-    const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.organisationShares', 'organisationShares')
-      .leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports')
-      .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .leftJoinAndSelect('innovationSupports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .where('innovation.id = :innovationId', { innovationId });
-
-    switch (requestUser.type) {
-      case UserTypeEnum.INNOVATOR: {
-        baseQuery.andWhere('innovation.owner_id = :ownerId', { ownerId: requestUser.id });
-        break;
-      }
-      case UserTypeEnum.ACCESSOR: {
-        const organisation = requestUser.organisations[0];
-
-        if (organisation!.role === AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR) {
-          baseQuery.andWhere('organisationShares.organisation_id = :organisationId', { organisationId: organisation!.id });
-        } else {
-          baseQuery.andWhere('innovationSupports.organisation_unit_id = :organisationUnitId', { organisationUnitId: organisation!.organisationUnits[0]!.id });
-        }
-
-        break;
-      }
-
-      case UserTypeEnum.ASSESSMENT: {
-        baseQuery.loadAllRelationIds();
-        break;
-      }
-      default:
-        break;
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-
-    const innovation = await baseQuery.getOne();
-
-    const supports = innovation?.innovationSupports;
-    const shares = innovation?.organisationShares;
-
-    const result = shares?.map((os: OrganisationEntity) => {
-      const organisationSupports = supports?.filter(
-        (is: InnovationSupportEntity) => is.organisationUnit.organisation.id === os.id
-      ) || [];
-
-      let status: InnovationSupportStatusEnum = InnovationSupportStatusEnum.UNASSIGNED;
-      if (organisationSupports?.length === 1) {
-        status = organisationSupports[0]!.status;
-      } else if (organisationSupports?.length > 1) {
-        const idx = organisationSupports.findIndex(
-          (is: InnovationSupportEntity) =>
-            is.status != InnovationSupportStatusEnum.COMPLETE &&
-            is.status != InnovationSupportStatusEnum.WITHDRAWN &&
-            is.status != InnovationSupportStatusEnum.UNSUITABLE
-        );
-
-        if (idx !== -1) {
-          status = organisationSupports[idx]!.status;
-        } else {
-          status = organisationSupports[0]!.status;
-        }
+    return innovation.organisationShares.map(organisation => ({
+      organisation: {
+        id: organisation.id,
+        name: organisation.name,
+        acronym: organisation.acronym
       }
+    }));
 
-      return {
-        id: os.id,
-        status,
-      };
-    });
-
-    return result;
   }
 
   async submitInnovation(requestUser: DomainUserInfoType, innovationId: string, updatedById: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
