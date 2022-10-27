@@ -1,13 +1,13 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum } from '@innovations/shared/enums';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum, ActivityTypeEnum } from '@innovations/shared/enums';
+import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSupportEntity, InnovationSectionEntity, ActivityLogEntity } from '@innovations/shared/entities';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError, InternalServerError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -571,6 +571,80 @@ export class InnovationsService extends BaseAppService {
 
   }
 
+  async getInnovationActivitiesLog(
+    innovationId: string,
+    filters: { activityTypes?: ActivityTypeEnum },
+    pagination: PaginationQueryParamsType<'createdAt'>
+  ): Promise<{
+    count: number,
+    data: { type: ActivityTypeEnum, activity: ActivityEnum, date: DateISOType, params: ActivityLogListParamsType }[]
+  }> {
+
+    const query = this.sqlConnection
+      .createQueryBuilder(ActivityLogEntity, 'activityLog')
+      .where('activityLog.innovation_id = :innovationId', { innovationId });
+
+    // Filters
+    if (filters.activityTypes && filters.activityTypes.length > 0) {
+      query.andWhere('activityLog.type IN (:...activityTypes)', { activityTypes: filters.activityTypes });
+    }
+
+    // Pagination and ordering
+    query.skip(pagination.skip);
+    query.take(pagination.take);
+
+    for (const [key, order] of Object.entries(pagination.order || { 'default': 'DESC' })) {
+      let field: string;
+      switch (key) {
+        case 'createdAt': field = 'activityLog.createdAt'; break;
+        default: field = 'activityLog.createdAt'; break;
+      }
+      query.addOrderBy(field, order);
+    }
+
+    const [dbActivities, dbActivitiesCount] = await query.getManyAndCount();
+
+    const usersIds = dbActivities.flatMap(item => {
+      const params = JSON.parse(item.param) as ActivityLogListParamsType;
+      const p: string[] = [];
+
+      if (params.actionUserId) { p.push(params.actionUserId); }
+      if (params.interveningUserId) { p.push(params.interveningUserId); }
+
+      return p;
+    })
+
+    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...usersIds] }));
+
+    try {
+      return {
+        count: dbActivitiesCount,
+        data: dbActivities.map(item => {
+          const params = JSON.parse(item.param) as ActivityLogListParamsType;
+
+          if (params.actionUserId) {
+            params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '';
+          }
+          if (params.interveningUserId) {
+            params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '';
+          }
+
+          return {
+            activity: item.activity,
+            type: item.type,
+            date: item.createdAt,
+            params
+          }
+        })
+      }
+    } catch (error: any) {
+      if (Object.values(InnovationErrorsEnum).includes(error.name)) { throw error; }
+      else {
+        throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
+      }
+    }
+
+  }
 
   private async findInnovationSections(innovationId: string): Promise<InnovationSectionEntity[] | undefined> {
 
