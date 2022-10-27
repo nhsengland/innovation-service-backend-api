@@ -2,11 +2,10 @@ import { injectable, inject } from 'inversify';
 import type { Repository } from 'typeorm';
 
 import { InnovationEntity, InnovationSupportEntity, CommentEntity, UserEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, InnovationActionEntity } from '@innovations/shared/entities';
-import { LastSupportStatusViewEntity } from '@innovations/shared/entities/views/last-support-status.view.entity';
 import { InnovationSupportStatusEnum, type UserTypeEnum, ActivityEnum, InnovationSupportLogTypeEnum, InnovationActionStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { NotFoundError, InnovationErrorsEnum, InternalServerError, GenericErrorsEnum, UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
@@ -358,29 +357,4 @@ export class InnovationSupportsService extends BaseAppService {
 
   }
 
-
-  async getLastStatusTransition(innovationId: string)
-    : Promise<{
-      innovation: { id: string },
-      organisation: { id: string },
-      organisationUnit: { id: string; },
-      date: DateISOType
-    } | null> {
-
-    const result = await this.sqlConnection.createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
-      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
-      .getOne();
-
-    if (result) {
-
-      return {
-        innovation: { id: innovationId },
-        organisation: { id: result.organisationId },
-        organisationUnit: { id: result.organisationUnitId },
-        date: result.statusChangedAt,
-      };
-    }
-
-    return result;
-  }
 }

@@ -7,10 +7,9 @@ export class alterLastSupportStatusView1665136834576 implements MigrationInterfa
         
             CREATE OR ALTER   VIEW [dbo].[last_support_status_view_entity]
             AS
-            WITH
             SELECT
-              TOP 1
               a.valid_to statusChangedAt,
+              b.innovation_id innovationId,
               b.status currentStatus, 
               o.id organisationId,
               o.name organisationName,
@@ -34,8 +33,7 @@ export class alterLastSupportStatusView1665136834576 implements MigrationInterfa
             WHERE 
               B.status IN ('COMPLETE', 'NOT_YET', 'UNSUITABLE')
               AND DATEDIFF(DAY, B.updated_at, GETDATE()) > 7
-              AND C.cnt IS NULL
-              order by statusChangedAt DESC     
+              AND C.cnt IS NULL     
         `)
   }
 

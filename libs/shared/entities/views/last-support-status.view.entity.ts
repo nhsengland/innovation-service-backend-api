@@ -8,6 +8,9 @@ export class LastSupportStatusViewEntity {
   statusChangedAt: DateISOType;
 
   @ViewColumn()
+  innovationId: string;
+
+  @ViewColumn()
   currentStatus: string;
 
   @ViewColumn()
