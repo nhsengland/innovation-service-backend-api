@@ -118,6 +118,24 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         schema: {
           type: 'string',
         }
+      },
+      {
+        name: 'activityStartAfter',
+        in: 'query',
+        required: false,
+        description: 'Activity Logs that start after this date.',
+        schema: {
+          type: 'string',
+        }
+      },
+      {
+        name: 'activityStartBefore',
+        in: 'query',
+        required: false,
+        description: 'Activity Logs that start before this date.',
+        schema: {
+          type: 'string',
+        }
       }
     ],
     responses: {

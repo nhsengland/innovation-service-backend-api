@@ -1431,6 +1431,18 @@ paths:
               - COMMENTS
               - ACTIONS
               - THREADS
+        - name: activityStartAfter
+          in: query
+          description: Activity Logs that start after this date
+          required: false
+          schema:
+            type: string
+        - name: activityStartBefore
+          in: query
+          description: Activity Logs that start before this date
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: OK

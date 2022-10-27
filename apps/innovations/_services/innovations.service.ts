@@ -573,7 +573,7 @@ export class InnovationsService extends BaseAppService {
 
   async getInnovationActivitiesLog(
     innovationId: string,
-    filters: { activityTypes?: ActivityTypeEnum },
+    filters: { activityTypes?: ActivityTypeEnum, activityStartAfter?: string, activityStartBefore?: string },
     pagination: PaginationQueryParamsType<'createdAt'>
   ): Promise<{
     count: number,
@@ -587,6 +587,16 @@ export class InnovationsService extends BaseAppService {
     // Filters
     if (filters.activityTypes && filters.activityTypes.length > 0) {
       query.andWhere('activityLog.type IN (:...activityTypes)', { activityTypes: filters.activityTypes });
+    }
+    if(filters.activityStartAfter != null) {
+      query.andWhere('activityLog.createdAt >= :activityStartAfter', { activityStartAfter: filters.activityStartAfter});
+    }
+    if(filters.activityStartBefore != null) {
+      // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
+      const beforeDateWithTimestamp = new Date(filters.activityStartBefore);
+      beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
+
+      query.andWhere('activityLog.createdAt <= :activityStartBefore', { activityStartBefore: filters.activityStartBefore});
     }
 
     // Pagination and ordering
