@@ -26,6 +26,7 @@ class V1OrganisationsList {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       await authService.validate(context.auth.user.identityId)
+        .checkAccessorType()
         .checkInnovatorType()
         .verify();
 

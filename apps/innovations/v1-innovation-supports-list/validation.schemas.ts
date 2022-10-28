@@ -1,5 +1,6 @@
-import { JoiHelper } from '@innovations/shared/helpers';
 import Joi from 'joi';
+
+import { JoiHelper } from '@innovations/shared/helpers';
 
 
 export type ParamsType = {
@@ -11,8 +12,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 
 export type QueryParamsType = {
-  fields?: ('engagingAccessors')[];
+  fields: ('engagingAccessors')[];
 }
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('engagingAccessors')).optional()
+  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('engagingAccessors')).optional().default([])
 }).required();

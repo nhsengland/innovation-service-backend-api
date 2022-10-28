@@ -1,19 +1,20 @@
-import type { AzureFunction, HttpRequest } from "@azure/functions";
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import { mapOpenApi3_1 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { AccessorOrganisationRoleEnum } from '@innovations/shared/enums';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceType, AuthorizationServiceSymbol } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
-import { JwtDecoder } from "@innovations/shared/decorators";
-import { AccessorOrganisationRoleEnum } from "@innovations/shared/enums";
-import { JoiHelper, ResponseHelper } from "@innovations/shared/helpers";
-import { type AuthorizationServiceType, AuthorizationServiceSymbol } from "@innovations/shared/services";
-import type { CustomContextType } from "@innovations/shared/types";
-import { container } from "../_config";
-import { type InnovationSupportsServiceType, InnovationSupportsServiceSymbol } from "../_services/interfaces";
-import type { ResponseDTO } from "./transformation.dtos";
-import { type ParamsType, ParamsSchema, type BodyType, BodySchema } from "./validation.schemas";
+import { container } from '../_config';
+import { InnovationSupportsServiceType, InnovationSupportsServiceSymbol } from '../_services/interfaces';
+
+import { type ParamsType, ParamsSchema, type BodyType, BodySchema } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class V1PutInnovationSupportUpdate {
+class V1InnovationSupportUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -32,7 +33,6 @@ class V1PutInnovationSupportUpdate {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      // request user is always an accessor. It is ensured he has at least one organisation and one unit.
       const result = await innovationSupportsService.updateInnovationSupport(
         requestUser,
         params.innovationId,
@@ -51,84 +51,84 @@ class V1PutInnovationSupportUpdate {
 
 }
 
-export default openApi(V1PutInnovationSupportUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/supports/{supportId}', {
+export default openApi(V1InnovationSupportUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/supports/{supportId}', {
   patch: {
-    description: "Update support on innovation.",
-    operationId: "v1-innovation-update-support",
-    tags: ["Innovation Support"],
+    description: 'Update support on innovation.',
+    operationId: 'v1-innovation-update-support',
+    tags: ['Innovation Support'],
     parameters: [
       {
-        in: "path",
-        name: "innovationId",
-        description: "Unique innovation ID",
+        in: 'path',
+        name: 'innovationId',
+        description: 'Unique innovation ID',
         required: true,
       },
       {
-        in: "path",
-        name: "supportId",
+        in: 'path',
+        name: 'supportId',
         required: true,
       },
     ],
     requestBody: {
-      description: "",
+      description: '',
       required: true,
       content: {
-        "application/json": {
+        'application/json': {
           schema: {
-            type: "object",
+            type: 'object',
             properties: {
               status: {
-                "type": "string",
-                "enum": [
-                  "ENGAGING",
-                  "FURTHER_INFO_REQUIRED",
-                  "WAITING",
-                  "NOT_YET",
-                  "UNSUITABLE",
-                  "COMPLETE"
+                'type': 'string',
+                'enum': [
+                  'ENGAGING',
+                  'FURTHER_INFO_REQUIRED',
+                  'WAITING',
+                  'NOT_YET',
+                  'UNSUITABLE',
+                  'COMPLETE'
                 ]
               },
               message: {
-                "type": "string",
-                "maxLength": 400
+                'type': 'string',
+                'maxLength': 400
               },
               accessors: {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
+                'type': 'array',
+                'items': {
+                  'type': 'object',
+                  'properties': {
                     accessorId: {
-                      "type": "string",
-                      "format": "uuid"
+                      'type': 'string',
+                      'format': 'uuid'
                     },
                     organisationalUnitId: {
-                      "type": "string",
-                      "format": "uuid"
+                      'type': 'string',
+                      'format': 'uuid'
                     },
                   },
                 },
               },
             },
-            required: ["status", "message"],
+            required: ['status', 'message'],
             additionalProperties: false,
           },
         },
       }
     },
     responses: {
-      "200": {
-        description: "Innovation ID",
+      '200': {
+        description: 'Innovation ID',
         content: {
-          "application/json": {
+          'application/json': {
             schema: {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid"
+              'type': 'object',
+              'properties': {
+                'id': {
+                  'type': 'string',
+                  'format': 'uuid'
                 },
               },
-              "required": ["id"],
+              'required': ['id'],
             }
           }
         },

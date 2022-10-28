@@ -3,18 +3,17 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class PatchInnovationSectionSubmit {
+class V1InnovationSectionSubmit {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -50,12 +49,12 @@ class PatchInnovationSectionSubmit {
 
 }
 
-export default openApi(PatchInnovationSectionSubmit.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}/submit', {
+export default openApi(V1InnovationSectionSubmit.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}/submit', {
   post: {
     description: 'Submit an innovation section.',
     tags: ['Innovation'],
     summary: 'Submit an innovation section.',
-    operationId: 'submitInnovationSection',
+    operationId: 'v1-innovation-section-submit',
     parameters: [],
     requestBody: {
       description: 'Innovation section submit request body.',

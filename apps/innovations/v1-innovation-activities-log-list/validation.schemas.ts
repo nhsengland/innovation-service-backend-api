@@ -20,6 +20,6 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 }
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({
   activityTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ActivityTypeEnum))).optional(),
-  activityStartAfter: Joi.string().length(10).optional(),
-  activityStartBefore: Joi.string().length(10).optional(),
+  activityStartAfter: Joi.date().optional(),
+  activityStartBefore: Joi.date().optional(),
 }).required();
