@@ -8,11 +8,11 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 
 
 @injectable()
-export class InnovationSectionsService extends BaseAppService {
+export class InnovationSectionsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,

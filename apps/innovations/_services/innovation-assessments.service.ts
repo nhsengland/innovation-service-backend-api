@@ -31,14 +31,14 @@ import {
   UnprocessableEntityError,
 } from '@innovations/shared/errors';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 import { InnovationHelper } from '../_helpers/innovation.helper';
 
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 @injectable()
-export class InnovationAssessmentsService extends BaseAppService {
+export class InnovationAssessmentsService extends BaseService {
 
   innovationRepository: Repository<InnovationEntity>;
   innovationAssessmentRepository: Repository<InnovationAssessmentEntity>;

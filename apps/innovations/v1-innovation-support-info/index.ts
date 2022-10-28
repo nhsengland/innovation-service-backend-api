@@ -34,7 +34,7 @@ class V1InnovationSupportInfo {
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         status: result.status,
-        ...(result.engagingAccessors === undefined ? {} : { engagingAccessors: result.engagingAccessors })
+        engagingAccessors: result.engagingAccessors
       });
       return;
 
@@ -47,7 +47,7 @@ class V1InnovationSupportInfo {
 
 }
 
-export default openApi(V1InnovationSupportInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/support/{supportId}', {
+export default openApi(V1InnovationSupportInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/supports/{supportId}', {
   get: {
     description: 'Get supporting information for an Innovation',
     operationId: 'v1-innovation-support-info',

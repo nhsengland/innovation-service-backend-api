@@ -7,11 +7,11 @@ import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
-import { BaseAppService } from './base-app.service';
+import { BaseService } from './base.service';
 
 
 @injectable()
-export class UsersService extends BaseAppService {
+export class UsersService extends BaseService {
 
   userRepository: Repository<UserEntity>;
   organisationRepository: Repository<OrganisationEntity>;
