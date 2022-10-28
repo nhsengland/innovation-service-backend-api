@@ -15,11 +15,11 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   activityTypes?: ActivityTypeEnum;
-  activityStartAfter?: string;
-  activityStartBefore?: string;
+  startDate?: string;
+  endDate?: string;
 }
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({
   activityTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ActivityTypeEnum))).optional(),
-  activityStartAfter: Joi.date().optional(),
-  activityStartBefore: Joi.date().optional(),
+  startDate: Joi.date().optional(),
+  endDate: Joi.date().optional(),
 }).required();

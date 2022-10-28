@@ -1431,13 +1431,13 @@ paths:
               - COMMENTS
               - ACTIONS
               - THREADS
-        - name: activityStartAfter
+        - name: startDate
           in: query
           description: Activity Logs that start after this date
           required: false
           schema:
             type: string
-        - name: activityStartBefore
+        - name: endDate
           in: query
           description: Activity Logs that start before this date
           required: false

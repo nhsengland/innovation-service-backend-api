@@ -120,7 +120,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         }
       },
       {
-        name: 'activityStartAfter',
+        name: 'startDate',
         in: 'query',
         required: false,
         description: 'Activity Logs that start after this date.',
@@ -129,7 +129,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         }
       },
       {
-        name: 'activityStartBefore',
+        name: 'endDate',
         in: 'query',
         required: false,
         description: 'Activity Logs that start before this date.',
