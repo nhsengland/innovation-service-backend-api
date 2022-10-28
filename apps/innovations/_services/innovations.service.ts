@@ -535,15 +535,15 @@ export class InnovationsService extends BaseService {
     if (filters.activityTypes && filters.activityTypes.length > 0) {
       query.andWhere('activityLog.type IN (:...activityTypes)', { activityTypes: filters.activityTypes });
     }
-    if(filters.activityStartAfter != null) {
-      query.andWhere('activityLog.createdAt >= :activityStartAfter', { activityStartAfter: filters.activityStartAfter});
+    if (filters.activityStartAfter) {
+      query.andWhere('activityLog.createdAt >= :activityStartAfter', { activityStartAfter: filters.activityStartAfter });
     }
-    if(filters.activityStartBefore != null) {
+    if (filters.activityStartBefore) {
       // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
       const beforeDateWithTimestamp = new Date(filters.activityStartBefore);
       beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
 
-      query.andWhere('activityLog.createdAt <= :activityStartBefore', { activityStartBefore: filters.activityStartBefore});
+      query.andWhere('activityLog.createdAt <= :activityStartBefore', { activityStartBefore: beforeDateWithTimestamp });
     }
 
     // Pagination and ordering
