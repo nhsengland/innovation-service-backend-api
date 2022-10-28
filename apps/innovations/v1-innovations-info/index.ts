@@ -9,8 +9,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { PathParamsSchema, PathParamsType } from './validation.schemas';
 
 
 class V1InnovationsInfo {
@@ -23,52 +23,25 @@ class V1InnovationsInfo {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
-        //.checkAssessmentType()
-        //.checkAccessorType()
-        //.checkInnovatorType()
+      const auth = await authorizationService.validate(context.auth.user.identityId)
+        .checkAssessmentType()
+        .checkAccessorType()
+        .checkInnovatorType()
         .verify();
 
-      const requestUser = authInstance.getUserInfo();
+      const requestUser = auth.getUserInfo();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role });
-
-      const { ...filters } = queryParams;
-      filters.fields
-      const result = await innovationsService.getInnovationInfo(
-        request.params['innovationId']!,
-        { fields: filters.fields },
+      const params = JoiHelper.Validate<PathParamsType>(
+        PathParamsSchema,
+        request.params,
+        { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role }
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-        name: result.name,
-        description: result.description,
-        status: result.status,
-        submittedAt: result.submittedAt,
-        countryName: result.countryName,
-        postCode: result.postCode,
-        categories: result.categories,
-        otherCategoryDescription: result.otherCategoryDescription,
-        owner: {
-          id: result.owner.id,
-          name: result.owner.name,
-          isActive: result.owner.isActive,
-        },
-        assessment: result.assessment ? {
-          id: result.assessment.id,
-          createdAt: result.assessment.createdAt,
-          finishedAt: result.assessment.finishedAt,
-          assignedTo: {
-            name: result.assessment.assignedTo.name,
-          },
-        } : null,
-        supports: result.supports ? result.supports.map(support => ({
-          id: support.id,
-          status: support.status,
-        })) : null,
-        lastEngagingSupportTransition: result.lastEngagingSupportTransition,
-      });
+      const result = await innovationsService.getInnovationLastEngagingTransition(
+        params.innovationId,
+      );
+
+      context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
 
     } catch (error) {

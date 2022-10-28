@@ -644,6 +644,12 @@ export class InnovationsService extends BaseAppService {
 
   }
 
+  async getInnovationLastEngagingTransition(innovationId: string): Promise<{ statusChangedAt: null | DateISOType }> {
+    return {
+      statusChangedAt: await this.lastSupportStatusTransitionFromEngaging(innovationId)
+    }
+  }
+
   /**
   * Extracts information about the initial survey taken by the Innovator from CosmosDb
   */
@@ -707,20 +713,15 @@ export class InnovationsService extends BaseAppService {
 
   private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<DateISOType | null> {
 
-    try {
+    const result = await this.sqlConnection.createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
+      .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
+      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
+      .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
+      .getRawOne<{ statusChangedAt: string }>();
 
-      const result = await this.sqlConnection.createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
-        .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
-        .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
-        .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
-        .getRawOne<{ statusChangedAt: string }>();
+    if (!result) return null;
 
-      if (!result) return null;
-
-      return result.statusChangedAt;
-    } catch (error) {
-      throw error;
-    }
+    return result.statusChangedAt;
 
   }
 

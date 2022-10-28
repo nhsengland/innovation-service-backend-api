@@ -1375,3 +1375,22 @@ paths:
                     format: uuid
                 required:
                   - id
+  "/v1/{innovationId}":
+    get:
+      description: Get Innovation information
+      operationId: v1-innovation-info
+      tags:
+        - "[v1] Innovation"
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found

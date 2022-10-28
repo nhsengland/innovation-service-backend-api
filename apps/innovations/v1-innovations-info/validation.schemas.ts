@@ -1,13 +1,10 @@
 import Joi from 'joi';
 
-import { JoiHelper } from '@innovations/shared/helpers';
-
-
-export type QueryParamsType = {
-  fields?: ('assessment' | 'supports')[],
+export type PathParamsType = {
+  innovationId: string;
 }
 
 
-export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('assessment', 'supports')).optional()
+export const PathParamsSchema = Joi.object<PathParamsType>({
+  innovationId: Joi.string().uuid().required(),
 }).required();
