@@ -1,10 +1,10 @@
 import type { HttpRequest } from '@azure/functions';
 
-import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
 import { JwtDecoder } from '@notifications/shared/decorators';
-import type { CustomContextType } from '@notifications/shared/types';
-import { ResponseHelper } from '@notifications/shared/helpers';
 import { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { ResponseHelper } from '@notifications/shared/helpers';
+import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
+import type { CustomContextType } from '@notifications/shared/types';
 
 import { container } from '../_config';
 // import { ResponseDTO } from './transformation.dtos';
@@ -149,7 +149,7 @@ class V1Health {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 

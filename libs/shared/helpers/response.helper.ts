@@ -1,5 +1,6 @@
+import type { Context } from '@azure/functions';
 import { GenericErrorsEnum } from '../errors';
-import type { AppResponse } from '../types';
+import { AppResponse, isBaseErrorType } from '../types';
 
 
 export class ResponseHelper {
@@ -31,15 +32,47 @@ export class ResponseHelper {
   static ServiceUnavailable<T>(data?: T): AppResponse { return this.FormattedResponse(503, data); }
 
 
-  static Error(error: any): AppResponse {
+  /**
+   * this helper function is used to format the response of the function logging the errors into app insights
+   * @param context Azure Function Context.
+   * @param error the error to be handled.
+   * @returns the http response to be sent to the client.
+   */
+  static Error(context: Context, error: any): AppResponse {
 
-    try {
-      return error.errorResponse();
-    } catch (e) {
-      console.log('[UNKNOWN ERROR]: ', error);
+    if(isBaseErrorType(error)) { 
+      const res = error.errorResponse();
+      // Log 400s error, excluding 401 since they are normal in our execussion flow and 501 since it's not implemented to app insights as information.
+      if(res.status in [400, 403, 404, 422, 501]) {
+        context.log.info({
+          invocationId: context.invocationId,
+          error: res.body.error,
+          message: res.body.message,
+          details: res.body.details ?? {},
+          stack: error.stack
+        });
+      } else if (res.status >= 500) {
+        // All other 500s should be logged as error
+        context.log.error({
+          invocationId: context.invocationId,
+          error: res.body.error,
+          message: res.body.message,
+          details: res.body.details ?? {},
+          stack: error.stack
+        });
+      }
+      return res;
+    } else {
+      // All errors we don't know about should be logged as error
+      context.log.error({
+        invocationId: context.invocationId,
+        error: 'UNKNOWN_ERROR',
+        message: 'messsage' in error ? error.message : 'Unknown error',
+        details: 'details' in error ? error.details : {},
+        stack: 'stack' in error ? error.stack : 'No stack trace'
+      });
       return this.Internal({ error: GenericErrorsEnum.UNKNOWN_ERROR, message: 'Unknown error.' });
     }
-
   }
 
 

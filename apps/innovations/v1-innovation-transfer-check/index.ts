@@ -1,13 +1,13 @@
-import type { AzureFunction, Context, HttpRequest } from '@azure/functions'
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 import { container } from '../_config';
 import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
 
-import { ParamsSchema, ParamsType } from './validations.schema';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validations.schema';
 
 
 class V1InnovationTransferCheck {
@@ -26,7 +26,7 @@ class V1InnovationTransferCheck {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
   }

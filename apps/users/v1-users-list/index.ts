@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { AccessorOrganisationRoleEnum } from '@users/shared/enums';
@@ -11,8 +11,8 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import { OrganisationsServiceSymbol, OrganisationsServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1UsersList {
@@ -71,7 +71,7 @@ class V1UsersList {
       }
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
   }

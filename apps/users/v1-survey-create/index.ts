@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import type { CustomContextType } from '@users/shared/types';
@@ -7,8 +7,8 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import { SurveyServiceSymbol, SurveyServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType } from './validation.schemas';
 
 
 class V1SurveyCreate {
@@ -28,7 +28,7 @@ class V1SurveyCreate {
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }

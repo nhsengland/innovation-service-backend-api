@@ -2,15 +2,15 @@ import { mapOpenApi as openApi } from '@aaronpowell/azure-functions-nodejs-opena
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { ResponseHelper, JoiHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1OrganisationsList {
@@ -40,7 +40,7 @@ class V1OrganisationsList {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 
