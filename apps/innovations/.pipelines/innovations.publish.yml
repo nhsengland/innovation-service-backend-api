@@ -1,5 +1,14 @@
 trigger:
-- develop
+  batch: true
+  branches:
+    include:
+      - develop
+  paths:
+    include:
+      - '*'
+      - apps/innovations
+    exclude:
+      - apps
 
 variables:
   appName: innovations
