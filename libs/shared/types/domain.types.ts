@@ -52,6 +52,12 @@ export type ActivityLogDBParamsType = {
   comment?: { id?: string; value: string; }; // Some descriptions (ex: actions), are stored as a comment, hence, without an id.
   totalActions?: number;
 
+  thread?: {
+    id: string;
+    subject: string;
+    messageId: string;
+  };
+
 }
 
 // // This is the type of the list of activities.
