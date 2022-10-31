@@ -29,6 +29,7 @@ export class ResponseHelper {
 
   // 500 Range.
   static Internal<T>(data?: T): AppResponse { return this.FormattedResponse(500, data); }
+  static NotImplemented<T>(data?: T): AppResponse { return this.FormattedResponse(501, data); }
   static ServiceUnavailable<T>(data?: T): AppResponse { return this.FormattedResponse(503, data); }
 
 

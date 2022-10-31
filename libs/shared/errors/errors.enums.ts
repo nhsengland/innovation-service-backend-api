@@ -13,7 +13,8 @@ export enum GenericErrorsEnum {
 
   INTERNAL_CONFIGURATION_ERROR = 'GEN.0300',
 
-  UNKNOWN_ERROR = 'ERR.1000'
+  UNKNOWN_ERROR = 'ERR.1000',
+  NOT_IMPLEMENTED_ERROR = 'ERR.1001'
 }
 
 export enum UserErrorsEnum {
