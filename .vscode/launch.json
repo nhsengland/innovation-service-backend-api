@@ -1,6 +1,18 @@
 {
   "version": "0.2.0",
-  "configurations": [{
+  "configurations": [
+    {
+      "name": "FA. Admin",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run-script", "app:watch", "--app=admin", "--port=7071"],
+      "runtimeVersion": "14",
+      "skipFiles": ["<node_internals>/**"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnSessionStart"
+    },
+    {
       "name": "FA. Innovations",
       "type": "node",
       "request": "launch",

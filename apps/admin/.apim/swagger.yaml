@@ -1,0 +1,27 @@
+openapi: "3.0.3"
+info:
+  title: "Innovation Service - Admin API"
+  version: "1.0.0"
+servers:
+  - url: "https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api"
+
+paths:
+  "/v1/health":
+    get:
+      tags:
+        - "[v1] health"
+      description: "Get admin health"
+      operationId: "v1-admin-health"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "401":
+          description: "Unauthorized"
+        "403":
+          description: "Forbidden"
