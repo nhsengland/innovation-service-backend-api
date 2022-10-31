@@ -1,7 +1,7 @@
 import type { HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@notifications/shared/decorators';
-import { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { ResponseHelper } from '@notifications/shared/helpers';
 import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
 import type { CustomContextType } from '@notifications/shared/types';
@@ -55,14 +55,14 @@ class V1Health {
           await notifierService.send(requestQA, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
             {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
-              innovationSupport: { id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, statusChanged: true, newAssignedAccessors: [{id: '829e13b3-242a-4dc5-bdb9-3f45fa0bf307'}]}
+              innovationSupport: { id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, statusChanged: true, newAssignedAccessors: [{ id: '829e13b3-242a-4dc5-bdb9-3f45fa0bf307' }] }
             }
           );
           break;
 
         case NotifierTypeEnum.ACTION_CREATION:
           await notifierService.send(requestQA, NotifierTypeEnum.ACTION_CREATION,
-            { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD', action: { id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6', section: InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION } }
+            { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD', action: { id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6', section: InnovationSectionEnum.INNOVATION_DESCRIPTION } }
           );
           break;
 
@@ -72,7 +72,7 @@ class V1Health {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
               action: {
                 id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6',
-                section: InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION,
+                section: InnovationSectionEnum.INNOVATION_DESCRIPTION,
                 status: InnovationActionStatusEnum.REQUESTED
               }
             }

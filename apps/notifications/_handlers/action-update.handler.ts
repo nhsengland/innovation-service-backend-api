@@ -1,5 +1,5 @@
 import {
-  InnovationActionStatusEnum, InnovationSectionCatalogueEnum,
+  InnovationActionStatusEnum, InnovationSectionEnum,
   NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum,
   UserTypeEnum
 } from '@notifications/shared/enums';
@@ -15,7 +15,7 @@ import { BaseHandler } from './base.handler';
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
   EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
-  { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionCatalogueEnum }
+  { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionEnum }
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);

@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -27,7 +27,7 @@ export class InnovationSectionsService extends BaseService {
     status: InnovationStatusEnum,
     sections: {
       id: null | string,
-      section: InnovationSectionCatalogueEnum,
+      section: InnovationSectionEnum,
       status: InnovationSectionStatusEnum,
       submittedAt: null | DateISOType
     }[]
@@ -46,7 +46,7 @@ export class InnovationSectionsService extends BaseService {
       id: innovation.id,
       name: innovation.name,
       status: innovation.status,
-      sections: Object.values(InnovationSectionCatalogueEnum).map(sectionKey => {
+      sections: Object.values(InnovationSectionEnum).map(sectionKey => {
 
         const section = sections.find(item => item.section === sectionKey);
 
@@ -72,9 +72,9 @@ export class InnovationSectionsService extends BaseService {
   }
 
 
-  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{
+  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum): Promise<{
     id: null | string,
-    section: InnovationSectionCatalogueEnum,
+    section: InnovationSectionEnum,
     status: InnovationSectionStatusEnum,
     submittedAt: null | DateISOType
     data: null | { [key: string]: any }
@@ -129,7 +129,7 @@ export class InnovationSectionsService extends BaseService {
   async updateInnovationSectionInfo(
     user: { id: string },
     innovationId: string,
-    sectionKey: InnovationSectionCatalogueEnum,
+    sectionKey: InnovationSectionEnum,
     dataToUpdate: { [key: string]: any }
   ): Promise<{ id: string | undefined }> {
 
@@ -220,7 +220,7 @@ export class InnovationSectionsService extends BaseService {
   }
 
 
-  async submitInnovationSection(user: { id: string, identityId: string; type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{ id: string }> {
+  async submitInnovationSection(user: { id: string, identityId: string; type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum): Promise<{ id: string }> {
 
     const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')

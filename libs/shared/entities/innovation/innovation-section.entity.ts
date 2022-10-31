@@ -6,7 +6,7 @@ import { InnovationEntity } from './innovation.entity';
 import { InnovationActionEntity } from './innovation-action.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
 
-import { InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
+import { InnovationSectionEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
 import type { DateISOType } from '../../types/date.types';
 
 
@@ -19,10 +19,10 @@ export class InnovationSectionEntity extends BaseEntity {
 
   @Column({
     type: 'simple-enum',
-    enum: InnovationSectionCatalogueEnum,
+    enum: InnovationSectionEnum,
     nullable: false,
   })
-  section: InnovationSectionCatalogueEnum;
+  section: InnovationSectionEnum;
 
   @Column({
     type: 'simple-enum',

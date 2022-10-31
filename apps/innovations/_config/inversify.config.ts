@@ -18,16 +18,20 @@ import { InnovationTransferService } from '../_services/innovation-transfer.serv
 import { InnovationSectionsService } from '../_services/innovation-sections.service';
 
 import {
-  InnovationsServiceSymbol, InnovationsServiceType,
+  InnovationActionsServiceType, InnovationActionsServiceSymbol,
+  InnovationAssessmentsServiceType, InnovationAssessmentsServiceSymbol,
+  InnovationSectionsServiceSymbol, InnovationSectionsServiceType,
+  InnovationSupportsServiceType, InnovationSupportsServiceSymbol,
+  InnovationThreadsServiceType, InnovationThreadsServiceSymbol,
   InnovationTransferServiceSymbol, InnovationTransferServiceType,
-  InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationAssessmentsServiceType, InnovationAssessmentsServiceSymbol, InnovationThreadsServiceType, InnovationThreadsServiceSymbol, InnovationSupportsServiceType, InnovationSupportsServiceSymbol, InnovationActionServiceType, InnovationActionServiceSymbol,
+  InnovationsServiceSymbol, InnovationsServiceType
 } from '../_services/interfaces';
 
 import { startup } from './startup';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import { InnovationThreadsService } from '../_services/innovation-threads.service';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import { InnovationActionService } from '../_services/innovation-action.service';
+import { InnovationActionsService } from '../_services/innovation-actions.service';
 
 
 export const container: Container = new Container();
@@ -43,12 +47,12 @@ container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQ
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<HttpServiceType>(HttpServiceSymbol).to(HttpService).inSingletonScope();
 
-container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
-container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
-container.bind<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol).to(InnovationSectionsService).inSingletonScope();
+container.bind<InnovationActionsServiceType>(InnovationActionsServiceSymbol).to(InnovationActionsService).inSingletonScope();
 container.bind<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol).to(InnovationAssessmentsService).inSingletonScope();
-container.bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol).to(InnovationThreadsService).inSingletonScope();
+container.bind<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol).to(InnovationSectionsService).inSingletonScope();
 container.bind<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol).to(InnovationSupportsService).inSingletonScope();
-container.bind<InnovationActionServiceType>(InnovationActionServiceSymbol).to(InnovationActionService).inSingletonScope();
+container.bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol).to(InnovationThreadsService).inSingletonScope();
+container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
+container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
 
 startup();

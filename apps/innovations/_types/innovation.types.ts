@@ -1,9 +1,9 @@
-import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
   id: string | null;
-  section: InnovationSectionCatalogueEnum | null;
+  section: InnovationSectionEnum | null;
   status: InnovationSectionStatusEnum | null;
   actionStatus: InnovationActionStatusEnum | null;
   updatedAt: DateISOType | null;
@@ -35,24 +35,3 @@ export type InnovationAssessmentType = {
   updatedAt: null | DateISOType;
   updatedBy: { id: string, name: string };
 }
-
-export type ThreadListModel = {
-  count: number;
-  threads: {
-    id: string;
-    subject: string;
-    messageCount: number;
-    createdAt: DateISOType;
-    isNew: boolean;
-    lastMessage: {
-      id: string;
-      createdAt: DateISOType;
-      createdBy: {
-        id: string;
-        name: string;
-        type: UserTypeEnum;
-        organisationUnit: { id: string; name: string; acronym: string } | null;
-      };
-    };
-  }[];
-};

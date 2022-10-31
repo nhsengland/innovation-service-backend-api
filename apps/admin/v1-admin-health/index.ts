@@ -2,9 +2,9 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@admin/shared/decorators';
+import { ResponseHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
-import { ResponseHelper } from '@admin/shared/helpers';
 
 import { container } from '../_config';
 
@@ -15,15 +15,15 @@ class V1Health {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<any> {
-    
+
     try {
       const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
       await authorizationService.validate(context.auth.user.identityId).checkAdminType().verify();
       context.res = ResponseHelper.Ok<ResponseDTO>({
         status: 'OK'
       });
-    } catch (error) { 
-      context.res = ResponseHelper.Error(error);
+    } catch (error) {
+      context.res = ResponseHelper.Error(context, error);
     }
   }
 }

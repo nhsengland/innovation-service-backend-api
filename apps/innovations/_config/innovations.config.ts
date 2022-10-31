@@ -21,7 +21,7 @@ import {
   InnovationCertificationCatalogueEnum,
   InnovationPathwayKnowledgeCatalogueEnum,
   InnovationRevenueTypeCatalogueEnum,
-  InnovationSectionCatalogueEnum,
+  InnovationSectionEnum,
   InnovationSupportTypeCatalogueEnum,
   MainPurposeCatalogueEnum,
   PatientRangeCatalogueEnum,
@@ -36,7 +36,7 @@ import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants'
 import { InnovationLocationEnum } from '../_enums/innovation.enums'
 
 
-export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionCatalogueEnum]: {
+export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
   innovationFields: string[],
   lookupTables?: string[],
   allowFileUploads?: boolean,

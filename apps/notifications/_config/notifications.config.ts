@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import type { Schema } from 'joi';
 
-import { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import type { EmailTypeEnum } from './emails.config';
@@ -85,7 +85,7 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION]['action']>({
         id: Joi.string().guid().required(),
-        section: Joi.string().valid(...Object.values(InnovationSectionCatalogueEnum)).required()
+        section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required()
       }).required()
     }).required()
   },
@@ -96,7 +96,7 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]['action']>({
         id: Joi.string().guid().required(),
-        section: Joi.string().valid(...Object.values(InnovationSectionCatalogueEnum)).required(),
+        section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required(),
         status: Joi.string().valid(...Object.values(InnovationActionStatusEnum)).required()
       }).required()
     }).required()
