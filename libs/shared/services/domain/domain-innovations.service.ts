@@ -1,7 +1,7 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums';
-import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
+import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity, NotificationEntity } from '../../entities';
 import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
 import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from '../../types';
 
@@ -213,6 +213,25 @@ export class DomainInnovationsService {
 
   }
 
+
+  async getUnreadNotifications(userId: string, contextIds: string[]): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
+
+    const notifications = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+      .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
+      .innerJoinAndSelect('notificationUsers.user', 'user')
+      .where('notification.context_id IN (:...contextIds)', { contextIds })
+      .andWhere('user.id = :userId', { userId })
+      .andWhere('notificationUsers.read_at IS NULL')
+      .getMany();
+
+    return notifications.map(item => ({
+      id: item.id,
+      contextType: item.contextType,
+      contextId: item.contextId,
+      params: item.params
+    }));
+
+  }
 
 
   async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void> {

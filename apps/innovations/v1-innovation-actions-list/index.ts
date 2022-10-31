@@ -1,41 +1,50 @@
-import { mapOpenApi3_1 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
-import type { AzureFunction, HttpRequest } from "@azure/functions";
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import { JwtDecoder } from "@innovations/shared/decorators";
-import { JoiHelper, ResponseHelper } from "@innovations/shared/helpers";
-import { AuthorizationServiceSymbol, type AuthorizationServiceType } from "@innovations/shared/services";
-import type { CustomContextType } from "@innovations/shared/types";
-import { container } from "../_config";
-import { InnovationActionServiceSymbol, type InnovationActionServiceType } from "../_services/interfaces";
-import type { ResponseDTO } from "./transformation.dtos";
-import { QueryParamsSchema, type QueryParamsType } from "./validation.schemas";
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceType, AuthorizationServiceSymbol } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
-class V1GetInnovationActionList {
+import { container } from '../_config';
+import { InnovationActionsServiceType, InnovationActionsServiceSymbol } from '../_services/interfaces';
+
+import { QueryParamsType, QueryParamsSchema } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
+
+
+class V1InnovationActionsList {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationActionService = container.get<InnovationActionServiceType>(InnovationActionServiceSymbol);
+    const innovationActionsService = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
 
     try {
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
-
       const { skip, take, order, ...filters } = queryParams;
 
       const authInstance = await authorizationService.validate(context.auth.user.identityId)
+        .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .verify();
-
       const requestUser = authInstance.getUserInfo();
 
-      const result = await innovationActionService.getInnovationActionList(
-        requestUser,
+      const result = await innovationActionsService.getActionsList(
+        {
+          id: requestUser.id,
+          type: requestUser.type,
+          ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
+          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organizationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
+          ...(requestUser.organisations[0]?.role ? { organisationRole: requestUser.organisations[0]?.role } : {})
+        },
         filters,
         { skip, take, order }
       );
+
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
         data: result.data.map(item => ({
@@ -43,16 +52,11 @@ class V1GetInnovationActionList {
           displayId: item.displayId,
           status: item.status,
           description: item.description,
+          innovation: { id: item.innovation.id, name: item.innovation.name },
           section: item.section,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
-          innovation: {
-            id: item.innovation.id,
-            name: item.innovation.name
-          },
-          notifications: {
-            count: item.notifications?.count,
-          }
+          ...(item.notifications === undefined ? {} : { notifications: item.notifications })
         }))
       });
       return;
@@ -64,7 +68,7 @@ class V1GetInnovationActionList {
   }
 }
 
-export default openApi(V1GetInnovationActionList.httpTrigger as AzureFunction, '/v1/actions', {
+export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v1/actions', {
   get: {
     description: 'Get a list of innovation actions.',
     operationId: 'v1-innovation-actions-list',

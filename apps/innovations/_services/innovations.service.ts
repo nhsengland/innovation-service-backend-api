@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum, ActivityTypeEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum, ActivityTypeEnum } from '@innovations/shared/enums';
 import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSectionEntity, ActivityLogEntity } from '@innovations/shared/entities';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError, InternalServerError, GenericErrorsEnum } from '@innovations/shared/errors';
@@ -141,10 +141,10 @@ export class InnovationsService extends BaseService {
 
     if (user.type === UserTypeEnum.ACCESSOR) {
 
-      query.innerJoin('innovations.organisationShares', 'share');
+      query.innerJoin('innovations.organisationShares', 'shares');
       query.leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organizationUnitId });
       query.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
-      query.andWhere('share.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
+      query.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
 
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
@@ -421,25 +421,25 @@ export class InnovationsService extends BaseService {
 
 
       // Mark some section to status DRAFT.
-      let sectionsToBeInDraft: InnovationSectionCatalogueEnum[] = [];
+      let sectionsToBeInDraft: InnovationSectionEnum[] = [];
 
       if (surveyInfo) {
         sectionsToBeInDraft = [
-          InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION,
-          InnovationSectionCatalogueEnum.VALUE_PROPOSITION,
-          InnovationSectionCatalogueEnum.UNDERSTANDING_OF_BENEFITS,
-          InnovationSectionCatalogueEnum.EVIDENCE_OF_EFFECTIVENESS,
-          InnovationSectionCatalogueEnum.MARKET_RESEARCH,
-          InnovationSectionCatalogueEnum.TESTING_WITH_USERS
+          InnovationSectionEnum.INNOVATION_DESCRIPTION,
+          InnovationSectionEnum.VALUE_PROPOSITION,
+          InnovationSectionEnum.UNDERSTANDING_OF_BENEFITS,
+          InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS,
+          InnovationSectionEnum.MARKET_RESEARCH,
+          InnovationSectionEnum.TESTING_WITH_USERS
         ];
       } else {
-        sectionsToBeInDraft = [InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION];
+        sectionsToBeInDraft = [InnovationSectionEnum.INNOVATION_DESCRIPTION];
       }
 
       for (const sectionKey of sectionsToBeInDraft) {
         await transaction.save(InnovationSectionEntity, InnovationSectionEntity.new({
           innovation: savedInnovation,
-          section: InnovationSectionCatalogueEnum[sectionKey],
+          section: InnovationSectionEnum[sectionKey],
           status: InnovationSectionStatusEnum.DRAFT,
           createdBy: savedInnovation.createdBy,
           updatedBy: savedInnovation.updatedBy
@@ -629,7 +629,7 @@ export class InnovationsService extends BaseService {
 
     const innovationSections: InnovationSectionModel[] = [];
 
-    for (const key in InnovationSectionCatalogueEnum) {
+    for (const key in InnovationSectionEnum) {
       const section = sections.find((sec) => sec.section === key);
       innovationSections.push(this.getInnovationSectionMetadata(key, section));
     }
@@ -653,7 +653,7 @@ export class InnovationsService extends BaseService {
     } else {
       result = {
         id: null,
-        section: InnovationSectionCatalogueEnum[key as keyof typeof InnovationSectionCatalogueEnum],
+        section: InnovationSectionEnum[key as keyof typeof InnovationSectionEnum],
         status: InnovationSectionStatusEnum.NOT_STARTED,
         updatedAt: null,
         submittedAt: null,

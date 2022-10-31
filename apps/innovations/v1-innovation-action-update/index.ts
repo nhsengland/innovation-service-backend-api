@@ -1,21 +1,24 @@
-import { mapOpenApi3_1 as openApi } from "@aaronpowell/azure-functions-nodejs-openapi";
-import type { AzureFunction, HttpRequest } from "@azure/functions";
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from "@innovations/shared/decorators";
-import { JoiHelper, ResponseHelper } from "@innovations/shared/helpers";
-import { AuthorizationServiceSymbol, type AuthorizationServiceType } from "@innovations/shared/services";
-import type { CustomContextType } from "@innovations/shared/types";
-import { container } from "../_config";
-import { InnovationActionServiceSymbol, type InnovationActionServiceType } from "../_services/interfaces";
-import { BodySchema, ParamsSchema, type BodyType, type ParamsType } from "./validation.schemas";
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
-class V1UpdateInnovationAction {
+import { container } from '../_config';
+import { InnovationActionsServiceType, InnovationActionsServiceSymbol } from '../_services/interfaces';
+
+import { BodyType, BodySchema, ParamsType, ParamsSchema } from './validation.schemas';
+
+
+class V1InnovationActionUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationActionService = container.get<InnovationActionServiceType>(InnovationActionServiceSymbol);
+    const innovationActionsService = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
 
     try {
 
@@ -30,7 +33,7 @@ class V1UpdateInnovationAction {
 
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationActionService.updateInnovationAction(
+      const result = await innovationActionsService.updateInnovationAction(
         requestUser,
         params.actionId,
         params.innovationId,
@@ -46,61 +49,61 @@ class V1UpdateInnovationAction {
   }
 }
 
-export default openApi(V1UpdateInnovationAction.httpTrigger as AzureFunction, "/v1/{innovationId}/actions/{actionId}", {
+export default openApi(V1InnovationActionUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/actions/{actionId}', {
   put: {
-    description: "Update an innovation action.",
-    operationId: "v1-innovation-action-update",
+    description: 'Update an innovation action.',
+    operationId: 'v1-innovation-action-update',
     parameters: [
       {
-        name: "innovationId",
-        in: "path",
-        description: "The innovation id.",
+        name: 'innovationId',
+        in: 'path',
+        description: 'The innovation id.',
         required: true,
         schema: {
-          type: "string",
+          type: 'string',
         },
       },
       {
-        name: "actionId",
-        in: "path",
-        description: "The innovation action id.",
+        name: 'actionId',
+        in: 'path',
+        description: 'The innovation action id.',
         required: true,
         schema: {
-          type: "string",
+          type: 'string',
         },
       },
     ],
     requestBody: {
-      description: "The innovation action data.",
+      description: 'The innovation action data.',
       required: true,
       content: {
-        "application/json": {
+        'application/json': {
           schema: {
-            type: "object",
+            type: 'object',
             properties: {
               name: {
-                type: "string",
-                description: "The name of the action.",
+                type: 'string',
+                description: 'The name of the action.',
               },
               description: {
-                type: "string",
-                description: "The description of the action.",
+                type: 'string',
+                description: 'The description of the action.',
               },
               status: {
-                type: "string",
-                description: "The status of the action.",
+                type: 'string',
+                description: 'The status of the action.',
               },
               assignee: {
-                type: "string",
-                description: "The assignee of the action.",
+                type: 'string',
+                description: 'The assignee of the action.',
               },
               dueDate: {
-                type: "string",
-                description: "The due date of the action.",
+                type: 'string',
+                description: 'The due date of the action.',
               },
               comment: {
-                type: "string",
-                description: "The comment of the action.",
+                type: 'string',
+                description: 'The comment of the action.',
               },
             },
           },
@@ -108,65 +111,65 @@ export default openApi(V1UpdateInnovationAction.httpTrigger as AzureFunction, "/
       },
     },
     responses: {
-      "200": {
-        description: "The innovation action has been updated.",
+      '200': {
+        description: 'The innovation action has been updated.',
         content: {
-          "application/json": {
+          'application/json': {
             schema: {
-              type: "object",
+              type: 'object',
               properties: {
                 id: {
-                  type: "string",
-                  description: "The innovation action id.",
+                  type: 'string',
+                  description: 'The innovation action id.',
                 },
                 name: {
-                  type: "string",
-                  description: "The name of the action.",
+                  type: 'string',
+                  description: 'The name of the action.',
                 },
                 description: {
-                  type: "string",
-                  description: "The description of the action.",
+                  type: 'string',
+                  description: 'The description of the action.',
                 },
                 status: {
-                  type: "string",
-                  description: "The status of the action.",
+                  type: 'string',
+                  description: 'The status of the action.',
                 },
                 assignee: {
-                  type: "string",
-                  description: "The assignee of the action.",
+                  type: 'string',
+                  description: 'The assignee of the action.',
                 },
                 dueDate: {
-                  type: "string",
-                  description: "The due date of the action.",
+                  type: 'string',
+                  description: 'The due date of the action.',
                 },
                 comment: {
-                  type: "string",
-                  description: "The comment of the action.",
+                  type: 'string',
+                  description: 'The comment of the action.',
                 },
                 createdAt: {
-                  type: "string",
-                  description: "The date when the action was created.",
+                  type: 'string',
+                  description: 'The date when the action was created.',
                 },
                 updatedAt: {
-                  type: "string",
-                  description: "The date when the action was updated.",
+                  type: 'string',
+                  description: 'The date when the action was updated.',
                 },
               },
             },
           },
         },
       },
-      "400": {
-        description: "The innovation action data is invalid.",
+      '400': {
+        description: 'The innovation action data is invalid.',
       },
-      "401": {
-        description: "The user is not authorized to update the innovation action.",
+      '401': {
+        description: 'The user is not authorized to update the innovation action.',
       },
-      "404": {
-        description: "The innovation action does not exist.",
+      '404': {
+        description: 'The innovation action does not exist.',
       },
-      "500": {
-        description: "An error occurred while updating the innovation action.",
+      '500': {
+        description: 'An error occurred while updating the innovation action.',
       },
     },
   },

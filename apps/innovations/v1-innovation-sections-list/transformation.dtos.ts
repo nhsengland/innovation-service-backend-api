@@ -1,4 +1,4 @@
-import type { InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum } from '@innovations/shared/enums'
+import type { InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum } from '@innovations/shared/enums'
 import type { DateISOType } from '@notifications/shared/types';
 
 export type ResponseDTO = {
@@ -7,7 +7,7 @@ export type ResponseDTO = {
   status: InnovationStatusEnum;
   sections: {
     id: null | string;
-    section: InnovationSectionCatalogueEnum;
+    section: InnovationSectionEnum;
     status: InnovationSectionStatusEnum;
     submittedAt: null | DateISOType;
   }[];
