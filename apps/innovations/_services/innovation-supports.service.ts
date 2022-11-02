@@ -225,6 +225,7 @@ export class InnovationSupportsService extends BaseService {
           id: result.id,
           status: data.status,
           statusChanged: true,
+          message: data.message,
           newAssignedAccessors: (data.accessors ?? []).map(a => ({ id: a.id }))
         }
       }
@@ -335,6 +336,7 @@ export class InnovationSupportsService extends BaseService {
           id: result.id,
           status: data.status,
           statusChanged: dbSupport.status !== data.status,
+          message: data.message,
           newAssignedAccessors: data.status === InnovationSupportStatusEnum.ENGAGING ?
             (data.accessors ?? [])
               .filter(item => !previousUsersOrganisationUnitUsersIds.has(item.organisationUnitUserId))

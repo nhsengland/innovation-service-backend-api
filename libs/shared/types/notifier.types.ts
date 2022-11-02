@@ -19,7 +19,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
     innovationId: string,
     innovationSupport: {
-      id: string, status: InnovationSupportStatusEnum, statusChanged: boolean,
+      id: string, status: InnovationSupportStatusEnum, statusChanged: boolean, message: string,
       newAssignedAccessors?: { id: string }[] // Newly assigned accessors
     }
   },
