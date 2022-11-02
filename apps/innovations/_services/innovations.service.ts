@@ -53,7 +53,7 @@ export class InnovationsService extends BaseService {
       mainCategory: null | InnovationCategoryCatalogueEnum,
       otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
-      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } },
+      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number; },
       supports?: {
         id: string,
         status: InnovationSupportStatusEnum,
@@ -70,13 +70,13 @@ export class InnovationsService extends BaseService {
     }[]
   }> {
 
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-      .leftJoinAndSelect('innovations.reassessmentRequests', 'reassessmentRequests');
+    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations');
 
     // Assessment relations.
     if (filters.fields?.includes('assessment') || filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
       query.leftJoinAndSelect('innovations.assessments', 'assessments');
       query.leftJoinAndSelect('assessments.assignTo', 'assignTo');
+      query.leftJoinAndSelect('innovations.reassessmentRequests', 'reassessmentRequests');
     }
     // Supports relations.
     if (filters.fields?.includes('supports') || (filters.engagingOrganisations && filters.engagingOrganisations.length > 0) || filters.assignedToMe) {
@@ -218,9 +218,6 @@ export class InnovationsService extends BaseService {
         count: result[1],
         data: await Promise.all(result[0].map(async innovation => {
 
-          const reassessments = await innovation.reassessmentRequests;
-          const reassessmentCount = reassessments.length;
-
           // Assessment parsing.
           let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
 
@@ -234,6 +231,10 @@ export class InnovationsService extends BaseService {
               }
 
               if (innovation.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
+
+                const reassessments = await innovation.reassessmentRequests;
+                const reassessmentCount = reassessments.length;
+
                 assessment = {
                   id: innovation.assessments[0].id,
                   createdAt: innovation.assessments[0].createdAt,
@@ -243,6 +244,7 @@ export class InnovationsService extends BaseService {
                   },
                   reassessmentCount,
                 };
+
               }
 
             }
