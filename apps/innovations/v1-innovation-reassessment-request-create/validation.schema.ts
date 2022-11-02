@@ -13,9 +13,9 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type BodyType = {
   updatedInnovationRecord: YesOrNoCatalogueEnum,
-  changes: string,
+  description: string,
 }
 export const BodySchema = Joi.object<BodyType>({
   updatedInnovationRecord: Joi.string().valid(...Object.values(YesOrNoCatalogueEnum)).required(),
-  changes: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
 }).required();

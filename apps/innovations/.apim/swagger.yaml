@@ -1494,7 +1494,7 @@ paths:
                   type: string
                   description: Updated innovation record since submitting the last assessment.
                   example: "YES"
-                changes:
+                description:
                   type: string
                   description: >-
                     Changes made to the innovation since submitting the last

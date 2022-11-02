@@ -15,8 +15,8 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   @Column({ name: 'updated_innovation_record', type: 'varchar', nullable: true, length: 3 })
   updatedInnovationRecord: string;
 
-  @Column({ name: 'changes', type: 'nvarchar', nullable: false, length: 200 })
-  changes: string;
+  @Column({ name: 'description', type: 'nvarchar', nullable: false, length: 200 })
+  description: string;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

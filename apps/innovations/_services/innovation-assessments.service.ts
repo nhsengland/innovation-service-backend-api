@@ -278,7 +278,7 @@ export class InnovationAssessmentsService extends BaseService {
   async requestReassessment(
     requestUser: DomainUserInfoType,
     innovationId: string,
-    data: { updatedInnovationRecord: YesOrNoCatalogueEnum, changes: string },
+    data: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
   ): Promise<{ assessment: { id: string }, reassessment: { id: string } }> {
 
     // Within a transaction
@@ -290,13 +290,19 @@ export class InnovationAssessmentsService extends BaseService {
     // 6. Sends an in-app notification to the needs assessment team
 
     // Get the latest assessment record
+
+
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
       .innerJoinAndSelect('assessment.assignTo', 'assignTo')
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC')
       .limit(1)
-      .getOneOrFail();
+      .getOne();
+
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
 
     const result = await this.sqlConnection.transaction(async transaction => {
 
@@ -309,7 +315,7 @@ export class InnovationAssessmentsService extends BaseService {
         assessment: InnovationAssessmentEntity.new({ id: assessment.id }),
         innovation: InnovationEntity.new({ id: innovationId }),
         updatedInnovationRecord: data.updatedInnovationRecord,
-        changes: data.changes,
+        description: data.description,
         createdBy: assessment.createdBy,
         updatedBy: assessment.createdBy
       }));

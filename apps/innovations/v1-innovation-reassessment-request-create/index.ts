@@ -86,7 +86,7 @@ export default openApi(CreateInnovationReassessmentRequest.httpTrigger as AzureF
                 description: 'Updated innovation record since submitting the last assessment.',
                 example: 'YES',
               },
-              changes: {
+              description: {
                 type: 'string',
                 description: 'Changes made to the innovation since submitting the last assessment and what support you need next',
               },

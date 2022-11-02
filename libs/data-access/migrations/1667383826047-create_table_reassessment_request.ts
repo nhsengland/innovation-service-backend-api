@@ -11,7 +11,7 @@ export class createTableReassessmentRequest1667383826047 implements MigrationInt
         "deleted_at" datetime2 NULL,
         "id"  uniqueidentifier NOT NULL CONSTRAINT "df_innovation_reassessment_request_id" DEFAULT NEWSEQUENTIALID(),
         "updated_innovation_record" nvarchar(3) NULL,
-        "changes" nvarchar(200) NOT NULL,
+        "description" nvarchar(200) NOT NULL,
         "innovation_assessment_id" uniqueidentifier NOT NULL,
         "innovation_id" uniqueidentifier NOT NULL,
         CONSTRAINT "pk_innovation_reassessment_request_id" PRIMARY KEY ("id")
