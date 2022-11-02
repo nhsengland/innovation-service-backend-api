@@ -70,7 +70,8 @@ export class InnovationsService extends BaseService {
     }[]
   }> {
 
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations');
+    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .leftJoinAndSelect('innovations.reassessmentRequests', 'reassessmentRequests');
 
     // Assessment relations.
     if (filters.fields?.includes('assessment') || filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
@@ -196,8 +197,6 @@ export class InnovationsService extends BaseService {
       query.addOrderBy(field, order);
     }
 
-    // console.log('SQL', query.getQueryAndParameters());
-
     const result = await query.getManyAndCount();
 
     // Fetch users names.
@@ -219,8 +218,11 @@ export class InnovationsService extends BaseService {
         count: result[1],
         data: await Promise.all(result[0].map(async innovation => {
 
+          const reassessments = await innovation.reassessmentRequests;
+          const reassessmentCount = reassessments.length;
+
           // Assessment parsing.
-          let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
+          let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
 
           if (filters.fields?.includes('assessment')) {
 
@@ -238,7 +240,8 @@ export class InnovationsService extends BaseService {
                   finishedAt: innovation.assessments[0].finishedAt,
                   assignedTo: {
                     name: usersInfo.find(item => (item.id === innovation.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? ''
-                  }
+                  },
+                  reassessmentCount,
                 };
               }
 

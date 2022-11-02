@@ -306,6 +306,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       const reassessment = await transaction.save(InnovationReassessmentRequestEntity, InnovationReassessmentRequestEntity.new({
         assessment: InnovationAssessmentEntity.new({ id: assessment.id }),
+        innovation: InnovationEntity.new({ id: innovationId }),
         updatedInnovationRecord: data.updatedInnovationRecord,
         changes: data.changes,
         createdBy: assessment.createdBy,

@@ -13,6 +13,7 @@ export class createTableReassessmentRequest1667383826047 implements MigrationInt
         "updated_innovation_record" nvarchar(3) NULL,
         "changes" nvarchar(200) NOT NULL,
         "innovation_assessment_id" uniqueidentifier NOT NULL,
+        "innovation_id" uniqueidentifier NOT NULL,
         CONSTRAINT "pk_innovation_reassessment_request_id" PRIMARY KEY ("id")
       )`);
     await queryRunner.query(
@@ -22,6 +23,17 @@ export class createTableReassessmentRequest1667383826047 implements MigrationInt
         ADD CONSTRAINT 
           "fk_innovation_reassessment_request_innovation_assessment_assessment_id" 
         FOREIGN KEY ("innovation_assessment_id") REFERENCES "innovation_assessment"("id") 
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+
+      `
+    );
+    await queryRunner.query(
+      `
+        ALTER TABLE 
+          "innovation_reassessment_request" 
+        ADD CONSTRAINT 
+          "fk_innovation_reassessment_request_innovation_id" 
+        FOREIGN KEY ("innovation_id") REFERENCES "innovation"("id") 
         ON DELETE NO ACTION ON UPDATE NO ACTION
 
       `

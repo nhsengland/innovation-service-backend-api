@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 't
 import { BaseEntity } from '../base.entity';
 
 import { InnovationAssessmentEntity } from './innovation-assessment.entity';
+import { InnovationEntity } from './innovation.entity';
 
 
 @Entity('innovation_assessment')
@@ -16,6 +17,10 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
 
   @Column({ name: 'changes', type: 'nvarchar', nullable: false, length: 200 })
   changes: string;
+
+  @ManyToOne(() => InnovationEntity, { nullable: false })
+  @JoinColumn({ name: 'innovation_id' })
+  innovation: InnovationEntity;
 
   @ManyToOne(() => InnovationAssessmentEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_assessment_id' })
