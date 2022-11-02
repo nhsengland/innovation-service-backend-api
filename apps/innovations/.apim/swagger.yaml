@@ -1467,7 +1467,7 @@ paths:
           description: OK
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/reassessment":
+  "/v1/{innovationId}/reassessments":
     post:
       operationId: v1-innovation-reassessment-request-create
       description: Create a reassessment request for an innovation.

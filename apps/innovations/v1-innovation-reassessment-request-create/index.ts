@@ -55,7 +55,7 @@ class CreateInnovationReassessmentRequest {
   }
 }
 
-export default openApi(CreateInnovationReassessmentRequest.httpTrigger as AzureFunction, 'v1/{innovationId}/reassessment', {
+export default openApi(CreateInnovationReassessmentRequest.httpTrigger as AzureFunction, 'v1/{innovationId}/reassessments', {
   post: {
     operationId: 'v1-innovation-reassessment-request-create',
     description: 'Create a reassessment request for an innovation.',
