@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -8,6 +8,7 @@ import { InnovationEntity } from './innovation.entity';
 
 import type { MaturityLevelCatalogueEnum, YesPartiallyNoCatalogueEnum } from '../../enums/catalog.enums';
 import type { DateISOType } from '../../types/date.types';
+import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 
 
 @Entity('innovation_assessment')
@@ -73,6 +74,8 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'has_scale_resource_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasScaleResourceComment: null | string;
 
+  @OneToOne(() => InnovationReassessmentRequestEntity, { nullable: true })
+  reassessmentRequest: null | InnovationReassessmentRequestEntity;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

@@ -45,6 +45,7 @@ import type {
 } from '../../enums/catalog.enums';
 
 import type { DateISOType } from '../../types/date.types';
+import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 
 
 @Entity('innovation')
@@ -351,6 +352,8 @@ export class InnovationEntity extends BaseEntity {
   @OneToMany(() => NotificationEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
   notifications: Promise<NotificationEntity[]>;
 
+  @OneToMany(() => InnovationReassessmentRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  reassessmentRequests: Promise<InnovationReassessmentRequestEntity[]>;
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

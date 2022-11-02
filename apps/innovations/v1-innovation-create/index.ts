@@ -50,6 +50,7 @@ export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1', {
   post: {
     description: 'Create an innovation',
     parameters: [],
+    operationId: 'v1-innovation-create',
     requestBody: {
       content: {
         'application/json': {

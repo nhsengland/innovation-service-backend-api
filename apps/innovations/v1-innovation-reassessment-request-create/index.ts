@@ -19,7 +19,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 
 
-class CreateInnovationAssessment {
+class CreateInnovationReassessmentRequest {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -34,12 +34,12 @@ class CreateInnovationAssessment {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
-        .checkAssessmentType()
-        .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
+        .checkInnovatorType()
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationAssessmentsService.createInnovationAssessment(
+      const result = await innovationAssessmentsService.requestReassessment(
         requestUser,
         params.innovationId,
         body
@@ -48,82 +48,78 @@ class CreateInnovationAssessment {
       return;
 
     } catch (error) {
+      context.log.error(error);
       context.res = ResponseHelper.Error(context, error);
       return;
     }
   }
 }
 
-export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments', {
+export default openApi(CreateInnovationReassessmentRequest.httpTrigger as AzureFunction, 'v1/{innovationId}/reassessments', {
   post: {
-    summary: 'Create an innovation assessment',
-    description: 'Create an innovation assessment.',
-    operationId: 'v1-innovation-assessment-create',
-    tags: ['Innovation Assessment'],
+    operationId: 'v1-innovation-reassessment-request-create',
+    description: 'Create a reassessment request for an innovation.',
+    summary: 'Create a reassessment request for an innovation.',
+    tags: ['[v1] Innovation Assessments'],
     parameters: [
       {
         name: 'innovationId',
         in: 'path',
-        description: 'The innovation id.',
+        description: 'Innovation ID',
         required: true,
         schema: {
           type: 'string',
-          format: 'uuid'
-        }
-      }
+          format: 'uuid',
+        },
+      },
     ],
     requestBody: {
-      description: 'The innovation assessment data.',
+      description: 'Create a reassessment request for an innovation.',
       required: true,
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              comment: {
+              updatedInnovationRecord: {
                 type: 'string',
-                description: 'The comment for the assessment.'
+                description: 'Updated innovation record since submitting the last assessment.',
+                example: 'YES',
+              },
+              description: {
+                type: 'string',
+                description: 'Changes made to the innovation since submitting the last assessment and what support you need next',
               },
             },
-            required: ['comment']
-          }
-        }
-      }
+            required: ['updatedInnovationRecord', 'changes'],
+          },
+        },
+      },
     },
     responses: {
       200: {
-        description: 'The innovation assessment has been created.',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: {
-                  type: 'string',
-                  format: 'uuid',
-                  description: 'The innovation assessment id.'
-                },
-              },
-              required: ['id']
-            }
-          }
-        }
+        description: 'Returns the reassessment request and the cloned assessment id',
       },
       400: {
-        description: 'The innovation assessment has not been created.',
+        description: 'Bad request',
       },
       401: {
-        description: 'The user is not authenticated.',
+        description: 'Unauthorized',
       },
       403: {
-        description: 'The user is not authorized to create an innovation assessment.',
+        description: 'Forbidden',
       },
       404: {
-        description: 'The innovation does not exist.',
+        description: 'Not found',
+      },
+      422: {
+        description: 'Unprocessable entity',
       },
       500: {
-        description: 'An error occurred while creating the innovation assessment.',
-      }
-    }
-  }
+        description: 'Internal server error',
+      },
+    },
+  },
 });
+
+

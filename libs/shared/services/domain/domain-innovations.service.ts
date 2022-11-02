@@ -159,7 +159,9 @@ export class DomainInnovationsService {
         organisations: dbParams.organisations ?? undefined,
         organisationUnit: dbParams.organisationUnit ?? undefined,
         comment: dbParams.comment ?? undefined,
-        totalActions: dbParams.totalActions ?? undefined
+        totalActions: dbParams.totalActions ?? undefined,
+        assessment: dbParams.assessment ?? undefined,
+        reassessment: dbParams.reassessment ?? undefined,
       })
     });
 
@@ -188,6 +190,7 @@ export class DomainInnovationsService {
       case ActivityEnum.INNOVATION_SUBMISSION:
       case ActivityEnum.NEEDS_ASSESSMENT_START:
       case ActivityEnum.NEEDS_ASSESSMENT_COMPLETED:
+      case ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED:
         return ActivityTypeEnum.NEEDS_ASSESSMENT;
 
       case ActivityEnum.ORGANISATION_SUGGESTION:

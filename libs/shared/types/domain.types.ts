@@ -58,6 +58,14 @@ export type ActivityLogDBParamsType = {
     messageId: string;
   };
 
+  assessment?: {
+    id: string;
+  };
+
+  reassessment?: {
+    id: string;
+  };
+
 }
 
 // // This is the type of the list of activities.
@@ -119,5 +127,8 @@ export type ActivityLogTemplatesType = {
   }
   THREAD_MESSAGE_CREATION: {
     params: { thread: { id: string, subject: string }, message: { id: string } }
+  },
+  NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED: {
+    params: { assessment: { id: string }, reassessmentRequest: { id: string } }
   }
 }

@@ -21,6 +21,7 @@ import {
   ActivityEnum,
   ThreadContextTypeEnum,
   NotifierTypeEnum,
+  YesOrNoCatalogueEnum,
 } from '@innovations/shared/enums'
 
 import {
@@ -36,6 +37,7 @@ import { InnovationHelper } from '../_helpers/innovation.helper';
 
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
+import { InnovationReassessmentRequestEntity } from '@innovations/shared/entities/innovation/innovation-reassessment-request.entity';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -56,7 +58,6 @@ export class InnovationAssessmentsService extends BaseService {
     this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.organisationUnitRepository = this.sqlConnection.getRepository<OrganisationUnitEntity>(OrganisationUnitEntity);
   }
-
 
   async getInnovationAssessmentInfo(assessmentId: string): Promise<InnovationAssessmentType & { suggestedOrganisations: OrganisationWithUnitsType[] }> {
 
@@ -114,7 +115,6 @@ export class InnovationAssessmentsService extends BaseService {
 
   }
 
-
   async createInnovationAssessment(
     user: DomainUserInfoType,
     innovationId: string,
@@ -168,8 +168,6 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
   }
-
-
 
   async updateInnovationAssessment(
     user: DomainUserInfoType,
@@ -270,4 +268,86 @@ export class InnovationAssessmentsService extends BaseService {
 
   }
 
+  /**
+   * 
+   * @param requestUser - The user requesting the action. In this case, it's an innovator.
+   * @param assessmentId - The assessment id to be cloned and closed.
+   * @param data - The data to be used to create the new assessment request.
+   * @returns - The assessment request id and the new assessment id.
+   */
+  async requestReassessment(
+    requestUser: DomainUserInfoType,
+    innovationId: string,
+    data: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
+  ): Promise<{ assessment: { id: string }, reassessment: { id: string } }> {
+
+    // Within a transaction
+    // 1. Update the innovation status to NEEDS_ASSESSMENT
+    // 2. Create a new assessment record copied from the previous one
+    // 3. Soft deletes the previous assessment record
+    // 4. Create a new reassessment record
+    // 5. Create an activity log for the reassessment
+    // 6. Sends an in-app notification to the needs assessment team
+
+    // Get the latest assessment record
+
+
+    const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .innerJoinAndSelect('assessment.innovation', 'innovation')
+      .innerJoinAndSelect('assessment.assignTo', 'assignTo')
+      .where('innovation.id = :innovationId', { innovationId })
+      .orderBy('assessment.createdAt', 'DESC')
+      .limit(1)
+      .getOne();
+
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    const result = await this.sqlConnection.transaction(async transaction => {
+
+      await transaction.update(InnovationEntity,
+        { id: assessment.innovation.id },
+        { status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, updatedBy: assessment.createdBy }
+      );
+
+      const reassessment = await transaction.save(InnovationReassessmentRequestEntity, InnovationReassessmentRequestEntity.new({
+        assessment: InnovationAssessmentEntity.new({ id: assessment.id }),
+        innovation: InnovationEntity.new({ id: innovationId }),
+        updatedInnovationRecord: data.updatedInnovationRecord,
+        description: data.description,
+        createdBy: assessment.createdBy,
+        updatedBy: assessment.createdBy
+      }));
+
+      await transaction.softDelete(InnovationAssessmentEntity, { id: assessment.id });
+
+      // @ts-expect-error - Need to remove the `id` property from the object to create a copy of the previous record
+      delete assessment.id
+      assessment.finishedAt = null;
+
+
+      const newAssessment = await transaction.save(InnovationAssessmentEntity, assessment);
+
+      await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED'>(
+        transaction,
+        { userId: requestUser.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED },
+        {
+          assessment: { id: assessment.id },
+          reassessmentRequest: { id: reassessment.id },
+        }
+      );
+
+      return { reassessment: { id: reassessment.id }, assessment: { id: newAssessment.id } };
+    });
+
+    // add notification with Innovation submited for needs assessment
+    this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>(
+      requestUser,
+      NotifierTypeEnum.INNOVATION_SUBMITED,
+      { innovationId: assessment.innovation.id }
+    );
+
+    return { assessment: { id: result.assessment.id }, reassessment: { id: result.reassessment.id } };
+  }
 }
