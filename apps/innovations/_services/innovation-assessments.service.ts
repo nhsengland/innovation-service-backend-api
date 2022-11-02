@@ -268,15 +268,26 @@ export class InnovationAssessmentsService extends BaseService {
 
   }
 
+  /**
+   * 
+   * @param requestUser - The user requesting the action. In this case, it's an innovator.
+   * @param assessmentId - The assessment id to be cloned and closed.
+   * @param data - The data to be used to create the new assessment request.
+   * @returns - The assessment request id and the new assessment id.
+   */
   async requestReassessment(
     requestUser: DomainUserInfoType,
     assessmentId: string,
-    data: { hasUpdatedRecord: YesOrNoCatalogueEnum, changes: string },
-  ): Promise<{ id: string }> {
+    data: { updatedInnovationRecord: YesOrNoCatalogueEnum, changes: string },
+  ): Promise<{ assessment: { id: string }, reassessment: { id: string } }> {
+
     // Within a transaction
     // 1. Update the innovation status to NEEDS_ASSESSMENT
     // 2. Create a new assessment record copied from the previous one
-    // 3. Create a new reassessment record
+    // 3. Soft deletes the previous assessment record
+    // 4. Create a new reassessment record
+    // 5. Create an activity log for the reassessment
+    // 6. Sends an in-app notification to the needs assessment team
 
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
@@ -292,7 +303,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       const reassessment = await transaction.save(InnovationReassessmentRequestEntity, InnovationReassessmentRequestEntity.new({
         assessment: InnovationAssessmentEntity.new({ id: assessment.id }),
-        updatedInnovationRecord: data.hasUpdatedRecord,
+        updatedInnovationRecord: data.updatedInnovationRecord,
         changes: data.changes,
         createdBy: assessment.createdBy,
         updatedBy: assessment.createdBy
@@ -304,7 +315,7 @@ export class InnovationAssessmentsService extends BaseService {
       delete assessment.id
       assessment.finishedAt = null;
 
-      await transaction.save(InnovationAssessmentEntity, assessment);
+      const newAssessment = await transaction.save(InnovationAssessmentEntity, assessment);
 
       await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED'>(
         transaction,
@@ -315,7 +326,7 @@ export class InnovationAssessmentsService extends BaseService {
         }
       );
 
-      return reassessment;
+      return { reassessment: { id: reassessment.id }, assessment: { id: newAssessment.id } };
     });
 
     // add notification with Innovation submited for needs assessment
@@ -325,6 +336,6 @@ export class InnovationAssessmentsService extends BaseService {
       { innovationId: assessment.innovation.id }
     );
 
-    return { id: result['id'] };
+    return { assessment: { id: result.assessment.id }, reassessment: { id: result.reassessment.id } };
   }
 }
