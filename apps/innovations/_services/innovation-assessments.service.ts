@@ -296,8 +296,8 @@ export class InnovationAssessmentsService extends BaseService {
     const hasOngoingSupport = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoin('innovation.innovationSupports', 'supports')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-      .andWhere('supports.status in (:...status)', { status: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED] })
+      .andWhere('innovation.status = :innovationStatus', { innovationStatus: InnovationStatusEnum.IN_PROGRESS })
+      .andWhere('supports.status in (:...supportStatus)', { supportStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED] })
       .limit(1)
       .getOne();
 

@@ -37,7 +37,7 @@ export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
     }
   },
   cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },
-  logging: process.env['DB_LOGGING'] === 'true'
+  logging: true
 });
 
 export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
