@@ -45,7 +45,7 @@ class V1InnovationsInfo {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 
