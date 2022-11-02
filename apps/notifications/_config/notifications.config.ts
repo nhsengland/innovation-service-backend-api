@@ -3,6 +3,7 @@ import type { Schema } from 'joi';
 
 import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
+import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 
 import type { EmailTypeEnum } from './emails.config';
 import {
@@ -66,7 +67,8 @@ export const NOTIFICATIONS_CONFIG: {
         id: Joi.string().guid().required(),
         status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
         statusChanged: Joi.boolean().strict().required(),
-        newAssignedAccessors: Joi.array().items(Joi.object({id: Joi.string().guid().required()}))
+        newAssignedAccessors: Joi.array().items(Joi.object({id: Joi.string().guid().required()})),
+        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).trim().required()
       }).required()
     }).required()
   },
