@@ -22,6 +22,7 @@ import {
   ThreadContextTypeEnum,
   NotifierTypeEnum,
   YesOrNoCatalogueEnum,
+  InnovationSupportStatusEnum,
 } from '@innovations/shared/enums'
 
 import {
@@ -291,6 +292,18 @@ export class InnovationAssessmentsService extends BaseService {
 
     // Get the latest assessment record
 
+    // if it has at least one ongoing support, cannot request reassessment
+    const hasOngoingSupport = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoin('innovation.innovationSupports', 'supports')
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
+      .andWhere('supports.status in (:...status)', { status: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED] })
+      .limit(1)
+      .getOne();
+
+    if (hasOngoingSupport) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
+    }
 
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
