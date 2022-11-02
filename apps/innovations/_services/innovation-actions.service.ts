@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { InnovationActionEntity, InnovationEntity, UserEntity, InnovationSectionEntity, InnovationSupportEntity } from '@innovations/shared/entities';
-import { InnovationSectionEnum, InnovationActionStatusEnum, AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, InnovationSectionAliasEnum, ActivityEnum, UserTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity } from '@innovations/shared/entities';
+import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
@@ -11,7 +11,6 @@ import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types'
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 import { BaseService } from './base.service';
-import { NotFoundError } from '@notifications/shared/errors';
 
 
 @injectable()

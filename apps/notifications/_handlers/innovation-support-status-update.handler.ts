@@ -94,6 +94,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: this.data.innovation?.name || '',
           organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
+          support_status: this.inputData.innovationSupport.status,
+          support_status_change_comment: this.inputData.innovationSupport.message,
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/support')
             .setPathParams({ innovationId: this.inputData.innovationId })
