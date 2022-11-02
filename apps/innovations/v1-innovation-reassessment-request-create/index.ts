@@ -34,8 +34,8 @@ class CreateInnovationReassessmentRequest {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
-        .checkAssessmentType()
-        .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
+        .checkInnovatorType()
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
 
@@ -48,6 +48,7 @@ class CreateInnovationReassessmentRequest {
       return;
 
     } catch (error) {
+      context.log.error(error);
       context.res = ResponseHelper.Error(context, error);
       return;
     }

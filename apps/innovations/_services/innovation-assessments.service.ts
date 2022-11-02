@@ -292,6 +292,7 @@ export class InnovationAssessmentsService extends BaseService {
     // Get the latest assessment record
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
+      .innerJoinAndSelect('assessment.assignTo', 'assignTo')
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC')
       .limit(1)

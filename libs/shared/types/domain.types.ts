@@ -58,6 +58,14 @@ export type ActivityLogDBParamsType = {
     messageId: string;
   };
 
+  assessment?: {
+    id: string;
+  };
+
+  reassessment?: {
+    id: string;
+  };
+
 }
 
 // // This is the type of the list of activities.

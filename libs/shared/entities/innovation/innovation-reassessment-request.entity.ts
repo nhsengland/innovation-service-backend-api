@@ -6,7 +6,7 @@ import { InnovationAssessmentEntity } from './innovation-assessment.entity';
 import { InnovationEntity } from './innovation.entity';
 
 
-@Entity('innovation_assessment')
+@Entity('innovation_reassessment_request')
 export class InnovationReassessmentRequestEntity extends BaseEntity {
 
   @PrimaryGeneratedColumn('uuid')
