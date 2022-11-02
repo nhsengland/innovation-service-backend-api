@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -22,7 +22,7 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToOne(() => InnovationAssessmentEntity, { nullable: false })
+  @OneToOne(() => InnovationAssessmentEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_assessment_id' })
   assessment: InnovationAssessmentEntity;
 

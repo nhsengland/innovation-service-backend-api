@@ -301,7 +301,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.update(InnovationEntity,
         { id: assessment.innovation.id },
-        { status: InnovationStatusEnum.NEEDS_ASSESSMENT, updatedBy: assessment.createdBy }
+        { status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, updatedBy: assessment.createdBy }
       );
 
       const reassessment = await transaction.save(InnovationReassessmentRequestEntity, InnovationReassessmentRequestEntity.new({
@@ -318,6 +318,7 @@ export class InnovationAssessmentsService extends BaseService {
       // @ts-expect-error - Need to remove the `id` property from the object to create a copy of the previous record
       delete assessment.id
       assessment.finishedAt = null;
+
 
       const newAssessment = await transaction.save(InnovationAssessmentEntity, assessment);
 

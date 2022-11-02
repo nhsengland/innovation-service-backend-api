@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -74,8 +74,8 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'has_scale_resource_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasScaleResourceComment: null | string;
 
-  @OneToMany(() => InnovationReassessmentRequestEntity, reassessmentRequest => reassessmentRequest.assessment, { lazy: true, nullable: true })
-  reassessmentRequests: null | Promise<InnovationReassessmentRequestEntity[]>;
+  @OneToOne(() => InnovationReassessmentRequestEntity, { nullable: true })
+  reassessmentRequest: null | InnovationReassessmentRequestEntity;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
