@@ -19,6 +19,7 @@ import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entit
 import { InnovationFileEntity } from './innovation/innovation-file.entity';
 import { InnovationGeneralBenefitEntity } from './innovation/innovation-general-benefit.entity';
 import { InnovationPatientsCitizensBenefitEntity } from './innovation/innovation-patients-citizens-benefit.entity';
+import { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 import { InnovationRevenueEntity } from './innovation/innovation-revenue.entity';
 import { InnovationSectionEntity } from './innovation/innovation-section.entity';
 import { InnovationStandardEntity } from './innovation/innovation-standard.entity';
@@ -112,6 +113,7 @@ export const INNOVATION_ENTITIES = [
   InnovationFileEntity,
   InnovationGeneralBenefitEntity,
   InnovationPatientsCitizensBenefitEntity,
+  InnovationReassessmentRequestEntity,
   InnovationRevenueEntity,
   InnovationSectionEntity,
   InnovationStandardEntity,

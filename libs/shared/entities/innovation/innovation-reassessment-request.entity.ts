@@ -1,0 +1,31 @@
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { BaseEntity } from '../base.entity';
+
+import { InnovationAssessmentEntity } from './innovation-assessment.entity';
+
+
+@Entity('innovation_assessment')
+export class InnovationReassessmentRequestEntity extends BaseEntity {
+
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ name: 'updated_innovation_record', type: 'varchar', nullable: true, length: 3 })
+  updatedInnovationRecord: string;
+
+  @Column({ name: 'changes', type: 'nvarchar', nullable: false, length: 200 })
+  changes: string;
+
+  @ManyToOne(() => InnovationAssessmentEntity, { nullable: false })
+  @JoinColumn({ name: 'innovation_assessment_id' })
+  assessment: InnovationAssessmentEntity;
+
+
+  static new(data: Partial<InnovationReassessmentRequestEntity>): InnovationReassessmentRequestEntity {
+    const instance = new InnovationReassessmentRequestEntity();
+    Object.assign(instance, data);
+    return instance;
+  }
+
+}
