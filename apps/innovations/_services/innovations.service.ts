@@ -13,6 +13,7 @@ import type { InnovationSectionModel } from '../_types/innovation.types';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 
 import { BaseService } from './base.service';
+import { LastSupportStatusViewEntity } from '@innovations/shared/entities/views/last-support-status.view.entity';
 
 
 @injectable()
@@ -22,45 +23,6 @@ export class InnovationsService extends BaseService {
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifService: NotifierServiceType,
   ) { super(); }
-
-
-  /**
-  * Extracts information about the initial survey taken by the Innovator from CosmosDb
-  */
-  private async getSurveyInfo(surveyId: null | string): Promise<null | SurveyAnswersType> {
-
-    if (!surveyId) { return null; }
-
-    const survey = await SurveyModel.findById(surveyId).exec();
-
-    if (!survey) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SURVEY_ID_NOT_FOUND)
-    }
-
-    return survey.answers;
-
-  }
-
-  private addInnovationSupportFilterSQL(query: SelectQueryBuilder<InnovationEntity>, filter: AssessmentSupportFilterEnum): SelectQueryBuilder<InnovationEntity> {
-
-    switch (filter) {
-      case AssessmentSupportFilterEnum.UNASSIGNED:
-        query.andWhere('NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.deleted_at IS NULL)');
-        break;
-      case AssessmentSupportFilterEnum.ENGAGING:
-        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
-        break;
-      case AssessmentSupportFilterEnum.NOT_ENGAGING:
-        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status NOT IN ('${InnovationSupportStatusEnum.ENGAGING}') AND t_is.deleted_at IS NULL)`);
-        query.andWhere(`NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
-        break;
-      default:
-        break;
-    }
-
-    return query;
-
-  }
 
 
   async getInnovationsList(
@@ -360,7 +322,6 @@ export class InnovationsService extends BaseService {
 
   }
 
-
   async createInnovation(
     user: { id: string },
     data: { name: string, description: string, countryName: string, postcode: null | string, organisationShares: string[] },
@@ -603,6 +564,162 @@ export class InnovationsService extends BaseService {
 
   }
 
+  /***
+   * @deprecated - This method is on route of deprecation pending on the development of the new innovation overview page.
+   */
+  async getInnovationInfo(
+    id: string,
+    filters: { fields?: ('assessment' | 'supports')[] | undefined }
+  ): Promise<{
+    id: string,
+    name: string,
+    description: null | string,
+    status: InnovationStatusEnum,
+    submittedAt: null | DateISOType;
+    countryName: null | string;
+    postCode: null | string;
+    categories: InnovationCategoryCatalogueEnum[],
+    otherCategoryDescription: null | string,
+    owner: { id: string, name: string, isActive: boolean },
+    assessment?: null | undefined | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
+    supports?: null | undefined | {
+      id: string,
+      status: InnovationSupportStatusEnum
+    }[],
+    lastEngagingSupportTransition: null | DateISOType,
+  }> {
+
+    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .distinct()
+      .innerJoinAndSelect('innovation.owner', 'innovationOwner')
+      .leftJoinAndSelect('innovation.categories', 'innovationCategories')
+      .where('innovation.id = :innovationId', { innovationId: id });
+
+    // Assessment relations.
+    if (filters.fields?.includes('assessment')) {
+      query.leftJoinAndSelect('innovation.assessments', 'innovationAssessments');
+      query.leftJoinAndSelect('innovationAssessments.assignTo', 'assignTo');
+    }
+
+    // TODO: if I'm an accessor, should only 'MY' supports be returned?????????
+    // Supports relations.
+    if (filters.fields?.includes('supports')) {
+      query.leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports');
+      query.leftJoinAndSelect('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
+    }
+
+    const result = await query.getOne();
+    if (!result) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+
+    // Fetch users names.
+    const ownerId = result.owner.id;
+    const assessmentUsersIds = filters.fields?.includes('assessment') ? result.assessments?.map(assessment => assessment.assignTo.id) : [];
+
+    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
+
+    try {
+
+      const categories = (await result.categories).map(item => item.type);
+      const owner = usersInfo.find(item => item.id === result.owner.id);
+
+      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
+      switch (result.assessments?.length || 0) {
+        case 0:
+          assessment = filters.fields?.includes('assessment') ? null : undefined;
+          break;
+        case 1:
+          assessment = {
+            id: result.assessments[0]!.id,
+            createdAt: result.assessments[0]!.createdAt,
+            finishedAt: result.assessments[0]!.finishedAt,
+            assignedTo: {
+              name: usersInfo.find(user => user.id === result.assessments[0]!.assignTo.id && user.isActive)?.displayName ?? ''
+            }
+          };
+          break;
+        default:
+          throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WITH_INVALID_ASSESSMENTS);
+      }
+
+      return {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        status: result.status,
+        submittedAt: result.submittedAt,
+        countryName: result.countryName,
+        postCode: result.postcode,
+        // mainCategory: innovation.mainCategory,
+        // otherMainCategoryDescription: innovation.otherMainCategoryDescription,
+        categories,
+        otherCategoryDescription: result.otherCategoryDescription,
+        owner: {
+          id: result.owner.id,
+          name: owner?.displayName || '',
+          isActive: !!owner?.isActive
+        },
+        assessment,
+        supports: !filters.fields?.includes('supports') ? undefined : (result.innovationSupports || []).map(support => ({
+          id: support.id,
+          status: support.status
+        })),
+        lastEngagingSupportTransition: await this.lastSupportStatusTransitionFromEngaging(result.id)
+      };
+
+    } catch (error) {
+      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
+    }
+
+  }
+
+  async getInnovationLastEngagingTransition(innovationId: string): Promise<{ statusChangedAt: null | DateISOType }> {
+    return {
+      statusChangedAt: await this.lastSupportStatusTransitionFromEngaging(innovationId)
+    }
+  }
+
+  /**
+  * Extracts information about the initial survey taken by the Innovator from CosmosDb
+  */
+  private async getSurveyInfo(surveyId: null | string): Promise<null | SurveyAnswersType> {
+
+    if (!surveyId) { return null; }
+
+    const survey = await SurveyModel.findById(surveyId).exec();
+
+    if (!survey) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SURVEY_ID_NOT_FOUND)
+    }
+
+    return survey.answers;
+
+  }
+
+  private addInnovationSupportFilterSQL(query: SelectQueryBuilder<InnovationEntity>, filter: AssessmentSupportFilterEnum): SelectQueryBuilder<InnovationEntity> {
+
+    switch (filter) {
+      case AssessmentSupportFilterEnum.UNASSIGNED:
+        query.andWhere('NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.deleted_at IS NULL)');
+        break;
+      case AssessmentSupportFilterEnum.ENGAGING:
+        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
+        break;
+      case AssessmentSupportFilterEnum.NOT_ENGAGING:
+        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status NOT IN ('${InnovationSupportStatusEnum.ENGAGING}') AND t_is.deleted_at IS NULL)`);
+        query.andWhere(`NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
+        break;
+      default:
+        break;
+    }
+
+    return query;
+
+  }
+
+
   private async findInnovationSections(innovationId: string): Promise<InnovationSectionEntity[] | undefined> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
@@ -622,6 +739,20 @@ export class InnovationsService extends BaseService {
     return innovationSections.some(
       (x) => x.status !== InnovationSectionStatusEnum.SUBMITTED
     );
+
+  }
+
+  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<DateISOType | null> {
+
+    const result = await this.sqlConnection.createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
+      .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
+      .where('lastSupportStatus.innovationId = :innovationId', { innovationId })
+      .orderBy('lastSupportStatus.statusChangedAt', 'DESC')
+      .getRawOne<{ statusChangedAt: string }>();
+
+    if (!result) return null;
+
+    return result.statusChangedAt;
 
   }
 
