@@ -277,7 +277,7 @@ export class InnovationAssessmentsService extends BaseService {
    */
   async requestReassessment(
     requestUser: DomainUserInfoType,
-    assessmentId: string,
+    innovationId: string,
     data: { updatedInnovationRecord: YesOrNoCatalogueEnum, changes: string },
   ): Promise<{ assessment: { id: string }, reassessment: { id: string } }> {
 
@@ -289,9 +289,12 @@ export class InnovationAssessmentsService extends BaseService {
     // 5. Create an activity log for the reassessment
     // 6. Sends an in-app notification to the needs assessment team
 
+    // Get the latest assessment record
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .where('assessment.id = :assessmentId', { assessmentId })
+      .where('innovation.id = :innovationId', { innovationId })
+      .orderBy('assessment.createdAt', 'DESC')
+      .limit(1)
       .getOneOrFail();
 
     const result = await this.sqlConnection.transaction(async transaction => {

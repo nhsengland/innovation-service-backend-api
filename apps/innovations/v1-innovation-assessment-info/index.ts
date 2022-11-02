@@ -1,11 +1,11 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 import {
-    AuthorizationServiceSymbol, AuthorizationServiceType
+  AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 
 import type {
-    CustomContextType
+  CustomContextType
 } from '@innovations/shared/types';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
@@ -83,6 +83,7 @@ export default openApi(GetInnovationAssessmentInfo.httpTrigger as AzureFunction,
     summary: 'Get Innovation Assessment Info',
     description: 'Get Innovation Assessment Info',
     tags: ['Innovation Assessment Info'],
+    operationId: 'v1-innovation-assessment-info',
     parameters: [
       {
         name: 'innovationId',
