@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
@@ -8,9 +8,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema } from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationThreadMessageUpdate {
@@ -47,7 +46,7 @@ class V1InnovationThreadMessageUpdate {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 

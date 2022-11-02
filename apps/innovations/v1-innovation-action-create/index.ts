@@ -1,16 +1,16 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
+    AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationActionServiceSymbol, InnovationActionServiceType } from '../_services/interfaces';
+import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -21,7 +21,7 @@ class V1CreateInnovationAction {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationActionService = container.get<InnovationActionServiceType>(InnovationActionServiceSymbol);
+    const innovationActionsService = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
 
     try {
 
@@ -35,7 +35,7 @@ class V1CreateInnovationAction {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationActionService.createInnovationAction(
+      const result = await innovationActionsService.createInnovationAction(
         requestUser,
         params.innovationId,
         body
@@ -44,7 +44,7 @@ class V1CreateInnovationAction {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 

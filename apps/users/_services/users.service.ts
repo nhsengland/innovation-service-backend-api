@@ -1,12 +1,13 @@
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
-import { UserEntity, OrganisationEntity, InnovationTransferEntity, TermsOfUseEntity, TermsOfUseUserEntity, OrganisationUserEntity } from '@users/shared/entities';
-import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
+import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
+import { InternalServerError } from '@users/shared/errors/errors.config';
 import { BaseService } from './base.service';
 
 
@@ -129,7 +130,7 @@ export class UsersService extends BaseService {
         }));
       }
 
-      this.notifierService.send(
+      await this.notifierService.send(
         { id: dbUser.id, identityId: dbUser.identityId, type: dbUser.type },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
         {}
@@ -224,6 +225,92 @@ export class UsersService extends BaseService {
 
     });
 
+  }
+
+  /**
+   * gets the users list for the give user types crossing information between the identity provider and the database
+   * @param userTypes array of user types to retrieve
+   * @param fields extra fields to return
+   * @returns user object with extra selected fields
+   */
+  async getUserList(
+    filters: {userTypes: UserTypeEnum[], organisationUnitId?: string}, 
+    fields: ('organisations' | 'units')[]
+  ): Promise<{
+    id: string,
+    email: string,
+    isActive: boolean,
+    name: string,
+    type: UserTypeEnum,
+    organisations?: {
+      name: string,
+      role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
+      units?: {name: string, organisationUnitUserId: string}[]
+    }[]
+  }[]>{
+    // [TechDebt]: add pagination if this gets used outside of admin bulk export, other cases always have narrower conditions
+    const query = this.sqlConnection.createQueryBuilder(UserEntity, 'user');
+    const fieldSet = new Set(fields);
+
+    // Relations
+    if(fieldSet.has('organisations') || fieldSet.has('units') || filters.organisationUnitId){
+      query.leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
+        .leftJoinAndSelect('userOrganisations.organisation', 'organisation')
+
+      if(fieldSet.has('units') || filters.organisationUnitId) {
+        query.leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
+          .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit');
+      }
+    }
+
+    // Filters
+    if(filters.userTypes.length > 0) {
+      query.andWhere('user.type IN (:...userTypes)', { userTypes: filters.userTypes })
+    }
+    if(filters.organisationUnitId) {
+      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId })
+    }
+
+    // Get users from database
+    const usersFromSQL = await query.getMany()
+    const usersMap = new Map((await Promise.all(usersFromSQL.map(async user => {
+      let organisations = undefined;
+      if(fieldSet.has('organisations') || fieldSet.has('units')){
+        const userOrganisations = await user.userOrganisations;
+        organisations = userOrganisations.map(o => ({
+          name: o.organisation.name,
+          role: o.role,
+          ...(fieldSet.has('units') ? {units: o.userOrganisationUnits.map(u => ({name: u.organisationUnit.name, organisationUnitUserId: u.id}))} : {})
+        }))
+      }
+        
+      return {
+        id: user.id,
+        externalId: user.identityId,
+        type: user.type,
+        organisations: organisations
+      };
+    })
+    )).map(user => [user.externalId, user]));
+
+    // Get users from identity provider
+    const users = (await this.domainService.users.getUsersList({identityIds: [...usersMap.keys()]}))
+      .map(user => {
+        const dbUser = usersMap.get(user.identityId);
+        if(!dbUser) {
+          throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, {message: `domainService returned user not found in db ${user.identityId}`});
+        }
+        return {
+          id: dbUser.id,
+          email: user.email,
+          isActive: user.isActive,
+          name: user.displayName,
+          type: dbUser.type,
+          ...(dbUser.organisations ? {organisations: dbUser.organisations} : {})
+        } 
+      });
+
+    return users;
   }
 
 }

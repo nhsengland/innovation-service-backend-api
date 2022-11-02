@@ -1,15 +1,15 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
+    AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 
 import type {
-  CustomContextType
-} from '@innovations/shared/types'
+    CustomContextType
+} from '@innovations/shared/types';
 
+import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { JwtDecoder } from '@innovations/shared/decorators'
 
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
@@ -70,7 +70,7 @@ class GetInnovationAssessmentInfo {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 

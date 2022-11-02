@@ -4,6 +4,7 @@
     "rootDir": "./",
     "baseUrl": ".",
     "paths": {
+      "@admin/shared/*": ["apps/admin/.symlinks/shared/*"],
       "@innovations/shared/*": ["apps/innovations/.symlinks/shared/*"],
       "@notifications/shared/*": ["apps/notifications/.symlinks/shared/*"],
       "@users/shared/*": ["apps/users/.symlinks/shared/*"]

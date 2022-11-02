@@ -1,5 +1,5 @@
-import jwt_decode from 'jwt-decode';
 import type { HttpRequest } from '@azure/functions';
+import jwt_decode from 'jwt-decode';
 
 import { UnauthorizedError, UserErrorsEnum } from '../errors';
 import { ResponseHelper } from '../helpers';
@@ -52,7 +52,7 @@ export function JwtDecoder() {
 
       }
       catch (error) {
-        context.res = ResponseHelper.Error(new UnauthorizedError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN));
+        context.res = ResponseHelper.Error(context, new UnauthorizedError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN));
         return;
       }
 

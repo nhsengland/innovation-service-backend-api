@@ -56,6 +56,16 @@ export class InternalServerError extends Error implements BaseErrorType {
   errorResponse(): AppResponse { return ResponseHelper.Internal({ error: this.name, message: this.message }); }
 }
 
+export class NotImplementedError extends Error implements BaseErrorType {
+  details: undefined | ErrorDetailsType;
+  constructor(name: ErrorNamesType, data?: { message?: string, details?: ErrorDetailsType }) {
+    super(data?.message || 'Not Implemented');
+    this.name = name;
+    this.details = data?.details;
+  }
+  errorResponse(): AppResponse { return ResponseHelper.NotImplemented({ error: this.name, message: this.message, details: this.details }); }
+}
+
 export class ServiceUnavailableError extends Error implements BaseErrorType {
   details: undefined | ErrorDetailsType;
   constructor(name: ErrorNamesType, data?: { message?: string, details?: ErrorDetailsType }) {

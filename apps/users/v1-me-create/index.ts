@@ -1,5 +1,5 @@
-import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 import jwtDecode, { JwtPayload } from 'jwt-decode';
 
 import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
@@ -8,8 +8,8 @@ import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType } from './validation.schemas';
 
 
 class V1MeCreate {
@@ -47,7 +47,7 @@ class V1MeCreate {
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }

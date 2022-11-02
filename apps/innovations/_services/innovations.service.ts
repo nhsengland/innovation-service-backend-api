@@ -1,13 +1,13 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum } from '@innovations/shared/enums';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum, ActivityTypeEnum } from '@innovations/shared/enums';
+import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSectionEntity, ActivityLogEntity } from '@innovations/shared/entities';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError, InternalServerError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -103,10 +103,10 @@ export class InnovationsService extends BaseService {
 
     if (user.type === UserTypeEnum.ACCESSOR) {
 
-      query.innerJoin('innovations.organisationShares', 'share');
+      query.innerJoin('innovations.organisationShares', 'shares');
       query.leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organizationUnitId });
       query.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
-      query.andWhere('share.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
+      query.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
 
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
@@ -382,25 +382,25 @@ export class InnovationsService extends BaseService {
 
 
       // Mark some section to status DRAFT.
-      let sectionsToBeInDraft: InnovationSectionCatalogueEnum[] = [];
+      let sectionsToBeInDraft: InnovationSectionEnum[] = [];
 
       if (surveyInfo) {
         sectionsToBeInDraft = [
-          InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION,
-          InnovationSectionCatalogueEnum.VALUE_PROPOSITION,
-          InnovationSectionCatalogueEnum.UNDERSTANDING_OF_BENEFITS,
-          InnovationSectionCatalogueEnum.EVIDENCE_OF_EFFECTIVENESS,
-          InnovationSectionCatalogueEnum.MARKET_RESEARCH,
-          InnovationSectionCatalogueEnum.TESTING_WITH_USERS
+          InnovationSectionEnum.INNOVATION_DESCRIPTION,
+          InnovationSectionEnum.VALUE_PROPOSITION,
+          InnovationSectionEnum.UNDERSTANDING_OF_BENEFITS,
+          InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS,
+          InnovationSectionEnum.MARKET_RESEARCH,
+          InnovationSectionEnum.TESTING_WITH_USERS
         ];
       } else {
-        sectionsToBeInDraft = [InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION];
+        sectionsToBeInDraft = [InnovationSectionEnum.INNOVATION_DESCRIPTION];
       }
 
       for (const sectionKey of sectionsToBeInDraft) {
         await transaction.save(InnovationSectionEntity, InnovationSectionEntity.new({
           innovation: savedInnovation,
-          section: InnovationSectionCatalogueEnum[sectionKey],
+          section: InnovationSectionEnum[sectionKey],
           status: InnovationSectionStatusEnum.DRAFT,
           createdBy: savedInnovation.createdBy,
           updatedBy: savedInnovation.updatedBy
@@ -479,6 +479,90 @@ export class InnovationsService extends BaseService {
 
   }
 
+  async getInnovationActivitiesLog(
+    innovationId: string,
+    filters: { activityTypes?: ActivityTypeEnum, startDate?: string, endDate?: string },
+    pagination: PaginationQueryParamsType<'createdAt'>
+  ): Promise<{
+    count: number,
+    data: { type: ActivityTypeEnum, activity: ActivityEnum, date: DateISOType, params: ActivityLogListParamsType }[]
+  }> {
+
+    const query = this.sqlConnection
+      .createQueryBuilder(ActivityLogEntity, 'activityLog')
+      .where('activityLog.innovation_id = :innovationId', { innovationId });
+
+    // Filters
+    if (filters.activityTypes && filters.activityTypes.length > 0) {
+      query.andWhere('activityLog.type IN (:...activityTypes)', { activityTypes: filters.activityTypes });
+    }
+    if (filters.startDate) {
+      query.andWhere('activityLog.createdAt >= :startDate', { startDate: filters.startDate });
+    }
+    if (filters.endDate) {
+      // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
+      const beforeDateWithTimestamp = new Date(filters.endDate);
+      beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
+
+      query.andWhere('activityLog.createdAt < :endDate', { endDate: beforeDateWithTimestamp });
+    }
+
+    // Pagination and ordering
+    query.skip(pagination.skip);
+    query.take(pagination.take);
+
+    for (const [key, order] of Object.entries(pagination.order || { 'default': 'DESC' })) {
+      let field: string;
+      switch (key) {
+        case 'createdAt': field = 'activityLog.createdAt'; break;
+        default: field = 'activityLog.createdAt'; break;
+      }
+      query.addOrderBy(field, order);
+    }
+
+    const [dbActivities, dbActivitiesCount] = await query.getManyAndCount();
+
+    const usersIds = dbActivities.flatMap(item => {
+      const params = JSON.parse(item.param) as ActivityLogListParamsType;
+      const p: string[] = [];
+
+      if (params.actionUserId) { p.push(params.actionUserId); }
+      if (params.interveningUserId) { p.push(params.interveningUserId); }
+
+      return p;
+    })
+
+    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...usersIds] }));
+
+    try {
+      return {
+        count: dbActivitiesCount,
+        data: dbActivities.map(item => {
+          const params = JSON.parse(item.param) as ActivityLogListParamsType;
+
+          if (params.actionUserId) {
+            params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '';
+          }
+          if (params.interveningUserId) {
+            params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '';
+          }
+
+          return {
+            activity: item.activity,
+            type: item.type,
+            date: item.createdAt,
+            params
+          }
+        })
+      }
+    } catch (error: any) {
+      if (Object.values(InnovationErrorsEnum).includes(error.name)) { throw error; }
+      else {
+        throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
+      }
+    }
+
+  }
 
   /***
    * @deprecated - This method is on route of deprecation pending on the development of the new innovation overview page.
@@ -676,7 +760,7 @@ export class InnovationsService extends BaseService {
 
     const innovationSections: InnovationSectionModel[] = [];
 
-    for (const key in InnovationSectionCatalogueEnum) {
+    for (const key in InnovationSectionEnum) {
       const section = sections.find((sec) => sec.section === key);
       innovationSections.push(this.getInnovationSectionMetadata(key, section));
     }
@@ -700,7 +784,7 @@ export class InnovationsService extends BaseService {
     } else {
       result = {
         id: null,
-        section: InnovationSectionCatalogueEnum[key as keyof typeof InnovationSectionCatalogueEnum],
+        section: InnovationSectionEnum[key as keyof typeof InnovationSectionEnum],
         status: InnovationSectionStatusEnum.NOT_STARTED,
         updatedAt: null,
         submittedAt: null,

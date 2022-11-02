@@ -1,9 +1,20 @@
-import type { GenericErrorsEnum, UserErrorsEnum, OrganisationErrorsEnum, InnovationErrorsEnum, EmailErrorsEnum } from '../errors/errors.enums';
+import type { EmailErrorsEnum, GenericErrorsEnum, InnovationErrorsEnum, OrganisationErrorsEnum, UserErrorsEnum } from '../errors/errors.enums';
 import type { AuthErrorsEnum } from '../services/auth/authorization-validation.model';
+import type { AppResponse } from './request.types';
 
+export type ErrorResponseType = {
+  error: ErrorNamesType
+  message: string
+  details?: ErrorDetailsType
+}
 
 export type BaseErrorType = {
-  errorResponse: () => void;
+  stack?: string;
+  errorResponse: () => AppResponse<ErrorResponseType>;
+}
+
+export const isBaseErrorType = (error: any): error is BaseErrorType => {
+  return error.errorResponse !== undefined;
 }
 
 export type ErrorNamesType = AuthErrorsEnum | GenericErrorsEnum | UserErrorsEnum | OrganisationErrorsEnum | InnovationErrorsEnum | EmailErrorsEnum;

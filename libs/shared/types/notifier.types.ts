@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 
 
@@ -31,12 +31,12 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.ACTION_CREATION]: {
     innovationId: string,
-    action: { id: string, section: InnovationSectionCatalogueEnum }
+    action: { id: string, section: InnovationSectionEnum }
   },
 
   [NotifierTypeEnum.ACTION_UPDATE]: {
     innovationId: string,
-    action: { id: string, section: InnovationSectionCatalogueEnum, status: InnovationActionStatusEnum }
+    action: { id: string, section: InnovationSectionEnum, status: InnovationActionStatusEnum }
   },
 
   [NotifierTypeEnum.COMMENT_CREATION]: {

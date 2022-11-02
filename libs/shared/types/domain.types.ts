@@ -1,4 +1,4 @@
-import type { InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
 import type { DateISOType } from './date.types';
@@ -43,7 +43,7 @@ export type ActivityLogDBParamsType = {
   interveningUserId?: string;
 
   assessmentId?: string;
-  sectionId?: InnovationSectionCatalogueEnum;
+  sectionId?: InnovationSectionEnum;
   actionId?: string;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
@@ -51,6 +51,12 @@ export type ActivityLogDBParamsType = {
   organisationUnit?: string; // This holds the name, not id.
   comment?: { id?: string; value: string; }; // Some descriptions (ex: actions), are stored as a comment, hence, without an id.
   totalActions?: number;
+
+  thread?: {
+    id: string;
+    subject: string;
+    messageId: string;
+  };
 
 }
 
@@ -73,10 +79,10 @@ export type ActivityLogTemplatesType = {
     params: { organisations: string[] }
   },
   SECTION_DRAFT_UPDATE: {
-    params: { sectionId: InnovationSectionCatalogueEnum }
+    params: { sectionId: InnovationSectionEnum }
   },
   SECTION_SUBMISSION: {
-    params: { sectionId: InnovationSectionCatalogueEnum }
+    params: { sectionId: InnovationSectionEnum }
   },
   INNOVATION_SUBMISSION: {
     params: Record<string, never>
@@ -94,10 +100,10 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   ACTION_CREATION: {
-    params: { sectionId: InnovationSectionCatalogueEnum, actionId: string, comment: { value: string } }
+    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string } }
   },
   ACTION_STATUS_IN_REVIEW_UPDATE: {
-    params: { sectionId: InnovationSectionCatalogueEnum, totalActions: number }
+    params: { sectionId: InnovationSectionEnum, totalActions: number }
   },
   ACTION_STATUS_COMPLETED_UPDATE: {
     params: { actionId: string, comment: { id: string, value: string } }

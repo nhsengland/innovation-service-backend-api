@@ -1,16 +1,16 @@
-import type { AzureFunction } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
-import type { CustomContextType } from '@users/shared/types'
+import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import type { ResponseDTO } from './transformation.dtos';
 import { UserTypeEnum } from '@users/shared/enums';
+import type { ResponseDTO } from './transformation.dtos';
 
 
 class V1MeInfo {
@@ -55,7 +55,7 @@ class V1MeInfo {
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }

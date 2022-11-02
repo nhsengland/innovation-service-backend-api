@@ -10,9 +10,9 @@ export type CustomContextType = Context & {
   }
 }
 
-export type AppResponse = {
+export type AppResponse<T = any> = {
   isRaw: boolean;
   status: number;
-  body: any;
+  body: T;
   headers: { [key: string]: string };
 }

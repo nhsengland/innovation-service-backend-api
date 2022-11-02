@@ -1,10 +1,10 @@
-import type { AzureFunction } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
-import type { CustomContextType } from '@users/shared/types'
+import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
@@ -36,7 +36,7 @@ class V1MeTermsOfUseAccept {
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }

@@ -1,8 +1,8 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import type { UserTypeEnum } from '../../enums';
 import { UserEntity } from '../../entities';
-import { InternalServerError, NotFoundError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
+import type { UserTypeEnum } from '../../enums';
+import { GenericErrorsEnum, InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainUserInfoType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
@@ -94,6 +94,11 @@ export class DomainUsersService {
     type: UserTypeEnum
     isActive: boolean
   }[]> {
+    // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
+    // However we're doing needless query since we could force the identityId (only place calling it has it)
+    // and it would also be easy to do in chunks of 1000 users or so.
+    // My suggestion is parameter becomes identity: string[]; if there really is a need in the future to have
+    // both parameters we could add a function that does that part and calls this one
 
     if (!data.userIds && !data.identityIds) {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);

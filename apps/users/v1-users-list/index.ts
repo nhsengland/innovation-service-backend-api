@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { AccessorOrganisationRoleEnum } from '@users/shared/enums';
@@ -9,10 +9,10 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { OrganisationsServiceSymbol, OrganisationsServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1UsersList {
@@ -22,13 +22,12 @@ class V1UsersList {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
-    const organisationsService = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
 
     try {
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      if (queryParams.email) {
+      if ('email' in queryParams) {
 
         await authorizationService.validate(context.auth.user.identityId)
           .checkAdminType()
@@ -46,37 +45,35 @@ class V1UsersList {
         })));
         return;
 
-      } else if (queryParams.organisationUnitId) {
-
-        await authorizationService.validate(context.auth.user.identityId)
-          .checkAdminType()
-          .checkAccessorType({
+      } else if ('userTypes' in queryParams) {
+        
+        const validation = authorizationService.validate(context.auth.user.identityId)
+          .checkAdminType();
+        if(queryParams.organisationUnitId) {
+          validation.checkAccessorType({
             organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
             organisationUnitId: queryParams.organisationUnitId
-          })
-          .verify();
+          });
+        }
+        await validation.verify()
 
-        const result = await organisationsService.getOrganisationUnitAccessors(queryParams.organisationUnitId);
-        context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
-          id: item.id,
-          name: item.name,
-          organisationUnitUserId: item.organisationUnitUserId
-        })));
+        const users = await usersService.getUserList(queryParams, queryParams.fields);
+        context.res = ResponseHelper.Ok<ResponseDTO>(users);
         return;
 
       } else {
-
+        // this should be handled by joi but didn't manage to get it working so this is a fallback
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
-
       }
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
   }
 }
 
+// TODO this needs to be improved
 export default openApi(V1UsersList.httpTrigger as AzureFunction, '/v1', {
   get: {
     operationId: 'v1-users-list',
