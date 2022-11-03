@@ -8,10 +8,12 @@ import { InnovationCareSettingEntity } from './innovation-care-setting.entity';
 import { InnovationCategoryEntity } from './innovation-category.entity';
 import { InnovationClinicalAreaEntity } from './innovation-clinical-area.entity';
 import { InnovationDeploymentPlanEntity } from './innovation-deployment-plan.entity';
+import { InnovationDiseaseConditionEntity } from './innovation-disease-condition.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation-environmental-benefit.entity';
 import { InnovationEvidenceEntity } from './innovation-evidence.entity';
 import { InnovationGeneralBenefitEntity } from './innovation-general-benefit.entity';
 import { InnovationPatientsCitizensBenefitEntity } from './innovation-patients-citizens-benefit.entity';
+import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 import { InnovationRevenueEntity } from './innovation-revenue.entity';
 import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationStandardEntity } from './innovation-standard.entity';
@@ -45,7 +47,6 @@ import type {
 } from '../../enums/catalog.enums';
 
 import type { DateISOType } from '../../types/date.types';
-import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 
 
 @Entity('innovation')
@@ -341,7 +342,13 @@ export class InnovationEntity extends BaseEntity {
     lazy: true,
     cascade: ['insert', 'update']
   })
-  patientsCitizensBenefits: InnovationPatientsCitizensBenefitEntity[];
+  patientsCitizensBenefits: Promise<InnovationPatientsCitizensBenefitEntity[]>;
+
+  @OneToMany(() => InnovationDiseaseConditionEntity, record => record.innovation, {
+    lazy: true,
+    cascade: ["insert", "update"],
+  })
+  diseasesConditionsImpact: Promise<InnovationDiseaseConditionEntity[]>;
 
   @OneToMany(() => CommentEntity, record => record.innovation, { lazy: true })
   comments: Promise<CommentEntity[]>;
@@ -354,6 +361,7 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationReassessmentRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
   reassessmentRequests: Promise<InnovationReassessmentRequestEntity[]>;
+
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

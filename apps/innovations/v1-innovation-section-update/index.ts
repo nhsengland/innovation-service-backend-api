@@ -9,11 +9,12 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container, INNOVATION_SECTIONS_CONFIG } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class GetInnovationSectionInfo {
+class V1InnovationSectionUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -24,7 +25,7 @@ class GetInnovationSectionInfo {
     try {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const key = params.sectionKey as keyof typeof INNOVATION_SECTIONS_CONFIG;
+      const key = params.sectionKey;
       const body = JoiHelper.Validate<{ [key: string]: any }>(INNOVATION_SECTIONS_CONFIG[key].validation, request.body);
 
       const authInstance = await authorizationService.validate(context.auth.user.identityId)
@@ -47,12 +48,12 @@ class GetInnovationSectionInfo {
 
 }
 
-export default openApi(GetInnovationSectionInfo.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}/info', {
+export default openApi(V1InnovationSectionUpdate.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}', {
   put: {
     description: 'Update an innovation section info.',
     tags: ['Innovation'],
     summary: 'Update an innovation section info.',
-    operationId: 'updateInnovationSectionInfo',
+    operationId: 'v1-innovation-section-update',
     parameters: [],
     requestBody: {
       description: 'Innovation section info update request body.',

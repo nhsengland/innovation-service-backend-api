@@ -1,24 +1,21 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import type {
-  CustomContextType
-} from '@innovations/shared/types';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class UpdateInnovationAssessment {
+class V1InnovationAssessmentUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -34,7 +31,7 @@ class UpdateInnovationAssessment {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
-        .checkInnovation({ status: [InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] })
+        .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
 
@@ -54,7 +51,7 @@ class UpdateInnovationAssessment {
   }
 }
 
-export default openApi(UpdateInnovationAssessment.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments/{assessmentId}', {
+export default openApi(V1InnovationAssessmentUpdate.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments/{assessmentId}', {
   put: {
     summary: 'Update an innovation assessment',
     description: 'Update an innovation assessment.',

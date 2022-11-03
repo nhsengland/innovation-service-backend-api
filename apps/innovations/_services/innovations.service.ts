@@ -232,9 +232,6 @@ export class InnovationsService extends BaseService {
 
               if (innovation.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
 
-                const reassessments = await innovation.reassessmentRequests;
-                const reassessmentCount = reassessments.length;
-
                 assessment = {
                   id: innovation.assessments[0].id,
                   createdAt: innovation.assessments[0].createdAt,
@@ -242,7 +239,7 @@ export class InnovationsService extends BaseService {
                   assignedTo: {
                     name: usersInfo.find(item => (item.id === innovation.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? ''
                   },
-                  reassessmentCount,
+                  reassessmentCount: (await innovation.reassessmentRequests).length
                 };
 
               }

@@ -8,8 +8,8 @@ import type { InnovationAssessmentType } from '../_types/innovation.types';
 
 
 export type ParamsType = {
-  innovationId: string;
-  assessmentId: string;
+  innovationId: string,
+  assessmentId: string
 }
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),

@@ -1,4 +1,4 @@
-import { Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -8,11 +8,14 @@ import { InnovationAreaCatalogueEnum } from '../../enums/catalog.enums';
 
 
 @Entity('innovation_area')
-@Index(['type', 'innovation'], { unique: true })
 export class InnovationAreaEntity extends BaseEntity {
 
   @PrimaryColumn({ type: 'simple-enum', enum: InnovationAreaCatalogueEnum, nullable: false })
   type: InnovationAreaCatalogueEnum;
+
+  @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
+  innovationId: string;
+
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

@@ -17,18 +17,10 @@ export class InnovationSectionEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'simple-enum',
-    enum: InnovationSectionEnum,
-    nullable: false,
-  })
+  @Column({ type: 'simple-enum', enum: InnovationSectionEnum, nullable: false })
   section: InnovationSectionEnum;
 
-  @Column({
-    type: 'simple-enum',
-    enum: InnovationSectionStatusEnum,
-    nullable: false,
-  })
+  @Column({ type: 'simple-enum', enum: InnovationSectionStatusEnum, nullable: false })
   status: InnovationSectionStatusEnum;
 
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
@@ -39,9 +31,7 @@ export class InnovationSectionEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, record => record.evidence, {
-    nullable: true,
-  })
+  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_section_file',
     joinColumn: {
