@@ -23,11 +23,11 @@ export type InnovatorBodyType = {
 
 export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
   displayName: Joi.string().required(),
-  mobilePhone: Joi.string().optional().valid(null),
+  mobilePhone: Joi.string().optional().allow(null),
   organisation: Joi.object<InnovatorBodyType['organisation']>({
     id: Joi.string().guid().required(),
     isShadow: Joi.boolean().strict().required(),
-    name: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().valid(null) }),
-    size: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().valid(null) })
+    name: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().allow(null) }),
+    size: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().allow(null) })
   }).required()
 }).required();
