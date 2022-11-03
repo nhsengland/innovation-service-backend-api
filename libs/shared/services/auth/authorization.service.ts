@@ -92,7 +92,7 @@ export class AuthorizationService {
     });
 
     // Send notification to user with code.
-    await this.notifierService.send(
+    await this.notifierService.send<NotifierTypeEnum.SLS_VALIDATION>(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.SLS_VALIDATION,
       { code }

@@ -7,7 +7,8 @@ import { STORAGE_QUEUE_CONFIG } from '../../config';
 export enum QueuesEnum {
   EMAIL = 'email-send-queue',
   NOTIFICATION = 'notification-queue',
-  IN_APP = 'in-app-send-queue'
+  IN_APP = 'in-app-send-queue',
+  IDENTITY = 'identity-ops-queue'
 }
 
 

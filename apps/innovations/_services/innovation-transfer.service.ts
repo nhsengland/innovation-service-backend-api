@@ -24,7 +24,7 @@ export class InnovationTransferService extends BaseService {
   constructor(
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notfifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
   ) { super(); }
 
 
@@ -80,7 +80,6 @@ export class InnovationTransferService extends BaseService {
 
   }
 
-
   async getPendingInnovationTransferInfo(id: string): Promise<{ userExists: boolean }> {
 
     const dbTranfer = await this.buildTransferQuery({ id, status: InnovationTransferStatusEnum.PENDING }).getOne();
@@ -101,7 +100,6 @@ export class InnovationTransferService extends BaseService {
     }
 
   }
-
 
   async getInnovationTransferInfo(id: string): Promise<{
     id: string,
@@ -166,7 +164,7 @@ export class InnovationTransferService extends BaseService {
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
 
-      await this.notfifierService.send({
+      await this.notifierService.send<NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION>({
         id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type,
       },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, {
@@ -233,7 +231,7 @@ export class InnovationTransferService extends BaseService {
           }
         );
 
-        await this.notfifierService.send(
+        await this.notifierService.send<NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED>(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
           NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
           { innovationId: transfer.innovation.id, transferId: transfer.id });

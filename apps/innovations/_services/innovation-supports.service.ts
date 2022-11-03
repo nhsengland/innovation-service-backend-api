@@ -216,7 +216,7 @@ export class InnovationSupportsService extends BaseService {
 
     });
 
-    await this.notifierService.send(
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE>(
       requestUser,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
@@ -327,7 +327,7 @@ export class InnovationSupportsService extends BaseService {
 
     });
 
-    await this.notifierService.send(
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE>(
       user,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {

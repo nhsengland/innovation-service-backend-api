@@ -223,9 +223,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       const savedAssessment = await transaction.save(InnovationAssessmentEntity, dbAssessment);
 
-
-      // TODO: Should we log ONLY the new suggested units?
-      // If any was suggested on a previous update, should it also be logged here?
+      // Log suggested units
       if (dbAssessment.organisationUnits.length > 0) {
 
         const organisationUnits = await this.sqlConnection.createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')

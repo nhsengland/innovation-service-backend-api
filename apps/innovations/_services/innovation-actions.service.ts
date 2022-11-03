@@ -201,7 +201,7 @@ export class InnovationActionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    //Get section & support data
+    // Get section & support data
     const innovationSection = (await innovation.sections).find(sec => sec.section === action.sectionKey);
     if (!innovationSection) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
@@ -229,7 +229,7 @@ export class InnovationActionsService extends BaseService {
       actionObj.innovationSupport = InnovationSupportEntity.new({ id: innovationSupport.id });
     }
 
-    //Add new action to db and log action creation to innovation's activity log
+    // Add new action to db and log action creation to innovation's activity log
     const result = await this.sqlConnection.transaction(async (transactionManager: EntityManager) => {
       const actionResult = await transactionManager.save<InnovationActionEntity>(actionObj);
 
@@ -248,11 +248,8 @@ export class InnovationActionsService extends BaseService {
       return { id: actionResult.id };
     });
 
-    //TODO: Create notification
-
-    //Send action requested email to innovation owner
-
-    await this.notifierService.send(
+    // Send action requested email to innovation owner
+    await this.notifierService.send<NotifierTypeEnum.ACTION_CREATION>(
       requestUser,
       NotifierTypeEnum.ACTION_CREATION,
       {
@@ -295,6 +292,7 @@ export class InnovationActionsService extends BaseService {
     const innovationAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
       .innerJoinAndSelect('ia.innovationSection', 'is')
       .innerJoinAndSelect('ia.innovationSupport', 'isup')
+      .innerJoinAndSelect('is.innovation', 'i')
       .innerJoinAndSelect('isup.organisationUnit', 'ou')
       .innerJoinAndSelect('ou.organisation', 'o')
       .where('ia.id = :actionId', { actionId })
@@ -305,6 +303,20 @@ export class InnovationActionsService extends BaseService {
     }
 
     const result = await this.updateAction(requestUser, innovationId, innovationAction, actionData);
+
+    // Send action status update to innovation owner
+    await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+      requestUser,
+      NotifierTypeEnum.ACTION_UPDATE,
+      {
+        innovationId: innovationAction.innovationSection.innovation.id,
+        action: {
+          id: innovationAction.id,
+          section: innovationAction.innovationSection.section,
+          status: result.status
+        },
+      }
+    );
 
     return result;
   }
@@ -322,6 +334,20 @@ export class InnovationActionsService extends BaseService {
     }
 
     const result = await this.updateAction(requestUser, innovationId, innovationAction, actionData);
+
+    // Send action status update to accessor
+    await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+      requestUser,
+      NotifierTypeEnum.ACTION_UPDATE,
+      {
+        innovationId: innovationAction.innovationSection.innovation.id,
+        action: {
+          id: innovationAction.id,
+          section: innovationAction.innovationSection.section,
+          status: result.status
+        },
+      }
+    );
 
     return result;
   }
