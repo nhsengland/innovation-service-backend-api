@@ -1,4 +1,4 @@
-import type { MigrationInterface, QueryRunner } from "typeorm"
+import type { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class createAlterIdleSupportsView1664802350506 implements MigrationInterface {
 
@@ -87,7 +87,7 @@ export class createAlterIdleSupportsView1664802350506 implements MigrationInterf
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        queryRunner.query('DROP VIEW dbo.idle_support_view_entity')
+        await queryRunner.query('DROP VIEW dbo.idle_support_view_entity')
     }
 
 }

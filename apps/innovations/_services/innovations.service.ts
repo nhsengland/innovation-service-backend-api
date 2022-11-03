@@ -1,19 +1,19 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { InnovationStatusEnum, ActivityEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum, InnovationSectionEnum, InnovationSectionStatusEnum, NotifierTypeEnum, InnovatorOrganisationRoleEnum, InnovationCategoryCatalogueEnum, ActivityTypeEnum } from '@innovations/shared/enums';
-import { InnovationCategoryEntity, InnovationSupportTypeEntity, InnovationEntity, OrganisationEntity, UserEntity, InnovationSectionEntity, ActivityLogEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, NotFoundError, InternalServerError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
-import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 
-import type { InnovationSectionModel } from '../_types/innovation.types';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
+import type { InnovationSectionModel } from '../_types/innovation.types';
 
-import { BaseService } from './base.service';
 import { LastSupportStatusViewEntity } from '@innovations/shared/entities/views/last-support-status.view.entity';
+import { BaseService } from './base.service';
 
 
 @injectable()
@@ -473,7 +473,7 @@ export class InnovationsService extends BaseService {
 
     });
 
-    this.notifService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
+    await this.notifService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
       id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
     }, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
 

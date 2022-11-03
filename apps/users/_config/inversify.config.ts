@@ -1,5 +1,5 @@
-import 'reflect-metadata';
 import { Container } from 'inversify';
+import 'reflect-metadata';
 
 import {
   AuthorizationService, AuthorizationServiceSymbol, AuthorizationServiceType,
@@ -7,23 +7,19 @@ import {
   FileStorageService, FileStorageServiceSymbol, FileStorageServiceType,
   HttpService, HttpServiceSymbol, HttpServiceType,
   IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
-  LoggerService, LoggerServiceSymbol, LoggerServiceType,
-  NotifierServiceType, NotifierServiceSymbol, NotifierService,
-  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
-  NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionService,
-  StorageQueueServiceType, StorageQueueServiceSymbol, StorageQueueService
+  LoggerService, LoggerServiceSymbol, LoggerServiceType, NOSQLConnectionService, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, NotifierService, NotifierServiceSymbol, NotifierServiceType, SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType
 } from '@users/shared/services';
 
-import { OrganisationsService } from '../_services/organisations.service';
-import { SurveyService } from '../_services/survey.service';
-import { TermsOfUseService } from '../_services/terms-of-use.service';
-import { UsersService } from '../_services/users.service';
 import {
   OrganisationsServiceSymbol, OrganisationsServiceType,
   SurveyServiceSymbol, SurveyServiceType,
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
   UsersServiceSymbol, UsersServiceType
 } from '../_services/interfaces';
+import { OrganisationsService } from '../_services/organisations.service';
+import { SurveyService } from '../_services/survey.service';
+import { TermsOfUseService } from '../_services/terms-of-use.service';
+import { UsersService } from '../_services/users.service';
 
 import { startup } from './startup';
 
@@ -45,4 +41,4 @@ container.bind<SurveyServiceType>(SurveyServiceSymbol).to(SurveyService).inSingl
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 
-startup();
+void startup();

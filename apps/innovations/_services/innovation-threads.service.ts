@@ -1,13 +1,13 @@
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 
-import { BaseService } from './base.service'
+import { BaseService } from './base.service';
 
 
 @injectable()
@@ -150,7 +150,7 @@ export class InnovationThreadsService extends BaseService {
       );
       const firstMessage = sortedMessagesAsc.find((_: any) => true); // a thread always have at least 1 message
 
-      this.sendThreadCreateNotification(
+      await this.sendThreadCreateNotification(
         requestUser,
         firstMessage!.id,
         result.thread
@@ -180,7 +180,7 @@ export class InnovationThreadsService extends BaseService {
     threadId: string,
     message: string,
     sendNotification: boolean,
-    isEditable: boolean = false,
+    isEditable = false,
     transaction?: EntityManager
   ): Promise<{
     threadMessage: InnovationThreadMessageEntity;
@@ -728,7 +728,7 @@ export class InnovationThreadsService extends BaseService {
     threadObj: InnovationThreadEntity,
     requestUser: DomainUserInfoType,
     innovation: InnovationEntity
-  ) {
+  ) : Promise<InnovationThreadEntity> {
     const result = await transaction.save<InnovationThreadEntity>(threadObj);
 
     try {
@@ -760,7 +760,7 @@ export class InnovationThreadsService extends BaseService {
     requestUser: DomainUserInfoType,
     thread: InnovationThreadEntity,
     transaction: EntityManager
-  ) {
+  ) : Promise<InnovationThreadMessageEntity>{
     const result = await this.sqlConnection.getRepository<InnovationThreadMessageEntity>(InnovationThreadMessageEntity).save(
       threadMessageObj
     );
@@ -790,7 +790,7 @@ export class InnovationThreadsService extends BaseService {
     innovationId: string,
     message: string,
     subject: string
-  ) {
+  ) : void {
     if (
       !requestUser ||
       !innovationId ||
@@ -807,7 +807,7 @@ export class InnovationThreadsService extends BaseService {
     requestUser: DomainUserInfoType,
     threadId: string,
     message: string
-  ) {
+  ) : void {
     if (
       !requestUser ||
       !threadId ||
@@ -932,8 +932,8 @@ export class InnovationThreadsService extends BaseService {
     requestUser: DomainUserInfoType,
     messageId: string,
     thread: InnovationThreadEntity
-  ) {
-    this.notifierService.send(
+  ) : Promise<void> {
+    await this.notifierService.send(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.THREAD_CREATION,
       {
@@ -947,9 +947,9 @@ export class InnovationThreadsService extends BaseService {
     requestUser: DomainUserInfoType,
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
-  ) {
+  ) : Promise<void> {
 
-    this.notifierService.send(
+    await this.notifierService.send(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.THREAD_MESSAGE_CREATION,
       {

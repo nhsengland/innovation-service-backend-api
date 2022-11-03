@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import { DataSource } from 'typeorm';
 
 import { SQLDB_DEFAULT_CONNECTION } from '../../config';
-import { ServiceUnavailableError, GenericErrorsEnum } from '../../errors';
+import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 
 
 @injectable()
@@ -10,7 +10,7 @@ export class SQLConnectionService {
 
   private connection: DataSource;
 
-  async init() {
+  async init(): Promise<this> {
 
     this.connection = new DataSource(SQLDB_DEFAULT_CONNECTION);
 
@@ -23,7 +23,7 @@ export class SQLConnectionService {
 
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, { details: error });
 
-    };
+    }
 
     return this;
 

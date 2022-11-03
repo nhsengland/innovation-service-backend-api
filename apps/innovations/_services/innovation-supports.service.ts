@@ -1,8 +1,8 @@
-import { injectable, inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, InnovationSupportEntity, CommentEntity, UserEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, InnovationActionEntity } from '@innovations/shared/entities';
-import { InnovationSupportStatusEnum, type UserTypeEnum, ActivityEnum, InnovationSupportLogTypeEnum, InnovationActionStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
-import { NotFoundError, InnovationErrorsEnum, InternalServerError, GenericErrorsEnum, UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { CommentEntity, InnovationActionEntity, InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, type UserTypeEnum } from '@innovations/shared/enums';
+import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
 import type { DomainUserInfoType } from '@innovations/shared/types';
 
@@ -216,7 +216,7 @@ export class InnovationSupportsService extends BaseService {
 
     });
 
-    this.notifierService.send(
+    await this.notifierService.send(
       requestUser,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
@@ -327,7 +327,7 @@ export class InnovationSupportsService extends BaseService {
 
     });
 
-    this.notifierService.send(
+    await this.notifierService.send(
       user,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {

@@ -1,8 +1,8 @@
+import { CommentEntity, IdleSupportViewEntity, InnovationActionEntity, InnovationEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, OrganisationEntity, UserEntity } from '@notifications/shared/entities';
+import { AccessorOrganisationRoleEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@notifications/shared/errors';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
-import { IdentityProviderServiceType, IdentityProviderServiceSymbol } from '@notifications/shared/services';
-import { InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationTransferEntity, InnovationThreadEntity, InnovationThreadMessageEntity, CommentEntity, NotificationEntity, OrganisationEntity, UserEntity, IdleSupportViewEntity } from '@notifications/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationTransferStatusEnum, EmailNotificationTypeEnum, EmailNotificationPreferenceEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum, InnovationSupportStatusEnum } from '@notifications/shared/enums';
-import { NotFoundError, UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, UserErrorsEnum } from '@notifications/shared/errors';
 
 import { BaseService } from './base.service';
 
@@ -565,7 +565,18 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async idleSupportsByInnovation() {
+  async idleSupportsByInnovation() : Promise<{
+    innovationId: string;
+    values: {
+        identityId: string;
+        innovationId: string;
+        ownerId: string;
+        ownerIdentityId: string;
+        unitId: string;
+        unitName: string;
+        innovationName: string;
+    }[];
+  }[]>{
     try {
 
       const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);

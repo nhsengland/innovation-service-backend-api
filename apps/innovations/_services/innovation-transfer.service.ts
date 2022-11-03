@@ -3,8 +3,8 @@ import type { SelectQueryBuilder } from 'typeorm';
 
 import { InnovationEntity, InnovationTransferEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationTransferStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { UnprocessableEntityError, InnovationErrorsEnum, BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
-import { IdentityProviderServiceSymbol, type IdentityProviderServiceType, DomainServiceSymbol, type DomainServiceType, NotifierServiceSymbol, type NotifierServiceType } from '@innovations/shared/services';
+import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { DomainServiceSymbol, IdentityProviderServiceSymbol, NotifierServiceSymbol, type DomainServiceType, type IdentityProviderServiceType, type NotifierServiceType } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -166,7 +166,7 @@ export class InnovationTransferService extends BaseService {
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
 
-      this.notfifierService.send({
+      await this.notfifierService.send({
         id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type,
       },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, {
@@ -233,7 +233,7 @@ export class InnovationTransferService extends BaseService {
           }
         );
 
-        this.notfifierService.send(
+        await this.notfifierService.send(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
           NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
           { innovationId: transfer.innovation.id, transferId: transfer.id });

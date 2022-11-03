@@ -24,7 +24,7 @@ export class NotifierService {
 
     try {
 
-      this.storageQueueService.sendMessage(QueuesEnum.NOTIFICATION, {
+      await this.storageQueueService.sendMessage(QueuesEnum.NOTIFICATION, {
         data: {
           requestUser: {id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type},
           action: notifierType,

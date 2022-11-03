@@ -12,11 +12,13 @@
     "app:watch:tsc-alias": "tsc-alias -w -p apps/$npm_config_app/tsconfig.json",
     "app:watch:func-start": "func host start --script-root dist/apps/$npm_config_app --port $npm_config_port --javascript",
     "app:test": "jest -c=apps/$npm_config_app/jest.config.ts --runInBand --coverage",
+    "libs:lint": "eslint libs/**/*.ts",
     "migrations": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/migrations-connection.config.ts",
     "migrations:new": "ts-node ./node_modules/typeorm/cli.js migration:create ./libs/data-access/migrations/$npm_config_name",
     "migrations:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d libs/data-access/config/migrations-connection.config.ts",
     "seeds": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/seeds-connection.config.ts",
-    "postinstall": "npm run app:configure --app=innovations && npm run app:configure --app=notifications && npm run app:configure --app=users && npm run app:configure --app=admin"
+    "postinstall": "npm run app:configure --app=innovations && npm run app:configure --app=notifications && npm run app:configure --app=users && npm run app:configure --app=admin",
+    "prepare": "husky install"
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",
@@ -53,6 +55,7 @@
     "ts-jest": "^29.0.0",
     "ts-node": "^10.9.1",
     "tsc-alias": "^1.7.0",
-    "typescript": "~4.7.4"
+    "typescript": "~4.7.4",
+    "husky": "^8.0.0"
   }
 }

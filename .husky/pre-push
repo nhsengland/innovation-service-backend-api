@@ -1,0 +1,31 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Temporary to disable
+exit 0
+
+CHANGES=$(git diff develop --name-only | awk -F '/' '{print $1"/"$2}' | egrep "(apps|libs)/" | uniq);
+
+if [ -n "$CHANGES" ]; then
+  echo "Changes detected in the following apps or libs:"
+  echo "$CHANGES"
+  
+  if echo $CHANGES | grep -q libs; then
+    echo "Libs changed testing all apps"
+    APPS=$(ls apps)
+    echo "Running lint for libs"
+    npm run libs:lint -- --quiet
+  else 
+    APPS=$(echo "${CHANGES}" | grep "apps/" | awk -F '/' '{print $2}')
+  fi
+
+  for APP in $APPS; do
+    echo "Running lint for $APP"
+    npm run app:lint --app=$APP -- --quiet 
+    echo "Running tests for $APP (TODO)"
+    #echo "Running build for $APP"
+    #npm run app:build --app=$APP
+  done
+else
+  echo "No changes detected in apps or libs. Skipping affected tests."
+fi

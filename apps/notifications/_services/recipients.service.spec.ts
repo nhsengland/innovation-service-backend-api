@@ -3,15 +3,13 @@ import * as dotenv from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
 
 //import { RecipientsServiceSymbol, RecipientsServiceType } from './interfaces';
-import { GENERAL_ENTITIES, INNOVATION_ENTITIES, ORGANISATION_ENTITIES, USER_ENTITIES } from '@notifications/shared/entities';
 import { TypeORMCustomStrategy } from '@notifications/shared/config/typeorm/custom-strategy.config';
+import { GENERAL_ENTITIES, INNOVATION_ENTITIES, ORGANISATION_ENTITIES, USER_ENTITIES } from '@notifications/shared/entities';
 import { join } from 'path';
 
 dotenv.config();
 
 export async function connect(): Promise<DataSource> {
-  let connection: DataSource;
-  
   const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
     name: 'default',
     type: 'mssql',
@@ -39,8 +37,8 @@ export async function connect(): Promise<DataSource> {
     database: process.env['DB_TESTS_NAME'],
   } as DataSourceOptions;
 
-  connection = new DataSource(TESTS_DB_CONNECTION);
-  connection.initialize();
+  const connection = new DataSource(TESTS_DB_CONNECTION);
+  await connection.initialize();
 
   return connection;
 }

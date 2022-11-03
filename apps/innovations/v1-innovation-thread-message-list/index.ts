@@ -60,14 +60,14 @@ class V1InnovationThreadMessageList {
             name: message.createdBy.name,
             type: message.createdBy.type,
             organisationUnit: {
-              id: message.createdBy.organisationUnit?.id!, // if the organisationUnit exists, then all props are ensured to exist
-              name: message.createdBy.organisationUnit?.name!,
-              acronym: message.createdBy.organisationUnit?.acronym!,
+              id: message.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
+              name: message.createdBy.organisationUnit?.name ?? '',
+              acronym: message.createdBy.organisationUnit?.acronym ?? '',
             },
             organisation: {
-              id: message.createdBy.organisation?.id!, // if the organisation exists, then all props are ensured to exist
-              name: message.createdBy.organisation?.name!,
-              acronym: message.createdBy.organisation?.acronym!,
+              id: message.createdBy.organisation?.id ?? '', // if the organisation exists, then all props are ensured to exist
+              name: message.createdBy.organisation?.name ?? '',
+              acronym: message.createdBy.organisation?.acronym ?? '',
             },
           },
           isEditable: message.isEditable,

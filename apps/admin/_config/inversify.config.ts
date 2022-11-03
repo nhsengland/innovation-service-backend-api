@@ -1,16 +1,12 @@
-import 'reflect-metadata';
 import { Container } from 'inversify';
+import 'reflect-metadata';
 
 import {
   AuthorizationService, AuthorizationServiceSymbol, AuthorizationServiceType,
   DomainService, DomainServiceSymbol, DomainServiceType,
   FileStorageService, FileStorageServiceSymbol, FileStorageServiceType,
   IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
-  LoggerService, LoggerServiceSymbol, LoggerServiceType,
-  NotifierServiceType, NotifierServiceSymbol, NotifierService,
-  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
-  NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionService,
-  StorageQueueServiceType, StorageQueueServiceSymbol, StorageQueueService
+  LoggerService, LoggerServiceSymbol, LoggerServiceType, NOSQLConnectionService, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, NotifierService, NotifierServiceSymbol, NotifierServiceType, SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType
 } from '@admin/shared/services';
 
 import { startup } from './startup';
@@ -27,4 +23,4 @@ container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConne
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 
-startup();
+void startup();

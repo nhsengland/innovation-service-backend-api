@@ -32,7 +32,7 @@ class V1MeUpdate {
 
         const accessorBody = JoiHelper.Validate<AccessorBodyType>(AccessorBodySchema, request.body);
 
-        authInstance
+        await authInstance
           .checkAccessorType()
           .verify();
 

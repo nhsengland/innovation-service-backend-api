@@ -1,37 +1,24 @@
-import 'reflect-metadata';
 import { Container } from 'inversify';
+import 'reflect-metadata';
 
 import {
   AuthorizationService, AuthorizationServiceSymbol, AuthorizationServiceType,
   DomainService, DomainServiceSymbol, DomainServiceType,
-  FileStorageService, FileStorageServiceSymbol, FileStorageServiceType,
-  IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
-  LoggerService, LoggerServiceSymbol, LoggerServiceType,
-  NotifierServiceType, NotifierServiceSymbol, NotifierService,
-  SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType,
-  NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionService,
-  StorageQueueServiceType, StorageQueueServiceSymbol, StorageQueueService, HttpServiceType, HttpServiceSymbol, HttpService
+  FileStorageService, FileStorageServiceSymbol, FileStorageServiceType, HttpService, HttpServiceSymbol, HttpServiceType, IdentityProviderService, IdentityProviderServiceSymbol, IdentityProviderServiceType,
+  LoggerService, LoggerServiceSymbol, LoggerServiceType, NOSQLConnectionService, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, NotifierService, NotifierServiceSymbol, NotifierServiceType, SQLConnectionService, SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueService, StorageQueueServiceSymbol, StorageQueueServiceType
 } from '@innovations/shared/services';
 
-import { InnovationsService } from '../_services/innovations.service';
-import { InnovationTransferService } from '../_services/innovation-transfer.service';
 import { InnovationSectionsService } from '../_services/innovation-sections.service';
+import { InnovationTransferService } from '../_services/innovation-transfer.service';
+import { InnovationsService } from '../_services/innovations.service';
 
-import {
-  InnovationActionsServiceType, InnovationActionsServiceSymbol,
-  InnovationAssessmentsServiceType, InnovationAssessmentsServiceSymbol,
-  InnovationSectionsServiceSymbol, InnovationSectionsServiceType,
-  InnovationSupportsServiceType, InnovationSupportsServiceSymbol,
-  InnovationThreadsServiceType, InnovationThreadsServiceSymbol,
-  InnovationTransferServiceSymbol, InnovationTransferServiceType,
-  InnovationsServiceSymbol, InnovationsServiceType
-} from '../_services/interfaces';
+import { InnovationActionsServiceSymbol, InnovationActionsServiceType, InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType, InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationsServiceSymbol, InnovationsServiceType, InnovationSupportsServiceSymbol, InnovationSupportsServiceType, InnovationThreadsServiceSymbol, InnovationThreadsServiceType, InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
 
-import { startup } from './startup';
-import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
-import { InnovationThreadsService } from '../_services/innovation-threads.service';
-import { InnovationSupportsService } from '../_services/innovation-supports.service';
 import { InnovationActionsService } from '../_services/innovation-actions.service';
+import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
+import { InnovationSupportsService } from '../_services/innovation-supports.service';
+import { InnovationThreadsService } from '../_services/innovation-threads.service';
+import { startup } from './startup';
 
 
 export const container: Container = new Container();
@@ -55,4 +42,4 @@ container.bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol).to(
 container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
 container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
 
-startup();
+void startup();

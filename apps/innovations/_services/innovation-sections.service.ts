@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
-import { DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
@@ -273,7 +273,7 @@ export class InnovationSectionsService extends BaseService {
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 
-        this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+        await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
           {
             id: user.id, identityId: user.identityId, type: user.type,
           },

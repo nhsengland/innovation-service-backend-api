@@ -252,7 +252,7 @@ export class InnovationActionsService extends BaseService {
 
     //Send action requested email to innovation owner
 
-    this.notifierService.send(
+    await this.notifierService.send(
       requestUser,
       NotifierTypeEnum.ACTION_CREATION,
       {

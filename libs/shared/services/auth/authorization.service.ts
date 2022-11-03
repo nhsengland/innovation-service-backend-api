@@ -1,10 +1,10 @@
-import { inject, injectable } from 'inversify';
 import { randomBytes, scrypt } from 'crypto';
+import { inject, injectable } from 'inversify';
 
 import { NotifierTypeEnum } from '../../enums';
-import { ForbiddenError, ServiceUnavailableError, GenericErrorsEnum } from '../../errors';
+import { ForbiddenError, GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 import { SLSEventTypeEnum, SLSModel } from '../../schemas/sls.schema';
-import {  DomainServiceSymbol, DomainServiceType,  NotifierServiceSymbol, NotifierServiceType} from '../interfaces';
+import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '../interfaces';
 import { AuthorizationValidationModel } from './authorization-validation.model';
 
 
@@ -92,7 +92,7 @@ export class AuthorizationService {
     });
 
     // Send notification to user with code.
-    this.notifierService.send(
+    await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.SLS_VALIDATION,
       { code }
