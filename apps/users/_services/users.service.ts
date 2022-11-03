@@ -130,7 +130,7 @@ export class UsersService extends BaseService {
         }));
       }
 
-      await this.notifierService.send(
+      await this.notifierService.send<NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION>(
         { id: dbUser.id, identityId: dbUser.identityId, type: dbUser.type },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
         {}

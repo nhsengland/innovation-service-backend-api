@@ -21,7 +21,7 @@ export class InnovationsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifService: NotifierServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
   ) { super(); }
 
 
@@ -473,7 +473,8 @@ export class InnovationsService extends BaseService {
 
     });
 
-    await this.notifService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
+    // Add notification with Innovation submited for needs assessment
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
       id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
     }, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
 
