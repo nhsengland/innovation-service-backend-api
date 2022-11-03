@@ -162,6 +162,7 @@ export class DomainInnovationsService {
         totalActions: dbParams.totalActions ?? undefined,
         assessment: dbParams.assessment ?? undefined,
         reassessment: dbParams.reassessment ?? undefined,
+        thread: dbParams.thread ?? undefined
       })
     });
 
