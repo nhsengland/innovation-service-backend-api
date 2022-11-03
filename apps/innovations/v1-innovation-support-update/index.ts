@@ -52,7 +52,7 @@ class V1InnovationSupportUpdate {
 }
 
 export default openApi(V1InnovationSupportUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/supports/{supportId}', {
-  patch: {
+  put: {
     description: 'Update support on innovation.',
     operationId: 'v1-innovation-support-update',
     tags: ['Innovation Support'],
