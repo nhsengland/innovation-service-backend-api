@@ -1,44 +1,33 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { DomainServiceType, DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 
 import {
-  InnovationEntity,
-  InnovationAssessmentEntity,
-  OrganisationEntity,
+  InnovationAssessmentEntity, InnovationEntity, OrganisationEntity,
   OrganisationUnitEntity,
-  UserEntity,
+  UserEntity
 } from '@innovations/shared/entities';
 
 import type {
   DomainUserInfoType,
-  OrganisationWithUnitsType,
+  OrganisationWithUnitsType
 } from '@innovations/shared/types';
 
 import {
-  InnovationStatusEnum,
-  ActivityEnum,
-  ThreadContextTypeEnum,
-  NotifierTypeEnum,
-  YesOrNoCatalogueEnum,
-  InnovationSupportStatusEnum,
-} from '@innovations/shared/enums'
+  ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, YesOrNoCatalogueEnum
+} from '@innovations/shared/enums';
 
 import {
-  InnovationErrorsEnum,
-  NotFoundError,
-  InternalServerError,
-  GenericErrorsEnum,
-  UnprocessableEntityError,
+  GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError
 } from '@innovations/shared/errors';
 
-import { BaseService } from './base.service';
 import { InnovationHelper } from '../_helpers/innovation.helper';
+import { BaseService } from './base.service';
 
+import { InnovationReassessmentRequestEntity } from '@innovations/shared/entities/innovation/innovation-reassessment-request.entity';
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
-import { InnovationReassessmentRequestEntity } from '@innovations/shared/entities/innovation/innovation-reassessment-request.entity';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
@@ -258,7 +247,7 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     if (data.isSubmission && dbAssessment.finishedAt) {
-      this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED>(
+      await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED>(
         user,
         NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
         { innovationId: innovationId, assessmentId: assessmentId, organisationUnitIds: data.suggestedOrganisationUnitsIds || [] }
@@ -355,7 +344,7 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     // add notification with Innovation submited for needs assessment
-    this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>(
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>(
       requestUser,
       NotifierTypeEnum.INNOVATION_SUBMITED,
       { innovationId: assessment.innovation.id }
