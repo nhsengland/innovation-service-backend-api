@@ -32,9 +32,9 @@ import {
   YesOrNoCatalogueEnum
 } from '@innovations/shared/enums';
 
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants'
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 
-import { InnovationLocationEnum } from '../_enums/innovation.enums'
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 
 export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
@@ -235,7 +235,7 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
     }],
     validation: Joi.object({
       hasDeployPlan: Joi.string().valid(...Object.values(YesOrNoCatalogueEnum)),
-      isDeployed: Joi.string().valid(...Object.values(YesOrNoCatalogueEnum)),
+      isDeployed: Joi.string().valid(...Object.values(YesOrNoCatalogueEnum)).allow(null),
       deploymentPlans: Joi.array().items(
         Joi.object({
           id: Joi.string().guid().allow(null).required(),
