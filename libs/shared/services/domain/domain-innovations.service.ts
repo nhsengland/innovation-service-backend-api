@@ -3,7 +3,7 @@ import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
 import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity, NotificationEntity } from '../../entities';
 import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
-import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from '../../types';
+import type { ActivityLogTemplatesType, ActivitiesParamsType } from '../../types';
 
 import type { FileStorageServiceType } from '../interfaces';
 
@@ -141,8 +141,6 @@ export class DomainInnovationsService {
     params: ActivitiesParamsType<T>
   ): Promise<void> {
 
-    const dbParams = { ...params } as ActivityLogDBParamsType;
-
     const activityLog = ActivityLogEntity.new({
       innovation: InnovationEntity.new({ id: configuration.innovationId }),
       activity: configuration.activity,
@@ -151,18 +149,7 @@ export class DomainInnovationsService {
       updatedBy: configuration.userId,
       param: JSON.stringify({
         actionUserId: configuration.userId,
-        interveningUserId: dbParams.interveningUserId ?? undefined,
-        assessmentId: dbParams.assessmentId ?? undefined,
-        innovationSupportStatus: dbParams.innovationSupportStatus ?? undefined,
-        sectionId: dbParams.sectionId ?? undefined,
-        actionId: dbParams.actionId ?? undefined,
-        organisations: dbParams.organisations ?? undefined,
-        organisationUnit: dbParams.organisationUnit ?? undefined,
-        comment: dbParams.comment ?? undefined,
-        totalActions: dbParams.totalActions ?? undefined,
-        assessment: dbParams.assessment ?? undefined,
-        reassessment: dbParams.reassessment ?? undefined,
-        thread: dbParams.thread ?? undefined
+        ...params
       })
     });
 

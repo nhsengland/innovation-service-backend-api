@@ -334,7 +334,7 @@ export class InnovationAssessmentsService extends BaseService {
         { userId: requestUser.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED },
         {
           assessment: { id: assessment.id },
-          reassessmentRequest: { id: reassessment.id },
+          reassessment: { id: reassessment.id },
         }
       );
 
