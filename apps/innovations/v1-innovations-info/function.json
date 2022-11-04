@@ -5,7 +5,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/{innovationId:alpha}"
+      "route": "v1/{innovationId:guid}"
     },
     {
       "type": "http",
