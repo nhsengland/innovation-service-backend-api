@@ -129,6 +129,6 @@ export type ActivityLogTemplatesType = {
     params: { thread: { id: string, subject: string }, message: { id: string } }
   },
   NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED: {
-    params: { assessment: { id: string }, reassessmentRequest: { id: string } }
+    params: { assessment: { id: string }, reassessment: { id: string } }
   }
 }
