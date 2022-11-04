@@ -15,7 +15,7 @@ export type ResponseDTO = {
     mainCategory: null | InnovationCategoryCatalogueEnum,
     otherMainCategoryDescription: null | string,
     isAssessmentOverdue?: boolean,
-    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number; },
+    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
     supports?: {
       id: string,
       status: InnovationSupportStatusEnum,
@@ -31,4 +31,4 @@ export type ResponseDTO = {
     }[],
     notifications?: number
   }[]
-}
+};
