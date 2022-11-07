@@ -21,30 +21,30 @@ export type BodyType = Omit<InnovationAssessmentType, 'id'> & { suggestedOrganis
 export const BodySchema = Joi.object<BodyType>({
 
   summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).optional(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).optional(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null).optional(),
 
-  maturityLevel: Joi.string().valid(...Object.values(MaturityLevelCatalogueEnum)).optional(),
+  maturityLevel: Joi.string().valid(...Object.values(MaturityLevelCatalogueEnum)).allow(null).optional(),
   maturityLevelComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasRegulatoryApprovals: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasRegulatoryApprovals: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasRegulatoryApprovalsComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasEvidence: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasEvidence: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasEvidenceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasValidation: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasValidation: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasValidationComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasProposition: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasProposition: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasPropositionComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasCompetitionKnowledge: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasCompetitionKnowledge: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasCompetitionKnowledgeComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasImplementationPlan: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasImplementationPlan: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasImplementationPlanComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  hasScaleResource: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).optional(),
+  hasScaleResource: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasScaleResourceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
   suggestedOrganisationUnitsIds: Joi.array().items(Joi.string().guid()).optional(),
