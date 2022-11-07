@@ -20,7 +20,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = Omit<InnovationAssessmentType, 'id'> & { suggestedOrganisationUnitsIds?: string[], isSubmission: boolean }
 export const BodySchema = Joi.object<BodyType>({
 
-  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).optional(),
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null).optional(),
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null).optional(),
 
   maturityLevel: Joi.string().valid(...Object.values(MaturityLevelCatalogueEnum)).allow(null).optional(),
