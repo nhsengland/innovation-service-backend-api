@@ -295,6 +295,7 @@ export class InnovationAssessmentsService extends BaseService {
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
       .innerJoinAndSelect('assessment.assignTo', 'assignTo')
+      .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC')
       .limit(1)
