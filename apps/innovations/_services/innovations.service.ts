@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -12,7 +12,6 @@ import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
-import { LastSupportStatusViewEntity } from '@innovations/shared/entities/views/last-support-status.view.entity';
 import { BaseService } from './base.service';
 
 
