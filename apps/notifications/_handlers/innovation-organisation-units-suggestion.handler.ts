@@ -6,7 +6,7 @@ import { container, ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler, } from './base.handler';
+import { BaseHandler } from './base.handler';
 
 
 export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
@@ -36,7 +36,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('accessor/innovations/:innovationId/actions')
+            .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
             .buildUrl()
         }
