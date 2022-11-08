@@ -137,7 +137,7 @@ export class InnovationAssessmentsService extends BaseService {
       const thread = await this.threadService.createThreadOrMessage(
         user,
         innovationId,
-        'Needs Assessment started',
+        'Initial needs assessment',
         data.message,
         assessment.id,
         ThreadContextTypeEnum.NEEDS_ASSESSMENT,
