@@ -1,23 +1,41 @@
 import Joi from 'joi';
 
-import { MaturityLevelCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
-
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-
-import type { InnovationAssessmentType } from '../_types/innovation.types';
+import { MaturityLevelCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
 
 
 export type ParamsType = {
   innovationId: string,
-  assessmentId: string
-}
+  assessmentId: string;
+};
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
   assessmentId: Joi.string().guid().required()
 }).required();
 
 
-export type BodyType = Omit<InnovationAssessmentType, 'id'> & { suggestedOrganisationUnitsIds?: string[], isSubmission: boolean }
+export type BodyType = {
+  summary?: null | string,
+  description?: null | string,
+  maturityLevel?: null | MaturityLevelCatalogueEnum,
+  maturityLevelComment?: null | string,
+  hasRegulatoryApprovals?: null | YesPartiallyNoCatalogueEnum,
+  hasRegulatoryApprovalsComment?: null | string,
+  hasEvidence?: null | YesPartiallyNoCatalogueEnum,
+  hasEvidenceComment?: null | string,
+  hasValidation?: null | YesPartiallyNoCatalogueEnum,
+  hasValidationComment?: null | string,
+  hasProposition?: null | YesPartiallyNoCatalogueEnum,
+  hasPropositionComment?: null | string,
+  hasCompetitionKnowledge?: null | YesPartiallyNoCatalogueEnum,
+  hasCompetitionKnowledgeComment?: null | string,
+  hasImplementationPlan?: null | YesPartiallyNoCatalogueEnum,
+  hasImplementationPlanComment?: null | string,
+  hasScaleResource?: null | YesPartiallyNoCatalogueEnum,
+  hasScaleResourceComment?: null | string,
+  suggestedOrganisationUnitsIds?: string[],
+  isSubmission?: boolean
+};
 export const BodySchema = Joi.object<BodyType>({
 
   summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).optional(),

@@ -1,25 +1,20 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
-
-import type {
-  CustomContextType
-} from '@innovations/shared/types';
-
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class CreateInnovationReassessmentRequest {
+class V1InnovationReassessmentRequestCreate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -39,12 +34,12 @@ class CreateInnovationReassessmentRequest {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationAssessmentsService.requestReassessment(
+      const result = await innovationAssessmentsService.createInnovationReassessment(
         requestUser,
         params.innovationId,
         body
       );
-      context.res = ResponseHelper.Ok<ResponseDTO>(result);
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.assessment.id });
       return;
 
     } catch (error) {
@@ -55,7 +50,7 @@ class CreateInnovationReassessmentRequest {
   }
 }
 
-export default openApi(CreateInnovationReassessmentRequest.httpTrigger as AzureFunction, 'v1/{innovationId}/reassessments', {
+export default openApi(V1InnovationReassessmentRequestCreate.httpTrigger as AzureFunction, 'v1/{innovationId}/reassessments', {
   post: {
     operationId: 'v1-innovation-reassessment-request-create',
     description: 'Create a reassessment request for an innovation.',
