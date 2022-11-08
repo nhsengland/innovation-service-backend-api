@@ -1,4 +1,4 @@
-import type { MigrationInterface, QueryRunner } from "typeorm";
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterLastSupportViewIncludeFurtherInfo1667905947259
   implements MigrationInterface {
@@ -40,6 +40,6 @@ export class alterLastSupportViewIncludeFurtherInfo1667905947259
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    queryRunner.query("DROP VIEW dbo.idle_support_view_entity");
+    queryRunner.query('DROP VIEW dbo.idle_support_view_entity');
   }
 }
