@@ -40,6 +40,6 @@ export class alterLastSupportViewIncludeFurtherInfo1667905947259
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    queryRunner.query('DROP VIEW dbo.idle_support_view_entity');
+    await queryRunner.query('DROP VIEW dbo.idle_support_view_entity');
   }
 }
