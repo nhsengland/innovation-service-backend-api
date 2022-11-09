@@ -837,7 +837,7 @@ export class InnovationsService extends BaseService {
     if (!request) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
-    
+
     const requestCreator = await this.domainService.users.getUserInfo({userId: request.createdBy});
 
     return {
@@ -863,6 +863,32 @@ export class InnovationsService extends BaseService {
       expiresAt: request.exportExpiresAt.toISOString(),
       isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
     };
+  }
+
+  async checkInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string): Promise<{canExport: boolean}> {
+
+    const requestQuery = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .innerJoinAndSelect('request.innovation', 'innovation')
+      .where('request.id = :exportRequestId', { exportRequestId })
+ 
+
+    if (requestUser.type === 'ACCESSOR') {
+      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+      requestQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+    }
+
+    const request = await requestQuery.getOne();
+      
+    if (!request) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
+    }
+
+    return {
+      canExport: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
+    };
+
   }
 
   /**
