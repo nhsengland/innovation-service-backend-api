@@ -252,6 +252,7 @@ export class InnovationSupportsService extends BaseService {
     }
 
     const previousUsersOrganisationUnitUsersIds = new Set(dbSupport.organisationUnitUsers.map(item => item.id));
+    const previousStatus = dbSupport.status;
 
 
     const result = await this.sqlConnection.transaction(async transaction => {
@@ -264,19 +265,24 @@ export class InnovationSupportsService extends BaseService {
 
         dbSupport.organisationUnitUsers = [];
 
-        const openActions = (await dbSupport.actions).filter(action =>
-          [
-            InnovationActionStatusEnum.REQUESTED,
-            InnovationActionStatusEnum.STARTED,
-            InnovationActionStatusEnum.IN_REVIEW
-          ].includes(action.status)
-        );
+        // Delete actions if NOT ENGAGING and NOT FURTHER_INFO_REQUIRED.
+        if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
 
-        for (const action of openActions) {
-          await transaction.update(InnovationActionEntity,
-            { id: action.id },
-            { status: InnovationActionStatusEnum.DELETED, updatedBy: user.id }
+          const openActions = (await dbSupport.actions).filter(action =>
+            [
+              InnovationActionStatusEnum.REQUESTED,
+              InnovationActionStatusEnum.STARTED,
+              InnovationActionStatusEnum.IN_REVIEW
+            ].includes(action.status)
           );
+
+          for (const action of openActions) {
+            await transaction.update(InnovationActionEntity,
+              { id: action.id },
+              { status: InnovationActionStatusEnum.DELETED, updatedBy: user.id }
+            );
+          }
+
         }
 
       }
@@ -335,7 +341,7 @@ export class InnovationSupportsService extends BaseService {
         innovationSupport: {
           id: result.id,
           status: data.status,
-          statusChanged: dbSupport.status !== data.status,
+          statusChanged: previousStatus !== data.status,
           message: data.message,
           newAssignedAccessors: data.status === InnovationSupportStatusEnum.ENGAGING ?
             (data.accessors ?? [])

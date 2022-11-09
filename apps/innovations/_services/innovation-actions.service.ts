@@ -257,24 +257,28 @@ export class InnovationActionsService extends BaseService {
         action: {
           id: result.id,
           section: action.sectionKey,
-        },
+        }
       }
     );
 
     return result;
   }
 
-  async updateInnovationAction(requestUser: DomainUserInfoType, actionId: string, innovationId: string, action: any): Promise<InnovationActionEntity | undefined> {
+  async updateInnovationAction(requestUser: DomainUserInfoType, actionId: string, innovationId: string, action: any): Promise<undefined | InnovationActionEntity> {
 
-    if (requestUser.type === UserTypeEnum.ACCESSOR) {
-      return await this.updateInnovationActionAsAccessor(requestUser, actionId, innovationId, action);
+    switch (requestUser.type) {
+
+      case UserTypeEnum.ACCESSOR:
+        return this.updateInnovationActionAsAccessor(requestUser, actionId, innovationId, action);
+
+      case UserTypeEnum.INNOVATOR:
+        return this.updateInnovationActionAsInnovator(requestUser, actionId, innovationId, action);
+
+      default:
+        return;
+
     }
 
-    if (requestUser.type === UserTypeEnum.INNOVATOR) {
-      return await this.updateInnovationActionAsInnovator(requestUser, actionId, innovationId, action);
-    }
-
-    return;
   }
 
   private async updateInnovationActionAsAccessor(requestUser: DomainUserInfoType, actionId: string, innovationId: string, actionData: any): Promise<InnovationActionEntity> {
@@ -387,18 +391,18 @@ export class InnovationActionsService extends BaseService {
           .where('u.id = :id', { id: innovationAction.createdBy })
           .getOne();
 
-        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_DECLINED_UPDATE>(trs, {
-          userId: requestUser.id,
-          innovationId,
-          activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE
-        }, {
-          actionId: innovationAction.id,
-          interveningUserId: actionCreatedBy?.identityId || '',
-          comment: {
-            id: thread?.message?.id || '',
-            value: thread?.message?.message || ''
-          }
-        })
+        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_DECLINED_UPDATE>(
+          trs,
+          {
+            userId: requestUser.id,
+            innovationId,
+            activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE
+          },
+          {
+            actionId: innovationAction.id,
+            interveningUserId: actionCreatedBy?.identityId || '',
+            comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
+          })
       }
 
       if (actionData.status === InnovationActionStatusEnum.COMPLETED) {
