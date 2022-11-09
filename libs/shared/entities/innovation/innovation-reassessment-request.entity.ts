@@ -5,6 +5,8 @@ import { BaseEntity } from '../base.entity';
 import { InnovationAssessmentEntity } from './innovation-assessment.entity';
 import { InnovationEntity } from './innovation.entity';
 
+import type { YesOrNoCatalogueEnum } from '../../enums';
+
 
 @Entity('innovation_reassessment_request')
 export class InnovationReassessmentRequestEntity extends BaseEntity {
@@ -13,7 +15,7 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   id: string;
 
   @Column({ name: 'updated_innovation_record', type: 'varchar', nullable: true, length: 3 })
-  updatedInnovationRecord: string;
+  updatedInnovationRecord: YesOrNoCatalogueEnum;
 
   @Column({ name: 'description', type: 'nvarchar', nullable: false, length: 200 })
   description: string;

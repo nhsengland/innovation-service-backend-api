@@ -69,8 +69,7 @@ class V1InnovationsList {
             }))
           }),
           ...(item.notifications === undefined ? {} : { notifications: item.notifications }),
-          ...(item.messages === undefined ? {} : { messages: item.messages }),
-          ...(item.actions === undefined ? {} : { actions: item.actions }),
+          ...(item.statistics === undefined ? {} : { statistics: item.statistics }),
         }))
       });
       return;

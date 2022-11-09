@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -12,7 +12,6 @@ import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
-import { LastSupportStatusViewEntity } from '@innovations/shared/entities/views/last-support-status.view.entity';
 import { BaseService } from './base.service';
 
 
@@ -67,8 +66,10 @@ export class InnovationsService extends BaseService {
         }
       }[],
       notifications?: number,
-      actions?: number,
-      messages?: number
+      statistics?: {
+        actions: number,
+        messages: number
+      }
     }[]
   }> {
 
@@ -298,7 +299,7 @@ export class InnovationsService extends BaseService {
               )
             }),
 
-            ...(!filters.fields?.includes('statistics') ? {} : await this.getInnovationStatistics(innovation))
+            ...(!filters.fields?.includes('statistics') ? {} : { statistics: await this.getInnovationStatistics(innovation) })
 
           };
 
@@ -811,7 +812,7 @@ export class InnovationsService extends BaseService {
 
       if (notificationUsers.length === 0) { continue; }
 
-      if (item.contextDetail === NotificationContextDetailEnum.THREAD_MESSAGE_CREATION) {
+      if (item.contextType === NotificationContextTypeEnum.THREAD) {
         statistics.messages++;
       }
 

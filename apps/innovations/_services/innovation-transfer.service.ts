@@ -231,12 +231,13 @@ export class InnovationTransferService extends BaseService {
           }
         );
 
-        await this.notifierService.send<NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED>(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-          NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
-          { innovationId: transfer.innovation.id, transferId: transfer.id });
-
       }
+
+      // It should send a notification for all cases
+      await this.notifierService.send<NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED>(
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
+        { innovationId: transfer.innovation.id, transferId: transfer.id });
 
       return { id: savedTransfer.id };
 
