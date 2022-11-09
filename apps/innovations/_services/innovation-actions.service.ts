@@ -274,7 +274,6 @@ export class InnovationActionsService extends BaseService {
       return await this.updateInnovationActionAsInnovator(requestUser, actionId, innovationId, action);
     }
 
-    return;
   }
 
   private async updateInnovationActionAsAccessor(requestUser: DomainUserInfoType, actionId: string, innovationId: string, actionData: any): Promise<InnovationActionEntity> {
@@ -387,18 +386,18 @@ export class InnovationActionsService extends BaseService {
           .where('u.id = :id', { id: innovationAction.createdBy })
           .getOne();
 
-        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_DECLINED_UPDATE>(trs, {
-          userId: requestUser.id,
-          innovationId,
-          activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE
-        }, {
-          actionId: innovationAction.id,
-          interveningUserId: actionCreatedBy?.identityId || '',
-          comment: {
-            id: thread?.message?.id || '',
-            value: thread?.message?.message || ''
-          }
-        })
+        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_DECLINED_UPDATE>(
+          trs,
+          {
+            userId: requestUser.id,
+            innovationId,
+            activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE
+          },
+          {
+            actionId: innovationAction.id,
+            interveningUserId: actionCreatedBy?.identityId || '',
+            comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
+          })
       }
 
       if (actionData.status === InnovationActionStatusEnum.COMPLETED) {
