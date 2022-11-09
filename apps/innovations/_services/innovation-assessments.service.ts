@@ -298,7 +298,6 @@ export class InnovationAssessmentsService extends BaseService {
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC')
-      .limit(1)
       .getOne();
 
     if (!assessment) {

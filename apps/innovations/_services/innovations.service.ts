@@ -3,7 +3,7 @@ import type { SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
+import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -770,7 +770,7 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async getInnovationRecordExportRequests(requestUser: DomainUserInfoType, innovationId: string): Promise<InnovationExportRequestListType | []> {
+  async getInnovationRecordExportRequests(requestUser: DomainUserInfoType, innovationId: string, skip = 0, take = 50): Promise<InnovationExportRequestListType | []> {
 
     const requestsQuery = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
@@ -783,6 +783,10 @@ export class InnovationsService extends BaseService {
       requestsQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
     
+    requestsQuery.orderBy('request.createdAt', 'ASC')
+    requestsQuery.skip(skip);
+    requestsQuery.take(take);
+
     const requests = await requestsQuery.getMany();
 
     if (requests.length === 0) {
