@@ -252,6 +252,7 @@ export class InnovationSupportsService extends BaseService {
     }
 
     const previousUsersOrganisationUnitUsersIds = new Set(dbSupport.organisationUnitUsers.map(item => item.id));
+    const previousStatus = dbSupport.status;
 
 
     const result = await this.sqlConnection.transaction(async transaction => {
@@ -335,7 +336,7 @@ export class InnovationSupportsService extends BaseService {
         innovationSupport: {
           id: result.id,
           status: data.status,
-          statusChanged: dbSupport.status !== data.status,
+          statusChanged: previousStatus !== data.status,
           message: data.message,
           newAssignedAccessors: data.status === InnovationSupportStatusEnum.ENGAGING ?
             (data.accessors ?? [])
