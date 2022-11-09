@@ -257,21 +257,26 @@ export class InnovationActionsService extends BaseService {
         action: {
           id: result.id,
           section: action.sectionKey,
-        },
+        }
       }
     );
 
     return result;
   }
 
-  async updateInnovationAction(requestUser: DomainUserInfoType, actionId: string, innovationId: string, action: any): Promise<InnovationActionEntity | undefined> {
+  async updateInnovationAction(requestUser: DomainUserInfoType, actionId: string, innovationId: string, action: any): Promise<undefined | InnovationActionEntity> {
 
-    if (requestUser.type === UserTypeEnum.ACCESSOR) {
-      return await this.updateInnovationActionAsAccessor(requestUser, actionId, innovationId, action);
-    }
+    switch (requestUser.type) {
 
-    if (requestUser.type === UserTypeEnum.INNOVATOR) {
-      return await this.updateInnovationActionAsInnovator(requestUser, actionId, innovationId, action);
+      case UserTypeEnum.ACCESSOR:
+        return this.updateInnovationActionAsAccessor(requestUser, actionId, innovationId, action);
+
+      case UserTypeEnum.INNOVATOR:
+        return this.updateInnovationActionAsInnovator(requestUser, actionId, innovationId, action);
+
+      default:
+        return;
+
     }
 
   }
