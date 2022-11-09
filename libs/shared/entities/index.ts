@@ -60,6 +60,7 @@ export { InnovationThreadEntity } from './innovation/Innovation-thread.entity';
 export { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
+export { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
 
 // Organisation.
 import { OrganisationUnitUserEntity } from './organisation/organisation-unit-user.entity';

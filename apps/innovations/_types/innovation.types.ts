@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
@@ -63,3 +63,26 @@ export type LastSupportStatusType = {
   organisation: { id: string, name: string, acronym: string };
   organisationUnit: { id: string, name: string, acronym: string };
 }
+
+
+export type InnovationExportRequestItemType = {
+  id: string,
+  status: InnovationExportRequestStatusEnum,
+  isExportable: boolean,
+  requestReason: string,
+  rejectReason?: null | string,
+  expiresAt: DateISOType, // Returned only when "opened".
+  organisation: {
+    id: string,
+    name: string,
+    acronym: null | string, 
+    organisationUnit: { id: string, name: string, acronym: null | string }
+  },
+  createdAt: DateISOType,
+  createdBy: {  
+    id: string,
+    name: string
+  }
+}
+
+export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
