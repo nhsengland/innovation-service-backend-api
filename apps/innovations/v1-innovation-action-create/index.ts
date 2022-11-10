@@ -5,7 +5,7 @@ import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 import {
-    AuthorizationServiceSymbol, AuthorizationServiceType
+  AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 

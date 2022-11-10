@@ -27,7 +27,12 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    const suggestedOrganisationUnitsUsers = await this.recipientsService.organisationUnitsQualifyingAccessors(this.inputData.organisationUnitIds);
+    // Retrieve innovation shared organizations units
+    const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(this.inputData.innovationId);
+    const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation => organisation.organisationUnits.map(unit => unit.id));
+    
+    const suggestedSharedOrganisationUnitsIds = sharedOrganisationUnitsIds.filter(id => this.inputData.organisationUnitIds.includes(id));
+    const suggestedOrganisationUnitsUsers = await this.recipientsService.organisationUnitsQualifyingAccessors(suggestedSharedOrganisationUnitsIds);
 
     for (const user of suggestedOrganisationUnitsUsers) {
       this.emails.push({
