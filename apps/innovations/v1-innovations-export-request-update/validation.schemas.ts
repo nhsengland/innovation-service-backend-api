@@ -14,7 +14,7 @@ export type PathParamsType = {
 
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.when('$userType', {
-    is: 'ASSESSOR',
+    is: 'ACCESSOR',
     then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELED).required(),
     otherwise: Joi.string().valid(InnovationExportRequestStatusEnum.REJECTED, InnovationExportRequestStatusEnum.APPROVED).required(),
   }),

@@ -5,14 +5,14 @@ export class createTableExportRequest1667910679991
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       Create Table [dbo].[innovation_export_request] (
-        [id] uniqueidentifier NOT NULL,
+        [id] uniqueidentifier NOT NULL CONSTRAINT "df_innovation_export_request_id" DEFAULT NEWSEQUENTIALID(),
         [innovation_id] uniqueidentifier NOT NULL,
         [organisation_unit_id] uniqueidentifier NOT NULL,
         [status] varchar(50) CHECK( status IN ('PENDING','APPROVED','REJECTED','CANCELED') ) NOT NULL,
         [request_reason] varchar(255) NOT NULL,
         [reject_reason] varchar(255) NULL,
-        [created_at] datetime2(7) NOT NULL,
-        [updated_at] datetime2(7) NOT NULL,
+        [created_at] datetime2(7) NOT NULL CONSTRAINT "df_innovation_export_request_created_at" DEFAULT getdate(), 
+        [updated_at] datetime2(7) NOT NULL CONSTRAINT "df_innovation_export_request_updated_at" DEFAULT getdate(), 
         [deleted_at] datetime2(7) NULL,
         [created_by] uniqueidentifier NOT NULL,
         [updated_by] uniqueidentifier NOT NULL,

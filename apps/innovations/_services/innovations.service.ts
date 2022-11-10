@@ -698,8 +698,8 @@ export class InnovationsService extends BaseService {
 
     // TODO: Integrate this in the authorization service.
       const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .where('request.innovationId = :innovationId', { innovationId })
-        .andWhere('request.organisationUnitId = :organisationUnitId', { organisationUnitId })
+        .where('request.innovation_id = :innovationId', { innovationId })
+        .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
         .andWhere('request.status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED ] })
         .getMany();
 
@@ -714,6 +714,7 @@ export class InnovationsService extends BaseService {
         status: InnovationExportRequestStatusEnum.PENDING,
         createdAt: new Date().toISOString(),
         createdBy: requestUser.id,
+        updatedBy: requestUser.id,
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }),
         requestReason: data.requestReason,
       });
@@ -727,10 +728,13 @@ export class InnovationsService extends BaseService {
   async updateInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string, data: {status: InnovationExportRequestStatusEnum, rejectReason: null | string}): Promise<{ id: string; }> {
     
     // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
+    
     const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
-    if (!organisationUnitId) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+    if (requestUser.type === UserTypeEnum.ACCESSOR) {
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
     }
 
     const exportRequest = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
@@ -743,10 +747,10 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
 
-
-    // TODO: Integrate this in the authorization service.
-    if (exportRequest.organisationUnit.id !== organisationUnitId) {
-      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_FROM_DIFFERENT_UNIT);
+    if (requestUser.type === UserTypeEnum.ACCESSOR) {
+      if (exportRequest.organisationUnit.id !== organisationUnitId) {
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_FROM_DIFFERENT_UNIT);
+      }
     }
 
     const {status, rejectReason} = data;
@@ -770,7 +774,10 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async getInnovationRecordExportRequests(requestUser: DomainUserInfoType, innovationId: string, skip = 0, take = 50): Promise<InnovationExportRequestListType | []> {
+  async getInnovationRecordExportRequests(requestUser: DomainUserInfoType, innovationId: string, skip = 0, take = 50): Promise<{
+    count: number;
+    data: InnovationExportRequestListType | [],
+  }> {
 
     const requestsQuery = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
@@ -787,17 +794,20 @@ export class InnovationsService extends BaseService {
     requestsQuery.skip(skip);
     requestsQuery.take(take);
 
-    const requests = await requestsQuery.getMany();
+    const [requests, count] = await requestsQuery.getManyAndCount();
 
     if (requests.length === 0) {
-      return [];
+      return {
+        count: 0,
+        data: [],
+      };
     }
 
     const requestCreators = requests.map( r => r.createdBy);
 
     const requestCreatorsNames = await this.domainService.users.getUsersList({ userIds: requestCreators });
 
-    return requests.map(r => ({
+    const retval = requests.map(r => ({
       id: r.id,
       status: r.status,
       requestReason: r.requestReason,
@@ -820,6 +830,11 @@ export class InnovationsService extends BaseService {
       expiresAt: r.exportExpiresAt.toISOString(),
       isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED && r.exportExpired === false,
     }));
+
+    return {
+      count,
+      data: retval,
+    }
   }
 
   async getInnovationRecordExportRequestInfo(requestUser: DomainUserInfoType, exportRequestId: string): Promise<InnovationExportRequestItemType> {
@@ -827,7 +842,6 @@ export class InnovationsService extends BaseService {
     const requestQuery = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .innerJoinAndSelect('request.innovation', 'innovation')
       .where('request.id = :exportRequestId', { exportRequestId })
  
 
@@ -864,7 +878,7 @@ export class InnovationsService extends BaseService {
           acronym: request.organisationUnit.acronym,
         },
       },
-      expiresAt: request.exportExpiresAt.toISOString(),
+      expiresAt: request.exportExpiresAt?.toISOString(),
       isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
     };
   }

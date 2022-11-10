@@ -2,7 +2,8 @@ import { InnovationEntity } from './innovation.entity';
 import { InnovationExportRequestStatusEnum } from '../../enums';
 import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../base.entity';
-import type { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+
 
 @Entity('innovation_export_request')
 export class InnovationExportRequestEntity extends BaseEntity {
@@ -22,7 +23,7 @@ export class InnovationExportRequestEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToOne(() => InnovationEntity, { nullable: false })
+  @ManyToOne(() => OrganisationUnitEntity, { nullable: false })
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
@@ -35,29 +36,30 @@ export class InnovationExportRequestEntity extends BaseEntity {
   // expires after 7 days
   @AfterLoad()
   setRequestExpired(): void {
-    this.requestExpired = 
-      this.status === InnovationExportRequestStatusEnum.PENDING &&
-        new Date(this.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+    if (this.status === InnovationExportRequestStatusEnum.PENDING) {
+      this.requestExpired = 
+          new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+    }
   }
 
   // after entity is loaded compute exportExpired. 
   // expires after 30 days
   @AfterLoad()
   setExportExpired(): void {
-    this.exportExpired = 
-      this.status === InnovationExportRequestStatusEnum.APPROVED && 
-        new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+    if (this.status === InnovationExportRequestStatusEnum.APPROVED) {
+      this.exportExpired = 
+          new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+    }
   }
 
   @AfterLoad()
   setExportExpiresAt(): void {
     if (this.status === InnovationExportRequestStatusEnum.APPROVED) {
+      this.exportExpiresAt = new Date(this.updatedAt);
       const updatedAt = new Date(this.updatedAt);
       this.exportExpiresAt.setDate(updatedAt.getDate() + 30);
       return;
     }
-    // expired
-    this.exportExpiresAt.setDate(new Date(this.createdAt).getDate() - 1);
     return;
   }
 

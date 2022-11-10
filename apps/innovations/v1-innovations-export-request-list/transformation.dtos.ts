@@ -1,3 +1,6 @@
-import type { InnovationExportRequestListType } from "../_types/innovation.types";
+import type { InnovationExportRequestListType } from '../_types/innovation.types';
 
-export type ResponseDTO = InnovationExportRequestListType
+export type ResponseDTO = {
+  count: number;
+  data: InnovationExportRequestListType
+}

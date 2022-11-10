@@ -16,6 +16,7 @@ import { InnovationDeploymentPlanEntity } from './innovation/innovation-deployme
 import { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
 import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
+import { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
 import { InnovationFileEntity } from './innovation/innovation-file.entity';
 import { InnovationGeneralBenefitEntity } from './innovation/innovation-general-benefit.entity';
 import { InnovationPatientsCitizensBenefitEntity } from './innovation/innovation-patients-citizens-benefit.entity';
@@ -111,6 +112,7 @@ export const INNOVATION_ENTITIES = [
   InnovationDiseaseConditionEntity,
   InnovationEnvironmentalBenefitEntity,
   InnovationEvidenceEntity,
+  InnovationExportRequestEntity,
   InnovationFileEntity,
   InnovationGeneralBenefitEntity,
   InnovationPatientsCitizensBenefitEntity,
@@ -127,7 +129,7 @@ export const INNOVATION_ENTITIES = [
   InnovationThreadEntity,
   InnovationTransferEntity,
   InnovationUserTestEntity,
-  InnovationEntity
+  InnovationEntity,
 ];
 
 export const ORGANISATION_ENTITIES = [
