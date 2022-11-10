@@ -21,4 +21,4 @@ pool:
 extends:
   template: ../../../.pipelines/build-function-app.yml
   parameters:
-      users: innovations
+      appName: users
