@@ -55,9 +55,20 @@ class V1Health {
           await notifierService.send(requestQA, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
             {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
-              innovationSupport: { id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, message: "one test message", statusChanged: true, newAssignedAccessors: [{ id: '829e13b3-242a-4dc5-bdb9-3f45fa0bf307' }] }
+              innovationSupport: { id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, message: 'one test message', statusChanged: true, newAssignedAccessors: [{ id: '829e13b3-242a-4dc5-bdb9-3f45fa0bf307' }] }
             }
           );
+          break;
+
+        case NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION:
+          await notifierService.send(requestQA, NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              organisationUnitIds: [
+                '7CD3B905-7CB6-EC11-997E-0050F25A43BD', // Shared
+                '729BF5B6-5BBA-EC11-997E-0050F25A43BD', // NOT shared
+              ]
+          });
           break;
 
         case NotifierTypeEnum.ACTION_CREATION:
