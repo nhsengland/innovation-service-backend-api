@@ -1517,3 +1517,107 @@ paths:
           description: Unprocessable entity
         "500":
           description: Internal server error
+
+  "/v1/{innovationId}/export-requests":
+    post:
+      operationId: v1-innovations-export-requests-create
+      description: Create export request.
+      tags:
+        - "[v1] Innovations"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          description: Innovation ID
+          schema:
+            type: string
+            format: uuid
+        responses:
+          '200':
+            description: Success
+          '400':
+            description: Invalid innovation payload
+    get:
+      operationId: v1-innovations-export-request-list
+      description: Get export requests from a innovation.
+      tags:
+        - "[v1] Innovations"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          description: Innovation ID
+          schema:
+            type: string
+            format: uuid
+        responses:
+          '200':
+            description: Success
+          '400':
+            description: Invalid innovation payload
+
+  "/v1/{innovationId}/export-requests/{requestId}":
+    get:
+      operationId: v1-innovations-export-request-info
+      description: Get export request info.
+      tags:
+        - "[v1] Innovations"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          description: Innovation ID
+          schema:
+            type: string
+            format: uuid
+        - name: requestId
+          in: path
+          required: true
+          description: Export request ID
+          schema:
+            type: string
+            format: uuid
+        responses:
+          '200':
+            description: Success
+          '400':
+            description: Invalid innovation payload
+  
+  "/v1/{innovationId}/export-requests/{requestId}/status":
+    patch:
+      description: Update an innovation transfer status
+      operationId: updateInnovationTransferStatus
+      tags:
+        - "[v1] Innovations"
+      parameters:
+        - name: transferId
+          in: path
+          required: true
+          description: The innovation transfer id
+          schema:
+            type: string
+        - name: requestId
+          in: path
+          required: true
+          description: Export request ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation transfer status
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '204':
+          description: The innovation transfer status has been updated
+        '400':
+          description: The innovation transfer status is invalid
+        '401':
+          description: The user is not authorized to update the innovation transfer status
+        '404':
+          description: The innovation transfer does not exist
+        '500':
+          description: An error occurred while updating the innovation transfer status

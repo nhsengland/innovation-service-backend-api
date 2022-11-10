@@ -54,7 +54,7 @@ class V1InnovationsExportRequestInfo {
 
 
 export default openApi(V1InnovationsExportRequestInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests/{requestId}', {
-  post: {
+  get: {
     operationId: 'v1-innovations-export-request-info',
     description: 'Get export request info.',
     tags: ['[v1] Innovations'],
