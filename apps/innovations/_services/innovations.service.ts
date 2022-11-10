@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -807,16 +807,19 @@ export class InnovationsService extends BaseService {
   private async getInnovationStatistics(innovation: InnovationEntity): Promise<{ messages: number, actions: number }> {
     let statistics = { messages: 0, actions: 0 };
 
-    for (const item of (await innovation.notifications)) {
-      const notificationUsers = await item.notificationUsers;
+    for (const notification of (await innovation.notifications)) {
+      const notificationUsers = await notification.notificationUsers;
 
       if (notificationUsers.length === 0) { continue; }
 
-      if (item.contextType === NotificationContextTypeEnum.THREAD) {
+      if (notification.contextType === NotificationContextTypeEnum.THREAD) {
         statistics.messages++;
       }
 
-      if (item.contextDetail === NotificationContextDetailEnum.ACTION_CREATION) {
+      if (
+        notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION ||
+        (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationActionStatusEnum.REQUESTED)
+      ) {
         statistics.actions++;
       }
     }
