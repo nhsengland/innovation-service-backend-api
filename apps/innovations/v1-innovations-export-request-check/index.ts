@@ -41,7 +41,7 @@ class V1InnovationsExportRequestInfo {
       );
 
       if (!result.canExport) {
-        context.res = ResponseHelper.Unauthorized();
+        context.res = ResponseHelper.Forbidden();
         return;
       }
 
@@ -87,7 +87,7 @@ export default openApi(V1InnovationsExportRequestInfo.httpTrigger as AzureFuncti
     ],
     responses: {
       200: { description: 'Success' },
-      401: { description: 'Unauthorized' },
+      403: { description: 'Forbidden' },
     },
   },
 });

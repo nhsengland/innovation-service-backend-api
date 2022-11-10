@@ -1605,8 +1605,8 @@ paths:
         responses:
           '200':
             description: Success
-          '401':
-            description: Unauthorized
+          '403':
+            description: Forbidden
   
   "/v1/{innovationId}/export-requests/{requestId}/status":
     patch:
