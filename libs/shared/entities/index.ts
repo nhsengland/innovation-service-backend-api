@@ -48,6 +48,7 @@ export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entit
 export { InnovationFileEntity } from './innovation/innovation-file.entity';
 export { InnovationGeneralBenefitEntity } from './innovation/innovation-general-benefit.entity';
 export { InnovationPatientsCitizensBenefitEntity } from './innovation/innovation-patients-citizens-benefit.entity';
+export { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 export { InnovationRevenueEntity } from './innovation/innovation-revenue.entity';
 export { InnovationSectionEntity } from './innovation/innovation-section.entity';
 export { InnovationStandardEntity } from './innovation/innovation-standard.entity';
@@ -94,6 +95,7 @@ export { UserEntity } from './user/user.entity';
 import { IdleSupportViewEntity } from './views/idle-support.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { IdleSupportViewEntity } from './views/idle-support.view.entity';
+export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 
 export const GENERAL_ENTITIES = [
   TermsOfUseEntity,
@@ -152,5 +154,5 @@ export const USER_ENTITIES = [
 
 export const VIEW_ENTITIES = [
   IdleSupportViewEntity,
-  LastSupportStatusViewEntity,
-]
+  LastSupportStatusViewEntity
+];

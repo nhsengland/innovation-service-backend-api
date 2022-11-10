@@ -121,6 +121,16 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
 
   EVIDENCE_OF_EFFECTIVENESS: {
     innovationFields: ['hasEvidence'],
+    // TODO: I believe that this is not being used!
+    // Section has only 1 question, nothing more.
+    // To be confirmed with the tests...
+    innovationDependencies: [
+      {
+        table: 'evidence',
+        fields: ['id', 'evidenceType', 'clinicalEvidenceType', 'description', 'summary', 'files']
+        // allowFileUploads: true
+      }
+    ],
     validation: Joi.object({
       hasEvidence: Joi.string().valid(...Object.values(HasEvidenceCatalogueEnum))
     }).required().min(1)

@@ -1,60 +1,62 @@
-import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
-import type { DateISOType } from '@innovations/shared/types';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
-  id: string | null;
-  section: InnovationSectionEnum | null;
-  status: InnovationSectionStatusEnum | null;
-  actionStatus: InnovationActionStatusEnum | null;
-  updatedAt: DateISOType | null;
-  submittedAt: DateISOType | null;
+  id: string | null,
+  section: InnovationSectionEnum | null,
+  status: InnovationSectionStatusEnum | null,
+  actionStatus: InnovationActionStatusEnum | null,
+  updatedAt: DateISOType | null,
+  submittedAt: DateISOType | null
 }
 
 export type InnovationAssessmentType = {
-  id: string;
-  summary: null | string;
-  description: null | string;
-  finishedAt: null | DateISOType;
-  assignTo: { id: string, name: string };
-  maturityLevel: null | string;
-  maturityLevelComment: null | string;
-  hasRegulatoryApprovals: null | string;
-  hasRegulatoryApprovalsComment: null | string;
-  hasEvidence: null | string;
-  hasEvidenceComment: null | string;
-  hasValidation: null | string;
-  hasValidationComment: null | string;
-  hasProposition: null | string;
-  hasPropositionComment: null | string;
-  hasCompetitionKnowledge: null | string;
-  hasCompetitionKnowledgeComment: null | string;
-  hasImplementationPlan: null | string;
-  hasImplementationPlanComment: null | string;
-  hasScaleResource: null | string;
-  hasScaleResourceComment: null | string;
-  updatedAt: null | DateISOType;
-  updatedBy: { id: string, name: string };
-}
+  id: string,
+  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
+  summary: null | string,
+  description: null | string,
+  finishedAt: null | DateISOType,
+  assignTo: { id: string, name: string },
+  maturityLevel: null | MaturityLevelCatalogueEnum,
+  maturityLevelComment: null | string,
+  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueEnum,
+  hasRegulatoryApprovalsComment: null | string,
+  hasEvidence: null | YesPartiallyNoCatalogueEnum,
+  hasEvidenceComment: null | string,
+  hasValidation: null | YesPartiallyNoCatalogueEnum,
+  hasValidationComment: null | string,
+  hasProposition: null | YesPartiallyNoCatalogueEnum,
+  hasPropositionComment: null | string,
+  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueEnum,
+  hasCompetitionKnowledgeComment: null | string,
+  hasImplementationPlan: null | YesPartiallyNoCatalogueEnum,
+  hasImplementationPlanComment: null | string,
+  hasScaleResource: null | YesPartiallyNoCatalogueEnum,
+  hasScaleResourceComment: null | string,
+  suggestedOrganisations: OrganisationWithUnitsType[],
+  updatedAt: null | DateISOType,
+  updatedBy: { id: string, name: string }
+};
 
 export type ThreadListModel = {
-  count: number;
+  count: number,
   threads: {
-    id: string;
-    subject: string;
-    messageCount: number;
-    createdAt: DateISOType;
-    isNew: boolean;
+    id: string,
+    subject: string,
+    messageCount: number,
+    createdAt: DateISOType,
+    isNew: boolean,
     lastMessage: {
-      id: string;
-      createdAt: DateISOType;
+      id: string,
+      createdAt: DateISOType,
       createdBy: {
-        id: string;
-        name: string;
-        type: UserTypeEnum;
-        organisationUnit: { id: string; name: string; acronym: string } | null;
-      };
-    };
-  }[];
+        id: string,
+        name: string,
+        type: UserTypeEnum,
+        organisationUnit: null | { id: string, name: string, acronym: string }
+      }
+    }
+  }[]
 };
 
 export type LastSupportStatusType = {

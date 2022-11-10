@@ -274,16 +274,14 @@ export class InnovationSectionsService extends BaseService {
         );
 
         await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
-          {
-            id: user.id, identityId: user.identityId, type: user.type,
-          },
+          { id: user.id, identityId: user.identityId, type: user.type },
           NotifierTypeEnum.ACTION_UPDATE,
           {
             innovationId: dbInnovation.id,
             action: {
               id: requestedStatusActions[0]!.id,
               section: savedSection.section,
-              status: InnovationActionStatusEnum.IN_REVIEW,
+              status: InnovationActionStatusEnum.IN_REVIEW
             }
           });
       }

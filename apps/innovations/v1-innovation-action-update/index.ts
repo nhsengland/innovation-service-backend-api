@@ -7,9 +7,9 @@ import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@inno
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationActionsServiceType, InnovationActionsServiceSymbol } from '../_services/interfaces';
+import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 
-import { BodyType, BodySchema, ParamsType, ParamsSchema } from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationActionUpdate {
@@ -29,6 +29,7 @@ class V1InnovationActionUpdate {
         .setInnovation(params.innovationId)
         .checkInnovation()
         .checkAccessorType()
+        .checkInnovatorType()
         .verify();
 
       const requestUser = auth.getUserInfo();
