@@ -12,7 +12,7 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
-import { translate } from '../_helpers/tanslate.helper';
+import { translate } from '../_helpers/translate.helper';
 
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
