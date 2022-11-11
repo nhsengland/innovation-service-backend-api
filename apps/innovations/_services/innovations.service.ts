@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -36,7 +36,7 @@ export class InnovationsService extends BaseService {
       engagingOrganisations?: string[],
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
-      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications')[]
+      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
   ): Promise<{
@@ -65,7 +65,11 @@ export class InnovationsService extends BaseService {
           }
         }
       }[],
-      notifications?: number
+      notifications?: number,
+      statistics?: {
+        actions: number,
+        messages: number
+      }
     }[]
   }> {
 
@@ -87,7 +91,7 @@ export class InnovationsService extends BaseService {
       query.leftJoinAndSelect('supportingOrganisationUser.user', 'supportingUsers');
     }
     // Notifications.
-    if (filters.fields?.includes('notifications')) {
+    if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
       query.leftJoinAndSelect('innovations.notifications', 'notifications')
       query.leftJoinAndSelect('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
     }
@@ -293,7 +297,10 @@ export class InnovationsService extends BaseService {
                   Promise.resolve(0)
                 )
               )
-            })
+            }),
+
+            ...(!filters.fields?.includes('statistics') ? {} : { statistics: await this.getInnovationStatistics(innovation) })
+
           };
 
         }))
@@ -795,6 +802,29 @@ export class InnovationsService extends BaseService {
     }
 
     return result;
+  }
+
+  private async getInnovationStatistics(innovation: InnovationEntity): Promise<{ messages: number, actions: number }> {
+    let statistics = { messages: 0, actions: 0 };
+
+    for (const notification of (await innovation.notifications)) {
+      const notificationUsers = await notification.notificationUsers;
+
+      if (notificationUsers.length === 0) { continue; }
+
+      if (notification.contextType === NotificationContextTypeEnum.THREAD) {
+        statistics.messages++;
+      }
+
+      if (
+        notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION ||
+        (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationActionStatusEnum.REQUESTED)
+      ) {
+        statistics.actions++;
+      }
+    }
+
+    return statistics;
   }
 
 }
