@@ -300,7 +300,7 @@ export class InnovationEntity extends BaseEntity {
     lazy: true,
     cascade: ['insert', 'update']
   })
-  evidence: Promise<InnovationEvidenceEntity[]>;
+  evidences: Promise<InnovationEvidenceEntity[]>;
 
   @OneToMany(() => InnovationStandardEntity, record => record.innovation, {
     lazy: true,

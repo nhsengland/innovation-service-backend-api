@@ -1,5 +1,5 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
@@ -35,7 +35,7 @@ class V1InnovationReassessmentRequestCreate {
       const requestUser = auth.getUserInfo();
 
       const result = await innovationAssessmentsService.createInnovationReassessment(
-        requestUser,
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         params.innovationId,
         body
       );
