@@ -5,6 +5,7 @@ export type ResponseDTO = {
   id: string;
   name: string;
   status: InnovationStatusEnum;
+  exportRequests: number;
   sections: {
     id: null | string;
     section: InnovationSectionEnum;

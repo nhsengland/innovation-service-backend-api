@@ -1,6 +1,5 @@
-import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
 import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
-
 
 export interface InnovationSectionModel {
   id: string | null,
@@ -61,8 +60,31 @@ export type ThreadListModel = {
 };
 
 export type LastSupportStatusType = {
-  statusChangedAt: DateISOType,
-  currentStatus: InnovationSupportStatusEnum,
-  organisation: { id: string, name: string, acronym: string },
-  organisationUnit: { id: string, name: string, acronym: string }
-};
+  statusChangedAt: Date;
+  currentStatus: InnovationSupportStatusEnum;
+  organisation: { id: string, name: string, acronym: string };
+  organisationUnit: { id: string, name: string, acronym: string };
+}
+
+
+export type InnovationExportRequestItemType = {
+  id: string,
+  status: InnovationExportRequestStatusEnum,
+  isExportable: boolean,
+  requestReason: string,
+  rejectReason?: null | string,
+  expiresAt: DateISOType, // Returned only when "opened".
+  organisation: {
+    id: string,
+    name: string,
+    acronym: null | string, 
+    organisationUnit: { id: string, name: string, acronym: null | string }
+  },
+  createdAt: DateISOType,
+  createdBy: {  
+    id: string,
+    name: string
+  }
+}
+
+export type InnovationExportRequestListType = InnovationExportRequestItemType[];  

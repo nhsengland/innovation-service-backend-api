@@ -1,16 +1,16 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
-import type { InnovationSectionModel } from '../_types/innovation.types';
+import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
 
 import { BaseService } from './base.service';
 
@@ -690,6 +690,229 @@ export class InnovationsService extends BaseService {
     }
   }
 
+  async createInnovationRecordExportRequest(requestUser: DomainUserInfoType, innovationId: string, data: {requestReason: string}): Promise<{ id: string; }> {
+    
+      // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
+      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
+
+    // TODO: Integrate this in the authorization service.
+      const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+        .where('request.innovation_id = :innovationId', { innovationId })
+        .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
+        .andWhere('request.status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED ] })
+        .getMany();
+
+      if (unitPendingAndApprovedRequests.length > 0) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
+      }
+
+      
+  
+      const request = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
+        innovation: InnovationEntity.new({ id: innovationId }),
+        status: InnovationExportRequestStatusEnum.PENDING,
+        createdAt: new Date().toISOString(),
+        createdBy: requestUser.id,
+        updatedBy: requestUser.id,
+        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }),
+        requestReason: data.requestReason,
+      });
+  
+      return {
+        id: request.id,
+      };
+  
+  }
+
+  async updateInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string, data: {status: InnovationExportRequestStatusEnum, rejectReason: null | string}): Promise<{ id: string; }> {
+    
+    // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
+    
+    const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+
+    if (requestUser.type === UserTypeEnum.ACCESSOR) {
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+    }
+
+    const exportRequest = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
+      .where('request.id = :exportRequestId', { exportRequestId })
+      .getOne();
+
+    // TODO: Integrate this in the authorization service.
+    if (!exportRequest) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
+    }
+
+    if (requestUser.type === UserTypeEnum.ACCESSOR) {
+      if (exportRequest.organisationUnit.id !== organisationUnitId) {
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_FROM_DIFFERENT_UNIT);
+      }
+    }
+
+    const {status, rejectReason} = data;
+
+    // TODO: Integrate this in the joi validation.
+    if (status === InnovationExportRequestStatusEnum.REJECTED) {
+      if (!rejectReason) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_REJECT_REASON_REQUIRED);
+      }
+    }
+
+    const updatedRequest = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
+      ...exportRequest,
+      status,
+      rejectReason,
+    });
+
+    return {
+      id: updatedRequest.id,
+    };
+
+  }
+
+  async getInnovationRecordExportRequests(requestUser: DomainUserInfoType, innovationId: string, skip = 0, take = 50): Promise<{
+    count: number;
+    data: InnovationExportRequestListType | [],
+  }> {
+
+    const requestsQuery = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .innerJoinAndSelect('request.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId })
+     
+    if (requestUser.type === 'ACCESSOR') {
+      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+      requestsQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+    }
+    
+    requestsQuery.orderBy('request.createdAt', 'ASC')
+    requestsQuery.skip(skip);
+    requestsQuery.take(take);
+
+    const [requests, count] = await requestsQuery.getManyAndCount();
+
+    if (requests.length === 0) {
+      return {
+        count: 0,
+        data: [],
+      };
+    }
+
+    const requestCreators = requests.map( r => r.createdBy);
+
+    const requestCreatorsNames = await this.domainService.users.getUsersList({ userIds: requestCreators });
+
+    const retval = requests.map(r => ({
+      id: r.id,
+      status: r.status,
+      requestReason: r.requestReason,
+      rejectReason: r.rejectReason,
+      createdAt: r.createdAt,
+      createdBy: {
+        id: r.createdBy,
+        name: requestCreatorsNames.find(u => u.id === r.createdBy)?.displayName || 'unknown',
+      },
+      organisation:{
+        id: r.organisationUnit.organisation.id,
+        name: r.organisationUnit.organisation.name,
+        acronym: r.organisationUnit.organisation.acronym,
+        organisationUnit: {
+          id: r.organisationUnit.id,
+          name: r.organisationUnit.name,
+          acronym: r.organisationUnit.acronym,
+        },
+      },
+      expiresAt: r.exportExpiresAt.toISOString(),
+      isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED && r.exportExpired === false,
+    }));
+
+    return {
+      count,
+      data: retval,
+    }
+  }
+
+  async getInnovationRecordExportRequestInfo(requestUser: DomainUserInfoType, exportRequestId: string): Promise<InnovationExportRequestItemType> {
+
+    const requestQuery = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .where('request.id = :exportRequestId', { exportRequestId })
+ 
+
+    if (requestUser.type === 'ACCESSOR') {
+      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+      requestQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+    }
+
+    const request = await requestQuery.getOne();
+      
+    if (!request) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
+    }
+
+    const requestCreator = await this.domainService.users.getUserInfo({userId: request.createdBy});
+
+    return {
+      id: request.id,
+      status: request.status,
+      requestReason: request.requestReason,
+      rejectReason: request.rejectReason,
+      createdAt: request.createdAt,
+      createdBy: {
+        id: request.createdBy,
+        name: requestCreator.displayName,
+      },
+      organisation:{
+        id: request.organisationUnit.organisation.id,
+        name: request.organisationUnit.organisation.name,
+        acronym: request.organisationUnit.organisation.acronym,
+        organisationUnit: {
+          id: request.organisationUnit.id,
+          name: request.organisationUnit.name,
+          acronym: request.organisationUnit.acronym,
+        },
+      },
+      expiresAt: request.exportExpiresAt?.toISOString(),
+      isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
+    };
+  }
+
+  async checkInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string): Promise<{canExport: boolean}> {
+
+    const requestQuery = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .innerJoinAndSelect('request.innovation', 'innovation')
+      .where('request.id = :exportRequestId', { exportRequestId })
+ 
+
+    if (requestUser.type === 'ACCESSOR') {
+      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+      requestQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+    }
+
+    const request = await requestQuery.getOne();
+      
+    if (!request) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
+    }
+
+    return {
+      canExport: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
+    };
+
+  }
+
   /**
   * Extracts information about the initial survey taken by the Innovator from CosmosDb
   */
@@ -805,7 +1028,7 @@ export class InnovationsService extends BaseService {
   }
 
   private async getInnovationStatistics(innovation: InnovationEntity): Promise<{ messages: number, actions: number }> {
-    let statistics = { messages: 0, actions: 0 };
+    const statistics = { messages: 0, actions: 0 };
 
     for (const notification of (await innovation.notifications)) {
       const notificationUsers = await notification.notificationUsers;

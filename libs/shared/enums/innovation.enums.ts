@@ -87,3 +87,11 @@ export enum ThreadContextTypeEnum {
   SUPPORT = 'SUPPORT',
   ACTION = 'ACTION',
 }
+
+export enum InnovationExportRequestStatusEnum {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED',
+}
