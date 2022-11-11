@@ -29,6 +29,10 @@ export type ResponseDTO = {
         }
       }
     }[],
-    notifications?: number
+    notifications?: number,
+    statistics?: {
+      actions: number,
+      messages: number
+    }
   }[]
 };

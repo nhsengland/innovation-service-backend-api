@@ -8,6 +8,7 @@ import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
+import { In } from 'typeorm';
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
@@ -265,24 +266,15 @@ export class InnovationSupportsService extends BaseService {
 
         dbSupport.organisationUnitUsers = [];
 
-        // Delete actions if NOT ENGAGING and NOT FURTHER_INFO_REQUIRED.
-        if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
-
-          const openActions = (await dbSupport.actions).filter(action =>
-            [
-              InnovationActionStatusEnum.REQUESTED,
-              InnovationActionStatusEnum.STARTED,
-              InnovationActionStatusEnum.IN_REVIEW
-            ].includes(action.status)
-          );
-
-          for (const action of openActions) {
-            await transaction.update(InnovationActionEntity,
-              { id: action.id },
-              { status: InnovationActionStatusEnum.DELETED, updatedBy: user.id }
-            );
-          }
-
+        // cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
+        if(data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED ) {
+          await transaction.createQueryBuilder().update(InnovationActionEntity)
+            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: user.id })
+            .where({ 
+              innovationSupport: dbSupport.id,
+              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.STARTED, InnovationActionStatusEnum.IN_REVIEW])
+            })
+            .execute();
         }
 
       }
