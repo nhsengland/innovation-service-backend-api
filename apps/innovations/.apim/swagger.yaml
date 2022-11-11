@@ -1555,6 +1555,24 @@ paths:
             description: Success
           '400':
             description: Invalid innovation payload
+    head:
+      operationId: v1-innovations-export-request-check
+      description: Check if can export
+      tags:
+        - "[v1] Innovations"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          description: Innovation ID
+          schema:
+            type: string
+            format: uuid
+        responses:
+          '200':
+            description: Success
+          '403':
+            description: Forbidden
 
   "/v1/{innovationId}/export-requests/{requestId}":
     get:

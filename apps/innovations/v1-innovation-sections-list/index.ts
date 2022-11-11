@@ -40,6 +40,7 @@ class GetInnovationSectionsList {
         id: result.id,
         name: result.name,
         status: result.status,
+        exportRequests: result.exportRequests,
         sections: result.sections.map(section => ({
           id: section.id,
           section: section.section,

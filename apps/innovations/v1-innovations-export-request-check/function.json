@@ -4,8 +4,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["get"],
-      "route": "v1/{innovationId}/export-requests/{requestId}"
+      "methods": ["head"],
+      "route": "v1/{innovationId}/export-requests"
     },
     {
       "type": "http",

@@ -58,7 +58,7 @@ class V1InnovationsExportRequestInfo {
 }
 
 
-export default openApi(V1InnovationsExportRequestInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests/{requestId}', {
+export default openApi(V1InnovationsExportRequestInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests', {
   head: {
     operationId: 'v1-innovations-export-request-info',
     description: 'Get export request info.',
@@ -74,16 +74,6 @@ export default openApi(V1InnovationsExportRequestInfo.httpTrigger as AzureFuncti
           format: 'uuid'
         }
       },
-      {
-        name: 'requestId',
-        in: 'path',
-        required: true,
-        description: 'Export request ID',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
     ],
     responses: {
       200: { description: 'Success' },

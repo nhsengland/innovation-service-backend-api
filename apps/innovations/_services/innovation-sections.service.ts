@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
@@ -25,6 +25,7 @@ export class InnovationSectionsService extends BaseService {
     id: string,
     name: string,
     status: InnovationStatusEnum,
+    exportRequests: number,
     sections: {
       id: null | string,
       section: InnovationSectionEnum,
@@ -42,10 +43,17 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = await innovation.sections;
 
+    const exportRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'requests')
+      .where('requests.innovation_id = :innovationId', { innovationId })
+      .andWhere('requests.status = :status', { status: InnovationExportRequestStatusEnum.PENDING })
+      .getCount();
+
+      
     return {
       id: innovation.id,
       name: innovation.name,
       status: innovation.status,
+      exportRequests,
       sections: Object.values(InnovationSectionEnum).map(sectionKey => {
 
         const section = sections.find(item => item.section === sectionKey);
@@ -65,7 +73,6 @@ export class InnovationSectionsService extends BaseService {
             submittedAt: null
           };
         }
-
       })
     };
 
