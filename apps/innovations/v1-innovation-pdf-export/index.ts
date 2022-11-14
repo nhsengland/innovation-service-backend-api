@@ -4,33 +4,30 @@ import type { HttpRequest } from '@azure/functions';
 //import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
-import { container } from '../_config';
-import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+//import { BodySchema, BodyType } from './validation.schemas';
 
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
 import PdfPrinter from 'pdfmake';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { type BodyType, BodySchema } from './validation.schemas';
+import type { InnovationExportSectionAnswerType, InnovationExportSectionItemType, InnovationExportSectionType } from '../_types/innovation.types';
+//import { JwtDecoder } from '@innovations/shared/decorators';
 
 class PostInnovationPDFExport {
 
-  //@JwtDecoder()
+ 
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
-    const innovationSectionsService = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
-  
     try {
 
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-
-      const data = await innovationSectionsService.findAllSections(params.innovationId);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
 
       const documentDefinition = {
         content: [
           {
-            text: data.innovation.name,
+            text: body[0]?.sections[0],
             style: 'document-title',
             pageBreak: 'after',
           },
@@ -61,16 +58,36 @@ class PostInnovationPDFExport {
         }
       }
 
-      data.innovationSections.forEach((entry) => {
+      body.forEach((entry: {title: string, sections: InnovationExportSectionType[]}) => {
         documentDefinition.content.push({
-          text: entry.section.section || '',
+          text: entry.title || '',
           style: 'header',
-          pageBreak: 'before',
           tocItem: true,
           tocStyle: { italics: true },
           tocMargin: [0, 10, 0, 0],
           tocNumberStyle: { italics: true, decoration: 'underline' },
+          pageBreak: 'after',
         } as any);
+
+        entry.sections.forEach((section: InnovationExportSectionItemType ) => {
+          documentDefinition.content.push({
+            text: section.section as any,
+            style: 'subheader',
+          } as any);
+
+          section.answers.forEach((answer: InnovationExportSectionAnswerType) => {
+            documentDefinition.content.push({
+              text: answer.label,
+              style: 'small',
+            } as any);
+
+            documentDefinition.content.push({
+              text: answer.value,
+              style: 'quote',
+            } as any);
+
+          });
+        });
        });
 
       

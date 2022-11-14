@@ -89,3 +89,14 @@ export type InnovationExportRequestItemType = {
 
 export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
 
+export type InnovationExportSectionAnswerType = {
+  label: string;
+  value: string;
+}
+
+export type InnovationExportSectionItemType = {
+  section: string;
+  answers: InnovationExportSectionAnswerType[];
+}
+
+export type InnovationExportSectionType = InnovationExportSectionItemType;

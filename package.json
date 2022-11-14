@@ -6,7 +6,7 @@
     "app:configure": "rimraf ./apps/$npm_config_app/.symlinks/shared && ln -s ../../../libs/shared ./apps/$npm_config_app/.symlinks/shared",
     "app:lint": "eslint apps/$npm_config_app/**/*.ts",
     "app:build": "rimraf dist/apps/$npm_config_app && tsc -p apps/$npm_config_app/tsconfig.json && tsc-alias -p apps/$npm_config_app/tsconfig.json && npm run app:postbuild",
-    "app:postbuild": "copyfiles -u 1 apps/$npm_config_app/**/function.json dist/apps && copyfiles package.json host.json local.settings.json dist/apps/$npm_config_app",
+    "app:postbuild": "copyfiles -u 1 apps/$npm_config_app/**/function.json dist/apps && copyfiles package.json host.json local.settings.json dist/apps/$npm_config_app && copyfiles -u 3 apps/$npm_config_app/**/fonts/*.ttf dist/apps/$npm_config_app/fonts/",
     "app:watch": "npm run app:build && npm-run-all --parallel app:watch:*",
     "app:watch:tsc": "tsc --w --project apps/$npm_config_app/tsconfig.json --pretty",
     "app:watch:tsc-alias": "tsc-alias -w -p apps/$npm_config_app/tsconfig.json",

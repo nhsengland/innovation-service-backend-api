@@ -4,8 +4,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["post"],
-      "route": "v1/{innovationId}/pdf"
+      "methods": ["get"],
+      "route": "v1/{innovationId}/all-sections"
     },
     {
       "type": "http",
