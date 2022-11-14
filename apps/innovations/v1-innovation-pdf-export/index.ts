@@ -22,27 +22,62 @@ class PostInnovationPDFExport {
     try {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
-
-
+      
       const documentDefinition = {
+        header: (current: number) => {
+          if (current > 1) {
+            return {
+              columns: [{
+                text: 'Innovation Record',
+                style: 'dimmed',
+                margin: [10, 10, 10, 10],
+                alignment: 'right',
+                italic: true,
+              }],
+            };
+          } else return;
+        },
+        footer: (current: number, total: number) => {
+          if (current > 1) {
+            return {
+              columns: [
+                {
+                  text: `${current} of ${total}`,
+                  style: 'footer',
+                  alignment: 'right',
+                  margin: [0, 0, 10, 10],
+                },
+              ]
+            };
+          } else return;
+        },
         content: [
           {
-            text: body[0]?.sections[0],
-            style: 'document-title',
+            text: 'INNOVATION NAME',
+            style: 'documentTitle',
             pageBreak: 'after',
           },
           { 
             toc: {
               title: { text: 'INDEX', style: 'header' },
-              //textMargin: [0, 0, 0, 0],
-              //textStyle: {italics: true},
               numberStyle: { bold: true }
             }
           },
         ],
         styles: {
+          dimmed: {
+            fontSize: 10,
+            color: '#999999',
+            italic: true,
+          },
+          documentTitle: {
+            fontSize: 26,
+            bold: true,
+            alignment: 'center',
+            margin: [0, 0, 0, 20],
+          },
           header: {
-            fontSize: 18,
+            fontSize: 20,
             bold: true
           },
           subheader: {
@@ -53,12 +88,23 @@ class PostInnovationPDFExport {
             italics: true
           },
           small: {
-            fontSize: 8
-          }
+            fontSize: 10
+          },
+          question: {
+            fontSize: 12,
+            bold: true,
+            italics: true,
+          },
+          footer: {
+            fontSize: 10,
+            color: '#999999',
+            italics: true,           
+          },
         }
       }
 
       body.forEach((entry: {title: string, sections: InnovationExportSectionType[]}) => {
+
         documentDefinition.content.push({
           text: entry.title || '',
           style: 'header',
@@ -66,25 +112,38 @@ class PostInnovationPDFExport {
           tocStyle: { italics: true },
           tocMargin: [0, 10, 0, 0],
           tocNumberStyle: { italics: true, decoration: 'underline' },
-          pageBreak: 'after',
+          pageBreak: 'before',
         } as any);
 
         entry.sections.forEach((section: InnovationExportSectionItemType ) => {
           documentDefinition.content.push({
             text: section.section as any,
             style: 'subheader',
+            margin: [0, 10],
           } as any);
 
           section.answers.forEach((answer: InnovationExportSectionAnswerType) => {
             documentDefinition.content.push({
               text: answer.label,
-              style: 'small',
+              style: 'question',
+              margin: [0, 5],
             } as any);
 
-            documentDefinition.content.push({
-              text: answer.value,
-              style: 'quote',
-            } as any);
+            const answers = answer.value.split('\n');
+
+            if (answers.length > 1) {
+              documentDefinition.content.push({
+                ul: answers,
+                style: 'small',
+                margin: [5, 2],
+              } as any);
+            }  else {
+              documentDefinition.content.push({
+                text: answers[0] === 'undefined' ? '-' : answers[0] === '' ? '-' : answers[0],
+                style: 'small',
+                margin: [5, 2],
+              } as any);
+            }
 
           });
         });
