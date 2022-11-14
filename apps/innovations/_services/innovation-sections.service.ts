@@ -9,6 +9,7 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 
 import { BaseService } from './base.service';
+import type { InnovationSectionModel } from '../_types/innovation.types';
 
 
 @injectable()
@@ -300,6 +301,81 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
+  async findAllSections(innovationId: string): Promise<{innovation: {name: string}, innovationSections: { section: InnovationSectionModel, data: Record<string, string>}[]}> {
+   
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.sections', 'sections')
+      .leftJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('sections.files', 'files')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+    
+    const sections = await innovation.sections;
+    const innovationSections: { section: InnovationSectionModel, data: Record<string, string>}[] = [];
+
+    for (const key in InnovationSectionEnum) {
+      const section = sections.find((sec) => sec.section === key);
+
+      if (!section) {
+        continue;
+      }
+
+      const sectionFields = INNOVATION_SECTIONS_CONFIG[key as keyof typeof INNOVATION_SECTIONS_CONFIG];
+
+      innovationSections.push({
+        section: this.getInnovationSectionMetadata(key, section),
+        data: await this.parseSectionInformation(
+          innovation,
+          section?.files,
+          {
+            fields: sectionFields.innovationFields,
+            lookupTables: sectionFields.lookupTables,
+            dependencies: sectionFields.innovationDependencies,
+            allowFileUploads: sectionFields.allowFileUploads
+          }
+        )
+      });
+    }
+
+    return {
+      innovation: { name: innovation.name },
+      innovationSections
+    };
+  }
+
+  private getInnovationSectionMetadata(
+    key: string,
+    section?: InnovationSectionEntity
+  ): InnovationSectionModel {
+
+    let result: InnovationSectionModel;
+
+    if (section) {
+      result = {
+        id: section.id,
+        section: section.section,
+        status: section.status,
+        updatedAt: section.updatedAt,
+        submittedAt: section.submittedAt,
+        actionStatus: null,
+      };
+    } else {
+      result = {
+        id: null,
+        section: InnovationSectionEnum[key as keyof typeof InnovationSectionEnum],
+        status: InnovationSectionStatusEnum.NOT_STARTED,
+        updatedAt: null,
+        submittedAt: null,
+        actionStatus: null,
+      };
+    }
+
+    return result;
+  }
 
   private async parseSectionUpdate(
     user: { id: string },
