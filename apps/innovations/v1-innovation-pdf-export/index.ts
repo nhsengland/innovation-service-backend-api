@@ -8,6 +8,10 @@ import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
+import PdfMake from 'pdfmake/build/pdfmake';
+import PdfFonts from 'pdfmake/build/vfs_fonts';
+import PdfPrinter from 'pdfmake';
+import type { TDocumentDefinitions } from 'pdfmake/interfaces';
 
 class PostInnovationPDFExport {
 
@@ -43,17 +47,27 @@ class PostInnovationPDFExport {
 
       data.innovationSections.forEach((entry) => {
         documentDefinition.content.push({
-          toc: {
-            title: {
-              text: entry.section.section || '',
-              style: 'header',
-            },
-            numberStyle: { bold: true },
-          }
-        });
+          text: entry.section.section || '',
+          style: 'header',
+          pageBreak: 'before',
+          tocItem: true,
+          tocStyle: { italics: true },
+          tocMargin: [0, 10, 0, 0],
+          tocNumberStyle: { italics: true, decoration: 'underline' },
+        } as any);
        });
 
       
+      PdfMake.vfs = PdfFonts.pdfMake.vfs;
+
+      const pdf = await generatePDF(documentDefinition as any);
+
+      context.res = {
+        body: pdf,
+        headers: {
+          'Content-Type': 'application/pdf',
+        },
+      };
 
       return;
         
@@ -67,3 +81,29 @@ class PostInnovationPDFExport {
 }
 
 export default PostInnovationPDFExport.httpTrigger;
+
+
+async function generatePDF(docDefinition: TDocumentDefinitions): Promise<unknown> {
+
+  const fontDescriptors = { 
+      Roboto: {
+          normal: 'fonts/Roboto-Regular.ttf',
+          bold: 'fonts/Roboto-Medium.ttf',
+          italics: 'fonts/Roboto-Italic.ttf',
+          bolditalics: 'fonts/Roboto-MediumItalic.ttf'
+      }
+  };
+  const printer = new PdfPrinter(fontDescriptors);
+  const doc = printer.createPdfKitDocument(docDefinition);
+
+  return new Promise(resolve => {
+      const chunks: any[] = [];
+      doc.end();
+      doc.on('data', (chunk) => {
+          chunks.push(chunk);
+      });
+      doc.on('end', () => {
+          resolve(Buffer.concat(chunks));
+      });    
+  });
+}
