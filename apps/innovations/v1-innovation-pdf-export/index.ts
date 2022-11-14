@@ -1,19 +1,16 @@
-//import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { HttpRequest } from '@azure/functions';
 
-//import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
-//import { BodySchema, BodyType } from './validation.schemas';
 
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
 import PdfPrinter from 'pdfmake';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
-import { type BodyType, BodySchema } from './validation.schemas';
+import { type BodyType, BodySchema, ParamsType, ParamsSchema } from './validation.schemas';
 import type { InnovationExportSectionAnswerType, InnovationExportSectionItemType, InnovationExportSectionType } from '../_types/innovation.types';
-//import { JwtDecoder } from '@innovations/shared/decorators';
-
+import { container } from '../_config';
+import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 class PostInnovationPDFExport {
 
  
@@ -21,8 +18,13 @@ class PostInnovationPDFExport {
 
     try {
 
+      const innovationService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
+      
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       
+      const innovation = await innovationService.getInnovationInfo(params.innovationId, {});
+
       const documentDefinition = {
         header: (current: number) => {
           if (current > 1) {
@@ -53,7 +55,7 @@ class PostInnovationPDFExport {
         },
         content: [
           {
-            text: 'INNOVATION NAME',
+            text: innovation.name,
             style: 'documentTitle',
             pageBreak: 'after',
           },
