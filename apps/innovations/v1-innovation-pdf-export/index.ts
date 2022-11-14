@@ -42,7 +42,23 @@ class PostInnovationPDFExport {
               numberStyle: { bold: true }
             }
           },
-        ]
+        ],
+        styles: {
+          header: {
+            fontSize: 18,
+            bold: true
+          },
+          subheader: {
+            fontSize: 15,
+            bold: true
+          },
+          quote: {
+            italics: true
+          },
+          small: {
+            fontSize: 8
+          }
+        }
       }
 
       data.innovationSections.forEach((entry) => {
