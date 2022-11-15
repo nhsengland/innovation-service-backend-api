@@ -29,10 +29,6 @@ class V1InnovationInfo {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
-        .checkAssessmentType()
-        .checkAssessmentType()
-        .checkAccessorType()
-        .checkInnovatorType()
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
