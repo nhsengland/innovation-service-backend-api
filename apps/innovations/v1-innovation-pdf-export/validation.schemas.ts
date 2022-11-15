@@ -1,15 +1,12 @@
 import Joi from 'joi';
-import type { InnovationExportSectionType } from '../_types/innovation.types';
+import type { InnovationAllSectionsType } from '../_types/innovation.types';
 
 
 export type ParamsType = {
   innovationId: string;
 }
 
-export type BodyType = {
-  title: string;
-  sections: InnovationExportSectionType[];
-}[];
+export type BodyType = InnovationAllSectionsType;
 
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),

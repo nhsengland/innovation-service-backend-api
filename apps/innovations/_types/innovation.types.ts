@@ -100,3 +100,8 @@ export type InnovationExportSectionItemType = {
 }
 
 export type InnovationExportSectionType = InnovationExportSectionItemType;
+
+export type InnovationAllSectionsType = {
+  title: string;
+  sections: InnovationExportSectionType[];
+}[];
