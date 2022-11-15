@@ -27,7 +27,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    // Retrieve innovation shared organizations units
+    // Retrieve innovation shared organisations units
     const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(this.inputData.innovationId);
     const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation => organisation.organisationUnits.map(unit => unit.id));
     

@@ -181,7 +181,7 @@ export class IdentityProviderService {
   }
 
 
-  async getUsersList(entityIds: string[]): Promise<{ identityId: string, displayName: string, email: string, isActive: boolean }[]> {
+  async getUsersList(entityIds: string[]): Promise<{ identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean }[]> {
 
     if ((entityIds || []).length === 0) { return []; }
 
@@ -224,6 +224,7 @@ export class IdentityProviderService {
         identityId: u.id,
         displayName: u.displayName,
         email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
+        mobilePhone: u.mobilePhone,
         isActive: u.accountEnabled
       }))
     );

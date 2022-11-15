@@ -1,22 +1,26 @@
-import { InnovationEntity } from './innovation.entity';
-import { InnovationExportRequestStatusEnum } from '../../enums';
 import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
 import { BaseEntity } from '../base.entity';
+
+import { InnovationEntity } from './innovation.entity';
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+
+import { InnovationExportRequestStatusEnum } from '../../enums';
 
 
 @Entity('innovation_export_request')
 export class InnovationExportRequestEntity extends BaseEntity {
+
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({name: 'status', type: 'simple-enum', enum: InnovationExportRequestStatusEnum, nullable: false})
+  @Column({ name: 'status', type: 'simple-enum', enum: InnovationExportRequestStatusEnum, nullable: false })
   status: InnovationExportRequestStatusEnum;
 
-  @Column({name: 'request_reason', type: 'varchar', length: 255, nullable: false})
+  @Column({ name: 'request_reason', type: 'varchar', length: 255, nullable: false })
   requestReason: string;
 
-  @Column({name: 'reject_reason', type: 'varchar', length: 255, nullable: true})
+  @Column({ name: 'reject_reason', type: 'varchar', length: 255, nullable: true })
   rejectReason: null | string;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
@@ -27,18 +31,24 @@ export class InnovationExportRequestEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
+  isExportActive: boolean;
   requestExpired: boolean;
   exportExpired: boolean;
-
   exportExpiresAt: Date;
+
+
+  @AfterLoad()
+  setIsActive(): void {
+    this.isExportActive = this.status === InnovationExportRequestStatusEnum.APPROVED && new Date(this.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+  }
+
 
   // after entity is loaded compute requestExpired. 
   // expires after 7 days
   @AfterLoad()
   setRequestExpired(): void {
     if (this.status === InnovationExportRequestStatusEnum.PENDING) {
-      this.requestExpired = 
-          new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
+      this.requestExpired = new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
     }
   }
 
@@ -47,8 +57,7 @@ export class InnovationExportRequestEntity extends BaseEntity {
   @AfterLoad()
   setExportExpired(): void {
     if (this.status === InnovationExportRequestStatusEnum.APPROVED) {
-      this.exportExpired = 
-          new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+      this.exportExpired = new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
     }
   }
 
@@ -58,14 +67,14 @@ export class InnovationExportRequestEntity extends BaseEntity {
       this.exportExpiresAt = new Date(this.updatedAt);
       const updatedAt = new Date(this.updatedAt);
       this.exportExpiresAt.setDate(updatedAt.getDate() + 30);
-      return;
     }
-    return;
   }
+
 
   static new(data: Partial<InnovationExportRequestEntity>): InnovationExportRequestEntity {
     const instance = new InnovationExportRequestEntity();
     Object.assign(instance, data);
     return instance;
   }
+
 }
