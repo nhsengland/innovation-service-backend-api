@@ -25,7 +25,7 @@ export class InnovationsService extends BaseService {
 
 
   async getInnovationsList(
-    user: { id: string, type: UserTypeEnum, organisationId?: string, organisationRole?: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, organizationUnitId?: string },
+    user: { id: string, type: UserTypeEnum, organisationId?: string, organisationRole?: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, organisationUnitId?: string },
     filters: {
       status: InnovationStatusEnum[],
       name?: string,
@@ -52,7 +52,7 @@ export class InnovationsService extends BaseService {
       mainCategory: null | InnovationCategoryCatalogueEnum,
       otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
-      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number; },
+      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
       supports?: {
         id: string,
         status: InnovationSupportStatusEnum,
@@ -108,13 +108,13 @@ export class InnovationsService extends BaseService {
     if (user.type === UserTypeEnum.ACCESSOR) {
 
       query.innerJoin('innovations.organisationShares', 'shares');
-      query.leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organizationUnitId });
+      query.leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organisationUnitId });
       query.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
       query.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
 
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
-        // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organizationUnitId });
+        // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
 
       if (filters.supportStatuses && filters.supportStatuses.length > 0) {
@@ -177,7 +177,7 @@ export class InnovationsService extends BaseService {
 
     if (filters.suggestedOnly) {
       query.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
-      query.andWhere('assessmentOrganisationUnits.id = :suggestedOrganisationUnitId', { suggestedOrganisationUnitId: user.organizationUnitId });
+      query.andWhere('assessmentOrganisationUnits.id = :suggestedOrganisationUnitId', { suggestedOrganisationUnitId: user.organisationUnitId });
     }
 
     // Pagination and ordering.
@@ -314,6 +314,152 @@ export class InnovationsService extends BaseService {
     }
 
   }
+
+
+  async getInnovationInfo(
+    user: { id: string, type: UserTypeEnum, organisationUnitId?: string },
+    id: string,
+    filters: { fields?: ('assessment' | 'supports')[] }
+  ): Promise<{
+    id: string,
+    name: string,
+    description: null | string,
+    status: InnovationStatusEnum,
+    submittedAt: null | DateISOType,
+    countryName: null | string,
+    postCode: null | string,
+    categories: InnovationCategoryCatalogueEnum[],
+    otherCategoryDescription: null | string,
+    owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean },
+    lastEndSupportAt: null | DateISOType,
+    canUserExport: boolean,
+    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } },
+    supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
+  }> {
+
+    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.owner', 'innovationOwner')
+      .innerJoinAndSelect('innovationOwner.userOrganisations', 'userOrganisations')
+      .innerJoinAndSelect('userOrganisations.organisation', 'organisation')
+      .leftJoinAndSelect('innovation.categories', 'innovationCategories')
+      .where('innovation.id = :innovationId', { innovationId: id });
+
+    if (user.type === UserTypeEnum.ACCESSOR) {
+      query.leftJoinAndSelect('innovation.exportRequests', 'exportRequests', 'exportRequests.status IN (:...requestStatuses) AND exportRequests.organisation_unit_id = :organisationUnitId', { requestStatuses: [InnovationExportRequestStatusEnum.APPROVED], organisationUnitId: user.organisationUnitId });
+    }
+
+    // Assessment relations.
+    if (filters.fields?.includes('assessment')) {
+      query.leftJoinAndSelect('innovation.assessments', 'innovationAssessments');
+      query.leftJoinAndSelect('innovationAssessments.assignTo', 'assignTo');
+    }
+
+    // Supports relations.
+    if (filters.fields?.includes('supports')) {
+      query.leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports');
+      query.leftJoinAndSelect('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
+    }
+
+    const result = await query.getOne();
+    if (!result) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    // Fetch users names.
+    const ownerId = result.owner.id;
+    const assessmentUsersIds = filters.fields?.includes('assessment') ? result.assessments?.map(assessment => assessment.assignTo.id) : [];
+
+    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
+
+    try {
+
+      const categories = (await result.categories).map(item => item.type);
+      const ownerInfo = usersInfo.find(item => item.id === result.owner.id);
+
+      // Export requests parsing.
+      let canUserExport = false;
+      switch (user.type) {
+        case UserTypeEnum.INNOVATOR:
+          canUserExport = true;
+          break;
+        case UserTypeEnum.ASSESSMENT:
+          canUserExport = false;
+          break;
+        case UserTypeEnum.ACCESSOR:
+          canUserExport = (await result.exportRequests).filter(item => item.isExportActive).length > 0;
+          break;
+      }
+
+      // Assessment parsing.
+      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
+
+      if (filters.fields?.includes('assessment')) {
+
+        if (result.assessments.length === 0) { assessment = null; }
+        else {
+
+          if (result.assessments.length > 1) { // This should never happen, but...
+            this.logger.error(`Innovation ${result.id} with ${result.assessments.length} assessments detected`);
+          }
+
+          if (result.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
+
+            assessment = {
+              id: result.assessments[0].id,
+              createdAt: result.assessments[0].createdAt,
+              finishedAt: result.assessments[0].finishedAt,
+              assignedTo: { name: usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? '' },
+              // reassessmentCount: (await innovation.reassessmentRequests).length
+            };
+
+          }
+
+        }
+
+      }
+
+      return {
+        id: result.id,
+        name: result.name,
+        description: result.description,
+        status: result.status,
+        submittedAt: result.submittedAt,
+        countryName: result.countryName,
+        postCode: result.postcode,
+        categories,
+        otherCategoryDescription: result.otherCategoryDescription,
+        owner: {
+          id: result.owner.id,
+          name: ownerInfo?.displayName || '',
+          email: ownerInfo?.email || '',
+          mobilePhone: ownerInfo?.mobilePhone || '',
+          isActive: !!ownerInfo?.isActive,
+          organisations: (await result.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
+            name: item.organisation.name,
+            size: item.organisation.size
+          }))
+        },
+        lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(result.id),
+
+        canUserExport,
+
+        ...(assessment === undefined ? {} : { assessment }),
+
+        ...(!filters.fields?.includes('supports') ? {} : {
+          supports: (result.innovationSupports || []).map(support => ({
+            id: support.id,
+            status: support.status,
+            organisationUnitId: support.organisationUnit.id
+          }))
+        })
+      };
+
+    } catch (error) {
+      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
+    }
+
+  }
+
 
   async getNeedsAssessmentOverdueInnovations(innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[], supportFilter?: AssessmentSupportFilterEnum): Promise<number> {
 
@@ -573,166 +719,56 @@ export class InnovationsService extends BaseService {
 
   }
 
-  /***
-   * @deprecated - This method is on route of deprecation pending on the development of the new innovation overview page.
-   */
-  async getInnovationInfo(
-    id: string,
-    filters: { fields?: ('assessment' | 'supports')[] | undefined }
-  ): Promise<{
-    id: string,
-    name: string,
-    description: null | string,
-    status: InnovationStatusEnum,
-    submittedAt: null | DateISOType;
-    countryName: null | string;
-    postCode: null | string;
-    categories: InnovationCategoryCatalogueEnum[],
-    otherCategoryDescription: null | string,
-    owner: { id: string, name: string, isActive: boolean },
-    assessment?: null | undefined | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
-    supports?: null | undefined | {
-      id: string,
-      status: InnovationSupportStatusEnum
-    }[],
-    lastEngagingSupportTransition: null | DateISOType,
-  }> {
 
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .distinct()
-      .innerJoinAndSelect('innovation.owner', 'innovationOwner')
-      .leftJoinAndSelect('innovation.categories', 'innovationCategories')
-      .where('innovation.id = :innovationId', { innovationId: id });
+  // async getInnovationLastEngagingTransition(innovationId: string): Promise<{ statusChangedAt: null | DateISOType }> {
+  //   return {
+  //     statusChangedAt: await this.lastSupportStatusTransitionFromEngaging(innovationId)
+  //   }
+  // }
 
-    // Assessment relations.
-    if (filters.fields?.includes('assessment')) {
-      query.leftJoinAndSelect('innovation.assessments', 'innovationAssessments');
-      query.leftJoinAndSelect('innovationAssessments.assignTo', 'assignTo');
+  async createInnovationRecordExportRequest(requestUser: DomainUserInfoType, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
+
+    // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
+    const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+
+    if (!organisationUnitId) {
+      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
-
-    // TODO: if I'm an accessor, should only 'MY' supports be returned?????????
-    // Supports relations.
-    if (filters.fields?.includes('supports')) {
-      query.leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports');
-      query.leftJoinAndSelect('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
-    }
-
-    const result = await query.getOne();
-    if (!result) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
-
-
-    // Fetch users names.
-    const ownerId = result.owner.id;
-    const assessmentUsersIds = filters.fields?.includes('assessment') ? result.assessments?.map(assessment => assessment.assignTo.id) : [];
-
-    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
-
-    try {
-
-      const categories = (await result.categories).map(item => item.type);
-      const owner = usersInfo.find(item => item.id === result.owner.id);
-
-      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
-      switch (result.assessments?.length || 0) {
-        case 0:
-          assessment = filters.fields?.includes('assessment') ? null : undefined;
-          break;
-        case 1:
-          assessment = {
-            id: result.assessments[0]!.id,
-            createdAt: result.assessments[0]!.createdAt,
-            finishedAt: result.assessments[0]!.finishedAt,
-            assignedTo: {
-              name: usersInfo.find(user => user.id === result.assessments[0]!.assignTo.id && user.isActive)?.displayName ?? ''
-            }
-          };
-          break;
-        default:
-          throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WITH_INVALID_ASSESSMENTS);
-      }
-
-      return {
-        id: result.id,
-        name: result.name,
-        description: result.description,
-        status: result.status,
-        submittedAt: result.submittedAt,
-        countryName: result.countryName,
-        postCode: result.postcode,
-        // mainCategory: innovation.mainCategory,
-        // otherMainCategoryDescription: innovation.otherMainCategoryDescription,
-        categories,
-        otherCategoryDescription: result.otherCategoryDescription,
-        owner: {
-          id: result.owner.id,
-          name: owner?.displayName || '',
-          isActive: !!owner?.isActive
-        },
-        assessment,
-        supports: !filters.fields?.includes('supports') ? undefined : (result.innovationSupports || []).map(support => ({
-          id: support.id,
-          status: support.status
-        })),
-        lastEngagingSupportTransition: await this.lastSupportStatusTransitionFromEngaging(result.id)
-      };
-
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
-
-  }
-
-  async getInnovationLastEngagingTransition(innovationId: string): Promise<{ statusChangedAt: null | DateISOType }> {
-    return {
-      statusChangedAt: await this.lastSupportStatusTransitionFromEngaging(innovationId)
-    }
-  }
-
-  async createInnovationRecordExportRequest(requestUser: DomainUserInfoType, innovationId: string, data: {requestReason: string}): Promise<{ id: string; }> {
-    
-      // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
-      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
-
-      if (!organisationUnitId) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
 
 
     // TODO: Integrate this in the authorization service.
-      const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .where('request.innovation_id = :innovationId', { innovationId })
-        .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
-        .andWhere('request.status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED ] })
-        .getMany();
+    const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .where('request.innovation_id = :innovationId', { innovationId })
+      .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
+      .andWhere('request.status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED] })
+      .getMany();
 
-      if (unitPendingAndApprovedRequests.length > 0) {
-        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
-      }
+    if (unitPendingAndApprovedRequests.length > 0) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
+    }
 
-      
-  
-      const request = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
-        innovation: InnovationEntity.new({ id: innovationId }),
-        status: InnovationExportRequestStatusEnum.PENDING,
-        createdAt: new Date().toISOString(),
-        createdBy: requestUser.id,
-        updatedBy: requestUser.id,
-        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }),
-        requestReason: data.requestReason,
-      });
-  
-      return {
-        id: request.id,
-      };
-  
+
+
+    const request = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
+      innovation: InnovationEntity.new({ id: innovationId }),
+      status: InnovationExportRequestStatusEnum.PENDING,
+      createdAt: new Date().toISOString(),
+      createdBy: requestUser.id,
+      updatedBy: requestUser.id,
+      organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }),
+      requestReason: data.requestReason,
+    });
+
+    return {
+      id: request.id,
+    };
+
   }
 
-  async updateInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string, data: {status: InnovationExportRequestStatusEnum, rejectReason: null | string}): Promise<{ id: string; }> {
-    
+  async updateInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string, data: { status: InnovationExportRequestStatusEnum, rejectReason: null | string }): Promise<{ id: string; }> {
+
     // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
-    
+
     const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
     if (requestUser.type === UserTypeEnum.ACCESSOR) {
@@ -757,7 +793,7 @@ export class InnovationsService extends BaseService {
       }
     }
 
-    const {status, rejectReason} = data;
+    const { status, rejectReason } = data;
 
     // TODO: Integrate this in the joi validation.
     if (status === InnovationExportRequestStatusEnum.REJECTED) {
@@ -788,12 +824,12 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
       .innerJoinAndSelect('request.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
-     
+
     if (requestUser.type === 'ACCESSOR') {
       const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
       requestsQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
-    
+
     requestsQuery.orderBy('request.createdAt', 'ASC')
     requestsQuery.skip(skip);
     requestsQuery.take(take);
@@ -807,7 +843,7 @@ export class InnovationsService extends BaseService {
       };
     }
 
-    const requestCreators = requests.map( r => r.createdBy);
+    const requestCreators = requests.map(r => r.createdBy);
 
     const requestCreatorsNames = await this.domainService.users.getUsersList({ userIds: requestCreators });
 
@@ -821,7 +857,7 @@ export class InnovationsService extends BaseService {
         id: r.createdBy,
         name: requestCreatorsNames.find(u => u.id === r.createdBy)?.displayName || 'unknown',
       },
-      organisation:{
+      organisation: {
         id: r.organisationUnit.organisation.id,
         name: r.organisationUnit.organisation.name,
         acronym: r.organisationUnit.organisation.acronym,
@@ -847,7 +883,7 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
       .where('request.id = :exportRequestId', { exportRequestId })
- 
+
 
     if (requestUser.type === 'ACCESSOR') {
       const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
@@ -855,12 +891,12 @@ export class InnovationsService extends BaseService {
     }
 
     const request = await requestQuery.getOne();
-      
+
     if (!request) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
 
-    const requestCreator = await this.domainService.users.getUserInfo({userId: request.createdBy});
+    const requestCreator = await this.domainService.users.getUserInfo({ userId: request.createdBy });
 
     return {
       id: request.id,
@@ -872,7 +908,7 @@ export class InnovationsService extends BaseService {
         id: request.createdBy,
         name: requestCreator.displayName,
       },
-      organisation:{
+      organisation: {
         id: request.organisationUnit.organisation.id,
         name: request.organisationUnit.organisation.name,
         acronym: request.organisationUnit.organisation.acronym,
@@ -887,22 +923,20 @@ export class InnovationsService extends BaseService {
     };
   }
 
-  async checkInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string): Promise<{canExport: boolean}> {
+  async checkInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string): Promise<{ canExport: boolean }> {
 
-    const requestQuery = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+    const query = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
       .innerJoinAndSelect('request.innovation', 'innovation')
       .where('request.id = :exportRequestId', { exportRequestId })
- 
 
     if (requestUser.type === 'ACCESSOR') {
       const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
-      requestQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
 
-    const request = await requestQuery.getOne();
-      
+    const request = await query.getOne();
     if (!request) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
@@ -1028,9 +1062,11 @@ export class InnovationsService extends BaseService {
   }
 
   private async getInnovationStatistics(innovation: InnovationEntity): Promise<{ messages: number, actions: number }> {
+
     const statistics = { messages: 0, actions: 0 };
 
     for (const notification of (await innovation.notifications)) {
+
       const notificationUsers = await notification.notificationUsers;
 
       if (notificationUsers.length === 0) { continue; }
@@ -1039,15 +1075,14 @@ export class InnovationsService extends BaseService {
         statistics.messages++;
       }
 
-      if (
-        notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION ||
-        (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationActionStatusEnum.REQUESTED)
-      ) {
+      if (notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationActionStatusEnum.REQUESTED)) {
         statistics.actions++;
       }
+
     }
 
     return statistics;
+
   }
 
 }

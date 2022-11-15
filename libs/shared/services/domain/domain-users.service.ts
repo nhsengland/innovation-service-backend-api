@@ -89,8 +89,9 @@ export class DomainUsersService {
   async getUsersList(data: { userIds?: string[], identityIds?: string[] }): Promise<{
     id: string,
     identityId: string,
-    email: string,
     displayName: string,
+    email: string,
+    mobilePhone: null | string,
     type: UserTypeEnum
     isActive: boolean
   }[]> {
@@ -127,8 +128,9 @@ export class DomainUsersService {
       return {
         id: dbUser.id,
         identityId: dbUser.identityId,
-        email: identityUser.email,
         displayName: identityUser.displayName,
+        email: identityUser.email,
+        mobilePhone: identityUser.mobilePhone,
         type: dbUser.type,
         isActive: !dbUser.lockedAt
       };
