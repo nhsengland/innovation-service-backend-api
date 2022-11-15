@@ -1,18 +1,13 @@
-import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
-import {
-  EmailNotificationTypeEnum, EmailNotificationPreferenceEnum,
-  InnovationSupportStatusEnum,
-  NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum,
-  UserTypeEnum
-} from '@notifications/shared/enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
+import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler } from './base.handler';
 import { translate } from '../_helpers/translate.helper';
+import { BaseHandler } from './base.handler';
 
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
@@ -73,7 +68,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
       await this.prepareInAppForAccessorsWhenEngaging();
-      await this.prepareEmailForNewAccessors(this.inputData.innovationSupport.newAssignedAccessors);
+      await this.prepareEmailForNewAccessors(this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id));
     }
 
     return this;
