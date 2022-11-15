@@ -39,7 +39,7 @@ class V1InnovationsList {
           id: requestUser.id,
           type: requestUser.type,
           ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organizationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
+          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organisationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
           ...(requestUser.organisations[0]?.role ? { organisationRole: requestUser.organisations[0]?.role } : {})
         },
         filters,

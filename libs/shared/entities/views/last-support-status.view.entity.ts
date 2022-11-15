@@ -1,5 +1,7 @@
-import type { DateISOType } from "@innovations/shared/types";
-import { ViewEntity, ViewColumn } from "typeorm";
+import { ViewEntity, ViewColumn } from 'typeorm';
+
+import type { DateISOType } from '@innovations/shared/types';
+
 
 @ViewEntity()
 export class LastSupportStatusViewEntity {

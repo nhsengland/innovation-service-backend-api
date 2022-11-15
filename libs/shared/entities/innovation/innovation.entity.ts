@@ -11,6 +11,7 @@ import { InnovationDeploymentPlanEntity } from './innovation-deployment-plan.ent
 import { InnovationDiseaseConditionEntity } from './innovation-disease-condition.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation-environmental-benefit.entity';
 import { InnovationEvidenceEntity } from './innovation-evidence.entity';
+import { InnovationExportRequestEntity } from './innovation-export-request.entity';
 import { InnovationGeneralBenefitEntity } from './innovation-general-benefit.entity';
 import { InnovationPatientsCitizensBenefitEntity } from './innovation-patients-citizens-benefit.entity';
 import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
@@ -361,6 +362,9 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationReassessmentRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
   reassessmentRequests: Promise<InnovationReassessmentRequestEntity[]>;
+
+  @OneToMany(() => InnovationExportRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  exportRequests: Promise<InnovationExportRequestEntity[]>;
 
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
