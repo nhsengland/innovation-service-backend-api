@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -945,6 +945,67 @@ export class InnovationsService extends BaseService {
       canExport: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
     };
 
+  }
+
+  /**
+   * dismisses innovation notification for the requestUser according to optional conditions
+   * 
+   * @param requestUser the user that is dismissing the notification
+   * @param innovationId the innovation id
+   * @param conditions extra conditions that control the dismissal
+   *  - if notificationIds is set, only the notifications with the given ids will be dismissed
+   *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
+   *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
+   * @returns the number of notifications dismissed and error if it occurs
+   */
+  async dismissNotifications(requestUser: DomainUserInfoType, innovationId: string, conditions: {
+    notificationIds: string[]
+    notificationContext: {
+      id?: string
+      type?: NotificationContextTypeEnum
+    }
+  }): Promise<{affected: number, error?: any}> {
+    const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+      .innerJoin(NotificationUserEntity, 'notification_user', 'notification.id = notification_user.notification_id')
+      .where('notification.innovation_id = :innovationId', { innovationId })
+      .andWhere('notification_user.user_id = :userId AND notification_user.read_at IS NULL', { userId: requestUser.id });
+
+    if(conditions.notificationIds.length > 0) {
+      query.andWhere('notification.id IN (:...notificationIds)', { notificationIds: conditions.notificationIds });
+    }
+    if(conditions.notificationContext.id) {
+      query.andWhere('notification.contextId = :contextId', { contextId: conditions.notificationContext.id });
+    }
+    if(conditions.notificationContext.type) {
+      query.andWhere('notification.contextType = :contextType', { contextType: conditions.notificationContext.type });
+    }
+    
+    const notifications = await query.getMany();
+
+    if(notifications.length === 0) {
+      return {
+        affected: 0,
+        error: 'No notifications found' // should this really be an error, kept previous behaviour
+      }
+    }
+
+    try {
+      await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
+        .set({ readAt: () => 'CURRENT_TIMESTAMP' })
+        .where('notification_id IN (:...notificationIds)', { notificationIds: notifications.map(n => n.id) })
+        .andWhere('user_id = :userId', { userId: requestUser.id })
+        .execute();
+
+      return {
+        affected: notifications.length
+      };
+    } catch (error) {
+      // kept previous behaviour, would rather let the error bubble up
+      return {
+        affected: 0,
+        error
+      }
+    }
   }
 
   /**
