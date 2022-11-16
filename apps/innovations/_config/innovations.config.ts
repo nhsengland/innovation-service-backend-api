@@ -34,7 +34,9 @@ import {
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 
-import { InnovationLocationEnum } from '../_enums/innovation.enums';
+import { InnovationLocationEnum, InnovationStatisticsEnum } from '../_enums/innovation.enums';
+import type { DateISOType } from '@innovations/shared/types';
+import type { BaseHandler } from '../_handlers/base.handler';
 
 
 export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
@@ -253,5 +255,18 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
       files: Joi.array().items(Joi.string().guid())
     }).required().min(1)
   }
-
 };
+
+export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatisticsEnum, {
+  handler: { new(...args: any[]): BaseHandler<InnovationStatisticsEnum, Record<string, unknown>> },
+}>  = {
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
+    handler: ActionsToSubmitHandler,
+  },
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
+    handler: SectionsSubmittedHandler,
+  },
+  [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
+    handler: UnreadMessagesHandler,
+  },
+}
