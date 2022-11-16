@@ -40,10 +40,10 @@ export class PDFService  extends BaseService{
 
     const fontDescriptors = { 
         Roboto: {
-            normal: '_fonts/Roboto-Regular.ttf',
-            bold: '_fonts/Roboto-Medium.ttf',
-            italics: '_fonts/Roboto-Italic.ttf',
-            bolditalics: '_fonts/Roboto-MediumItalic.ttf'
+            normal: '_fonts/Frutiger-LT-Std-55-Roman.ttf',
+            bold: '_fonts/Frutiger-LT-Std-65-Bold.ttf',
+            italics: '_fonts/Frutiger-LT-Std-55-Roman.ttf',
+            bolditalics: '_fonts/Frutiger-LT-Std-65-Bold.ttf'
         }
     };
     const printer = new PdfPrinter(fontDescriptors);
