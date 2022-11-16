@@ -3,7 +3,7 @@ const translations: {[key: string]: string} = {
     
     ENGAGING: 'engaging',
     FURTHER_INFO_REQUIRED: 'further info',
-    COMPLETE: 'complete',
+    COMPLETE: 'completed',
     WAITING: 'waiting',
     NOT_YET: 'not yet',
     UNASSIGNED: 'unassigned',
