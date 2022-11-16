@@ -241,4 +241,11 @@ export class DomainInnovationsService {
     }
   }
 
+  async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    .where('innovation.id = :innovationId', { innovationId })
+    .getOne();
+
+    return innovation;
+  }
 }

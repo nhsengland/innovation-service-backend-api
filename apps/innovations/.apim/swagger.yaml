@@ -238,6 +238,31 @@ paths:
         "401":
           description: "Unauthorized"
 
+  "/v1/{innovationId}/all-sections":
+    get:
+      tags:
+        - "[v1] Sections"
+      description: "Get all innovation sections list."
+      operationId: "v1-innovation-all-sections-list"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
   "/v1/{innovationId}/sections/{sectionKey}/submit":
     patch:
       tags:
