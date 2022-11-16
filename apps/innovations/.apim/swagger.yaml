@@ -1681,7 +1681,7 @@ paths:
                         - THREAD
                         - COMMENT
       responses:
-        200: 
+        204: 
           description: 'Success'
         400:
           description: 'Invalid payload'

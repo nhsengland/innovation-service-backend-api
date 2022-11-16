@@ -9,7 +9,6 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
 
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -33,16 +32,14 @@ class V1InnovationNotificationsDismiss {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const res = await innovationsService.dismissNotifications(requestUser, params.innovationId, body);
-      context.res = ResponseHelper.Ok<ResponseDTO>(res);
+      await innovationsService.dismissNotifications(requestUser, params.innovationId, body);
+      context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 
@@ -96,10 +93,7 @@ export default openApi(V1InnovationNotificationsDismiss.httpTrigger as AzureFunc
       }
     },
     responses: {
-      200: { description: 'Success', content: { 'application/json': { schema: { type: 'object', properties: {
-        affected: { type: 'number', description: 'number of affected notifications' },
-        error: {description: 'error message', type: 'string'},
-      } } } } },
+      204: { description: 'Success'},
       400: { description: 'Invalid payload' },
     },
   },

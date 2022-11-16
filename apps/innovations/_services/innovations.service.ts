@@ -956,56 +956,36 @@ export class InnovationsService extends BaseService {
    *  - if notificationIds is set, only the notifications with the given ids will be dismissed
    *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
    *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
-   * @returns the number of notifications dismissed and error if it occurs
    */
   async dismissNotifications(requestUser: DomainUserInfoType, innovationId: string, conditions: {
-    notificationIds: string[]
-    notificationContext: {
-      id?: string
-      type?: NotificationContextTypeEnum
-    }
-  }): Promise<{affected: number, error?: any}> {
+    notificationIds: string[],
+    contextTypes: string[],
+    contextIds: string[]
+  }): Promise<void> {
+    const params: {userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[]} = {userId: requestUser.id, innovationId};
     const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
-      .innerJoin(NotificationUserEntity, 'notification_user', 'notification.id = notification_user.notification_id')
-      .where('notification.innovation_id = :innovationId', { innovationId })
-      .andWhere('notification_user.user_id = :userId AND notification_user.read_at IS NULL', { userId: requestUser.id });
+      .select('notification.id')
+      .where('notification.innovation_id = :innovationId', { innovationId });
 
     if(conditions.notificationIds.length > 0) {
-      query.andWhere('notification.id IN (:...notificationIds)', { notificationIds: conditions.notificationIds });
+      query.andWhere('notification.id IN (:...notificationIds)');
+      params.notificationIds = conditions.notificationIds;
     }
-    if(conditions.notificationContext.id) {
-      query.andWhere('notification.contextId = :contextId', { contextId: conditions.notificationContext.id });
+    if(conditions.contextIds.length > 0) {
+      query.andWhere('notification.contextId IN (:...contextIds)');
+      params.contextIds = conditions.contextIds;
     }
-    if(conditions.notificationContext.type) {
-      query.andWhere('notification.contextType = :contextType', { contextType: conditions.notificationContext.type });
+    if(conditions.contextTypes.length > 0) {
+      query.andWhere('notification.contextType IN (:...contextTypes)');
+      params.contextTypes = conditions.contextTypes;
     }
     
-    const notifications = await query.getMany();
-
-    if(notifications.length === 0) {
-      return {
-        affected: 0,
-        error: 'No notifications found' // should this really be an error, kept previous behaviour
-      }
-    }
-
-    try {
-      await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
-        .set({ readAt: () => 'CURRENT_TIMESTAMP' })
-        .where('notification_id IN (:...notificationIds)', { notificationIds: notifications.map(n => n.id) })
-        .andWhere('user_id = :userId', { userId: requestUser.id })
-        .execute();
-
-      return {
-        affected: notifications.length
-      };
-    } catch (error) {
-      // kept previous behaviour, would rather let the error bubble up
-      return {
-        affected: 0,
-        error
-      }
-    }
+    await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
+      .set({ readAt: () => 'CURRENT_TIMESTAMP' })
+      .where('notification_id IN ( ' + query.getQuery() + ' )')
+      .andWhere('user_id = :userId AND read_at IS NULL')
+      .setParameters(params)
+      .execute();
   }
 
   /**
