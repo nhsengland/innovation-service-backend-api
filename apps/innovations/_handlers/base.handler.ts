@@ -3,10 +3,10 @@ import type { UserTypeEnum } from '@innovations/shared/enums';
 import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import type { InnovationStatisticsInputType, InnovationStatisticsTemplateType } from '../_types/innovation.types';
 
-type HandlerInnovationStatisticsResponseType<T> = Array<{
+type HandlerInnovationStatisticsResponseType<T> = {
   innovationId: string;
-  response: T;
-}>;
+  data: T;
+} | null;
 
 
 export abstract class BaseHandler<
@@ -16,7 +16,7 @@ export abstract class BaseHandler<
   requestUser: { id: string, identityId: string, type: UserTypeEnum };
   inputData: InnovationStatisticsInputType[InnovationStatisticsType];
 
-  statistics: HandlerInnovationStatisticsResponseType<InnovationStatisticsTemplateType[InnovationStatisticsType]> = [];
+  statistics: HandlerInnovationStatisticsResponseType<InnovationStatisticsTemplateType[InnovationStatisticsType]> = null;
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },

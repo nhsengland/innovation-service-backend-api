@@ -20,14 +20,15 @@ export class AccessorUnitChangeHandler extends BaseHandler<
   
   async run(): Promise<this> {
 
-    this.statistics.push({
+    this.statistics = {
       innovationId: this.inputData.innovationId,
-      response: {
-        from: 10,
+      data: {
+        from: 0,
         total: 50,
         lastSubmittedAt: new Date().toISOString(),
       }
-    });
+    };
+
     return this;
   }
 
