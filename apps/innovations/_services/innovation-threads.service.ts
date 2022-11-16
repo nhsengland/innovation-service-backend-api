@@ -21,7 +21,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThreadOrMessage(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     subject: string,
     message: string,
@@ -98,7 +98,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThread(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     subject: string,
     message: string,
@@ -176,7 +176,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThreadMessage(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     threadId: string,
     message: string,
     sendNotification: boolean,
@@ -726,9 +726,9 @@ export class InnovationThreadsService extends BaseService {
   private async threadCreateTransaction(
     transaction: EntityManager,
     threadObj: InnovationThreadEntity,
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string },
     innovation: InnovationEntity
-  ) : Promise<InnovationThreadEntity> {
+  ): Promise<InnovationThreadEntity> {
     const result = await transaction.save<InnovationThreadEntity>(threadObj);
 
     try {
@@ -757,10 +757,10 @@ export class InnovationThreadsService extends BaseService {
 
   private async createThreadMessageTransaction(
     threadMessageObj: InnovationThreadMessageEntity,
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     thread: InnovationThreadEntity,
     transaction: EntityManager
-  ) : Promise<InnovationThreadMessageEntity>{
+  ): Promise<InnovationThreadMessageEntity> {
     const result = await this.sqlConnection.getRepository<InnovationThreadMessageEntity>(InnovationThreadMessageEntity).save(
       threadMessageObj
     );
@@ -786,11 +786,11 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private createThreadGuard(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     message: string,
     subject: string
-  ) : void {
+  ): void {
     if (
       !requestUser ||
       !innovationId ||
@@ -804,10 +804,10 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private createThreadMessageGuard(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     threadId: string,
     message: string
-  ) : void {
+  ): void {
     if (
       !requestUser ||
       !threadId ||
@@ -820,7 +820,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async createThreadNoTransaction(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     subject: string,
     message: string,
@@ -875,7 +875,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async createThreadWithTransaction(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     subject: string,
     message: string,
@@ -929,10 +929,10 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async sendThreadCreateNotification(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     messageId: string,
     thread: InnovationThreadEntity
-  ) : Promise<void> {
+  ): Promise<void> {
     await this.notifierService.send<NotifierTypeEnum.THREAD_CREATION>(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.THREAD_CREATION,
@@ -944,10 +944,10 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async sendThreadMessageCreateNotification(
-    requestUser: DomainUserInfoType,
+    requestUser: { id: string, identityId: string, type: UserTypeEnum },
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
-  ) : Promise<void> {
+  ): Promise<void> {
 
     await this.notifierService.send<NotifierTypeEnum.THREAD_MESSAGE_CREATION>(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },

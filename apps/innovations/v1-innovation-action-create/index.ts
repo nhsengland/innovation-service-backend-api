@@ -1,21 +1,19 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class V1CreateInnovationAction {
+class V1InnovationActionCreate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -30,13 +28,13 @@ class V1CreateInnovationAction {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
-        .checkInnovation()
         .checkAccessorType()
+        .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationActionsService.createInnovationAction(
-        requestUser,
+      const result = await innovationActionsService.createAction(
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, organisationUnitId: requestUser.organisations[0]?.organisationUnits[0]?.id || '' },
         params.innovationId,
         body
       );
@@ -52,7 +50,7 @@ class V1CreateInnovationAction {
 
 }
 
-export default openApi(V1CreateInnovationAction.httpTrigger as AzureFunction, '/v1/{innovationId}/actions', {
+export default openApi(V1InnovationActionCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/actions', {
   post: {
     description: 'Create a new innovation action.',
     operationId: 'v1-innovation-action-create',

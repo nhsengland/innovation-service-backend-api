@@ -1,22 +1,39 @@
 import Joi from 'joi';
 
-import { InnovationActionStatusEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
 
 
 export type ParamsType = {
-  innovationId: string;
-  actionId: string;
+  innovationId: string,
+  actionId: string
 }
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  actionId: Joi.string().guid().required(),
+  actionId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
-  status: string;
-  message: string;
+  status: InnovationActionStatusEnum,
+  message?: string
 }
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.string().valid(...Object.values(InnovationActionStatusEnum)).required(),
-  message: Joi.string().max(500).allow(null).allow('').required(),
+
+  status:
+    Joi.when('$userType', {
+      is: UserTypeEnum.ACCESSOR,
+      then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED).required()
+    }).when('$userType', {
+      is: UserTypeEnum.INNOVATOR,
+      then: Joi.string().valid(InnovationActionStatusEnum.DECLINED).required()
+    }),
+
+  message:
+    Joi.when('$userType', {
+      is: UserTypeEnum.ACCESSOR,
+      then: Joi.forbidden()
+    }).when('$userType', {
+      is: UserTypeEnum.INNOVATOR,
+      then: Joi.string().max(500).required()
+    })
+
 }).required();

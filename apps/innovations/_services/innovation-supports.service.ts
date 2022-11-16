@@ -266,13 +266,13 @@ export class InnovationSupportsService extends BaseService {
 
         dbSupport.organisationUnitUsers = [];
 
-        // cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
-        if(data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED ) {
+        // Cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
+        if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
           await transaction.createQueryBuilder().update(InnovationActionEntity)
             .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: user.id })
-            .where({ 
+            .where({
               innovationSupport: dbSupport.id,
-              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.STARTED, InnovationActionStatusEnum.IN_REVIEW])
+              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW])
             })
             .execute();
         }

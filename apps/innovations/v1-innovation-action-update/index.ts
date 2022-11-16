@@ -2,6 +2,8 @@ import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-op
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
+import { UserTypeEnum } from '@innovations/shared/enums';
+import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -10,6 +12,7 @@ import { container } from '../_config';
 import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
 class V1InnovationActionUpdate {
@@ -22,26 +25,47 @@ class V1InnovationActionUpdate {
 
     try {
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
-        .checkInnovation()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkInnovation()
         .verify();
-
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationActionsService.updateInnovationAction(
-        requestUser,
-        params.actionId,
-        params.innovationId,
-        body
-      );
-      context.res = ResponseHelper.Ok(result);
-      return;
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: requestUser.type });
+
+      if (requestUser.type === UserTypeEnum.ACCESSOR) {
+
+        const accessorResult = await innovationActionsService.updateActionAsAccessor(
+          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          params.innovationId,
+          params.actionId,
+          { status: body.status }
+        );
+
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
+        return;
+
+      } else if (requestUser.type === UserTypeEnum.INNOVATOR) {
+
+        const innovatorResult = await innovationActionsService.updateActionAsInnovator(
+          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          params.innovationId,
+          params.actionId,
+          { status: body.status, message: body.message ?? '' } // Joi will make sure that message is never empty for an innovator.
+        );
+
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
+        return;
+
+      } else {
+
+        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+
+      }
 
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

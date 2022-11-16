@@ -11,10 +11,10 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  description: string;
-  sectionKey: InnovationSectionEnum;
+  section: InnovationSectionEnum,
+  description: string
 }
 export const BodySchema = Joi.object<BodyType>({
-  description: Joi.string().max(500).required(),
-  sectionKey: Joi.string().valid(...Object.values(InnovationSectionEnum)).required()
+  section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required(),
+  description: Joi.string().max(500).required()
 }).required();
