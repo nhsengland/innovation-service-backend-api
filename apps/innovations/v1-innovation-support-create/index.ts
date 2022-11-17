@@ -30,11 +30,13 @@ class V1InnovationSupportCreate {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR] })
+        .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
 
       const result = await innovationSupportsService.createInnovationSupport(
-        requestUser,
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        requestUser.organisations[0]?.organisationUnits[0]?.id || '',
         params.innovationId,
         body
       );

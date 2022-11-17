@@ -182,7 +182,7 @@ export class InnovationAssessmentsService extends BaseService {
     const result = await this.sqlConnection.transaction(async transaction => {
 
       // Merge new data with assessment record.
-      const assessment = Object.entries(dbAssessment).reduce((acc, item) => ({ ...acc, [item[0]]: item[1] }), dbAssessment);
+      const assessment = Object.entries(data).reduce((acc, item) => ({ ...acc, [item[0]]: item[1] }), dbAssessment);
 
       assessment.updatedBy = user.id;
 
@@ -222,9 +222,7 @@ export class InnovationAssessmentsService extends BaseService {
           await this.domainService.innovations.addActivityLog<'ORGANISATION_SUGGESTION'>(
             transaction,
             { userId: user.id, innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION },
-            {
-              organisations: organisations.map(item => item.name)
-            }
+            { organisations: organisations.map(item => item.name) }
           );
 
         }

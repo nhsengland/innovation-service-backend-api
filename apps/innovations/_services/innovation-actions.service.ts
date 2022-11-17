@@ -160,7 +160,8 @@ export class InnovationActionsService extends BaseService {
   }> {
 
     const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
-      .leftJoinAndSelect('action.innovationSection', 'innovationSection')
+      .innerJoinAndSelect('action.innovationSection', 'innovationSection')
+      .innerJoinAndSelect('action.createdByUser', 'createdByUser')
       .where('action.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
@@ -174,7 +175,7 @@ export class InnovationActionsService extends BaseService {
       description: dbAction.description,
       section: dbAction.innovationSection.section,
       createdAt: dbAction.createdAt,
-      createdBy: (await this.identityProviderService.getUserInfo(dbAction.createdBy)).displayName
+      createdBy: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName
     };
 
   }
