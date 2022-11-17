@@ -1,19 +1,17 @@
+import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import Joi from 'joi';
 
-export type PathParamsType = {
+enum orderFields {
+  createdAt = 'createdAt',
+}
+
+export type ParamsType = {
   innovationId: string;
 }
-
-export type QueryType = {
-  skip?: number;
-  take?: number;
-}
-
-export const PathParamsSchema = Joi.object<PathParamsType>({
-  innovationId: Joi.string().uuid().required(),
+export const ParamsSchema = Joi.object<ParamsType>({
+  innovationId: Joi.string().guid().required()
 }).required();
 
-export const QuerySchema = Joi.object<QueryType>({
-  skip: Joi.number().integer().min(0).default(0),
-  take: Joi.number().integer().min(1).max(50).default(50),
-}).required();
+export type QueryParamsType = PaginationQueryParamsType<orderFields>;
+export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).required();
+

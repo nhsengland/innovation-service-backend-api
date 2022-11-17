@@ -73,7 +73,7 @@ export type InnovationExportRequestItemType = {
   isExportable: boolean,
   requestReason: string,
   rejectReason?: null | string,
-  expiresAt: DateISOType, // Returned only when "opened".
+  expiresAt?: DateISOType, // Returned only when "opened".
   organisation: {
     id: string,
     name: string,
@@ -84,7 +84,8 @@ export type InnovationExportRequestItemType = {
   createdBy: {  
     id: string,
     name: string
-  }
+  },
+  updatedAt: DateISOType
 }
 
 export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
