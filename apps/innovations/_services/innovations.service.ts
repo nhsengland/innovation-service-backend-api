@@ -830,7 +830,7 @@ export class InnovationsService extends BaseService {
       requestsQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
 
-    requestsQuery.orderBy('request.createdAt', 'ASC')
+    requestsQuery.orderBy('request.createdAt', 'DESC')
     requestsQuery.skip(skip);
     requestsQuery.take(take);
 
@@ -867,8 +867,9 @@ export class InnovationsService extends BaseService {
           acronym: r.organisationUnit.acronym,
         },
       },
-      expiresAt: r.exportExpiresAt.toISOString(),
+      expiresAt: r.exportExpiresAt?.toISOString(),
       isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED && r.exportExpired === false,
+      updatedAt: r.updatedAt
     }));
 
     return {
@@ -920,6 +921,7 @@ export class InnovationsService extends BaseService {
       },
       expiresAt: request.exportExpiresAt?.toISOString(),
       isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
+      updatedAt: request.updatedAt
     };
   }
 

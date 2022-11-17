@@ -10,7 +10,7 @@ import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
-import { PathParamsSchema, PathParamsType, QuerySchema, QueryType } from './validation.schemas';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1InnovationsExportRequestList {
@@ -24,18 +24,19 @@ class V1InnovationsExportRequestList {
     try {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
+        .checkInnovatorType()
         .checkAccessorType()
         .verify();
 
       const requestUser = auth.getUserInfo();
 
-      const params = JoiHelper.Validate<PathParamsType>(
-        PathParamsSchema,
+      const params = JoiHelper.Validate<ParamsType>(
+        ParamsSchema,
         request.params,
         { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role }
       );
 
-      const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
+      const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const result = await innovationsService.getInnovationRecordExportRequests(
         requestUser,

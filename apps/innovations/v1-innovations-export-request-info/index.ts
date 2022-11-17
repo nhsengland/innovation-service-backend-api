@@ -24,6 +24,7 @@ class V1InnovationsExportRequestInfo {
     try {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
+        .checkInnovatorType()
         .checkAccessorType()
         .verify();
 

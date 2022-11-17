@@ -32,11 +32,10 @@ class V1InnovationsExportRequestsUpdate {
 
       const params = JoiHelper.Validate<PathParamsType>(
         PathParamsSchema,
-        request.params,
-        { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role }
+        request.params
       );
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: requestUser.type });
 
       const { rejectReason, status } = body;
 

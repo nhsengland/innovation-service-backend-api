@@ -25,12 +25,6 @@ export const BodySchema = Joi.object<BodyType>({
   }),
 });
 
-// accessors: Joi.when('status', {
-//   is: InnovationSupportStatusEnum.ENGAGING,
-//   then: Joi.array().items(Joi.object({ id: Joi.string().guid().required(), organisationUnitUserId: Joi.string().guid().required() })).required(),
-//   otherwise: Joi.forbidden()
-// }),
-
 export const PathParamsSchema = Joi.object<PathParamsType>({
   innovationId: Joi.string().uuid().required(),
   requestId: Joi.string().uuid().required(),
