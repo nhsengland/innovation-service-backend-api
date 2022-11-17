@@ -455,7 +455,38 @@ paths:
           description: "Bad Request"
         "401":
           description: "Unauthorized"
-
+  "/v1/{innovationId}/pdf": 
+    post:
+      description: Generate PDF for an innovation
+      tags: 
+        - "[v1] Innovations"
+      operationId: "v1-innovation-pdf"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The thread details.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+      
   "/v1/{innovationId}/threads":
     post:
       description: Create a new editable thread.
