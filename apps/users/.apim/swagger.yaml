@@ -153,3 +153,19 @@ paths:
           description: "Ok"
         "401":
           description: "Unauthorized"
+
+  "/v1/notifications/counters":
+    get:
+      tags:
+        - "[v1] Notifications"
+      description: "Returns the notifications counters"
+      operationId: "v1-notifications-counters"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"

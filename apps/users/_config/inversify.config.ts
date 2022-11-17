@@ -11,6 +11,8 @@ import {
 } from '@users/shared/services';
 
 import {
+  NotificationsServiceSymbol,
+  NotificationsServiceType,
   OrganisationsServiceSymbol, OrganisationsServiceType,
   SurveyServiceSymbol, SurveyServiceType,
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
@@ -21,6 +23,7 @@ import { SurveyService } from '../_services/survey.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 
+import { NotificationsService } from '../_services/notifications.service';
 import { startup } from './startup';
 
 export const container: Container = new Container();
@@ -40,5 +43,6 @@ container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(Organisa
 container.bind<SurveyServiceType>(SurveyServiceSymbol).to(SurveyService).inSingletonScope();
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
+container.bind<NotificationsServiceType>(NotificationsServiceSymbol).to(NotificationsService).inSingletonScope();
 
 void startup();
