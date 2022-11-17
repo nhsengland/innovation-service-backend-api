@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -945,6 +945,47 @@ export class InnovationsService extends BaseService {
       canExport: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
     };
 
+  }
+
+  /**
+   * dismisses innovation notification for the requestUser according to optional conditions
+   * 
+   * @param requestUser the user that is dismissing the notification
+   * @param innovationId the innovation id
+   * @param conditions extra conditions that control the dismissal
+   *  - if notificationIds is set, only the notifications with the given ids will be dismissed
+   *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
+   *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
+   */
+  async dismissNotifications(requestUser: DomainUserInfoType, innovationId: string, conditions: {
+    notificationIds: string[],
+    contextTypes: string[],
+    contextIds: string[]
+  }): Promise<void> {
+    const params: {userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[]} = {userId: requestUser.id, innovationId};
+    const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+      .select('notification.id')
+      .where('notification.innovation_id = :innovationId', { innovationId });
+
+    if(conditions.notificationIds.length > 0) {
+      query.andWhere('notification.id IN (:...notificationIds)');
+      params.notificationIds = conditions.notificationIds;
+    }
+    if(conditions.contextIds.length > 0) {
+      query.andWhere('notification.contextId IN (:...contextIds)');
+      params.contextIds = conditions.contextIds;
+    }
+    if(conditions.contextTypes.length > 0) {
+      query.andWhere('notification.contextType IN (:...contextTypes)');
+      params.contextTypes = conditions.contextTypes;
+    }
+    
+    await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
+      .set({ readAt: () => 'CURRENT_TIMESTAMP' })
+      .where('notification_id IN ( ' + query.getQuery() + ' )')
+      .andWhere('user_id = :userId AND read_at IS NULL')
+      .setParameters(params)
+      .execute();
   }
 
   /**

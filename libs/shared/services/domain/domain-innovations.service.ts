@@ -101,15 +101,9 @@ export class DomainInnovationsService {
     transactionManager: EntityManager,
     user: { id: string, organisationUnitId: string },
     innovation: { id: string },
+    supportStatus: InnovationSupportStatusEnum,
     supportLog: { type: InnovationSupportLogTypeEnum, description: string, suggestedOrganisationUnits: string[] }
   ): Promise<{ id: string }> {
-
-    // Fetch support status of the request user.
-    const userSupport = await this.innovationSupportRepository.createQueryBuilder('support')
-      .where('support.innovation.id = :innovationId ', { innovationId: innovation.id, })
-      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId: user.organisationUnitId })
-      .getOne();
-    const supportStatus = userSupport?.status || InnovationSupportStatusEnum.UNASSIGNED;
 
     const supportLogData = InnovationSupportLogEntity.new({
       innovation: InnovationEntity.new({ id: innovation.id }),
@@ -241,4 +235,11 @@ export class DomainInnovationsService {
     }
   }
 
+  async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    return innovation;
+  }
 }
