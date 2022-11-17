@@ -6,6 +6,7 @@ import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationSupportEntity } from './innovation-support.entity';
 
 import { InnovationActionStatusEnum } from '../../enums/innovation.enums';
+import { UserEntity } from '../user/user.entity';
 
 
 @Entity('innovation_action')
@@ -31,6 +32,10 @@ export class InnovationActionEntity extends BaseEntity {
   @ManyToOne(() => InnovationSupportEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_support_id' })
   innovationSupport: InnovationSupportEntity;
+
+  @ManyToOne(() => UserEntity, { nullable: false })
+  @JoinColumn({ name: 'created_by' })
+  createdByUser: UserEntity;
 
 
   static new(data: Partial<InnovationActionEntity>): InnovationActionEntity {

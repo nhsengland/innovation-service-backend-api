@@ -65,7 +65,7 @@ export const BodySchema = Joi.object<BodyType>({
   hasScaleResource: Joi.string().valid(...Object.values(YesPartiallyNoCatalogueEnum)).allow(null).optional(),
   hasScaleResourceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
-  suggestedOrganisationUnitsIds: Joi.array().items(Joi.string().guid()).optional(),
+  suggestedOrganisationUnitsIds: Joi.array().items(Joi.string().guid()).allow(null).optional().default([]),
   isSubmission: Joi.boolean().strict().optional().default(false)
 
 }).required();

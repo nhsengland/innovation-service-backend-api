@@ -1,14 +1,13 @@
 import { inject, injectable } from 'inversify';
+import { In } from 'typeorm';
 
-import { CommentEntity, InnovationActionEntity, InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, type UserTypeEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
-import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
-import { In } from 'typeorm';
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
@@ -152,19 +151,22 @@ export class InnovationSupportsService extends BaseService {
 
 
   async createInnovationSupport(
-    requestUser: DomainUserInfoType,
+    user: { id: string, identityId: string, type: UserTypeEnum },
+    organisationUnitId: string,
     innovationId: string,
     data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
   ): Promise<{ id: string }> {
 
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true);
+    const organisationUnit = await this.sqlConnection.createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .where('unit.id = :organisationUnitId', { organisationUnitId })
+      .getOne();
     if (!organisationUnit) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
     }
 
     const support = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
       .where('support.innovation.id = :innovationId ', { innovationId, })
-      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId: organisationUnit.id })
+      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId })
       .getOne();
     if (support) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
@@ -172,62 +174,62 @@ export class InnovationSupportsService extends BaseService {
 
     const result = await this.sqlConnection.transaction(async transaction => {
 
-      const comment = await transaction.save(CommentEntity, CommentEntity.new({
-        user: UserEntity.new({ id: requestUser.id }),
-        innovation: InnovationEntity.new({ id: innovationId }),
-        message: data.message,
-        createdBy: requestUser.id,
-        updatedBy: requestUser.id,
-        organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id })
-      }));
-
-      const innovationSupport = InnovationSupportEntity.new({
+      const newSupport = InnovationSupportEntity.new({
         status: data.status,
-        createdBy: requestUser.id,
-        updatedBy: requestUser.id,
+        createdBy: user.id,
+        updatedBy: user.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
         organisationUnitUsers: (data.accessors || []).map(item => OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId }))
       });
 
-      const savedSupport = await transaction.save(InnovationSupportEntity, innovationSupport);
+      const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
+
+
+      const thread = await this.innovationThreadsService.createThreadOrMessage(
+        { id: user.id, identityId: user.identityId, type: user.type },
+        innovationId,
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
+        data.message,
+        savedSupport.id,
+        ThreadContextTypeEnum.SUPPORT,
+        transaction,
+        true,
+      );
 
       await this.domainService.innovations.addActivityLog<'SUPPORT_STATUS_UPDATE'>(
         transaction,
-        { userId: requestUser.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
+        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: organisationUnit.name,
-          comment: { id: comment.id, value: comment.message }
+          comment: { id: thread.message?.id ?? '', value: thread.message?.message ?? '' }
         }
       );
 
-      // Don't really know why are we just storing support log for these 2 states.
-      // Kept the existing rules for now...
-      if (data.status === InnovationSupportStatusEnum.ENGAGING || data.status === InnovationSupportStatusEnum.COMPLETE) {
-        await this.domainService.innovations.addSupportLog(
-          transaction,
-          { id: requestUser.id, organisationUnitId: organisationUnit.id },
-          { id: innovationId },
-          { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: comment.message, suggestedOrganisationUnits: [] }
-        );
-      }
+      await this.domainService.innovations.addSupportLog(
+        transaction,
+        { id: user.id, organisationUnitId: organisationUnitId },
+        { id: innovationId },
+        savedSupport.status,
+        { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: thread.message?.message ?? '', suggestedOrganisationUnits: [] }
+      );
 
       return { id: savedSupport.id };
 
     });
 
     await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE>(
-      requestUser,
+      user,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
-        innovationId: innovationId,
+        innovationId,
         innovationSupport: {
           id: result.id,
           status: data.status,
           statusChanged: true,
           message: data.message,
-          newAssignedAccessors: (data.accessors ?? []).map(a => ({ id: a.id }))
+          newAssignedAccessors: data.status === InnovationSupportStatusEnum.ENGAGING ? (data.accessors ?? []).map(item => ({ id: item.id })) : []
         }
       }
     );
@@ -238,13 +240,14 @@ export class InnovationSupportsService extends BaseService {
 
 
   async updateInnovationSupport(
-    user: DomainUserInfoType,
+    user: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     supportId: string,
     data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
   ): Promise<{ id: string }> {
 
     const dbSupport = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUsers')
       .where('support.id = :supportId ', { supportId })
       .getOne();
@@ -286,40 +289,33 @@ export class InnovationSupportsService extends BaseService {
 
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        user,
+        { id: user.id, identityId: user.identityId, type: user.type },
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
         data.message,
-        supportId,
+        savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
         transaction,
         true,
       );
-
-
-      // Accessor type users always have organisations and units.
-      const organisationUnit = user.organisations.find(_ => true)!.organisationUnits.find(_ => true)!;
 
       await this.domainService.innovations.addActivityLog<'SUPPORT_STATUS_UPDATE'>(
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
         {
           innovationSupportStatus: savedSupport.status,
-          organisationUnit: organisationUnit.name,
+          organisationUnit: savedSupport.organisationUnit.name,
           comment: { id: thread.message!.id, value: thread.message!.message }
         }
       );
 
-      // Don't really know why are we just storing support log for these 2 states.
-      // Kept the existing rules for now...
-      if (data.status === InnovationSupportStatusEnum.ENGAGING || data.status === InnovationSupportStatusEnum.COMPLETE) {
-        await this.domainService.innovations.addSupportLog(
-          transaction,
-          { id: user.id, organisationUnitId: organisationUnit.id },
-          { id: innovationId },
-          { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: thread.message!.message, suggestedOrganisationUnits: [] }
-        );
-      }
+      await this.domainService.innovations.addSupportLog(
+        transaction,
+        { id: user.id, organisationUnitId: savedSupport.organisationUnit.id },
+        { id: innovationId },
+        savedSupport.status,
+        { type: InnovationSupportLogTypeEnum.STATUS_UPDATE, description: thread.message!.message, suggestedOrganisationUnits: [] }
+      );
 
       return { id: savedSupport.id };
 
