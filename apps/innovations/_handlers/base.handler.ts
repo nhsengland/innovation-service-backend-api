@@ -5,9 +5,9 @@ import type { InnovationStatisticsInputType, InnovationStatisticsTemplateType } 
 
 type HandlerInnovationStatisticsResponseType<T> = {
   innovationId: string;
+  statistic: InnovationStatisticsEnum
   data: T;
 } | null;
-
 
 export abstract class BaseHandler<
   InnovationStatisticsType extends InnovationStatisticsEnum,
@@ -16,7 +16,7 @@ export abstract class BaseHandler<
   requestUser: { id: string, identityId: string, type: UserTypeEnum };
   inputData: InnovationStatisticsInputType[InnovationStatisticsType];
 
-  statistics: HandlerInnovationStatisticsResponseType<InnovationStatisticsTemplateType[InnovationStatisticsType]> = null;
+  private statistics: HandlerInnovationStatisticsResponseType<InnovationStatisticsTemplateType[InnovationStatisticsType]> = null;
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
@@ -33,5 +33,10 @@ export abstract class BaseHandler<
   getStatistics(): HandlerInnovationStatisticsResponseType<InnovationStatisticsTemplateType[InnovationStatisticsType]> {
     return this.statistics;
   }
+
+  setStatistics(statistics: HandlerInnovationStatisticsResponseType<InnovationStatisticsTemplateType[InnovationStatisticsType]>): void {
+    this.statistics = statistics;
+  }
+  
 
 }

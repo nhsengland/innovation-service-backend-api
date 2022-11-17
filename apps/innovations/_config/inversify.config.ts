@@ -12,7 +12,7 @@ import { InnovationSectionsService } from '../_services/innovation-sections.serv
 import { InnovationTransferService } from '../_services/innovation-transfer.service';
 import { InnovationsService } from '../_services/innovations.service';
 
-import { InnovationActionsServiceSymbol, InnovationActionsServiceType, InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType, InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationsServiceSymbol, InnovationsServiceType, InnovationSupportsServiceSymbol, InnovationSupportsServiceType, InnovationThreadsServiceSymbol, InnovationThreadsServiceType, InnovationTransferServiceSymbol, InnovationTransferServiceType, PDFServiceSymbol, PDFServiceType } from '../_services/interfaces';
+import { InnovationActionsServiceSymbol, InnovationActionsServiceType, InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType, InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationsServiceSymbol, InnovationsServiceType, InnovationSupportsServiceSymbol, InnovationSupportsServiceType, InnovationThreadsServiceSymbol, InnovationThreadsServiceType, InnovationTransferServiceSymbol, InnovationTransferServiceType, PDFServiceSymbol, PDFServiceType, StatisticsServiceSymbol, StatisticsServiceType } from '../_services/interfaces';
 
 import { InnovationActionsService } from '../_services/innovation-actions.service';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
@@ -20,6 +20,7 @@ import { InnovationSupportsService } from '../_services/innovation-supports.serv
 import { InnovationThreadsService } from '../_services/innovation-threads.service';
 import { startup } from './startup';
 import { PDFService } from '../_services/pdf.service';
+import { StatisticsService } from '../_services/statistics-service';
 
 
 export const container: Container = new Container();
@@ -43,5 +44,6 @@ container.bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol).to(
 container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
 container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
 container.bind<PDFServiceType>(PDFServiceSymbol).to(PDFService).inSingletonScope();
+container.bind<StatisticsServiceType>(StatisticsServiceSymbol).to(StatisticsService).inSingletonScope();
 
 void startup();

@@ -2,38 +2,34 @@ import { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import { BaseHandler } from './base.handler';
 import type { UserTypeEnum } from '@innovations/shared/enums';
 import type { InnovationStatisticsInputType } from '../_types/innovation.types';
-import { StatisticsServiceSymbol, StatisticsServiceType } from '../_services/interfaces';
-import { container } from '../_config';
 //import { container } from '../_config';
 //import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
-export class ActionsToSubmitStatisticsHandler extends BaseHandler<
+
+export class UnreadMessagesStatisticsHandler extends BaseHandler<
   InnovationStatisticsEnum.ACTIONS_TO_SUBMIT
 > {
 
-  private statisticsService: StatisticsServiceType;
+  //private recipientsService: InnovationActionsServiceType;
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
     data: InnovationStatisticsInputType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]
   ) {
     super(requestUser, data);
-    this.statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
+    //this.recipientsService = container.get(InnovationActionsServiceSymbol);
   }
   
   async run(): Promise<this> {
 
-    const actions = await this.statisticsService.getUnsubmittedActions(this.inputData.innovationId);
-
     this.setStatistics({
       innovationId: this.inputData.innovationId,
-      statistic: InnovationStatisticsEnum.ACTIONS_TO_SUBMIT,
+      statistic: InnovationStatisticsEnum.UNREAD_MESSAGES,
       data: {
-        from: actions.from,
-        total: actions.total,
-        lastSubmittedAt: actions.lastSubmittedAt,
+        from: 0,
+        total: 50,
+        lastSubmittedAt: new Date().toISOString(),
       }
     });
-
 
     return this;
   }

@@ -90,6 +90,23 @@ export type InnovationExportRequestItemType = {
 
 export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
 
+export type InnovationExportSectionAnswerType = {
+  label: string;
+  value: string;
+}
+
+export type InnovationExportSectionItemType = {
+  section: string;
+  answers: InnovationExportSectionAnswerType[];
+}
+
+export type InnovationExportSectionType = InnovationExportSectionItemType;
+
+export type InnovationAllSectionsType = {
+  title: string;
+  sections: InnovationExportSectionType[];
+}[];
+
 export type InnovationStatisticsInputType = {
 
   [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
@@ -111,7 +128,7 @@ export type InnovationStatisticsTemplateType = {
   [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
     total: number,
     from: number,
-    lastSubmittedAt: DateISOType,
+    lastSubmittedAt: null | DateISOType,
   },
 
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
