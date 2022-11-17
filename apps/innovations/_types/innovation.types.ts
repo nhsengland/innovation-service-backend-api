@@ -1,6 +1,5 @@
 import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
 import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
-import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 
 export interface InnovationSectionModel {
   id: string | null,
@@ -107,39 +106,3 @@ export type InnovationAllSectionsType = {
   sections: InnovationExportSectionType[];
 }[];
 
-export type InnovationStatisticsInputType = {
-
-  [InnovationStatisticsEnum.ACTIONS]: {
-    innovationId: string,
-  },
-
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
-    innovationId: string,
-  },
-
-  [InnovationStatisticsEnum.MESSAGES]: {
-    innovationId: string,
-  },
-
-}
-
-export type InnovationStatisticsTemplateType = {
-
-  [InnovationStatisticsEnum.ACTIONS]: {
-    total: number,
-    from: number,
-    lastSubmittedAt: null | DateISOType,
-  },
-
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
-    total: number,
-    from: number,
-    lastSubmittedAt: null | DateISOType,
-  },
-
-  [InnovationStatisticsEnum.MESSAGES]: {
-    total: number,
-    lastSubmittedAt: null | DateISOType,
-  },
-
-}
