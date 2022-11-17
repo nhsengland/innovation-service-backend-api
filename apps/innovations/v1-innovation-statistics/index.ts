@@ -34,23 +34,13 @@ class GetInnovationStatistics {
 
       const requestUser = auth.getUserInfo();
 
-      const statistics = [];
-
-      for (const statistic of query.statistics) {
-
-        const stat = await StatisticsHandlersHelper.runHandler(
+        const stats = await StatisticsHandlersHelper.runHandler(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-          statistic,
+          query.statistics,
           { innovationId: params.innovationId }
         ); 
-        
-        statistics.push(stat.getStatistics());
-        
-      }
-  
-      const result = StatisticsHandlersHelper.buildResponse(statistics)
-      
-      context.res = ResponseHelper.Ok(result);
+    
+      context.res = ResponseHelper.Ok(stats);
       return;
 
     } catch (error) {

@@ -1,7 +1,6 @@
 import type { UserTypeEnum } from '@innovations/shared/enums';
 
 import { INNOVATION_STATISTICS_CONFIG } from '../_config';
-import type { BaseHandler } from '../_handlers/statistics/base.handler';
 import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import type { InnovationStatisticsTemplateType } from '../_types/innovation.types';
 
@@ -10,15 +9,38 @@ export class StatisticsHandlersHelper {
 
   static async runHandler(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    action: InnovationStatisticsEnum,
+    actions: InnovationStatisticsEnum[],
     params: { [key: string]: any }
-  ): Promise<BaseHandler<InnovationStatisticsEnum>> {
+  ): Promise<
+    {
+      [key: string]: {
+          total: number;
+          from: number;
+          lastSubmittedAt: string | null;
+      } | {
+          total: number;
+          from: number;
+          lastSubmittedAt: string | null;
+      } | {
+          total: number;
+          lastSubmittedAt: string | null;
+      };
+    }
+  > {
 
-    return new INNOVATION_STATISTICS_CONFIG[action].handler(requestUser, params).run()
+    const handlers = actions.map((action) => {
+      const handler = new INNOVATION_STATISTICS_CONFIG[action].handler(requestUser, params);
+      return handler.run();
+    });
 
+    const resolved = await  Promise.all(handlers);
+
+    const result = this.buildResponse(resolved.map(x => x.getStatistics()));
+
+    return result;
   }
 
-  static buildResponse(
+  private static buildResponse(
     statistics: ({ innovationId: string; statistic: InnovationStatisticsEnum; data:  InnovationStatisticsTemplateType[InnovationStatisticsEnum] } | null)[]): { [key: string]: InnovationStatisticsTemplateType[InnovationStatisticsEnum]; } {
   return statistics.reduce(
     (acc: { [key: string]: any; }, curr) => {
