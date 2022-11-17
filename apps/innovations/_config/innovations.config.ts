@@ -35,10 +35,10 @@ import {
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 
 import { InnovationLocationEnum, InnovationStatisticsEnum } from '../_enums/innovation.enums';
-import type { BaseHandler } from '../_handlers/base.handler';
-import { ActionsToSubmitStatisticsHandler } from '../_handlers/actions-to-submit.handler';
-import { SectionsSubmittedStatisticsHandler } from '../_handlers/sections-submitted.handler';
-import { UnreadMessagesStatisticsHandler } from '../_handlers/unread-messages.handler';
+import type { BaseHandler } from '../_handlers/statistics/base.handler';
+import { ActionsToSubmitStatisticsHandler } from '../_handlers/statistics/actions-to-submit.handler';
+import { SectionsSubmittedStatisticsHandler } from '../_handlers/statistics/sections-submitted.handler';
+import { UnreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-messages.handler';
 
 
 export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {

@@ -133,10 +133,13 @@ export type InnovationStatisticsTemplateType = {
 
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
     total: number,
+    from: number,
+    lastSubmittedAt: null | DateISOType,
   },
 
   [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
     total: number,
+    lastSubmittedAt: null | DateISOType,
   },
 
 }

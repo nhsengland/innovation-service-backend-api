@@ -1,7 +1,7 @@
 
 import type { UserTypeEnum } from '@innovations/shared/enums';
-import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
-import type { InnovationStatisticsInputType, InnovationStatisticsTemplateType } from '../_types/innovation.types';
+import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
+import type { InnovationStatisticsInputType, InnovationStatisticsTemplateType } from '../../_types/innovation.types';
 
 type HandlerInnovationStatisticsResponseType<T> = {
   innovationId: string;

@@ -1,7 +1,7 @@
 import type { UserTypeEnum } from '@innovations/shared/enums';
 
 import { INNOVATION_STATISTICS_CONFIG } from '../_config';
-import type { BaseHandler } from '../_handlers/base.handler';
+import type { BaseHandler } from '../_handlers/statistics/base.handler';
 import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import type { InnovationStatisticsTemplateType } from '../_types/innovation.types';
 
