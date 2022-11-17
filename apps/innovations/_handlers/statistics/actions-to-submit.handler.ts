@@ -6,14 +6,14 @@ import { StatisticsServiceSymbol, StatisticsServiceType } from '../../_services/
 import { container } from '../../_config';
 
 export class ActionsToSubmitStatisticsHandler extends BaseHandler<
-  InnovationStatisticsEnum.ACTIONS_TO_SUBMIT
+  InnovationStatisticsEnum.ACTIONS
 > {
 
   private statisticsService: StatisticsServiceType;
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: InnovationStatisticsInputType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]
+    data: InnovationStatisticsInputType[InnovationStatisticsEnum.ACTIONS]
   ) {
     super(requestUser, data);
     this.statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
@@ -25,7 +25,7 @@ export class ActionsToSubmitStatisticsHandler extends BaseHandler<
 
     this.setStatistics({
       innovationId: this.inputData.innovationId,
-      statistic: InnovationStatisticsEnum.ACTIONS_TO_SUBMIT,
+      statistic: InnovationStatisticsEnum.ACTIONS,
       data: {
         from: actions.from,
         total: actions.total,

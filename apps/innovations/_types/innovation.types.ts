@@ -109,15 +109,15 @@ export type InnovationAllSectionsType = {
 
 export type InnovationStatisticsInputType = {
 
-  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
+  [InnovationStatisticsEnum.ACTIONS]: {
     innovationId: string,
   },
 
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
+  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
     innovationId: string,
   },
 
-  [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
+  [InnovationStatisticsEnum.MESSAGES]: {
     innovationId: string,
   },
 
@@ -125,19 +125,19 @@ export type InnovationStatisticsInputType = {
 
 export type InnovationStatisticsTemplateType = {
 
-  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
+  [InnovationStatisticsEnum.ACTIONS]: {
     total: number,
     from: number,
     lastSubmittedAt: null | DateISOType,
   },
 
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
+  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
     total: number,
     from: number,
     lastSubmittedAt: null | DateISOType,
   },
 
-  [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
+  [InnovationStatisticsEnum.MESSAGES]: {
     total: number,
     lastSubmittedAt: null | DateISOType,
   },

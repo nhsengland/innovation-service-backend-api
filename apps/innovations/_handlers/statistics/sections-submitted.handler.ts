@@ -8,14 +8,14 @@ import { type StatisticsServiceType, StatisticsServiceSymbol } from 'apps/innova
 //import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 
 export class SectionsSubmittedStatisticsHandler extends BaseHandler<
-  InnovationStatisticsEnum.ACTIONS_TO_SUBMIT
+  InnovationStatisticsEnum.INNOVATION_RECORD
 > {
 
   private statisticsService: StatisticsServiceType;
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: InnovationStatisticsInputType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]
+    data: InnovationStatisticsInputType[InnovationStatisticsEnum.INNOVATION_RECORD]
   ) {
     super(requestUser, data);
     this.statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
@@ -27,7 +27,7 @@ export class SectionsSubmittedStatisticsHandler extends BaseHandler<
 
     this.setStatistics({
       innovationId: this.inputData.innovationId,
-      statistic: InnovationStatisticsEnum.SECTIONS_SUBMITTED,
+      statistic: InnovationStatisticsEnum.INNOVATION_RECORD,
       data: {
         from: sections.from,
         total: sections.total,

@@ -262,13 +262,13 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
 export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatisticsEnum, {
   handler: { new(...args: any[]): BaseHandler<InnovationStatisticsEnum> },
 }>  = {
-  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
+  [InnovationStatisticsEnum.ACTIONS]: {
     handler: ActionsToSubmitStatisticsHandler,
   },
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
+  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
     handler: SectionsSubmittedStatisticsHandler,
   },
-  [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
+  [InnovationStatisticsEnum.MESSAGES]: {
     handler: UnreadMessagesStatisticsHandler,
   },
 }
