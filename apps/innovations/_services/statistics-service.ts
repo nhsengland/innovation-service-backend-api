@@ -1,5 +1,5 @@
 import { InnovationActionEntity, InnovationSectionEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
 
@@ -10,38 +10,20 @@ export class StatisticsService  extends BaseService {
     super();
   }
 
-  async getUnsubmittedActions(innovationId: string): Promise<{
-    total: number;
-    from: number;
-    lastSubmittedAt: null | string;
-  }> {
+  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<InnovationActionEntity[]> {
     
     const openActions = await  this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
     .innerJoinAndSelect('action.innovationSection', 'section')
     .innerJoinAndSelect('section.innovation', 'innovation')
     .where('innovation.id = :innovationId', { innovationId })
-    .andWhere('action.status IN(:...status)', { status: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW] })
+    .andWhere('action.status IN(:...statuses)', { statuses })
+    .orderBy('action.createdAt', 'DESC')
     .getMany();
 
-    const sortedUnsubmittedActions = openActions.filter(x => x.status === InnovationActionStatusEnum.REQUESTED).sort((a, b) => {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    });
-
-    const lastSubmittedAction = sortedUnsubmittedActions.find(_ => true);
-
-    return {
-      total: openActions.filter(action => action.status === InnovationActionStatusEnum.IN_REVIEW).length,
-      from: openActions.length,
-      lastSubmittedAt: lastSubmittedAction?.updatedAt || null,
-    }
-
+    return openActions;
   }
 
-  async getSubmittedSections(innovationId: string): Promise<{
-    total: number;
-    from: number;
-    lastSubmittedAt: null | string;
-  }> {
+  async getSubmittedSections(innovationId: string): Promise<InnovationSectionEntity[]> {
     const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
     .innerJoinAndSelect('section.innovation', 'innovation')
     .where('innovation.id = :innovationId', { innovationId })
@@ -49,16 +31,11 @@ export class StatisticsService  extends BaseService {
     .orderBy('section.updatedAt', 'DESC')
     .getMany();
 
-    return {
-      total: sections.length,
-      from: Object.keys(InnovationSectionEnum).length,
-      lastSubmittedAt: sections.find(_ => true)?.updatedAt || null,
-    }
-
+    return sections;
   }
 
   async getUnreadMessages(innovationId: string, userId: string): Promise<{
-    total: number;
+    count: number;
     lastSubmittedAt: null | string;
   }> {
 
@@ -73,7 +50,7 @@ export class StatisticsService  extends BaseService {
 
     if (unreadMessages.length === 0) {
       return {
-        total: 0,
+        count: 0,
         lastSubmittedAt: null,
       }
     }
@@ -94,7 +71,7 @@ export class StatisticsService  extends BaseService {
     }).find(_ => true);
 
     return {
-      total: unreadMessages.length,
+      count: unreadMessages.length,
       lastSubmittedAt: latestMessage?.createdAt || null,
     }
   }

@@ -7,50 +7,19 @@ import { unreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-
 export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatisticsEnum, {
   handler: (...args: any[]) => Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]>,
 }>  = {
-  [InnovationStatisticsEnum.ACTIONS]: {
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
     handler: actionsToSubmitStatisticsHandler,
   },
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
     handler: sectionsSubmittedStatisticsHandler,
   },
-  [InnovationStatisticsEnum.MESSAGES]: {
+  [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
     handler: unreadMessagesStatisticsHandler,
   },
 }
 
-export type InnovationStatisticsInputType = {
-
-  [InnovationStatisticsEnum.ACTIONS]: {
-    innovationId: string,
-  },
-
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
-    innovationId: string,
-  },
-
-  [InnovationStatisticsEnum.MESSAGES]: {
-    innovationId: string,
-  },
-
-}
-
 export type InnovationStatisticsTemplateType = {
-
-  [InnovationStatisticsEnum.ACTIONS]: {
-    total: number,
-    from: number,
-    lastSubmittedAt: null | DateISOType,
-  },
-
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
-    total: number,
-    from: number,
-    lastSubmittedAt: null | DateISOType,
-  },
-
-  [InnovationStatisticsEnum.MESSAGES]: {
-    total: number,
-    lastSubmittedAt: null | DateISOType,
-  },
-
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: { count: number; total: number; lastSubmittedAt: null | DateISOType;},
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: { count: number; total: number; lastSubmittedAt: null | DateISOType;},
+  [InnovationStatisticsEnum.UNREAD_MESSAGES]: { count: number; lastSubmittedAt: null | DateISOType;},
 }
