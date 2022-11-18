@@ -18,20 +18,8 @@ export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatist
   },
 }
 
-
-type CounterType = {
-  count: number;
-  total: number;
-  lastSubmittedAt: null | DateISOType;
-  overdue: null | DateISOType;
-}
-
 export type InnovationStatisticsTemplateType = {
-
-  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: Pick<CounterType, 'count' | 'total' | 'lastSubmittedAt'>,
-
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: Pick<CounterType, 'count' | 'total' | 'lastSubmittedAt'>,
-
-  [InnovationStatisticsEnum.UNREAD_MESSAGES]: Pick<CounterType, 'count' | 'lastSubmittedAt'>,
-
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: { count: number; total: number; lastSubmittedAt: null | DateISOType;},
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: { count: number; total: number; lastSubmittedAt: null | DateISOType;},
+  [InnovationStatisticsEnum.UNREAD_MESSAGES]: { count: number; lastSubmittedAt: null | DateISOType;},
 }
