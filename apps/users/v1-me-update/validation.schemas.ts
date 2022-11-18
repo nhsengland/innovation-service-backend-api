@@ -1,11 +1,11 @@
 import Joi from 'joi';
 
 
-export type AccessorBodyType = {
+export type DefaultUserBodyType = {
   displayName: string
 }
 
-export const AccessorBodySchema = Joi.object<AccessorBodyType>({
+export const DefaultUserBodySchema = Joi.object<DefaultUserBodyType>({
   displayName: Joi.string().required()
 }).required();
 

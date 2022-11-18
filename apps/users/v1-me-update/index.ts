@@ -12,7 +12,7 @@ import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
-import { AccessorBodySchema, AccessorBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
+import { DefaultUserBodySchema, DefaultUserBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
 
 
 class V1MeUpdate {
@@ -28,11 +28,13 @@ class V1MeUpdate {
       const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
       const requestUser = authInstance.getUserInfo();
 
-      if (requestUser.type === UserTypeEnum.ACCESSOR) {
+      if ([UserTypeEnum.ADMIN, UserTypeEnum.ASSESSMENT, UserTypeEnum.ACCESSOR].includes(requestUser.type)) {
 
-        const accessorBody = JoiHelper.Validate<AccessorBodyType>(AccessorBodySchema, request.body);
+        const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(DefaultUserBodySchema, request.body);
 
         await authInstance
+          .checkAdminType()
+          .checkAssessmentType()
           .checkAccessorType()
           .verify();
 

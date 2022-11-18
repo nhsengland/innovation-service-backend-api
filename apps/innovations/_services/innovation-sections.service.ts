@@ -1,15 +1,15 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionEntity, InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
 
-import { INNOVATION_SECTIONS_CONFIG } from '../_config';
-
 import { BaseService } from './base.service';
+
 import type { InnovationSectionModel } from '../_types/innovation.types';
+import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 
 
 @injectable()
@@ -22,18 +22,16 @@ export class InnovationSectionsService extends BaseService {
   ) { super(); }
 
 
-  async getInnovationSectionsList(innovationId: string): Promise<{
-    id: string,
-    name: string,
-    status: InnovationStatusEnum,
-    exportRequests: number,
-    sections: {
-      id: null | string,
-      section: InnovationSectionEnum,
-      status: InnovationSectionStatusEnum,
-      submittedAt: null | DateISOType
-    }[]
-  }> {
+  async getInnovationSectionsList(
+    user: { type: UserTypeEnum },
+    innovationId: string
+  ): Promise<{
+    id: null | string,
+    section: InnovationSectionEnum,
+    status: InnovationSectionStatusEnum,
+    submittedAt: null | DateISOType,
+    openActionsCount: number
+  }[]> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
@@ -44,38 +42,38 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = await innovation.sections;
 
-    const exportRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'requests')
-      .where('requests.innovation_id = :innovationId', { innovationId })
-      .andWhere('requests.status = :status', { status: InnovationExportRequestStatusEnum.PENDING })
-      .getCount();
+    const openActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+      .select('sections.section', 'section')
+      .addSelect('COUNT(actions.id)', 'actionsCount')
+      .innerJoin('actions.innovationSection', 'sections')
+      .where('sections.innovation_id = :innovationId', { innovationId })
+      .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id) })
+      .groupBy('sections.section');
 
-      
-    return {
-      id: innovation.id,
-      name: innovation.name,
-      status: innovation.status,
-      exportRequests,
-      sections: Object.values(InnovationSectionEnum).map(sectionKey => {
+    if (user.type === UserTypeEnum.ACCESSOR) {
+      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
+    } else if (user.type === UserTypeEnum.INNOVATOR) {
+      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+    }
 
-        const section = sections.find(item => item.section === sectionKey);
+    const openActionsResult: { section: string, actionsCount: number }[] = await openActionsQuery.getRawMany();
 
-        if (section) {
-          return {
-            id: section.id,
-            section: section.section,
-            status: section.status,
-            submittedAt: section.submittedAt
-          };
-        } else {
-          return {
-            id: null,
-            section: sectionKey,
-            status: InnovationSectionStatusEnum.NOT_STARTED,
-            submittedAt: null
-          };
-        }
-      })
-    };
+
+    return Object.values(InnovationSectionEnum).map(sectionKey => {
+
+      const section = sections.find(item => item.section === sectionKey);
+
+      if (section) {
+
+        const openActionsCount = openActionsResult.find(item => item.section === sectionKey)?.actionsCount ?? 0;
+
+        return { id: section.id, section: section.section, status: section.status, submittedAt: section.submittedAt, openActionsCount };
+
+      } else {
+        return { id: null, section: sectionKey, status: InnovationSectionStatusEnum.NOT_STARTED, submittedAt: null, openActionsCount: 0 };
+      }
+
+    });
 
   }
 
@@ -246,7 +244,7 @@ export class InnovationSectionsService extends BaseService {
     if (dbSection.status !== InnovationSectionStatusEnum.DRAFT) {
       // TODO: TechDebt #116721 this should be reviewed, as it is not possible to submit a section that is not in draft.
       // throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_WITH_UNPROCESSABLE_STATUS);
-      return {id: dbSection.id};
+      return { id: dbSection.id };
     }
 
 
@@ -303,8 +301,8 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
-  async findAllSections(innovationId: string): Promise<{innovation: {name: string}, innovationSections: { section: InnovationSectionModel, data: Record<string, string>}[]}> {
-   
+  async findAllSections(innovationId: string): Promise<{ innovation: { name: string }, innovationSections: { section: InnovationSectionModel, data: Record<string, string> }[] }> {
+
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.owner', 'owner')
@@ -315,18 +313,19 @@ export class InnovationSectionsService extends BaseService {
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
-    
+
     const sections = await innovation.sections;
-    const innovationSections: { section: InnovationSectionModel, data: Record<string, string>}[] = [];
+    const innovationSections: { section: InnovationSectionModel, data: Record<string, string> }[] = [];
 
     for (const key in InnovationSectionEnum) {
+
       const section = sections.find((sec) => sec.section === key);
 
       if (!section) {
         continue;
       }
 
-      const sectionFields = INNOVATION_SECTIONS_CONFIG[key as keyof typeof INNOVATION_SECTIONS_CONFIG];
+      const sectionFields = INNOVATION_SECTIONS_CONFIG[key as InnovationSectionEnum];
 
       innovationSections.push({
         section: this.getInnovationSectionMetadata(key, section),
@@ -341,18 +340,17 @@ export class InnovationSectionsService extends BaseService {
           }
         )
       });
+
     }
 
     return {
       innovation: { name: innovation.name },
       innovationSections
     };
+
   }
 
-  private getInnovationSectionMetadata(
-    key: string,
-    section?: InnovationSectionEntity
-  ): InnovationSectionModel {
+  private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {
 
     let result: InnovationSectionModel;
 

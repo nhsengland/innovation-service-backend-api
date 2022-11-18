@@ -1,21 +1,19 @@
-import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-
-import {
-    AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class GetInnovationSectionsList {
+class V1InnovationSectionsList {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -27,27 +25,23 @@ class GetInnovationSectionsList {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .checkInnovation()
         .verify();
+      const requestUser = auth.getUserInfo()
 
-      const result = await innovationSectionsService.getInnovationSectionsList(params.innovationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-        name: result.name,
-        status: result.status,
-        exportRequests: result.exportRequests,
-        sections: result.sections.map(section => ({
-          id: section.id,
-          section: section.section,
-          status: section.status,
-          submittedAt: section.submittedAt
-        }))
-      });
+      const result = await innovationSectionsService.getInnovationSectionsList({ type: requestUser.type }, params.innovationId);
+      context.res = ResponseHelper.Ok<ResponseDTO>(result.map(section => ({
+        id: section.id,
+        section: section.section,
+        status: section.status,
+        submittedAt: section.submittedAt,
+        openActionsCount: section.openActionsCount
+      })));
       return;
 
     } catch (error) {
@@ -59,12 +53,12 @@ class GetInnovationSectionsList {
 
 }
 
-export default openApi(GetInnovationSectionsList.httpTrigger as AzureFunction, 'v1/{innovationId}/sections', {
+export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, 'v1/{innovationId}/sections', {
   get: {
     description: 'Get an innovation sections list.',
     tags: ['Innovation'],
     summary: 'Get an innovation sections list.',
-    operationId: 'getInnovationSectionsList',
+    operationId: 'v1-innovation-sections-list',
     parameters: [],
     responses: {
       200: {
