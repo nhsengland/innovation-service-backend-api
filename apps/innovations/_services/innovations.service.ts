@@ -66,10 +66,7 @@ export class InnovationsService extends BaseService {
         }
       }[],
       notifications?: number,
-      statistics?: {
-        actions: number,
-        messages: number
-      }
+      statistics?: { actions: number, messages: number }
     }[]
   }> {
 
@@ -332,8 +329,8 @@ export class InnovationsService extends BaseService {
     otherCategoryDescription: null | string,
     owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean },
     lastEndSupportAt: null | DateISOType,
-    canUserExport: boolean,
-    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } },
+    export: { canUserExport: boolean, activeRequestsCount: number },
+    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
     supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
   }> {
 
@@ -377,21 +374,25 @@ export class InnovationsService extends BaseService {
       const ownerInfo = usersInfo.find(item => item.id === result.owner.id);
 
       // Export requests parsing.
-      let canUserExport = false;
+      const innovationExport = {
+        canUserExport: false,
+        activeRequestsCount: (await result.exportRequests).filter(item => item.isExportActive).length
+      };
+
       switch (user.type) {
         case UserTypeEnum.INNOVATOR:
-          canUserExport = true;
+          innovationExport.canUserExport = true;
           break;
         case UserTypeEnum.ASSESSMENT:
-          canUserExport = false;
+          innovationExport.canUserExport = false;
           break;
         case UserTypeEnum.ACCESSOR:
-          canUserExport = (await result.exportRequests).filter(item => item.isExportActive).length > 0;
+          innovationExport.canUserExport = innovationExport.activeRequestsCount > 0;
           break;
       }
 
       // Assessment parsing.
-      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } };
+      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
 
       if (filters.fields?.includes('assessment')) {
 
@@ -409,7 +410,7 @@ export class InnovationsService extends BaseService {
               createdAt: result.assessments[0].createdAt,
               finishedAt: result.assessments[0].finishedAt,
               assignedTo: { name: usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? '' },
-              // reassessmentCount: (await innovation.reassessmentRequests).length
+              reassessmentCount: (await result.reassessmentRequests).length
             };
 
           }
@@ -441,7 +442,7 @@ export class InnovationsService extends BaseService {
         },
         lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(result.id),
 
-        canUserExport,
+        export: innovationExport,
 
         ...(assessment === undefined ? {} : { assessment }),
 
@@ -964,24 +965,24 @@ export class InnovationsService extends BaseService {
     contextTypes: string[],
     contextIds: string[]
   }): Promise<void> {
-    const params: {userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[]} = {userId: requestUser.id, innovationId};
+    const params: { userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: requestUser.id, innovationId };
     const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
       .select('notification.id')
       .where('notification.innovation_id = :innovationId', { innovationId });
 
-    if(conditions.notificationIds.length > 0) {
+    if (conditions.notificationIds.length > 0) {
       query.andWhere('notification.id IN (:...notificationIds)');
       params.notificationIds = conditions.notificationIds;
     }
-    if(conditions.contextIds.length > 0) {
+    if (conditions.contextIds.length > 0) {
       query.andWhere('notification.contextId IN (:...contextIds)');
       params.contextIds = conditions.contextIds;
     }
-    if(conditions.contextTypes.length > 0) {
+    if (conditions.contextTypes.length > 0) {
       query.andWhere('notification.contextType IN (:...contextTypes)');
       params.contextTypes = conditions.contextTypes;
     }
-    
+
     await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
       .where('notification_id IN ( ' + query.getQuery() + ' )')

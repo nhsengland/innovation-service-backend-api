@@ -62,7 +62,7 @@ class V1InnovationInfo {
           organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null
         },
         lastEndSupportAt: result.lastEndSupportAt,
-        canUserExport: result.canUserExport,
+        export: result.export,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
         ...(result.supports === undefined ? {} : {
           supports: result.supports.map(s => ({

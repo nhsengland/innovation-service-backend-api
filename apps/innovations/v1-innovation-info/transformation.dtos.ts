@@ -20,7 +20,7 @@ export type ResponseDTO = {
     organisations: null | { name: string, size: null | string }[]
   },
   lastEndSupportAt: null | DateISOType,
-  canUserExport: boolean,
-  assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string } },
+  export: { canUserExport: boolean, activeRequestsCount: number },
+  assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
   supports?: null | { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
 };
