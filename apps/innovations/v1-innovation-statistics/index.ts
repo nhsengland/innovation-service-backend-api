@@ -7,7 +7,10 @@ import { type AuthorizationServiceType, AuthorizationServiceSymbol } from '@inno
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
+import type { InnovationStatisticsTemplateType } from '../_config/statistics.config';
+import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
+import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.schemas';
 
 
@@ -40,7 +43,7 @@ class GetInnovationStatistics {
           { innovationId: params.innovationId }
         ); 
     
-      context.res = ResponseHelper.Ok(stats);
+      context.res = ResponseHelper.Ok<ResponseDTO>(stats);
       return;
 
     } catch (error) {

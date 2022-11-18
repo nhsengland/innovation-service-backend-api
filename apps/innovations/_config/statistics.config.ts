@@ -7,50 +7,31 @@ import { unreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-
 export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatisticsEnum, {
   handler: (...args: any[]) => Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]>,
 }>  = {
-  [InnovationStatisticsEnum.ACTIONS]: {
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: {
     handler: actionsToSubmitStatisticsHandler,
   },
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: {
     handler: sectionsSubmittedStatisticsHandler,
   },
-  [InnovationStatisticsEnum.MESSAGES]: {
+  [InnovationStatisticsEnum.UNREAD_MESSAGES]: {
     handler: unreadMessagesStatisticsHandler,
   },
 }
 
-export type InnovationStatisticsInputType = {
 
-  [InnovationStatisticsEnum.ACTIONS]: {
-    innovationId: string,
-  },
-
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
-    innovationId: string,
-  },
-
-  [InnovationStatisticsEnum.MESSAGES]: {
-    innovationId: string,
-  },
-
+type CounterType = {
+  count: number;
+  total: number;
+  lastSubmittedAt: null | DateISOType;
+  overdue: null | DateISOType;
 }
 
 export type InnovationStatisticsTemplateType = {
 
-  [InnovationStatisticsEnum.ACTIONS]: {
-    total: number,
-    from: number,
-    lastSubmittedAt: null | DateISOType,
-  },
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT]: Pick<CounterType, 'count' | 'total' | 'lastSubmittedAt'>,
 
-  [InnovationStatisticsEnum.INNOVATION_RECORD]: {
-    total: number,
-    from: number,
-    lastSubmittedAt: null | DateISOType,
-  },
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED]: Pick<CounterType, 'count' | 'total' | 'lastSubmittedAt'>,
 
-  [InnovationStatisticsEnum.MESSAGES]: {
-    total: number,
-    lastSubmittedAt: null | DateISOType,
-  },
+  [InnovationStatisticsEnum.UNREAD_MESSAGES]: Pick<CounterType, 'count' | 'lastSubmittedAt'>,
 
 }
