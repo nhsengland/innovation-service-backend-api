@@ -253,5 +253,4 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
       files: Joi.array().items(Joi.string().guid())
     }).required().min(1)
   }
-
 };

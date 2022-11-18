@@ -106,3 +106,4 @@ export type InnovationAllSectionsType = {
   title: string;
   sections: InnovationExportSectionType[];
 }[];
+

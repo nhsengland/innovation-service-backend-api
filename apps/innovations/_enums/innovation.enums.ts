@@ -25,3 +25,9 @@ export enum InnovationThreadSubjectEnum {
   NEEDS_ASSESSMENT_COMPLETE = 'Needs assessment process completed',
   INNOVATION_SUPPORT_UPDATE = 'Innovation support updated',
 }
+
+export enum InnovationStatisticsEnum {
+  INNOVATION_RECORD = 'INNOVATION_RECORD',
+  ACTIONS = 'ACTIONS',
+  MESSAGES = 'MESSAGES',
+}
