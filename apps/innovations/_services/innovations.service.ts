@@ -329,7 +329,7 @@ export class InnovationsService extends BaseService {
     otherCategoryDescription: null | string,
     owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean },
     lastEndSupportAt: null | DateISOType,
-    export: { canUserExport: boolean, activeRequestsCount: number },
+    export: { canUserExport: boolean, pendingRequestsCount: number },
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
     supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
   }> {
@@ -342,7 +342,7 @@ export class InnovationsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId: id });
 
     if (user.type === UserTypeEnum.ACCESSOR) {
-      query.leftJoinAndSelect('innovation.exportRequests', 'exportRequests', 'exportRequests.status IN (:...requestStatuses) AND exportRequests.organisation_unit_id = :organisationUnitId', { requestStatuses: [InnovationExportRequestStatusEnum.APPROVED], organisationUnitId: user.organisationUnitId });
+      query.leftJoinAndSelect('innovation.exportRequests', 'exportRequests', 'exportRequests.status IN (:...requestStatuses) AND exportRequests.organisation_unit_id = :organisationUnitId', { requestStatuses: [InnovationExportRequestStatusEnum.APPROVED, InnovationExportRequestStatusEnum.PENDING], organisationUnitId: user.organisationUnitId });
     }
 
     // Assessment relations.
@@ -376,7 +376,7 @@ export class InnovationsService extends BaseService {
       // Export requests parsing.
       const innovationExport = {
         canUserExport: false,
-        activeRequestsCount: (await result.exportRequests).filter(item => item.isExportActive).length
+        pendingRequestsCount: (await result.exportRequests).filter(item => item.isRequestPending).length
       };
 
       switch (user.type) {
@@ -387,7 +387,7 @@ export class InnovationsService extends BaseService {
           innovationExport.canUserExport = false;
           break;
         case UserTypeEnum.ACCESSOR:
-          innovationExport.canUserExport = innovationExport.activeRequestsCount > 0;
+          innovationExport.canUserExport = (await result.exportRequests).filter(item => item.isExportActive).length > 0;
           break;
       }
 
