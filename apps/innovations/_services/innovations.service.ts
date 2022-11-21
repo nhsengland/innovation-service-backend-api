@@ -736,8 +736,6 @@ export class InnovationsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-
-    // TODO: Integrate this in the authorization service.
     const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .where('request.innovation_id = :innovationId', { innovationId })
       .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
@@ -760,6 +758,17 @@ export class InnovationsService extends BaseService {
       requestReason: data.requestReason,
     });
 
+    // Create notification
+
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST>(
+      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
+      {
+        innovationId: innovationId,
+        requestId: request.id,
+      }
+    );
+
     return {
       id: request.id,
     };
@@ -779,6 +788,7 @@ export class InnovationsService extends BaseService {
     }
 
     const exportRequest = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.innovation', 'innovation')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .where('request.id = :exportRequestId', { exportRequestId })
       .getOne();
@@ -808,6 +818,9 @@ export class InnovationsService extends BaseService {
       status,
       rejectReason,
     });
+
+    await this.createExportStatusUpdateNotification(status, requestUser, updatedRequest.innovation.id, updatedRequest.id);
+
 
     return {
       id: updatedRequest.id,
@@ -1127,6 +1140,32 @@ export class InnovationsService extends BaseService {
 
     return statistics;
 
+  }
+
+  private async createExportStatusUpdateNotification(status: InnovationExportRequestStatusEnum, requestUser: DomainUserInfoType, innovationId: string, requestId: string,): Promise<void> {
+    
+    if (status === InnovationExportRequestStatusEnum.APPROVED) {
+      await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED>(
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED,
+        {
+          innovationId,
+          requestId
+        }
+      );
+    }
+
+    if (status === InnovationExportRequestStatusEnum.REJECTED) {
+      await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED>(
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED,
+        {
+          innovationId,
+          requestId,
+        }
+      );
+    }
+    
   }
 
 }

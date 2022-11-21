@@ -89,6 +89,18 @@ export type NotifierTemplatesType = {
     innovationId: string,
     unitId: string
   },
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    innovationId: string,
+    requestId: string,
+  },
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED]: {
+    innovationId: string,
+    requestId: string,
+  },
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED]: {
+    innovationId: string,
+    requestId: string
+  },
 
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,

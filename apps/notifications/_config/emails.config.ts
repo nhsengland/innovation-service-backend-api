@@ -28,7 +28,10 @@ export enum EmailTypeEnum {
   INNOVATOR_DAILY_DIGEST = '1f2f2f06-5d6a-424e-8c05-65b9c072d20d',
   UNIT_INACTIVATION_SUPPORT_COMPLETED = '1fbe19f7-2be8-4959-b53c-debe5add86a6',
   INNOVATOR_INCOMPLETE_RECORD = 'afb9c395-b7ff-4a4f-adee-e0c3bec2e9f3',
-  QA_A_IDLE_SUPPORT= '420a22ac-b052-4180-8a48-daf787db3f7f'
+  QA_A_IDLE_SUPPORT= '420a22ac-b052-4180-8a48-daf787db3f7f',
+  INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR = '783f53f1-6df9-4549-968e-9977648e03f1',
+  INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR = 'bfb0b9b9-3bd2-40de-9b98-aa3431832e1e',
+  INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR = '4e0c8775-0ae8-4c03-bf0f-4ae3273ffa87',
 }
 
 
@@ -65,5 +68,8 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.INNOVATOR_DAILY_DIGEST]: { display_name?: string, actions_count: string, messages_count: string, supports_count: string },
   [EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: { display_name?: string, unit_name: string, innovation_name: string, support_url: string },
   [EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD]: { display_name?: string, innovation_name: string },
-  [EmailTypeEnum.QA_A_IDLE_SUPPORT]: { display_name?: string, innovation_name: string, innovator_name: string }
+  [EmailTypeEnum.QA_A_IDLE_SUPPORT]: { display_name?: string, innovation_name: string, innovator_name: string },
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, innovation_name: string, pdf_request_comment: string, pdf_export_url: string },
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR]: { display_name?: string, innovation_name: string, innovator_name: string, innovation_url: string },
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR]: { display_name?: string, innovation_name: string, innovator_name: string, innovation_url: string, pdf_rejection_comment: string },
 }
