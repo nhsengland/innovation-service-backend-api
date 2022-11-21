@@ -46,9 +46,8 @@ EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR,
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: this.data.innovation?.name || '',
           message_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/threads')
-            .setPathParams({ innovationId: this.inputData.innovationId })
-            .setPathParams({ threadId: this.inputData.threadId })
+            .addPath('innovator/innovations/:innovationId/threads/:threadId')
+            .setPathParams({ innovationId: this.inputData.innovationId, threadId: this.inputData.threadId  })
             .buildUrl()
         }
       });
