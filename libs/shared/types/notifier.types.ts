@@ -94,4 +94,9 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
   [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    innovationId: string,
+    threadId: string
+  },
+
 }
