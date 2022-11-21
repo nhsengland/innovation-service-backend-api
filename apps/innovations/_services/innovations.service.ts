@@ -819,8 +819,16 @@ export class InnovationsService extends BaseService {
       rejectReason,
     });
 
-    await this.createExportStatusUpdateNotification(status, requestUser, updatedRequest.innovation.id, updatedRequest.id);
 
+    // Create notification
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK>(
+      { id : requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
+      {
+        innovationId: exportRequest.innovation.id,
+        requestId: updatedRequest.id,
+      }
+    );
 
     return {
       id: updatedRequest.id,
@@ -1140,24 +1148,6 @@ export class InnovationsService extends BaseService {
 
     return statistics;
 
-  }
-
-  private async createExportStatusUpdateNotification(status: InnovationExportRequestStatusEnum, requestUser: DomainUserInfoType, innovationId: string, requestId: string,): Promise<void> {
-    
-    const notificationType = 
-      status === InnovationExportRequestStatusEnum.APPROVED ? 
-        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED :
-        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED;
-
-    await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-      notificationType,
-      {
-        innovationId,
-        requestId
-      }
-    );
-    
   }
 
 }
