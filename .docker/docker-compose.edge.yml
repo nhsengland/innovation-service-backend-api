@@ -21,3 +21,12 @@ services:
     ports:
       - 8081:8081
       - 27017:27017
+
+  queue:
+    container_name: queue
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    restart: unless-stopped
