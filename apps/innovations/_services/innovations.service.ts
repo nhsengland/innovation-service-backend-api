@@ -1144,27 +1144,19 @@ export class InnovationsService extends BaseService {
 
   private async createExportStatusUpdateNotification(status: InnovationExportRequestStatusEnum, requestUser: DomainUserInfoType, innovationId: string, requestId: string,): Promise<void> {
     
-    if (status === InnovationExportRequestStatusEnum.APPROVED) {
-      await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED>(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED,
-        {
-          innovationId,
-          requestId
-        }
-      );
-    }
+    const notificationType = 
+      status === InnovationExportRequestStatusEnum.APPROVED ? 
+        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED :
+        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED;
 
-    if (status === InnovationExportRequestStatusEnum.REJECTED) {
-      await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED>(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-        NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED,
-        {
-          innovationId,
-          requestId,
-        }
-      );
-    }
+    await this.notifierService.send(
+      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      notificationType,
+      {
+        innovationId,
+        requestId
+      }
+    );
     
   }
 
