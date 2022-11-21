@@ -65,7 +65,7 @@ export class ActionUpdateHandler extends BaseHandler<
       userIds: [this.data.actionInfo?.owner.id || ''],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the suipplied action status, NOT the action status from query.
+        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
         section: this.inputData.action.section
       }
     });
@@ -80,7 +80,7 @@ export class ActionUpdateHandler extends BaseHandler<
       userIds: [this.data.innovation?.owner.id || ''],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the suipplied action status, NOT the action status from query.
+        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
         section: this.inputData.action.section
       }
     });

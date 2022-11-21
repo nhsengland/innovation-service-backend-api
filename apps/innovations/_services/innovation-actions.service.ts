@@ -340,6 +340,21 @@ export class InnovationActionsService extends BaseService {
 
   }
 
+  /**
+   * returns ths action subject according to the status
+   * @param dbAction the action to get the subject from
+   * @param status the status to get the subject from
+   * @returns the action subject according to the status
+   */
+  private getSaveActionSubject(dbAction: InnovationActionEntity, status: InnovationActionStatusEnum): string {
+    switch (status) {
+      case InnovationActionStatusEnum.DECLINED:
+        return `Action ${dbAction.displayId} declined`;
+      // TODO this should be reviewed as this never happens in current implementation
+      default:
+        return `Action ${dbAction.displayId} updated`;
+    }
+  }
 
   private async saveAction(
     user: { id: string, identityId: string, type: UserTypeEnum },
@@ -357,7 +372,7 @@ export class InnovationActionsService extends BaseService {
         thread = await this.innovationThreadsService.createThreadOrMessage(
           { id: user.id, identityId: user.identityId, type: user.type },
           innovationId,
-          `Action ${dbAction.displayId} - ${dbAction.description}`,
+          this.getSaveActionSubject(dbAction, data.status),
           data.message,
           dbAction.id,
           ThreadContextTypeEnum.ACTION,
