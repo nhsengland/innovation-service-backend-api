@@ -32,6 +32,7 @@ export class InnovationExportRequestEntity extends BaseEntity {
   organisationUnit: OrganisationUnitEntity;
 
   isExportActive: boolean;
+  isRequestPending: boolean;
   requestExpired: boolean;
   exportExpired: boolean;
   exportExpiresAt: Date;
@@ -42,6 +43,10 @@ export class InnovationExportRequestEntity extends BaseEntity {
     this.isExportActive = this.status === InnovationExportRequestStatusEnum.APPROVED && new Date(this.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
   }
 
+  @AfterLoad()
+  setIsPending(): void {
+    this.isRequestPending = this.status === InnovationExportRequestStatusEnum.PENDING;
+  }
 
   // after entity is loaded compute requestExpired. 
   // expires after 7 days
