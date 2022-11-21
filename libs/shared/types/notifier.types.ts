@@ -93,11 +93,8 @@ export type NotifierTemplatesType = {
     innovationId: string,
     requestId: string,
   },
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED]: {
-    innovationId: string,
-    requestId: string,
-  },
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED]: {
+  
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
     innovationId: string,
     requestId: string
   },

@@ -30,8 +30,7 @@ import {
   IdleSupportHandler
 } from '../_handlers';
 import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
-import { InnovationRecordExportApprovedHandler } from '../_handlers/innovation-record-export-approved.handler';
-import { InnovationRecordExportRejectedHandler } from '../_handlers/innovation-record-export-rejected.handler';
+import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -205,17 +204,9 @@ export const NOTIFICATIONS_CONFIG: {
     }).required(),
   },
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED]: {
-    handler: InnovationRecordExportApprovedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required(),
-    }).required(),
-  },
-
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED]: {
-    handler: InnovationRecordExportRejectedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED]>({
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    handler: InnovationRecordExportFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
       innovationId: Joi.string().guid().required(),
       requestId: Joi.string().guid().required(),
     }).required(),
