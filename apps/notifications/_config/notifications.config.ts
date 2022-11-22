@@ -20,6 +20,7 @@ import {
   InnovationTransferOwnershipCompletedHandler,
   InnovatorAccountCreationHandler,
   LockUserHandler,
+  NeedsAssessmentStartedHandler,
   NeedsAssessmentCompletedHandler,
   SLSValidationHandler,
   DailyDigestHandler,
@@ -49,6 +50,14 @@ export const NOTIFICATIONS_CONFIG: {
     handler: InnovationSubmitedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({
       innovationId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    handler: NeedsAssessmentStartedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
     }).required()
   },
 
