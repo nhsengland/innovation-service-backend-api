@@ -1,22 +1,19 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
-} from '@innovations/shared/services';
-import {
-  JwtDecoder,
-} from '@innovations/shared/decorators'
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
+
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
-import type { CustomContextType } from '@innovations/shared/types';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 
-class CreateInnovation {
+class V1InnovationCreate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -26,24 +23,22 @@ class CreateInnovation {
 
     try {
 
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
-      const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query)
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query)
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();
 
-      let surveyId;
-      if (query.isSurvey) surveyId = requestUser.surveyId;
+      const surveyId = queryParams.useSurvey ? requestUser.surveyId : null;
 
       const result = await innovationService.createInnovation({ id: requestUser.id }, body, surveyId);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 
@@ -51,11 +46,11 @@ class CreateInnovation {
 
 }
 
-export default openApi(CreateInnovation.httpTrigger as AzureFunction, '/v1', {
+export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1', {
   post: {
     description: 'Create an innovation',
-    operationId: 'createInnovation',
     parameters: [],
+    operationId: 'v1-innovation-create',
     requestBody: {
       content: {
         'application/json': {

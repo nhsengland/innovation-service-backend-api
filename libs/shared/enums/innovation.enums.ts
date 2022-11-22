@@ -10,12 +10,12 @@ export enum InnovationStatusEnum {
 
 export enum InnovationActionStatusEnum {
   REQUESTED = 'REQUESTED',
-  STARTED = 'STARTED',
-  CONTINUE = 'CONTINUE',
+  // STARTED = 'STARTED',
+  // CONTINUE = 'CONTINUE',
   IN_REVIEW = 'IN_REVIEW',
   DELETED = 'DELETED',
   DECLINED = 'DECLINED',
-  COMPLETED = 'COMPLETED',
+  COMPLETED = 'COMPLETED'
 }
 
 export enum InnovationSectionStatusEnum {
@@ -43,7 +43,7 @@ export enum InnovationTransferStatusEnum {
   EXPIRED = 'EXPIRED',
 }
 
-export enum InnovationSectionCatalogueEnum {
+export enum InnovationSectionEnum {
   INNOVATION_DESCRIPTION = 'INNOVATION_DESCRIPTION',
   VALUE_PROPOSITION = 'VALUE_PROPOSITION',
   UNDERSTANDING_OF_NEEDS = 'UNDERSTANDING_OF_NEEDS',
@@ -60,7 +60,7 @@ export enum InnovationSectionCatalogueEnum {
   IMPLEMENTATION_PLAN = 'IMPLEMENTATION_PLAN',
 }
 
-export enum InnovationSectionAliasCatalogueEnum {
+export enum InnovationSectionAliasEnum {
   INNOVATION_DESCRIPTION = 'ID',
   VALUE_PROPOSITION = 'VP',
   UNDERSTANDING_OF_NEEDS = 'UN',
@@ -85,5 +85,13 @@ export enum InnovationSupportLogTypeEnum {
 export enum ThreadContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   SUPPORT = 'SUPPORT',
-  ACTION = 'ACTION'
+  ACTION = 'ACTION',
+}
+
+export enum InnovationExportRequestStatusEnum {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  CANCELLED = 'CANCELLED',
+  EXPIRED = 'EXPIRED',
 }

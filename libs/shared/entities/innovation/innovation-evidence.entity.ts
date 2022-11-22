@@ -31,19 +31,11 @@ export class InnovationEvidenceEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, record => record.evidence, {
-    nullable: true,
-  })
+  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_evidence_file',
-    joinColumn: {
-      name: 'innovation_evidence_id',
-      referencedColumnName: 'id'
-    },
-    inverseJoinColumn: {
-      name: 'innovation_file_id',
-      referencedColumnName: 'id'
-    },
+    joinColumn: { name: 'innovation_evidence_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' },
   })
   files: InnovationFileEntity[];
 

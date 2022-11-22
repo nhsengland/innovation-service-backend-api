@@ -1,4 +1,4 @@
-import type { InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
 import type { DateISOType } from './date.types';
@@ -14,7 +14,6 @@ export type DomainUserInfoType = {
   roles: ServiceRoleEnum[],
   phone: null | string,
   isActive: boolean,
-  termsOfUseAccepted: boolean,
   passwordResetAt: null | DateISOType,
   firstTimeSignInAt: null | DateISOType,
   surveyId: null | string,
@@ -31,8 +30,8 @@ export type DomainUserInfoType = {
 
 // Organisations types.
 export type OrganisationWithUnitsType = {
-  id: string; name: string; acronym: string;
-  units: { id: string; name: string; acronym: string; }[];
+  id: string, name: string, acronym: null | string,
+  units: { id: string, name: string, acronym: string }[]
 }
 
 
@@ -44,7 +43,7 @@ export type ActivityLogDBParamsType = {
   interveningUserId?: string;
 
   assessmentId?: string;
-  sectionId?: InnovationSectionCatalogueEnum;
+  sectionId?: InnovationSectionEnum;
   actionId?: string;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
@@ -52,6 +51,20 @@ export type ActivityLogDBParamsType = {
   organisationUnit?: string; // This holds the name, not id.
   comment?: { id?: string; value: string; }; // Some descriptions (ex: actions), are stored as a comment, hence, without an id.
   totalActions?: number;
+
+  thread?: {
+    id: string;
+    subject: string;
+    messageId: string;
+  };
+
+  assessment?: {
+    id: string;
+  };
+
+  reassessment?: {
+    id: string;
+  };
 
 }
 
@@ -74,10 +87,10 @@ export type ActivityLogTemplatesType = {
     params: { organisations: string[] }
   },
   SECTION_DRAFT_UPDATE: {
-    params: { sectionId: InnovationSectionCatalogueEnum }
+    params: { sectionId: InnovationSectionEnum }
   },
   SECTION_SUBMISSION: {
-    params: { sectionId: InnovationSectionCatalogueEnum }
+    params: { sectionId: InnovationSectionEnum }
   },
   INNOVATION_SUBMISSION: {
     params: Record<string, never>
@@ -95,10 +108,10 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   ACTION_CREATION: {
-    params: { sectionId: InnovationSectionCatalogueEnum, actionId: string, comment: { value: string } }
+    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string } }
   },
   ACTION_STATUS_IN_REVIEW_UPDATE: {
-    params: { sectionId: InnovationSectionCatalogueEnum, totalActions: number }
+    params: { sectionId: InnovationSectionEnum, totalActions: number }
   },
   ACTION_STATUS_COMPLETED_UPDATE: {
     params: { actionId: string, comment: { id: string, value: string } }
@@ -108,5 +121,14 @@ export type ActivityLogTemplatesType = {
   },
   COMMENT_CREATION: {
     params: { comment: { id: string, value: string } }
+  },
+  THREAD_CREATION: {
+    params: { thread: { id: string, subject: string }, message: { id: string } }
+  }
+  THREAD_MESSAGE_CREATION: {
+    params: { thread: { id: string, subject: string }, message: { id: string } }
+  },
+  NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED: {
+    params: { assessment: { id: string }, reassessment: { id: string } }
   }
 }

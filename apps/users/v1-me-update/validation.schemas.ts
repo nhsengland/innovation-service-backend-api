@@ -1,33 +1,33 @@
-import * as Joi from 'joi';
+import Joi from 'joi';
 
 
-export type AccessorBodyType = {
-  displayName: string;
+export type DefaultUserBodyType = {
+  displayName: string
 }
 
-export const AccessorBodySchema = Joi.object<AccessorBodyType>({
+export const DefaultUserBodySchema = Joi.object<DefaultUserBodyType>({
   displayName: Joi.string().required()
 }).required();
 
 
 export type InnovatorBodyType = {
-  displayName: string;
-  mobilePhone?: string;
+  displayName: string,
+  mobilePhone?: null | string,
   organisation: {
-    id: string;
-    isShadow: boolean;
-    name?: string;
-    size?: string;
+    id: string,
+    isShadow: boolean,
+    name?: null | string,
+    size?: null | string
   };
 }
 
 export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
   displayName: Joi.string().required(),
-  mobilePhone: Joi.string(),
+  mobilePhone: Joi.string().optional().allow(null),
   organisation: Joi.object<InnovatorBodyType['organisation']>({
     id: Joi.string().guid().required(),
     isShadow: Joi.boolean().strict().required(),
-    name: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().valid(null) }),
-    size: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().valid(null) })
+    name: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().allow(null) }),
+    size: Joi.alternatives().conditional('isShadow', { is: false, then: Joi.string().required(), otherwise: Joi.string().optional().allow(null) })
   }).required()
 }).required();

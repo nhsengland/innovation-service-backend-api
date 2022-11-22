@@ -4,15 +4,15 @@ export type CustomContextType = Context & {
   auth: {
     user: {
       identityId: string,
-      name: string,
-      surveyId?: string
+      name: string
+      // surveyId?: string
     }
   }
 }
 
-export type AppResponse = {
+export type AppResponse<T = any> = {
   isRaw: boolean;
   status: number;
-  body: any;
+  body: T;
   headers: { [key: string]: string };
 }

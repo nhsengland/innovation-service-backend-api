@@ -3,14 +3,13 @@ info:
   title: "Innovation Service - Users API"
   version: "1.0.0"
 servers:
-  - url: 'https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api'
+  - url: "https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api"
 
 paths:
   "/v1/survey":
     post:
       tags:
-        - "v1"
-        - "Survey"
+        - "[v1] Survey"
       description: "Creates a Survey object with answers"
       operationId: "v1-survey-create"
       responses:
@@ -22,12 +21,11 @@ paths:
           description: "Unauthorized"
         "422":
           description: "Unprocessable Entity"
-          
+
   "/v1/me":
     get:
       tags:
-        - "v1"
-        - "Users"
+        - "[v1] Users"
       description: "Retrieves the user profile information"
       operationId: "v1-me-info"
       parameters:
@@ -45,8 +43,7 @@ paths:
           description: "Not Found"
     put:
       tags:
-        - "v1"
-        - "Users"
+        - "[v1] Users"
       description: "User profile information update"
       operationId: "v1-me-update"
       parameters:
@@ -64,8 +61,7 @@ paths:
           description: "Unauthorized"
     post:
       tags:
-        - "v1"
-        - "Users"
+        - "[v1] Users"
       description: "Creates the user profile"
       operationId: "v1-me-create"
       parameters:
@@ -82,11 +78,68 @@ paths:
         "401":
           description: "Unauthorized"
 
+  "/v1/me/terms-of-use":
+    get:
+      tags:
+        - "[v1] Terms of Use"
+      description: "Retrieves the user terms of use"
+      operationId: "v1-me-terms-of-use-info"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "401":
+          description: "Unauthorized"
+        "404":
+          description: "Not Found"
+
+  "/v1/me/terms-of-use/accept":
+    patch:
+      tags:
+        - "[v1] Terms of Use"
+      description: "Accept user terms of use"
+      operationId: "v1-me-terms-of-use-accept"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "401":
+          description: "Unauthorized"
+        "404":
+          description: "Not Found"
+
+  "/v1":
+    get:
+      tags:
+        - "[v1] Users"
+      description: "Get users list"
+      operationId: "v1-users-list"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"
+        "401":
+          description: "Unauthorized"
+
   "/v1/organisations":
     get:
       tags:
-        - "v1"
-        - "Organisations"
+        - "[v1] Organisations"
       description: "Retrieves organisations list"
       operationId: "v1-organisations-list"
       parameters:
@@ -100,3 +153,19 @@ paths:
           description: "Ok"
         "401":
           description: "Unauthorized"
+
+  "/v1/notifications/counters":
+    get:
+      tags:
+        - "[v1] Notifications"
+      description: "Returns the notifications counters"
+      operationId: "v1-notifications-counters"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "Ok"

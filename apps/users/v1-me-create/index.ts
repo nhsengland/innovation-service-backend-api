@@ -1,6 +1,6 @@
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import jwtDecode, { JwtPayload } from "jwt-decode";
+import jwtDecode, { JwtPayload } from 'jwt-decode';
 
 import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
@@ -8,6 +8,7 @@ import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
+import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
 
@@ -21,31 +22,32 @@ class V1MeCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      let identityId: string = '';
+      if (!body.identityId) { // If identityId not supplied, try go get it from the token.
 
-      try {
+        try {
 
-        const decodedToken = jwtDecode<JwtPayload>(body.token);
+          const decodedToken = jwtDecode<JwtPayload>(body.token ?? '');
 
-        if (decodedToken.sub) {
-          identityId = decodedToken.sub;
-        } else {
+          if (decodedToken.sub) {
+            body.identityId = decodedToken.sub;
+          } else {
+            throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
+          }
+
+        } catch (error) {
           throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
         }
 
-      } catch (error) {
-        throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
       }
 
+      const result = await usersService.createUserInnovator({ identityId: body.identityId }, { surveyId: body.surveyId ?? null });
 
-      await usersService.createUserInnovator({ identityId }, { surveyId: body.surveyId })
-
-      context.res = ResponseHelper.NoContent();
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }

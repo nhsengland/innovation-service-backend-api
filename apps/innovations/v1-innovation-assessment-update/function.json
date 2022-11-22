@@ -1,11 +1,10 @@
 {
-  "bindings": [
-    {
+  "bindings": [{
       "authLevel": "anonymous",
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["post"],
+      "methods": ["put"],
       "route": "v1/{innovationId}/assessments/{assessmentId}"
     },
     {

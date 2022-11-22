@@ -1,8 +1,9 @@
 import Joi from 'joi';
 import type { Schema } from 'joi';
 
-import { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
+import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 
 import type { EmailTypeEnum } from './emails.config';
 import {
@@ -19,6 +20,7 @@ import {
   InnovationTransferOwnershipCompletedHandler,
   InnovatorAccountCreationHandler,
   LockUserHandler,
+  NeedsAssessmentStartedHandler,
   NeedsAssessmentCompletedHandler,
   SLSValidationHandler,
   DailyDigestHandler,
@@ -28,6 +30,8 @@ import {
   UnitInactivationSupportStatusCompletedHandler,
   IdleSupportHandler
 } from '../_handlers';
+import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
+import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -49,6 +53,14 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    handler: NeedsAssessmentStartedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
+    }).required()
+  },
+
   [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     handler: NeedsAssessmentCompletedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
@@ -66,6 +78,8 @@ export const NOTIFICATIONS_CONFIG: {
         id: Joi.string().guid().required(),
         status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
         statusChanged: Joi.boolean().strict().required(),
+        newAssignedAccessors: Joi.array().items(Joi.object({id: Joi.string().guid().required()})),
+        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).trim().required()
       }).required()
     }).required()
   },
@@ -84,7 +98,7 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION]['action']>({
         id: Joi.string().guid().required(),
-        section: Joi.string().valid(...Object.values(InnovationSectionCatalogueEnum)).required()
+        section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required()
       }).required()
     }).required()
   },
@@ -95,7 +109,7 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]['action']>({
         id: Joi.string().guid().required(),
-        section: Joi.string().valid(...Object.values(InnovationSectionCatalogueEnum)).required(),
+        section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required(),
         status: Joi.string().valid(...Object.values(InnovationActionStatusEnum)).required()
       }).required()
     }).required()
@@ -191,6 +205,23 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    handler: InnovationRecordExportRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      requestId: Joi.string().guid().required(),
+    }).required(),
+  },
+
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    handler: InnovationRecordExportFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
+      innovationId: Joi.string().guid().required(),
+      requestId: Joi.string().guid().required(),
+    }).required(),
+  },
+
+  
   // RECURRENT
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,

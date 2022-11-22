@@ -1,16 +1,16 @@
+import axios from 'axios';
 import { injectable } from 'inversify';
 import { Secret, sign } from 'jsonwebtoken';
-import axios from 'axios';
 import { v4 as uuid } from 'uuid';
 
-import { ServiceUnavailableError, UnprocessableEntityError, EmailErrorsEnum, GenericErrorsEnum } from '@notifications/shared/errors';
+import { EmailErrorsEnum, GenericErrorsEnum, ServiceUnavailableError, UnprocessableEntityError } from '@notifications/shared/errors';
 
 import type { NotificationLogTypeEnum } from '@notifications/shared/enums/notification.enums';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
-import { BaseService } from './base.service';
 import { NotificationLogEntity } from '@notifications/shared/entities/user/notification-log.entity';
+import { BaseService } from './base.service';
 
 
 type apiResponseDTO = {
@@ -121,7 +121,7 @@ export class EmailService extends BaseService {
   }
 
 
-  private async createRecurrentNotificationLog(log: { type: NotificationLogTypeEnum; params: Record<string, string | number>; } | undefined) {
+  private async createRecurrentNotificationLog(log: { type: NotificationLogTypeEnum; params: Record<string, string | number>; } | undefined) : Promise<void> {
     if (log) {
 
 
@@ -146,7 +146,7 @@ export class EmailService extends BaseService {
     }
   }
 
-  private async sendEmailNotifyNHS<T extends EmailTypeEnum>(apiProperties: apiClientParamsType<EmailTemplatesType[T]>, toEmail: string) {
+  private async sendEmailNotifyNHS<T extends EmailTypeEnum>(apiProperties: apiClientParamsType<EmailTemplatesType[T]>, toEmail: string) : Promise<void> {
     const response = await axios.post<apiResponseDTO>(
       new URL(this.apiEmailPath, this.apiBaseUrl).toString(),
       apiProperties,

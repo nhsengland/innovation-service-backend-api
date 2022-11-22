@@ -1,4 +1,4 @@
-import { Entity, Index, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -8,15 +8,16 @@ import { SubgroupBenefitCatalogueEnum } from '../../enums/catalog.enums';
 
 
 @Entity('innovation_patients_citizens_benefit')
-@Index(['type', 'innovation'], { unique: true })
 export class InnovationPatientsCitizensBenefitEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: SubgroupBenefitCatalogueEnum })
+  @PrimaryColumn({ type: 'simple-enum', enum: SubgroupBenefitCatalogueEnum, nullable: false })
   type: SubgroupBenefitCatalogueEnum;
 
+  @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
+  innovationId: string;
 
-  @PrimaryColumn({ name: 'innovation_id', type: 'uniqueidentifier' })
-  @ManyToOne(() => InnovationEntity)
+
+  @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 

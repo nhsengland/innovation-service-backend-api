@@ -2,11 +2,11 @@ import { injectable } from 'inversify';
 
 import { SurveyAnswersType, SurveyModel } from '@users/shared/schemas';
 
-import { BaseAppService } from "./base-app.service";
+import { BaseService } from './base.service';
 
 
 @injectable()
-export class SurveyService extends BaseAppService {
+export class SurveyService extends BaseService {
 
 	constructor() {
 		super();

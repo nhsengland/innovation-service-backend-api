@@ -1,35 +1,109 @@
-import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import type { DateISOType } from '@innovations/shared/types';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
-  id: string | null;
-  section: InnovationSectionCatalogueEnum | null;
-  status: InnovationSectionStatusEnum | null;
-  actionStatus: InnovationActionStatusEnum | null;
-  updatedAt: DateISOType | null;
-  submittedAt: DateISOType | null;
+  id: string | null,
+  section: InnovationSectionEnum | null,
+  status: InnovationSectionStatusEnum | null,
+  actionStatus: InnovationActionStatusEnum | null,
+  updatedAt: DateISOType | null,
+  submittedAt: DateISOType | null
 }
 
 export type InnovationAssessmentType = {
-  id: string;
-  summary: null | string;
-  description: null | string;
-  finishedAt: null | DateISOType;
-  assignTo: { id: string, name: string };
-  maturityLevel: null | string;
-  maturityLevelComment: null | string;
-  hasRegulatoryApprovals: null | string;
-  hasRegulatoryApprovalsComment: null | string;
-  hasEvidence: null | string;
-  hasEvidenceComment: null | string;
-  hasValidation: null | string;
-  hasValidationComment: null | string;
-  hasProposition: null | string;
-  hasPropositionComment: null | string;
-  hasCompetitionKnowledge: null | string;
-  hasCompetitionKnowledgeComment: null | string;
-  hasImplementationPlan: null | string;
-  hasImplementationPlanComment: null | string;
-  hasScaleResource: null | string;
-  hasScaleResourceComment: null | string;
+  id: string,
+  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
+  summary: null | string,
+  description: null | string,
+  finishedAt: null | DateISOType,
+  assignTo: { id: string, name: string },
+  maturityLevel: null | MaturityLevelCatalogueEnum,
+  maturityLevelComment: null | string,
+  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueEnum,
+  hasRegulatoryApprovalsComment: null | string,
+  hasEvidence: null | YesPartiallyNoCatalogueEnum,
+  hasEvidenceComment: null | string,
+  hasValidation: null | YesPartiallyNoCatalogueEnum,
+  hasValidationComment: null | string,
+  hasProposition: null | YesPartiallyNoCatalogueEnum,
+  hasPropositionComment: null | string,
+  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueEnum,
+  hasCompetitionKnowledgeComment: null | string,
+  hasImplementationPlan: null | YesPartiallyNoCatalogueEnum,
+  hasImplementationPlanComment: null | string,
+  hasScaleResource: null | YesPartiallyNoCatalogueEnum,
+  hasScaleResourceComment: null | string,
+  suggestedOrganisations: OrganisationWithUnitsType[],
+  updatedAt: null | DateISOType,
+  updatedBy: { id: string, name: string }
+};
+
+export type ThreadListModel = {
+  count: number,
+  threads: {
+    id: string,
+    subject: string,
+    messageCount: number,
+    createdAt: DateISOType,
+    isNew: boolean,
+    lastMessage: {
+      id: string,
+      createdAt: DateISOType,
+      createdBy: {
+        id: string,
+        name: string,
+        type: UserTypeEnum,
+        organisationUnit: null | { id: string, name: string, acronym: string }
+      }
+    }
+  }[]
+};
+
+export type LastSupportStatusType = {
+  statusChangedAt: Date;
+  currentStatus: InnovationSupportStatusEnum;
+  organisation: { id: string, name: string, acronym: string };
+  organisationUnit: { id: string, name: string, acronym: string };
 }
+
+
+export type InnovationExportRequestItemType = {
+  id: string,
+  status: InnovationExportRequestStatusEnum,
+  isExportable: boolean,
+  requestReason: string,
+  rejectReason?: null | string,
+  expiresAt?: DateISOType, // Returned only when "opened".
+  organisation: {
+    id: string,
+    name: string,
+    acronym: null | string, 
+    organisationUnit: { id: string, name: string, acronym: null | string }
+  },
+  createdAt: DateISOType,
+  createdBy: {  
+    id: string,
+    name: string
+  },
+  updatedAt: DateISOType
+}
+
+export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
+
+export type InnovationExportSectionAnswerType = {
+  label: string;
+  value: string;
+}
+
+export type InnovationExportSectionItemType = {
+  section: string;
+  answers: InnovationExportSectionAnswerType[];
+}
+
+export type InnovationExportSectionType = InnovationExportSectionItemType;
+
+export type InnovationAllSectionsType = {
+  title: string;
+  sections: InnovationExportSectionType[];
+}[];
+

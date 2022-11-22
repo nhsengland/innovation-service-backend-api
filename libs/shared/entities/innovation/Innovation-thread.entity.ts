@@ -20,10 +20,10 @@ export class InnovationThreadEntity extends BaseEntity {
   subject: string;
 
   @Column({ type: 'simple-enum', name: 'context_type', enum: ThreadContextTypeEnum, nullable: true })
-  contextType: ThreadContextTypeEnum;
+  contextType: ThreadContextTypeEnum | undefined;
 
   @Column({ type: 'uniqueidentifier', name: 'context_id', nullable: true })
-  contextId: string;
+  contextId: string | undefined;
 
 
   @OneToMany(() => InnovationThreadMessageEntity, message => message.thread, {

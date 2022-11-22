@@ -1,0 +1,21 @@
+trigger:
+  batch: true
+  branches:
+    include:
+      - develop
+  paths:
+    include:
+      - '*'
+      - apps/admin
+    exclude:
+      - apps
+
+name: FA_Admin_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:.r)
+
+pool:
+  vmImage: ubuntu-latest
+
+extends:
+  template: ../../../.pipelines/build-function-app.yml
+  parameters:
+      appName: admin

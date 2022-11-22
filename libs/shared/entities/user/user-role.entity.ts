@@ -14,7 +14,7 @@ export class UserRoleEntity extends BaseEntity {
   @PrimaryColumn()
   id: string;
 
-  @Column({ name: 'active_since' })
+  @Column({ name: 'active_since', type: 'datetime2' })
   activeSince: DateISOType;
 
 

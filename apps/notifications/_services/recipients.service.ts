@@ -1,8 +1,8 @@
+import { CommentEntity, IdleSupportViewEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, OrganisationEntity, UserEntity } from '@notifications/shared/entities';
+import { AccessorOrganisationRoleEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@notifications/shared/errors';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
-import { IdentityProviderServiceType, IdentityProviderServiceSymbol } from '@notifications/shared/services';
-import { InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationTransferEntity, InnovationThreadEntity, InnovationThreadMessageEntity, CommentEntity, NotificationEntity, OrganisationEntity, UserEntity, IdleSupportViewEntity } from '@notifications/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationTransferStatusEnum, EmailNotificationTypeEnum, EmailNotificationPreferenceEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum, InnovationSupportStatusEnum } from '@notifications/shared/enums';
-import { NotFoundError, UnprocessableEntityError, InnovationErrorsEnum, OrganisationErrorsEnum, UserErrorsEnum } from '@notifications/shared/errors';
 
 import { BaseService } from './base.service';
 
@@ -132,7 +132,7 @@ export class RecipientsService extends BaseService {
   }
 
   async innovationSharedOrganisationsWithUnits(innovationId: string): Promise<{
-    id: string, name: string, acronym: string, organisationUnits: { id: string, name: string, acronym: string }[]
+    id: string, name: string, acronym: null | string, organisationUnits: { id: string, name: string, acronym: string }[]
   }[]> {
 
     const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
@@ -365,7 +365,7 @@ export class RecipientsService extends BaseService {
   }
 
   async organisationUnitInfo(organisationUnitId: string): Promise<{
-    organisation: { id: string, name: string, acronym: string },
+    organisation: { id: string, name: string, acronym: null | string },
     organisationUnit: { id: string, name: string, acronym: string }
   }> {
 
@@ -565,7 +565,18 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async idleSupportsByInnovation() {
+  async idleSupportsByInnovation() : Promise<{
+    innovationId: string;
+    values: {
+        identityId: string;
+        innovationId: string;
+        ownerId: string;
+        ownerIdentityId: string;
+        unitId: string;
+        unitName: string;
+        innovationName: string;
+    }[];
+  }[]>{
     try {
 
       const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
@@ -591,14 +602,33 @@ export class RecipientsService extends BaseService {
     }
   }
 
-  // private mapIdleSupports(idleSupports: IdleSupportViewEntity[]) {
-  //   const groupedByInnovation = _.reduce(
-  //     _.groupBy(idleSupports, 'innovationId'),
-  //     (result: any, value, key) => {
-  //       result[key] = _.groupBy(value, 'organisationUnitId');
-  //       return result;
-  //     }, {});
+  async getExportRequestWithRelations(requestId: string): Promise<{exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; }}> {
+    const request = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
+      .where('request.id = :requestId', { requestId })
+      .getOne();
+    
+    if (!request) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
+    }
 
-  //   return groupedByInnovation;
-  // }
+    const createdBy = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :id', { id: request.createdBy }).getOne();
+
+    if (!createdBy) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    const createdByUser = await this.identityProviderService.getUserInfo(createdBy.identityId);
+    
+    return {
+      exportRequest: request,
+      createdBy: {
+        id: createdBy.id,
+        identityId: createdBy.identityId,
+        name: createdByUser.displayName,
+      },
+    }
+  }
+
 }

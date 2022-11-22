@@ -1,24 +1,21 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import type {
-  CustomContextType
-} from '@innovations/shared/types'
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JwtDecoder } from '@innovations/shared/decorators'
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
+
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsType, ParamsSchema } from './validation.schema';
 
 
-class UpdateInnovationAssessment {
+class V1InnovationAssessmentUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -34,12 +31,12 @@ class UpdateInnovationAssessment {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
-        .checkInnovation({ status: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+        .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
 
       const result = await innovationAssessmentsService.updateInnovationAssessment(
-        { id: requestUser.id },
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         params.innovationId,
         params.assessmentId,
         body
@@ -48,16 +45,17 @@ class UpdateInnovationAssessment {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
   }
 }
 
-export default openApi(UpdateInnovationAssessment.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments/{assessmentId}', {
+export default openApi(V1InnovationAssessmentUpdate.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments/{assessmentId}', {
   put: {
     summary: 'Update an innovation assessment',
     description: 'Update an innovation assessment.',
+    operationId: 'v1-innovation-assessment-update',
     parameters: [
       {
         name: 'innovationId',

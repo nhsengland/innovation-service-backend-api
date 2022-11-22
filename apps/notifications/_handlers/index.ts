@@ -15,6 +15,7 @@ export { InnovationTransferOwnershipCompletedHandler } from './innovation-transf
 export { InnovationTransferOwnershipCreationHandler } from './innovation-transfer-ownership-creation.handler';
 export { InnovatorAccountCreationHandler } from './innovator-account-creation.handler';
 export { LockUserHandler } from './lock-user.handler';
+export { NeedsAssessmentStartedHandler } from './needs-assessment-started.handler';
 export { NeedsAssessmentCompletedHandler } from './needs-assessment-completed.handler';
 export { SLSValidationHandler } from './sls-validation.handler';
 export { ThreadCreationHandler } from './thread-creation.handler';

@@ -1,0 +1,44 @@
+# File: simple-param.yml
+parameters:
+- name: appName
+  type: string
+- name: hasApim
+  type: boolean
+  default: true
+
+steps:
+- task: NodeTool@0
+  displayName: 'Install Node 14'
+  inputs:
+    versionSpec: '14.x'
+
+- task: CmdLine@2
+  displayName: 'Build APP'
+  inputs:
+    script: |
+      npm install &&
+      npm run app:configure --app=${{parameters.appName}} &&
+      npm run app:build --app=${{parameters.appName}} &&
+      cp -r node_modules dist/apps/${{parameters.appName}}
+
+- ${{ if eq(parameters.hasApim, true) }}:
+  - task: CmdLine@2
+    displayName: 'Copy apim'
+    inputs:
+      script: cp -r apps/${{parameters.appName}}/.apim dist/apps/${{parameters.appName}}
+
+- task: ArchiveFiles@2
+  displayName: 'Archive files'
+  inputs:
+    rootFolderOrFile: 'dist/apps/${{parameters.appName}}'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/${{parameters.appName}}.zip'
+    replaceExistingArchive: true
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifact'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/${{parameters.appName}}.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'

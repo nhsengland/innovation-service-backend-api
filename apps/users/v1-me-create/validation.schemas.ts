@@ -2,11 +2,12 @@ import Joi from 'joi';
 
 
 export type BodyType = {
-  token: string
-  surveyId: string,
+  identityId?: string,
+  token?: string,
+  surveyId?: null | string
 }
-
 export const BodySchema = Joi.object<BodyType>({
-  surveyId: Joi.string().required(),
-  token: Joi.string().required()
-}).required();
+  identityId: Joi.string().guid().optional(),
+  token: Joi.string().optional(),
+  surveyId: Joi.string().optional().allow(null)
+}).or('identityId', 'token').required();

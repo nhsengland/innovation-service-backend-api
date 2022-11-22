@@ -1,9 +1,9 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums';
-import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
+import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity, NotificationEntity } from '../../entities';
 import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
-import type { ActivityLogTemplatesType, ActivityLogDBParamsType, ActivitiesParamsType } from '../../types';
+import type { ActivityLogTemplatesType, ActivitiesParamsType } from '../../types';
 
 import type { FileStorageServiceType } from '../interfaces';
 
@@ -101,15 +101,9 @@ export class DomainInnovationsService {
     transactionManager: EntityManager,
     user: { id: string, organisationUnitId: string },
     innovation: { id: string },
+    supportStatus: InnovationSupportStatusEnum,
     supportLog: { type: InnovationSupportLogTypeEnum, description: string, suggestedOrganisationUnits: string[] }
   ): Promise<{ id: string }> {
-
-    // Fetch support status of the request user.
-    const userSupport = await this.innovationSupportRepository.createQueryBuilder('support')
-      .where('support.innovation.id = :innovationId ', { innovationId: innovation.id, })
-      .andWhere('support.organisation_unit_id = :organisationUnitId', { organisationUnitId: user.organisationUnitId })
-      .getOne();
-    const supportStatus = userSupport?.status || InnovationSupportStatusEnum.UNASSIGNED;
 
     const supportLogData = InnovationSupportLogEntity.new({
       innovation: InnovationEntity.new({ id: innovation.id }),
@@ -141,8 +135,6 @@ export class DomainInnovationsService {
     params: ActivitiesParamsType<T>
   ): Promise<void> {
 
-    const dbParams = { ...params } as ActivityLogDBParamsType;
-
     const activityLog = ActivityLogEntity.new({
       innovation: InnovationEntity.new({ id: configuration.innovationId }),
       activity: configuration.activity,
@@ -151,15 +143,7 @@ export class DomainInnovationsService {
       updatedBy: configuration.userId,
       param: JSON.stringify({
         actionUserId: configuration.userId,
-        interveningUserId: dbParams.interveningUserId ?? undefined,
-        assessmentId: dbParams.assessmentId ?? undefined,
-        innovationSupportStatus: dbParams.innovationSupportStatus ?? undefined,
-        sectionId: dbParams.sectionId ?? undefined,
-        actionId: dbParams.actionId ?? undefined,
-        organisations: dbParams.organisations ?? undefined,
-        organisationUnit: dbParams.organisationUnit ?? undefined,
-        comment: dbParams.comment ?? undefined,
-        totalActions: dbParams.totalActions ?? undefined
+        ...params
       })
     });
 
@@ -188,6 +172,7 @@ export class DomainInnovationsService {
       case ActivityEnum.INNOVATION_SUBMISSION:
       case ActivityEnum.NEEDS_ASSESSMENT_START:
       case ActivityEnum.NEEDS_ASSESSMENT_COMPLETED:
+      case ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED:
         return ActivityTypeEnum.NEEDS_ASSESSMENT;
 
       case ActivityEnum.ORGANISATION_SUGGESTION:
@@ -197,6 +182,9 @@ export class DomainInnovationsService {
       case ActivityEnum.COMMENT_CREATION:
         return ActivityTypeEnum.COMMENTS;
 
+      case ActivityEnum.THREAD_CREATION:
+      case ActivityEnum.THREAD_MESSAGE_CREATION:
+        return ActivityTypeEnum.THREADS;
 
       case ActivityEnum.ACTION_CREATION:
       case ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE:
@@ -210,6 +198,25 @@ export class DomainInnovationsService {
 
   }
 
+
+  async getUnreadNotifications(userId: string, contextIds: string[]): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
+
+    const notifications = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+      .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
+      .innerJoinAndSelect('notificationUsers.user', 'user')
+      .where('notification.context_id IN (:...contextIds)', { contextIds })
+      .andWhere('user.id = :userId', { userId })
+      .andWhere('notificationUsers.read_at IS NULL')
+      .getMany();
+
+    return notifications.map(item => ({
+      id: item.id,
+      contextType: item.contextType,
+      contextId: item.contextId,
+      params: item.params
+    }));
+
+  }
 
 
   async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void> {
@@ -228,4 +235,11 @@ export class DomainInnovationsService {
     }
   }
 
+  async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    return innovation;
+  }
 }

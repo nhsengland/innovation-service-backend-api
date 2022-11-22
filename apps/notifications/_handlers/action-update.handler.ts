@@ -1,7 +1,5 @@
 import {
-  InnovationActionStatusEnum, InnovationSectionCatalogueEnum,
-  NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum,
-  UserTypeEnum
+  InnovationActionStatusEnum, InnovationSectionEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum
 } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -15,7 +13,7 @@ import { BaseHandler } from './base.handler';
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
   EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
-  { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionCatalogueEnum }
+  { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionEnum }
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
@@ -67,7 +65,7 @@ export class ActionUpdateHandler extends BaseHandler<
       userIds: [this.data.actionInfo?.owner.id || ''],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the suipplied action status, NOT the action status from query.
+        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
         section: this.inputData.action.section
       }
     });
@@ -82,7 +80,7 @@ export class ActionUpdateHandler extends BaseHandler<
       userIds: [this.data.innovation?.owner.id || ''],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the suipplied action status, NOT the action status from query.
+        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
         section: this.inputData.action.section
       }
     });

@@ -1,19 +1,19 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
+    JwtDecoder
+} from '@innovations/shared/decorators';
+import {
+    AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
-import {
-  JwtDecoder,
-} from '@innovations/shared/decorators'
 
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
-import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
-import type { CustomContextType } from '@innovations/shared/types';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class GetInnovationTransfer {
 
@@ -44,7 +44,7 @@ class GetInnovationTransfer {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 

@@ -1,87 +1,86 @@
 import { inject, injectable } from 'inversify';
-import type { Repository } from 'typeorm';
 
-import {
-  DomainServiceType, DomainServiceSymbol, FileStorageServiceType, FileStorageServiceSymbol,
-} from '@innovations/shared/services';
-
-import { INNOVATION_SECTIONS_CONFIG } from '../_config';
-import { BaseAppService } from './base-app.service';
-import { InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSectionStatusEnum, InnovationStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { InnovationActionEntity, InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
+import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
+
+import { BaseService } from './base.service';
+
+import type { InnovationSectionModel } from '../_types/innovation.types';
+import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 
 
 @injectable()
-export class InnovationSectionsService extends BaseAppService {
-
-  innovationRepository: Repository<InnovationEntity>;
+export class InnovationSectionsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType
-  ) {
-    super();
-    this.innovationRepository = this.sqlConnection.getRepository<InnovationEntity>(InnovationEntity);
-  }
+    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+  ) { super(); }
 
 
-  async getInnovationSectionsList(innovationId: string): Promise<{
-    id: string,
-    name: string,
-    status: InnovationStatusEnum,
-    sections: {
-      id: null | string,
-      section: InnovationSectionCatalogueEnum,
-      status: InnovationSectionStatusEnum,
-      submittedAt: null | DateISOType
-    }[]
-  }> {
+  async getInnovationSectionsList(
+    user: { type: UserTypeEnum },
+    innovationId: string
+  ): Promise<{
+    id: null | string,
+    section: InnovationSectionEnum,
+    status: InnovationSectionStatusEnum,
+    submittedAt: null | DateISOType,
+    openActionsCount: number
+  }[]> {
 
-    const innovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
-
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
     const sections = await innovation.sections;
 
-    return {
-      id: innovation.id,
-      name: innovation.name,
-      status: innovation.status,
-      sections: Object.values(InnovationSectionCatalogueEnum).map(sectionKey => {
+    const openActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+      .select('sections.section', 'section')
+      .addSelect('COUNT(actions.id)', 'actionsCount')
+      .innerJoin('actions.innovationSection', 'sections')
+      .where('sections.innovation_id = :innovationId', { innovationId })
+      .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id) })
+      .groupBy('sections.section');
 
-        const section = sections.find(item => item.section === sectionKey);
+    if (user.type === UserTypeEnum.ACCESSOR) {
+      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
+    } else if (user.type === UserTypeEnum.INNOVATOR) {
+      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+    }
 
-        if (section) {
-          return {
-            id: section.id,
-            section: section.section,
-            status: section.status,
-            submittedAt: section.submittedAt
-          };
-        } else {
-          return {
-            id: null,
-            section: sectionKey,
-            status: InnovationSectionStatusEnum.NOT_STARTED,
-            submittedAt: null
-          };
-        }
+    const openActionsResult: { section: string, actionsCount: number }[] = await openActionsQuery.getRawMany();
 
-      })
-    };
+
+    return Object.values(InnovationSectionEnum).map(sectionKey => {
+
+      const section = sections.find(item => item.section === sectionKey);
+
+      if (section) {
+
+        const openActionsCount = openActionsResult.find(item => item.section === sectionKey)?.actionsCount ?? 0;
+
+        return { id: section.id, section: section.section, status: section.status, submittedAt: section.submittedAt, openActionsCount };
+
+      } else {
+        return { id: null, section: sectionKey, status: InnovationSectionStatusEnum.NOT_STARTED, submittedAt: null, openActionsCount: 0 };
+      }
+
+    });
 
   }
 
 
-  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{
+  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum): Promise<{
     id: null | string,
-    section: InnovationSectionCatalogueEnum,
+    section: InnovationSectionEnum,
     status: InnovationSectionStatusEnum,
     submittedAt: null | DateISOType
     data: null | { [key: string]: any }
@@ -92,7 +91,7 @@ export class InnovationSectionsService extends BaseAppService {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('sections.files', 'sectionFiles')
       .where('innovation.id = :innovationId', { innovationId })
@@ -136,7 +135,7 @@ export class InnovationSectionsService extends BaseAppService {
   async updateInnovationSectionInfo(
     user: { id: string },
     innovationId: string,
-    sectionKey: InnovationSectionCatalogueEnum,
+    sectionKey: InnovationSectionEnum,
     dataToUpdate: { [key: string]: any }
   ): Promise<{ id: string | undefined }> {
 
@@ -145,7 +144,7 @@ export class InnovationSectionsService extends BaseAppService {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('sections.files', 'sectionFiles')
       .where('innovation.id = :innovationId AND innovation.owner_id = :userId', { innovationId, userId: user.id })
@@ -227,9 +226,9 @@ export class InnovationSectionsService extends BaseAppService {
   }
 
 
-  async submitInnovationSection(user: { id: string, name: string }, innovationId: string, sectionKey: InnovationSectionCatalogueEnum): Promise<{ id: string }> {
+  async submitInnovationSection(user: { id: string, identityId: string; type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum): Promise<{ id: string }> {
 
-    const dbInnovation = await this.innovationRepository.createQueryBuilder('innovation')
+    const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId AND innovation.owner_id = :userId', { innovationId, userId: user.id })
       .getOne();
@@ -243,7 +242,9 @@ export class InnovationSectionsService extends BaseAppService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
     if (dbSection.status !== InnovationSectionStatusEnum.DRAFT) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_WITH_UNPROCESSABLE_STATUS);
+      // TODO: TechDebt #116721 this should be reviewed, as it is not possible to submit a section that is not in draft.
+      // throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_WITH_UNPROCESSABLE_STATUS);
+      return { id: dbSection.id };
     }
 
 
@@ -279,47 +280,19 @@ export class InnovationSectionsService extends BaseAppService {
           { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
+
+        await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+          { id: user.id, identityId: user.identityId, type: user.type },
+          NotifierTypeEnum.ACTION_UPDATE,
+          {
+            innovationId: dbInnovation.id,
+            action: {
+              id: requestedStatusActions[0]!.id,
+              section: savedSection.section,
+              status: InnovationActionStatusEnum.IN_REVIEW
+            }
+          });
       }
-
-
-      //for (const action of requestedStatusActions) {
-      // for (let index = 0; index < updatedActions.length; index++) {
-
-      // const element = updatedActions[index];
-      // targetNotificationUsers = [element.createdBy];
-
-      // TODO: Update when notifications are in place.
-      // try {
-      //   await this.notificationService.create(
-      //     requestUser,
-      //     NotificationAudience.ACCESSORS,
-      //     innovationId,
-      //     NotificationContextType.ACTION,
-      //     element.id,
-      //     `The action with id ${element.id} was updated by the innovator with id ${requestUser.id} for the innovation with id ${innovationId}`,
-      //     targetNotificationUsers
-      //   );
-      // } catch (error) {
-      //   this.logService.error(
-      //     `An error has occured while creating a notification of type ${NotificationContextType.ACTION} from ${requestUser.id}`,
-      //     error
-      //   );
-      // }
-
-
-      // Send e-mail to accessor.
-      // TODO: Should we stop operaiton if email fails??????
-      // const usersInfo = await this.domainService.users.getUsersList({ userIds: [action.createdBy] });
-      // for (const userInfo of usersInfo) { // UsersInfo will have only 1 item!
-      //   // TODO: TECH DEBT: the action_url must be filled! Need to implement an easy solution for this!
-      //   await this.emailService.sendEmail<'ACCESSORS_ACTION_TO_REVIEW'>(
-      //     'ACCESSORS_ACTION_TO_REVIEW',
-      //     userInfo.email,
-      //     { innovator_name: user.name, innovation_name: dbInnovation.name, action_url: '' }
-      //   )
-      // }
-
-      //}
 
       return { id: savedSection.id };
 
@@ -328,15 +301,90 @@ export class InnovationSectionsService extends BaseAppService {
 
   }
 
+  async findAllSections(innovationId: string): Promise<{ innovation: { name: string }, innovationSections: { section: InnovationSectionModel, data: Record<string, string> }[] }> {
+
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.sections', 'sections')
+      .leftJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('sections.files', 'files')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const sections = await innovation.sections;
+    const innovationSections: { section: InnovationSectionModel, data: Record<string, string> }[] = [];
+
+    for (const key in InnovationSectionEnum) {
+
+      const section = sections.find((sec) => sec.section === key);
+
+      if (!section) {
+        continue;
+      }
+
+      const sectionFields = INNOVATION_SECTIONS_CONFIG[key as InnovationSectionEnum];
+
+      innovationSections.push({
+        section: this.getInnovationSectionMetadata(key, section),
+        data: await this.parseSectionInformation(
+          innovation,
+          section?.files,
+          {
+            fields: sectionFields.innovationFields,
+            lookupTables: sectionFields.lookupTables,
+            dependencies: sectionFields.innovationDependencies,
+            allowFileUploads: sectionFields.allowFileUploads
+          }
+        )
+      });
+
+    }
+
+    return {
+      innovation: { name: innovation.name },
+      innovationSections
+    };
+
+  }
+
+  private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {
+
+    let result: InnovationSectionModel;
+
+    if (section) {
+      result = {
+        id: section.id,
+        section: section.section,
+        status: section.status,
+        updatedAt: section.updatedAt,
+        submittedAt: section.submittedAt,
+        actionStatus: null,
+      };
+    } else {
+      result = {
+        id: null,
+        section: InnovationSectionEnum[key as keyof typeof InnovationSectionEnum],
+        status: InnovationSectionStatusEnum.NOT_STARTED,
+        updatedAt: null,
+        submittedAt: null,
+        actionStatus: null,
+      };
+    }
+
+    return result;
+  }
 
   private async parseSectionUpdate(
     user: { id: string },
     entity: { [key: string]: any }, // This variable should hold an TypeORM entity.
     config: {
       fields: string[],
-      lookupTables?: string[] | undefined,
-      dependencies?: { table: string; fields: string[]; lookupTables?: string[]; }[] | undefined
-      allowFileUploads?: boolean | undefined
+      lookupTables?: undefined | string[],
+      dependencies?: undefined | { table: string, fields: string[], lookupTables?: string[] }[]
+      allowFileUploads?: undefined | boolean
     },
     dataToUpdate: { [key: string]: any }
   ): Promise<{ [key: string]: any }> {

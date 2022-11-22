@@ -1,5 +1,5 @@
-import 'reflect-metadata';
 import { Container } from 'inversify';
+import 'reflect-metadata';
 
 import {
   AuthorizationService, AuthorizationServiceSymbol, AuthorizationServiceType,
@@ -14,12 +14,12 @@ import {
 
 import { DispatchService } from '../_services/dispatch.service';
 import { EmailService } from '../_services/email.service';
-import { RecipientsService } from '../_services/recipients.service';
 import {
   DispatchServiceSymbol, DispatchServiceType,
   EmailServiceSymbol, EmailServiceType,
   RecipientsServiceSymbol, RecipientsServiceType
 } from '../_services/interfaces';
+import { RecipientsService } from '../_services/recipients.service';
 
 import { startup } from './startup';
 
@@ -39,4 +39,4 @@ container.bind<DispatchServiceType>(DispatchServiceSymbol).to(DispatchService).i
 container.bind<EmailServiceType>(EmailServiceSymbol).to(EmailService).inSingletonScope();
 container.bind<RecipientsServiceType>(RecipientsServiceSymbol).to(RecipientsService).inSingletonScope();
 
-startup();
+void startup();

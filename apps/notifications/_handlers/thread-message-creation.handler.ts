@@ -1,8 +1,5 @@
 import {
-  EmailNotificationTypeEnum,
-  NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum,
-  UserTypeEnum,
-  EmailNotificationPreferenceEnum
+  EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -108,7 +105,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
   }
 
 
-  private pushInAppNotifications( threadIntervenientUsers: ThreadIntervinientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) {
+  private pushInAppNotifications( threadIntervenientUsers: ThreadIntervinientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
     
     const inAppRecipients = threadIntervenientUsers.map(item => item.id);
 

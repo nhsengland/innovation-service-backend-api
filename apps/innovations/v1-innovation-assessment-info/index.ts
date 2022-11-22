@@ -1,23 +1,19 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import type {
-  CustomContextType
-} from '@innovations/shared/types'
-
+import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { JwtDecoder } from '@innovations/shared/decorators'
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
-import type { ResponseDTO } from './transformation.dtos';
+
 import { ParamsSchema, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
 
 
-class GetInnovationAssessmentInfo {
+class V1InnovationAssessmentInfo {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -40,6 +36,7 @@ class GetInnovationAssessmentInfo {
       const result = await innovationAssessmentsService.getInnovationAssessmentInfo(params.assessmentId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
+        ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
         summary: result.summary,
         description: result.description,
         finishedAt: result.finishedAt,
@@ -63,12 +60,14 @@ class GetInnovationAssessmentInfo {
         suggestedOrganisations: result.suggestedOrganisations.map(item => ({
           id: item.id, name: item.name, acronym: item.acronym,
           units: item.units
-        }))
+        })),
+        updatedAt: result.updatedAt,
+        updatedBy: result.updatedBy
       });
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 
@@ -76,11 +75,12 @@ class GetInnovationAssessmentInfo {
 
 }
 
-export default openApi(GetInnovationAssessmentInfo.httpTrigger as AzureFunction, 'v1/:innovationId/assessment/:assessmentId/info', {
+export default openApi(V1InnovationAssessmentInfo.httpTrigger as AzureFunction, 'v1/:innovationId/assessment/:assessmentId', {
   get: {
     summary: 'Get Innovation Assessment Info',
     description: 'Get Innovation Assessment Info',
     tags: ['Innovation Assessment Info'],
+    operationId: 'v1-innovation-assessment-info',
     parameters: [
       {
         name: 'innovationId',
@@ -167,7 +167,15 @@ export default openApi(GetInnovationAssessmentInfo.httpTrigger as AzureFunction,
                       }
                     }
                   }
-                }
+                },
+                updatedAt: { type: 'string', format: 'date-time' },
+                updatedBy: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', format: 'uuid' },
+                    name: { type: 'string' }
+                  }
+                },
               }
             }
           }

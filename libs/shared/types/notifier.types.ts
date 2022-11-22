@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 
 
@@ -19,7 +19,8 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
     innovationId: string,
     innovationSupport: {
-      id: string, status: InnovationSupportStatusEnum, statusChanged: boolean
+      id: string, status: InnovationSupportStatusEnum, statusChanged: boolean, message: string,
+      newAssignedAccessors?: { id: string }[] // Newly assigned accessors
     }
   },
 
@@ -30,12 +31,12 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.ACTION_CREATION]: {
     innovationId: string,
-    action: { id: string, section: InnovationSectionCatalogueEnum }
+    action: { id: string, section: InnovationSectionEnum }
   },
 
   [NotifierTypeEnum.ACTION_UPDATE]: {
     innovationId: string,
-    action: { id: string, section: InnovationSectionCatalogueEnum, status: InnovationActionStatusEnum }
+    action: { id: string, section: InnovationSectionEnum, status: InnovationActionStatusEnum }
   },
 
   [NotifierTypeEnum.COMMENT_CREATION]: {
@@ -88,9 +89,23 @@ export type NotifierTemplatesType = {
     innovationId: string,
     unitId: string
   },
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    innovationId: string,
+    requestId: string,
+  },
+  
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    innovationId: string,
+    requestId: string
+  },
 
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
   [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    innovationId: string,
+    threadId: string
+  },
 
 }

@@ -20,8 +20,8 @@ export class OrganisationEntity extends BaseEntity {
   @Column({ type: 'simple-enum', enum: OrganisationTypeEnum, nullable: false })
   type: OrganisationTypeEnum;
 
-  @Column({ nullable: true })
-  acronym: string;
+  @Column({ type: 'nvarchar', length: 20, nullable: true })
+  acronym: null | string;
 
   @Column({ type: 'nvarchar', length: 255, nullable: true })
   size: null | string;

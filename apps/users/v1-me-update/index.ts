@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { UserTypeEnum } from '@users/shared/enums';
@@ -12,10 +12,10 @@ import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
-import { AccessorBodySchema, AccessorBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
+import { DefaultUserBodySchema, DefaultUserBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
 
 
-class PutMe {
+class V1MeUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -28,9 +28,13 @@ class PutMe {
       const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
       const requestUser = authInstance.getUserInfo();
 
-      if (requestUser.type === UserTypeEnum.ACCESSOR) {
-        const accessorBody = JoiHelper.Validate<AccessorBodyType>(AccessorBodySchema, request.body);
-        authInstance
+      if ([UserTypeEnum.ADMIN, UserTypeEnum.ASSESSMENT, UserTypeEnum.ACCESSOR].includes(requestUser.type)) {
+
+        const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(DefaultUserBodySchema, request.body);
+
+        await authInstance
+          .checkAdminType()
+          .checkAssessmentType()
           .checkAccessorType()
           .verify();
 
@@ -70,22 +74,17 @@ class PutMe {
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }
   }
 }
 
-export default openApi(PutMe.httpTrigger as AzureFunction, '/v1/me', {
+export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
   put: {
-    summary: 'Update user information',
-    description: 'Update user information',
-    operationId: 'v1-me-update',
-    tags: ['v1'],
     parameters: [],
     requestBody: {
-      description: 'Update user information',
       required: true,
       content: {
         'application/json': {

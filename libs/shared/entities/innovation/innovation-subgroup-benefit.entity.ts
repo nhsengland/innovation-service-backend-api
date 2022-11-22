@@ -11,12 +11,10 @@ import { SubgroupBenefitCatalogueEnum } from '../../enums/catalog.enums';
 @Index(['type', 'innovationSubgroup'], { unique: true })
 export class InnovationSubgroupBenefitEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: SubgroupBenefitCatalogueEnum })
+  @PrimaryColumn({ type: 'simple-enum', enum: SubgroupBenefitCatalogueEnum, nullable: false })
   type: SubgroupBenefitCatalogueEnum;
 
-
-  @PrimaryColumn({ name: 'innovation_subgroup_id', type: 'uniqueidentifier' })
-  @ManyToOne(() => InnovationSubgroupEntity)
+  @ManyToOne(() => InnovationSubgroupEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_subgroup_id' })
   innovationSubgroup: InnovationSubgroupEntity;
 

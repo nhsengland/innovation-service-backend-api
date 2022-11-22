@@ -1,8 +1,8 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { UserTypeEnum } from '../../enums';
 import { UserEntity } from '../../entities';
-import { InternalServerError, NotFoundError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
+import type { UserTypeEnum } from '../../enums';
+import { GenericErrorsEnum, InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainUserInfoType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
@@ -32,8 +32,7 @@ export class DomainUsersService {
       .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
       .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('user.serviceRoles', 'serviceRoles')
-      .leftJoinAndSelect('serviceRoles.role', 'role')
-      .leftJoinAndSelect('user.termsOfUseUser', 'termsOfUseUser', 'accepted_at IS NULL')
+      .leftJoinAndSelect('serviceRoles.role', 'role');
 
     if (data.userId) { query.where('user.id = :userId', { userId: data.userId }); }
     else if (data.identityId) { query.where('user.external_id = :identityId', { identityId: data.identityId }); }
@@ -48,9 +47,6 @@ export class DomainUsersService {
 
     try {
 
-      const userOrganisations = await dbUser.userOrganisations;
-      const termsOfUseAccepted = UserTypeEnum.ADMIN ? true : (await dbUser.termsOfUseUser).length === 0;
-
       return {
         id: dbUser.id,
         identityId: authUser.identityId,
@@ -60,11 +56,10 @@ export class DomainUsersService {
         roles: dbUser.serviceRoles.map(item => item.role.name),
         phone: authUser.phone,
         isActive: !dbUser.lockedAt,
-        termsOfUseAccepted,
         passwordResetAt: authUser.passwordResetAt,
         firstTimeSignInAt: dbUser.firstTimeSignInAt,
         surveyId: dbUser.surveyId,
-        organisations: userOrganisations.map(userOrganisation => {
+        organisations: (await dbUser.userOrganisations).map(userOrganisation => {
 
           const organisation = userOrganisation.organisation;
           const organisationUnits = userOrganisation.userOrganisationUnits;
@@ -94,11 +89,17 @@ export class DomainUsersService {
   async getUsersList(data: { userIds?: string[], identityIds?: string[] }): Promise<{
     id: string,
     identityId: string,
-    email: string,
     displayName: string,
+    email: string,
+    mobilePhone: null | string,
     type: UserTypeEnum
     isActive: boolean
   }[]> {
+    // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
+    // However we're doing needless query since we could force the identityId (only place calling it has it)
+    // and it would also be easy to do in chunks of 1000 users or so.
+    // My suggestion is parameter becomes identity: string[]; if there really is a need in the future to have
+    // both parameters we could add a function that does that part and calls this one
 
     if (!data.userIds && !data.identityIds) {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
@@ -127,8 +128,9 @@ export class DomainUsersService {
       return {
         id: dbUser.id,
         identityId: dbUser.identityId,
-        email: identityUser.email,
         displayName: identityUser.displayName,
+        email: identityUser.email,
+        mobilePhone: identityUser.mobilePhone,
         type: dbUser.type,
         isActive: !dbUser.lockedAt
       };

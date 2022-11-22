@@ -6,7 +6,7 @@ import { container, ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler, } from './base.handler';
+import { BaseHandler } from './base.handler';
 
 
 export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
@@ -27,7 +27,12 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    const suggestedOrganisationUnitsUsers = await this.recipientsService.organisationUnitsQualifyingAccessors(this.inputData.organisationUnitIds);
+    // Retrieve innovation shared organisations units
+    const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(this.inputData.innovationId);
+    const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation => organisation.organisationUnits.map(unit => unit.id));
+    
+    const suggestedSharedOrganisationUnitsIds = sharedOrganisationUnitsIds.filter(id => this.inputData.organisationUnitIds.includes(id));
+    const suggestedOrganisationUnitsUsers = await this.recipientsService.organisationUnitsQualifyingAccessors(suggestedSharedOrganisationUnitsIds);
 
     for (const user of suggestedOrganisationUnitsUsers) {
       this.emails.push({
@@ -36,7 +41,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('accessor/innovations/:innovationId/actions')
+            .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
             .buildUrl()
         }

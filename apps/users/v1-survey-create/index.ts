@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import type { CustomContextType } from '@users/shared/types';
@@ -7,11 +7,11 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import { SurveyServiceSymbol, SurveyServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType } from './validation.schemas';
 
 
-class V1SurveyPOST {
+class V1SurveyCreate {
 
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
@@ -28,7 +28,7 @@ class V1SurveyPOST {
 
     } catch (error) {
 
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
 
     }
@@ -38,7 +38,7 @@ class V1SurveyPOST {
 }
 
 // TODO: Improve parameters
-export default openApi(V1SurveyPOST.httpTrigger as AzureFunction, '/v1/survey', {
+export default openApi(V1SurveyCreate.httpTrigger as AzureFunction, '/v1/survey', {
   post: {
     parameters: [],
     responses: {

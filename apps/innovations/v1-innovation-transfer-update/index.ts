@@ -1,20 +1,19 @@
-import type { HttpRequest } from '@azure/functions'
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType,
-} from '@innovations/shared/services';
-import {
-  JwtDecoder,
-} from '@innovations/shared/decorators'
+import { JwtDecoder } from '@innovations/shared/decorators';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validations.schema';
-import type { CustomContextType } from '@innovations/shared/types';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
-class UpdateInnovationTransfer {
+import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validations.schema';
+
+
+class V1InnovationTransferUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -32,21 +31,21 @@ class UpdateInnovationTransfer {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      await transferService.updateInnovationTransferStatus({
+      const result = await transferService.updateInnovationTransferStatus({
         id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
       }, params.transferId, body.status);
 
-      context.res = ResponseHelper.NoContent();
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
   }
 }
 
-export default openApi(UpdateInnovationTransfer.httpTrigger as any, '/v1/innovation-transfers/{transferId}', {
+export default openApi(V1InnovationTransferUpdate.httpTrigger as AzureFunction, '/v1/innovation-transfers/{transferId}', {
   patch: {
     description: 'Update an innovation transfer status',
     operationId: 'updateInnovationTransferStatus',

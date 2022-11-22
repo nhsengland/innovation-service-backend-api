@@ -1,10 +1,10 @@
 import type { HttpRequest } from '@azure/functions';
 
-import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
 import { JwtDecoder } from '@notifications/shared/decorators';
-import type { CustomContextType } from '@notifications/shared/types';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { ResponseHelper } from '@notifications/shared/helpers';
-import { InnovationActionStatusEnum, InnovationSectionCatalogueEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
+import type { CustomContextType } from '@notifications/shared/types';
 
 import { container } from '../_config';
 // import { ResponseDTO } from './transformation.dtos';
@@ -37,7 +37,15 @@ class V1Health {
             { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD' }
           );
           break;
-
+        
+        case NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED:
+          await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, 
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              threadId: '90D96FD1-B469-ED11-AC20-281878FB7B33'
+            });
+            break;
+        
         case NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED:
           await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
             {
@@ -55,14 +63,29 @@ class V1Health {
           await notifierService.send(requestQA, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
             {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
-              innovationSupport: { id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, statusChanged: true }
+              innovationSupport: {
+                id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, message: 'one test message', statusChanged: true, 
+                // first is the same as the sender, the second is another one (the first shouldn't receive the email notification)
+                newAssignedAccessors: [{ id: requestQA.id }, { id: 'CD136010-453F-4A7D-B9E6-B9B1D73D4CE2' }],
+              }
             }
           );
           break;
 
+        case NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION:
+          await notifierService.send(requestQA, NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              organisationUnitIds: [
+                '7CD3B905-7CB6-EC11-997E-0050F25A43BD', // Shared
+                '729BF5B6-5BBA-EC11-997E-0050F25A43BD', // NOT shared
+              ]
+          });
+          break;
+
         case NotifierTypeEnum.ACTION_CREATION:
           await notifierService.send(requestQA, NotifierTypeEnum.ACTION_CREATION,
-            { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD', action: { id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6', section: InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION } }
+            { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD', action: { id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6', section: InnovationSectionEnum.INNOVATION_DESCRIPTION } }
           );
           break;
 
@@ -72,7 +95,7 @@ class V1Health {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
               action: {
                 id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6',
-                section: InnovationSectionCatalogueEnum.INNOVATION_DESCRIPTION,
+                section: InnovationSectionEnum.INNOVATION_DESCRIPTION,
                 status: InnovationActionStatusEnum.REQUESTED
               }
             }
@@ -149,7 +172,7 @@ class V1Health {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
 

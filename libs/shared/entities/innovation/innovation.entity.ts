@@ -8,10 +8,13 @@ import { InnovationCareSettingEntity } from './innovation-care-setting.entity';
 import { InnovationCategoryEntity } from './innovation-category.entity';
 import { InnovationClinicalAreaEntity } from './innovation-clinical-area.entity';
 import { InnovationDeploymentPlanEntity } from './innovation-deployment-plan.entity';
+import { InnovationDiseaseConditionEntity } from './innovation-disease-condition.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation-environmental-benefit.entity';
 import { InnovationEvidenceEntity } from './innovation-evidence.entity';
+import { InnovationExportRequestEntity } from './innovation-export-request.entity';
 import { InnovationGeneralBenefitEntity } from './innovation-general-benefit.entity';
 import { InnovationPatientsCitizensBenefitEntity } from './innovation-patients-citizens-benefit.entity';
+import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 import { InnovationRevenueEntity } from './innovation-revenue.entity';
 import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationStandardEntity } from './innovation-standard.entity';
@@ -19,6 +22,7 @@ import { InnovationSubgroupEntity } from './innovation-subgroup.entity';
 import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationSupportTypeEntity } from './innovation-support-type.entity';
 import { InnovationUserTestEntity } from './innovation-user-test.entity';
+import { NotificationEntity } from '../user/notification.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
 import { CommentEntity } from '../user/comment.entity';
 import { UserEntity } from '../user/user.entity';
@@ -63,7 +67,6 @@ export class InnovationEntity extends BaseEntity {
 
   @Column({ name: 'description', type: 'nvarchar', nullable: true })
   description: null | string;
-
 
   @Column({ name: 'country_name', length: 100 })
   countryName: string;
@@ -298,7 +301,7 @@ export class InnovationEntity extends BaseEntity {
     lazy: true,
     cascade: ['insert', 'update']
   })
-  evidence: Promise<InnovationEvidenceEntity[]>;
+  evidences: Promise<InnovationEvidenceEntity[]>;
 
   @OneToMany(() => InnovationStandardEntity, record => record.innovation, {
     lazy: true,
@@ -320,7 +323,7 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationSupportTypeEntity, record => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   supportTypes: Promise<InnovationSupportTypeEntity[]>;
 
@@ -336,19 +339,32 @@ export class InnovationEntity extends BaseEntity {
   })
   environmentalBenefits: Promise<InnovationEnvironmentalBenefitEntity[]>;
 
-  @OneToMany(() => InnovationPatientsCitizensBenefitEntity, (record) => record.innovation, {
+  @OneToMany(() => InnovationPatientsCitizensBenefitEntity, record => record.innovation, {
     lazy: true,
     cascade: ['insert', 'update']
   })
-  patientsCitizensBenefits: InnovationPatientsCitizensBenefitEntity[];
+  patientsCitizensBenefits: Promise<InnovationPatientsCitizensBenefitEntity[]>;
+
+  @OneToMany(() => InnovationDiseaseConditionEntity, record => record.innovation, {
+    lazy: true,
+    cascade: ["insert", "update"],
+  })
+  diseasesConditionsImpact: Promise<InnovationDiseaseConditionEntity[]>;
 
   @OneToMany(() => CommentEntity, record => record.innovation, { lazy: true })
   comments: Promise<CommentEntity[]>;
 
-  @OneToMany(() => InnovationSupportEntity, record => record.innovation, {
-    cascade: ['insert', 'update']
-  })
+  @OneToMany(() => InnovationSupportEntity, record => record.innovation, { cascade: ['insert', 'update'] })
   innovationSupports: InnovationSupportEntity[];
+
+  @OneToMany(() => NotificationEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  notifications: Promise<NotificationEntity[]>;
+
+  @OneToMany(() => InnovationReassessmentRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  reassessmentRequests: Promise<InnovationReassessmentRequestEntity[]>;
+
+  @OneToMany(() => InnovationExportRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  exportRequests: Promise<InnovationExportRequestEntity[]>;
 
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {

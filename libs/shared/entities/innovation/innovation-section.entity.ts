@@ -6,7 +6,7 @@ import { InnovationEntity } from './innovation.entity';
 import { InnovationActionEntity } from './innovation-action.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
 
-import { InnovationSectionCatalogueEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
+import { InnovationSectionEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
 import type { DateISOType } from '../../types/date.types';
 
 
@@ -17,21 +17,13 @@ export class InnovationSectionEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'simple-enum',
-    enum: InnovationSectionCatalogueEnum,
-    nullable: false,
-  })
-  section: InnovationSectionCatalogueEnum;
+  @Column({ type: 'simple-enum', enum: InnovationSectionEnum, nullable: false })
+  section: InnovationSectionEnum;
 
-  @Column({
-    type: 'simple-enum',
-    enum: InnovationSectionStatusEnum,
-    nullable: false,
-  })
+  @Column({ type: 'simple-enum', enum: InnovationSectionStatusEnum, nullable: false })
   status: InnovationSectionStatusEnum;
 
-  @Column({ name: 'submitted_at', nullable: true })
+  @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
   submittedAt: DateISOType;
 
 
@@ -39,19 +31,11 @@ export class InnovationSectionEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, record => record.evidence, {
-    nullable: true,
-  })
+  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_section_file',
-    joinColumn: {
-      name: 'innovation_section_id',
-      referencedColumnName: 'id'
-    },
-    inverseJoinColumn: {
-      name: 'innovation_file_id',
-      referencedColumnName: 'id'
-    },
+    joinColumn: { name: 'innovation_section_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
   })
   files: InnovationFileEntity[];
 

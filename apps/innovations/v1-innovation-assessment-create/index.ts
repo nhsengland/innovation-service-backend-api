@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import {
   AuthorizationServiceSymbol, AuthorizationServiceType
@@ -7,16 +7,16 @@ import {
 
 import type {
   CustomContextType
-} from '@innovations/shared/types'
+} from '@innovations/shared/types';
 
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JwtDecoder } from '@innovations/shared/decorators'
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsType, ParamsSchema } from './validation.schema';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 
 
 class CreateInnovationAssessment {
@@ -40,7 +40,7 @@ class CreateInnovationAssessment {
       const requestUser = auth.getUserInfo();
 
       const result = await innovationAssessmentsService.createInnovationAssessment(
-        { id: requestUser.id },
+        requestUser,
         params.innovationId,
         body
       );
@@ -48,7 +48,7 @@ class CreateInnovationAssessment {
       return;
 
     } catch (error) {
-      context.res = ResponseHelper.Error(error);
+      context.res = ResponseHelper.Error(context, error);
       return;
     }
   }
@@ -58,7 +58,7 @@ export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 
   post: {
     summary: 'Create an innovation assessment',
     description: 'Create an innovation assessment.',
-    operationId: 'createInnovationAssessment',
+    operationId: 'v1-innovation-assessment-create',
     tags: ['Innovation Assessment'],
     parameters: [
       {
