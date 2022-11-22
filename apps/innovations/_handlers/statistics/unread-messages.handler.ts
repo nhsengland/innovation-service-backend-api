@@ -1,6 +1,6 @@
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import type { UserTypeEnum } from '@innovations/shared/enums';
-import { container } from 'apps/innovations/_config';
+import { container } from '../../_config';
 import { type StatisticsServiceType, StatisticsServiceSymbol } from 'apps/innovations/_services/interfaces';
 import type { InnovationStatisticsTemplateType } from '../../_config/statistics.config';
 
