@@ -181,7 +181,7 @@ export class InnovationsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(pagination.order || { 'default': 'DESC' })) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'name': field = 'innovations.name'; break;
@@ -667,7 +667,7 @@ export class InnovationsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(pagination.order || { 'default': 'DESC' })) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'createdAt': field = 'activityLog.createdAt'; break;
@@ -727,14 +727,7 @@ export class InnovationsService extends BaseService {
   //   }
   // }
 
-  async createInnovationRecordExportRequest(requestUser: DomainUserInfoType, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
-
-    // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
-    const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
-
-    if (!organisationUnitId) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-    }
+  async createInnovationRecordExportRequest(requestUser: { id: string, identityId: string, type: UserTypeEnum}, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
 
     const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .where('request.innovation_id = :innovationId', { innovationId })
@@ -745,8 +738,6 @@ export class InnovationsService extends BaseService {
     if (unitPendingAndApprovedRequests.length > 0) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
     }
-
-
 
     const request = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
       innovation: InnovationEntity.new({ id: innovationId }),
@@ -836,12 +827,19 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async getInnovationRecordExportRequests(requestUser: DomainUserInfoType, innovationId: string, skip = 0, take = 50): Promise<{
+  async getInnovationRecordExportRequests(
+    requestUser: { id: string, type: UserTypeEnum, organisations: DomainUserInfoType['organisations'] },
+    innovationId: string,
+    filters: {
+      statuses?: InnovationExportRequestStatusEnum[]
+    },
+    pagination: PaginationQueryParamsType<'createdAt' | 'updatedAt'>
+  ): Promise<{
     count: number;
-    data: InnovationExportRequestListType | [],
+    data: InnovationExportRequestListType,
   }> {
 
-    const requestsQuery = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+    const query = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
       .innerJoinAndSelect('request.innovation', 'innovation')
@@ -849,14 +847,27 @@ export class InnovationsService extends BaseService {
 
     if (requestUser.type === 'ACCESSOR') {
       const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
-      requestsQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
 
-    requestsQuery.orderBy('request.createdAt', 'DESC')
-    requestsQuery.skip(skip);
-    requestsQuery.take(take);
+    if (filters.statuses && filters.statuses.length > 0) {
+      query.andWhere('request.status IN (:...statuses)', { statuses: filters.statuses });
+    }
 
-    const [requests, count] = await requestsQuery.getManyAndCount();
+    query.skip(pagination.skip);
+    query.take(pagination.take);
+
+    for (const [key, order] of Object.entries(pagination.order)) {
+      let field: string;
+      switch (key) {
+        case 'updatedAt': field = 'request.updatedAt'; break;
+        default:
+          field = 'request.createdAt'; break;
+      }
+      query.addOrderBy(field, order);
+    }
+
+    const [requests, count] = await query.getManyAndCount();
 
     if (requests.length === 0) {
       return {
@@ -973,7 +984,7 @@ export class InnovationsService extends BaseService {
 
   /**
    * dismisses innovation notification for the requestUser according to optional conditions
-   * 
+   *
    * @param requestUser the user that is dismissing the notification
    * @param innovationId the innovation id
    * @param conditions extra conditions that control the dismissal
