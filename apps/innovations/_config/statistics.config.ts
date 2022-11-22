@@ -1,4 +1,4 @@
-import type { DateISOType } from '@admin/shared/types'
+import type { DateISOType } from '@innovations/shared/types'
 import { InnovationStatisticsEnum } from '../_enums/innovation.enums'
 import { actionsToSubmitStatisticsHandler } from '../_handlers/statistics/actions-to-submit.handler'
 import { sectionsSubmittedStatisticsHandler } from '../_handlers/statistics/sections-submitted.handler'
