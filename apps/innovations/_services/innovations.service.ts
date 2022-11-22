@@ -13,7 +13,6 @@ import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/i
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
 
 import { BaseService } from './base.service';
-import { InnovationHelper } from '../_helpers/innovation.helper';
 
 
 @injectable()
@@ -182,7 +181,7 @@ export class InnovationsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(InnovationHelper.getPaginationOrder(pagination.order))) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'name': field = 'innovations.name'; break;
@@ -668,7 +667,7 @@ export class InnovationsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(InnovationHelper.getPaginationOrder(pagination.order))) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'createdAt': field = 'activityLog.createdAt'; break;
@@ -730,7 +729,6 @@ export class InnovationsService extends BaseService {
 
   async createInnovationRecordExportRequest(requestUser: { id: string, identityId: string, type: UserTypeEnum}, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
 
-    // TODO: Integrate this in the authorization service.
     const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .where('request.innovation_id = :innovationId', { innovationId })
       .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
@@ -859,7 +857,7 @@ export class InnovationsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(InnovationHelper.getPaginationOrder(pagination.order))) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'updatedAt': field = 'request.updatedAt'; break;

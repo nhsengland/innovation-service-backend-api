@@ -10,7 +10,6 @@ import type { DateISOType } from '@innovations/shared/types';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
 import { BaseService } from './base.service';
-import { InnovationHelper } from '../_helpers/innovation.helper';
 
 
 @injectable()
@@ -103,7 +102,7 @@ export class InnovationActionsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(InnovationHelper.getPaginationOrder(pagination.order))) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'displayId': field = 'action.displayId'; break;

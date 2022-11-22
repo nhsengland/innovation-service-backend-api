@@ -32,8 +32,4 @@ export class InnovationHelper {
 
   }
 
-  static getPaginationOrder(order: { [key in string]?: 'ASC' | 'DESC' }): { [key: string]: 'ASC' | 'DESC' | undefined } {
-    return Object.keys(order).length > 0 ? order : { default: 'DESC' };
-  }
-
 }
