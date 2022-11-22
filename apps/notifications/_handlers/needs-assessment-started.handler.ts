@@ -11,7 +11,7 @@ import { BaseHandler } from './base.handler';
 export class NeedsAssessmentStartedHandler extends BaseHandler<
 NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
 EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR,
-{ idontknow: string }
+Record<string, never>
 > {
 
     private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
