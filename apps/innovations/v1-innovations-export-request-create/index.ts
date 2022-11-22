@@ -47,7 +47,7 @@ class V1InnovationsExportRequestsCreate {
       const { requestReason } = body;
 
       const result = await innovationsService.createInnovationRecordExportRequest(
-        { id: requestUser.id },
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         organisationUnitId,
         params.innovationId,
         { requestReason }

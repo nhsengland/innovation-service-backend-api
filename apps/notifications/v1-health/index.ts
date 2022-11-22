@@ -37,7 +37,15 @@ class V1Health {
             { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD' }
           );
           break;
-
+        
+        case NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED:
+          await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, 
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              threadId: '90D96FD1-B469-ED11-AC20-281878FB7B33'
+            });
+            break;
+        
         case NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED:
           await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
             {

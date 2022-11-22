@@ -728,7 +728,7 @@ export class InnovationsService extends BaseService {
   //   }
   // }
 
-  async createInnovationRecordExportRequest(requestUser: { id: string }, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
+  async createInnovationRecordExportRequest(requestUser: { id: string, identityId: string, type: UserTypeEnum}, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
 
     // TODO: Integrate this in the authorization service.
     const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
@@ -751,6 +751,17 @@ export class InnovationsService extends BaseService {
       requestReason: data.requestReason,
     });
 
+    // Create notification
+
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST>(
+      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
+      {
+        innovationId: innovationId,
+        requestId: request.id,
+      }
+    );
+
     return {
       id: request.id,
     };
@@ -770,6 +781,7 @@ export class InnovationsService extends BaseService {
     }
 
     const exportRequest = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .innerJoinAndSelect('request.innovation', 'innovation')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .where('request.id = :exportRequestId', { exportRequestId })
       .getOne();
@@ -799,6 +811,17 @@ export class InnovationsService extends BaseService {
       status,
       rejectReason,
     });
+
+
+    // Create notification
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK>(
+      { id : requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
+      {
+        innovationId: exportRequest.innovation.id,
+        requestId: updatedRequest.id,
+      }
+    );
 
     return {
       id: updatedRequest.id,

@@ -131,6 +131,15 @@ export class InnovationAssessmentsService extends BaseService {
         }
       );
 
+      await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED>(
+        user,
+        NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
+        {
+          innovationId,
+          threadId: thread.thread.id
+        }
+      );
+
       return { id: assessment['id'] };
 
     });

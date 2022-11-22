@@ -20,6 +20,7 @@ import {
   InnovationTransferOwnershipCompletedHandler,
   InnovatorAccountCreationHandler,
   LockUserHandler,
+  NeedsAssessmentStartedHandler,
   NeedsAssessmentCompletedHandler,
   SLSValidationHandler,
   DailyDigestHandler,
@@ -29,6 +30,8 @@ import {
   UnitInactivationSupportStatusCompletedHandler,
   IdleSupportHandler
 } from '../_handlers';
+import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
+import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -47,6 +50,14 @@ export const NOTIFICATIONS_CONFIG: {
     handler: InnovationSubmitedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({
       innovationId: Joi.string().guid().required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    handler: NeedsAssessmentStartedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
+      innovationId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required(),
     }).required()
   },
 
@@ -194,6 +205,23 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    handler: InnovationRecordExportRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      requestId: Joi.string().guid().required(),
+    }).required(),
+  },
+
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    handler: InnovationRecordExportFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
+      innovationId: Joi.string().guid().required(),
+      requestId: Joi.string().guid().required(),
+    }).required(),
+  },
+
+  
   // RECURRENT
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,
