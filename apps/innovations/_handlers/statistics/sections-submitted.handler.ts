@@ -2,7 +2,7 @@ import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import { InnovationSectionEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { container } from 'apps/innovations/_config';
 import { type StatisticsServiceType, StatisticsServiceSymbol } from 'apps/innovations/_services/interfaces';
-import type { InnovationStatisticsTemplateType } from 'apps/innovations/_config/statistics.config';
+import type { InnovationStatisticsTemplateType } from '../../_config/statistics.config';
 
 export const sectionsSubmittedStatisticsHandler = async (
   _: { id: string, identityId: string, type: UserTypeEnum },
