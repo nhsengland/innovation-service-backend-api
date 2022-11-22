@@ -33,14 +33,13 @@ export class InnovationExportRequestEntity extends BaseEntity {
 
   isExportActive: boolean;
   isRequestPending: boolean;
-  requestExpired: boolean;
   exportExpired: boolean;
   exportExpiresAt: Date;
 
 
   @AfterLoad()
   setIsActive(): void {
-    this.isExportActive = this.status === InnovationExportRequestStatusEnum.APPROVED && new Date(this.createdAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+    this.isExportActive = this.status === InnovationExportRequestStatusEnum.APPROVED && new Date(this.updatedAt) > new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
   }
 
   @AfterLoad()
@@ -48,21 +47,16 @@ export class InnovationExportRequestEntity extends BaseEntity {
     this.isRequestPending = this.status === InnovationExportRequestStatusEnum.PENDING;
   }
 
-  // after entity is loaded compute requestExpired. 
-  // expires after 7 days
-  @AfterLoad()
-  setRequestExpired(): void {
-    if (this.status === InnovationExportRequestStatusEnum.PENDING) {
-      this.requestExpired = new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 7);
-    }
-  }
-
   // after entity is loaded compute exportExpired. 
   // expires after 30 days
   @AfterLoad()
   setExportExpired(): void {
     if (this.status === InnovationExportRequestStatusEnum.APPROVED) {
-      this.exportExpired = new Date(this.createdAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+      const isExpired = new Date(this.updatedAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
+
+      if(isExpired) {
+        this.status = InnovationExportRequestStatusEnum.EXPIRED;
+      }
     }
   }
 
