@@ -11,6 +11,7 @@ import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/i
 
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './validation.schemas';
+import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 
 
 class V1InnovationsExportRequestsCreate {
@@ -37,10 +38,17 @@ class V1InnovationsExportRequestsCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
+      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
       const { requestReason } = body;
 
       const result = await innovationsService.createInnovationRecordExportRequest(
-        requestUser,
+        { id: requestUser.id },
+        organisationUnitId,
         params.innovationId,
         { requestReason }
       );

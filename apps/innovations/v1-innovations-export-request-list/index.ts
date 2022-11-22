@@ -30,19 +30,16 @@ class V1InnovationsExportRequestList {
 
       const requestUser = auth.getUserInfo();
 
-      const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params,
-        { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role }
-      );
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationRecordExportRequests(
-        requestUser,
+        { id: requestUser.id, type: requestUser.type, organisations: requestUser.organisations },
         params.innovationId,
-        query.skip,
-        query.take,
+        filters,
+        { skip, take, order }
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
