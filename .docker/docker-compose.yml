@@ -9,3 +9,18 @@ services:
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
+      
+  queue:
+    container_name: queue
+    image: mcr.microsoft.com/azure-storage/azurite
+    ports:
+      - 10000:10000
+      - 10001:10001
+      - 10002:10002
+    restart: unless-stopped
+    # HOW TO USE THIS CONTAINER
+    #
+    # 1. Open the local.settings.json file and locate the "AZURE_STORAGE_CONNECTIONSTRING" setting.
+    # 2. Replace the value of the setting with the connection string below.
+    # "AZURE_STORAGE_CONNECTIONSTRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;",
+    
