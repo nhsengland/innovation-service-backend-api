@@ -727,7 +727,7 @@ export class InnovationsService extends BaseService {
   //   }
   // }
 
-  async createInnovationRecordExportRequest(requestUser: { id: string, identityId: string, type: UserTypeEnum}, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
+  async createInnovationRecordExportRequest(requestUser: { id: string, identityId: string, type: UserTypeEnum }, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
 
     const unitPendingAndApprovedRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .where('request.innovation_id = :innovationId', { innovationId })
@@ -813,7 +813,7 @@ export class InnovationsService extends BaseService {
 
     // Create notification
     await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK>(
-      { id : requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
       {
         innovationId: exportRequest.innovation.id,
@@ -901,7 +901,7 @@ export class InnovationsService extends BaseService {
         },
       },
       expiresAt: r.exportExpiresAt?.toISOString(),
-      isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED && r.exportExpired === false,
+      isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED,
       updatedAt: r.updatedAt
     }));
 
@@ -953,7 +953,7 @@ export class InnovationsService extends BaseService {
         },
       },
       expiresAt: request.exportExpiresAt?.toISOString(),
-      isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
+      isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED,
       updatedAt: request.updatedAt
     };
   }
@@ -977,7 +977,7 @@ export class InnovationsService extends BaseService {
     }
 
     return {
-      canExport: request.status === InnovationExportRequestStatusEnum.APPROVED && request.exportExpired === false,
+      canExport: request.status === InnovationExportRequestStatusEnum.APPROVED,
     };
 
   }

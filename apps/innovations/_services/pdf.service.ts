@@ -9,6 +9,7 @@ import type { DomainUserInfoType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 import { InnovationExportRequestEntity } from '@innovations/shared/entities';
 import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 
 @injectable()
 export class PDFService  extends BaseService{
@@ -31,7 +32,7 @@ export class PDFService  extends BaseService{
         throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
       }
       
-      if (request.requestExpired) {
+      if (request.status === InnovationExportRequestStatusEnum.EXPIRED) {
         throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_EXPIRED);
       }
     }
