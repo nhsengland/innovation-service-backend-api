@@ -191,6 +191,9 @@ paths:
             enum:
               - WAITING_ASSESSMENT
               - ASSIGNED_INNOVATIONS
+              - INNOVATIONS_ASSIGNED_TO_ME
+              - ACTIONS_TO_REVIEW
+              - INNOVATIONS_TO_REVIEW
       responses:
         "200":
           description: "Ok"
