@@ -29,4 +29,15 @@ export class StatisticsService  extends BaseService {
       overdue: overdueCount
     }
   }
+
+
+ async assignedInnovations(userId: string): Promise<{count: number; total: number; overdue: number}> {
+  console.log(userId);
+
+  return {
+    count: 0,
+    total: 0,
+    overdue: 0
+  }
+ }
 }
