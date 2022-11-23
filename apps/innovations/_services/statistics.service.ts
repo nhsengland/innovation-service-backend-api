@@ -75,5 +75,4 @@ export class StatisticsService  extends BaseService {
       lastSubmittedAt: latestMessage?.createdAt || null,
     }
   }
-
 }

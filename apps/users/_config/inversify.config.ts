@@ -14,6 +14,8 @@ import {
   NotificationsServiceSymbol,
   NotificationsServiceType,
   OrganisationsServiceSymbol, OrganisationsServiceType,
+  StatisticsServiceSymbol,
+  StatisticsServiceType,
   SurveyServiceSymbol, SurveyServiceType,
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
   UsersServiceSymbol, UsersServiceType
@@ -25,6 +27,7 @@ import { UsersService } from '../_services/users.service';
 
 import { NotificationsService } from '../_services/notifications.service';
 import { startup } from './startup';
+import { StatisticsService } from '../_services/statistics.service';
 
 export const container: Container = new Container();
 
@@ -44,5 +47,6 @@ container.bind<SurveyServiceType>(SurveyServiceSymbol).to(SurveyService).inSingl
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 container.bind<NotificationsServiceType>(NotificationsServiceSymbol).to(NotificationsService).inSingletonScope();
+container.bind<StatisticsServiceType>(StatisticsServiceSymbol).to(StatisticsService).inSingletonScope();
 
 void startup();

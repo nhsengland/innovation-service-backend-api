@@ -102,7 +102,7 @@ export class InnovationActionsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(pagination.order || { 'default': 'DESC' })) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'displayId': field = 'action.displayId'; break;
@@ -393,7 +393,7 @@ export class InnovationActionsService extends BaseService {
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE },
           {
             actionId: dbAction.id,
-            interveningUserId: actionCreatedBy?.identityId || '',
+            interveningUserId: actionCreatedBy?.id || '',
             comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
           });
 

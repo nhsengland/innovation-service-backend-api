@@ -20,7 +20,7 @@ import { InnovationSupportsService } from '../_services/innovation-supports.serv
 import { InnovationThreadsService } from '../_services/innovation-threads.service';
 import { startup } from './startup';
 import { PDFService } from '../_services/pdf.service';
-import { StatisticsService } from '../_services/statistics-service';
+import { StatisticsService } from '../_services/statistics.service';
 
 
 export const container: Container = new Container();
