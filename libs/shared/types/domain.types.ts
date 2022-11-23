@@ -117,6 +117,9 @@ export type ActivityLogTemplatesType = {
     params: { sectionId: InnovationSectionEnum, totalActions: number }
   },
   ACTION_STATUS_COMPLETED_UPDATE: {
+    params: { actionId: string }
+  },
+  ACTION_STATUS_REQUESTED_UPDATE: {
     params: { actionId: string, comment: { id: string, value: string } }
   },
   ACTION_STATUS_DECLINED_UPDATE: {

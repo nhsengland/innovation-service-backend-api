@@ -191,6 +191,7 @@ export class DomainInnovationsService {
       case ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE:
       case ActivityEnum.ACTION_STATUS_DECLINED_UPDATE:
       case ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE:
+      case ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE:
         return ActivityTypeEnum.ACTIONS;
 
       default:
