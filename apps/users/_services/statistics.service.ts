@@ -1,6 +1,6 @@
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@users/shared/enums';
-import { OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
@@ -88,7 +88,7 @@ export class StatisticsService  extends BaseService {
       .getManyAndCount();
       
     const myActionsCount = await baseQuery
-      .where('actions.created_by = :userId', { userId: requestUser.id }).getCount();    
+      .andWhere('actions.created_by = :userId', { userId: requestUser.id }).getCount();    
   
 
     return {
@@ -110,16 +110,17 @@ export class StatisticsService  extends BaseService {
 
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.assessments', 'assessments')
-      .innerJoinAndSelect('assessments.organisationUnits', 'organisationUnits')
-      .innerJoinAndSelect('organisationUnits.organisationUser', 'organisationUser')
+      .innerJoinAndSelect('assessments.organisationUnits', 'organisationUnits', 'organisationUnits.id = :organisationUnit', { organisationUnit })
+      .innerJoinAndSelect('organisationUnits.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
-      .leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.organisation_unit_id != :organisationUnit', { organisationUnit })
-      .where('innovationSupports.id IS NULL')
+      .leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
+      .where('user.id = :userId', { userId: requestUser.id })
+      .andWhere('innovationSupports.id IS NULL')
       .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-
-    const [myInnovationsToReview, myInnovationsToReviewCount] = await baseQuery
       .orderBy('innovation.submitted_at', 'DESC')
-      .getManyAndCount();
+
+    const [myInnovationsToReview, myInnovationsToReviewCount] = await baseQuery.getManyAndCount();
   
 
     return {
