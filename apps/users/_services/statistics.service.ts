@@ -79,16 +79,15 @@ export class StatisticsService  extends BaseService {
       .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
       .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
-      .where('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW })
-      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit })
+      .where('actions.created_by = :userId', { userId: requestUser.id })
 
     const [myUnitActions, myUnitActionsCount] = await baseQuery
-
+      .andWhere('actions.status in (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
       .orderBy('actions.updated_at', 'DESC')
       .getManyAndCount();
       
     const myActionsCount = await baseQuery
-      .andWhere('actions.created_by = :userId', { userId: requestUser.id }).getCount();    
+      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getCount();    
   
 
     return {
