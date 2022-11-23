@@ -393,7 +393,7 @@ export class InnovationActionsService extends BaseService {
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE },
           {
             actionId: dbAction.id,
-            interveningUserId: actionCreatedBy?.identityId || '',
+            interveningUserId: actionCreatedBy?.id || '',
             comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
           });
 

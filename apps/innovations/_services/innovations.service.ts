@@ -611,7 +611,7 @@ export class InnovationsService extends BaseService {
 
     await this.sqlConnection.transaction(async transaction => {
 
-      return transaction.update(
+      const update = transaction.update(
         InnovationEntity,
         { id: innovationId },
         {
@@ -621,12 +621,25 @@ export class InnovationsService extends BaseService {
         }
       );
 
+      // Add to activity log
+      await this.domainService.innovations.addActivityLog<'INNOVATION_SUBMISSION'>(
+        transaction,
+        { userId: requestUser.id, innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION },
+        {}
+      );
+
+      return update;
+
     });
+
+    
 
     // Add notification with Innovation submited for needs assessment
     await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
       id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
     }, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
+
+
 
     return {
       id: innovationId,
