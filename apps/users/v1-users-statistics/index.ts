@@ -30,7 +30,7 @@ class GetUserStatistics {
       const requestUser = auth.getUserInfo();
 
         const stats = await StatisticsHandlersHelper.runHandler(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          requestUser,
           query.statistics,
         ); 
     

@@ -2,15 +2,18 @@ import type { UserStatisticsEnum } from '../../_enums/user.enums';
 import { container } from '../../_config';
 import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_services/interfaces';
 import type { UserStatisticsTemplateType } from '../../_config/statistics.config';
+import type { DomainUserInfoType } from '@users/shared/types';
 
-export const waitingAssessmentStatisticsHandler = async (): Promise<UserStatisticsTemplateType[UserStatisticsEnum.WAITING_ASSESSMENT]> => {
+export const innovationsToReviewStatisticsHandler = async (
+  requestUser: DomainUserInfoType,
+): Promise<UserStatisticsTemplateType[UserStatisticsEnum.INNOVATIONS_TO_REVIEW]> => {
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const actions = await statisticsService.waitingAssessment();
+    const supports = await statisticsService.innovationsToReview(requestUser)
   
     return {
-      count: actions.count,
-      overdue: actions.overdue,
+      count: supports.count,
+      lastSubmittedAt: supports.lastSubmittedAt,
     }
 }
