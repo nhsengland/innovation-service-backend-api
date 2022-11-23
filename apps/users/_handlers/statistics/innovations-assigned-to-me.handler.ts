@@ -6,7 +6,7 @@ import type { DomainUserInfoType } from '@users/shared/types';
 
 export const innovationsAssignedToMeStatisticsHandler = async (
   requestUser: DomainUserInfoType,
-): Promise<UserStatisticsTemplateType[UserStatisticsEnum.INNOVATIONS_ASSIGNED_TO_ME]> => {
+): Promise<UserStatisticsTemplateType[UserStatisticsEnum.INNOVATIONS_ASSIGNED_TO_ME_COUNTER]> => {
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
