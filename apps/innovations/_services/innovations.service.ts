@@ -748,7 +748,10 @@ export class InnovationsService extends BaseService {
       .andWhere('request.status IN (:...status)', { status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED] })
       .getMany();
 
-    if (unitPendingAndApprovedRequests.length > 0) {
+    // In DB "EXPIRED" status doesn't exist, they are "PENDING" so the query above will bring some pending that are really EXPIRED
+    const pendingAndApprovedRequests = unitPendingAndApprovedRequests.filter(request => request.status !== 'EXPIRED');
+
+    if (pendingAndApprovedRequests.length > 0) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
     }
 

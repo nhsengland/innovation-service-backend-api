@@ -1,5 +1,5 @@
-import { InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
-import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum } from '@innovations/shared/enums';
+import { InnovationActionEntity, InnovationSectionEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
 
