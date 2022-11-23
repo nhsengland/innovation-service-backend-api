@@ -101,6 +101,9 @@ export type ActivityLogTemplatesType = {
   NEEDS_ASSESSMENT_COMPLETED: {
     params: { assessmentId: string }
   },
+  NEEDS_ASSESSMENT_EDITED: {
+    params: { assessmentId: string }
+  },
   ORGANISATION_SUGGESTION: { // TODO: I believe that this is misleading. organisations param, is being populated with units!
     params: { organisations: string[] }
   },

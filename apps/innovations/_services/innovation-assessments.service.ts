@@ -120,7 +120,7 @@ export class InnovationAssessmentsService extends BaseService {
         assessment.id,
         ThreadContextTypeEnum.NEEDS_ASSESSMENT,
         transaction,
-        true,
+        false
       );
 
       await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_START'>(
@@ -182,10 +182,10 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
-    // Cannot re-submit an assessment.
-    if (data.isSubmission && dbAssessment.finishedAt) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WITH_INVALID_ASSESSMENTS);
-    }
+    // // Cannot re-submit an assessment.
+    // if (data.isSubmission && dbAssessment.finishedAt) {
+    //   throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WITH_INVALID_ASSESSMENTS);
+    // }
 
 
     const result = await this.sqlConnection.transaction(async transaction => {
@@ -204,18 +204,33 @@ export class InnovationAssessmentsService extends BaseService {
 
         assessment.finishedAt = new Date().toISOString();
 
-        await transaction.update(InnovationEntity,
-          { id: innovationId },
-          { status: InnovationStatusEnum.IN_PROGRESS, updatedBy: user.id }
-        );
+        // if it's first assessment submission
+        if (!dbAssessment.finishedAt) {
 
-        await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_COMPLETED'>(
-          transaction,
-          { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED },
-          {
-            assessmentId: assessment.id
-          }
-        );
+          await transaction.update(InnovationEntity,
+            { id: innovationId },
+            { status: InnovationStatusEnum.IN_PROGRESS, updatedBy: user.id }
+          );
+  
+          await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_COMPLETED'>(
+            transaction,
+            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED },
+            {
+              assessmentId: assessment.id
+            }
+          );
+
+        // if it's editing an already submitted assessment
+        } else { 
+          await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_EDITED'>(
+            transaction,
+            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED },
+            {
+              assessmentId: assessment.id
+            }
+          );
+        }
+        
 
         // Add suggested organisations (NOT units) names to activity log.
         if ((data.suggestedOrganisationUnitsIds ?? []).length > 0) {
