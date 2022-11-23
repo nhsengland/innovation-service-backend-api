@@ -1,5 +1,5 @@
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 import { injectable } from 'inversify';
@@ -102,17 +102,19 @@ export class StatisticsService  extends BaseService {
     requestUser: DomainUserInfoType,
   ): Promise<{count: number, lastSubmittedAt: null | DateISOType}> {
 
+
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
+
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.assessments', 'assessments')
       .innerJoinAndSelect('assessments.organisationUnits', 'organisationUnits', 'organisationUnits.id = :organisationUnit', { organisationUnit })
       .innerJoinAndSelect('organisationUnits.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser', 'organisationUser.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
       .innerJoinAndSelect('organisationUser.user', 'user')
       .leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
       .where('user.id = :userId', { userId: requestUser.id })
