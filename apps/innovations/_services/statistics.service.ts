@@ -81,7 +81,7 @@ export class StatisticsService  extends BaseService {
   async actionsToReview(
     innovationId: string,
     requestUser: DomainUserInfoType,
-  ): Promise<{count: number, total: number, lastSubmittedAt: null | DateISOType}> {
+  ): Promise<{count: number, lastSubmittedAt: null | DateISOType}> {
 
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
@@ -95,20 +95,14 @@ export class StatisticsService  extends BaseService {
     .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
     .innerJoinAndSelect('organisationUser.user', 'user')
     .where('actions.created_by = :userId', { userId: requestUser.id })
-    .andWhere('innovartionSupports.innovation_id = :innovationId', { innovationId })
-
-    const [myUnitActions, myUnitActionsCount] = await baseQuery
-      .andWhere('actions.status in (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
-      .orderBy('actions.updated_at', 'DESC')
-      .getManyAndCount();
+    .andWhere('innovationSupport.innovation_id = :innovationId', { innovationId })
     
-    const myActionsCount = await baseQuery
-      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getCount();    
+    const [myActions, myActionsCount] = await baseQuery
+      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getManyAndCount();    
 
     return {
       count: myActionsCount,
-      total: myUnitActionsCount,
-      lastSubmittedAt: myUnitActions.find(_ => true)?.updatedAt || null,
+      lastSubmittedAt: myActions.find(_ => true)?.updatedAt || null,
     }
   }
 
