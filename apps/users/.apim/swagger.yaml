@@ -189,11 +189,11 @@ paths:
           schema:
             type: string
             enum:
-              - WAITING_ASSESSMENT
-              - ASSIGNED_INNOVATIONS
-              - INNOVATIONS_ASSIGNED_TO_ME
-              - ACTIONS_TO_REVIEW
-              - INNOVATIONS_TO_REVIEW
+              - WAITING_ASSESSMENT_COUNTER
+              - ASSIGNED_INNOVATIONS_COUNTER
+              - INNOVATIONS_ASSIGNED_TO_ME_COUNTER
+              - ACTIONS_TO_REVIEW_COUNTER
+              - INNOVATIONS_TO_REVIEW_COUNTER
       responses:
         "200":
           description: "Ok"
