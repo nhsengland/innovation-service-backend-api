@@ -182,11 +182,15 @@ paths:
           schema:
             type: string
           required: true
-        - in: query
-          name: statistics
+        - name: statistics
+          in: query
+          description: Statistics Types
+          required: false
           schema:
             type: string
-          description: List of statistics type to return
+            enum:
+              - WAITING_ASSESSMENT
+              - ASSIGNED_INNOVATIONS
       responses:
         "200":
           description: "Ok"
