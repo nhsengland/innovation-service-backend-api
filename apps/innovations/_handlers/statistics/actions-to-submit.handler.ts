@@ -7,7 +7,7 @@ import type { InnovationStatisticsTemplateType } from '../../_config/statistics.
 export const actionsToSubmitStatisticsHandler = async (
   _: { id: string, identityId: string, type: UserTypeEnum },
   data: { innovationId: string;}
-): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]> => {
+): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]> => {
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
