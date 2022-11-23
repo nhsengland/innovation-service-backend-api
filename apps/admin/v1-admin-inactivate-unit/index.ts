@@ -32,7 +32,7 @@ class V1InnovationActionUpdate {
 
       const requestUser = auth.getUserInfo();
 
-      const result = await adminService.inactivateUnit(
+      const adminResult = await adminService.inactivateUnit(
         // { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         // params.innovationId,
         // params.actionId,
