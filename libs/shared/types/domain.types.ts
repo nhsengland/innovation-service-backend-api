@@ -120,7 +120,7 @@ export type ActivityLogTemplatesType = {
     params: { actionId: string }
   },
   ACTION_STATUS_REQUESTED_UPDATE: {
-    params: { actionId: string, comment: { id: string, value: string } }
+    params: { actionId: string }
   },
   ACTION_STATUS_DECLINED_UPDATE: {
     params: { actionId: string, interveningUserId: string, comment: { id: string, value: string } }
