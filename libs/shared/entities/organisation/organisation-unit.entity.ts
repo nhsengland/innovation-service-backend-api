@@ -6,6 +6,7 @@ import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.
 import { InnovationSupportLogEntity } from '../innovation/innovation-support-log.entity';
 import { OrganisationEntity } from './organisation.entity';
 import { OrganisationUnitUserEntity } from './organisation-unit-user.entity';
+import type { DateISOType } from '@admin/shared/types';
 
 
 @Entity('organisation_unit')
@@ -23,6 +24,8 @@ export class OrganisationUnitEntity extends BaseEntity {
   @Column({ name: 'is_shadow', nullable: false, default: false })
   isShadow: boolean;
 
+  @Column({ name: 'innactivated_at', nullable: true})
+  inactivatedAt: null | DateISOType;
 
   @ManyToOne(() => OrganisationEntity, { nullable: false })
   @JoinColumn({ name: 'organisation_id' })
