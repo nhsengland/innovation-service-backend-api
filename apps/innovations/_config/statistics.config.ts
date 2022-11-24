@@ -5,7 +5,7 @@ import { actionsToSubmitStatisticsHandler } from '../_handlers/statistics/action
 import { sectionsSubmittedSinceAssessmentStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-assessment-start.handler'
 import { sectionsSubmittedSinceSupportStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-support-start.handler'
 import { sectionsSubmittedStatisticsHandler } from '../_handlers/statistics/sections-submitted.handler'
-import { unreadMessagesThreadsInitiatedByStatisticsHandler } from '../_handlers/statistics/unread-messages-initiated-by-na.handler'
+import { unreadMessagesThreadsInitiatedByStatisticsHandler } from '../_handlers/statistics/unread-messages-initiated-by.handler'
 import { unreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-messages.handler'
 
 export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatisticsEnum, {
