@@ -147,14 +147,14 @@ export class UsersService extends BaseService {
     user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
     data: {
       displayName: string,
-      mobilePhone?: string,
+      mobilePhone?: string | null,
       organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string }
     }
   ): Promise<{ id: string }> {
 
     await this.identityProviderService.updateUser(user.identityId, {
       displayName: data.displayName,
-      ...(data.mobilePhone ? { mobilePhone: data.mobilePhone } : {})
+      ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
     });
 
     // NOTE: Only innovators can change their organisation, we make a sanity check here.

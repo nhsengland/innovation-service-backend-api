@@ -265,7 +265,7 @@ export class IdentityProviderService {
   }
 
 
-  async updateUser(identityId: string, body: { displayName?: string, mobilePhone?: string, accountEnabled?: boolean }): Promise<void> {
+  async updateUser(identityId: string, body: { displayName?: string, mobilePhone?: string | null, accountEnabled?: boolean }): Promise<void> {
 
     await this.verifyAccessToken();
 
