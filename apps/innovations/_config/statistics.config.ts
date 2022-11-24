@@ -1,3 +1,4 @@
+import type { InnovationSectionEnum } from '@innovations/shared/enums'
 import type { DateISOType } from '@innovations/shared/types'
 import { InnovationStatisticsEnum } from '../_enums/innovation.enums'
 import { actionsToReviewStatisticsHandler } from '../_handlers/statistics/actions-to-review.handler'
@@ -36,7 +37,7 @@ export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatist
 
 export type InnovationStatisticsTemplateType = {
   [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]: { count: number; total: number; lastSubmittedAt: null | DateISOType;},
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]: { count: number; total: number; lastSubmittedAt: null | DateISOType;},
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]: { count: number; total: number; lastSubmittedSection: null | InnovationSectionEnum; lastSubmittedAt: null | DateISOType;},
   [InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]: { count: number; lastSubmittedAt: null | DateISOType;},
   [InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: { count: number; lastSubmittedAt: null | DateISOType;},
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]: { count: number; lastSubmittedAt: null | DateISOType;},
