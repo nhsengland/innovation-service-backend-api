@@ -102,7 +102,7 @@ export class InnovationActionsService extends BaseService {
     query.skip(pagination.skip);
     query.take(pagination.take);
 
-    for (const [key, order] of Object.entries(pagination.order || { 'default': 'DESC' })) {
+    for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
         case 'displayId': field = 'action.displayId'; break;

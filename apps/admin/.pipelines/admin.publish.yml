@@ -1,5 +1,8 @@
 trigger:
   batch: true
+  tags:
+    include:
+      - '2.*'
   branches:
     include:
       - develop

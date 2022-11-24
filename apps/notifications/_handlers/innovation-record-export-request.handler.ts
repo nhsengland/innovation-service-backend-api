@@ -35,7 +35,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
           accessor_name: request.createdBy.name,
           pdf_request_comment: request.exportRequest.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/record')
+          .addPath('innovator/innovations/:innovationId/export/list')
           .setPathParams({ innovationId: this.inputData.innovationId })
           .buildUrl(), // TODO: Check what exactly is this URL.
         }

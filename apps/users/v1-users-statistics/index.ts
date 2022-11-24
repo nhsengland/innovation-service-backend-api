@@ -1,18 +1,16 @@
 import type { HttpRequest } from '@azure/functions';
-
-import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { type AuthorizationServiceType, AuthorizationServiceSymbol } from '@innovations/shared/services';
-
-import type { CustomContextType } from '@innovations/shared/types';
+import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JwtDecoder } from '@users/shared/decorators';
+import { type AuthorizationServiceType, AuthorizationServiceSymbol } from '@users/shared/services';
+import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.schemas';
+import { QuerySchema, QueryType } from './validation.schemas';
 
 
-class GetInnovationStatistics {
+class GetUserStatistics {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -21,16 +19,12 @@ class GetInnovationStatistics {
     
     try {
 
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-
       const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
-        .setInnovation(params.innovationId)
-        .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
-        .checkInnovation()
+        .checkAssessmentType()
         .verify();
 
       const requestUser = auth.getUserInfo();
@@ -38,7 +32,6 @@ class GetInnovationStatistics {
         const stats = await StatisticsHandlersHelper.runHandler(
           requestUser,
           query.statistics,
-          { innovationId: params.innovationId }
         ); 
     
       context.res = ResponseHelper.Ok<ResponseDTO>(stats);
@@ -53,4 +46,4 @@ class GetInnovationStatistics {
 
 }
 
-export default GetInnovationStatistics.httpTrigger;
+export default GetUserStatistics.httpTrigger;

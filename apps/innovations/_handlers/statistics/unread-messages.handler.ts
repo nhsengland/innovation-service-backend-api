@@ -1,13 +1,13 @@
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import type { UserTypeEnum } from '@innovations/shared/enums';
-import { container } from 'apps/innovations/_config';
-import { type StatisticsServiceType, StatisticsServiceSymbol } from 'apps/innovations/_services/interfaces';
-import type { InnovationStatisticsTemplateType } from 'apps/innovations/_config/statistics.config';
+import { container } from '../../_config';
+import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_services/interfaces';
+import type { InnovationStatisticsTemplateType } from '../../_config/statistics.config';
 
 export const unreadMessagesStatisticsHandler = async (
   requestUser: { id: string, identityId: string, type: UserTypeEnum },
   data: { innovationId: string }
-): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]> => {
+): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]> => {
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   

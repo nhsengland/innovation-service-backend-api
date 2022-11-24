@@ -6,7 +6,7 @@ import type { InnovationThreadsService } from './innovation-threads.service';
 import type { InnovationTransferService } from './innovation-transfer.service'
 import type { InnovationsService } from './innovations.service';
 import type { PDFService } from './pdf.service';
-import type { StatisticsService } from './statistics-service';
+import type { StatisticsService } from './statistics.service';
 
 
 export type InnovationActionsServiceType = typeof InnovationActionsService.prototype;

@@ -37,10 +37,13 @@ class V1InnovationsExportRequestsCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
+      const organisationUnitId = requestUser.organisations.find(_ => true)!.organisationUnits.find(_ => true)!.id;
+
       const { requestReason } = body;
 
       const result = await innovationsService.createInnovationRecordExportRequest(
-        requestUser,
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        organisationUnitId,
         params.innovationId,
         { requestReason }
       );
