@@ -32,6 +32,39 @@ export class StatisticsService  extends BaseService {
     }
   }
 
+
+ async assignedInnovations(userId: string): Promise<{count: number; total: number; overdue: number}> {
+
+  const count = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+      .andWhere('assignTo.id = :userId', { userId })
+      .getCount();
+
+    const total = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+
+      .getCount();
+
+    const overdueCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`)
+      .andWhere('assignTo.id = :userId', { userId })
+      .getCount();
+
+
+  return {
+    count: count,
+    total: total,
+    overdue: overdueCount
+  }
+ }
+
   async innovationsAssignedToMe(
     requestUser: DomainUserInfoType,
   ): Promise<{count: number, total: number, lastSubmittedAt: null | DateISOType}> {
