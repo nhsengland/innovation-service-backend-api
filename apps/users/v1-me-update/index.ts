@@ -58,7 +58,7 @@ class V1MeUpdate {
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, firstTimeSignInAt: requestUser.firstTimeSignInAt },
           {
             displayName: innovatorBody.displayName,
-            ...(innovatorBody.mobilePhone ? { mobilePhone: innovatorBody.mobilePhone } : {}),
+            ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
             organisation: innovatorBody.organisation
           }
         );
