@@ -1,5 +1,5 @@
-import { InnovationActionEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
-import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import { UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
@@ -45,7 +45,8 @@ export class StatisticsService  extends BaseService {
     .innerJoinAndSelect('notification.innovation', 'innovation')
     .innerJoinAndSelect('notification.notificationUsers', 'users')
     .where('innovation.id = :innovationId', { innovationId })
-    .andWhere('notification.context_type = :context_type', { context_type: 'THREAD' })
+    .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
+    .andWhere('notification.context_detail = :context_detail', { context_detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION })
     .andWhere('users.user_id = :userId', { userId })
     .andWhere('users.readAt IS NULL')
     .getMany();
@@ -57,18 +58,14 @@ export class StatisticsService  extends BaseService {
       }
     }
 
-    const unreadThreads = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
-    .where('thread.id IN(:...ids)', { ids: unreadMessages.map(x => x.contextId) })
-    .orderBy('thread.created_at', 'DESC')
-    .getMany();
-
+    // the context id is always the thread id regardless if the detail is a message or a reply  
     const unreadThreadMessages = await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
     .where('threadMessage.id IN(:...ids)', { ids: unreadMessages.map(x => x.contextId) })
     .orderBy('threadMessage.created_at', 'DESC')
     .getMany();
 
 
-    const latestMessage = [...unreadThreads, ...unreadThreadMessages].sort((a, b) => {
+    const latestMessage = unreadThreadMessages.sort((a, b) => {
       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
     }).find(_ => true);
 
@@ -134,4 +131,77 @@ export class StatisticsService  extends BaseService {
 
     return sections;
   }
+
+  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<[InnovationSectionEntity[], number]> {
+   
+    const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessments')
+      .innerJoinAndSelect('assessments.assignTo', 'assignTo')
+      .innerJoinAndSelect('assessments.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('assignTo.id = :userId', { userId: requestUser.id })
+      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.NEEDS_ASSESSMENT })
+      .getOne();
+
+    const assessmentStartedAt = assessment?.updatedAt;
+ 
+    const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
+      .innerJoinAndSelect('section.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED })
+      .andWhere('section.updated_at >= :assessmentStartedAt', { assessmentStartedAt })
+      .orderBy('section.updatedAt', 'DESC')
+      .getManyAndCount();
+
+    return sections;
+  }
+
+  async getUnreadMessagesInitiatedByNA(innovationId: string, userId: string): Promise<{
+    count: number;
+    lastSubmittedAt: null | string;
+  }> {
+
+    // considers only threads created by the user
+    const threadCreatedByMe = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
+      .innerJoinAndSelect('thread.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('thread.created_by = :userId', { userId })
+      .getMany();
+
+    // gets unread messages on this threads
+    // the context id is always the thread id regardless if the detail is a message or a reply
+    const unreadMessages = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+    .innerJoinAndSelect('notification.innovation', 'innovation')
+    .innerJoinAndSelect('notification.notificationUsers', 'users')
+    .where('innovation.id = :innovationId', { innovationId })
+    .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
+    .andWhere('notification.context_detail = :context_detail', { context_detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION })
+    .andWhere('users.user_id = :userId', { userId })
+    .andWhere('users.readAt IS NULL')
+    .andWhere('notification.context_id IN (:...threadIds)', { threadIds: threadCreatedByMe.map(_ => _.id) })
+    .getMany();
+
+    if (unreadMessages.length === 0) {
+      return {
+        count: 0,
+        lastSubmittedAt: null,
+      }
+    }
+
+    const unreadThreadMessages = await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
+    .where('threadMessage.id IN(:...ids)', { ids: unreadMessages.map(x => x.contextId) })
+    .orderBy('threadMessage.created_at', 'DESC')
+    .getMany();
+
+
+    const latestMessage = unreadThreadMessages.sort((a, b) => {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    }).find(_ => true);
+
+    return {
+      count: unreadMessages.length,
+      lastSubmittedAt: latestMessage?.createdAt || null,
+    }
+  }
+
+  
 }
