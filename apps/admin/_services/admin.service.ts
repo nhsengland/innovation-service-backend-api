@@ -1,6 +1,7 @@
 import {
   InnovationActionEntity,
   InnovationSupportEntity,
+  NotificationEntity,
   OrganisationUnitEntity,
   OrganisationUnitUserEntity,
 } from '@admin/shared/entities';
@@ -18,6 +19,7 @@ export class AdminService extends BaseService {
     requestUser: DomainUserInfoType,
     unitId: string
   ): Promise<{ id: string }> {
+    
     // get users from unit
     const users = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
@@ -53,6 +55,17 @@ export class AdminService extends BaseService {
     const supportsToClear = supports.map((s) => s.id);
 
     // TODO: clear and lock stuff
+
+    const contexts = [...actionsToClear, ...supportsToClear];
+
+    if (contexts.length > 0) {
+      const notificationsToMarkAsRead = await this.sqlConnection
+        .createQueryBuilder(NotificationEntity, 'notification')
+        .innerJoinAndSelect('notification.notificationUsers', 'notificationUser')
+        .where('notification.context_id IN (:..contexts)', {contexts})
+        .andWhere('notificationUser.read_at IS NULL')
+        .getMany();
+    }
 
   }
 }
