@@ -11,15 +11,13 @@ export const actionsToSubmitStatisticsHandler = async (
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const requestedActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED]);
-  
-    const openActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]);
-
-    const totalActions = [...requestedActions, ...openActions].length;
+    const requestedActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED]);  
+    
+    const lastSubmittedAction = requestedActions.find(_ => true)
 
     return {
-      total: totalActions,
       count:requestedActions.length,
-      lastSubmittedAt: requestedActions.find(_ => true)?.updatedAt || null,
+      lastSubmittedSection: lastSubmittedAction?.innovationSection.section || null,
+      lastSubmittedAt: lastSubmittedAction?.updatedAt || null,
     }
 }
