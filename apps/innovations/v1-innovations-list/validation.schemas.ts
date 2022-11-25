@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { InnovationCategoryCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -24,6 +24,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   status: InnovationStatusEnum[],
   assessmentSupportStatus?: AssessmentSupportFilterEnum,
   supportStatuses?: InnovationSupportStatusEnum[],
+  groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
@@ -51,6 +52,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
     then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE)).optional(),
     otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum))).optional()
   }),
+  groupedStatuses: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum))).optional(),
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
   fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics')).optional()

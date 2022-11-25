@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -33,6 +33,7 @@ export class InnovationsService extends BaseService {
       locations?: InnovationLocationEnum[],
       assessmentSupportStatus?: AssessmentSupportFilterEnum,
       supportStatuses?: InnovationSupportStatusEnum[],
+      groupedStatuses?: InnovationGroupedStatusEnum[],
       engagingOrganisations?: string[],
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
@@ -47,6 +48,7 @@ export class InnovationsService extends BaseService {
       description: null | string,
       status: InnovationStatusEnum,
       submittedAt: null | DateISOType,
+      updatedAt: null | DateISOType,
       countryName: null | string,
       postCode: null | string,
       mainCategory: null | InnovationCategoryCatalogueEnum,
@@ -93,7 +95,6 @@ export class InnovationsService extends BaseService {
       query.leftJoinAndSelect('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
     }
 
-
     if (user.type === UserTypeEnum.INNOVATOR) {
       query.andWhere('innovations.owner_id = :innovatorUserId', { innovatorUserId: user.id });
     }
@@ -120,6 +121,59 @@ export class InnovationsService extends BaseService {
 
     }
 
+    if (user.type === UserTypeEnum.ADMIN) {
+      query.withDeleted();
+    }
+
+    if (filters.groupedStatuses && filters.groupedStatuses.length > 0) {
+      const status = this.getGroupedToInnovationStatusMap(filters.groupedStatuses);
+
+      if (
+        (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === false)
+        || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === true)
+      ) {
+
+        status.splice(status.indexOf(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT), 1);
+
+        const isReassessment = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT);
+
+        query.orWhere(
+          `innovations.id IN (
+            SELECT innovations.id
+            FROM innovation innovations
+            FULL JOIN innovation_reassessment_request reassessmentRequests
+            ON reassessmentRequests.innovation_id = innovations.id
+            WHERE (innovations.status = :waitingNeedsAssessmentStatus AND reassessmentRequests.innovation_id ${isReassessment ? 'IS NOT' : 'IS'} NULL))`,
+          { waitingNeedsAssessmentStatus: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT }
+        );
+
+      }
+
+      if (
+        (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === false)
+        || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === true)
+      ) {
+
+        status.splice(status.indexOf(InnovationStatusEnum.IN_PROGRESS), 1);
+
+        const isAwaitingSupport = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT);
+        const receivingSupportQuery = '(SELECT supports.innovation_id FROM innovation_support supports WHERE supports.status IN (:...receivingSupportStatus))';
+
+        query.orWhere(
+          `innovations.id IN (
+            SELECT innovations.id
+            FROM innovation innovations
+            WHERE (innovations.status = :inProgressStatus AND innovations.id ${isAwaitingSupport ? 'NOT IN' : 'IN'} ${receivingSupportQuery}))`,
+          { inProgressStatus: InnovationStatusEnum.IN_PROGRESS, receivingSupportStatus: [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.ENGAGING] }
+        );
+
+      }
+
+      if (status.length > 0) {
+        query.andWhere('innovations.status IN (:...status) ', { status });
+      }
+
+    }
 
     // Filters.
     if (filters.status && filters.status.length > 0) {
@@ -254,6 +308,7 @@ export class InnovationsService extends BaseService {
             description: innovation.description,
             status: innovation.status,
             submittedAt: innovation.submittedAt,
+            updatedAt: innovation.updatedAt,
             countryName: innovation.countryName,
             postCode: innovation.postcode,
             mainCategory: innovation.mainCategory,
@@ -632,7 +687,7 @@ export class InnovationsService extends BaseService {
 
     });
 
-    
+
 
     // Add notification with Innovation submited for needs assessment
     await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
@@ -749,7 +804,7 @@ export class InnovationsService extends BaseService {
       .getMany();
 
     // In DB "EXPIRED" status doesn't exist, they are "PENDING" so the query above will bring some pending that are really EXPIRED
-    const pendingAndApprovedRequests = unitPendingAndApprovedRequests.filter(request => request.status !== 'EXPIRED');
+    const pendingAndApprovedRequests = unitPendingAndApprovedRequests.filter(request => request.status !== InnovationExportRequestStatusEnum.EXPIRED);
 
     if (pendingAndApprovedRequests.length > 0) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
@@ -1175,6 +1230,28 @@ export class InnovationsService extends BaseService {
 
     return statistics;
 
+  }
+
+  private getGroupedToInnovationStatusMap(groupedStatuses: InnovationGroupedStatusEnum[]) {
+    const groupedToInnovationStatusMap = {
+      [InnovationGroupedStatusEnum.RECORD_NOT_SHARED]: InnovationStatusEnum.CREATED,
+      [InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+      [InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+      [InnovationGroupedStatusEnum.NEEDS_ASSESSMENT]: InnovationStatusEnum.NEEDS_ASSESSMENT,
+      [InnovationGroupedStatusEnum.AWAITING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
+      [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
+      [InnovationGroupedStatusEnum.ARCHIVED]: InnovationStatusEnum.ARCHIVED,
+    }
+
+    const status = [];
+    for (const groupedStatus of groupedStatuses) {
+      const innovationStatus = groupedToInnovationStatusMap[groupedStatus];
+      if (status.includes(innovationStatus) === false) {
+        status.push(innovationStatus);
+      }
+    }
+
+    return status;
   }
 
 }
