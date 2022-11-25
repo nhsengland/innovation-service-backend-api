@@ -13,11 +13,11 @@ export const actionsToSubmitStatisticsHandler = async (
   
     const requestedActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED]);  
     
-    const lastSubmittedAction = requestedActions.find(_ => true)
+    const lastRequestedAction = requestedActions.find(_ => true)
 
     return {
       count:requestedActions.length,
-      lastSubmittedSection: lastSubmittedAction?.innovationSection.section || null,
-      lastSubmittedAt: lastSubmittedAction?.updatedAt || null,
+      lastSubmittedSection: lastRequestedAction?.innovationSection.section || null,
+      lastSubmittedAt: lastRequestedAction?.updatedAt || null,
     }
 }
