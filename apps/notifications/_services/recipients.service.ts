@@ -86,7 +86,7 @@ export class RecipientsService extends BaseService {
     email: string;
     isActive: boolean;
   }[]> {
-    if(userIds.length === 0) { return []; }
+    if (!userIds.length) { return []; }
     
     const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
       .where(`users.id IN (:...userIds)`, { userIds })

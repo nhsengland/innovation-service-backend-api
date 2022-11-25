@@ -36,7 +36,7 @@ export class IdleSupportHandler extends BaseHandler<
 
     const idleSupportsByInnovation = await this.recipientsService.idleSupportsByInnovation();
 
-    if(!idleSupportsByInnovation.length) return;
+    if (!idleSupportsByInnovation.length) { return; }
 
     const ownerIds = [...new Set(idleSupportsByInnovation.flatMap(is => is.values.map(i => i.ownerId)))];
     const ownerIdentities = await this.recipientsService.usersIdentityInfo(ownerIds);
@@ -51,7 +51,7 @@ export class IdleSupportHandler extends BaseHandler<
       for (const details of innovation.values) {
         this.emails.push({
           templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
-          to: { type: 'identityId', value: details.identityId, displayNameParam: 'display_name'},
+          to: { type: 'identityId', value: details.identityId, displayNameParam: 'display_name' },
           params: {
             innovation_name: innovation.values.find(_ => true)?.innovationName || '',
             innovator_name: ownerIdentities.find(i => i.identityId === details.ownerIdentityId)?.displayName || '',
