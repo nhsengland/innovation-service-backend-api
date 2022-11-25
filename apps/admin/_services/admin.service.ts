@@ -5,97 +5,141 @@ import {
   OrganisationUnitEntity,
   OrganisationUnitUserEntity,
 } from '@admin/shared/entities';
-import { InnovationActionStatusEnum, InnovationSupportStatusEnum } from '@admin/shared/enums';
+import {
+  InnovationActionStatusEnum,
+  InnovationSupportStatusEnum,
+} from '@admin/shared/enums';
 import type { DomainUserInfoType } from '@admin/shared/types';
 import type { HttpRequestUser } from '@azure/functions';
+import { NotificationUserEntity } from '@innovations/shared/entities';
 import { UnprocessableEntityError } from '@innovations/shared/errors';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
+import { In } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
 export class AdminService extends BaseService {
-  constructor() {}
+  constructor() {
+    super();
+  }
 
   async inactivateUnit(
     requestUser: DomainUserInfoType,
     unitId: string
   ): Promise<{ id: string }> {
-    
-    // // get users from unit
-    // const users = await this.sqlConnection
-    //   .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-    //   .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-    //   .leftJoinAndSelect('org_user.user', 'user')
-    //   .where('org_unit_user.organisation_unit_id = :unitId', {
-    //     unitId,
-    //   })
-    //   .getMany();
+    // get the organisation to whom the unit belongs to
+    const unit = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitEntity, 'org_units')
+      .where('org_units.id = :unitId', { unitId })
+      .getOne();
 
-    // //get open actions issued by users from unit
-    // const actions = await this.sqlConnection
-    //   .createQueryBuilder(InnovationActionEntity, 'actions')
-    //   .leftJoinAndSelect('actions.innovationSupport', 'supports')
-    //   .leftJoinAndSelect('supports.organisationUnit', 'unit')
-    //   .where('unit.id = :unitId', { unitId })
-    //   .getMany();
+    const organisationId = unit.organisation.id;
 
-    // // get innovations with active support from unit
-    // const supports = await this.sqlConnection
-    //   .createQueryBuilder(InnovationSupportEntity, 'support')
-    //   .leftJoinAndSelect('support.organisationUnit', 'unit')
-    //   .leftJoinAndSelect('support.innovation', 'innovation')
-    //   .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
-    //   .where('unit.id = :unitId', { unitId })
-    //   .getMany();
+    // get users from unit
+    const users = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+      .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
+      .leftJoinAndSelect('org_user.user', 'user')
+      .where('org_unit_user.organisation_unit_id = :unitId', {
+        unitId,
+      })
+      .getMany();
 
-    // const usersToLock = users.map((u) => ({
-    //   id: u.organisationUser.user.id,
-    // }));
+    //get open actions issued by users from unit
+    const actions = await this.sqlConnection
+      .createQueryBuilder(InnovationActionEntity, 'actions')
+      .leftJoinAndSelect('actions.innovationSupport', 'supports')
+      .leftJoinAndSelect('supports.organisationUnit', 'unit')
+      .where('unit.id = :unitId', { unitId })
+      .getMany();
 
-    // const actionIds = actions.map((a) => a.id);
-    // const supportIds = supports.map((s) => s.id);
+    // get innovations with active support from unit
+    const supports = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .leftJoinAndSelect('support.organisationUnit', 'unit')
+      .leftJoinAndSelect('support.innovation', 'innovation')
+      .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
+      .where('unit.id = :unitId', { unitId })
+      .getMany();
 
-    // // TODO: clear and lock stuff
+    const usersToLock = users.map((u) => ({
+      id: u.organisationUser.user.id,
+    }));
 
-    // const contexts = [...actionIds, ...supportIds];
+    const actionIds = actions.map((a) => a.id);
+    const supportIds = supports.map((s) => s.id);
 
-    // if (contexts.length > 0) {
-    //   const notificationsToMarkAsRead = await this.sqlConnection
-    //     .createQueryBuilder(NotificationEntity, 'notification')
-    //     .innerJoinAndSelect('notification.notificationUsers', 'notificationUser')
-    //     .where('notification.context_id IN (:..contexts)', {contexts})
-    //     .andWhere('notificationUser.read_at IS NULL')
-    //     .getMany();
-    // }
+    const contexts = [...actionIds, ...supportIds];
 
+    let notificationsToMarkAsRead: NotificationEntity[] = [];
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    if (contexts.length > 0) {
+      notificationsToMarkAsRead = await this.sqlConnection
+        .createQueryBuilder(NotificationEntity, 'notification')
+        .innerJoinAndSelect(
+          'notification.notificationUsers',
+          'notificationUser'
+        )
+        .where('notification.context_id IN (:..contexts)', { contexts })
+        .andWhere('notificationUser.read_at IS NULL')
+        .getMany();
+    }
 
-      const actionsToClear = actions.filter(a => 
+    const actionsToClear = actions
+      .filter((a) =>
         [
           InnovationActionStatusEnum.REQUESTED,
-          InnovationActionStatusEnum.IN_REVIEW
+          InnovationActionStatusEnum.IN_REVIEW,
         ].includes(a.status)
-      ).map(aa => aa.id);
+      )
+      .map((aa) => aa.id);
 
-    
-    const supportsToComplete = supports.filter(s => {
+    const supportsToComplete = supports.filter((s) => {
       [
         InnovationSupportStatusEnum.ENGAGING,
-        InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
-      ].includes(s.status)
+        InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
+      ].includes(s.status);
     });
 
-    //Inactivate unit
-    const inactivateUnitResult = await transaction.update(
-      OrganisationUnitEntity,
-      {id: unitId},
-      {inactivatedAt: new Date().toISOString()}
-    );
-    
-    
+    const result = await this.sqlConnection.transaction(async (transaction) => {
+      // Inactivate unit
+      const inactivateUnitResult = await transaction.update(
+        OrganisationUnitEntity,
+        { id: unitId },
+        { inactivatedAt: new Date().toISOString() }
+      );
 
-  });
+      // Clear actions issued by unit
+      if (actionsToClear.length > 0) {
+        await transaction.update(
+          InnovationActionEntity,
+          { id: In(actionsToClear) },
+          { status: InnovationActionStatusEnum.DELETED }
+        );
+      }
 
+      // Complete supports of unit
+      // Check with Antonio why we don't use update here
+      const updatedSupports = supportsToComplete.map((support) => ({
+        ...support,
+        status: InnovationSupportStatusEnum.COMPLETE,
+        organisationUnitUsers: [],
+      }));
+
+      if (updatedSupports.length > 0) {
+        await transaction
+          .getRepository(InnovationSupportEntity)
+          .save(updatedSupports, { chunk: 50 });
+      }
+
+      // Mark as read notifications in the context of this unit
+      if (notificationsToMarkAsRead.length > 0) {
+        await transaction.update(
+          NotificationUserEntity,
+          { notification: In(notificationsToMarkAsRead.map((n) => n.id)) },
+          { readAt: new Date().toISOString() }
+        );
+      }
+    });
   }
 }
