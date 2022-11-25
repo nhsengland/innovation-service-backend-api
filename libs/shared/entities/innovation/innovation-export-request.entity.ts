@@ -17,10 +17,10 @@ export class InnovationExportRequestEntity extends BaseEntity {
   @Column({ name: 'status', type: 'simple-enum', enum: InnovationExportRequestStatusEnum, nullable: false })
   status: InnovationExportRequestStatusEnum;
 
-  @Column({ name: 'request_reason', type: 'varchar', length: 255, nullable: false })
+  @Column({ name: 'request_reason', type: 'varchar', length: 500, nullable: false })
   requestReason: string;
 
-  @Column({ name: 'reject_reason', type: 'varchar', length: 255, nullable: true })
+  @Column({ name: 'reject_reason', type: 'varchar', length: 500, nullable: true })
   rejectReason: null | string;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
