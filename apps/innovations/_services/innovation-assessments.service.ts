@@ -182,12 +182,6 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
-    // // Cannot re-submit an assessment.
-    // if (data.isSubmission && dbAssessment.finishedAt) {
-    //   throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WITH_INVALID_ASSESSMENTS);
-    // }
-
-
     const result = await this.sqlConnection.transaction(async transaction => {
 
       // Merge new data with assessment record.

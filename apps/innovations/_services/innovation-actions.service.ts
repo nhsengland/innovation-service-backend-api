@@ -406,7 +406,6 @@ export class InnovationActionsService extends BaseService {
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE },
           {
             actionId: dbAction.id
-            // comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
           },
         );
 
