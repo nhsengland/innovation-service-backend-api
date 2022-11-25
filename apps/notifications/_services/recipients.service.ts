@@ -86,18 +86,16 @@ export class RecipientsService extends BaseService {
     email: string;
     isActive: boolean;
   }[]> {
-    try {
-      const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
-        .where(`users.id IN (:...userIds)`, { userIds })
-        .andWhere(`users.locked_at IS NULL`)
-        .getMany();
+    if(userIds.length === 0) { return []; }
+    
+    const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
+      .where(`users.id IN (:...userIds)`, { userIds })
+      .andWhere(`users.locked_at IS NULL`)
+      .getMany();
 
-      const identityInfos = await this.identityProviderService.getUsersList(dbUsers.map(u => u.identityId));
+    const identityInfos = await this.identityProviderService.getUsersList(dbUsers.map(u => u.identityId));
 
-      return identityInfos;
-    } catch (error) {
-      throw error
-    }
+    return identityInfos;
 
   }
 
@@ -459,7 +457,7 @@ export class RecipientsService extends BaseService {
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
-      .getRawMany() || [];
+      .getMany();
 
     return dbInnovations.map(innovation => ({
       id: innovation.owner.id,

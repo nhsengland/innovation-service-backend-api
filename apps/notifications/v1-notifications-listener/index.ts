@@ -1,9 +1,9 @@
 import type { Context } from '@azure/functions';
 
-import { LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '@notifications/shared/services';
-import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
 import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
+import { StorageQueueServiceSymbol, StorageQueueServiceType } from '@notifications/shared/services';
+import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
 
 import { container } from '../_config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
@@ -24,10 +24,9 @@ class V1NotificationsListener {
     }
   ): Promise<void> {
 
-    const loggerService = container.get<LoggerServiceType>(LoggerServiceSymbol);
     const storageQueueService = container.get<StorageQueueServiceType>(StorageQueueServiceSymbol);
 
-    console.log('NOTIFICATION LISTENER: ', requestMessage);
+    context.log.info('NOTIFICATION LISTENER: ', JSON.stringify(requestMessage));
 
     try {
 
@@ -36,8 +35,8 @@ class V1NotificationsListener {
 
       const notificationsInstance = await HandlersHelper.runHandler(message.data.requestUser, message.data.action, message.data.params);
 
-      console.log('RESULT::Emails', notificationsInstance.getEmails());
-      console.log('RESULT::InApp', notificationsInstance.getInApp());
+      context.log.info('RESULT::Emails', JSON.stringify(notificationsInstance.getEmails()));
+      context.log.info('RESULT::InApp', JSON.stringify(notificationsInstance.getInApp()));
 
       for (const item of notificationsInstance.getEmails()) {
 
@@ -71,7 +70,7 @@ class V1NotificationsListener {
       return;
 
     } catch (error) {
-      loggerService.error('ERROR: Unexpected error parsing notification', error);
+      context.log.error('ERROR: Unexpected error parsing notification: ', JSON.stringify(error));
       throw error;
     }
 

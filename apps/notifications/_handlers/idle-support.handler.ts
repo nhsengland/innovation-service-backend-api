@@ -36,6 +36,8 @@ export class IdleSupportHandler extends BaseHandler<
 
     const idleSupportsByInnovation = await this.recipientsService.idleSupportsByInnovation();
 
+    if(!idleSupportsByInnovation.length) return;
+
     const ownerIds = [...new Set(idleSupportsByInnovation.flatMap(is => is.values.map(i => i.ownerId)))];
     const ownerIdentities = await this.recipientsService.usersIdentityInfo(ownerIds);
 

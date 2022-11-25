@@ -1,8 +1,8 @@
 import type { Context } from '@azure/functions';
 
-import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
-import type { NotificationContextTypeEnum, NotificationContextDetailEnum } from '@notifications/shared/enums';
+import type { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
+import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 
 import { container } from '../_config';
 import { DispatchServiceSymbol, DispatchServiceType } from '../_services/interfaces';
@@ -28,7 +28,7 @@ class V1SendInAppListener {
     const loggerService = container.get<LoggerServiceType>(LoggerServiceSymbol);
     const dispatchService = container.get<DispatchServiceType>(DispatchServiceSymbol);
 
-    console.log('IN APP LISTENER: ', requestMessage);
+    context.log.info('IN APP LISTENER: ', JSON.stringify(requestMessage));
 
     try {
 
