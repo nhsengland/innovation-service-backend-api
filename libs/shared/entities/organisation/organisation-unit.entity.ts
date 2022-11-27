@@ -24,7 +24,7 @@ export class OrganisationUnitEntity extends BaseEntity {
   @Column({ name: 'is_shadow', nullable: false, default: false })
   isShadow: boolean;
 
-  @Column({ name: 'innactivated_at', nullable: true})
+  @Column({ name: 'inactivated_at', nullable: true})
   inactivatedAt: null | DateISOType;
 
   @ManyToOne(() => OrganisationEntity, { nullable: false })

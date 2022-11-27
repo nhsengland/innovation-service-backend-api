@@ -6,6 +6,7 @@ import { InnovationEntity } from '../innovation/innovation.entity';
 import { OrganisationUnitEntity } from './organisation-unit.entity';
 
 import { OrganisationTypeEnum } from '../../enums/organisation.enums';
+import type { DateISOType } from '@admin/shared/types';
 
 
 @Entity('organisation')
@@ -28,6 +29,9 @@ export class OrganisationEntity extends BaseEntity {
 
   @Column({ name: 'is_shadow', nullable: false, default: false })
   isShadow: boolean;
+
+  @Column({ name: 'inactivated_at', nullable: true})
+  inactivatedAt: null | DateISOType;
 
 
   @ManyToMany(() => InnovationEntity, record => record.organisationShares)

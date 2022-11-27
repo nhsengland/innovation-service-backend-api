@@ -2,24 +2,36 @@ import {
   InnovationActionEntity,
   InnovationSupportEntity,
   NotificationEntity,
+  OrganisationEntity,
   OrganisationUnitEntity,
   OrganisationUnitUserEntity,
+  UserEntity,
 } from '@admin/shared/entities';
 import {
   InnovationActionStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  NotifierTypeEnum,
 } from '@admin/shared/enums';
+import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
+import {
+  DomainServiceSymbol,
+  DomainServiceType,
+  NotifierServiceSymbol,
+  NotifierServiceType,
+} from '@admin/shared/services';
 import type { DomainUserInfoType } from '@admin/shared/types';
-import type { HttpRequestUser } from '@azure/functions';
 import { NotificationUserEntity } from '@innovations/shared/entities';
-import { UnprocessableEntityError } from '@innovations/shared/errors';
 import { inject, injectable } from 'inversify';
 import { In } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
 export class AdminService extends BaseService {
-  constructor() {
+  constructor(
+    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+  ) {
     super();
   }
 
@@ -33,6 +45,11 @@ export class AdminService extends BaseService {
       .where('org_units.id = :unitId', { unitId })
       .getOne();
 
+    if (!unit) {
+      throw new NotFoundError(
+        OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND
+      );
+    }
     const organisationId = unit.organisation.id;
 
     // get users from unit
@@ -103,7 +120,7 @@ export class AdminService extends BaseService {
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
       // Inactivate unit
-      const inactivateUnitResult = await transaction.update(
+      await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
         { inactivatedAt: new Date().toISOString() }
@@ -140,6 +157,62 @@ export class AdminService extends BaseService {
           { readAt: new Date().toISOString() }
         );
       }
+
+      // lock users of unit
+      if (usersToLock.length > 0) {
+        await transaction.update(
+          UserEntity,
+          { id: In(usersToLock.map((u) => u.id)) },
+          { lockedAt: new Date().toISOString() }
+        );
+      }
+
+      // get number of active units in organisation
+      const activeUnitsCounter = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .where('unit.inatictivatedAt IS NULL')
+        .andWhere('unit.organisation_id = :organisationId', { organisationId })
+        .getCount();
+
+      // inactivate organisation if it has no active units
+      if (activeUnitsCounter === 0) {
+        await transaction.update(
+          OrganisationEntity,
+          { id: organisationId },
+          { inactivatedAt: new Date().toISOString() }
+        );
+      }
+
+      for (const support of updatedSupports) {
+        await this.domainService.innovations.addSupportLog(
+          transaction,
+          { id: requestUser.id, organisationUnitId: unitId },
+          { id: support.innovation.id },
+          support.status,
+          {
+            type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
+            description: '',
+            suggestedOrganisationUnits: [],
+          }
+        );
+
+        await this.notifierService.send<NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED>(
+          {
+            id: requestUser.id,
+            identityId: requestUser.identityId,
+            type: requestUser.type,
+          },
+          NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
+          {
+            innovationId: support.innovation.id,
+            unitId,
+          }
+        );
+      }
+
+      return { id: unitId };
     });
+
+    return result;
   }
 }

@@ -6,9 +6,8 @@
         "direction": "in",
         "name": "req",
         "methods": ["patch"],
-        "route": "user-admin/organisations/{organisationId}/units/{organisationUnitId}/inactivate"
+        "route": "v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate"
       },
       { "type": "http", "direction": "out", "name": "res" }
-    ],
-    "scriptFile": "../dist/adminsInactivateUnits/index.js"
+    ]
   }
