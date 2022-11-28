@@ -10,6 +10,8 @@ import {
 } from '@admin/shared/services';
 
 import { startup } from './startup';
+import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AdminService } from '../_services/admin.service';
 
 export const container: Container = new Container();
 
@@ -23,4 +25,5 @@ container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConne
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 
+container.bind<AdminServiceType>(AdminServiceSymbol).to(AdminService).inSingletonScope();
 void startup();

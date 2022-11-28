@@ -38,7 +38,7 @@ class V1InnovationActionUpdate {
         .verify();
 
       const requestUser = auth.getUserInfo();
-
+      
       await adminService.inactivateUnit(
         requestUser,
         params.organisationUnitId

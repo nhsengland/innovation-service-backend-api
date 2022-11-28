@@ -50,7 +50,6 @@ export class AdminService extends BaseService {
         OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND
       );
     }
-    const organisationId = unit.organisation.id;
 
     // get users from unit
     const users = await this.sqlConnection
@@ -61,7 +60,7 @@ export class AdminService extends BaseService {
         unitId,
       })
       .getMany();
-
+    
     //get open actions issued by users from unit
     const actions = await this.sqlConnection
       .createQueryBuilder(InnovationActionEntity, 'actions')
@@ -69,7 +68,7 @@ export class AdminService extends BaseService {
       .leftJoinAndSelect('supports.organisationUnit', 'unit')
       .where('unit.id = :unitId', { unitId })
       .getMany();
-
+    
     // get innovations with active support from unit
     const supports = await this.sqlConnection
       .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -97,7 +96,7 @@ export class AdminService extends BaseService {
           'notification.notificationUsers',
           'notificationUser'
         )
-        .where('notification.context_id IN (:..contexts)', { contexts })
+        .where('notification.context_id IN (:...contexts)', { contexts })
         .andWhere('notificationUser.read_at IS NULL')
         .getMany();
     }
@@ -167,10 +166,12 @@ export class AdminService extends BaseService {
         );
       }
 
+      const organisationId = unit.organisationId;
+
       // get number of active units in organisation
       const activeUnitsCounter = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'unit')
-        .where('unit.inatictivatedAt IS NULL')
+        .where('unit.inactivatedAt IS NULL')
         .andWhere('unit.organisation_id = :organisationId', { organisationId })
         .getCount();
 
