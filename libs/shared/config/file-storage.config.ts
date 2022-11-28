@@ -9,7 +9,8 @@ if (!process.env['STORAGE_CONTAINER'] || !process.env['STORAGE_ACCOUNT'] || !pro
 
 
 export const FILE_STORAGE_CONFIG = Object.freeze({
-  storageContainer: process.env['STORAGE_CONTAINER'] ?? '',
+  // just failsafe to strip leading slash
+  storageContainer: process.env['STORAGE_CONTAINER']?.replace(/^\//, '') ?? '',
   storageAccount: process.env['STORAGE_ACCOUNT'] ?? '',
   storageKey: process.env['STORAGE_KEY'] ?? '',
   storageBaseUrl: process.env['STORAGE_BASE_URL'] ?? ''
