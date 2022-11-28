@@ -1,4 +1,4 @@
-import { container } from './inversify.config';
+import { container } from '@admin/shared/config/inversify.config';
 
 import {
   SQLConnectionServiceSymbol, SQLConnectionServiceType
@@ -26,3 +26,6 @@ export const startup = async (): Promise<void> => {
   }
 
 }
+
+export { container };
+void startup();

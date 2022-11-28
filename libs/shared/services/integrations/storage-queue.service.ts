@@ -1,14 +1,15 @@
-import { injectable } from 'inversify';
 import { QueueClient, QueueSendMessageOptions, QueueSendMessageResponse, QueueServiceClient } from '@azure/storage-queue';
+import { injectable } from 'inversify';
 
 import { STORAGE_QUEUE_CONFIG } from '../../config';
 
 
 export enum QueuesEnum {
+  AUDIT = 'audit-send-queue',
   EMAIL = 'email-send-queue',
-  NOTIFICATION = 'notification-queue',
+  IDENTITY = 'identity-ops-queue',
   IN_APP = 'in-app-send-queue',
-  IDENTITY = 'identity-ops-queue'
+  NOTIFICATION = 'notification-queue'
 }
 
 

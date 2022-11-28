@@ -1,7 +1,6 @@
 import type { Context } from '@azure/functions';
 
 import { JoiHelper } from '@notifications/shared/helpers';
-import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 
 import { container, EmailTypeEnum } from '../_config';
 import { DispatchServiceSymbol, DispatchServiceType } from '../_services/interfaces';
@@ -27,7 +26,6 @@ class V1SendEmailListener {
     }
   ): Promise<void> {
 
-    const loggerService = container.get<LoggerServiceType>(LoggerServiceSymbol);
     const dispatchService = container.get<DispatchServiceType>(DispatchServiceSymbol);
 
     context.log.info('EMAIL LISTENER: ', JSON.stringify(requestMessage));
@@ -47,7 +45,7 @@ class V1SendEmailListener {
       return;
 
     } catch (error) {
-      loggerService.error('ERROR: Unexpected error parsing notification', error);
+      context.log.error('ERROR: Unexpected error parsing notification', error);
       throw error;
     }
 

@@ -1,6 +1,6 @@
 import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
 import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
-import { UnprocessableEntityError, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';

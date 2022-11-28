@@ -9,7 +9,7 @@ import type {
   CustomContextType
 } from '@innovations/shared/types';
 
-import { JwtDecoder } from '@innovations/shared/decorators';
+import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
@@ -17,11 +17,13 @@ import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
+import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 
 
 class CreateInnovationAssessment {
 
   @JwtDecoder()
+  @Audit({ action: ActionEnum.CREATE, target: TargetEnum.ASSESSMENT, identifierResponseField: 'id' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);

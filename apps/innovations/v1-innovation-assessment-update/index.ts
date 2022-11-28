@@ -1,9 +1,9 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
-import { JwtDecoder } from '@innovations/shared/decorators';
+import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -11,13 +11,15 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
+import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 
 
 class V1InnovationAssessmentUpdate {
 
   @JwtDecoder()
+  @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.ASSESSMENT, identifierParam: 'assessmentId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
