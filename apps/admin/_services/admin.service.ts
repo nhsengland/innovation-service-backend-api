@@ -21,7 +21,7 @@ import {
   NotifierServiceType,
 } from '@admin/shared/services';
 import type { DomainUserInfoType } from '@admin/shared/types';
-import { NotificationUserEntity } from '@innovations/shared/entities';
+import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
 import { In } from 'typeorm';
 import { BaseService } from './base.service';
@@ -69,7 +69,7 @@ export class AdminService extends BaseService {
       .where('unit.id = :unitId', { unitId })
       .getMany();
     
-    // get innovations with active support from unit
+    // get all supports from unit
     const supports = await this.sqlConnection
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
@@ -110,12 +110,11 @@ export class AdminService extends BaseService {
       )
       .map((aa) => aa.id);
 
-    const supportsToComplete = supports.filter((s) => {
+    const supportsToComplete = supports.filter(s => 
       [
         InnovationSupportStatusEnum.ENGAGING,
-        InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-      ].includes(s.status);
-    });
+        InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
+      ].includes(s.status));
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
       // Inactivate unit
@@ -135,12 +134,13 @@ export class AdminService extends BaseService {
       }
 
       // Complete supports of unit
-      // Check with Antonio why we don't use update here
       const updatedSupports = supportsToComplete.map((support) => ({
         ...support,
         status: InnovationSupportStatusEnum.COMPLETE,
         organisationUnitUsers: [],
       }));
+
+      console.log('updated supports', updatedSupports)
 
       if (updatedSupports.length > 0) {
         await transaction
@@ -209,6 +209,7 @@ export class AdminService extends BaseService {
             unitId,
           }
         );
+
       }
 
       return { id: unitId };
