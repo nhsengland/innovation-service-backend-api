@@ -1,3 +1,4 @@
+export { AuditService } from './integrations/audit.service';
 export { AuthorizationService } from './auth/authorization.service';
 
 export { DomainService } from './domain/domain.service';

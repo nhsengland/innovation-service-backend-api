@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 
 
 export type ParamsType = {
@@ -25,7 +25,7 @@ export const BodySchema = Joi.object<BodyType>({
     InnovationSupportStatusEnum.UNSUITABLE,
     InnovationSupportStatusEnum.COMPLETE
   ).required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).trim().required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required(),
   accessors: Joi.when('status', {
     is: InnovationSupportStatusEnum.ENGAGING,
     then: Joi.array().items(Joi.object({ id: Joi.string().guid().required(), organisationUnitUserId: Joi.string().guid().required() })).required(),

@@ -1,8 +1,22 @@
-import { container } from './inversify.config';
+import { container } from '@notifications/shared/config/inversify.config';
 
-import { SQLConnectionServiceType, SQLConnectionServiceSymbol } from '@notifications/shared/services'
+import { SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@notifications/shared/services';
 
+import { DispatchService } from '../_services/dispatch.service';
+import { EmailService } from '../_services/email.service';
+import {
+  DispatchServiceSymbol, DispatchServiceType,
+  EmailServiceSymbol, EmailServiceType,
+  RecipientsServiceSymbol, RecipientsServiceType
+} from '../_services/interfaces';
+import { RecipientsService } from '../_services/recipients.service';
 
+// Specific inversify container configuration
+container.bind<DispatchServiceType>(DispatchServiceSymbol).to(DispatchService).inSingletonScope();
+container.bind<EmailServiceType>(EmailServiceSymbol).to(EmailService).inSingletonScope();
+container.bind<RecipientsServiceType>(RecipientsServiceSymbol).to(RecipientsService).inSingletonScope();
+
+export { container };
 export const startup = async (): Promise<void> => {
 
   console.log('Initializing Notifications app function');
@@ -24,3 +38,5 @@ export const startup = async (): Promise<void> => {
   }
 
 }
+
+void startup()

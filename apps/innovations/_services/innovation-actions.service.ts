@@ -405,9 +405,20 @@ export class InnovationActionsService extends BaseService {
           transaction,
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE },
           {
-            actionId: dbAction.id,
-            comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
-          }
+            actionId: dbAction.id
+          },
+        );
+
+      }
+
+      if (data.status === InnovationActionStatusEnum.REQUESTED) {
+
+        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE>(
+          transaction,
+          { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE },
+          {
+            actionId: dbAction.id
+          },
         );
 
       }

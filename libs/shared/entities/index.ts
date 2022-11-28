@@ -1,6 +1,8 @@
 // General.
+import { AuditEntity } from './general/audit.entity';
 import { TermsOfUseUserEntity } from './general/terms-of-use-user.entity';
 import { TermsOfUseEntity } from './general/terms-of-use.entity';
+export { AuditEntity } from './general/audit.entity';
 export { TermsOfUseUserEntity } from './general/terms-of-use-user.entity';
 export { TermsOfUseEntity } from './general/terms-of-use.entity';
 
@@ -98,6 +100,7 @@ export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 
 export const GENERAL_ENTITIES = [
+  AuditEntity,
   TermsOfUseEntity,
   TermsOfUseUserEntity
 ];

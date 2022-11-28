@@ -1,9 +1,13 @@
-import { container } from './inversify.config';
+import { container } from '@admin/shared/config/inversify.config';
 
 import {
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
+import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AdminService } from '../_services/admin.service';
+
+container.bind<AdminServiceType>(AdminServiceSymbol).to(AdminService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
 
@@ -26,3 +30,6 @@ export const startup = async (): Promise<void> => {
   }
 
 }
+
+export { container };
+void startup();

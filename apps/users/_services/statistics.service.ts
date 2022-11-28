@@ -32,6 +32,39 @@ export class StatisticsService  extends BaseService {
     }
   }
 
+
+ async assignedInnovations(userId: string): Promise<{count: number; total: number; overdue: number}> {
+
+  const count = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+      .andWhere('assignTo.id = :userId', { userId })
+      .getCount();
+
+    const total = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+
+      .getCount();
+
+    const overdueCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignTo')
+      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`)
+      .andWhere('assignTo.id = :userId', { userId })
+      .getCount();
+
+
+  return {
+    count: count,
+    total: total,
+    overdue: overdueCount
+  }
+ }
+
   async innovationsAssignedToMe(
     requestUser: DomainUserInfoType,
   ): Promise<{count: number, total: number, lastSubmittedAt: null | DateISOType}> {
@@ -79,16 +112,15 @@ export class StatisticsService  extends BaseService {
       .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
       .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
-      .where('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW })
-      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit })
+      .where('actions.created_by = :userId', { userId: requestUser.id })
 
     const [myUnitActions, myUnitActionsCount] = await baseQuery
-
+      .andWhere('actions.status in (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
       .orderBy('actions.updated_at', 'DESC')
       .getManyAndCount();
       
     const myActionsCount = await baseQuery
-      .andWhere('actions.created_by = :userId', { userId: requestUser.id }).getCount();    
+      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getCount();    
   
 
     return {
