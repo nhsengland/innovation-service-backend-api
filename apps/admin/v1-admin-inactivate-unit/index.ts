@@ -57,7 +57,7 @@ export default openApi(
   V1InnovationActionUpdate.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate',
   {
-    put: {
+    patch: {
       description: 'Inactivate an organisation unit.',
       operationId: 'v1-admin-inactivate-unit',
       parameters: [
