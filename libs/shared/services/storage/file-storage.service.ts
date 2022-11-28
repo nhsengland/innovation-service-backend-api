@@ -1,9 +1,9 @@
 import { BlobClient, BlobDeleteIfExistsResponse, BlobSASPermissions, BlobSASSignatureValues, generateBlobSASQueryParameters, SASProtocol, StorageSharedKeyCredential } from '@azure/storage-blob';
 import { injectable } from 'inversify';
-import { extname, join } from 'path';
+import { extname } from 'path';
 
 import { FILE_STORAGE_CONFIG } from '../../config/file-storage.config';
-import { ServiceUnavailableError, GenericErrorsEnum } from '../../errors';
+import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 
 
 enum StoragePermissionsEnum {
@@ -42,7 +42,7 @@ export class FileStorageService {
     try {
 
       const query = generateBlobSASQueryParameters(signature, storageSharedKeyCredential);
-      return `${join(FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, filename)}?${query.toString()}`;
+      return [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, filename].filter(Boolean).join('/') + '?' + query.toString();
 
     } catch (error) {
       // TODO: Log this here!
@@ -62,8 +62,7 @@ export class FileStorageService {
   async deleteFile(id: string, filename: string): Promise<BlobDeleteIfExistsResponse> {
 
     try {
-
-      const url = join(FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, `${id}${extname(filename)}`);
+      const url = [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, `${id}${extname(filename)}`].filter(Boolean).join('/');
       const storageSharedKeyCredential = new StorageSharedKeyCredential(FILE_STORAGE_CONFIG.storageAccount, FILE_STORAGE_CONFIG.storageKey);
       const blobClient = new BlobClient(url, storageSharedKeyCredential);
       const response = await blobClient.deleteIfExists({ deleteSnapshots: 'include' });
