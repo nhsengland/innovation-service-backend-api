@@ -28,6 +28,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   engagingOrganisations?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
+  latestWorkedByMe?: boolean,
   fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
 }
 
@@ -55,5 +56,9 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   groupedStatuses: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum))).optional(),
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
+  latestWorkedByMe: Joi.boolean().optional().default(false),
   fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics')).optional()
-}).required();
+})
+// make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
+.fork('order', (schema) => Joi.when('latestWorkedByMe', {is: true, then: schema.forbidden(), otherwise: schema.optional()})).messages({'any.unknown': 'order field is not allowed when latestWorkedByMe is true'})
+.required()

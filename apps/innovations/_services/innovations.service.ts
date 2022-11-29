@@ -12,6 +12,7 @@ import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
 
+import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import { BaseService } from './base.service';
 
 
@@ -37,6 +38,7 @@ export class InnovationsService extends BaseService {
       engagingOrganisations?: string[],
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
+      latestWorkedByMe?: boolean,
       fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
@@ -93,6 +95,11 @@ export class InnovationsService extends BaseService {
     if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
       query.leftJoinAndSelect('innovations.notifications', 'notifications')
       query.leftJoinAndSelect('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
+    }
+    // Last worked on.
+    if (filters.latestWorkedByMe) {
+      query.andWhere('innovations.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)', 
+      { userId: user.id, actions: [ActionEnum.CREATE, ActionEnum.UPDATE], offset: pagination.skip, fetch: pagination.take });
     }
 
     if (user.type === UserTypeEnum.INNOVATOR) {
@@ -231,24 +238,27 @@ export class InnovationsService extends BaseService {
       query.andWhere('assessmentOrganisationUnits.id = :suggestedOrganisationUnitId', { suggestedOrganisationUnitId: user.organisationUnitId });
     }
 
-    // Pagination and ordering.
-    query.skip(pagination.skip);
-    query.take(pagination.take);
-
-    for (const [key, order] of Object.entries(pagination.order)) {
-      let field: string;
-      switch (key) {
-        case 'name': field = 'innovations.name'; break;
-        case 'location': field = 'innovations.countryName'; break;
-        case 'mainCategory': field = 'innovations.mainCategory'; break;
-        case 'submittedAt': field = 'innovations.submittedAt'; break;
-        case 'updatedAt': field = 'innovations.updatedAt'; break;
-        case 'assessmentStartedAt': field = 'assessments.createdAt'; break;
-        case 'assessmentFinishedAt': field = 'assessments.finishedAt'; break;
-        default:
-          field = 'innovations.createdAt'; break;
+    // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs
+    if (! filters.latestWorkedByMe) {
+      // Pagination and ordering.
+      query.skip(pagination.skip);
+      query.take(pagination.take);
+      
+      for (const [key, order] of Object.entries(pagination.order)) {
+        let field: string;
+        switch (key) {
+          case 'name': field = 'innovations.name'; break;
+          case 'location': field = 'innovations.countryName'; break;
+          case 'mainCategory': field = 'innovations.mainCategory'; break;
+          case 'submittedAt': field = 'innovations.submittedAt'; break;
+          case 'updatedAt': field = 'innovations.updatedAt'; break;
+          case 'assessmentStartedAt': field = 'assessments.createdAt'; break;
+          case 'assessmentFinishedAt': field = 'assessments.finishedAt'; break;
+          default:
+            field = 'innovations.createdAt'; break;
+        }
+        query.addOrderBy(field, order);
       }
-      query.addOrderBy(field, order);
     }
 
     const result = await query.getManyAndCount();
@@ -1232,7 +1242,7 @@ export class InnovationsService extends BaseService {
 
   }
 
-  private getGroupedToInnovationStatusMap(groupedStatuses: InnovationGroupedStatusEnum[]) {
+  private getGroupedToInnovationStatusMap(groupedStatuses: InnovationGroupedStatusEnum[]): InnovationStatusEnum[] {
     const groupedToInnovationStatusMap = {
       [InnovationGroupedStatusEnum.RECORD_NOT_SHARED]: InnovationStatusEnum.CREATED,
       [InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
