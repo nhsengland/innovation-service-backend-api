@@ -58,15 +58,8 @@ export class StatisticsService  extends BaseService {
       }
     }
 
-    // the context id is always the thread id regardless if the detail is a message or a reply  
-    const unreadThreadMessages = await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
-    .where('threadMessage.id IN(:...ids)', { ids: unreadMessages.map(x => x.contextId) })
-    .orderBy('threadMessage.created_at', 'DESC')
-    .getMany();
-
-
-    const latestMessage = unreadThreadMessages.sort((a, b) => {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    const latestMessage = unreadMessages.sort((a, b) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     }).find(_ => true);
 
     return {
@@ -139,7 +132,6 @@ export class StatisticsService  extends BaseService {
       .innerJoinAndSelect('assessments.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('assignTo.id = :userId', { userId: requestUser.id })
-      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.NEEDS_ASSESSMENT })
       .getOne();
 
     const assessmentStartedAt = assessment?.updatedAt;
