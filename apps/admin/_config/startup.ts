@@ -4,6 +4,10 @@ import {
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
+import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AdminService } from '../_services/admin.service';
+
+container.bind<AdminServiceType>(AdminServiceSymbol).to(AdminService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
 
