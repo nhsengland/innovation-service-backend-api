@@ -58,9 +58,9 @@ class V1InnovationInfo {
           id: result.owner.id,
           name: result.owner.name,
           isActive: result.owner.isActive,
-          // Contact details only sent to Assessment users.
-          ...(requestUser.type === UserTypeEnum.ASSESSMENT ? { email: result.owner.email } : {}),
-          ...(requestUser.type === UserTypeEnum.ASSESSMENT ? { mobilePhone: result.owner.mobilePhone } : {}),
+          // Contact details only sent to Assessment and Admin users.
+          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { email: result.owner.email } : {}),
+          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { mobilePhone: result.owner.mobilePhone } : {}),
           organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null
         },
         lastEndSupportAt: result.lastEndSupportAt,
