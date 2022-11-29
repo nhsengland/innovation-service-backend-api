@@ -7,7 +7,7 @@ import type { InnovationStatisticsTemplateType } from '../../_config/statistics.
 export const unreadMessagesThreadsInitiatedByStatisticsHandler = async (
   requestUser: { id: string, identityId: string, type: UserTypeEnum },
   data: { innovationId: string }
-): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]> => {
+): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]> => {
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
