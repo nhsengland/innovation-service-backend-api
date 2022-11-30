@@ -11,7 +11,7 @@ export const unreadMessagesThreadsInitiatedByStatisticsHandler = async (
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const actions = await statisticsService.getUnreadMessages(data.innovationId, requestUser.id);
+    const actions = await statisticsService.getUnreadMessagesInitiatedBy(data.innovationId, requestUser.id);
   
     return {
       count: actions.count,
