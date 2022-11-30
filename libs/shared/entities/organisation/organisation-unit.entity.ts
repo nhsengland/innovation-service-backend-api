@@ -2,11 +2,11 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGe
 
 import { BaseEntity } from '../base.entity';
 
+import type { DateISOType } from '../../types';
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportLogEntity } from '../innovation/innovation-support-log.entity';
-import { OrganisationEntity } from './organisation.entity';
 import { OrganisationUnitUserEntity } from './organisation-unit-user.entity';
-import type { DateISOType } from '@admin/shared/types';
+import { OrganisationEntity } from './organisation.entity';
 
 
 @Entity('organisation_unit')

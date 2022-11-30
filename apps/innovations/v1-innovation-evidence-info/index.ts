@@ -1,19 +1,18 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
-
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
-
-import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
+import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
 
 
-class V1InnovationSectionsList {
+class GetInnovationEvidenceInfo {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -25,7 +24,7 @@ class V1InnovationSectionsList {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
@@ -33,16 +32,16 @@ class V1InnovationSectionsList {
         .checkAdminType()
         .checkInnovation()
         .verify();
-      const requestUser = auth.getUserInfo()
 
-      const result = await innovationSectionsService.getInnovationSectionsList({ type: requestUser.type }, params.innovationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>(result.map(section => ({
-        id: section.id,
-        section: section.section,
-        status: section.status,
-        submittedAt: section.submittedAt,
-        openActionsCount: section.openActionsCount
-      })));
+      const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceId);
+      context.res = ResponseHelper.Ok<ResponseDTO>({
+        id: result.id,
+        evidenceType: result.evidenceType,
+        clinicalEvidenceType: result.clinicalEvidenceType,
+        description: result.description,
+        summary: result.summary,
+        files: result.files
+      });
       return;
 
     } catch (error) {
@@ -54,16 +53,16 @@ class V1InnovationSectionsList {
 
 }
 
-export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, 'v1/{innovationId}/sections', {
+export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, 'v1/{innovationId}/evidences/{evidenceId}', {
   get: {
-    description: 'Get an innovation sections list.',
+    description: 'Get an innovation evidence info.',
     tags: ['Innovation'],
-    summary: 'Get an innovation sections list.',
-    operationId: 'v1-innovation-sections-list',
+    summary: 'Get an innovation evidence info.',
+    operationId: 'getInnovationEvidenceInfo',
     parameters: [],
     responses: {
       200: {
-        description: 'Success',
+        description: 'Innovation section info.',
         content: {
           'application/json': {
             schema: {
@@ -71,37 +70,43 @@ export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, 'v
               properties: {
                 id: {
                   type: 'string',
-                  description: 'Innovation id.',
+                  description: 'Innovation evidence id.',
                 },
-                name: {
+                evidenceType: {
                   type: 'string',
-                  description: 'Innovation name.',
+                  enum: [Object.values(EvidenceTypeCatalogueEnum)],
+                  description: 'Evidence type.',
                 },
-                status: {
+                clinicalEvidenceType: {
                   type: 'string',
-                  description: 'Innovation status.',
+                  enum: [Object.values(ClinicalEvidenceTypeCatalogueEnum)],
+                  description: 'Clinical Evidence type.',
                 },
-                sections: {
+                description: {
+                  type: 'string',
+                  description: 'Evidence description.',
+                },
+                summary: {
+                  type: 'string',
+                  description: 'Evidence summary.',
+                },
+                files: {
                   type: 'array',
-                  description: 'Innovation sections.',
+                  description: 'Innovation evidence files.',
                   items: {
                     type: 'object',
                     properties: {
                       id: {
                         type: 'string',
-                        description: 'Innovation section id.',
+                        description: 'File id.',
                       },
-                      section: {
+                      displayFileName: {
                         type: 'string',
-                        description: 'Innovation section name.',
+                        description: 'File display name.',
                       },
-                      status: {
+                      url: {
                         type: 'string',
-                        description: 'Innovation section status.',
-                      },
-                      submittedAt: {
-                        type: 'string',
-                        description: 'Innovation section submitted date.',
+                        description: 'File url.',
                       },
                     },
                   },
@@ -118,10 +123,10 @@ export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, 'v
         description: 'Forbidden',
       },
       404: {
-        description: 'Not Found',
+        description: 'Not found',
       },
       500: {
-        description: 'Internal Server Error',
+        description: 'Internal server error',
       },
     },
   },
