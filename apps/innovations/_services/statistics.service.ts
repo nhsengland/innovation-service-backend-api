@@ -46,7 +46,7 @@ export class StatisticsService  extends BaseService {
     .innerJoinAndSelect('notification.notificationUsers', 'users')
     .where('innovation.id = :innovationId', { innovationId })
     .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
-    .andWhere('notification.context_detail = :context_detail', { context_detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION })
+    .andWhere('notification.context_detail IN (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
     .andWhere('users.user_id = :userId', { userId })
     .andWhere('users.readAt IS NULL')
     .getMany();
@@ -148,7 +148,7 @@ export class StatisticsService  extends BaseService {
     return sections;
   }
 
-  async getUnreadMessagesInitiatedByNA(innovationId: string, userId: string): Promise<{
+  async getUnreadMessagesInitiatedBy(innovationId: string, userId: string): Promise<{
     count: number;
     lastSubmittedAt: null | string;
   }> {
@@ -167,7 +167,7 @@ export class StatisticsService  extends BaseService {
     .innerJoinAndSelect('notification.notificationUsers', 'users')
     .where('innovation.id = :innovationId', { innovationId })
     .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
-    .andWhere('notification.context_detail = :context_detail', { context_detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION })
+    .andWhere('notification.context_detail in (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
     .andWhere('users.user_id = :userId', { userId })
     .andWhere('users.readAt IS NULL')
     .andWhere('notification.context_id IN (:...threadIds)', { threadIds: threadCreatedByMe.map(_ => _.id) })
