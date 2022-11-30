@@ -26,33 +26,33 @@ paths:
         "403":
           description: "Forbidden"
     
-    "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
-      patch:
-        tags:
-          - "[v1] Inactivate Unit"
-        description: "Inactivate an organisation unit"
-        operationId: "v1-admin-inactivate-unit"
-        parameters:
-          - name: Authorization
-            in: header
-            schema:
-              type: string
-            required: true
-          - name: organisationId
-            in: path
-            required: true
-            schema:
-              type: string
-          - name: organisationUnitId
-            in: path
-            required: true
-            schema:
-              type: string
-        responses:
-          "200":
-            description: "OK"
-          "400":
-            description: "Bad Request"
-          "401":
-            description: "Unauthorized"
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
+    patch:
+      tags:
+        - "[v1] Inactivate Unit"
+      description: "Inactivate an organisation unit"
+      operationId: "v1-admin-inactivate-unit"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
 
