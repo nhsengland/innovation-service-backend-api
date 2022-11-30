@@ -71,7 +71,7 @@ export class StatisticsService  extends BaseService {
   async actionsToReview(
     innovationId: string,
     requestUser: DomainUserInfoType,
-  ): Promise<{count: number, lastSubmittedAt: null | DateISOType}> {
+  ): Promise<{count: number, lastSubmittedSection: null | string, lastSubmittedAt: null | DateISOType}> {
 
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
@@ -92,6 +92,7 @@ export class StatisticsService  extends BaseService {
 
     return {
       count: myActionsCount,
+      lastSubmittedSection: myActions.find(_ => true)?.innovationSection.section || null,
       lastSubmittedAt: myActions.find(_ => true)?.updatedAt || null,
     }
   }

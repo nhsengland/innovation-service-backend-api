@@ -3,6 +3,7 @@ import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_serv
 import type { InnovationStatisticsTemplateType } from '../../_config/statistics.config';
 import type { DomainUserInfoType } from '@innovations/shared/types';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
+import { InnovationSectionEnum } from '@innovations/shared/enums';
 
 export const sectionsSubmittedSinceSupportStartStatisticsHandler = async (
   requestUser: DomainUserInfoType,
@@ -14,9 +15,13 @@ export const sectionsSubmittedSinceSupportStartStatisticsHandler = async (
     const submittedSections = await statisticsService.getSubmittedSectionsSinceSupportStart(data.innovationId, requestUser)
   
     const [sections, count] = submittedSections;
+    const totalSections = Object.keys(InnovationSectionEnum).length;
+    const lastSubmittedSection = sections.find(_ => true);
 
     return {
       count,
-      lastSubmittedAt: sections.find(_ => true)?.updatedAt || null,
+      total: totalSections,
+      lastSubmittedSection: lastSubmittedSection?.section || null,
+      lastSubmittedAt: lastSubmittedSection?.updatedAt || null,
     }
 }
