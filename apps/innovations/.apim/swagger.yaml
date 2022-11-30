@@ -1766,3 +1766,28 @@ paths:
           description: 'Success'
         '400':
           description: 'Invalid payload'
+
+  "/v1/{innovationId}/submissions":
+    get:
+      tags:
+        - "[v1] Innovations"
+      description: "Get Innovation submission states."
+      operationId: "v1-innovation-submission-states"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"

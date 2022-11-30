@@ -1104,6 +1104,31 @@ export class InnovationsService extends BaseService {
       .execute();
   }
 
+  async getInnovationSubmissionsState(innovationId: string): Promise<{ 
+    submittedAllSections: boolean; 
+    submittedForNeedsAssessment: boolean; 
+  }> {
+
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .where('innovation.id = :innovationId', { innovationId }).getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const sectionsSubmitted = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
+      .where('section.innovation_id = :innovationId', { innovationId })
+      .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED }).getCount();
+
+    const totalSections = Object.keys(InnovationSectionEnum).length;
+    
+
+    return {
+      submittedAllSections: sectionsSubmitted === totalSections,
+      submittedForNeedsAssessment: innovation.status !== InnovationStatusEnum.CREATED,
+    };
+  }
+
   /**
   * Extracts information about the initial survey taken by the Innovator from CosmosDb
   */
@@ -1141,7 +1166,6 @@ export class InnovationsService extends BaseService {
     return query;
 
   }
-
 
   private async findInnovationSections(innovationId: string): Promise<InnovationSectionEntity[] | undefined> {
 
