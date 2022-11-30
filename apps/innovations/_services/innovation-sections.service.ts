@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
@@ -346,6 +346,40 @@ export class InnovationSectionsService extends BaseService {
     return {
       innovation: { name: innovation.name },
       innovationSections
+    };
+
+  }
+
+  async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
+    id: string,
+    evidenceType: EvidenceTypeCatalogueEnum,
+    clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum,
+    description: string,
+    summary: string,
+    files: { id: string; displayFileName: string; url: string }[];
+  }> {
+
+    const evidence = await this.sqlConnection.createQueryBuilder(InnovationEvidenceEntity, 'evidences')
+      .leftJoinAndSelect('evidences.files', 'files')
+      .where('evidences.innovation_id = :innovationId', { innovationId })
+      .andWhere('evidences.id = :evidenceId', { evidenceId })
+      .getOne()
+
+    if (!evidence) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
+    }
+
+    return {
+      id: evidence.id,
+      evidenceType: evidence.evidenceType,
+      clinicalEvidenceType: evidence.clinicalEvidenceType,
+      description: evidence.description,
+      summary: evidence.summary,
+      files: evidence.files.map(file => ({
+        id: file.id,
+        displayFileName: file.displayFileName,
+        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
+      }))
     };
 
   }

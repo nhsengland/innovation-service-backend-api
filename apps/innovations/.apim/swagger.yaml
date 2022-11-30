@@ -1720,6 +1720,35 @@ paths:
           description: The innovation transfer does not exist
         '500':
           description: An error occurred while updating the innovation transfer status
+  
+  "/v1/{innovationId}/evidences/{evidenceId}":
+    get:
+      tags:
+        - "[v1] Evidences"
+      description: "Get an innovation evidence info."
+      operationId: "v1-innovation-evidence-info"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: evidenceId
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+        '404':
+          description: "Not Found"
+        '500':
+          description: "Internal Server Error"
 
   "/v1/{innovationId}/notifications/dismiss":
     patch:
