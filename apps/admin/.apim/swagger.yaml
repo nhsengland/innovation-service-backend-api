@@ -43,7 +43,7 @@ paths:
             required: true
             schema:
               type: string
-          - name: organisationalUnitId
+          - name: organisationUnitId
             in: path
             required: true
             schema:
