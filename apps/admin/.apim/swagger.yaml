@@ -52,7 +52,7 @@ paths:
           "200":
             description: "OK"
           "400":
-            description: "Bad Requues"
+            description: "Bad Request"
           "401":
             description: "Unauthorized"
 
