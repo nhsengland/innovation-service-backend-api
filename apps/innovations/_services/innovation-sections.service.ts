@@ -350,6 +350,15 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
+  async createInnovationEvidence(innovationId: string, evidence: any, section: InnovationSectionEnum): Promise<{
+    id: string
+  }> {
+
+    
+
+
+  }
+
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
     id: string,
     evidenceType: EvidenceTypeCatalogueEnum,
