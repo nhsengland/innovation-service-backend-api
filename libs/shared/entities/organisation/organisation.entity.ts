@@ -6,7 +6,7 @@ import { InnovationEntity } from '../innovation/innovation.entity';
 import { OrganisationUnitEntity } from './organisation-unit.entity';
 
 import { OrganisationTypeEnum } from '../../enums/organisation.enums';
-import type { DateISOType } from 'libs/shared/types';
+import type { DateISOType } from '../../types';
 
 
 @Entity('organisation')
