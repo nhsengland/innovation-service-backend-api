@@ -52,7 +52,7 @@ class GetInnovationSectionInfo {
 
 }
 
-export default openApi(GetInnovationSectionInfo.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}/info', {
+export default openApi(GetInnovationSectionInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/sections/{sectionKey}/info', {
   get: {
     description: 'Get an innovation section info.',
     tags: ['Innovation'],

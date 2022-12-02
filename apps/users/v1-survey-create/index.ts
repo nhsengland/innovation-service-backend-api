@@ -55,7 +55,7 @@ export default openApi(V1SurveyCreate.httpTrigger as AzureFunction, '/v1/survey'
           }
         }
       },
-      400: { description: 'Invalida survey payload' }
+      400: { description: 'Invalid survey payload' }
     }
   }
 

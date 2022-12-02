@@ -432,7 +432,7 @@ paths:
                               type: string
         "500":
           description: An error occurred while processing the request.
-  "v1/{innovationId}/all-sections":
+  "/v1/{innovationId}/all-sections":
     get:
       description: Get an innovation sections list details.
       tags:
@@ -455,7 +455,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "v1/{innovationId}/assessments":
+  "/v1/{innovationId}/assessments":
     post:
       summary: Create an innovation assessment
       description: Create an innovation assessment.
@@ -507,7 +507,7 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
-  v1/:innovationId/assessment/:assessmentId:
+  /v1/:innovationId/assessment/:assessmentId:
     get:
       summary: Get Innovation Assessment Info
       description: Get Innovation Assessment Info
@@ -642,7 +642,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "v1/{innovationId}/assessments/{assessmentId}":
+  "/v1/{innovationId}/assessments/{assessmentId}":
     put:
       summary: Update an innovation assessment
       description: Update an innovation assessment.
@@ -762,7 +762,7 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
-  "v1/{innovationId}/evidences/{evidenceId}":
+  "/v1/{innovationId}/evidences/{evidenceId}":
     get:
       description: Get an innovation evidence info.
       tags:
@@ -890,7 +890,7 @@ paths:
           description: Success
         "400":
           description: Invalid payload
-  "v1/{innovationId}/reassessments":
+  "/v1/{innovationId}/reassessments":
     post:
       operationId: v1-innovation-reassessment-request-create
       description: Create a reassessment request for an innovation.
@@ -939,7 +939,7 @@ paths:
           description: Unprocessable entity
         "500":
           description: Internal server error
-  "v1/{innovationId}/sections/{sectionKey}/info":
+  "/v1/{innovationId}/sections/{sectionKey}/info":
     get:
       description: Get an innovation section info.
       tags:
@@ -1005,7 +1005,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "v1/{innovationId}/sections/{sectionKey}/submit":
+  "/v1/{innovationId}/sections/{sectionKey}/submit":
     post:
       description: Submit an innovation section.
       tags:
@@ -1027,7 +1027,7 @@ paths:
       responses:
         "200":
           description: Innovation section submit response.
-  "v1/{innovationId}/sections/{sectionKey}":
+  "/v1/{innovationId}/sections/{sectionKey}":
     put:
       description: Update an innovation section info.
       tags:
@@ -1068,7 +1068,7 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
-  "v1/{innovationId}/sections":
+  "/v1/{innovationId}/sections":
     get:
       description: Get an innovation sections list.
       tags:
@@ -1119,7 +1119,7 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "v1/{innovationId}/shares":
+  "/v1/{innovationId}/shares":
     get:
       description: Get all the shares for an innovation.
       tags:
@@ -1189,7 +1189,7 @@ paths:
           description: Success
         "400":
           description: Invalid innovation payload
-  "v1/{innovationId}/submit":
+  "/v1/{innovationId}/submit":
     patch:
       summary: Submit an innovation
       description: Submit an innovation for assessment.
@@ -1300,9 +1300,13 @@ paths:
           name: innovationId
           description: Unique innovation ID
           required: true
+          schema:
+            type: string
         - in: path
           name: supportId
           required: true
+          schema:
+            type: string
       requestBody:
         description: ""
         required: true

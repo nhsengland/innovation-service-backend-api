@@ -3,13 +3,13 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
+import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
-import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
 
 
 class GetInnovationEvidenceInfo {
@@ -53,7 +53,7 @@ class GetInnovationEvidenceInfo {
 
 }
 
-export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, 'v1/{innovationId}/evidences/{evidenceId}', {
+export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/evidences/{evidenceId}', {
   get: {
     description: 'Get an innovation evidence info.',
     tags: ['Innovation'],

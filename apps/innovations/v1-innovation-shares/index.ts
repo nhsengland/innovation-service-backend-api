@@ -49,7 +49,7 @@ class V1InnovationShares {
 
 }
 
-export default openApi(V1InnovationShares.httpTrigger as AzureFunction, 'v1/{innovationId}/shares', {
+export default openApi(V1InnovationShares.httpTrigger as AzureFunction, '/v1/{innovationId}/shares', {
   get: {
     description: 'Get all the shares for an innovation.',
     tags: ['Innovation'],

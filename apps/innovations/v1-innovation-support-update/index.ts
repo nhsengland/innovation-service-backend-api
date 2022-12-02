@@ -63,11 +63,17 @@ export default openApi(V1InnovationSupportUpdate.httpTrigger as AzureFunction, '
         name: 'innovationId',
         description: 'Unique innovation ID',
         required: true,
+        schema: {
+          type: 'string',
+        }
       },
       {
         in: 'path',
         name: 'supportId',
         required: true,
+        schema: {
+          type: 'string',
+        }
       },
     ],
     requestBody: {

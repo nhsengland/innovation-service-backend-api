@@ -49,7 +49,7 @@ class V1InnovationSectionSubmit {
 
 }
 
-export default openApi(V1InnovationSectionSubmit.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}/submit', {
+export default openApi(V1InnovationSectionSubmit.httpTrigger as AzureFunction, '/v1/{innovationId}/sections/{sectionKey}/submit', {
   post: {
     description: 'Submit an innovation section.',
     tags: ['Innovation'],

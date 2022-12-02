@@ -5,7 +5,7 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
-  v1/health:
+  /v1/health:
     get:
       summary: Get admin health
       description: Get admin application health status
