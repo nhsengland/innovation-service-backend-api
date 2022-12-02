@@ -21,26 +21,23 @@ class CreateInnovationEvidence {
     const innovationSectionsService = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
 
     try {
+      
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params)
 
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-
-      await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
-        .checkAssessmentType()
-        .checkAccessorType()
         .checkInnovatorType()
-        .checkAdminType()
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.createInnovationEvidence(params.innovationId, params.evidenceId);
+      const requestUser = auth.getUserInfo();
+
+      const result = await innovationSectionsService.createInnovationEvidence(
+        { id: requestUser.id },
+        params.innovationId,
+        body.evidenceData);
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-        evidenceType: result.evidenceType,
-        clinicalEvidenceType: result.clinicalEvidenceType,
-        description: result.description,
-        summary: result.summary,
-        files: result.files
+        id: result.id
       });
       return;
 
