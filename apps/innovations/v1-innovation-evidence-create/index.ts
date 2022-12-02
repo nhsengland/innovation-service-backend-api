@@ -14,11 +14,12 @@ import {
   InnovationSectionsServiceType,
 } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 import {
-  ClinicalEvidenceTypeCatalogueEnum,
-  EvidenceTypeCatalogueEnum,
-} from '@innovations/shared/enums';
+  BodySchema,
+  BodyType,
+  ParamsSchema,
+  ParamsType,
+} from './validation.schemas';
 
 class CreateInnovationEvidence {
   @JwtDecoder()
@@ -68,17 +69,60 @@ class CreateInnovationEvidence {
 
 export default openApi(
   CreateInnovationEvidence.httpTrigger as AzureFunction,
-  'v1/{innovationId}/evidences/{evidenceId}',
+  'v1/{innovationId}/evidence',
   {
-    get: {
-      description: 'Get an innovation evidence info.',
+    post: {
+      description: 'Create an innovation evidence entry.',
       tags: ['Innovation'],
-      summary: 'Get an innovation evidence info.',
-      operationId: 'getInnovationEvidenceInfo',
-      parameters: [],
+      summary: 'Create an innovation evidence entry.',
+      operationId: 'createInnovationEvidence',
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          description: 'The innovation id.',
+          required: true,
+          schema: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+      ],
+      requestBody: {
+        description: 'The innovation evidence to create.',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                evidenceType: {
+                  type: 'string',
+                  description: 'Type of the evidence.',
+                  example: 'CLINICAL',
+                },
+                clinicalEvidenceType: {
+                  type: 'string',
+                  description: 'Type of clinical evidence.',
+                  example: 'DATA_PUBLISHED',
+                },
+                description: {
+                  type: 'string',
+                  description: 'Description of the evidence.',
+                  example: 'Example evidence.'
+                },
+                files: {
+                  type: 'string',
+                  description: 'Ids of the uploaded files.'
+                }
+              },
+            },
+          },
+        },
+      },
       responses: {
         200: {
-          description: 'Innovation section info.',
+          description: 'Innovation evidence info.',
           content: {
             'application/json': {
               schema: {
@@ -87,45 +131,6 @@ export default openApi(
                   id: {
                     type: 'string',
                     description: 'Innovation evidence id.',
-                  },
-                  evidenceType: {
-                    type: 'string',
-                    enum: [Object.values(EvidenceTypeCatalogueEnum)],
-                    description: 'Evidence type.',
-                  },
-                  clinicalEvidenceType: {
-                    type: 'string',
-                    enum: [Object.values(ClinicalEvidenceTypeCatalogueEnum)],
-                    description: 'Clinical Evidence type.',
-                  },
-                  description: {
-                    type: 'string',
-                    description: 'Evidence description.',
-                  },
-                  summary: {
-                    type: 'string',
-                    description: 'Evidence summary.',
-                  },
-                  files: {
-                    type: 'array',
-                    description: 'Innovation evidence files.',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string',
-                          description: 'File id.',
-                        },
-                        displayFileName: {
-                          type: 'string',
-                          description: 'File display name.',
-                        },
-                        url: {
-                          type: 'string',
-                          description: 'File url.',
-                        },
-                      },
-                    },
                   },
                 },
               },
