@@ -10,7 +10,7 @@ paths:
       summary: Create a new user on DB
       operationId: v1-me-create
       tags:
-        - v1
+        - "[v1] Users"
       responses:
         "200":
           description: User created
@@ -33,6 +33,10 @@ paths:
                   message:
                     type: string
     get:
+      description: Retrieves the user profile information.
+      operationId: v1-me-info
+      tags:
+        - "[v1] Users"
       parameters: []
       responses:
         "200":
@@ -55,6 +59,10 @@ paths:
         "404":
           description: Unable to find a game with that id
     put:
+      description: User profile information update
+      operationId: v1-me-update
+      tags:
+        - "[v1] Users"
       parameters: []
       requestBody:
         required: true
@@ -111,8 +119,12 @@ paths:
                     type: string
                   message:
                     type: string
-  /v1/me/terms-of-use:
+  /v1/me/terms-of-use/accept:
     patch:
+      description: Accept user terms of use
+      operationId: v1-me-terms-of-use-accept
+      tags:
+        - "[v1] Terms of Use"
       parameters: []
       responses:
         "200":
@@ -127,7 +139,12 @@ paths:
                     description: Operation identifier
         "404":
           description: Unable to find a game with that id
+  /v1/me/terms-of-use:
     get:
+      description: Retrieves the user terms of use
+      operationId: v1-me-terms-of-use-info
+      tags:
+        - "[v1] Terms of Use"
       parameters: []
       responses:
         "200":
@@ -149,8 +166,46 @@ paths:
                       - Complete
         "404":
           description: Unable to find a game with that id
+  /v1/notifications/counters:
+    get:
+      description: Returns the notifications counters
+      operationId: v1-notifications-counters
+      tags:
+        - "[v1] Notifications"
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: number
+                    description: The total of active notifications
+  /v1/organisations:
+    get:
+      description: Retrieves organisations list
+      operationId: v1-organisations-list
+      tags:
+        - "[v1] Organisations"
+      parameters: []
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
   /v1/survey:
     post:
+      operationId: v1-survey-create
+      description: Creates a Survey object with answers
+      tags:
+        - "[v1] Survey"
       parameters: []
       responses:
         "200":
@@ -164,11 +219,13 @@ paths:
                     type: string
                     description: Unique identifier for survey object
         "400":
-          description: Invalida survey payload
+          description: Invalid survey payload
   /v1:
     get:
       operationId: v1-users-list
       description: Get users list
+      tags:
+        - "[v1] Users"
       parameters: []
       responses:
         "200":
@@ -181,3 +238,28 @@ paths:
                   id:
                     type: string
                     description: Unique identifier for user object
+  /v1/statistics:
+    get:
+      description: Get an user statistics
+      operationId: v1-users-statistics
+      tags:
+        - "[v1] User Statistics"
+      parameters:
+        - in: query
+          name: statistics
+          required: false
+          schema:
+            type: string
+            enum:
+              - WAITING_ASSESSMENT_COUNTER
+              - ASSIGNED_INNOVATIONS_COUNTER
+              - INNOVATIONS_ASSIGNED_TO_ME_COUNTER
+              - ACTIONS_TO_REVIEW_COUNTER
+              - INNOVATIONS_TO_REVIEW_COUNTER
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                type: object

@@ -1,4 +1,4 @@
-import { mapOpenApi as openApi } from '@aaronpowell/azure-functions-nodejs-openapi/build/openAPIv2';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
@@ -52,18 +52,23 @@ class V1OrganisationsList {
 
 export default openApi(V1OrganisationsList.httpTrigger as AzureFunction, '/v1/organisations', {
   get: {
-    description: 'Get organisations list',
-    operationId: 'getOrganisations',
+    description: 'Retrieves organisations list',
+    operationId: 'v1-organisations-list',
+    tags: ['[v1] Organisations'],
     parameters: [],
     responses: {
       200: {
-        description: 'Success',
-        schema: {
-          type: 'array',
-          items: {
-            type: 'object',
-          },
-        },
+        description: 'Ok',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: {
+                type: 'object',
+              },
+            },
+          }
+        }
       },
     },
   },
