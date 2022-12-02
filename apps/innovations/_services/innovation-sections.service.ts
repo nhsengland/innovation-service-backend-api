@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity, UserEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity} from '@innovations/shared/entities';
 import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -10,8 +10,6 @@ import { BaseService } from './base.service';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
-import { getRepository } from 'typeorm';
-
 
 @injectable()
 export class InnovationSectionsService extends BaseService {
@@ -356,7 +354,7 @@ export class InnovationSectionsService extends BaseService {
     user: { id: string },
     innovationId: string,
     evidenceData: any
-  ): Promise<{ id: string }> {
+  ): Promise<{ id: string | undefined}> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.evidences', 'evidences')
@@ -368,6 +366,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
+    evidenceData.innovation = innovationId;
     evidenceData.files = evidenceData.files?.map((id: string) => ({ id }));
     evidenceData.createdBy = user.id;
     evidenceData.updatedBy = user.id;
@@ -380,8 +379,13 @@ export class InnovationSectionsService extends BaseService {
     
     evidences.push(evidence);
 
-    return { id: evidence.id };
+    await this.sqlConnection.transaction(async transaction => {
+
+      await transaction.save(InnovationEntity, innovation);
+
+    });
     
+    return {id: evidence.id}
   }
 
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
