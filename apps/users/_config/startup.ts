@@ -56,7 +56,7 @@ export const startup = async (): Promise<void> => {
 
       const response = await httpService.getHttpInstance().get(`http://localhost:7074/api/swagger.json`);
       console.log('Saving swagger file');
-      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/users/.apim/swagger-test.yaml`, YAML.stringify(response.data))
+      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/users/.apim/swagger.yaml`, YAML.stringify(response.data))
       console.log('Documentation generated successfully');
       console.groupEnd();
 
