@@ -81,6 +81,7 @@ export class StatisticsService  extends BaseService {
 
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
     .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
+    .innerJoinAndSelect('actions.innovationSection', 'section')
     .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
     .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
     .innerJoinAndSelect('organisationUser.user', 'user')
@@ -92,7 +93,7 @@ export class StatisticsService  extends BaseService {
 
     return {
       count: myActionsCount,
-      lastSubmittedSection: myActions.find(_ => true)?.innovationSection.section || null,
+      lastSubmittedSection: myActions.find(_ => true)?.innovationSection?.section || null,
       lastSubmittedAt: myActions.find(_ => true)?.updatedAt || null,
     }
   }
