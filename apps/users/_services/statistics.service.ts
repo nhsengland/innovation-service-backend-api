@@ -106,27 +106,31 @@ export class StatisticsService  extends BaseService {
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
-
-    const baseQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+      
+    const myActionsCount = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
       .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
       .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
       .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .where('actions.created_by = :userId', { userId: requestUser.id })
+      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW })
+      .getCount();   
 
-    const [myUnitActions, myUnitActionsCount] = await baseQuery
+    const [myUnitActions, myUnitActionsCount] = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+      .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
+      .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
+      .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
+      .innerJoinAndSelect('organisationUser.user', 'user')
+      .where('actions.created_by = :userId', { userId: requestUser.id })
       .andWhere('actions.status in (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
       .orderBy('actions.updated_at', 'DESC')
-      .getManyAndCount();
-      
-    const myActionsCount = await baseQuery
-      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getCount();    
+      .getManyAndCount(); 
   
 
     return {
       count: myActionsCount,
       total: myUnitActionsCount,
-      lastSubmittedAt: myUnitActions.find(_ => true)?.updatedAt || null,
+      lastSubmittedAt:  myUnitActions.find(_ => true)?.updatedAt || null,
     }
   }
 

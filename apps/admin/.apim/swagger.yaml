@@ -1,5 +1,5 @@
 info:
-  title: NHS Innovation Service API - Admin module
+  title: Admin API @ NHS Innovation Service
   version: 1.0.0
 servers:
   - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
