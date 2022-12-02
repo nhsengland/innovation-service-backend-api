@@ -71,6 +71,7 @@ export default openApi(V1InnovationThreadMessageCreate.httpTrigger as AzureFunct
   post: {
     description: 'Creates a new message in a thread.',
     operationId: 'v1-innovation-thread-message-create',
+    tags: ['[v1] Innovation Threads'],
     parameters: [
       {
         name: 'innovationId',

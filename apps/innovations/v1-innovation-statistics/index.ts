@@ -1,8 +1,9 @@
-import type { HttpRequest } from '@azure/functions';
+import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { type AuthorizationServiceType, AuthorizationServiceSymbol } from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
 
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -53,4 +54,17 @@ class GetInnovationStatistics {
 
 }
 
-export default GetInnovationStatistics.httpTrigger;
+export default openapi(GetInnovationStatistics.httpTrigger as AzureFunction, '/v1/{innovationId}/statistics', {
+  get: {
+    description: 'Get an innovation statistics',
+    tags: ['[v1] Innovation Statistics'],
+    operationId: 'v1-innovation-statistics',
+    parameters: [
+      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }
+    ],
+    responses: {
+      200: { description: 'Ok.' },
+      400: { description: 'Bad request.' }
+    },
+  },
+});

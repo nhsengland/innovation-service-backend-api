@@ -9,6 +9,8 @@ paths:
     post:
       description: Create a new innovation action.
       operationId: v1-innovation-action-create
+      tags:
+        - "[v1] Innovation Actions"
       parameters:
         - name: innovationId
           in: path
@@ -64,6 +66,8 @@ paths:
     get:
       description: Get an innovation action.
       operationId: v1-innovation-action-info
+      tags:
+        - "[v1] Innovation Actions"
       parameters:
         - name: innovationId
           in: path
@@ -117,6 +121,8 @@ paths:
     put:
       description: Update an innovation action.
       operationId: v1-innovation-action-update
+      tags:
+        - "[v1] Innovation Actions"
       parameters:
         - name: innovationId
           in: path
@@ -203,6 +209,8 @@ paths:
     get:
       description: Get a list of innovation actions.
       operationId: v1-innovation-actions-list
+      tags:
+        - "[v1] Innovation Actions"
       parameters:
         - name: skip
           in: query
@@ -313,6 +321,8 @@ paths:
     get:
       operationId: v1-innovation-activities-log-list
       description: Get activities log list of an Innovation
+      tags:
+        - "[v1] Innovation Activities Log"
       parameters:
         - name: innovationId
           in: path
@@ -438,8 +448,13 @@ paths:
       tags:
         - Innovation
       summary: Get an innovation sections list details.
-      operationId: getInnovationAllSectionsList
-      parameters: []
+      operationId: v1-innovation-all-sections-list
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -507,7 +522,7 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
-  /v1/:innovationId/assessment/:assessmentId:
+  "/v1/{innovationId}/assessment/{assessmentId}":
     get:
       summary: Get Innovation Assessment Info
       description: Get Innovation Assessment Info
@@ -745,6 +760,8 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
+        "422":
+          description: Unprocessable entity
     get:
       operationId: v1-innovations-list
       description: Get innovations list
@@ -768,8 +785,18 @@ paths:
       tags:
         - Innovation
       summary: Get an innovation evidence info.
-      operationId: getInnovationEvidenceInfo
-      parameters: []
+      operationId: v1-innovation-evidence-info
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: evidenceId
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Innovation section info.
@@ -832,6 +859,8 @@ paths:
     get:
       operationId: v1-innovation-info
       description: Get innovation information.
+      tags:
+        - "[v1] Innovation"
       parameters:
         - name: innovationId
           in: path
@@ -890,6 +919,30 @@ paths:
           description: Success
         "400":
           description: Invalid payload
+  "/v1/{innovationId}/pdf":
+    post:
+      description: Generate PDF for an innovation
+      tags:
+        - "[v1] Innovations"
+      operationId: v1-innovation-pdf
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The thread details
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Ok.
+        "400":
+          description: Bad request.
   "/v1/{innovationId}/reassessments":
     post:
       operationId: v1-innovation-reassessment-request-create
@@ -939,14 +992,24 @@ paths:
           description: Unprocessable entity
         "500":
           description: Internal server error
-  "/v1/{innovationId}/sections/{sectionKey}/info":
+  "/v1/{innovationId}/sections/{sectionKey}":
     get:
       description: Get an innovation section info.
       tags:
         - Innovation
       summary: Get an innovation section info.
-      operationId: getInnovationSectionInfo
-      parameters: []
+      operationId: v1-innovation-section-info
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: sectionKey
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Innovation section info.
@@ -1005,36 +1068,23 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/sections/{sectionKey}/submit":
-    post:
-      description: Submit an innovation section.
-      tags:
-        - Innovation
-      summary: Submit an innovation section.
-      operationId: v1-innovation-section-submit
-      parameters: []
-      requestBody:
-        description: Innovation section submit request body.
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                id:
-                  type: string
-                  description: Innovation section id.
-                  example: "1"
-      responses:
-        "200":
-          description: Innovation section submit response.
-  "/v1/{innovationId}/sections/{sectionKey}":
     put:
       description: Update an innovation section info.
       tags:
         - Innovation
       summary: Update an innovation section info.
       operationId: v1-innovation-section-update
-      parameters: []
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: sectionKey
+          required: true
+          schema:
+            type: string
       requestBody:
         description: Innovation section info update request body.
         content:
@@ -1068,6 +1118,38 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
+  "/v1/{innovationId}/sections/{sectionKey}/submit":
+    patch:
+      description: Submit an innovation section.
+      tags:
+        - Innovation
+      summary: Submit an innovation section.
+      operationId: v1-innovation-section-submit
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: sectionKey
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Innovation section submit request body.
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Innovation section id.
+                  example: "1"
+      responses:
+        "200":
+          description: Innovation section submit response.
   "/v1/{innovationId}/sections":
     get:
       description: Get an innovation sections list.
@@ -1075,7 +1157,12 @@ paths:
         - Innovation
       summary: Get an innovation sections list.
       operationId: v1-innovation-sections-list
-      parameters: []
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: Success
@@ -1126,7 +1213,12 @@ paths:
         - Innovation
       summary: Get all the shares for an innovation.
       operationId: v1-innovation-shares
-      parameters: []
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
       responses:
         "200":
           description: OK
@@ -1172,6 +1264,23 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/v1/{innovationId}/statistics":
+    get:
+      description: Get an innovation statistics
+      tags:
+        - "[v1] Innovation Statistics"
+      operationId: v1-innovation-statistics
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Ok.
+        "400":
+          description: Bad request.
   "/v1/{innovationId}/submissions":
     get:
       operationId: v1-innovation-submission-states
@@ -1232,7 +1341,7 @@ paths:
       description: Create support in innovation.
       operationId: v1-innovation-support-create
       tags:
-        - Innovation Support
+        - "[v1] Innovation Support"
       parameters:
         - in: path
           name: innovationId
@@ -1249,7 +1358,7 @@ paths:
       description: Get a list with all Innovation's Supports.
       operationId: v1-innovations-supports-list
       tags:
-        - Innovation Support
+        - "[v1] Innovation Support"
       parameters:
         - in: path
           name: innovationId
@@ -1271,7 +1380,7 @@ paths:
       description: Get supporting information for an Innovation
       operationId: v1-innovation-support-info
       tags:
-        - Innovation Support
+        - "[v1] Innovation Support"
       parameters:
         - in: path
           name: innovationId
@@ -1294,7 +1403,7 @@ paths:
       description: Update support on innovation.
       operationId: v1-innovation-support-update
       tags:
-        - Innovation Support
+        - "[v1] Innovation Support"
       parameters:
         - in: path
           name: innovationId
@@ -1572,6 +1681,8 @@ paths:
     post:
       description: Creates a new message in a thread.
       operationId: v1-innovation-thread-message-create
+      tags:
+        - "[v1] Innovation Threads"
       parameters:
         - name: innovationId
           in: path
@@ -1643,7 +1754,7 @@ paths:
       description: Get a list of messages from a thread
       operationId: v1-innovation-thread-message-list
       tags:
-        - Innovation Thread
+        - "[v1] Innovation Threads"
       parameters:
         - name: innovationId
           in: path
@@ -1751,7 +1862,7 @@ paths:
       summary: Get a thread message info
       description: Get a thread message info
       tags:
-        - Innovation Thread
+        - "[v1] Innovation Threads"
       parameters:
         - name: innovationId
           in: path
@@ -1800,7 +1911,7 @@ paths:
       summary: Update a thread message
       description: Update a thread message
       tags:
-        - Innovation Thread
+        - "[v1] Innovation Threads"
       operationId: v1-innovation-thread-message-update
       parameters:
         - name: innovationId
@@ -1856,6 +1967,7 @@ paths:
   "/v1/transfers/{transferId}/check":
     get:
       description: Get details of pending innovations transfers
+      operationId: v1-innovation-transfer-check
       parameters:
         - in: path
           name: transferId
@@ -1898,6 +2010,8 @@ paths:
             application/json:
               schema:
                 type: object
+        "422":
+          description: Unprocessable Entity
     get:
       description: Get innovation transfer list
       operationId: getInnovationTransferList
@@ -1934,10 +2048,9 @@ paths:
             application/json:
               schema:
                 type: object
-  "/v1/innovation-transfers/{transferId}":
     patch:
       description: Update an innovation transfer status
-      operationId: updateInnovationTransferStatus
+      operationId: v1-innovation-transfer-update
       parameters:
         - name: transferId
           in: path
@@ -2042,6 +2155,7 @@ paths:
           description: Success
         "400":
           description: Invalid innovation payload
+  "/v1/{innovationId}/export-requests/{requestId}/status":
     patch:
       operationId: v1-innovations-export-requests-update-status
       description: updates export request status

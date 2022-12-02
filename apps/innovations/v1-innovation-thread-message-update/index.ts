@@ -58,7 +58,7 @@ export default openApi(V1InnovationThreadMessageUpdate.httpTrigger as AzureFunct
   put: {
     summary: 'Update a thread message',
     description: 'Update a thread message',
-    tags: ['Innovation Thread'],
+    tags: ['[v1] Innovation Threads'],
     operationId: 'v1-innovation-thread-message-update',
     parameters: [
       {

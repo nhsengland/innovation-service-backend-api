@@ -72,6 +72,7 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
   get: {
     description: 'Get a list of innovation actions.',
     operationId: 'v1-innovation-actions-list',
+    tags: ['[v1] Innovation Actions'],
     parameters: [
       {
         name: 'skip',

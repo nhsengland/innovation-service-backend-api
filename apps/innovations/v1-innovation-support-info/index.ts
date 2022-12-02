@@ -51,7 +51,7 @@ export default openApi(V1InnovationSupportInfo.httpTrigger as AzureFunction, '/v
   get: {
     description: 'Get supporting information for an Innovation',
     operationId: 'v1-innovation-support-info',
-    tags: ['Innovation Support'],
+    tags: ['[v1] Innovation Support'],
     parameters: [
       {
         in: 'path',

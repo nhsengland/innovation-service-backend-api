@@ -54,7 +54,10 @@ export default openApi(V1InnovationSectionUpdate.httpTrigger as AzureFunction, '
     tags: ['Innovation'],
     summary: 'Update an innovation section info.',
     operationId: 'v1-innovation-section-update',
-    parameters: [],
+    parameters: [
+      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
+      { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } }
+    ],
     requestBody: {
       description: 'Innovation section info update request body.',
       content: {

@@ -56,7 +56,7 @@ export default openApi(V1InnovationThreadMessageInfo.httpTrigger as AzureFunctio
   get: {
     summary: 'Get a thread message info',
     description: 'Get a thread message info',
-    tags: ['Innovation Thread'],
+    tags: ['[v1] Innovation Threads'],
     parameters: [
       {
         name: 'innovationId',

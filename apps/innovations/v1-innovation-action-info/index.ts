@@ -55,6 +55,7 @@ export default openApi(V1InnovationActionInfo.httpTrigger as AzureFunction, '/v1
   get: {
     description: 'Get an innovation action.',
     operationId: 'v1-innovation-action-info',
+    tags: ['[v1] Innovation Actions'],
     parameters: [
       {
         name: 'innovationId',

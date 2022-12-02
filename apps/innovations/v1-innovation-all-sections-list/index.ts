@@ -53,8 +53,10 @@ export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction
     description: 'Get an innovation sections list details.',
     tags: ['Innovation'],
     summary: 'Get an innovation sections list details.',
-    operationId: 'getInnovationAllSectionsList',
-    parameters: [],
+    operationId: 'v1-innovation-all-sections-list',
+    parameters: [
+      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }
+    ],
     responses: {
       200: {
         description: 'Success',

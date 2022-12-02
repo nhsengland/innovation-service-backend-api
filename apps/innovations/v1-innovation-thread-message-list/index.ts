@@ -93,7 +93,7 @@ export default openApi(V1InnovationThreadMessageList.httpTrigger as AzureFunctio
     summary: 'Get a list of messages from a thread',
     description: 'Get a list of messages from a thread',
     operationId: 'v1-innovation-thread-message-list',
-    tags: ['Innovation Thread'],
+    tags: ['[v1] Innovation Threads'],
     parameters: [
       {
         name: 'innovationId',

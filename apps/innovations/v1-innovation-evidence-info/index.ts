@@ -58,8 +58,11 @@ export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, '
     description: 'Get an innovation evidence info.',
     tags: ['Innovation'],
     summary: 'Get an innovation evidence info.',
-    operationId: 'getInnovationEvidenceInfo',
-    parameters: [],
+    operationId: 'v1-innovation-evidence-info',
+    parameters: [
+      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
+      { in: 'path', name: 'evidenceId', required: true, schema: { type: 'string' } },
+    ],
     responses: {
       200: {
         description: 'Innovation section info.',
