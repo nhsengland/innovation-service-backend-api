@@ -30,6 +30,7 @@ class V1InnovationActionInfo {
         .checkAccessorType()
         .checkInnovatorType()
         .checkInnovation()
+        .checkAdminType()
         .verify();
 
       const result = await innovationActionsService.getActionInfo(params.actionId);
