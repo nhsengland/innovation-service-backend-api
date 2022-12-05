@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity} from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
 import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
