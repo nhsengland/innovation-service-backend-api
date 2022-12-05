@@ -99,6 +99,12 @@ export type NotifierTemplatesType = {
     requestId: string
   },
 
+  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+    innovationId: string,
+    proposedStatus: InnovationSupportStatusEnum,
+    requestStatusUpdateComment: string,
+  },
+
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
   [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,

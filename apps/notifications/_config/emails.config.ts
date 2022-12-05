@@ -1,3 +1,4 @@
+
 export enum EmailTypeEnum {
   ACCOUNT_CREATION_TO_INNOVATOR = '62486954-b235-4aa6-8b8d-960191fc6e69',
   INNOVATION_SUBMITED_TO_INNOVATOR = 'f34dd5fd-815b-4cc5-841d-46623ee85ad6',
@@ -33,6 +34,7 @@ export enum EmailTypeEnum {
   INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR = '783f53f1-6df9-4549-968e-9977648e03f1',
   INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR = 'bfb0b9b9-3bd2-40de-9b98-aa3431832e1e',
   INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR = '4e0c8775-0ae8-4c03-bf0f-4ae3273ffa87',
+  ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST = '09ad791a-faa2-4c51-ba9c-3198430e6f5f',
 }
 
 
@@ -74,4 +76,5 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, innovation_name: string, pdf_request_comment: string, pdf_export_url: string },
   [EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR]: { display_name?: string, innovation_name: string, innovator_name: string, innovation_url: string },
   [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR]: { display_name?: string, innovation_name: string, innovator_name: string, innovation_url: string, pdf_rejection_comment: null | string },
+  [EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST]: { display_name?: string, innovation_name: string, innovation_url: string, accessor_name: string, proposed_status: string, request_status_update_comment: string },
 }

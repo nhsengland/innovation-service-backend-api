@@ -32,6 +32,7 @@ import {
 } from '../_handlers';
 import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
 import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
+import { InnovationSupportStatusChangeRequestHandler } from '../_handlers/innovation-support-status-change-request.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -220,8 +221,14 @@ export const NOTIFICATIONS_CONFIG: {
       requestId: Joi.string().guid().required(),
     }).required(),
   },
-
-  
+  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+    handler: InnovationSupportStatusChangeRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      proposedStatus: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
+      requestStatusUpdateComment: Joi.string().required(),
+    }).required(),
+  },
   // RECURRENT
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,
