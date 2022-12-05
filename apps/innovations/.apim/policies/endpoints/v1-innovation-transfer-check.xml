@@ -1,6 +1,5 @@
 <policies>
   <inbound>
-    <base />
     <set-backend-service base-url="https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api" />
   </inbound>
   <backend>
