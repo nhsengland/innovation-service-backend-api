@@ -61,7 +61,9 @@ class V1InnovationInfo {
           // Contact details only sent to Assessment and Admin users.
           ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { email: result.owner.email } : {}),
           ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { mobilePhone: result.owner.mobilePhone } : {}),
-          organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null
+          organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
+          ...([UserTypeEnum.ADMIN].includes(requestUser.type) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
+
         },
         lastEndSupportAt: result.lastEndSupportAt,
         export: result.export,
