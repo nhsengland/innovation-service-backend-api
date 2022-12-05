@@ -86,7 +86,7 @@ export class DomainUsersService {
 
   }
 
-  async getUsersList(data: { userIds?: string[], identityIds?: string[] }, lastLoginInfo = false): Promise<{
+  async getUsersList(data: { userIds?: string[], identityIds?: string[] }): Promise<{
     id: string,
     identityId: string,
     displayName: string,
@@ -116,7 +116,7 @@ export class DomainUsersService {
     else if (data.identityIds) { query.where('external_id IN (:...identityIds)', { identityIds: data.identityIds }); }
 
     const dbUsers = await query.getMany();
-    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId), lastLoginInfo);
+    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
 
 
     return dbUsers.map(dbUser => {

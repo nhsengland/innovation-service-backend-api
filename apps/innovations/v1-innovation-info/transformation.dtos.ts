@@ -18,7 +18,7 @@ export type ResponseDTO = {
     email?: string,
     mobilePhone?: null | string,
     organisations: null | { name: string, size: null | string }[],
-    lastLoginAt: null | DateISOType
+    lastLoginAt?: null | DateISOType
   },
   lastEndSupportAt: null | DateISOType,
   export: { canUserExport: boolean, pendingRequestsCount: number },
