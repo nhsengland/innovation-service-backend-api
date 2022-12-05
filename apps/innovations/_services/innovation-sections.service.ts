@@ -353,12 +353,17 @@ export class InnovationSectionsService extends BaseService {
   async createInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceData: any
-  ): Promise<{ id: string | undefined}> {
-
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    evidenceData: {
+      evidenceType: EvidenceTypeCatalogueEnum;
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+      description: string;
+      summary: string;
+      files: string[];
+    }
+  ): Promise<{ id: string }> {
+    const innovation = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.evidences', 'evidences')
-      .leftJoinAndSelect('evidences.files', 'files')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -366,28 +371,25 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    evidenceData.innovation = innovationId;
-    evidenceData.files = evidenceData.files?.map((id: string) => ({ id }));
-    evidenceData.createdBy = user.id;
-    evidenceData.updatedBy = user.id;
-
     const evidences = await innovation.evidences;
 
-    const evidence = InnovationEvidenceEntity.new(
-      evidenceData
-    )
-    
+    const evidence = InnovationEvidenceEntity.new({
+      innovation: InnovationEntity.new({ id: innovationId }),
+      files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
+      createdBy: user.id,
+      updatedBy: user.id
+    });
+
     evidences.push(evidence);
 
-    await this.sqlConnection.transaction(async transaction => {
-
-      await transaction.save(InnovationEntity, innovation);
-
+    return this.sqlConnection.transaction(async (transaction) => {
+      const savedEvidence = await transaction.save(
+        InnovationEntity,
+        innovation
+      );
+      return { id: savedEvidence.id };
     });
-    
-    return {id: evidence.id}
   }
-
   
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
     id: string,

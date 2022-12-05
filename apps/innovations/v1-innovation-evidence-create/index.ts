@@ -50,10 +50,11 @@ class CreateInnovationEvidence {
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const innovation = auth.getInnovationInfo();
 
       const result = await innovationSectionsService.createInnovationEvidence(
         { id: requestUser.id },
-        params.innovationId,
+        innovation.id,
         body
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({
