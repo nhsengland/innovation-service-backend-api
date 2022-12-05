@@ -31,7 +31,7 @@ export class OrganisationEntity extends BaseEntity {
   isShadow: boolean;
 
   @Column({ name: 'inactivated_at', nullable: true, default: null})
-  inactivatedAt: DateISOType;
+  inactivatedAt: DateISOType | null;
 
   @ManyToMany(() => InnovationEntity, record => record.organisationShares)
   innovationShares: InnovationEntity[];

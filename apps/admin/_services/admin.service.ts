@@ -8,10 +8,12 @@ import {
   UserEntity,
 } from '@admin/shared/entities';
 import {
+  AccessorOrganisationRoleEnum,
   InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
+  UserTypeEnum,
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
 import {
@@ -38,7 +40,8 @@ export class AdminService extends BaseService {
   async inactivateUnit(
     requestUser: DomainUserInfoType,
     unitId: string
-  ): Promise<{ id: string }> {
+  ): Promise<{ unitId: string }> {
+
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_units')
@@ -116,7 +119,7 @@ export class AdminService extends BaseService {
         InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
       ].includes(s.status));
 
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const result = await this.sqlConnection.transaction(async transaction => {
       // Inactivate unit
       await transaction.update(
         OrganisationUnitEntity,
@@ -212,9 +215,87 @@ export class AdminService extends BaseService {
 
       }
 
-      return { id: unitId };
+      return { unitId };
     });
 
     return result;
   }
+
+
+  async activateUnit(
+    organisationId: string,
+    unitId: string,
+    userIds: string[]):
+    Promise<{
+      unitId: string
+    }> {
+      const unit = await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitEntity, 'org_units')
+        .where('org_units.id = :unitId', { unitId })
+        .getOne();
+
+      if (!unit) {
+        throw new NotFoundError(
+          OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND
+        );
+      }
+
+      // get users from unit
+      const unitUsers = await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+        .where('org_unit_user.organisation_unit_id = :unitId', {
+          unitId,
+        })
+        .getMany();
+
+      //ensure users to activate belong to unit
+      userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
+
+      const canActivate =
+        unitUsers.filter(
+          (unitUser) =>
+            unitUser.organisationUser.role ===
+            AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+        ).length > 0;
+
+      if (!canActivate) {
+        throw new Error(
+          OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA
+        );
+      }
+
+      const result = await this.sqlConnection.transaction(
+        async (transaction) => {
+          // Activate unit
+          await transaction.update(
+            OrganisationUnitEntity,
+            { id: unitId },
+            { inactivatedAt: null }
+          );
+
+          //Activate users of unit
+          for (const userId of userIds) {
+            await transaction.update(
+              UserEntity,
+              { id: userId },
+              { lockedAt: null }
+            );
+          }
+
+          // activate organistion to whom unit belongs if it is inactivated
+          if (unit.organisation.inactivatedAt != null /* juggle check */) {
+            await transaction.update(
+              OrganisationEntity,
+              { id: organisationId },
+              { inactivatedAt: null }
+            );
+          }
+
+          return { unitId };
+        }
+      );
+
+      return result;
+    }
+
 }

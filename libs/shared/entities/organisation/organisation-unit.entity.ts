@@ -25,7 +25,7 @@ export class OrganisationUnitEntity extends BaseEntity {
   isShadow: boolean;
 
   @Column({ name: 'inactivated_at', nullable: true, default: null })
-  inactivatedAt: DateISOType;
+  inactivatedAt: DateISOType | null;
 
   @Column({ name: 'organisation_id', nullable: false})
   organisationId: string;
