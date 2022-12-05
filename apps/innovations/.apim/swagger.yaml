@@ -1456,6 +1456,61 @@ paths:
                     format: uuid
                 required:
                   - id
+  
+  '/v1/{innovationId}/supports/{supportId}/change-request':
+    post:
+      description: Requests an innovation support change.
+      operationId: v1-innovation-support-change-request
+      tags:
+        - '[v1] Innovation Supports'
+      parameters:
+        - in: path
+          name: innovationId
+          schema:
+            type: string
+
+          description: Unique innovation ID
+          required: true
+        - in: path
+          name: supportId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: ''
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - FURTHER_INFO_REQUIRED
+                    - WAITING
+                    - NOT_YET
+                    - UNSUITABLE
+                    - COMPLETE
+                message:
+                  type: string
+                  maxLength: 400
+              required:
+                - status
+                - message
+      responses:
+        '200':
+          description: Operation success status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: boolean
+                required:
+                  - success
   '/v1/{innovationId}':
     get:
       description: Get Innovation information

@@ -10,6 +10,7 @@ import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
+import type { DomainUserInfoType } from '@innovations/shared/types';
 
 
 @injectable()
@@ -344,4 +345,13 @@ export class InnovationSupportsService extends BaseService {
 
   }
 
+  async changeInnovationSupportStatusRequest(requestUser: DomainUserInfoType, innovationId: string, supportId: string, status: InnovationSupportStatusEnum, requestReason: string): Promise<boolean> {
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST>(
+      requestUser,
+      NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
+      { innovationId, supportId ,proposedStatus: status, requestStatusUpdateComment: requestReason },
+    );
+
+    return true;
+  }
 }

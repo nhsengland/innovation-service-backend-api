@@ -1,4 +1,4 @@
-import type { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -77,8 +77,8 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
           proposed_status: this.data.support?.proposedSupportStatus || '',
           request_status_update_comment: this.data.support?.requestStatusUpdateComment || '',
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('accessor/innovations/:innovationId')
-            .setPathParams({ innovationId: this.inputData.innovationId })
+            .addPath('accessor/innovations/:innovationId/supports/:supportId')
+            .setPathParams({ innovationId: this.inputData.innovationId, supportId: this.inputData.supportId })
             .buildUrl()
         }
       });

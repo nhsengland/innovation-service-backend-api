@@ -101,6 +101,7 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
     innovationId: string,
+    supportId: string,
     proposedStatus: InnovationSupportStatusEnum,
     requestStatusUpdateComment: string,
   },

@@ -225,6 +225,7 @@ export const NOTIFICATIONS_CONFIG: {
     handler: InnovationSupportStatusChangeRequestHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
       innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
       proposedStatus: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
       requestStatusUpdateComment: Joi.string().required(),
     }).required(),
