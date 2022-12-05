@@ -11,7 +11,6 @@ import { BaseService } from './base.service';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 
-
 @injectable()
 export class InnovationSectionsService extends BaseService {
 
@@ -350,6 +349,46 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
+
+  async createInnovationEvidence(
+    user: { id: string },
+    innovationId: string,
+    evidenceData: any
+  ): Promise<{ id: string | undefined}> {
+
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.evidences', 'evidences')
+      .leftJoinAndSelect('evidences.files', 'files')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    evidenceData.innovation = innovationId;
+    evidenceData.files = evidenceData.files?.map((id: string) => ({ id }));
+    evidenceData.createdBy = user.id;
+    evidenceData.updatedBy = user.id;
+
+    const evidences = await innovation.evidences;
+
+    const evidence = InnovationEvidenceEntity.new(
+      evidenceData
+    )
+    
+    evidences.push(evidence);
+
+    await this.sqlConnection.transaction(async transaction => {
+
+      await transaction.save(InnovationEntity, innovation);
+
+    });
+    
+    return {id: evidence.id}
+  }
+
+  
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
     id: string,
     evidenceType: EvidenceTypeCatalogueEnum,

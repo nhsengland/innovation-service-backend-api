@@ -1,17 +1,17 @@
-openapi: "3.0.3"
+openapi: '3.0.3'
 info:
-  title: "Innovation Service - Innovations API"
-  version: "1.0.0"
+  title: 'Innovation Service - Innovations API'
+  version: '1.0.0'
 servers:
-  - url: "https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api"
+  - url: 'https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api'
 
 paths:
-  "/v1":
+  '/v1':
     get:
       tags:
-        - "[v1] Innovations"
-      description: "Get innovations list "
-      operationId: "v1-innovations-list"
+        - '[v1] Innovations'
+      description: 'Get innovations list '
+      operationId: 'v1-innovations-list'
       parameters:
         - name: Authorization
           in: header
@@ -19,19 +19,19 @@ paths:
             type: string
           required: true
       responses:
-        "201":
-          description: "Created"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "422":
-          description: "Unprocessable Entity"
+        '201':
+          description: 'Created'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+        '422':
+          description: 'Unprocessable Entity'
     post:
       tags:
-        - "[v1] Innovations"
-      description: "Creates an innovation"
-      operationId: "v1-innovation-create"
+        - '[v1] Innovations'
+      description: 'Creates an innovation'
+      operationId: 'v1-innovation-create'
       parameters:
         - name: Authorization
           in: header
@@ -39,21 +39,21 @@ paths:
             type: string
           required: true
       responses:
-        "201":
-          description: "Created"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "422":
-          description: "Unprocessable Entity"
+        '201':
+          description: 'Created'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+        '422':
+          description: 'Unprocessable Entity'
 
-  "/v1/overdue-assessments":
+  '/v1/overdue-assessments':
     get:
       tags:
-        - "[v1] Innovations"
-      description: "Get assessment overdue innovations"
-      operationId: "v1-innovations-overdue-assessments"
+        - '[v1] Innovations'
+      description: 'Get assessment overdue innovations'
+      operationId: 'v1-innovations-overdue-assessments'
       parameters:
         - name: Authorization
           in: header
@@ -61,21 +61,21 @@ paths:
             type: string
           required: true
       responses:
-        "201":
-          description: "Created"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "422":
-          description: "Unprocessable Entity"
+        '201':
+          description: 'Created'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+        '422':
+          description: 'Unprocessable Entity'
 
-  "/v1/transfers":
+  '/v1/transfers':
     get:
       tags:
-        - "[v1] Transfers"
-      description: "Retrieves innovation transfer list"
-      operationId: "v1-innovation-transfer-list"
+        - '[v1] Transfers'
+      description: 'Retrieves innovation transfer list'
+      operationId: 'v1-innovation-transfer-list'
       parameters:
         - name: Authorization
           in: header
@@ -83,17 +83,17 @@ paths:
             type: string
           required: true
       responses:
-        "200":
-          description: "Ok"
-        "401":
-          description: "Unauthorized"
-        "404":
-          description: "Not Found"
+        '200':
+          description: 'Ok'
+        '401':
+          description: 'Unauthorized'
+        '404':
+          description: 'Not Found'
     post:
       tags:
-        - "[v1] Transfers"
-      description: "Creates a transfer"
-      operationId: "v1-innovation-transfer-create"
+        - '[v1] Transfers'
+      description: 'Creates a transfer'
+      operationId: 'v1-innovation-transfer-create'
       parameters:
         - name: Authorization
           in: header
@@ -101,21 +101,21 @@ paths:
             type: string
           required: true
       responses:
-        "201":
-          description: "Created"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-        "422":
-          description: "Unprocessable Entity"
+        '201':
+          description: 'Created'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+        '422':
+          description: 'Unprocessable Entity'
 
-  "/v1/transfers/{transferId}":
+  '/v1/transfers/{transferId}':
     get:
       tags:
-        - "[v1] Transfers"
-      description: "Retrieves the innovation transfer information"
-      operationId: "v1-innovation-transfer-info"
+        - '[v1] Transfers'
+      description: 'Retrieves the innovation transfer information'
+      operationId: 'v1-innovation-transfer-info'
       parameters:
         - name: Authorization
           in: header
@@ -128,17 +128,17 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "Ok"
-        "401":
-          description: "Unauthorized"
-        "404":
-          description: "Not Found"
+        '200':
+          description: 'Ok'
+        '401':
+          description: 'Unauthorized'
+        '404':
+          description: 'Not Found'
     patch:
       tags:
-        - "[v1] Transfers"
-      description: "Updates innovation transfer information"
-      operationId: "v1-innovation-transfer-update"
+        - '[v1] Transfers'
+      description: 'Updates innovation transfer information'
+      operationId: 'v1-innovation-transfer-update'
       parameters:
         - name: Authorization
           in: header
@@ -151,19 +151,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "Ok"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'Ok'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/transfers/{transferId}/check":
+  '/v1/transfers/{transferId}/check':
     get:
       tags:
-        - "[v1] Transfers"
-      description: "Check user innovation transfer information"
-      operationId: "v1-innovation-transfer-check"
+        - '[v1] Transfers'
+      description: 'Check user innovation transfer information'
+      operationId: 'v1-innovation-transfer-check'
       parameters:
         - name: Authorization
           in: header
@@ -176,19 +176,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "Ok"
-        "401":
-          description: "Unauthorized"
-        "404":
-          description: "Not Found"
+        '200':
+          description: 'Ok'
+        '401':
+          description: 'Unauthorized'
+        '404':
+          description: 'Not Found'
 
-  "/v1/{innovationId}/sections/{sectionId}":
+  '/v1/{innovationId}/sections/{sectionId}':
     get:
       tags:
-        - "[v1] Sections"
-      description: "Get an innovation section info."
-      operationId: "v1-innovation-section-info"
+        - '[v1] Sections'
+      description: 'Get an innovation section info.'
+      operationId: 'v1-innovation-section-info'
       parameters:
         - name: Authorization
           in: header
@@ -206,19 +206,19 @@ paths:
             type: string
           required: true
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/sections":
+  '/v1/{innovationId}/sections':
     get:
       tags:
-        - "[v1] Sections"
-      description: "Get an innovation sections list."
-      operationId: "v1-innovation-sections-list"
+        - '[v1] Sections'
+      description: 'Get an innovation sections list.'
+      operationId: 'v1-innovation-sections-list'
       parameters:
         - name: Authorization
           in: header
@@ -231,19 +231,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/all-sections":
+  '/v1/{innovationId}/all-sections':
     get:
       tags:
-        - "[v1] Sections"
-      description: "Get all innovation sections list."
-      operationId: "v1-innovation-all-sections-list"
+        - '[v1] Sections'
+      description: 'Get all innovation sections list.'
+      operationId: 'v1-innovation-all-sections-list'
       parameters:
         - name: Authorization
           in: header
@@ -256,19 +256,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/sections/{sectionKey}/submit":
+  '/v1/{innovationId}/sections/{sectionKey}/submit':
     patch:
       tags:
-        - "[v1] Sections"
-      description: "Submits an innovation section"
-      operationId: "v1-innovation-section-submit"
+        - '[v1] Sections'
+      description: 'Submits an innovation section'
+      operationId: 'v1-innovation-section-submit'
       parameters:
         - name: Authorization
           in: header
@@ -286,19 +286,19 @@ paths:
             type: string
           required: true
       responses:
-        "204":
-          description: "No Content"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '204':
+          description: 'No Content'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/sections/{sectionKey}":
+  '/v1/{innovationId}/sections/{sectionKey}':
     put:
       tags:
-        - "[v1] Sections"
-      description: "Updates an innovation section"
-      operationId: "v1-innovation-section-update"
+        - '[v1] Sections'
+      description: 'Updates an innovation section'
+      operationId: 'v1-innovation-section-update'
       parameters:
         - name: Authorization
           in: header
@@ -316,19 +316,19 @@ paths:
             type: string
           required: true
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/statistics":
+  '/v1/{innovationId}/statistics':
       get:
         tags:
-          - "[v1] Innovation Statistics"
-        description: "Get an innovation statistics"
-        operationId: "v1-innovation-statistics"
+          - '[v1] Innovation Statistics'
+        description: 'Get an innovation statistics'
+        operationId: 'v1-innovation-statistics'
         parameters:
           - name: Authorization
             in: header
@@ -341,19 +341,19 @@ paths:
             schema:
               type: string
         responses:
-          "200":
-            description: "OK"
-          "400":
-            description: "Bad Request"
-          "401":
-            description: "Unauthorized"
+          '200':
+            description: 'OK'
+          '400':
+            description: 'Bad Request'
+          '401':
+            description: 'Unauthorized'
 
-  "/v1/{innovationId}/submit":
+  '/v1/{innovationId}/submit':
     patch:
       tags:
-        - "[v1] Innovations"
-      description: "Submit innovation for assessment"
-      operationId: "v1-innovation-submit"
+        - '[v1] Innovations'
+      description: 'Submit innovation for assessment'
+      operationId: 'v1-innovation-submit'
       parameters:
         - name: Authorization
           in: header
@@ -366,19 +366,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/shares":
+  '/v1/{innovationId}/shares':
     get:
       tags:
-        - "[v1] Innovations"
-      description: "Get all the shares for an innovation."
-      operationId: "v1-innovation-shares"
+        - '[v1] Innovations'
+      description: 'Get all the shares for an innovation.'
+      operationId: 'v1-innovation-shares'
       parameters:
         - name: Authorization
           in: header
@@ -391,19 +391,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/assessments":
+  '/v1/{innovationId}/assessments':
     post:
       tags:
-        - "[v1] Innovations"
-      description: "Initiate innovation assessment"
-      operationId: "v1-innovation-assessment-create"
+        - '[v1] Innovations'
+      description: 'Initiate innovation assessment'
+      operationId: 'v1-innovation-assessment-create'
       parameters:
         - name: Authorization
           in: header
@@ -416,19 +416,19 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
 
-  "/v1/{innovationId}/assessments/{assessmentId}":
+  '/v1/{innovationId}/assessments/{assessmentId}':
     get:
       tags:
-        - "[v1] Innovations"
-      description: "get innovation assessment info"
-      operationId: "v1-innovation-assessment-info"
+        - '[v1] Innovations'
+      description: 'get innovation assessment info'
+      operationId: 'v1-innovation-assessment-info'
       parameters:
         - name: Authorization
           in: header
@@ -446,17 +446,17 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
     put:
       tags:
-        - "[v1] Innovations"
-      description: "update innovation assessment"
-      operationId: "v1-innovation-assessment-update"
+        - '[v1] Innovations'
+      description: 'update innovation assessment'
+      operationId: 'v1-innovation-assessment-update'
       parameters:
         - name: Authorization
           in: header
@@ -474,18 +474,18 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-  "/v1/{innovationId}/pdf": 
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+  '/v1/{innovationId}/pdf': 
     post:
       description: Generate PDF for an innovation
       tags: 
-        - "[v1] Innovations"
-      operationId: "v1-innovation-pdf"
+        - '[v1] Innovations'
+      operationId: 'v1-innovation-pdf'
       parameters:
         - name: Authorization
           in: header
@@ -505,18 +505,18 @@ paths:
             schema:
               type: object
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
       
-  "/v1/{innovationId}/threads":
+  '/v1/{innovationId}/threads':
     post:
       description: Create a new editable thread.
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       operationId: v1-innovation-thread-create
       parameters:
         - name: innovationId
@@ -545,7 +545,7 @@ paths:
                 - subject
                 - message
       responses:
-        "200":
+        '200':
           description: The thread was created successfully.
           content:
             application/json:
@@ -573,21 +573,21 @@ paths:
                       createdAt:
                         type: string
                         description: The thread creation date.
-                        example: "2021-01-01T00:00:00.000Z"
-        "400":
+                        example: '2021-01-01T00:00:00.000Z'
+        '400':
           description: The request was invalid.
-        "401":
+        '401':
           description: The user is not authenticated.
-        "403":
+        '403':
           description: The user is not authorized to create a thread.
-        "404":
+        '404':
           description: The innovation does not exist.
-        "500":
+        '500':
           description: An error occurred while creating the thread.
     get:
       description: Get Innovation Threads
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       operationId: v1-innovation-thread-list
       parameters:
         - name: innovationId
@@ -615,7 +615,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
@@ -664,20 +664,20 @@ paths:
                                       type: string
                                     acronym:
                                       type: string
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not Found
-        "500":
+        '500':
           description: Internal Server Error
 
-  "/v1/{innovationId}/threads/{threadId}":
+  '/v1/{innovationId}/threads/{threadId}':
     get:
       description: Get Innovation Thread Info
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       operationId: v1-innovation-thread-info
       parameters:
         - name: innovationId
@@ -693,7 +693,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
@@ -715,21 +715,21 @@ paths:
                         type: string
                       type:
                         type: string
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not Found
-        "500":
+        '500':
           description: Internal Server Error
 
-  "/v1/{innovationId}/threads/{threadId}/messages":
+  '/v1/{innovationId}/threads/{threadId}/messages':
     post:
       description: Creates a new message in a thread.
       operationId: v1-innovation-thread-message-create
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       parameters:
         - name: innovationId
           in: path
@@ -755,7 +755,7 @@ paths:
                   type: string
                   description: Message to be created.
       responses:
-        "200":
+        '200':
           description: Message created.
           content:
             application/json:
@@ -786,21 +786,21 @@ paths:
                       isEditable:
                         type: boolean
                         description: Flag to indicate if the message can be edited.
-        "400":
+        '400':
           description: Bad request.
-        "401":
+        '401':
           description: Unauthorized.
-        "403":
+        '403':
           description: Forbidden.
-        "404":
+        '404':
           description: Not found.
-        "500":
+        '500':
           description: Internal server error.
     get:
       description: Get a list of messages from a thread
       operationId: v1-innovation-thread-message-list
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       parameters:
         - name: innovationId
           in: path
@@ -836,7 +836,7 @@ paths:
               - ASC
               - DESC
       responses:
-        "200":
+        '200':
           description: Returns a list of messages from a thread
           content:
             application/json:
@@ -893,23 +893,23 @@ paths:
                           type: string
                         updatedAt:
                           type: string
-        "400":
+        '400':
           description: Bad request
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not found
-        "500":
+        '500':
           description: Internal server error
 
-  "/v1/{innovationId}/threads/{threadId}/messages/{messageId}":
+  '/v1/{innovationId}/threads/{threadId}/messages/{messageId}':
     get:
       description: Get a thread message info
       operationId: v1-innovation-thread-message-info
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       parameters:
         - name: innovationId
           in: path
@@ -930,7 +930,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
@@ -946,18 +946,18 @@ paths:
                   createdAt:
                     type: string
                     description: Message creation date
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not Found
-        "500":
+        '500':
           description: Internal Server Error
     put:
       description: Update a thread message
       tags:
-        - "[v1] Innovation Threads"
+        - '[v1] Innovation Threads'
       operationId: v1-innovation-thread-message-update
       parameters:
         - name: innovationId
@@ -990,7 +990,7 @@ paths:
                   type: string
                   description: Message
       responses:
-        "200":
+        '200':
           description: Success
           content:
             application/json:
@@ -1000,23 +1000,23 @@ paths:
                   id:
                     type: string
                     description: Message Id
-        "400":
+        '400':
           description: Bad Request
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not Found
-        "500":
+        '500':
           description: Internal Server Error
 
-  "/v1/{innovationId}/actions":
+  '/v1/{innovationId}/actions':
     post:
       description: Create a new innovation action.
       operationId: v1-innovation-action-create
       tags:
-        - "[v1] Innovation Actions"
+        - '[v1] Innovation Actions'
       parameters:
         - name: innovationId
           in: path
@@ -1045,7 +1045,7 @@ paths:
                 - description
                 - sectionKey
       responses:
-        "200":
+        '200':
           description: The innovation action has been created.
           content:
             application/json:
@@ -1058,23 +1058,23 @@ paths:
                     example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
                 required:
                   - id
-        "400":
+        '400':
           description: The innovation action could not be created.
-        "401":
+        '401':
           description: The user is not authorized to create an innovation action.
-        "403":
+        '403':
           description: The user is not allowed to create an innovation action.
-        "404":
+        '404':
           description: The innovation could not be found.
-        "500":
+        '500':
           description: An unexpected error occurred while creating the innovation action.
 
-  "/v1/actions":
+  '/v1/actions':
     get:
       description: Get a list of innovation actions.
       operationId: v1-innovation-actions-list
       tags:
-        - "[v1] Innovation Actions"
+        - '[v1] Innovation Actions'
       parameters:
         - name: skip
           in: query
@@ -1122,7 +1122,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: The list of innovation actions.
           content:
             application/json:
@@ -1173,21 +1173,21 @@ paths:
                             count:
                               type: integer
                               description: The number of notifications for the action.
-        "400":
+        '400':
           description: The request is invalid.
-        "401":
+        '401':
           description: The user is not authenticated.
-        "403":
+        '403':
           description: The user is not authorized to access this resource.
-        "500":
+        '500':
           description: An error occurred while processing the request.
 
-  "/v1/{innovationId}/actions/{actionId}":
+  '/v1/{innovationId}/actions/{actionId}':
     get:
       description: Get an innovation action.
       operationId: v1-innovation-action-info
       tags:
-        - "[v1] Innovation Actions"
+        - '[v1] Innovation Actions'
       parameters:
         - name: innovationId
           in: path
@@ -1204,7 +1204,7 @@ paths:
             type: string
             format: uuid
       responses:
-        "200":
+        '200':
           description: The innovation action.
           content:
             application/json:
@@ -1232,17 +1232,17 @@ paths:
                     format: date-time
                   createdBy:
                     type: string
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not Found
     put:
       description: Update an innovation action.
       operationId: v1-innovation-action-update
       tags:
-        - "[v1] Innovation Actions"
+        - '[v1] Innovation Actions'
       parameters:
         - name: innovationId
           in: path
@@ -1283,7 +1283,7 @@ paths:
                   type: string
                   description: The comment of the action.
       responses:
-        "200":
+        '200':
           description: The innovation action has been updated.
           content:
             application/json:
@@ -1317,21 +1317,21 @@ paths:
                   updatedAt:
                     type: string
                     description: The date when the action was updated.
-        "400":
+        '400':
           description: The innovation action data is invalid.
-        "401":
+        '401':
           description: The user is not authorized to update the innovation action.
-        "404":
+        '404':
           description: The innovation action does not exist.
-        "500":
+        '500':
           description: An error occurred while updating the innovation action.
 
-  "/v1/{innovationId}/supports":
+  '/v1/{innovationId}/supports':
     post:
       description: Create support in innovation.
       operationId: v1-innovation-create-support
       tags:
-        - "[v1] Innovation Supports"
+        - '[v1] Innovation Supports'
       parameters:
         - in: path
           name: innovationId
@@ -1339,17 +1339,17 @@ paths:
           schema:
             type: string
       responses:
-        "201":
+        '201':
           description:
             Creates a new innovation support request for the innovation identified
             by the supplied 'Innovation ID'.
-        "401":
+        '401':
           description: Unauthorised.
     get:
       description: Get a list with all Innovation's Supports.
       operationId: v1-innovations-supports-list
       tags:
-        - "[v1] Innovation Supports"
+        - '[v1] Innovation Supports'
       parameters:
         - in: path
           name: innovationId
@@ -1362,16 +1362,16 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: Success
-        "404":
+        '404':
           description: Not found
-  "/v1/{innovationId}/supports/{supportId}":
+  '/v1/{innovationId}/supports/{supportId}':
     get:
       description: Get supporting information for an Innovation.
       operationId: v1-innovation-support-info
       tags:
-        - "[v1] Innovation Supports"
+        - '[v1] Innovation Supports'
       parameters:
         - in: path
           name: innovationId
@@ -1384,17 +1384,17 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: OK
-        "400":
+        '400':
           description: Bad Request
-        "404":
+        '404':
           description: Not Found
     put:
       description: Update support on innovation.
       operationId: v1-innovation-support-update
       tags:
-        - "[v1] Innovation Supports"
+        - '[v1] Innovation Supports'
       parameters:
         - in: path
           name: innovationId
@@ -1409,7 +1409,7 @@ paths:
             type: string
           required: true
       requestBody:
-        description: ""
+        description: ''
         required: true
         content:
           application/json:
@@ -1444,7 +1444,7 @@ paths:
                 - message
               additionalProperties: false
       responses:
-        "200":
+        '200':
           description: Innovation ID
           content:
             application/json:
@@ -1456,12 +1456,12 @@ paths:
                     format: uuid
                 required:
                   - id
-  "/v1/{innovationId}":
+  '/v1/{innovationId}':
     get:
       description: Get Innovation information
       operationId: v1-innovation-info
       tags:
-        - "[v1] Innovation"
+        - '[v1] Innovation'
       parameters:
         - in: path
           name: innovationId
@@ -1469,18 +1469,18 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: OK
-        "400":
+        '400':
           description: Bad Request
-        "404":
+        '404':
           description: Not Found
-  "/v1/{innovationId}/activities":
+  '/v1/{innovationId}/activities':
     get:
       description: Get activities log list of an Innovation.
       operationId: v1-innovation-activities-log-list
       tags:
-        - "[v1] Innovation Activities Log"
+        - '[v1] Innovation Activities Log'
       parameters:
         - name: Authorization
           in: header
@@ -1544,17 +1544,17 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: OK
-        "500":
+        '500':
           description: Internal Server Error
-  "/v1/{innovationId}/reassessments":
+  '/v1/{innovationId}/reassessments':
     post:
       operationId: v1-innovation-reassessment-request-create
       description: Create a reassessment request for an innovation.
       summary: Create a reassessment request for an innovation.
       tags:
-        - "[v1] Innovation Assessments"
+        - '[v1] Innovation Assessments'
       parameters:
         - name: innovationId
           in: path
@@ -1574,7 +1574,7 @@ paths:
                 updatedInnovationRecord:
                   type: string
                   description: Updated innovation record since submitting the last assessment.
-                  example: "YES"
+                  example: 'YES'
                 description:
                   type: string
                   description: >-
@@ -1584,27 +1584,27 @@ paths:
                 - updatedInnovationRecord
                 - changes
       responses:
-        "200":
+        '200':
           description: Returns the reassessment request and the cloned assessment id
-        "400":
+        '400':
           description: Bad request
-        "401":
+        '401':
           description: Unauthorized
-        "403":
+        '403':
           description: Forbidden
-        "404":
+        '404':
           description: Not found
-        "422":
+        '422':
           description: Unprocessable entity
-        "500":
+        '500':
           description: Internal server error
 
-  "/v1/{innovationId}/export-requests":
+  '/v1/{innovationId}/export-requests':
     post:
       operationId: v1-innovations-export-requests-create
       description: Create export request.
       tags:
-        - "[v1] Innovations"
+        - '[v1] Innovations'
       parameters:
         - name: innovationId
           in: path
@@ -1622,7 +1622,7 @@ paths:
       operationId: v1-innovations-export-request-list
       description: Get export requests from a innovation.
       tags:
-        - "[v1] Innovations"
+        - '[v1] Innovations'
       parameters:
         - name: innovationId
           in: path
@@ -1640,7 +1640,7 @@ paths:
       operationId: v1-innovations-export-request-check
       description: Check if can export
       tags:
-        - "[v1] Innovations"
+        - '[v1] Innovations'
       parameters:
         - name: innovationId
           in: path
@@ -1655,12 +1655,12 @@ paths:
         '403':
           description: Forbidden
 
-  "/v1/{innovationId}/export-requests/{requestId}":
+  '/v1/{innovationId}/export-requests/{requestId}':
     get:
       operationId: v1-innovations-export-request-info
       description: Get export request info.
       tags:
-        - "[v1] Innovations"
+        - '[v1] Innovations'
       parameters:
         - name: innovationId
           in: path
@@ -1682,12 +1682,12 @@ paths:
         '400':
           description: Invalid innovation payload
   
-  "/v1/{innovationId}/export-requests/{requestId}/status":
+  '/v1/{innovationId}/export-requests/{requestId}/status':
     patch:
       description: Update an innovation transfer status
       operationId: updateInnovationTransferStatus
       tags:
-        - "[v1] Innovations"
+        - '[v1] Innovations'
       parameters:
         - name: innovationId
           in: path
@@ -1721,12 +1721,41 @@ paths:
         '500':
           description: An error occurred while updating the innovation transfer status
   
-  "/v1/{innovationId}/evidences/{evidenceId}":
+  '/v1/{innovationId}/evidence':
+    post:
+      tags:
+        - '[v1] Evidences'
+      description: 'Create an innovation evidence.'
+      operationId: 'v1-innovation-evidence'
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: 'The innovation evidence to create.'
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: 'Created'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+        '422':
+          description: 'Unprocessable Entity'
+        
+  '/v1/{innovationId}/evidences/{evidenceId}':
     get:
       tags:
-        - "[v1] Evidences"
-      description: "Get an innovation evidence info."
-      operationId: "v1-innovation-evidence-info"
+        - '[v1] Evidences'
+      description: 'Get an innovation evidence info.'
+      operationId: 'v1-innovation-evidence-info'
       parameters:
         - name: innovationId
           in: path
@@ -1739,18 +1768,20 @@ paths:
             type: string
           required: true
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
+        '403':
+          description: 'Forbidden'
         '404':
-          description: "Not Found"
+          description: 'Not Found'
         '500':
-          description: "Internal Server Error"
+          description: 'Internal Server Error'
 
-  "/v1/{innovationId}/notifications/dismiss":
+  '/v1/{innovationId}/notifications/dismiss':
     patch:
       operationId: 'v1-innovation-notifications-dismiss'
       description: 'Dismisses innovation notifications.'
@@ -1796,12 +1827,12 @@ paths:
         '400':
           description: 'Invalid payload'
 
-  "/v1/{innovationId}/submissions":
+  '/v1/{innovationId}/submissions':
     get:
       tags:
-        - "[v1] Innovations"
-      description: "Get Innovation submission states."
-      operationId: "v1-innovation-submission-states"
+        - '[v1] Innovations'
+      description: 'Get Innovation submission states.'
+      operationId: 'v1-innovation-submission-states'
       parameters:
         - name: Authorization
           in: header
@@ -1814,9 +1845,9 @@ paths:
           schema:
             type: string
       responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
