@@ -137,6 +137,9 @@ export default openApi(
             },
           },
         },
+        400: {
+          description: 'Bad Request',
+        },
         401: {
           description: 'Unauthorized',
         },
