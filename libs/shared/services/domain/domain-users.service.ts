@@ -3,7 +3,7 @@ import type { DataSource, Repository } from 'typeorm';
 import { UserEntity } from '../../entities';
 import type { UserTypeEnum } from '../../enums';
 import { GenericErrorsEnum, InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DomainUserInfoType } from '../../types';
+import type { DateISOType, DomainUserInfoType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
 
@@ -86,14 +86,15 @@ export class DomainUsersService {
 
   }
 
-  async getUsersList(data: { userIds?: string[], identityIds?: string[] }): Promise<{
+  async getUsersList(data: { userIds?: string[], identityIds?: string[] }, lastLoginInfo = false): Promise<{
     id: string,
     identityId: string,
     displayName: string,
     email: string,
     mobilePhone: null | string,
     type: UserTypeEnum
-    isActive: boolean
+    isActive: boolean,
+    lastLoginAt: null | DateISOType
   }[]> {
     // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)
@@ -115,7 +116,7 @@ export class DomainUsersService {
     else if (data.identityIds) { query.where('external_id IN (:...identityIds)', { identityIds: data.identityIds }); }
 
     const dbUsers = await query.getMany();
-    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
+    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId), lastLoginInfo);
 
 
     return dbUsers.map(dbUser => {
@@ -132,7 +133,8 @@ export class DomainUsersService {
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
         type: dbUser.type,
-        isActive: !dbUser.lockedAt
+        isActive: !dbUser.lockedAt,
+        lastLoginAt: identityUser.lastLoginAt, 
       };
 
     });
