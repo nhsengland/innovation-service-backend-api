@@ -12,6 +12,7 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
+  OrganisationTypeEnum,
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
 import {
@@ -23,8 +24,9 @@ import {
 import type { DomainUserInfoType } from '@admin/shared/types';
 import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
-import { In } from 'typeorm';
+import { EntityManager, In, UsingJoinTableIsNotAllowedError } from 'typeorm';
 import { BaseService } from './base.service';
+import { AuthErrorsEnum } from '@admin/shared/services/auth/authorization-validation.model';
 
 @injectable()
 export class AdminService extends BaseService {
@@ -216,5 +218,123 @@ export class AdminService extends BaseService {
     });
 
     return result;
+  }
+
+  async createOrganisation(
+    requestUser: DomainServiceType,
+    organisation: {
+      name: string;
+      acronym: string;
+      units?: { name: string; acronym: string }[];
+    }
+  ): Promise<{ id: string }> {
+
+    const name = organisation.name
+    const acronym = organisation.acronym
+
+    const orgAlreadyExists = await this.sqlConnection
+      .createQueryBuilder(OrganisationEntity, 'org')
+      .where('org.name = :name OR organisation.acronym = :acronym', { name, acronym })
+      .getOne()
+
+    if (orgAlreadyExists) {
+      throw new Error(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+    }
+
+    const org = OrganisationEntity.new({
+      name,
+      acronym,
+      inactivatedAt: new Date(),
+      type: OrganisationTypeEnum.ACCESSOR,
+      isShadow: false 
+    });
+
+    const result = await this.sqlConnection.transaction(async (transaction) => {
+
+      const savedOrganisation = await transaction.save(
+        OrganisationEntity,
+        org
+      );
+
+      /*
+        units can only have length 0 or greater than 1
+        if 0 -> create shadow unit
+        if > 1 -> create specified units and shadow
+      */
+      if (organisation.units && organisation.units.length > 1) {
+        //create specified units
+        for (const unit of organisation.units) {
+          try {
+            const u = await this.createOrganisationUnit(
+              org.id,
+              unit.name,
+              unit.acronym,
+              false,
+              transaction
+            )
+          }
+          catch (error) {
+            throw error;
+          }
+        }
+      }
+      //create shadow unit
+      try {
+        const u = await this.createOrganisationUnit(
+          org.id,
+          name,
+          acronym,
+          true,
+          transaction
+        )
+      }
+      catch (error) {
+        throw error
+      }
+
+      return { id: savedOrganisation.id }
+    });
+
+    return result
+  }
+
+  private async createOrganisationUnit(
+    organisationId: string,
+    name: string,
+    acronym: string,
+    isShadow: boolean,
+    transaction: EntityManager
+  ): Promise<OrganisationUnitEntity> {
+
+    const org = await this.sqlConnection
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .where('organanisation.id = :organisationId', { organisationId })
+      .getOne()
+
+    if (!org) {
+      throw new Error(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
+    }
+
+    const unitAlreadyExists = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
+      .getOne()
+
+    if (unitAlreadyExists) {
+      throw new Error(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
+    }
+
+    const savedUnit = await transaction.save(
+      OrganisationUnitEntity,
+      OrganisationUnitEntity.new({
+        name: name,
+        acronym: acronym,
+        inactivatedAt: new Date(),
+        isShadow: isShadow,
+        organisation: org
+      })
+    );
+    
+    return savedUnit
   }
 }
