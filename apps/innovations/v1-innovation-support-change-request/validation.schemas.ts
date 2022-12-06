@@ -17,7 +17,9 @@ export type BodyType = {
   status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED' | 'WITHDRAWN'>;
   message: string;
 }
+
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
+  status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum))
+    .disallow(InnovationSupportStatusEnum.UNASSIGNED, InnovationSupportStatusEnum.WITHDRAWN).required(),
   message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required(),
 }).required();

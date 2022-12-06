@@ -27,7 +27,9 @@ class V1InnovationSupportChangeRequest{
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
+        .setInnovation(params.innovationId)
         .checkAccessorType()
+        .checkInnovation()
         .verify();
 
       const requestUser = auth.getUserInfo();
