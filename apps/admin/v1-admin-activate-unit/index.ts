@@ -34,7 +34,7 @@ class V1AdminActivateUnit {
 
         const body = JoiHelper.Validate<BodyType>(
             BodySchema,
-            request.params
+            request.body
         );
 
         const auth = await authorizationService
@@ -42,13 +42,16 @@ class V1AdminActivateUnit {
         .checkAdminType()
         .verify();
 
+        const requestUser = auth.getUserInfo()
+
         const result = await adminService.activateUnit(
+            { id: requestUser.id },
             params.organisationId,
             params.organisationUnitId,
             body.userIds
         );
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
+        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId, userId: result.id });
         return;
         } catch (error) {
         context.res = ResponseHelper.Error(context, error);

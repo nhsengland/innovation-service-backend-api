@@ -1,3 +1,4 @@
 export type ResponseDTO = {
-  unitId: string;
+  unitId: string,
+  userId: string
 };

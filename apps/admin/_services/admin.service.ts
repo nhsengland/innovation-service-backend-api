@@ -12,8 +12,7 @@ import {
   InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
-  NotifierTypeEnum,
-  UserTypeEnum,
+  NotifierTypeEnum
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
 import {
@@ -223,15 +222,19 @@ export class AdminService extends BaseService {
 
 
   async activateUnit(
+    user: { id: string },
     organisationId: string,
     unitId: string,
     userIds: string[]):
     Promise<{
-      unitId: string
+      unitId: string,
+      id: string
     }> {
+
       const unit = await this.sqlConnection
-        .createQueryBuilder(OrganisationUnitEntity, 'org_units')
-        .where('org_units.id = :unitId', { unitId })
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .innerJoinAndSelect('org_unit.organisation', 'organisation')
+        .where('org_unit.id = :unitId', { unitId })
         .getOne();
 
       if (!unit) {
@@ -243,6 +246,7 @@ export class AdminService extends BaseService {
       // get users from unit
       const unitUsers = await this.sqlConnection
         .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+        .innerJoinAndSelect('org_unit_user.organisationUser', 'org_user')
         .where('org_unit_user.organisation_unit_id = :unitId', {
           unitId,
         })
@@ -251,10 +255,11 @@ export class AdminService extends BaseService {
       //ensure users to activate belong to unit
       userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
 
+      //check if at least 1 user is QA
       const canActivate =
         unitUsers.filter(
-          (unitUser) =>
-            unitUser.organisationUser.role ===
+          (u) =>
+            u.organisationUser.role ===
             AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
         ).length > 0;
 
@@ -273,17 +278,8 @@ export class AdminService extends BaseService {
             { inactivatedAt: null }
           );
 
-          //Activate users of unit
-          for (const userId of userIds) {
-            await transaction.update(
-              UserEntity,
-              { id: userId },
-              { lockedAt: null }
-            );
-          }
-
           // activate organistion to whom unit belongs if it is inactivated
-          if (unit.organisation.inactivatedAt != null /* juggle check */) {
+          if (unit.organisation.inactivatedAt !== null) {
             await transaction.update(
               OrganisationEntity,
               { id: organisationId },
@@ -291,7 +287,35 @@ export class AdminService extends BaseService {
             );
           }
 
-          return { unitId };
+          //Activate users of unit
+          // for (const userId of userIds) {
+          //   await transaction.update(
+          //     UserEntity,
+          //     { id: userId },
+          //     { lockedAt: null }
+          //   );
+          // }
+
+          await transaction
+            .createQueryBuilder(UserEntity, 'users')
+            .update()
+            .set({ lockedAt: null })
+            .where('id in (:...userIds)', { userIds })
+            .execute();
+          
+          const unlockedUsers = await this.sqlConnection
+            .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+            .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
+            .leftJoinAndSelect('org_user.user', 'user')
+            .where('org_unit_user.organisation_unit_id = :unitId', {
+              unitId,
+            })
+            .getMany();
+
+          console.log('Unlocked users: ', unlockedUsers.map(u => u.organisationUser.user))
+          console.log('Activated unit', unit)
+
+          return { unitId , id: user.id };
         }
       );
 
