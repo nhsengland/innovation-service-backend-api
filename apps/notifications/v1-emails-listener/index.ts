@@ -45,7 +45,7 @@ class V1SendEmailListener {
       return;
 
     } catch (error) {
-      context.log.error('ERROR: Unexpected error parsing notification', error);
+      context.log.error('ERROR: Unexpected error parsing notification: ', JSON.stringify(error));
       throw error;
     }
 

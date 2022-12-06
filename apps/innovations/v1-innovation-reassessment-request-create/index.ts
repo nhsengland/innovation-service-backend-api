@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
@@ -10,8 +10,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 
 
 class V1InnovationReassessmentRequestCreate {
@@ -43,7 +43,6 @@ class V1InnovationReassessmentRequestCreate {
       return;
 
     } catch (error) {
-      context.log.error(error);
       context.res = ResponseHelper.Error(context, error);
       return;
     }
