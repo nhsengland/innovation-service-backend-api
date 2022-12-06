@@ -4,6 +4,7 @@ import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/se
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
+import { translate } from '../_helpers/translate.helper';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
@@ -20,10 +21,6 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
 
   private data: {
     innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
-    support?: {
-      requestStatusUpdateComment: string,
-      proposedSupportStatus: InnovationSupportStatusEnum,
-    },
     requestUser?: { displayName: string, identityId: string },
   } = {};
 
@@ -39,11 +36,6 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   async run(): Promise<this> {
 
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-
-    this.data.support = {
-      requestStatusUpdateComment: this.inputData.requestStatusUpdateComment,
-      proposedSupportStatus: this.inputData.proposedStatus,
-    }
 
     this.data.requestUser = {
       displayName: requestUserInfo.displayName,
@@ -74,8 +66,8 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
         params: {
           innovation_name: this.data.innovation?.name || '',
           accessor_name: this.data.requestUser?.displayName || '',
-          proposed_status: this.data.support?.proposedSupportStatus || '',
-          request_status_update_comment: this.data.support?.requestStatusUpdateComment || '',
+          proposed_status: translate(this.inputData.proposedStatus),
+          request_status_update_comment: this.inputData.requestStatusUpdateComment || '',
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId/supports/:supportId')
             .setPathParams({ innovationId: this.inputData.innovationId, supportId: this.inputData.supportId })
