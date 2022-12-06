@@ -163,12 +163,12 @@ export class StatisticsService  extends BaseService {
 
     // gets unread messages on this threads
     // the context id is always the thread id regardless if the detail is a message or a reply
-    const unreadMessages = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+    const unreadMessages = threadCreatedByMe.length == 0 ? [] : await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
     .innerJoinAndSelect('notification.innovation', 'innovation')
     .innerJoinAndSelect('notification.notificationUsers', 'users')
     .where('innovation.id = :innovationId', { innovationId })
     .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
-    .andWhere('notification.context_detail in (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
+    .andWhere('notification.context_detail IN (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
     .andWhere('users.user_id = :userId', { userId })
     .andWhere('users.readAt IS NULL')
     .andWhere('notification.context_id IN (:...threadIds)', { threadIds: threadCreatedByMe.map(_ => _.id) })
