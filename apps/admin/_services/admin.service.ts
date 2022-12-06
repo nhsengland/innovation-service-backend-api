@@ -243,13 +243,19 @@ export class AdminService extends BaseService {
         );
       }
 
-      // get users from unit
+      // get users entities
+      const usersToLock = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoin('user.userOrganisations', 'org_user')
+      .innerJoin('org_user.userOrganisationUnits', 'unit_user')
+      .where('unit_user.id IN (:...userIds)', { userIds })
+      .getMany()
+
+      // get organisationUnitUser entities
       const unitUsers = await this.sqlConnection
         .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
         .innerJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-        .where('org_unit_user.organisation_unit_id = :unitId', {
-          unitId,
-        })
+        .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
         .getMany();
 
       //ensure users to activate belong to unit
@@ -288,32 +294,13 @@ export class AdminService extends BaseService {
           }
 
           //Activate users of unit
-          // for (const userId of userIds) {
-          //   await transaction.update(
-          //     UserEntity,
-          //     { id: userId },
-          //     { lockedAt: null }
-          //   );
-          // }
-
-          await transaction
-            .createQueryBuilder(UserEntity, 'users')
-            .update()
-            .set({ lockedAt: null })
-            .where('id in (:...userIds)', { userIds })
-            .execute();
-          
-          const unlockedUsers = await this.sqlConnection
-            .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-            .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-            .leftJoinAndSelect('org_user.user', 'user')
-            .where('org_unit_user.organisation_unit_id = :unitId', {
-              unitId,
-            })
-            .getMany();
-
-          console.log('Unlocked users: ', unlockedUsers.map(u => u.organisationUser.user))
-          console.log('Activated unit', unit)
+          for (const u of usersToLock) {
+            await transaction.update(
+              UserEntity,
+              { id: u.id },
+              { lockedAt: null }
+            );
+          }
 
           return { unitId , id: user.id };
         }
