@@ -37,21 +37,18 @@ class V1AdminActivateUnit {
             request.body
         );
 
-        const auth = await authorizationService
+        await authorizationService
         .validate(context.auth.user.identityId)
         .checkAdminType()
         .verify();
 
-        const requestUser = auth.getUserInfo()
-
         const result = await adminService.activateUnit(
-            { id: requestUser.id },
             params.organisationId,
             params.organisationUnitId,
             body.userIds
         );
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId, userId: result.id });
+        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
         return;
         } catch (error) {
         context.res = ResponseHelper.Error(context, error);

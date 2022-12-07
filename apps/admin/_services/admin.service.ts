@@ -142,8 +142,6 @@ export class AdminService extends BaseService {
         organisationUnitUsers: [],
       }));
 
-      console.log('updated supports', updatedSupports)
-
       if (updatedSupports.length > 0) {
         await transaction
           .getRepository(InnovationSupportEntity)
@@ -222,13 +220,11 @@ export class AdminService extends BaseService {
 
 
   async activateUnit(
-    user: { id: string },
     organisationId: string,
     unitId: string,
     userIds: string[]):
     Promise<{
-      unitId: string,
-      id: string
+      unitId: string
     }> {
 
       const unit = await this.sqlConnection
@@ -259,7 +255,7 @@ export class AdminService extends BaseService {
         .getMany();
 
       //ensure users to activate belong to unit
-      userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
+      userIds = userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
 
       //check if at least 1 user is QA
       const canActivate =
@@ -302,7 +298,7 @@ export class AdminService extends BaseService {
             );
           }
 
-          return { unitId , id: user.id };
+          return { unitId };
         }
       );
 
