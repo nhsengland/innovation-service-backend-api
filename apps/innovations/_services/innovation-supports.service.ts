@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { In } from 'typeorm';
 
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, InnovationSupportLogEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, type UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
@@ -10,7 +10,9 @@ import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
+import type { InnovationSupportsLogType } from '../_types/innovation.types';
 import type { DomainUserInfoType } from '@innovations/shared/types';
+
 
 
 @injectable()
@@ -100,7 +102,74 @@ export class InnovationSupportsService extends BaseService {
     } catch (error) {
       throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
     }
+  }
 
+  async getInnovationSupportLogs(
+    innovationId: string,
+  ): Promise<InnovationSupportsLogType[]> {
+
+    const query = this.sqlConnection
+      .createQueryBuilder(InnovationSupportLogEntity, 'supports')
+      .leftJoinAndSelect('supports.innovation', 'innovation')
+      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
+      .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('suggestedOrganisation.inactivated_at IS NULL')
+      .orderBy('supports.createdAt', 'ASC');
+
+    const supportLogs = await query.getMany();
+
+    const usersIds = supportLogs.map(item => item.createdBy);
+    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...usersIds] }));
+    const userNames: {[key: string]: string} = usersInfo.reduce((map: {[key: string]: string}, obj) => {
+      map[obj.id] = obj.displayName;
+      return map;
+    }, {});
+   
+
+    const response: InnovationSupportsLogType[] = supportLogs.map((log) => {
+      const rec: InnovationSupportsLogType = {
+        id: log.id,
+        type: log.type,
+        description: log.description,
+        innovationSupportStatus: log.innovationSupportStatus,
+        createdBy: userNames[log.createdBy] ?? '',
+        createdAt: log.createdAt,
+        organisationUnit: log.organisationUnit ? {
+          id: log.organisationUnit.id,
+          name: log.organisationUnit.name,
+          acronym: log.organisationUnit.acronym,
+          organisation: {
+            id: log.organisationUnit.organisation.id,
+            name: log.organisationUnit.organisation.name,
+            acronym: log.organisationUnit.organisation.acronym,
+          },
+        } : null,
+      };
+
+      if (
+        log.suggestedOrganisationUnits &&
+        log.suggestedOrganisationUnits.length > 0
+      ) {
+        rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
+            id: orgUnit.id,
+            name: orgUnit.name,
+            acronym: orgUnit.acronym,
+            organisation: {
+              id: orgUnit.organisation.id,
+              name: orgUnit.organisation.name,
+              acronym: orgUnit.organisation.acronym,
+            },
+          })
+        );
+      }
+
+      return rec;
+    });
+
+    return response;
   }
 
 

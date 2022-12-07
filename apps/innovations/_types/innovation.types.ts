@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
 import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
@@ -107,3 +107,31 @@ export type InnovationAllSectionsType = {
   sections: InnovationExportSectionType[];
 }[];
 
+export type InnovationSupportsLogType = {
+  id: string;
+  type: InnovationSupportLogTypeEnum;
+  description: string;
+  innovationSupportStatus: string;
+  createdBy: string;
+  createdAt: DateISOType;
+  organisationUnit: null | {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  };
+  suggestedOrganisationUnits?: {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  }[];
+}

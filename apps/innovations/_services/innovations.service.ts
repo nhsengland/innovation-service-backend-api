@@ -392,7 +392,7 @@ export class InnovationsService extends BaseService {
     postCode: null | string,
     categories: InnovationCategoryCatalogueEnum[],
     otherCategoryDescription: null | string,
-    owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean },
+    owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
     lastEndSupportAt: null | DateISOType,
     export: { canUserExport: boolean, pendingRequestsCount: number },
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
@@ -500,6 +500,7 @@ export class InnovationsService extends BaseService {
           email: ownerInfo?.email || '',
           mobilePhone: ownerInfo?.mobilePhone || '',
           isActive: !!ownerInfo?.isActive,
+          lastLoginAt: ownerInfo?.lastLoginAt ?? null,
           organisations: (await result.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
             name: item.organisation.name,
             size: item.organisation.size
