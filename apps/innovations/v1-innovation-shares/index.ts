@@ -27,6 +27,9 @@ class V1InnovationShares {
 
       await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
+        .checkInnovatorType()
+        .checkAssessmentType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
 
