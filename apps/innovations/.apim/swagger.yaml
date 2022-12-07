@@ -1851,3 +1851,28 @@ paths:
           description: 'Bad Request'
         '401':
           description: 'Unauthorized'
+
+  '/v1/{innovationId}/support-logs':
+    get:
+      tags:
+        - '[v1] Innovation Supports'
+      description: 'Get Support Logs for Innovation.'
+      operationId: 'v1-innovation-support-logs'
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 'OK'
+        '400':
+          description: 'Bad Request'
+        '401':
+          description: 'Unauthorized'
