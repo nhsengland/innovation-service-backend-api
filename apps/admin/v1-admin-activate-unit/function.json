@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate"
+      "route": "v1/organisations/{organisationId}/units/{organisationUnitId}/activate"
     },
     { "type": "http", "direction": "out", "name": "res" }
   ]
