@@ -56,3 +56,40 @@ paths:
         "401":
           description: "Unauthorized"
 
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
+    patch:
+      tags:
+        - "[v1] Activate Unit"
+      description: "Activate an organisation unit"
+      operationId: "v1-admin-activate-unit"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Users to unlock.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+

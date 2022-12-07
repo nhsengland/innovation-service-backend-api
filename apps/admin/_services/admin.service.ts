@@ -8,10 +8,11 @@ import {
   UserEntity,
 } from '@admin/shared/entities';
 import {
+  AccessorOrganisationRoleEnum,
   InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
 import {
@@ -38,7 +39,8 @@ export class AdminService extends BaseService {
   async inactivateUnit(
     requestUser: DomainUserInfoType,
     unitId: string
-  ): Promise<{ id: string }> {
+  ): Promise<{ unitId: string }> {
+
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_units')
@@ -116,7 +118,7 @@ export class AdminService extends BaseService {
         InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
       ].includes(s.status));
 
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const result = await this.sqlConnection.transaction(async transaction => {
       // Inactivate unit
       await transaction.update(
         OrganisationUnitEntity,
@@ -139,8 +141,6 @@ export class AdminService extends BaseService {
         status: InnovationSupportStatusEnum.COMPLETE,
         organisationUnitUsers: [],
       }));
-
-      console.log('updated supports', updatedSupports)
 
       if (updatedSupports.length > 0) {
         await transaction
@@ -212,9 +212,97 @@ export class AdminService extends BaseService {
 
       }
 
-      return { id: unitId };
+      return { unitId };
     });
 
     return result;
   }
+
+
+  async activateUnit(
+    organisationId: string,
+    unitId: string,
+    userIds: string[]):
+    Promise<{
+      unitId: string
+    }> {
+
+      const unit = await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .innerJoinAndSelect('org_unit.organisation', 'organisation')
+        .where('org_unit.id = :unitId', { unitId })
+        .getOne();
+
+      if (!unit) {
+        throw new NotFoundError(
+          OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND
+        );
+      }
+
+      // get users entities
+      const usersToLock = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoin('user.userOrganisations', 'org_user')
+      .innerJoin('org_user.userOrganisationUnits', 'unit_user')
+      .where('unit_user.id IN (:...userIds)', { userIds })
+      .getMany()
+
+      // get organisationUnitUser entities
+      const unitUsers = await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+        .innerJoinAndSelect('org_unit_user.organisationUser', 'org_user')
+        .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
+        .getMany();
+
+      //ensure users to activate belong to unit
+      userIds = userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
+
+      //check if at least 1 user is QA
+      const canActivate =
+        unitUsers.some(
+          (u) =>
+            u.organisationUser.role ===
+            AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+        );
+
+      if (!canActivate) {
+        throw new Error(
+          OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA
+        );
+      }
+
+      const result = await this.sqlConnection.transaction(
+        async (transaction) => {
+          // Activate unit
+          await transaction.update(
+            OrganisationUnitEntity,
+            { id: unitId },
+            { inactivatedAt: null }
+          );
+
+          // activate organistion to whom unit belongs if it is inactivated
+          if (unit.organisation.inactivatedAt !== null) {
+            await transaction.update(
+              OrganisationEntity,
+              { id: organisationId },
+              { inactivatedAt: null }
+            );
+          }
+
+          //Activate users of unit
+          for (const u of usersToLock) {
+            await transaction.update(
+              UserEntity,
+              { id: u.id },
+              { lockedAt: null }
+            );
+          }
+
+          return { unitId };
+        }
+      );
+
+      return result;
+    }
+
 }
