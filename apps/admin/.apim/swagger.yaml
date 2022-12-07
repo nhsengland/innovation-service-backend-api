@@ -93,3 +93,30 @@ paths:
         "401":
           description: "Unauthorized"
 
+  "/v1/organisations":
+    post:
+      tags:
+        - "[v1] Create Organisation"
+      description: "Create an organisation"
+      operationId: "v1-admin-organisation-create"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: Organisation to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
