@@ -1,19 +1,31 @@
-import type { DateISOType, OrganisationType, OrganisationUnitType } from "@innovations/shared/types";
+import type { InnovationSupportLogTypeEnum } from "@innovations/shared/enums";
+import type { DateISOType } from "@innovations/shared/types";
 
 export type ResponseDTO = {
   id: string;
-  type: string;
+  type: InnovationSupportLogTypeEnum;
   description: string;
   innovationSupportStatus: string;
   createdBy: string;
   createdAt: DateISOType;
-  organisationUnit?: {
+  organisationUnit: null | {
     id: string;
     name: string;
-    acronym?: string;
-    organisation?: OrganisationType;
-    isActive?: boolean;
-    userCount?: number;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
   };
-  suggestedOrganisationUnits?: OrganisationUnitType[];
+  suggestedOrganisationUnits?: {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  }[];
 }

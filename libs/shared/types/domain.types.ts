@@ -138,39 +138,3 @@ export type ActivityLogTemplatesType = {
     params: { assessment: { id: string }, reassessment: { id: string } }
   }
 }
-
-export type OrganisationUnitType = {
-  id: string;
-  name: string;
-  acronym?: string;
-  organisation?: OrganisationType;
-  isActive?: boolean;
-  userCount?: number;
-}
-
-export type OrganisationType = {
-  id: string;
-  name: string;
-  acronym?: string;
-  organisationUnits?: OrganisationUnitType[];
-  isActive?: boolean;
-}
-
-
-export type InnovationSupportsLogType = {
-    id: string;
-    type: string;
-    description: string;
-    innovationSupportStatus: string;
-    createdBy: string;
-    createdAt: DateISOType;
-    organisationUnit?: {
-      id: string;
-      name: string;
-      acronym?: string;
-      organisation?: OrganisationType;
-      isActive?: boolean;
-      userCount?: number;
-    };
-    suggestedOrganisationUnits?: OrganisationUnitType[];
-}

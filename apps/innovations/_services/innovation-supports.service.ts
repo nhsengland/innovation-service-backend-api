@@ -6,11 +6,12 @@ import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum,
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
 
-import { InnovationSupportLogEnum, InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
+import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
-import type { InnovationSupportsLogType } from '@innovations/shared/types';
+import type { InnovationSupportsLogType } from '../_types/innovation.types';
+
 
 
 @injectable()
@@ -104,7 +105,6 @@ export class InnovationSupportsService extends BaseService {
 
   async getInnovationSupportLogs(
     innovationId: string,
-    type?: InnovationSupportLogEnum
   ): Promise<InnovationSupportsLogType[]> {
 
     const query = this.sqlConnection
@@ -114,15 +114,7 @@ export class InnovationSupportsService extends BaseService {
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
       .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
       .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
-      .where('innovation.id = :innovationId', { innovationId });
-
-    
-    
-    if (type) {
-      query.andWhere('supports.type = :type', { type });
-    }
-
-    query
+      .where('innovation.id = :innovationId', { innovationId })
       .andWhere('suggestedOrganisation.inactivated_at IS NULL')
       .orderBy('supports.createdAt', 'ASC');
 
@@ -135,58 +127,48 @@ export class InnovationSupportsService extends BaseService {
       return map;
     }, {});
    
-    try {
-      const response: InnovationSupportsLogType[] = supportLogs.map((log) => {
-        const rec: InnovationSupportsLogType = {
-          id: log.id,
-          type: log.type,
-          description: log.description,
-          innovationSupportStatus: log.innovationSupportStatus,
-          createdBy: userNames[log.createdBy] ?? '',
-          createdAt: log.createdAt,
-        };
-  
-        if (log.organisationUnit) {
-          rec.organisationUnit = {
-            id: log.organisationUnit.id,
-            name: log.organisationUnit.name,
-            acronym: log.organisationUnit.acronym || "",
-            organisation: {
-              id: log.organisationUnit.organisation.id,
-              name: log.organisationUnit.organisation.name,
-              acronym: log.organisationUnit.organisation.acronym || "",
-            },
-          };
-        }
-  
-        if (
-          log.suggestedOrganisationUnits &&
-          log.suggestedOrganisationUnits.length > 0
-        ) {
-          rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map(
-            (orgUnit: { id: any; name: any; acronym: any; organisation: { id: any; name: any; acronym: any; }; }) => ({
-              id: orgUnit.id,
-              name: orgUnit.name,
-              acronym: orgUnit.acronym,
-              organisation: {
-                id: orgUnit.organisation.id,
-                name: orgUnit.organisation.name,
-                acronym: orgUnit.organisation.acronym,
-              },
-            })
-          );
-        }
-  
-        return rec;
-      });
 
-      return response;
-    } catch (error: any) {
-      if (Object.values(InnovationErrorsEnum).includes(error.name)) { throw error; }
-      else {
-        throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
+    const response: InnovationSupportsLogType[] = supportLogs.map((log) => {
+      const rec: InnovationSupportsLogType = {
+        id: log.id,
+        type: log.type,
+        description: log.description,
+        innovationSupportStatus: log.innovationSupportStatus,
+        createdBy: userNames[log.createdBy] ?? '',
+        createdAt: log.createdAt,
+        organisationUnit: log.organisationUnit ? {
+          id: log.organisationUnit.id,
+          name: log.organisationUnit.name,
+          acronym: log.organisationUnit.acronym,
+          organisation: {
+            id: log.organisationUnit.organisation.id,
+            name: log.organisationUnit.organisation.name,
+            acronym: log.organisationUnit.organisation.acronym,
+          },
+        } : null,
+      };
+
+      if (
+        log.suggestedOrganisationUnits &&
+        log.suggestedOrganisationUnits.length > 0
+      ) {
+        rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
+            id: orgUnit.id,
+            name: orgUnit.name,
+            acronym: orgUnit.acronym,
+            organisation: {
+              id: orgUnit.organisation.id,
+              name: orgUnit.organisation.name,
+              acronym: orgUnit.organisation.acronym,
+            },
+          })
+        );
       }
-    }
+
+      return rec;
+    });
+
+    return response;
   }
 
 
