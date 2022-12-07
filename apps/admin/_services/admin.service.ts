@@ -259,11 +259,11 @@ export class AdminService extends BaseService {
 
       //check if at least 1 user is QA
       const canActivate =
-        unitUsers.filter(
+        unitUsers.some(
           (u) =>
             u.organisationUser.role ===
             AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
-        ).length > 0;
+        );
 
       if (!canActivate) {
         throw new Error(
