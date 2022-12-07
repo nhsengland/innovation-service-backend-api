@@ -32,6 +32,7 @@ class V1InnovationThreadInfo {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkAdminType()
         .verify();
 
       const result = await threadsService.getThreadInfo(
