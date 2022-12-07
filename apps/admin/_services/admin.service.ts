@@ -312,14 +312,17 @@ export class AdminService extends BaseService {
       acronym: string;
       units?: { name: string; acronym: string }[];
     }
-  ): Promise<{ id: string }> {
+  ): Promise<{
+    id: string;
+    units: string[]
+   }> {
 
     const name = organisation.name
     const acronym = organisation.acronym
 
     const orgAlreadyExists = await this.sqlConnection
       .createQueryBuilder(OrganisationEntity, 'org')
-      .where('org.name = :name OR organisation.acronym = :acronym', { name, acronym })
+      .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
       .getOne()
 
     if (orgAlreadyExists) {
@@ -334,53 +337,64 @@ export class AdminService extends BaseService {
       isShadow: false 
     });
 
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const savedOrganisation = await this.sqlConnection.transaction(async (transaction) => {
 
       const savedOrganisation = await transaction.save(
         OrganisationEntity,
         org
       );
 
+      return savedOrganisation;
+      
+    });
+
+    const savedUnits = await this.sqlConnection.transaction(async transaction => {
       /*
         units can only have length 0 or greater than 1
         if 0 -> create shadow unit
-        if > 1 -> create specified units and shadow
+        if > 1 -> create specified units
       */
+      const savedUnits: OrganisationUnitEntity[] = []
       if (organisation.units && organisation.units.length > 1) {
         //create specified units
         for (const unit of organisation.units) {
           try {
-            await this.createOrganisationUnit(
-              org.id,
+            const u = await this.createOrganisationUnit(
+              savedOrganisation.id,
               unit.name,
               unit.acronym,
               false,
               transaction
             )
+            savedUnits.push(u)
           }
           catch (error) {
             throw error;
           }
         }
+        return savedUnits
       }
       //create shadow unit
       try {
-        await this.createOrganisationUnit(
+        const shadowUnit = await this.createOrganisationUnit(
           org.id,
           name,
           acronym,
           true,
           transaction
         )
+        savedUnits.push(shadowUnit)
       }
       catch (error) {
         throw error
       }
 
-      return { id: savedOrganisation.id }
+      return savedUnits
+
     });
 
-    return result
+    
+    return { id: savedOrganisation.id, units: savedUnits.map(u => u.id) }
   }
 
   private async createOrganisationUnit(
@@ -393,7 +407,7 @@ export class AdminService extends BaseService {
 
     const org = await this.sqlConnection
       .createQueryBuilder(OrganisationEntity, 'organisation')
-      .where('organanisation.id = :organisationId', { organisationId })
+      .where('organisation.id = :organisationId', { organisationId })
       .getOne()
 
     if (!org) {
@@ -421,6 +435,7 @@ export class AdminService extends BaseService {
     );
     
     return savedUnit
+
   }
 
   

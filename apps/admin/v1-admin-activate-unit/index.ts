@@ -15,7 +15,7 @@ import { container } from '../_config';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminActivateUnit {
+class V1AdminUnitActivate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -58,7 +58,7 @@ class V1AdminActivateUnit {
 }
 
 export default openApi(
-  V1AdminActivateUnit.httpTrigger as AzureFunction,
+  V1AdminUnitActivate.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}/units/{organisationUnitId}/activate',
   {
     patch: {
@@ -103,7 +103,7 @@ export default openApi(
       },
       responses: {
         '200': {
-          description: 'The organisation unit has been activated..',
+          description: 'The organisation unit has been activated.',
           content: {
             'application/json': {
               schema: {
