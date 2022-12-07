@@ -24,9 +24,8 @@ import {
 import type { DomainUserInfoType } from '@admin/shared/types';
 import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
-import { EntityManager, In, UsingJoinTableIsNotAllowedError } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { BaseService } from './base.service';
-import { AuthErrorsEnum } from '@admin/shared/services/auth/authorization-validation.model';
 
 @injectable()
 export class AdminService extends BaseService {
@@ -265,7 +264,7 @@ export class AdminService extends BaseService {
         //create specified units
         for (const unit of organisation.units) {
           try {
-            const u = await this.createOrganisationUnit(
+            await this.createOrganisationUnit(
               org.id,
               unit.name,
               unit.acronym,
@@ -280,7 +279,7 @@ export class AdminService extends BaseService {
       }
       //create shadow unit
       try {
-        const u = await this.createOrganisationUnit(
+        await this.createOrganisationUnit(
           org.id,
           name,
           acronym,
