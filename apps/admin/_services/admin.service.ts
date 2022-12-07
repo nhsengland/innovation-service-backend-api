@@ -345,7 +345,7 @@ export class AdminService extends BaseService {
       );
 
       return savedOrganisation;
-      
+
     });
 
     const savedUnits = await this.sqlConnection.transaction(async transaction => {
@@ -393,8 +393,8 @@ export class AdminService extends BaseService {
 
     });
 
-    
     return { id: savedOrganisation.id, units: savedUnits.map(u => u.id) }
+    
   }
 
   private async createOrganisationUnit(
