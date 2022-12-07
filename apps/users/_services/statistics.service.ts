@@ -108,29 +108,27 @@ export class StatisticsService  extends BaseService {
     }
       
     const myActionsCount = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
-      .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
-      .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
-      .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
-      .innerJoinAndSelect('organisationUser.user', 'user')
+      .select('actions.status', 'status')
+      .addSelect('count(*)', 'count')
+      .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
+      .innerJoin('actions.innovationSupport', 'innovationSupport')
       .where('actions.created_by = :userId', { userId: requestUser.id })
-      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW })
-      .getCount();   
-
-    const [myUnitActions, myUnitActionsCount] = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
-      .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
-      .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
-      .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
-      .innerJoinAndSelect('organisationUser.user', 'user')
-      .where('actions.created_by = :userId', { userId: requestUser.id })
-      .andWhere('actions.status in (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
-      .orderBy('actions.updated_at', 'DESC')
-      .getManyAndCount(); 
+      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
+      .groupBy('actions.status')
+      .getRawMany();
   
-
+    const actions: Record<string, any> = {
+      IN_REVIEW: { count: 0, lastSubmittedAt: null },
+      REQUESTED: { count: 0, lastSubmittedAt: null },
+    }
+    for(const action of myActionsCount) {
+      actions[action.status] = {count: action.count, lastSubmittedAt: action.lastSubmittedAt} 
+    }
+    
     return {
-      count: myActionsCount,
-      total: myUnitActionsCount,
-      lastSubmittedAt:  myUnitActions.find(_ => true)?.updatedAt || null,
+      count: actions['IN_REVIEW'].count,
+      total: actions['IN_REVIEW'].count + actions['REQUESTED'].count,
+      lastSubmittedAt: Object.values(actions).map(_ => _.lastSubmittedAt).sort( (a, b) => b-a)[0] || null,
     }
   }
 

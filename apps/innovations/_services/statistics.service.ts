@@ -82,14 +82,11 @@ export class StatisticsService  extends BaseService {
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
     .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
     .innerJoinAndSelect('actions.innovationSection', 'section')
-    .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
-    .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
-    .innerJoinAndSelect('organisationUser.user', 'user')
-    .where('actions.created_by = :userId', { userId: requestUser.id })
+    .where('innovationSupport.organisation_unit_id = :organisationUnit', { organisationUnit })
     .andWhere('innovationSupport.innovation_id = :innovationId', { innovationId })
+    .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW });
     
-    const [myActions, myActionsCount] = await baseQuery
-      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getManyAndCount();    
+    const [myActions, myActionsCount] = await baseQuery.getManyAndCount();    
 
     return {
       count: myActionsCount,
