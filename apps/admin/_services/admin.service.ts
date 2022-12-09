@@ -26,7 +26,6 @@ import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
 import { In } from 'typeorm';
 import { BaseService } from './base.service';
-import { throws } from 'assert';
 
 @injectable()
 export class AdminService extends BaseService {
