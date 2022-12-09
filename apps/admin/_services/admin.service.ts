@@ -40,7 +40,9 @@ export class AdminService extends BaseService {
   async inactivateUnit(
     requestUser: DomainUserInfoType,
     unitId: string
-  ): Promise<{ unitId: string }> {
+  ): Promise<{
+    unitId: string
+  }> {
 
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
@@ -222,8 +224,8 @@ export class AdminService extends BaseService {
   async activateUnit(
     organisationId: string,
     unitId: string,
-    userIds: string[]):
-    Promise<{
+    userIds: string[]
+    ): Promise<{
       unitId: string
     }> {
 
@@ -303,8 +305,49 @@ export class AdminService extends BaseService {
       );
 
       return result;
-    }
+  }
 
+  async updateUnit(
+    unitId: string,
+    name: string,
+    acronym: string
+  ): Promise<{
+    id: string
+  }> {
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      const unit = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('org_unit.id = :unitId', { unitId })
+        .getOne()
+
+      if (!unit) {
+        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      }
+
+      const unitNameOrAcronymAlreadyExists = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
+        .andWhere('org_unit.id != :unitId', { unitId })
+        .getOne()
+
+      if (unitNameOrAcronymAlreadyExists) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
+      }
+
+      await transaction.update(
+        OrganisationUnitEntity,
+        { id: unit.id },
+        {
+          name: name,
+          acronym: acronym
+        }
+      )
+
+      return { id: unit.id }
+    })
+  }
 
   async createOrganisation(
     organisation: {
