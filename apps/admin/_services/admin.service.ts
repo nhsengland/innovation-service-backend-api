@@ -331,12 +331,12 @@ export class AdminService extends BaseService {
       .getOne()
 
     if (unitAlreadyExists) {
-      throw new Error(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+      throw new Error(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
     }
 
     return this.sqlConnection.transaction(async transaction => {
 
-      const sUnit = transaction.update(
+      await transaction.update(
         OrganisationUnitEntity,
         { id: unit.id },
         {
