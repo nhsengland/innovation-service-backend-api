@@ -12,10 +12,10 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminUnitActivate {
+class V1AdminOrganisationCreate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -27,10 +27,6 @@ class V1AdminUnitActivate {
     const adminService = container.get<AdminServiceType>(AdminServiceSymbol);
 
     try {
-        const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params
-        );
 
         const body = JoiHelper.Validate<BodyType>(
             BodySchema,
@@ -38,63 +34,49 @@ class V1AdminUnitActivate {
         );
 
         await authorizationService
-        .validate(context.auth.user.identityId)
-        .checkAdminType()
-        .verify();
+            .validate(context.auth.user.identityId)
+            .checkAdminType()
+            .verify();
 
-        const result = await adminService.activateUnit(
-            params.organisationId,
-            params.organisationUnitId,
-            body.userIds
+        const result = await adminService.createOrganisation(
+            body.organisation
         );
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, units: result.units });
         return;
-        } catch (error) {
+    } catch (error) {
         context.res = ResponseHelper.Error(context, error);
         return;
-        }
+    }
   }
 }
 
 export default openApi(
-  V1AdminUnitActivate.httpTrigger as AzureFunction,
-  '/v1/organisations/{organisationId}/units/{organisationUnitId}/activate',
+  V1AdminOrganisationCreate.httpTrigger as AzureFunction,
+  '/v1/organisations',
   {
-    patch: {
-      description: 'Activate an organisation unit.',
-      operationId: 'v1-admin-unit-activate',
-      parameters: [
-        {
-          name: 'organisationId',
-          in: 'path',
-          description: 'The organisation id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-        {
-          name: 'organisationUnitId',
-          in: 'path',
-          description: 'The organisation unit id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
+    post: {
+      description: 'Create an organisation unit.',
+      operationId: 'v1-admin-organisation-create',
       requestBody: {
-        description: 'The id of the users to unlock.',
+        description: 'The organisation to create.',
         required: true,
         content: {
             'application/json': {
                 schema: {
                     type: 'object',
                     properties: {
-                        userIds: {
+                        name: {
                             type: 'string',
-                            description: 'Ids of the users to unlock.'
+                            description: 'Name of the organisation.'
+                        },
+                        acronym: {
+                            type: 'string',
+                            description: 'Acronym of the organisation.'
+                        },
+                        unit: {
+                            type: 'string',
+                            description: 'Ids of the organistaion units.' 
                         }
                     }
                 }
@@ -103,7 +85,7 @@ export default openApi(
       },
       responses: {
         '200': {
-          description: 'The organisation unit has been activated.',
+          description: 'The organisation unit has been created.',
           content: {
             'application/json': {
               schema: {
@@ -111,7 +93,7 @@ export default openApi(
                 properties: {
                   unitId: {
                     type: 'string',
-                    description: 'The organisation unit id.',
+                    description: 'The organisation id.',
                   },
                 },
               },
@@ -122,13 +104,10 @@ export default openApi(
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to activate an organisation unit.',
-        },
-        '404': {
-          description: 'The organisation unit does not exist.',
+          description: 'The user is not authorized to create an organisation.',
         },
         '500': {
-          description: 'An error occurred while activating the organisation unit.',
+          description: 'An error occurred while creating the organisation unit.',
         },
       },
     },

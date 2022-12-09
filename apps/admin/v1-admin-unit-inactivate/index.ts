@@ -15,7 +15,7 @@ import { container } from '../_config';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminInactivateUnit {
+class V1AdminUnitInactivate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -54,7 +54,7 @@ class V1AdminInactivateUnit {
 }
 
 export default openApi(
-  V1AdminInactivateUnit.httpTrigger as AzureFunction,
+  V1AdminUnitInactivate.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate',
   {
     patch: {
