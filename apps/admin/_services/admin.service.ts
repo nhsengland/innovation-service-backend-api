@@ -333,7 +333,7 @@ export class AdminService extends BaseService {
         .getOne()
 
       if (unitAlreadyExists) {
-        throw new Error(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
       }
 
       await transaction.update(
