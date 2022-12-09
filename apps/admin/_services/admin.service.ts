@@ -326,13 +326,13 @@ export class AdminService extends BaseService {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       }
 
-      const unitAlreadyExists = await transaction
+      const unitNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
         .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
         .andWhere('org_unit.id != :unitId', { unitId })
         .getOne()
 
-      if (unitAlreadyExists) {
+      if (unitNameOrAcronymAlreadyExists) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
       }
 
