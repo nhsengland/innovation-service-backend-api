@@ -320,35 +320,30 @@ export class AdminService extends BaseService {
     const name = organisation.name
     const acronym = organisation.acronym
 
-    const orgAlreadyExists = await this.sqlConnection
-      .createQueryBuilder(OrganisationEntity, 'org')
-      .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
-      .getOne()
+    const result = await this.sqlConnection.transaction(async (transaction) => {
 
-    if (orgAlreadyExists) {
-      throw new Error(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
-    }
+      const orgAlreadyExists = await transaction
+        .createQueryBuilder(OrganisationEntity, 'org')
+        .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
+        .getOne()
 
-    const org = OrganisationEntity.new({
-      name,
-      acronym,
-      inactivatedAt: new Date().toISOString(),
-      type: OrganisationTypeEnum.ACCESSOR,
-      isShadow: false 
-    });
+      if (orgAlreadyExists) {
+        throw new Error(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+      }
 
-    const savedOrganisation = await this.sqlConnection.transaction(async (transaction) => {
+      const org = OrganisationEntity.new({
+        name,
+        acronym,
+        inactivatedAt: new Date().toISOString(),
+        type: OrganisationTypeEnum.ACCESSOR,
+        isShadow: false 
+      });
 
       const savedOrganisation = await transaction.save(
         OrganisationEntity,
         org
       );
 
-      return savedOrganisation;
-
-    });
-
-    const savedUnits = await this.sqlConnection.transaction(async transaction => {
       /*
         units can only have length 0 or greater than 1
         if 0 -> create shadow unit
@@ -372,7 +367,7 @@ export class AdminService extends BaseService {
             throw error;
           }
         }
-        return savedUnits
+        return { id: savedOrganisation.id, units: savedUnits }
       }
       //create shadow unit
       try {
@@ -389,11 +384,11 @@ export class AdminService extends BaseService {
         throw error
       }
 
-      return savedUnits
+      return { id: savedOrganisation.id, units: savedUnits }
 
     });
 
-    return { id: savedOrganisation.id, units: savedUnits.map(u => u.id) }
+    return { id: result.id, units: result.units.map(u => u.id) }
     
   }
 
@@ -405,7 +400,7 @@ export class AdminService extends BaseService {
     transaction: EntityManager
   ): Promise<OrganisationUnitEntity> {
 
-    const org = await this.sqlConnection
+    const org = await transaction
       .createQueryBuilder(OrganisationEntity, 'organisation')
       .where('organisation.id = :organisationId', { organisationId })
       .getOne()
@@ -414,7 +409,7 @@ export class AdminService extends BaseService {
       throw new Error(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
     }
 
-    const unitAlreadyExists = await this.sqlConnection
+    const unitAlreadyExists = await transaction
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
       .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
       .getOne()
@@ -437,7 +432,5 @@ export class AdminService extends BaseService {
     return savedUnit
 
   }
-
-  
 
 }
