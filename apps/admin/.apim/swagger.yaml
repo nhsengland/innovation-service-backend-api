@@ -31,7 +31,7 @@ paths:
       tags:
         - "[v1] Inactivate Unit"
       description: "Inactivate an organisation unit"
-      operationId: "v1-admin-inactivate-unit"
+      operationId: "v1-admin-unit-inactivate"
       parameters:
         - name: Authorization
           in: header
@@ -61,7 +61,7 @@ paths:
       tags:
         - "[v1] Activate Unit"
       description: "Activate an organisation unit"
-      operationId: "v1-admin-activate-unit"
+      operationId: "v1-admin-unit-activate"
       parameters:
         - name: Authorization
           in: header
@@ -80,6 +80,43 @@ paths:
             type: string
       requestBody:
         description: Users to unlock.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+    patch:
+      tags:
+        - "[v1] Update Unit"
+      description: "Update an organisation unit"
+      operationId: "v1-admin-unit-update"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Name and acronym for the unit.
         required: true
         content:
           application/json:

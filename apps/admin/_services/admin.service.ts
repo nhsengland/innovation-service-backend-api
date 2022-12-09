@@ -26,6 +26,7 @@ import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
 import { In } from 'typeorm';
 import { BaseService } from './base.service';
+import { throws } from 'assert';
 
 @injectable()
 export class AdminService extends BaseService {
@@ -39,7 +40,9 @@ export class AdminService extends BaseService {
   async inactivateUnit(
     requestUser: DomainUserInfoType,
     unitId: string
-  ): Promise<{ unitId: string }> {
+  ): Promise<{
+    unitId: string
+  }> {
 
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
@@ -222,8 +225,8 @@ export class AdminService extends BaseService {
   async activateUnit(
     organisationId: string,
     unitId: string,
-    userIds: string[]):
-    Promise<{
+    userIds: string[]
+    ): Promise<{
       unitId: string
     }> {
 
@@ -303,6 +306,53 @@ export class AdminService extends BaseService {
       );
 
       return result;
+  }
+
+  async updateUnit(
+    unitId: string,
+    name: string,
+    acronym: string
+  ): Promise<{
+    id: string
+  }> {
+
+    const unit = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+      .where('org_unit.id = :unitId', { unitId })
+      .getOne()
+
+    if (!unit) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
     }
+
+    const unitAlreadyExists = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+      .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
+      .andWhere('org_unit.id != :unitId', { unitId })
+      .getOne()
+
+    if (unitAlreadyExists) {
+      throw new Error(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+    }
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      const sUnit = transaction.update(
+        OrganisationUnitEntity,
+        { id: unit.id },
+        {
+          name: name,
+          acronym: acronym
+        }
+      )
+
+      return { id: unit.id }
+    })
+  }
+
+    
+
+
+
 
 }

@@ -12,10 +12,10 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminInactivateUnit {
+class V1AdminUnitUpdate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -27,39 +27,43 @@ class V1AdminInactivateUnit {
     const adminService = container.get<AdminServiceType>(AdminServiceSymbol);
 
     try {
-      const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params
-      );
+        const params = JoiHelper.Validate<ParamsType>(
+            ParamsSchema,
+            request.params
+        );
 
-      const auth = await authorizationService
+        const body = JoiHelper.Validate<BodyType>(
+            BodySchema,
+            request.body
+        );
+
+        await authorizationService
         .validate(context.auth.user.identityId)
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
-      
-      const result = await adminService.inactivateUnit(
-        requestUser,
-        params.organisationUnitId
-      );
+        const result = await adminService.updateUnit(
+            params.organisationUnitId,
+            body.name,
+            body.acronym
+        );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
-      return;
-    } catch (error) {
-      context.res = ResponseHelper.Error(context, error);
-      return;
-    }
+        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.id });
+        return;
+        } catch (error) {
+        context.res = ResponseHelper.Error(context, error);
+        return;
+        }
   }
 }
 
 export default openApi(
-  V1AdminInactivateUnit.httpTrigger as AzureFunction,
-  '/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate',
+  V1AdminUnitUpdate.httpTrigger as AzureFunction,
+  '/v1/organisations/{organisationId}/units/{organisationUnitId}',
   {
     patch: {
-      description: 'Inactivate an organisation unit.',
-      operationId: 'v1-admin-inactivate-unit',
+      description: 'Update an organisation unit.',
+      operationId: 'v1-admin-unit-update',
       parameters: [
         {
           name: 'organisationId',
@@ -80,9 +84,26 @@ export default openApi(
           },
         },
       ],
+      requestBody: {
+        description: 'New name and acronym for the unit.',
+        required: true,
+        content: {
+            'application/json': {
+                schema: {
+                    type: 'object',
+                    properties: {
+                        userIds: {
+                            type: 'string',
+                            description: 'Name and acronym for the unit.'
+                        }
+                    }
+                }
+            }
+        }
+      },
       responses: {
         '200': {
-          description: 'The organisation unit has been inactivated.',
+          description: 'The organisation unit has been updated.',
           content: {
             'application/json': {
               schema: {
@@ -101,13 +122,13 @@ export default openApi(
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to inactivate an organisation unit.',
+          description: 'The user is not authorized to update an organisation unit.',
         },
         '404': {
           description: 'The organisation unit does not exist.',
         },
         '500': {
-          description: 'An error occurred while inactivating the organisation unit.',
+          description: 'An error occurred while updating the organisation unit.',
         },
       },
     },

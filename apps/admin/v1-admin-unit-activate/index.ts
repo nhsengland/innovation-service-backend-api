@@ -63,7 +63,7 @@ export default openApi(
   {
     patch: {
       description: 'Activate an organisation unit.',
-      operationId: 'v1-admin-activate-unit',
+      operationId: 'v1-admin-unit-activate',
       parameters: [
         {
           name: 'organisationId',
