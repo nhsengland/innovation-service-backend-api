@@ -169,11 +169,11 @@ export class StatisticsService  extends BaseService {
     const unreadMessages = unreadMessageThreads.length;
     
     // gets the latest message on the unread threads
-    const latestMessage = await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'message')
+    const latestMessage = unreadMessages > 0 ? await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'message')
       .where('message.thread in (:...threadIds)', { threadIds: [...new Set(unreadMessageThreads.map(_ => _.thread_id))] })
       .orderBy('message.created_at', 'DESC')
       .limit(1)
-      .getOne();
+      .getOne() : null;
 
     return {
       count: unreadMessages,
