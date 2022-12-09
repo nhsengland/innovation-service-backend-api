@@ -15,7 +15,7 @@ import {
   NotifierTypeEnum,
   OrganisationTypeEnum,
 } from '@admin/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import {
   DomainServiceSymbol,
   DomainServiceType,
@@ -266,7 +266,7 @@ export class AdminService extends BaseService {
         );
 
       if (!canActivate) {
-        throw new Error(
+        throw new UnprocessableEntityError(
           OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA
         );
       }
@@ -328,7 +328,7 @@ export class AdminService extends BaseService {
         .getOne()
 
       if (orgAlreadyExists) {
-        throw new Error(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
       }
 
       const org = OrganisationEntity.new({
@@ -353,36 +353,26 @@ export class AdminService extends BaseService {
       if (organisation.units && organisation.units.length > 1) {
         //create specified units
         for (const unit of organisation.units) {
-          try {
-            const u = await this.createOrganisationUnit(
-              savedOrganisation.id,
-              unit.name,
-              unit.acronym,
-              false,
-              transaction
-            )
-            savedUnits.push(u)
-          }
-          catch (error) {
-            throw error;
-          }
+          const u = await this.createOrganisationUnit(
+            savedOrganisation.id,
+            unit.name,
+            unit.acronym,
+            false,
+            transaction
+          )
+          savedUnits.push(u)
         }
         return { id: savedOrganisation.id, units: savedUnits }
       }
       //create shadow unit
-      try {
-        const shadowUnit = await this.createOrganisationUnit(
-          org.id,
-          name,
-          acronym,
-          true,
-          transaction
-        )
-        savedUnits.push(shadowUnit)
-      }
-      catch (error) {
-        throw error
-      }
+      const shadowUnit = await this.createOrganisationUnit(
+        org.id,
+        name,
+        acronym,
+        true,
+        transaction
+      )
+      savedUnits.push(shadowUnit)
 
       return { id: savedOrganisation.id, units: savedUnits }
 
@@ -406,7 +396,7 @@ export class AdminService extends BaseService {
       .getOne()
 
     if (!org) {
-      throw new Error(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
     }
 
     const unitAlreadyExists = await transaction
@@ -415,7 +405,7 @@ export class AdminService extends BaseService {
       .getOne()
 
     if (unitAlreadyExists) {
-      throw new Error(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
+      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
     }
 
     const savedUnit = await transaction.save(
