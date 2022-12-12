@@ -2156,7 +2156,7 @@ paths:
           description: An error occurred while updating the innovation transfer status
   "/v1/{innovationId}/export-requests":
     head:
-      operationId: v1-innovations-export-request-info
+      operationId: v1-innovations-export-request-check
       description: Get export request info.
       tags:
         - "[v1] Innovations"
