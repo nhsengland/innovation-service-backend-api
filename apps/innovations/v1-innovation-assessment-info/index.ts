@@ -1,7 +1,7 @@
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
-import { JwtDecoder } from '@innovations/shared/decorators';
+import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -11,11 +11,13 @@ import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } 
 
 import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 
 
 class V1InnovationAssessmentInfo {
 
   @JwtDecoder()
+  @Audit({ action: ActionEnum.READ, target: TargetEnum.ASSESSMENT, identifierParam: 'assessmentId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
@@ -30,6 +32,7 @@ class V1InnovationAssessmentInfo {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
 

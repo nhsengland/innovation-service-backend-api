@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { InnovationCategoryCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -24,9 +24,11 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   status: InnovationStatusEnum[],
   assessmentSupportStatus?: AssessmentSupportFilterEnum,
   supportStatuses?: InnovationSupportStatusEnum[],
+  groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
+  latestWorkedByMe?: boolean,
   fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
 }
 
@@ -51,7 +53,12 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
     then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE)).optional(),
     otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum))).optional()
   }),
+  groupedStatuses: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationGroupedStatusEnum))).optional(),
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
+  latestWorkedByMe: Joi.boolean().optional().default(false),
   fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics')).optional()
-}).required();
+})
+// make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
+.fork('order', (schema) => Joi.when('latestWorkedByMe', {is: true, then: schema.forbidden(), otherwise: schema.optional()})).messages({'any.unknown': 'order field is not allowed when latestWorkedByMe is true'})
+.required()

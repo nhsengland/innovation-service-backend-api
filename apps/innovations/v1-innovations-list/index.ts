@@ -27,6 +27,7 @@ class V1InnovationsList {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .verify();
       const requestUser = authInstance.getUserInfo();
 
@@ -54,6 +55,7 @@ class V1InnovationsList {
           description: item.description,
           status: item.status,
           submittedAt: item.submittedAt,
+          updatedAt: item.updatedAt,
           countryName: item.countryName,
           postCode: item.postCode,
           mainCategory: item.mainCategory,

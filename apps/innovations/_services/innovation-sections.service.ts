@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
@@ -10,7 +10,6 @@ import { BaseService } from './base.service';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
-
 
 @injectable()
 export class InnovationSectionsService extends BaseService {
@@ -346,6 +345,82 @@ export class InnovationSectionsService extends BaseService {
     return {
       innovation: { name: innovation.name },
       innovationSections
+    };
+
+  }
+
+
+  async createInnovationEvidence(
+    user: { id: string },
+    innovationId: string,
+    evidenceData: {
+      evidenceType: EvidenceTypeCatalogueEnum;
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+      description: string;
+      summary: string;
+      files: string[];
+    }
+  ): Promise<{ id: string }> {
+    const innovation = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .leftJoinAndSelect('innovation.evidences', 'evidences')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const evidences = await innovation.evidences;
+
+    const evidence = InnovationEvidenceEntity.new({
+      innovation: InnovationEntity.new({ id: innovationId }),
+      files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
+      createdBy: user.id,
+      updatedBy: user.id
+    });
+
+    evidences.push(evidence);
+
+    return this.sqlConnection.transaction(async (transaction) => {
+      const savedEvidence = await transaction.save(
+        InnovationEntity,
+        innovation
+      );
+      return { id: savedEvidence.id };
+    });
+  }
+  
+  async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
+    id: string,
+    evidenceType: EvidenceTypeCatalogueEnum,
+    clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum,
+    description: string,
+    summary: string,
+    files: { id: string; displayFileName: string; url: string }[];
+  }> {
+
+    const evidence = await this.sqlConnection.createQueryBuilder(InnovationEvidenceEntity, 'evidences')
+      .leftJoinAndSelect('evidences.files', 'files')
+      .where('evidences.innovation_id = :innovationId', { innovationId })
+      .andWhere('evidences.id = :evidenceId', { evidenceId })
+      .getOne()
+
+    if (!evidence) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
+    }
+
+    return {
+      id: evidence.id,
+      evidenceType: evidence.evidenceType,
+      clinicalEvidenceType: evidence.clinicalEvidenceType,
+      description: evidence.description,
+      summary: evidence.summary,
+      files: evidence.files.map(file => ({
+        id: file.id,
+        displayFileName: file.displayFileName,
+        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
+      }))
     };
 
   }

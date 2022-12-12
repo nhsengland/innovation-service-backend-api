@@ -2,6 +2,7 @@ import type { AuthorizationService } from '../services/auth/authorization.servic
 
 import type { DomainService } from '../services/domain/domain.service';
 
+import type { AuditService } from '../services/integrations/audit.service';
 import type { HttpService } from '../services/integrations/http.service';
 import type { IdentityProviderService } from '../services/integrations/identity-provider.service';
 import type { LoggerService } from '../services/integrations/logger.service';
@@ -9,9 +10,11 @@ import type { NotifierService } from '../services/integrations/notifier.service'
 import type { StorageQueueService } from '../services/integrations/storage-queue.service';
 
 import type { FileStorageService } from '../services/storage/file-storage.service';
-import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import type { NOSQLConnectionService } from '../services/storage/nosql-connection.service';
+import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 
+export type AuditServiceType = typeof AuditService.prototype;
+export const AuditServiceSymbol = Symbol('AuditService');
 
 export type AuthorizationServiceType = typeof AuthorizationService.prototype;
 export const AuthorizationServiceSymbol = Symbol('AuthorizationService');

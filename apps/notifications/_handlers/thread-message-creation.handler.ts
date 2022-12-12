@@ -63,9 +63,16 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-
+    const owner = innovation.owner
     // Fetch all thread intervenients, excluding the request user.
     const threadIntervenientUsers = (await this.recipientsService.threadIntervenientUsers(this.inputData.threadId)).filter(item => item.id !== this.requestUser.id);
+    
+    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id)
+
+    // ensure innovation owner is included when he's not the request user
+    if (!ownerIncluded && owner.id !== this.requestUser.id) {
+      threadIntervenientUsers.push(owner)
+    }
 
     // exclude all assessment users
     const recipients = threadIntervenientUsers.filter(i => i.type !== UserTypeEnum.ASSESSMENT)

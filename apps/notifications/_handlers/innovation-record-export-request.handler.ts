@@ -1,6 +1,6 @@
-import type { NotifierTemplatesType } from '@innovations/shared/types';
-import type {  NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
+import type { NotifierTemplatesType } from '@notifications/shared/types';
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
@@ -35,7 +35,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
           accessor_name: request.createdBy.name,
           pdf_request_comment: request.exportRequest.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/record')
+          .addPath('innovator/innovations/:innovationId/export/list')
           .setPathParams({ innovationId: this.inputData.innovationId })
           .buildUrl(), // TODO: Check what exactly is this URL.
         }

@@ -1,4 +1,4 @@
-import type { UserTypeEnum } from '@innovations/shared/enums';
+import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationStatisticsTemplateType, INNOVATION_STATISTICS_CONFIG } from '../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
@@ -6,7 +6,7 @@ import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 export class StatisticsHandlersHelper {
 
   static async runHandler(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: DomainUserInfoType,
     actions: InnovationStatisticsEnum[],
     params: { [key: string]: any }
   ): Promise<Record<string, InnovationStatisticsTemplateType[InnovationStatisticsEnum]>> {

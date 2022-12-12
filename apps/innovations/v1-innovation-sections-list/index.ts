@@ -30,6 +30,7 @@ class V1InnovationSectionsList {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo()

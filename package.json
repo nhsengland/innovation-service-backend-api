@@ -17,7 +17,7 @@
     "migrations:new": "ts-node ./node_modules/typeorm/cli.js migration:create ./libs/data-access/migrations/$npm_config_name",
     "migrations:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d libs/data-access/config/migrations-connection.config.ts",
     "seeds": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/seeds-connection.config.ts",
-    "postinstall": "npm run app:configure --app=innovations && npm run app:configure --app=notifications && npm run app:configure --app=users && npm run app:configure --app=admin",
+    "postinstall": "node .scripts/postinstall.js",
     "prepare": "husky install"
   },
   "dependencies": {

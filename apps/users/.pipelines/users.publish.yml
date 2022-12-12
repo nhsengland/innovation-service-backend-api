@@ -16,7 +16,7 @@ trigger:
 variables:
   appName: users
 
-name: FA_Users_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:.r)
+name: FA_Users_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:r)
 
 pool:
   vmImage: ubuntu-latest

@@ -1,0 +1,42 @@
+trigger:
+  batch: true
+  tags:
+    include:
+      - '2.*'
+  branches:
+    include:
+      - develop
+  paths:
+    include:
+      - libs/data-access/migrations
+
+name: FA_Migrations_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:r)
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: CopyFiles@2
+  inputs:
+    Contents: |
+      package.json
+      package-lock.json
+      tsconfig.json
+      .scripts/**
+      libs/**
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+
+- task: ArchiveFiles@2
+  inputs:
+    rootFolderOrFile: '$(Build.ArtifactStagingDirectory)'
+    includeRootFolder: false
+    archiveType: 'zip'
+    archiveFile: '$(Build.ArtifactStagingDirectory)/Migrations.zip'
+    replaceExistingArchive: true
+  
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/Migrations.zip'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  

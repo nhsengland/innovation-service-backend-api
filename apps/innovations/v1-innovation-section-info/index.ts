@@ -28,6 +28,7 @@ class GetInnovationSectionInfo {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
       const requestUser = authInstance.getUserInfo();

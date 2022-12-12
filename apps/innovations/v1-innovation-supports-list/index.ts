@@ -31,6 +31,7 @@ class V1InnovationSupportsList {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
 

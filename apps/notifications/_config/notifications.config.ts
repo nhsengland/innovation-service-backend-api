@@ -1,37 +1,26 @@
-import Joi from 'joi';
 import type { Schema } from 'joi';
+import Joi from 'joi';
 
+import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
-import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 
-import type { EmailTypeEnum } from './emails.config';
 import {
-  BaseHandler,
   AccessorUnitChangeHandler,
   ActionCreationHandler,
-  ActionUpdateHandler,
-  CommentCreationHandler,
-  InnovationArchivedHandler,
+  ActionUpdateHandler, BaseHandler, CommentCreationHandler, DailyDigestHandler,
+  IdleInnovatorsHandler, IdleSupportHandler, InnovationArchivedHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationSubmitedHandler,
-  InnovationSupportStatusUpdateHandler,
-  InnovationTransferOwnershipCreationHandler,
-  InnovationTransferOwnershipCompletedHandler,
-  InnovatorAccountCreationHandler,
-  LockUserHandler,
-  NeedsAssessmentStartedHandler,
-  NeedsAssessmentCompletedHandler,
-  SLSValidationHandler,
-  DailyDigestHandler,
-  IdleInnovatorsHandler,
-  ThreadCreationHandler,
+  InnovationSupportStatusUpdateHandler, InnovationTransferOwnershipCompletedHandler, InnovationTransferOwnershipCreationHandler, InnovatorAccountCreationHandler,
+  LockUserHandler, NeedsAssessmentCompletedHandler, NeedsAssessmentStartedHandler, SLSValidationHandler, ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler,
-  IdleSupportHandler
+  UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
 import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
+import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
+import type { EmailTypeEnum } from './emails.config';
+import { InnovationSupportStatusChangeRequestHandler } from '../_handlers/innovation-support-status-change-request.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -79,7 +68,7 @@ export const NOTIFICATIONS_CONFIG: {
         status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
         statusChanged: Joi.boolean().strict().required(),
         newAssignedAccessors: Joi.array().items(Joi.object({id: Joi.string().guid().required()})),
-        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).trim().required()
+        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required()
       }).required()
     }).required()
   },
@@ -220,8 +209,15 @@ export const NOTIFICATIONS_CONFIG: {
       requestId: Joi.string().guid().required(),
     }).required(),
   },
-
-  
+  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+    handler: InnovationSupportStatusChangeRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
+      proposedStatus: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
+      requestStatusUpdateComment: Joi.string().required(),
+    }).required(),
+  },
   // RECURRENT
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,

@@ -7,19 +7,17 @@ import type { InnovationStatisticsTemplateType } from '../../_config/statistics.
 export const actionsToSubmitStatisticsHandler = async (
   _: { id: string, identityId: string, type: UserTypeEnum },
   data: { innovationId: string;}
-): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]> => {
+): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]> => {
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const requestedActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED]);
-  
-    const openActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]);
-
-    const totalActions = [...requestedActions, ...openActions].length;
+    const requestedActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED]);  
+    
+    const lastRequestedAction = requestedActions.find(_ => true)
 
     return {
-      total: totalActions,
       count:requestedActions.length,
-      lastSubmittedAt: requestedActions.find(_ => true)?.updatedAt || null,
+      lastSubmittedSection: lastRequestedAction?.innovationSection.section || null,
+      lastSubmittedAt: lastRequestedAction?.updatedAt || null,
     }
 }

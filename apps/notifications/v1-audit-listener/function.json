@@ -1,0 +1,14 @@
+{
+  "bindings": [{
+    "type": "queueTrigger",
+    "direction": "in",
+    "name": "queueItem",
+    "queueName": "audit-send-queue",
+    "connection": "AZURE_STORAGE_CONNECTIONSTRING"
+  }],
+  "retry": {
+    "strategy": "fixedDelay",
+    "delayInterval": "00:00:01",
+    "maxRetryCount": 1
+  }
+}

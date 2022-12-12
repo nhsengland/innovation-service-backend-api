@@ -59,6 +59,12 @@ type b2cGetUsersListDTO = {
     accountEnabled: boolean;
     createdDateTime: string;
     deletedDateTime: null | string;
+    signInActivity: {
+      lastSignInDateTime: null | string;
+      lastSignInRequestId: null | string;
+      lastNonInteractiveSignInDateTime: null | string;
+      lastNonInteractiveSignInRequestId: null | string;
+    }
   }[];
 }
 
@@ -181,7 +187,7 @@ export class IdentityProviderService {
   }
 
 
-  async getUsersList(entityIds: string[]): Promise<{ identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean }[]> {
+  async getUsersList(entityIds: string[]): Promise<{ identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, lastLoginAt: null | DateISOType }[]> {
 
     if ((entityIds || []).length === 0) { return []; }
 
@@ -210,24 +216,29 @@ export class IdentityProviderService {
       const userIds = userId.map(item => `"${item}"`).join(',');
       const odataFilter = `$filter=id in (${userIds})`;
 
+      const fields = ['displayName', 'identities', 'email', 'mobilePhone', 'accountEnabled', 'signInActivity'];
+
+      let url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`
+
       promises.push(
         axios.get<b2cGetUsersListDTO>(
-          `https://graph.microsoft.com/beta/users?${odataFilter}`,
+          url,
           { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
         )
       );
     }
 
     // Make all calls and merge results.
-    return (await Promise.all(promises)).flatMap(response =>
+    return (await Promise.all(promises)).flatMap(response => (
       response.data.value.map(u => ({
         identityId: u.id,
         displayName: u.displayName,
         email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
         mobilePhone: u.mobilePhone,
-        isActive: u.accountEnabled
+        isActive: u.accountEnabled,
+        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime
       }))
-    );
+    ));
 
   }
 
@@ -265,7 +276,7 @@ export class IdentityProviderService {
   }
 
 
-  async updateUser(identityId: string, body: { displayName?: string, mobilePhone?: string, accountEnabled?: boolean }): Promise<void> {
+  async updateUser(identityId: string, body: { displayName?: string, mobilePhone?: string | null, accountEnabled?: boolean }): Promise<void> {
 
     await this.verifyAccessToken();
 

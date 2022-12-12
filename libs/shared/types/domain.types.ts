@@ -101,6 +101,9 @@ export type ActivityLogTemplatesType = {
   NEEDS_ASSESSMENT_COMPLETED: {
     params: { assessmentId: string }
   },
+  NEEDS_ASSESSMENT_EDITED: {
+    params: { assessmentId: string }
+  },
   ORGANISATION_SUGGESTION: { // TODO: I believe that this is misleading. organisations param, is being populated with units!
     params: { organisations: string[] }
   },
@@ -114,7 +117,10 @@ export type ActivityLogTemplatesType = {
     params: { sectionId: InnovationSectionEnum, totalActions: number }
   },
   ACTION_STATUS_COMPLETED_UPDATE: {
-    params: { actionId: string, comment: { id: string, value: string } }
+    params: { actionId: string }
+  },
+  ACTION_STATUS_REQUESTED_UPDATE: {
+    params: { actionId: string }
   },
   ACTION_STATUS_DECLINED_UPDATE: {
     params: { actionId: string, interveningUserId: string, comment: { id: string, value: string } }
