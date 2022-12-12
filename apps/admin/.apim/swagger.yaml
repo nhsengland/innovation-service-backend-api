@@ -157,3 +157,35 @@ paths:
           description: "Bad Request"
         "401":
           description: "Unauthorized"
+
+  "/v1/organisations/{organisationId}":
+      patch:
+        tags:
+          - "[v1] Update Organisation"
+        description: "Update an organisation"
+        operationId: "v1-admin-organisation-update"
+        parameters:
+          - name: Authorization
+            in: header
+            schema:
+              type: string
+            required: true
+          - name: organisationId
+            in: path
+            required: true
+            schema:
+              type: string
+        requestBody:
+          description: Name and acronym for the organisation.
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+        responses:
+          "200":
+            description: "OK"
+          "400":
+            description: "Bad Request"
+          "401":
+            description: "Unauthorized"

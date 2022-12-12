@@ -319,6 +319,7 @@ export class AdminService extends BaseService {
 
       const unit = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .innerJoinAndSelect('org_unit.organisation', 'organisation')
         .where('org_unit.id = :unitId', { unitId })
         .getOne()
 
@@ -326,13 +327,21 @@ export class AdminService extends BaseService {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       }
 
+      const organisationId = unit.organisation.id
+
       const unitNameOrAcronymAlreadyExists = await transaction
-        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-        .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
-        .andWhere('org_unit.id != :unitId', { unitId })
+        .createQueryBuilder(OrganisationUnitEntity, 'ou')
+        .where('(ou.name = :name OR ou.acronym = :acronym) AND (ou.id != :unitId)', { name, acronym, unitId })
         .getOne()
 
-      if (unitNameOrAcronymAlreadyExists) {
+      const unitNameOrAcronymAlreadyExistsInOrganisation = await transaction
+        .createQueryBuilder(OrganisationEntity, 'org')
+        .where('(org.name = :name OR org.acronym = :acronym) AND (org.id != :organisationId)', { name, acronym, organisationId })
+        .getOne()
+
+      const alreadyExists = unitNameOrAcronymAlreadyExists || unitNameOrAcronymAlreadyExistsInOrganisation
+
+      if (alreadyExists) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
       }
 
@@ -346,8 +355,75 @@ export class AdminService extends BaseService {
       )
 
       return { id: unit.id }
+
     })
   }
+
+  async updateOrganisation(
+    organisationId: string,
+    name: string,
+    acronym: string
+  ): Promise<{
+    id: string
+  }> {
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      const organisation = await transaction
+        .createQueryBuilder(OrganisationEntity, 'org')
+        .innerJoinAndSelect('org.organisationUnits', 'organisationUnits')
+        .where('org.id = :organisationId', { organisationId })
+        .getOne()
+
+      if (!organisation) {
+        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      }
+
+      const orgNameOrAcronymAlreadyExists = await transaction
+        .createQueryBuilder(OrganisationEntity, 'org')
+        .where('(org.name = :name OR org.acronym = :acronym) AND (org.id != :organisationId)', { name, acronym, organisationId })
+        .getOne()
+
+      const unitIds = (await organisation.organisationUnits).map(u => u.id)
+
+      const orgNameOrAcronymAlreadyExistsInUnit = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('(org_unit.name = :name OR org_unit.acronym = :acronym) AND (org_unit.id NOT IN (:...unitIds))', { name, acronym, unitIds })
+        .getOne()
+      
+      const alreadyExists = orgNameOrAcronymAlreadyExists || orgNameOrAcronymAlreadyExistsInUnit
+
+      if (alreadyExists) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+      }
+
+      await transaction.update(
+        OrganisationEntity,
+        { id: organisation.id },
+        {
+          name: name,
+          acronym: acronym
+        }
+      )
+
+      if ((await organisation.organisationUnits).length == 1) {
+        // if organisation only has one unit (shadow), the name and acronym
+        // of this unit must also be changed
+        await transaction.update(
+          OrganisationUnitEntity,
+          { id: unitIds[0] },
+          {
+            name: name,
+            acronym: acronym
+          }
+        )
+        
+      }
+
+      return { id: organisation.id }
+    })
+  }
+
 
   async createOrganisation(
     organisation: {
@@ -365,12 +441,17 @@ export class AdminService extends BaseService {
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
 
-      const orgAlreadyExists = await transaction
+      const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
         .getOne()
 
-      if (orgAlreadyExists) {
+      const orgNameOrAcronymAlreadyExistsInUnit = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
+        .getOne()
+
+      if (orgNameOrAcronymAlreadyExists || orgNameOrAcronymAlreadyExistsInUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
       }
 
@@ -442,12 +523,21 @@ export class AdminService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
     }
 
-    const unitAlreadyExists = await transaction
+    const unitNameOrAcronymAlreadyExists = await transaction
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
       .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
       .getOne()
 
-    if (unitAlreadyExists) {
+    const unitNameOrAcronymAlreadyExistsInOrganisation = await transaction
+      .createQueryBuilder(OrganisationEntity, 'org')
+      .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
+      //.andWhere('org.id != :organisationId', { organisationId })
+      .getOne()
+
+    const alreadyExists = unitNameOrAcronymAlreadyExists ||
+     (unitNameOrAcronymAlreadyExistsInOrganisation && unitNameOrAcronymAlreadyExistsInOrganisation.id != organisationId)
+
+    if (alreadyExists) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
     }
 
