@@ -522,7 +522,7 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
-  "/v1/{innovationId}/assessment/{assessmentId}":
+  "/v1/{innovationId}/assessments/{assessmentId}":
     get:
       summary: Get Innovation Assessment Info
       description: Get Innovation Assessment Info
@@ -657,7 +657,6 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/assessments/{assessmentId}":
     put:
       summary: Update an innovation assessment
       description: Update an innovation assessment.
