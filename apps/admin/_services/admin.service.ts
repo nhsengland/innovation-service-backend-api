@@ -8,12 +8,14 @@ import {
   UserEntity,
 } from '@admin/shared/entities';
 import {
+  AccessorOrganisationRoleEnum,
   InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
+  OrganisationTypeEnum,
 } from '@admin/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import {
   DomainServiceSymbol,
   DomainServiceType,
@@ -23,7 +25,7 @@ import {
 import type { DomainUserInfoType } from '@admin/shared/types';
 import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
-import { In } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -38,7 +40,10 @@ export class AdminService extends BaseService {
   async inactivateUnit(
     requestUser: DomainUserInfoType,
     unitId: string
-  ): Promise<{ id: string }> {
+  ): Promise<{
+    unitId: string
+  }> {
+
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_units')
@@ -116,7 +121,7 @@ export class AdminService extends BaseService {
         InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
       ].includes(s.status));
 
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const result = await this.sqlConnection.transaction(async transaction => {
       // Inactivate unit
       await transaction.update(
         OrganisationUnitEntity,
@@ -139,8 +144,6 @@ export class AdminService extends BaseService {
         status: InnovationSupportStatusEnum.COMPLETE,
         organisationUnitUsers: [],
       }));
-
-      console.log('updated supports', updatedSupports)
 
       if (updatedSupports.length > 0) {
         await transaction
@@ -212,9 +215,255 @@ export class AdminService extends BaseService {
 
       }
 
-      return { id: unitId };
+      return { unitId };
     });
 
     return result;
   }
+
+  async activateUnit(
+    organisationId: string,
+    unitId: string,
+    userIds: string[]
+    ): Promise<{
+      unitId: string
+    }> {
+
+      const unit = await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .innerJoinAndSelect('org_unit.organisation', 'organisation')
+        .where('org_unit.id = :unitId', { unitId })
+        .getOne();
+
+      if (!unit) {
+        throw new NotFoundError(
+          OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND
+        );
+      }
+
+      // get users entities
+      const usersToLock = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoin('user.userOrganisations', 'org_user')
+      .innerJoin('org_user.userOrganisationUnits', 'unit_user')
+      .where('unit_user.id IN (:...userIds)', { userIds })
+      .getMany()
+
+      // get organisationUnitUser entities
+      const unitUsers = await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+        .innerJoinAndSelect('org_unit_user.organisationUser', 'org_user')
+        .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
+        .getMany();
+
+      //ensure users to activate belong to unit
+      userIds = userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
+
+      //check if at least 1 user is QA
+      const canActivate =
+        unitUsers.some(
+          (u) =>
+            u.organisationUser.role ===
+            AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+        );
+
+      if (!canActivate) {
+        throw new UnprocessableEntityError(
+          OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA
+        );
+      }
+
+      const result = await this.sqlConnection.transaction(
+        async (transaction) => {
+          // Activate unit
+          await transaction.update(
+            OrganisationUnitEntity,
+            { id: unitId },
+            { inactivatedAt: null }
+          );
+
+          // activate organistion to whom unit belongs if it is inactivated
+          if (unit.organisation.inactivatedAt !== null) {
+            await transaction.update(
+              OrganisationEntity,
+              { id: organisationId },
+              { inactivatedAt: null }
+            );
+          }
+
+          //Activate users of unit
+          for (const u of usersToLock) {
+            await transaction.update(
+              UserEntity,
+              { id: u.id },
+              { lockedAt: null }
+            );
+          }
+
+          return { unitId };
+        }
+      );
+
+      return result;
+  }
+
+  async updateUnit(
+    unitId: string,
+    name: string,
+    acronym: string
+  ): Promise<{
+    id: string
+  }> {
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      const unit = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('org_unit.id = :unitId', { unitId })
+        .getOne()
+
+      if (!unit) {
+        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      }
+
+      const unitNameOrAcronymAlreadyExists = await transaction
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
+        .andWhere('org_unit.id != :unitId', { unitId })
+        .getOne()
+
+      if (unitNameOrAcronymAlreadyExists) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
+      }
+
+      await transaction.update(
+        OrganisationUnitEntity,
+        { id: unit.id },
+        {
+          name: name,
+          acronym: acronym
+        }
+      )
+
+      return { id: unit.id }
+    })
+  }
+
+  async createOrganisation(
+    organisation: {
+      name: string;
+      acronym: string;
+      units?: { name: string; acronym: string }[];
+    }
+  ): Promise<{
+    id: string;
+    units: string[]
+   }> {
+
+    const name = organisation.name
+    const acronym = organisation.acronym
+
+    const result = await this.sqlConnection.transaction(async (transaction) => {
+
+      const orgAlreadyExists = await transaction
+        .createQueryBuilder(OrganisationEntity, 'org')
+        .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
+        .getOne()
+
+      if (orgAlreadyExists) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
+      }
+
+      const org = OrganisationEntity.new({
+        name,
+        acronym,
+        inactivatedAt: new Date().toISOString(),
+        type: OrganisationTypeEnum.ACCESSOR,
+        isShadow: false 
+      });
+
+      const savedOrganisation = await transaction.save(
+        OrganisationEntity,
+        org
+      );
+
+      /*
+        units can only have length 0 or greater than 1
+        if 0 -> create shadow unit
+        if > 1 -> create specified units
+      */
+      const savedUnits: OrganisationUnitEntity[] = []
+      if (organisation.units && organisation.units.length > 1) {
+        //create specified units
+        for (const unit of organisation.units) {
+          const u = await this.createOrganisationUnit(
+            savedOrganisation.id,
+            unit.name,
+            unit.acronym,
+            false,
+            transaction
+          )
+          savedUnits.push(u)
+        }
+        return { id: savedOrganisation.id, units: savedUnits }
+      }
+      //create shadow unit
+      const shadowUnit = await this.createOrganisationUnit(
+        org.id,
+        name,
+        acronym,
+        true,
+        transaction
+      )
+      savedUnits.push(shadowUnit)
+
+      return { id: savedOrganisation.id, units: savedUnits }
+
+    });
+
+    return { id: result.id, units: result.units.map(u => u.id) }
+    
+  }
+
+  private async createOrganisationUnit(
+    organisationId: string,
+    name: string,
+    acronym: string,
+    isShadow: boolean,
+    transaction: EntityManager
+  ): Promise<OrganisationUnitEntity> {
+
+    const org = await transaction
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .where('organisation.id = :organisationId', { organisationId })
+      .getOne()
+
+    if (!org) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
+    }
+
+    const unitAlreadyExists = await transaction
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
+      .getOne()
+
+    if (unitAlreadyExists) {
+      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
+    }
+
+    const savedUnit = await transaction.save(
+      OrganisationUnitEntity,
+      OrganisationUnitEntity.new({
+        name: name,
+        acronym: acronym,
+        inactivatedAt: new Date().toISOString(),
+        isShadow: isShadow,
+        organisation: org
+      })
+    );
+    
+    return savedUnit
+
+  }
+
 }

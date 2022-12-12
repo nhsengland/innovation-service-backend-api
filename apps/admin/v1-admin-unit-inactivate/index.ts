@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-class V1InnovationActionUpdate {
+class V1AdminUnitInactivate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -36,12 +36,12 @@ class V1InnovationActionUpdate {
 
       const requestUser = auth.getUserInfo();
       
-      await adminService.inactivateUnit(
+      const result = await adminService.inactivateUnit(
         requestUser,
         params.organisationUnitId
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: requestUser.id });
+      context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -51,12 +51,12 @@ class V1InnovationActionUpdate {
 }
 
 export default openApi(
-  V1InnovationActionUpdate.httpTrigger as AzureFunction,
+  V1AdminUnitInactivate.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate',
   {
     patch: {
       description: 'Inactivate an organisation unit.',
-      operationId: 'v1-admin-inactivate-unit',
+      operationId: 'v1-admin-unit-inactivate',
       parameters: [
         {
           name: 'organisationId',
@@ -79,13 +79,13 @@ export default openApi(
       ],
       responses: {
         '200': {
-          description: 'The organisation unit has been inactivated..',
+          description: 'The organisation unit has been inactivated.',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
-                  id: {
+                  unitId: {
                     type: 'string',
                     description: 'The organisation unit id.',
                   },
@@ -95,18 +95,16 @@ export default openApi(
           },
         },
         '400': {
-          description: 'The organisation unit data is invalid.',
+          description: 'Bad request.',
         },
         '401': {
-          description:
-            'The user is not authorized to inactivate an organisation unit.',
+          description: 'The user is not authorized to inactivate an organisation unit.',
         },
         '404': {
           description: 'The organisation unit does not exist.',
         },
         '500': {
-          description:
-            'An error occurred while inactivating the organisation unit.',
+          description: 'An error occurred while inactivating the organisation unit.',
         },
       },
     },

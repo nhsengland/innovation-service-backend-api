@@ -1,5 +1,5 @@
 info:
-  title: NHS Innovation Service API - Innovations module
+  title: Innovations API @ NHS Innovation Service
   version: 1.0.0
 servers:
   - url: https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api
@@ -779,6 +779,65 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
+  "/v1/{innovationId}/evidence":
+    post:
+      description: Create an innovation evidence entry.
+      tags:
+        - Innovation
+      summary: Create an innovation evidence entry.
+      operationId: v1-innovation-evidence-create
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation evidence to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidenceType:
+                  type: string
+                  description: Type of the evidence.
+                  example: CLINICAL
+                clinicalEvidenceType:
+                  type: string
+                  description: Type of clinical evidence.
+                  example: DATA_PUBLISHED
+                description:
+                  type: string
+                  description: Description of the evidence.
+                  example: Example evidence.
+                files:
+                  type: string
+                  description: Ids of the uploaded files.
+      responses:
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation evidence id.
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   "/v1/{innovationId}/evidences/{evidenceId}":
     get:
       description: Get an innovation evidence info.
@@ -1464,6 +1523,25 @@ paths:
                     format: uuid
                 required:
                   - id
+  "/v1/{innovationId}/support-logs":
+    get:
+      description: Get support logs list of an Innovation
+      operationId: v1-innovation-support-logs
+      tags:
+        - Innovation Support
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
   "/v1/{innovationId}/threads":
     post:
       summary: Create a new editable thread

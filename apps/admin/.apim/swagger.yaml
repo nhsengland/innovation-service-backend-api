@@ -32,7 +32,7 @@ paths:
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
     patch:
       description: Inactivate an organisation unit.
-      operationId: v1-admin-inactivate-unit
+      operationId: v1-admin-unit-inactivate
       parameters:
         - name: organisationId
           in: path
@@ -48,17 +48,17 @@ paths:
             type: string
       responses:
         "200":
-          description: The organisation unit has been inactivated..
+          description: The organisation unit has been inactivated.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id:
+                  unitId:
                     type: string
                     description: The organisation unit id.
         "400":
-          description: The organisation unit data is invalid.
+          description: Bad request.
         "401":
           description: The user is not authorized to inactivate an organisation unit.
         "404":

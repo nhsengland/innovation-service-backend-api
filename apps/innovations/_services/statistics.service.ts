@@ -1,4 +1,4 @@
-import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity } from '@innovations/shared/entities';
 import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
@@ -81,18 +81,16 @@ export class StatisticsService  extends BaseService {
 
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
     .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
-    .innerJoinAndSelect('innovationSupport.organisationUnitUsers', 'organisationUnitUsers')
-    .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
-    .innerJoinAndSelect('organisationUser.user', 'user')
-    .where('actions.created_by = :userId', { userId: requestUser.id })
+    .innerJoinAndSelect('actions.innovationSection', 'section')
+    .where('innovationSupport.organisation_unit_id = :organisationUnit', { organisationUnit })
     .andWhere('innovationSupport.innovation_id = :innovationId', { innovationId })
+    .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW });
     
-    const [myActions, myActionsCount] = await baseQuery
-      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW }).getManyAndCount();    
+    const [myActions, myActionsCount] = await baseQuery.getManyAndCount();    
 
     return {
       count: myActionsCount,
-      lastSubmittedSection: myActions.find(_ => true)?.innovationSection.section || null,
+      lastSubmittedSection: myActions.find(_ => true)?.innovationSection?.section || null,
       lastSubmittedAt: myActions.find(_ => true)?.updatedAt || null,
     }
   }
@@ -152,46 +150,33 @@ export class StatisticsService  extends BaseService {
     count: number;
     lastSubmittedAt: null | string;
   }> {
-
-    // considers only threads created by the user
-    const threadCreatedByMe = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
-      .innerJoinAndSelect('thread.innovation', 'innovation')
-      .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('thread.created_by = :userId', { userId })
-      .getMany();
-
     // gets unread messages on this threads
     // the context id is always the thread id regardless if the detail is a message or a reply
-    const unreadMessages = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
-    .innerJoinAndSelect('notification.innovation', 'innovation')
-    .innerJoinAndSelect('notification.notificationUsers', 'users')
-    .where('innovation.id = :innovationId', { innovationId })
-    .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
-    .andWhere('notification.context_detail in (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
-    .andWhere('users.user_id = :userId', { userId })
-    .andWhere('users.readAt IS NULL')
-    .andWhere('notification.context_id IN (:...threadIds)', { threadIds: threadCreatedByMe.map(_ => _.id) })
-    .getMany();
-
-    if (unreadMessages.length === 0) {
-      return {
-        count: 0,
-        lastSubmittedAt: null,
-      }
-    }
-
-    const unreadThreadMessages = await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
-    .where('threadMessage.id IN(:...ids)', { ids: unreadMessages.map(x => x.contextId) })
-    .orderBy('threadMessage.created_at', 'DESC')
-    .getMany();
-
-
-    const latestMessage = unreadThreadMessages.sort((a, b) => {
-      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    }).find(_ => true);
+    const unreadMessageThreads = (await this.sqlConnection.createQueryBuilder()
+      .select('thread.id', 'thread_id')
+      .from(NotificationUserEntity, 'users')
+      .innerJoin('users.notification', 'notification')
+      .innerJoin('innovation_thread', 'thread', 
+        'thread.id = notification.context_id AND notification.context_type = :contextType AND notification.context_detail IN (:...contextDetail)',
+        { contextType: NotificationContextTypeEnum.THREAD, contextDetail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION]}
+      )
+      .where('users.user_id = :userId', { userId })
+      .andWhere('users.read_at IS NULL')
+      .andWhere('thread.innovation_id = :innovationId', { innovationId })
+      .andWhere('thread.created_by = :userId', { userId })
+      .getRawMany());
+    
+    const unreadMessages = unreadMessageThreads.length;
+    
+    // gets the latest message on the unread threads
+    const latestMessage = unreadMessages > 0 ? await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'message')
+      .where('message.thread in (:...threadIds)', { threadIds: [...new Set(unreadMessageThreads.map(_ => _.thread_id))] })
+      .orderBy('message.created_at', 'DESC')
+      .limit(1)
+      .getOne() : null;
 
     return {
-      count: unreadMessages.length,
+      count: unreadMessages,
       lastSubmittedAt: latestMessage?.createdAt || null,
     }
   }

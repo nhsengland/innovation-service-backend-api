@@ -32,6 +32,7 @@ class V1InnovationAssessmentInfo {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
 

@@ -43,7 +43,6 @@ class V1InnovationReassessmentRequestCreate {
       return;
 
     } catch (error) {
-      context.log.error(error);
       context.res = ResponseHelper.Error(context, error);
       return;
     }

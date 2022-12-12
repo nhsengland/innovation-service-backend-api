@@ -16,7 +16,7 @@ class V1AuditListener {
     context: Context,
     auditEntry: AuditEntry
   ): Promise<void> {
-    context.log.info('AUDIT LISTENER: ', auditEntry);
+    context.log.info('AUDIT LISTENER: ', JSON.stringify(auditEntry));
 
     const auditService = container.get<AuditServiceType>(AuditServiceSymbol);
     try {
@@ -38,7 +38,7 @@ class V1AuditListener {
       return;
 
     } catch (error) {
-      context.log.error('ERROR: Unexpected error while processing audit', error);
+      context.log.error('ERROR: Unexpected error while processing audit:', JSON.stringify(error));
       throw error;
     }
 

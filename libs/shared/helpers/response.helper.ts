@@ -45,33 +45,33 @@ export class ResponseHelper {
       const res = error.errorResponse();
       // Log 400s error, excluding 401 since they are normal in our execussion flow and 501 since it's not implemented to app insights as information.
       if(res.status in [400, 403, 404, 422, 501]) {
-        context.log.info({
+        context.log.info(JSON.stringify({
           invocationId: context.invocationId,
           error: res.body.error,
           message: res.body.message,
           details: res.body.details ?? {},
           stack: error.stack
-        });
+        }));
       } else if (res.status >= 500) {
         // All other 500s should be logged as error
-        context.log.error({
+        context.log.error(JSON.stringify({
           invocationId: context.invocationId,
           error: res.body.error,
           message: res.body.message,
           details: res.body.details ?? {},
           stack: error.stack
-        });
+        }));
       }
       return res;
     } else {
       // All errors we don't know about should be logged as error
-      context.log.error({
+      context.log.error(JSON.stringify({
         invocationId: context.invocationId,
         error: 'UNKNOWN_ERROR',
         message: 'messsage' in error ? error.message : 'Unknown error',
         details: 'details' in error ? error.details : {},
         stack: 'stack' in error ? error.stack : 'No stack trace'
-      });
+      }));
       return this.Internal({ error: GenericErrorsEnum.UNKNOWN_ERROR, message: 'Unknown error.' });
     }
   }
