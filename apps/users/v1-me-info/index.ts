@@ -68,6 +68,9 @@ class V1MeInfo {
 // TODO: Improve response
 export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
   get: {
+    description: 'Retrieves the user profile information.',
+    operationId: 'v1-me-info',
+    tags: ['[v1] Users'],
     parameters: [],
     responses: {
       200: {

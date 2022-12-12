@@ -78,6 +78,7 @@ export default openApi(V1UsersList.httpTrigger as AzureFunction, '/v1', {
   get: {
     operationId: 'v1-users-list',
     description: 'Get users list',
+    tags: ['[v1] Users'],
     parameters: [],
     responses: {
       200: {

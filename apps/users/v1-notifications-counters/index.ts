@@ -1,4 +1,4 @@
-import { mapOpenApi as openApi } from '@aaronpowell/azure-functions-nodejs-openapi/build/openAPIv2';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
@@ -39,21 +39,26 @@ class V1UserNotificationsCounter {
 
 export default openApi(V1UserNotificationsCounter.httpTrigger as AzureFunction, '/v1/notifications/counters', {
   get: {
-    description: 'Get the user notifications counters',
+    description: 'Returns the notifications counters',
     operationId: 'v1-notifications-counters',
+    tags: ['[v1] Notifications'],
     parameters: [],
     responses: {
       200: {
         description: 'Success',
-        schema: {
-          type: 'object',
-          properties: {
-            total: {
-              type: 'number',
-              description: 'The total of active notifications',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                total: {
+                  type: 'number',
+                  description: 'The total of active notifications',
+                },
+              },
             },
-          },
-        },
+          }
+        }
       },
     },
   },

@@ -83,6 +83,9 @@ class V1MeUpdate {
 
 export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
   put: {
+    description: 'User profile information update',
+    operationId: 'v1-me-update',
+    tags: ['[v1] Users'],
     parameters: [],
     requestBody: {
       required: true,

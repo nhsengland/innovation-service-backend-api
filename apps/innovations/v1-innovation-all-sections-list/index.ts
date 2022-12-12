@@ -5,7 +5,7 @@ import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 import {
-    AuthorizationServiceSymbol, AuthorizationServiceType
+  AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -48,13 +48,15 @@ class GetInnovationAllSectionsList {
 
 }
 
-export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction, 'v1/{innovationId}/all-sections', {
+export default openApi(GetInnovationAllSectionsList.httpTrigger as AzureFunction, '/v1/{innovationId}/all-sections', {
   get: {
     description: 'Get an innovation sections list details.',
     tags: ['Innovation'],
     summary: 'Get an innovation sections list details.',
-    operationId: 'getInnovationAllSectionsList',
-    parameters: [],
+    operationId: 'v1-innovation-all-sections-list',
+    parameters: [
+      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }
+    ],
     responses: {
       200: {
         description: 'Success',

@@ -2,15 +2,15 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { ResponseHelper, JoiHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
-import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationSubmit {
@@ -50,7 +50,7 @@ class V1InnovationSubmit {
 
 }
 
-export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, 'v1/{innovationId}/submit', {
+export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, '/v1/{innovationId}/submit', {
   patch: {
     summary: 'Submit an innovation',
     description: 'Submit an innovation for assessment.',

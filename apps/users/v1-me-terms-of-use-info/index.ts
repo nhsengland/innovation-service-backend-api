@@ -55,6 +55,9 @@ class V1MeTermsOfUseInfo {
 // TODO: Improve response
 export default openApi(V1MeTermsOfUseInfo.httpTrigger as AzureFunction, '/v1/me/terms-of-use', {
   get: {
+    description: 'Retrieves the user terms of use',
+    operationId: 'v1-me-terms-of-use-info',
+    tags: ['[v1] Terms of Use'],
     parameters: [],
     responses: {
       200: {

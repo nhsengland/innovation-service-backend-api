@@ -1,5 +1,5 @@
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -9,8 +9,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationActionCreate {
@@ -54,6 +54,7 @@ export default openApi(V1InnovationActionCreate.httpTrigger as AzureFunction, '/
   post: {
     description: 'Create a new innovation action.',
     operationId: 'v1-innovation-action-create',
+    tags: ['[v1] Innovation Actions'],
     parameters: [
       {
         name: 'innovationId',

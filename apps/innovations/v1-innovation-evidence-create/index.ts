@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 import {
   AuthorizationServiceSymbol,
-  AuthorizationServiceType,
+  AuthorizationServiceType
 } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
@@ -11,14 +11,14 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import {
   InnovationSectionsServiceSymbol,
-  InnovationSectionsServiceType,
+  InnovationSectionsServiceType
 } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 import {
   BodySchema,
   BodyType,
   ParamsSchema,
-  ParamsType,
+  ParamsType
 } from './validation.schemas';
 
 class CreateInnovationEvidence {
@@ -70,13 +70,13 @@ class CreateInnovationEvidence {
 
 export default openApi(
   CreateInnovationEvidence.httpTrigger as AzureFunction,
-  'v1/{innovationId}/evidence',
+  '/v1/{innovationId}/evidence',
   {
     post: {
       description: 'Create an innovation evidence entry.',
       tags: ['Innovation'],
       summary: 'Create an innovation evidence entry.',
-      operationId: 'createInnovationEvidence',
+      operationId: 'v1-innovation-evidence-create',
       parameters: [
         {
           name: 'innovationId',

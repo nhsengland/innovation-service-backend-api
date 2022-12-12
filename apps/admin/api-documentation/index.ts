@@ -2,10 +2,10 @@ import { generateOpenApi3Spec as index } from '@aaronpowell/azure-functions-node
 
 export default index({
   info: {
-    title: 'Innovations API @ NHS Innovation Service',
+    title: 'Admin API @ NHS Innovation Service',
     version: '1.0.0',
   },
   servers: [
-    { url: 'https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api' }
+    { url: 'https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api' }
   ]
 });

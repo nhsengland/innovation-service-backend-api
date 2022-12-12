@@ -45,10 +45,10 @@ class V1InnovationTransferUpdate {
   }
 }
 
-export default openApi(V1InnovationTransferUpdate.httpTrigger as AzureFunction, '/v1/innovation-transfers/{transferId}', {
+export default openApi(V1InnovationTransferUpdate.httpTrigger as AzureFunction, '/v1/transfers/{transferId}', {
   patch: {
     description: 'Update an innovation transfer status',
-    operationId: 'updateInnovationTransferStatus',
+    operationId: 'v1-innovation-transfer-update',
     parameters: [
       {
         name: 'transferId',

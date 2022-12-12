@@ -1,6 +1,12 @@
 import { container } from '@innovations/shared/config/inversify.config';
 
+import fs from 'fs';
+import { join } from 'path';
+import YAML from 'yaml';
+
 import {
+  HttpServiceSymbol,
+  HttpServiceType,
   NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@innovations/shared/services';
@@ -39,6 +45,7 @@ export const startup = async (): Promise<void> => {
 
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
   const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
 
   try {
 
@@ -46,6 +53,18 @@ export const startup = async (): Promise<void> => {
     await noSqlConnectionService.init();
 
     console.log('Initialization complete');
+
+    if (process.env['LOCAL_MODE'] ?? false) {
+
+      console.group('Generating documentation...');
+
+      const response = await httpService.getHttpInstance().get(`http://localhost:7072/api/swagger.json`);
+      console.log('Saving swagger file');
+      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/innovations/.apim/swagger.yaml`, YAML.stringify(response.data))
+      console.log('Documentation generated successfully');
+      console.groupEnd();
+
+    }
 
   } catch (error) {
 

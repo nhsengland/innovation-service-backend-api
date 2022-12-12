@@ -62,7 +62,7 @@ export default openApi(V1MeCreate.httpTrigger as AzureFunction, '/v1/me', {
   post: {
     summary: 'Create a new user on DB',
     operationId: 'v1-me-create',
-    tags: ['v1'],
+    tags: ['[v1] Users'],
     responses: {
       200: {
         description: 'User created',

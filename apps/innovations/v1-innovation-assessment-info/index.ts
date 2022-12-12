@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -9,9 +9,9 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 
-import { ParamsSchema, ParamsType } from './validation.schemas';
-import type { ResponseDTO } from './transformation.dtos';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
+import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationAssessmentInfo {
@@ -78,7 +78,7 @@ class V1InnovationAssessmentInfo {
 
 }
 
-export default openApi(V1InnovationAssessmentInfo.httpTrigger as AzureFunction, 'v1/:innovationId/assessment/:assessmentId', {
+export default openApi(V1InnovationAssessmentInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/assessment/{assessmentId}', {
   get: {
     summary: 'Get Innovation Assessment Info',
     description: 'Get Innovation Assessment Info',
