@@ -319,7 +319,6 @@ export class AdminService extends BaseService {
 
       const unit = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-        .innerJoinAndSelect('org_unit.organisation', 'organisation')
         .where('org_unit.id = :unitId', { unitId })
         .getOne()
 
@@ -327,21 +326,12 @@ export class AdminService extends BaseService {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       }
 
-      const organisationId = unit.organisation.id
-
       const unitNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'ou')
         .where('(ou.name = :name OR ou.acronym = :acronym) AND (ou.id != :unitId)', { name, acronym, unitId })
         .getOne()
 
-      const unitNameOrAcronymAlreadyExistsInOrganisation = await transaction
-        .createQueryBuilder(OrganisationEntity, 'org')
-        .where('(org.name = :name OR org.acronym = :acronym) AND (org.id != :organisationId)', { name, acronym, organisationId })
-        .getOne()
-
-      const alreadyExists = unitNameOrAcronymAlreadyExists || unitNameOrAcronymAlreadyExistsInOrganisation
-
-      if (alreadyExists) {
+      if (unitNameOrAcronymAlreadyExists) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
       }
 
@@ -384,16 +374,7 @@ export class AdminService extends BaseService {
         .where('(org.name = :name OR org.acronym = :acronym) AND (org.id != :organisationId)', { name, acronym, organisationId })
         .getOne()
 
-      const unitIds = (await organisation.organisationUnits).map(u => u.id)
-
-      const orgNameOrAcronymAlreadyExistsInUnit = await transaction
-        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-        .where('(org_unit.name = :name OR org_unit.acronym = :acronym) AND (org_unit.id NOT IN (:...unitIds))', { name, acronym, unitIds })
-        .getOne()
-      
-      const alreadyExists = orgNameOrAcronymAlreadyExists || orgNameOrAcronymAlreadyExistsInUnit
-
-      if (alreadyExists) {
+      if (orgNameOrAcronymAlreadyExists) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
       }
 
@@ -409,6 +390,9 @@ export class AdminService extends BaseService {
       if ((await organisation.organisationUnits).length == 1) {
         // if organisation only has one unit (shadow), the name and acronym
         // of this unit must also be changed
+
+        const unitIds = (await organisation.organisationUnits).map(u => u.id)
+
         await transaction.update(
           OrganisationUnitEntity,
           { id: unitIds[0] },
@@ -446,12 +430,7 @@ export class AdminService extends BaseService {
         .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
         .getOne()
 
-      const orgNameOrAcronymAlreadyExistsInUnit = await transaction
-        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-        .where('org_unit.name = :name OR org_unit.acronym = :acronym', { name, acronym })
-        .getOne()
-
-      if (orgNameOrAcronymAlreadyExists || orgNameOrAcronymAlreadyExistsInUnit) {
+      if (orgNameOrAcronymAlreadyExists) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS)
       }
 
@@ -528,16 +507,7 @@ export class AdminService extends BaseService {
       .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
       .getOne()
 
-    const unitNameOrAcronymAlreadyExistsInOrganisation = await transaction
-      .createQueryBuilder(OrganisationEntity, 'org')
-      .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
-      //.andWhere('org.id != :organisationId', { organisationId })
-      .getOne()
-
-    const alreadyExists = unitNameOrAcronymAlreadyExists ||
-     (unitNameOrAcronymAlreadyExistsInOrganisation && unitNameOrAcronymAlreadyExistsInOrganisation.id != organisationId)
-
-    if (alreadyExists) {
+    if (unitNameOrAcronymAlreadyExists) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS)
     }
 
