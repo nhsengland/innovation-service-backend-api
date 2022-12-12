@@ -1,4 +1,4 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
@@ -29,6 +29,7 @@ class V1InnovationThreadCreate {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkAdminType()
         .verify();
 
       const requestUser = auth.getUserInfo();

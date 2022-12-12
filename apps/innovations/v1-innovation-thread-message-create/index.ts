@@ -1,4 +1,4 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
@@ -71,6 +71,7 @@ export default openApi(V1InnovationThreadMessageCreate.httpTrigger as AzureFunct
   post: {
     description: 'Creates a new message in a thread.',
     operationId: 'v1-innovation-thread-message-create',
+    tags: ['[v1] Innovation Threads'],
     parameters: [
       {
         name: 'innovationId',

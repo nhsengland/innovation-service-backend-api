@@ -1,99 +1,109 @@
-openapi: "3.0.3"
 info:
-  title: "Innovation Service - Admin API"
-  version: "1.0.0"
+  title: Admin API @ NHS Innovation Service
+  version: 1.0.0
 servers:
-  - url: "https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api"
-
+  - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
+openapi: 3.0.3
 paths:
-  "/v1/health":
+  /v1/health:
     get:
+      summary: Get admin health
+      description: Get admin application health status
       tags:
         - "[v1] health"
-      description: "Get admin health"
-      operationId: "v1-admin-health"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
+      parameters: []
       responses:
         "200":
-          description: "Ok"
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - OK
+                      - WARN
         "401":
-          description: "Unauthorized"
+          description: Unauthorized
         "403":
-          description: "Forbidden"
-    
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
+          description: Forbidden
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate:
     patch:
-      tags:
-        - "[v1] Inactivate Unit"
-      description: "Inactivate an organisation unit"
-      operationId: "v1-admin-unit-inactivate"
+      description: Inactivate an organisation unit.
+      operationId: v1-admin-unit-inactivate
       parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
         - name: organisationId
           in: path
+          description: The organisation id.
           required: true
           schema:
             type: string
         - name: organisationUnitId
           in: path
+          description: The organisation unit id.
           required: true
           schema:
             type: string
       responses:
         "200":
-          description: "OK"
+          description: The organisation unit has been inactivated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation unit id.
         "400":
-          description: "Bad Request"
+          description: Bad request.
         "401":
-          description: "Unauthorized"
+          description: The user is not authorized to inactivate an organisation unit.
+        "404":
+          description: The organisation unit does not exist.
+        "500":
+          description: An error occurred while inactivating the organisation unit.
 
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
-    patch:
-      tags:
-        - "[v1] Activate Unit"
-      description: "Activate an organisation unit"
-      operationId: "v1-admin-unit-activate"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-        - name: organisationId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: organisationUnitId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: Users to unlock.
-        required: true
-        content:
-          application/json:
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/activate:
+      patch:
+        tags:
+          - "[v1] Activate Unit"
+        description: "Activate an organisation unit"
+        operationId: "v1-admin-unit-activate"
+        parameters:
+          - name: Authorization
+            in: header
             schema:
-              type: object
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
+              type: string
+            required: true
+          - name: organisationId
+            in: path
+            required: true
+            schema:
+              type: string
+          - name: organisationUnitId
+            in: path
+            required: true
+            schema:
+              type: string
+        requestBody:
+          description: Users to unlock.
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+        responses:
+          "200":
+            description: "OK"
+          "400":
+            description: "Bad Request"
+          "401":
+            description: "Unauthorized"
 
-  "/v1/organisations":
+  /v1/organisations:
     post:
       tags:
         - "[v1] Create Organisation"
@@ -120,8 +130,7 @@ paths:
         "401":
           description: "Unauthorized"
 
-
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+  /v1/organisations/{organisationId}/units/{organisationUnitId}:
     patch:
       tags:
         - "[v1] Update Unit"
@@ -158,7 +167,7 @@ paths:
         "401":
           description: "Unauthorized"
 
-  "/v1/organisations/{organisationId}":
+  /v1/organisations/{organisationId}:
       patch:
         tags:
           - "[v1] Update Organisation"

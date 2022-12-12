@@ -77,6 +77,7 @@ export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1', {
         },
       },
       400: { description: 'Invalid innovation payload' },
+      422: { description: 'Unprocessable entity' },
     },
   },
 });

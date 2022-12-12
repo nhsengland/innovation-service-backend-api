@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { ResponseHelper } from '@admin/shared/helpers';
@@ -28,7 +28,7 @@ class V1Health {
   }
 }
 
-export default openApi(V1Health.httpTrigger as AzureFunction, 'v1/health', {
+export default openApi(V1Health.httpTrigger as AzureFunction, '/v1/health', {
   get: {
     summary: 'Get admin health',
     description: 'Get admin application health status',

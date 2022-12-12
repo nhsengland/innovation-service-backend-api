@@ -40,6 +40,9 @@ class V1SurveyCreate {
 // TODO: Improve parameters
 export default openApi(V1SurveyCreate.httpTrigger as AzureFunction, '/v1/survey', {
   post: {
+    operationId: 'v1-survey-create',
+    description: 'Creates a Survey object with answers',
+    tags: ['[v1] Survey'],
     parameters: [],
     responses: {
       200: {
@@ -55,7 +58,7 @@ export default openApi(V1SurveyCreate.httpTrigger as AzureFunction, '/v1/survey'
           }
         }
       },
-      400: { description: 'Invalida survey payload' }
+      400: { description: 'Invalid survey payload' }
     }
   }
 

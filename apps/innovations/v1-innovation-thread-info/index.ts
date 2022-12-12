@@ -1,4 +1,4 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
@@ -32,6 +32,7 @@ class V1InnovationThreadInfo {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkAdminType()
         .verify();
 
       const result = await threadsService.getThreadInfo(

@@ -1,5 +1,5 @@
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -51,7 +51,7 @@ export default openApi(V1InnovationSupportInfo.httpTrigger as AzureFunction, '/v
   get: {
     description: 'Get supporting information for an Innovation',
     operationId: 'v1-innovation-support-info',
-    tags: ['Innovation Support'],
+    tags: ['[v1] Innovation Support'],
     parameters: [
       {
         in: 'path',

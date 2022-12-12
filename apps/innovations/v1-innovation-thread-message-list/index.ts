@@ -1,4 +1,4 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
@@ -30,6 +30,7 @@ class V1InnovationThreadMessageList {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkAdminType()
         .verify();
 
       const requestUser = auth.getUserInfo();
@@ -93,7 +94,7 @@ export default openApi(V1InnovationThreadMessageList.httpTrigger as AzureFunctio
     summary: 'Get a list of messages from a thread',
     description: 'Get a list of messages from a thread',
     operationId: 'v1-innovation-thread-message-list',
-    tags: ['Innovation Thread'],
+    tags: ['[v1] Innovation Threads'],
     parameters: [
       {
         name: 'innovationId',

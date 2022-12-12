@@ -47,8 +47,11 @@ class V1MeTermsOfUseAccept {
 
 
 // TODO: Improve response
-export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/me/terms-of-use', {
+export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/me/terms-of-use/accept', {
   patch: {
+    description: 'Accept user terms of use',
+    operationId: 'v1-me-terms-of-use-accept',
+    tags: ['[v1] Terms of Use'],
     parameters: [],
     responses: {
       200: {
