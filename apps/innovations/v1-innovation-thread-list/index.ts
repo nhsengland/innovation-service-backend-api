@@ -29,6 +29,7 @@ class V1InnovationThreadCreate {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkAdminType()
         .verify();
 
       const requestUser = auth.getUserInfo();

@@ -30,6 +30,7 @@ class V1InnovationThreadMessageList {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkAdminType()
         .verify();
 
       const requestUser = auth.getUserInfo();
