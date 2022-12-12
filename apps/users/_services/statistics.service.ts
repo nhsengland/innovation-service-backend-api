@@ -145,23 +145,24 @@ export class StatisticsService  extends BaseService {
 
 
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.assessments', 'assessments')
-      .innerJoinAndSelect('assessments.organisationUnits', 'organisationUnits', 'organisationUnits.id = :organisationUnit', { organisationUnit })
-      .innerJoinAndSelect('organisationUnits.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser', 'organisationUser.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
-      .innerJoinAndSelect('organisationUser.user', 'user')
-      .leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
+      .select('count(*)', 'count')
+      .addSelect('MAX(innovation.submitted_at)', 'lastSubmittedAt')
+      .innerJoin('innovation.assessments', 'assessments')
+      .innerJoin('assessments.organisationUnits', 'organisationUnits', 'organisationUnits.id = :organisationUnit', { organisationUnit })
+      .innerJoin('organisationUnits.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser', 'organisationUser.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
+      .innerJoin('organisationUser.user', 'user')
+      .innerJoin('innovation.organisationShares', 'organisationShares', 'organisationShares.id = organisationUser.organisation_id')
+      .leftJoin('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
       .where('user.id = :userId', { userId: requestUser.id })
       .andWhere('innovationSupports.id IS NULL')
       .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-      .orderBy('innovation.submitted_at', 'DESC')
 
-    const [myInnovationsToReview, myInnovationsToReviewCount] = await baseQuery.getManyAndCount();
+    const {count, lastSubmittedAt} = await baseQuery.getRawOne();
   
-
     return {
-      count: myInnovationsToReviewCount,
-      lastSubmittedAt: myInnovationsToReview.find(_ => true)?.submittedAt || null,
+      count: count,
+      lastSubmittedAt: lastSubmittedAt,
     }
   }
 }
