@@ -327,8 +327,8 @@ export class AdminService extends BaseService {
       }
 
       const unitNameOrAcronymAlreadyExists = await transaction
-        .createQueryBuilder(OrganisationUnitEntity, 'ou')
-        .where('(ou.name = :name OR ou.acronym = :acronym) AND (ou.id != :unitId)', { name, acronym, unitId })
+        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+        .where('(org_unit.name = :name OR org_unit.acronym = :acronym) AND (org_unit.id != :unitId)', { name, acronym, unitId })
         .getOne()
 
       if (unitNameOrAcronymAlreadyExists) {
