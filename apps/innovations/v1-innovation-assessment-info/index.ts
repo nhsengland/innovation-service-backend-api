@@ -78,7 +78,7 @@ class V1InnovationAssessmentInfo {
 
 }
 
-export default openApi(V1InnovationAssessmentInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/assessment/{assessmentId}', {
+export default openApi(V1InnovationAssessmentInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/assessments/{assessmentId}', {
   get: {
     summary: 'Get Innovation Assessment Info',
     description: 'Get Innovation Assessment Info',
