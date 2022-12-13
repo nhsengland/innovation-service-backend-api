@@ -15,7 +15,7 @@ import { container } from '../_config';
 import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminOrganisationCreate {
+class V1AdminTermsOfUseCreate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -55,7 +55,7 @@ class V1AdminOrganisationCreate {
 }
 
 export default openApi(
-  V1AdminOrganisationCreate.httpTrigger as AzureFunction,
+  V1AdminTermsOfUseCreate.httpTrigger as AzureFunction,
   '/v1/tou',
   {
     post: {
