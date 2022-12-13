@@ -29,7 +29,7 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate:
     patch:
       description: Inactivate an organisation unit.
       operationId: v1-admin-unit-inactivate
@@ -65,3 +65,136 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while inactivating the organisation unit.
+
+  /v1/organisations/{organisationId}/units/{organisationUnitId}/activate:
+      patch:
+        tags:
+          - "[v1] Activate Unit"
+        description: "Activate an organisation unit"
+        operationId: "v1-admin-unit-activate"
+        parameters:
+          - name: Authorization
+            in: header
+            schema:
+              type: string
+            required: true
+          - name: organisationId
+            in: path
+            required: true
+            schema:
+              type: string
+          - name: organisationUnitId
+            in: path
+            required: true
+            schema:
+              type: string
+        requestBody:
+          description: Users to unlock.
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+        responses:
+          "200":
+            description: "OK"
+          "400":
+            description: "Bad Request"
+          "401":
+            description: "Unauthorized"
+
+  /v1/organisations:
+    post:
+      tags:
+        - "[v1] Create Organisation"
+      description: "Create an organisation"
+      operationId: "v1-admin-organisation-create"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+      requestBody:
+        description: Organisation to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
+  /v1/organisations/{organisationId}/units/{organisationUnitId}:
+    patch:
+      tags:
+        - "[v1] Update Unit"
+      description: "Update an organisation unit"
+      operationId: "v1-admin-unit-update"
+      parameters:
+        - name: Authorization
+          in: header
+          schema:
+            type: string
+          required: true
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Name and acronym for the unit.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: "OK"
+        "400":
+          description: "Bad Request"
+        "401":
+          description: "Unauthorized"
+
+  /v1/organisations/{organisationId}:
+      patch:
+        tags:
+          - "[v1] Update Organisation"
+        description: "Update an organisation"
+        operationId: "v1-admin-organisation-update"
+        parameters:
+          - name: Authorization
+            in: header
+            schema:
+              type: string
+            required: true
+          - name: organisationId
+            in: path
+            required: true
+            schema:
+              type: string
+        requestBody:
+          description: Name and acronym for the organisation.
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+        responses:
+          "200":
+            description: "OK"
+          "400":
+            description: "Bad Request"
+          "401":
+            description: "Unauthorized"
