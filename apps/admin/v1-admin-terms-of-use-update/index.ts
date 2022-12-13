@@ -62,9 +62,9 @@ class V1AdminTermsOfUseUpdate {
 
 export default openApi(
   V1AdminTermsOfUseUpdate.httpTrigger as AzureFunction,
-  '/v1/tou',
+  '/v1/tou/{touId}',
   {
-    post: {
+    put: {
       description: 'Update terms of use.',
       operationId: 'v1-admin-terms-of-use-update',
       parameters: [

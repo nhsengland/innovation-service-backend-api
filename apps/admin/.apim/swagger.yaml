@@ -149,6 +149,54 @@ paths:
           description: The user is not authorized to create terms of use.
         "500":
           description: An error occurred while creating the terms of use.
+  "/v1/tou/{touId}":
+    put:
+      description: Update terms of use.
+      operationId: v1-admin-terms-of-use-update
+      parameters:
+        - name: touId
+          in: path
+          description: The terms of use id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The updated terms of use.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the terms of use.
+                touType:
+                  type: string
+                  description: Type of the terms of use.
+                summary:
+                  type: string
+                  description: Brief summary of the terms of use.
+                releasedAt:
+                  type: string
+                  description: Relase date of the terms of use.
+      responses:
+        "200":
+          description: The terms of use have been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: Id of the updated terms of use.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to update terms of use.
+        "500":
+          description: An error occurred while updating the terms of use.
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
     patch:
       description: Activate an organisation unit.
