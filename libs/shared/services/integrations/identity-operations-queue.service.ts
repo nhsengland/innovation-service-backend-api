@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { IdentityOperationsTemplatesType } from 'libs/shared/types/identity-operations.type';
 
-import type { IdentityOperationsTypeEnum, UserTypeEnum } from '../../enums';
+import type { IdentityOperationsTypeEnum } from '../../enums';
 
 import { LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
 import { QueuesEnum } from './storage-queue.service';
@@ -17,7 +17,7 @@ export class IdentityOperationsQueueService {
 
 
   async sendToQueue<T extends IdentityOperationsTypeEnum>(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    // requestUser: { id: string, identityId: string, type: UserTypeEnum },
     operationType: T,
     params: IdentityOperationsTemplatesType[T]
   ): Promise<boolean> {
@@ -26,9 +26,9 @@ export class IdentityOperationsQueueService {
 
       await this.storageQueueService.sendMessage(QueuesEnum.IDENTITY, {
         data: {
-          requestUser: {id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type},
-          action: operationType,
-          params
+          // requestUser: {id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type},
+          type: operationType,
+          ...params
         }
       });
 

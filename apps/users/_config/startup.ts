@@ -7,6 +7,8 @@ import YAML from 'yaml';
 import { HttpServiceSymbol, HttpServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@users/shared/services';
 
 import {
+  IdentityOperationsServiceSymbol,
+  IdentityOperationsServiceType,
   NotificationsServiceSymbol,
   NotificationsServiceType,
   OrganisationsServiceSymbol, OrganisationsServiceType,
@@ -23,6 +25,7 @@ import { UsersService } from '../_services/users.service';
 
 import { NotificationsService } from '../_services/notifications.service';
 import { StatisticsService } from '../_services/statistics.service';
+import { IdentityOperationsService } from '../_services/identity-operations.service';
 
 // Specific inversify container configuration
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
@@ -31,6 +34,7 @@ container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseServ
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 container.bind<NotificationsServiceType>(NotificationsServiceSymbol).to(NotificationsService).inSingletonScope();
 container.bind<StatisticsServiceType>(StatisticsServiceSymbol).to(StatisticsService).inSingletonScope();
+container.bind<IdentityOperationsServiceType>(IdentityOperationsServiceSymbol).to(IdentityOperationsService).inSingletonScope();
 
 export { container };
 export const startup = async (): Promise<void> => {

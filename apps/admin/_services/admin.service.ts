@@ -42,7 +42,7 @@ export class AdminService extends BaseService {
   }
 
   async lockUser (
-    requestUser: DomainUserInfoType,
+    // requestUser: DomainUserInfoType,
     userId: string
   ): Promise<{
     id: string,
@@ -59,7 +59,7 @@ export class AdminService extends BaseService {
     }
 
     this.identityOperationsQueueService.sendToQueue(
-      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      // { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       IdentityOperationsTypeEnum.LOCK_USER,
       { identityId: userToLock.identityId }
     )
@@ -202,7 +202,7 @@ export class AdminService extends BaseService {
 
         for (const user of usersToLock) {
           this.identityOperationsQueueService.sendToQueue(
-            { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+            // { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
             IdentityOperationsTypeEnum.LOCK_USER,
             { identityId: user.identityId }
           )

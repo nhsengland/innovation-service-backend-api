@@ -21,7 +21,7 @@ class V1IdentityOperationsQueueListener {
         // use identityOperations service (need to create)
         const identityOperationsService = container.get<IdentityOperationsServiceType>(IdentityOperationsServiceSymbol);
 
-        context.log.info('IDENDITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
+        context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
 
         try {
 

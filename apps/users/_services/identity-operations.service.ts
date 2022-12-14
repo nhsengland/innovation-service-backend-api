@@ -33,7 +33,7 @@ export class IdentityOperationsService extends BaseService {
         console.log(operationType)
         console.log(params)
         
-        console.log('SUCCESS!!')
+        console.log('SUCCESS!')
 
   }
 }
