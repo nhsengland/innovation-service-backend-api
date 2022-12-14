@@ -1,3 +1,4 @@
+import type { IdentityOperationsService } from './identity-operations.service';
 import type { NotificationsService } from './notifications.service';
 import type { OrganisationsService } from './organisations.service';
 import type { StatisticsService } from './statistics.service';
@@ -23,3 +24,6 @@ export const NotificationsServiceSymbol = Symbol('NotificationsService');
 
 export type StatisticsServiceType = typeof StatisticsService.prototype;
 export const StatisticsServiceSymbol = Symbol('StatisticsService');
+
+export type IdentityOperationsServiceType = typeof IdentityOperationsService.prototype;
+export const IdentityOperationsServiceSymbol = Symbol('IdentityOperationsService')

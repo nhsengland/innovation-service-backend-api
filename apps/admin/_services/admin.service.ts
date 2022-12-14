@@ -9,16 +9,19 @@ import {
 } from '@admin/shared/entities';
 import {
   AccessorOrganisationRoleEnum,
+  IdentityOperationsTypeEnum,
   InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
 } from '@admin/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@admin/shared/errors';
 import {
   DomainServiceSymbol,
   DomainServiceType,
+  IdentityOperationsQueueServiceSymbol,
+  IdentityOperationsQueueServiceType,
   NotifierServiceSymbol,
   NotifierServiceType,
 } from '@admin/shared/services';
@@ -32,12 +35,40 @@ import { BaseService } from './base.service';
 export class AdminService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(IdentityOperationsQueueServiceSymbol) private identityOperationsQueueService: IdentityOperationsQueueServiceType 
   ) {
     super();
   }
 
-  async inactivateUnit(
+  async lockUser (
+    requestUser: DomainUserInfoType,
+    userId: string
+  ): Promise<{
+    id: string,
+    identityId: string
+  }> {
+
+    const userToLock = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :userId', { userId })
+      .getOne()
+
+    if (!userToLock) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+    }
+
+    this.identityOperationsQueueService.sendToQueue(
+      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      IdentityOperationsTypeEnum.LOCK_USER,
+      { identityId: userToLock.identityId }
+    )
+
+    return { id: userToLock.id, identityId: userToLock.identityId }
+
+  }
+
+  async inactivateUnit (
     requestUser: DomainUserInfoType,
     unitId: string
   ): Promise<{
@@ -85,6 +116,7 @@ export class AdminService extends BaseService {
 
     const usersToLock = users.map((u) => ({
       id: u.organisationUser.user.id,
+      identityId: u.organisationUser.user.identityId
     }));
 
     const actionIds = actions.map((a) => a.id);
@@ -167,7 +199,17 @@ export class AdminService extends BaseService {
           { id: In(usersToLock.map((u) => u.id)) },
           { lockedAt: new Date().toISOString() }
         );
+
+        for (const user of usersToLock) {
+          this.identityOperationsQueueService.sendToQueue(
+            { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+            IdentityOperationsTypeEnum.LOCK_USER,
+            { identityId: user.identityId }
+          )
+        }
       }
+
+
 
       const organisationId = unit.organisationId;
 

@@ -7,6 +7,7 @@ import type { HttpService } from '../services/integrations/http.service';
 import type { IdentityProviderService } from '../services/integrations/identity-provider.service';
 import type { LoggerService } from '../services/integrations/logger.service';
 import type { NotifierService } from '../services/integrations/notifier.service';
+import type { IdentityOperationsQueueService } from '../services/integrations/identity-operations-queue.service';
 import type { StorageQueueService } from '../services/integrations/storage-queue.service';
 
 import type { FileStorageService } from '../services/storage/file-storage.service';
@@ -35,6 +36,9 @@ export const LoggerServiceSymbol = Symbol('LoggerService');
 
 export type NotifierServiceType = typeof NotifierService.prototype;
 export const NotifierServiceSymbol = Symbol('NotifierService');
+
+export type IdentityOperationsQueueServiceType = typeof IdentityOperationsQueueService.prototype;
+export const IdentityOperationsQueueServiceSymbol = Symbol('IdentityOperationsQueueService');
 
 export type StorageQueueServiceType = typeof StorageQueueService.prototype;
 export const StorageQueueServiceSymbol = Symbol('StorageQueueService');

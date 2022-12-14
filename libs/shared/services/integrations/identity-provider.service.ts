@@ -218,7 +218,7 @@ export class IdentityProviderService {
 
       const fields = ['displayName', 'identities', 'email', 'mobilePhone', 'accountEnabled', 'signInActivity'];
 
-      let url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`
+      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`
 
       promises.push(
         axios.get<b2cGetUsersListDTO>(
@@ -276,6 +276,7 @@ export class IdentityProviderService {
   }
 
 
+  // MF - use this to lock user after reading lock request form queue
   async updateUser(identityId: string, body: { displayName?: string, mobilePhone?: string | null, accountEnabled?: boolean }): Promise<void> {
 
     await this.verifyAccessToken();
