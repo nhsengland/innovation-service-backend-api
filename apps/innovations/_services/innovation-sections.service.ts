@@ -33,7 +33,7 @@ export class InnovationSectionsService extends BaseService {
   }[]> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.section', 'sections')
+      .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
     if (!innovation) {
