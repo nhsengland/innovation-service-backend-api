@@ -209,7 +209,7 @@ export class InnovationSectionsService extends BaseService {
       await this.domainService.innovations.deleteInnovationFiles(transaction, sectionDeletedFiles);
 
       if (shouldAddActivityLog) {
-        await this.domainService.innovations.addActivityLog<'SECTION_DRAFT_UPDATE'>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE },
           { sectionId: sectionKey }
@@ -266,7 +266,7 @@ export class InnovationSectionsService extends BaseService {
       // Add activity logs.
       if (dbInnovation.status != InnovationStatusEnum.CREATED) {
         // BUSINESS RULE: Don't log section updates before innovation submission, only after.
-        await this.domainService.innovations.addActivityLog<'SECTION_SUBMISSION'>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION },
           { sectionId: savedSection.section }
@@ -274,7 +274,7 @@ export class InnovationSectionsService extends BaseService {
       }
 
       if (requestedStatusActions.length > 0) {
-        await this.domainService.innovations.addActivityLog<'ACTION_STATUS_IN_REVIEW_UPDATE'>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
@@ -390,7 +390,7 @@ export class InnovationSectionsService extends BaseService {
       return { id: savedEvidence.id };
     });
   }
-  
+
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
     id: string,
     evidenceType: EvidenceTypeCatalogueEnum,

@@ -1,6 +1,6 @@
-import type { UserTypeEnum } from "@users/shared/enums";
-import { type UserStatisticsTemplateType, USER_STATISTICS_CONFIG } from "../_config/statistics.config";
-import type { UserStatisticsEnum } from "../_enums/user.enums";
+import type { UserTypeEnum } from '@users/shared/enums';
+import { type UserStatisticsTemplateType, USER_STATISTICS_CONFIG } from '../_config/statistics.config';
+import type { UserStatisticsEnum } from '../_enums/user.enums';
 
 export class StatisticsHandlersHelper {
 

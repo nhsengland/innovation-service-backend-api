@@ -1,3 +1,4 @@
+import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
@@ -74,67 +75,70 @@ export type ActivityLogListParamsType = ActivityLogDBParamsType & {
   interveningUserName?: string;
 }
 
-export type ActivitiesParamsType<T extends keyof ActivityLogTemplatesType> = Required<ActivityLogTemplatesType[T]>['params'];
+export type ActivitiesParamsType<T extends ActivityEnum> = Required<ActivityLogTemplatesType[T]>['params'];
 
 export type ActivityLogTemplatesType = {
-  INNOVATION_CREATION: {
+  [ActivityEnum.INNOVATION_CREATION]: {
     params: Record<string, never>
   },
-  OWNERSHIP_TRANSFER: {
+  [ActivityEnum.OWNERSHIP_TRANSFER]: {
     params: { interveningUserId: string }
   },
-  SHARING_PREFERENCES_UPDATE: {
+  [ActivityEnum.SHARING_PREFERENCES_UPDATE]: {
     params: { organisations: string[] }
   },
-  SECTION_DRAFT_UPDATE: {
+  [ActivityEnum.SECTION_DRAFT_UPDATE]: {
     params: { sectionId: InnovationSectionEnum }
   },
-  SECTION_SUBMISSION: {
+  [ActivityEnum.SECTION_SUBMISSION]: {
     params: { sectionId: InnovationSectionEnum }
   },
   INNOVATION_SUBMISSION: {
     params: Record<string, never>
   },
-  NEEDS_ASSESSMENT_START: {
+  [ActivityEnum.NEEDS_ASSESSMENT_START]: {
     params: { comment: { id: string, value: string } }
   },
-  NEEDS_ASSESSMENT_COMPLETED: {
+  [ActivityEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     params: { assessmentId: string }
   },
-  NEEDS_ASSESSMENT_EDITED: {
+  [ActivityEnum.NEEDS_ASSESSMENT_EDITED]: {
     params: { assessmentId: string }
   },
-  ORGANISATION_SUGGESTION: { // TODO: I believe that this is misleading. organisations param, is being populated with units!
+  [ActivityEnum.ORGANISATION_SUGGESTION]: { // TODO: I believe that this is misleading. organisations param, is being populated with units!
     params: { organisations: string[] }
   },
-  SUPPORT_STATUS_UPDATE: {
+  [ActivityEnum.SUPPORT_STATUS_UPDATE]: {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
-  ACTION_CREATION: {
+  [ActivityEnum.ACTION_CREATION]: {
     params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string } }
   },
-  ACTION_STATUS_IN_REVIEW_UPDATE: {
+  [ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE]: {
     params: { sectionId: InnovationSectionEnum, totalActions: number }
   },
-  ACTION_STATUS_COMPLETED_UPDATE: {
+  [ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE]: {
     params: { actionId: string }
   },
-  ACTION_STATUS_REQUESTED_UPDATE: {
+  [ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE]: {
     params: { actionId: string }
   },
-  ACTION_STATUS_DECLINED_UPDATE: {
+  [ActivityEnum.ACTION_STATUS_DECLINED_UPDATE]: {
     params: { actionId: string, interveningUserId: string, comment: { id: string, value: string } }
   },
-  COMMENT_CREATION: {
+  [ActivityEnum.COMMENT_CREATION]: {
     params: { comment: { id: string, value: string } }
   },
-  THREAD_CREATION: {
+  [ActivityEnum.THREAD_CREATION]: {
     params: { thread: { id: string, subject: string }, message: { id: string } }
   }
-  THREAD_MESSAGE_CREATION: {
+  [ActivityEnum.THREAD_MESSAGE_CREATION]: {
     params: { thread: { id: string, subject: string }, message: { id: string } }
   },
-  NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED: {
+  [ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED]: {
     params: { assessment: { id: string }, reassessment: { id: string } }
+  },
+  [ActivityEnum.INNOVATION_PAUSE]: {
+    params: { message: string }
   }
 }

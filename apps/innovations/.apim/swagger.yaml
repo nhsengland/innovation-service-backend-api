@@ -991,6 +991,31 @@ paths:
           description: Success
         "400":
           description: Invalid payload
+  "/v1/{innovationId}/pause":
+    patch:
+      summary: Pause an innovation
+      description: Pause an innovation.
+      operationId: v1-innovation-pause
+      tags:
+        - Innovation
+      parameters:
+        - name: innovationId
+          in: path
+          description: Innovation ID
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Innovation paused successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation ID
   "/v1/{innovationId}/pdf":
     post:
       description: Generate PDF for an innovation
@@ -1374,7 +1399,7 @@ paths:
     patch:
       summary: Submit an innovation
       description: Submit an innovation for assessment.
-      operationId: v1-submit-innovation
+      operationId: v1-innovation-submit
       tags:
         - Innovation
       parameters:
@@ -1408,6 +1433,56 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
+  "/v1/{innovationId}/supports/{supportId}/change-request":
+    post:
+      description: Request Change Support for a given innovation.
+      operationId: v1-innovation-support-change-request
+      tags:
+        - Innovation Support
+      parameters:
+        - in: path
+          name: innovationId
+          description: Unique innovation ID
+          required: true
+        - in: path
+          name: supportId
+          required: true
+      requestBody:
+        description: ""
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - FURTHER_INFO_REQUIRED
+                    - WAITING
+                    - NOT_YET
+                    - UNSUITABLE
+                    - COMPLETE
+                message:
+                  type: string
+                  maxLength: 400
+              required:
+                - status
+                - message
+      responses:
+        "200":
+          description: Innovation ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
   "/v1/{innovationId}/supports":
     post:
       description: Create support in innovation.
