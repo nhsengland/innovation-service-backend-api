@@ -15,7 +15,7 @@ import { container } from '../_config';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminUnitUpdate {
+class V1AdminOrganisationUpdate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -58,7 +58,7 @@ class V1AdminUnitUpdate {
 }
 
 export default openApi(
-  V1AdminUnitUpdate.httpTrigger as AzureFunction,
+  V1AdminOrganisationUpdate.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}',
   {
     patch: {

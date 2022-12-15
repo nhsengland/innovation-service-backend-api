@@ -35,4 +35,34 @@ export class TermsOfUseService extends BaseService {
       return { id: savedToU.id };
     });
   }
+
+  async updateTermsOfUse(
+    requestUser: { id: string },
+    touPayload: {
+      name: string,
+      touType: TermsOfUseTypeEnum,
+      summary?: string,
+      releasedAt?: DateISOType
+    },
+    touId: string
+  ):
+    Promise<{ id: string }> {
+
+    await this.sqlConnection.transaction(async transaction => {
+
+      await transaction.update(
+        TermsOfUseEntity,
+        { id: touId },
+        {
+          name: touPayload.name,
+          touType: touPayload.touType,
+          summary: touPayload.summary || '',
+          updatedBy: requestUser.id,
+          releasedAt: touPayload.releasedAt || null
+        }
+      )
+    })
+
+    return { id: touId }
+  }
 }

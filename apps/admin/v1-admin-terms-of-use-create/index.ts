@@ -19,7 +19,7 @@ class V1AdminTermsOfUseCreate {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const adminToUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const toUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
 
     try {
 
@@ -30,7 +30,7 @@ class V1AdminTermsOfUseCreate {
         .verify();
       const requestUser = auth.getUserInfo()
 
-      const result = await adminToUService.createTermsOfUse({ id: requestUser.id }, body);
+      const result = await toUService.createTermsOfUse({ id: requestUser.id }, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
