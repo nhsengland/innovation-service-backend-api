@@ -29,7 +29,181 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden
-  /v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate:
+  /v1/organisations:
+    post:
+      description: Create an organisation unit.
+      operationId: v1-admin-organisation-create
+      requestBody:
+        description: The organisation to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the organisation.
+                acronym:
+                  type: string
+                  description: Acronym of the organisation.
+                unit:
+                  type: string
+                  description: Ids of the organistaion units.
+      responses:
+        "200":
+          description: The organisation unit has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create an organisation.
+        "500":
+          description: An error occurred while creating the organisation unit.
+  "/v1/organisations/{organisationId}":
+    patch:
+      description: Update an organisation.
+      operationId: v1-admin-organisation-update
+      parameters:
+        - name: organisationId
+          in: path
+          description: The organisation id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New name and acronym for the organisation.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: string
+                  description: Name and acronym for the organisation.
+      responses:
+        "200":
+          description: The organisation unit has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation unit id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to update an organisation unit.
+        "404":
+          description: The organisation unit does not exist.
+        "500":
+          description: An error occurred while updating the organisation unit.
+  /v1/tou:
+    post:
+      description: Create terms of use.
+      operationId: v1-admin-terms-of-use-create
+      requestBody:
+        description: The terms of use to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the terms of use.
+                touType:
+                  type: string
+                  enum:
+                    - INNOVATOR
+                    - SUPPORT_ORGANISATION
+                  description: Type of the terms of use.
+                summary:
+                  type: string
+                  description: Brief summary of the terms of use.
+                releasedAt:
+                  type: string
+                  description: Relase date of the terms of use.
+              required:
+                - name
+                - touType
+              additionalProperties: false
+      responses:
+        "200":
+          description: The terms of use have been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: Id of the created terms of use.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create terms of use.
+        "500":
+          description: An error occurred while creating the terms of use.
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
+    patch:
+      description: Activate an organisation unit.
+      operationId: v1-admin-unit-activate
+      parameters:
+        - name: organisationId
+          in: path
+          description: The organisation id.
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          description: The organisation unit id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The id of the users to unlock.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: string
+                  description: Ids of the users to unlock.
+      responses:
+        "200":
+          description: The organisation unit has been activated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation unit id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to activate an organisation unit.
+        "404":
+          description: The organisation unit does not exist.
+        "500":
+          description: An error occurred while activating the organisation unit.
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
     patch:
       description: Inactivate an organisation unit.
       operationId: v1-admin-unit-inactivate
@@ -65,136 +239,50 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while inactivating the organisation unit.
-
-  /v1/organisations/{organisationId}/units/{organisationUnitId}/activate:
-      patch:
-        tags:
-          - "[v1] Activate Unit"
-        description: "Activate an organisation unit"
-        operationId: "v1-admin-unit-activate"
-        parameters:
-          - name: Authorization
-            in: header
-            schema:
-              type: string
-            required: true
-          - name: organisationId
-            in: path
-            required: true
-            schema:
-              type: string
-          - name: organisationUnitId
-            in: path
-            required: true
-            schema:
-              type: string
-        requestBody:
-          description: Users to unlock.
-          required: true
-          content:
-            application/json:
-              schema:
-                type: object
-        responses:
-          "200":
-            description: "OK"
-          "400":
-            description: "Bad Request"
-          "401":
-            description: "Unauthorized"
-
-  /v1/organisations:
-    post:
-      tags:
-        - "[v1] Create Organisation"
-      description: "Create an organisation"
-      operationId: "v1-admin-organisation-create"
-      parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
-      requestBody:
-        description: Organisation to create.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  /v1/organisations/{organisationId}/units/{organisationUnitId}:
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
     patch:
-      tags:
-        - "[v1] Update Unit"
-      description: "Update an organisation unit"
-      operationId: "v1-admin-unit-update"
+      description: Update an organisation unit.
+      operationId: v1-admin-unit-update
       parameters:
-        - name: Authorization
-          in: header
-          schema:
-            type: string
-          required: true
         - name: organisationId
           in: path
+          description: The organisation id.
           required: true
           schema:
             type: string
         - name: organisationUnitId
           in: path
+          description: The organisation unit id.
           required: true
           schema:
             type: string
       requestBody:
-        description: Name and acronym for the unit.
+        description: New name and acronym for the unit.
         required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                userIds:
+                  type: string
+                  description: Name and acronym for the unit.
       responses:
         "200":
-          description: "OK"
-        "400":
-          description: "Bad Request"
-        "401":
-          description: "Unauthorized"
-
-  /v1/organisations/{organisationId}:
-      patch:
-        tags:
-          - "[v1] Update Organisation"
-        description: "Update an organisation"
-        operationId: "v1-admin-organisation-update"
-        parameters:
-          - name: Authorization
-            in: header
-            schema:
-              type: string
-            required: true
-          - name: organisationId
-            in: path
-            required: true
-            schema:
-              type: string
-        requestBody:
-          description: Name and acronym for the organisation.
-          required: true
+          description: The organisation unit has been updated.
           content:
             application/json:
               schema:
                 type: object
-        responses:
-          "200":
-            description: "OK"
-          "400":
-            description: "Bad Request"
-          "401":
-            description: "Unauthorized"
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation unit id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to update an organisation unit.
+        "404":
+          description: The organisation unit does not exist.
+        "500":
+          description: An error occurred while updating the organisation unit.

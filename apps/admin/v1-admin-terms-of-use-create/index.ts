@@ -1,13 +1,15 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
+import { bodyJ2S } from '@admin/shared/helpers/swagger.helper';
+
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
 } from '@admin/shared/services';
-import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AdminTermsOfUseServiceSymbol, AdminTermsOfUseServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -15,7 +17,7 @@ import { container } from '../_config';
 import { BodySchema, BodyType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminOrganisationCreate {
+class V1AdminTermsOfUseCreate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -24,7 +26,7 @@ class V1AdminOrganisationCreate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const adminService = container.get<AdminServiceType>(AdminServiceSymbol);
+    const adminToUService = container.get<AdminTermsOfUseServiceType>(AdminTermsOfUseServiceSymbol);
 
     try {
 
@@ -33,16 +35,19 @@ class V1AdminOrganisationCreate {
             request.body
         );
 
-        await authorizationService
+        const auth = await authorizationService
             .validate(context.auth.user.identityId)
             .checkAdminType()
             .verify();
 
-        const result = await adminService.createOrganisation(
-            body.organisation
+        const requestUser = auth.getUserInfo()
+
+        const result = await adminToUService.createTermsOfUse(
+            { id: requestUser.id },
+            body
         );
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, units: result.units });
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
         return;
     } catch (error) {
         context.res = ResponseHelper.Error(context, error);
@@ -52,40 +57,16 @@ class V1AdminOrganisationCreate {
 }
 
 export default openApi(
-  V1AdminOrganisationCreate.httpTrigger as AzureFunction,
-  '/v1/organisations',
+  V1AdminTermsOfUseCreate.httpTrigger as AzureFunction,
+  '/v1/tou',
   {
     post: {
-      description: 'Create an organisation unit.',
-      operationId: 'v1-admin-organisation-create',
-      requestBody: {
-        description: 'The organisation to create.',
-        required: true,
-        content: {
-            'application/json': {
-                schema: {
-                    type: 'object',
-                    properties: {
-                        name: {
-                            type: 'string',
-                            description: 'Name of the organisation.'
-                        },
-                        acronym: {
-                            type: 'string',
-                            description: 'Acronym of the organisation.'
-                        },
-                        unit: {
-                            type: 'string',
-                            description: 'Ids of the organistaion units.' 
-                        }
-                    }
-                }
-            }
-        }
-      },
+      description: 'Create terms of use.',
+      operationId: 'v1-admin-terms-of-use-create',
+      requestBody: bodyJ2S(BodySchema, 'The terms of use to create.'),
       responses: {
         '200': {
-          description: 'The organisation unit has been created.',
+          description: 'The terms of use have been created.',
           content: {
             'application/json': {
               schema: {
@@ -93,7 +74,7 @@ export default openApi(
                 properties: {
                   unitId: {
                     type: 'string',
-                    description: 'The organisation id.',
+                    description: 'Id of the created terms of use.',
                   },
                 },
               },
@@ -104,10 +85,10 @@ export default openApi(
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to create an organisation.',
+          description: 'The user is not authorized to create terms of use.',
         },
         '500': {
-          description: 'An error occurred while creating the organisation unit.',
+          description: 'An error occurred while creating the terms of use.',
         },
       },
     },
