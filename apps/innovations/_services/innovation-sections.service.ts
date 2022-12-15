@@ -41,6 +41,8 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = await innovation.sections;
 
+    if (sections.length === 0) return [];
+
     const openActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
       .select('sections.section', 'section')
       .addSelect('COUNT(actions.id)', 'actionsCount')
