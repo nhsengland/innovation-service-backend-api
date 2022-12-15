@@ -125,6 +125,9 @@ paths:
                   description: Name of the terms of use.
                 touType:
                   type: string
+                  enum:
+                    - INNOVATOR
+                    - SUPPORT_ORGANISATION
                   description: Type of the terms of use.
                 summary:
                   type: string
@@ -132,6 +135,10 @@ paths:
                 releasedAt:
                   type: string
                   description: Relase date of the terms of use.
+              required:
+                - name
+                - touType
+              additionalProperties: false
       responses:
         "200":
           description: The terms of use have been created.

@@ -31,6 +31,7 @@ class V1InnovationsActivitiesLogList {
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
 

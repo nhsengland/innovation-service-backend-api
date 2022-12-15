@@ -15,6 +15,6 @@ export type BodyType = {
   description: string
 }
 export const BodySchema = Joi.object<BodyType>({
-  section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required(),
-  description: Joi.string().max(500).required()
+  section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required().description('The section key.'),
+  description: Joi.string().max(500).required().description('The description of the action.'),
 }).required();
