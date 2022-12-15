@@ -104,10 +104,11 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareEmailForNewAccessors(accessors?: {id: string}[]): Promise<void> {
-    for (const accessor of accessors ?? []) {
+    const recipients = await this.recipientsService.usersInfo(accessors?.map(a => a.id) ?? []);
+    for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
-        to: { type: 'identityId', value: accessor.id, displayNameParam: 'display_name' },
+        to: { type: 'identityId', value: recipient.identityId, displayNameParam: 'display_name' },
         params: {
           qa_name: this.data.requestUserAdditionalInfo?.displayName ?? 'qualified accessor', // what should the default be, believe it will never happen
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
