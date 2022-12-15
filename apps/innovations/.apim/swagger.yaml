@@ -14,7 +14,6 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
@@ -27,17 +26,32 @@ paths:
             schema:
               type: object
               properties:
+                section:
+                  type: string
+                  enum:
+                    - INNOVATION_DESCRIPTION
+                    - VALUE_PROPOSITION
+                    - UNDERSTANDING_OF_NEEDS
+                    - UNDERSTANDING_OF_BENEFITS
+                    - EVIDENCE_OF_EFFECTIVENESS
+                    - MARKET_RESEARCH
+                    - INTELLECTUAL_PROPERTY
+                    - REGULATIONS_AND_STANDARDS
+                    - CURRENT_CARE_PATHWAY
+                    - TESTING_WITH_USERS
+                    - COST_OF_INNOVATION
+                    - COMPARATIVE_COST_BENEFIT
+                    - REVENUE_MODEL
+                    - IMPLEMENTATION_PLAN
+                  description: The section key.
                 description:
                   type: string
+                  maxLength: 500
                   description: The description of the action.
-                  example: This is a description of the action.
-                sectionKey:
-                  type: string
-                  description: The section key.
-                  example: ACCESS
               required:
+                - section
                 - description
-                - sectionKey
+              additionalProperties: false
       responses:
         "200":
           description: The innovation action has been created.

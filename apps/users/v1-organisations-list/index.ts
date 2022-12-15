@@ -25,14 +25,15 @@ class V1OrganisationsList {
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authService.validate(context.auth.user.identityId)
+      const auth = await authService.validate(context.auth.user.identityId)
         .checkAdminType()
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .verify();
-
-      const result = await organisationsService.getOrganisationsList(queryParams);
+      const requestUser = auth.getUserInfo();
+      
+      const result = await organisationsService.getOrganisationsList({ type: requestUser.type }, queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
         id: item.id,
         name: item.name,
