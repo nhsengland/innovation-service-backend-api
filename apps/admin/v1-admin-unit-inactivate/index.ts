@@ -5,7 +5,7 @@ import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
-import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AdminOrganisationsServiceSymbol, AdminOrganisationsServiceType } from '../_services/interfaces';
 
 import { container } from '../_config';
 
@@ -21,7 +21,7 @@ class V1AdminUnitInactivate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const adminService = container.get<AdminServiceType>(AdminServiceSymbol);
+    const adminOrganisationsService = container.get<AdminOrganisationsServiceType>(AdminOrganisationsServiceSymbol);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(
@@ -36,7 +36,7 @@ class V1AdminUnitInactivate {
 
       const requestUser = auth.getUserInfo();
       
-      const result = await adminService.inactivateUnit(
+      const result = await adminOrganisationsService.inactivateUnit(
         requestUser,
         params.organisationUnitId
       );

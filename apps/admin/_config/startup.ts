@@ -11,11 +11,21 @@ import {
 } from '@admin/shared/services';
 
 import { AdminService } from '../_services/admin.service';
+import { AdminOrganisationsService } from '../_services/admin-organisations.service';
 import { AdminTermsOfUseService } from '../_services/admin-terms-of-use.service';
-import { AdminServiceSymbol, AdminServiceType, AdminTermsOfUseServiceSymbol, AdminTermsOfUseServiceType } from '../_services/interfaces';
+import { AdminUsersService } from '../_services/admin-users.service';
+import { 
+  AdminServiceSymbol, AdminServiceType,
+  AdminTermsOfUseServiceSymbol, AdminTermsOfUseServiceType,
+  AdminOrganisationsServiceType, AdminOrganisationsServiceSymbol,
+  AdminUsersServiceType, AdminUsersServiceSymbol
+} from '../_services/interfaces';
+
 
 container.bind<AdminServiceType>(AdminServiceSymbol).to(AdminService).inSingletonScope();
 container.bind<AdminTermsOfUseServiceType>(AdminTermsOfUseServiceSymbol).to(AdminTermsOfUseService).inSingletonScope();
+container.bind<AdminOrganisationsServiceType>(AdminOrganisationsServiceSymbol).to(AdminOrganisationsService).inSingletonScope();
+container.bind<AdminUsersServiceType>(AdminUsersServiceSymbol).to(AdminUsersService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
 

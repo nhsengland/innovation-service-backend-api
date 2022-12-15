@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
 } from '@admin/shared/services';
-import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AdminOrganisationsServiceSymbol, AdminOrganisationsServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -24,7 +24,7 @@ class V1AdminOrganisationCreate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const adminService = container.get<AdminServiceType>(AdminServiceSymbol);
+    const adminOrganisationsService = container.get<AdminOrganisationsServiceType>(AdminOrganisationsServiceSymbol);
 
     try {
 
@@ -38,7 +38,7 @@ class V1AdminOrganisationCreate {
             .checkAdminType()
             .verify();
 
-        const result = await adminService.createOrganisation(
+        const result = await adminOrganisationsService.createOrganisation(
             body.organisation
         );
 
