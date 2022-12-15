@@ -33,6 +33,7 @@ export class InnovationSectionsService extends BaseService {
   }[]> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
     if (!innovation) {
@@ -41,22 +42,25 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = await innovation.sections;
 
-    const openActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
-      .select('sections.section', 'section')
-      .addSelect('COUNT(actions.id)', 'actionsCount')
-      .innerJoin('actions.innovationSection', 'sections')
-      .where('sections.innovation_id = :innovationId', { innovationId })
-      .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id) })
-      .groupBy('sections.section');
+    let openActions: { section: string, actionsCount: number }[] =  []
 
-    if (user.type === UserTypeEnum.ACCESSOR) {
-      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
-    } else if (user.type === UserTypeEnum.INNOVATOR) {
-      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+    if (sections.length > 0) {
+      const query = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+        .select('sections.section', 'section')
+        .addSelect('COUNT(actions.id)', 'actionsCount')
+        .innerJoin('actions.innovationSection', 'sections')
+        .where('sections.innovation_id = :innovationId', { innovationId })
+        .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id)})
+        .groupBy('sections.section');
+
+      if (user.type === UserTypeEnum.ACCESSOR) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
+      } else if (user.type === UserTypeEnum.INNOVATOR) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+      }
+
+      openActions = await query.getRawMany(); 
     }
-
-    const openActionsResult: { section: string, actionsCount: number }[] = await openActionsQuery.getRawMany();
-
 
     return Object.values(InnovationSectionEnum).map(sectionKey => {
 
@@ -64,7 +68,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (section) {
 
-        const openActionsCount = openActionsResult.find(item => item.section === sectionKey)?.actionsCount ?? 0;
+        const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
 
         return { id: section.id, section: section.section, status: section.status, submittedAt: section.submittedAt, openActionsCount };
 
