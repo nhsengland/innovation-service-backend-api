@@ -1,6 +1,8 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
+import { paramJ2S, bodyJ2S } from '@admin/shared/helpers/swagger.helper'
+
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import {
@@ -67,46 +69,8 @@ export default openApi(
     put: {
       description: 'Update terms of use.',
       operationId: 'v1-admin-terms-of-use-update',
-      parameters: [
-        {
-          name: 'touId',
-          in: 'path',
-          description: 'The terms of use id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        }
-      ],
-      requestBody: {
-        description: 'The updated terms of use.',
-        required: true,
-        content: {
-            'application/json': {
-                schema: {
-                    type: 'object',
-                    properties: {
-                        name: {
-                            type: 'string',
-                            description: 'Name of the terms of use.'
-                        },
-                        touType: {
-                            type: 'string',
-                            description: 'Type of the terms of use.'
-                        },
-                        summary: {
-                            type: 'string',
-                            description: 'Brief summary of the terms of use.' 
-                        },
-                        releasedAt: {
-                            type: 'string',
-                            description: 'Relase date of the terms of use.'
-                        }
-                    }
-                }
-            }
-        }
-      },
+      parameters: paramJ2S({path: ParamsSchema}),
+      requestBody: bodyJ2S(BodySchema, 'The terms of use to be updated.'),
       responses: {
         '200': {
           description: 'The terms of use have been updated.',

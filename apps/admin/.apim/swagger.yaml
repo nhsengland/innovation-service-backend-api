@@ -163,12 +163,13 @@ paths:
       parameters:
         - name: touId
           in: path
-          description: The terms of use id.
           required: true
           schema:
             type: string
+            format: uuid
+            description: The terms of use id.
       requestBody:
-        description: The updated terms of use.
+        description: The terms of use to be updated.
         required: true
         content:
           application/json:
@@ -180,6 +181,9 @@ paths:
                   description: Name of the terms of use.
                 touType:
                   type: string
+                  enum:
+                    - INNOVATOR
+                    - SUPPORT_ORGANISATION
                   description: Type of the terms of use.
                 summary:
                   type: string
@@ -187,6 +191,10 @@ paths:
                 releasedAt:
                   type: string
                   description: Relase date of the terms of use.
+              required:
+                - name
+                - touType
+              additionalProperties: false
       responses:
         "200":
           description: The terms of use have been updated.
