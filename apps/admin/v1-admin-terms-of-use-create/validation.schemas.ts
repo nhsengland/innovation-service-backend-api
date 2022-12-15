@@ -9,9 +9,9 @@ export type BodyType = {
   releasedAt?: DateISOType
 }
 export const BodySchema = Joi.object<BodyType>({
-  name: Joi.string().required(),
-  touType: Joi.string().valid(...Object.values(TermsOfUseTypeEnum)).required(),
-  summary: Joi.string().optional(),
-  releasedAt: Joi.string().optional()
+  name: Joi.string().required().description('Name of the terms of use.'),
+  touType: Joi.string().valid(...Object.values(TermsOfUseTypeEnum)).required().description('Type of the terms of use.'),
+  summary: Joi.string().optional().description('Brief summary of the terms of use.'),
+  releasedAt: Joi.string().optional().description('Relase date of the terms of use.')
 }).required()
 

@@ -1,6 +1,8 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
+import { bodyJ2S } from '@admin/shared/helpers/swagger.helper';
+
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import {
@@ -61,35 +63,7 @@ export default openApi(
     post: {
       description: 'Create terms of use.',
       operationId: 'v1-admin-terms-of-use-create',
-      requestBody: {
-        description: 'The terms of use to create.',
-        required: true,
-        content: {
-            'application/json': {
-                schema: {
-                    type: 'object',
-                    properties: {
-                        name: {
-                            type: 'string',
-                            description: 'Name of the terms of use.'
-                        },
-                        touType: {
-                            type: 'string',
-                            description: 'Type of the terms of use.'
-                        },
-                        summary: {
-                            type: 'string',
-                            description: 'Brief summary of the terms of use.' 
-                        },
-                        releasedAt: {
-                            type: 'string',
-                            description: 'Relase date of the terms of use.'
-                        }
-                    }
-                }
-            }
-        }
-      },
+      requestBody: bodyJ2S(BodySchema, 'The terms of use to create.'),
       responses: {
         '200': {
           description: 'The terms of use have been created.',
