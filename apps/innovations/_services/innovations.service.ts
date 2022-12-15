@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
-import type { SelectQueryBuilder } from 'typeorm';
+import { In, SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationActionEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -98,8 +98,8 @@ export class InnovationsService extends BaseService {
     }
     // Last worked on.
     if (filters.latestWorkedByMe) {
-      query.andWhere('innovations.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)', 
-      { userId: user.id, actions: [ActionEnum.CREATE, ActionEnum.UPDATE], offset: pagination.skip, fetch: pagination.take });
+      query.andWhere('innovations.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)',
+        { userId: user.id, actions: [ActionEnum.CREATE, ActionEnum.UPDATE], offset: pagination.skip, fetch: pagination.take });
     }
 
     if (user.type === UserTypeEnum.INNOVATOR) {
@@ -239,11 +239,11 @@ export class InnovationsService extends BaseService {
     }
 
     // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs
-    if (! filters.latestWorkedByMe) {
+    if (!filters.latestWorkedByMe) {
       // Pagination and ordering.
       query.skip(pagination.skip);
       query.take(pagination.take);
-      
+
       for (const [key, order] of Object.entries(pagination.order)) {
         let field: string;
         switch (key) {
@@ -628,8 +628,7 @@ export class InnovationsService extends BaseService {
         }));
       }
 
-
-      await this.domainService.innovations.addActivityLog<'INNOVATION_CREATION'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.INNOVATION_CREATION },
         {}
@@ -661,14 +660,22 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async submitInnovation(requestUser: DomainUserInfoType, innovationId: string, updatedById: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
+  async submitInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
 
-    const sections = await this.findInnovationSections(innovationId)
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .leftJoinAndSelect('innovations.sections', 'sections')
+      .where('innovations.id = :innovationId', { innovationId })
+      .getOne();
+
+    const sections = await innovation?.sections;
 
     if (!sections) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);
     }
 
+    // TODO: I believe that an error exists here.
+    // this.hasIncompleteSections does not take into account if ALL sections exists.
+    // If a section has never been saved before, is returning as being completed.
     const canSubmit = !(await this.hasIncompleteSections(sections));
 
     if (!canSubmit) {
@@ -683,14 +690,13 @@ export class InnovationsService extends BaseService {
         {
           submittedAt: new Date().toISOString(),
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          updatedBy: updatedById,
+          updatedBy: user.id
         }
       );
 
-      // Add to activity log
-      await this.domainService.innovations.addActivityLog<'INNOVATION_SUBMISSION'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: requestUser.id, innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION },
+        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION },
         {}
       );
 
@@ -698,19 +704,102 @@ export class InnovationsService extends BaseService {
 
     });
 
-
-
     // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>({
-      id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
-    }, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
-
-
+    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>(
+      { id: user.id, identityId: user.identityId, type: user.type },
+      NotifierTypeEnum.INNOVATION_SUBMITED,
+      { innovationId }
+    );
 
     return {
       id: innovationId,
       status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT
     };
+
+  }
+
+  async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
+
+    // const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    //   .innerJoinAndSelect('innovation.innovationSupports', 'innovationSupports')
+    // .innerJoinAndSelect('innovationSupports.organisationUnitUsers', 'organisationUnitUsers')
+    // .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
+    // .innerJoinAndSelect('organisationUsers.user', 'users')
+    //   .where('innovation.id = :innovationId', { innovationId: innovationId })
+    //   .getOne();
+
+    // if (!innovation) {
+    //   throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    // }
+
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      const supports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
+        .where('supports.innovation_id = :innovationId', { innovationId })
+        .getMany();
+
+      // Decline all actions from all innovation supports.
+      await transaction.getRepository(InnovationActionEntity).update(
+        { innovationSupport: In(supports.map(item => item.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]) },
+        { status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id }
+      );
+
+      // Removes assigned accessors from each Support and soft deletes the support.
+      for (const support of supports) {
+        // support.status = InnovationSupportStatusEnum.UNASSIGNED;
+        // support.organisationUnitUsers = [];
+        // support.updatedBy = user.id;
+        // await transaction.save(InnovationSupportEntity, support);
+        await transaction.update(InnovationSupportEntity,
+          { id: support.id },
+          {
+            status: InnovationSupportStatusEnum.UNASSIGNED,
+            organisationUnitUsers: [],
+            updatedBy: user.id
+            // deletedAt = new Date().toISOString();
+          }
+        );
+      }
+
+      await transaction.update(InnovationEntity,
+        { id: innovationId },
+        { status: InnovationStatusEnum.PAUSED, updatedBy: user.id }
+      );
+
+      await this.domainService.innovations.addActivityLog(
+        transaction,
+        { userId: user.id, innovationId, activity: ActivityEnum.INNOVATION_PAUSE },
+        { message: data.message }
+      );
+
+      // await transaction.createQueryBuilder().update(InnovationActionEntity)
+      //   .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id })
+      //   .where('innovation_support_id IN (:...supportIds)', { supportIds: innovation.innovationSupports.map(item => item.id) })
+      //   .andWhere('status IN (:...status)', { status: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW] })
+      //   .execute();
+
+      // Removes assigned accessors from each Support and soft deletes the support.
+      // for (const innovationSupport of innovation.innovationSupports) {
+      //   innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
+      //   innovationSupport.organisationUnitUsers = [];
+      //   innovationSupport.updatedBy = user.id;
+      //   await transaction.save(InnovationSupportEntity, innovationSupport);
+      // }
+
+      // Updates the Innovation status to Withdrawn.
+      // innovation.status = InnovationStatusEnum.PAUSED;
+      // innovation.updatedBy = user.id;
+      // innovation.organisationShares = [];
+      // dbInnovation.withdrawReason = data.message
+
+      // const savedEntity = await transaction.save(InnovationEntity, innovation);
+
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+
+      // return { id: innovationId }
+
+    });
 
   }
 
@@ -799,12 +888,6 @@ export class InnovationsService extends BaseService {
 
   }
 
-
-  // async getInnovationLastEngagingTransition(innovationId: string): Promise<{ statusChangedAt: null | DateISOType }> {
-  //   return {
-  //     statusChangedAt: await this.lastSupportStatusTransitionFromEngaging(innovationId)
-  //   }
-  // }
 
   async createInnovationRecordExportRequest(requestUser: { id: string, identityId: string, type: UserTypeEnum }, organisationUnitId: string, innovationId: string, data: { requestReason: string }): Promise<{ id: string; }> {
 
@@ -1105,10 +1188,7 @@ export class InnovationsService extends BaseService {
       .execute();
   }
 
-  async getInnovationSubmissionsState(innovationId: string): Promise<{ 
-    submittedAllSections: boolean; 
-    submittedForNeedsAssessment: boolean; 
-  }> {
+  async getInnovationSubmissionsState(innovationId: string): Promise<{ submittedAllSections: boolean, submittedForNeedsAssessment: boolean }> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId }).getOne();
@@ -1122,7 +1202,7 @@ export class InnovationsService extends BaseService {
       .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED }).getCount();
 
     const totalSections = Object.keys(InnovationSectionEnum).length;
-    
+
 
     return {
       submittedAllSections: sectionsSubmitted === totalSections,
@@ -1168,21 +1248,14 @@ export class InnovationsService extends BaseService {
 
   }
 
-  private async findInnovationSections(innovationId: string): Promise<InnovationSectionEntity[] | undefined> {
-
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-      .leftJoinAndSelect('innovations.sections', 'sections')
-      .where('innovations.id = :innovationId', { innovationId })
-      .getOne()
-
-    const sections = innovation?.sections;
-
-    return sections;
-  }
-
   private async hasIncompleteSections(sections: InnovationSectionEntity[]): Promise<boolean> {
 
-    const innovationSections = this.getInnovationSectionsMetadata(sections);
+    const innovationSections: InnovationSectionModel[] = [];
+
+    for (const key in InnovationSectionEnum) {
+      const section = sections.find((sec) => sec.section === key);
+      innovationSections.push(this.getInnovationSectionMetadata(key, section));
+    }
 
     return innovationSections.some(
       (x) => x.status !== InnovationSectionStatusEnum.SUBMITTED
@@ -1202,18 +1275,6 @@ export class InnovationsService extends BaseService {
 
     return result.statusChangedAt;
 
-  }
-
-  private getInnovationSectionsMetadata(sections: InnovationSectionEntity[]): InnovationSectionModel[] {
-
-    const innovationSections: InnovationSectionModel[] = [];
-
-    for (const key in InnovationSectionEnum) {
-      const section = sections.find((sec) => sec.section === key);
-      innovationSections.push(this.getInnovationSectionMetadata(key, section));
-    }
-
-    return innovationSections;
   }
 
   private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {

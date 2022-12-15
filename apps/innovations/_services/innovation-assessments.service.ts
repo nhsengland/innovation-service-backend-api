@@ -123,12 +123,10 @@ export class InnovationAssessmentsService extends BaseService {
         false
       );
 
-      await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_START'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START },
-        {
-          comment: { id: thread.thread.id, value: data.message }
-        }
+        { comment: { id: thread.thread.id, value: data.message } }
       );
 
       await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED>(
@@ -205,26 +203,21 @@ export class InnovationAssessmentsService extends BaseService {
             { id: innovationId },
             { status: InnovationStatusEnum.IN_PROGRESS, updatedBy: user.id }
           );
-  
-          await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_COMPLETED'>(
+
+          await this.domainService.innovations.addActivityLog(
             transaction,
             { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED },
-            {
-              assessmentId: assessment.id
-            }
+            { assessmentId: assessment.id }
           );
 
-        // if it's editing an already submitted assessment
-        } else { 
-          await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_EDITED'>(
+          // if it's editing an already submitted assessment
+        } else {
+          await this.domainService.innovations.addActivityLog(
             transaction,
             { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED },
-            {
-              assessmentId: assessment.id
-            }
+            { assessmentId: assessment.id }
           );
         }
-        
 
         // Add suggested organisations (NOT units) names to activity log.
         if ((data.suggestedOrganisationUnitsIds ?? []).length > 0) {
@@ -237,7 +230,7 @@ export class InnovationAssessmentsService extends BaseService {
             .andWhere('organisationUnits.inactivated_at IS NULL')
             .getMany();
 
-          await this.domainService.innovations.addActivityLog<'ORGANISATION_SUGGESTION'>(
+          await this.domainService.innovations.addActivityLog(
             transaction,
             { userId: user.id, innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION },
             { organisations: organisations.map(item => item.name) }
@@ -334,7 +327,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.softDelete(InnovationAssessmentEntity, { id: assessment.id });
 
-      await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED },
         { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }

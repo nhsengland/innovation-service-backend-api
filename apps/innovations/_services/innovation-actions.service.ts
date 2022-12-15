@@ -230,7 +230,7 @@ export class InnovationActionsService extends BaseService {
 
       const actionResult = await transaction.save<InnovationActionEntity>(actionObj);
 
-      await this.domainService.innovations.addActivityLog<'ACTION_CREATION'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: innovation.id, activity: ActivityEnum.ACTION_CREATION },
         {
@@ -388,7 +388,7 @@ export class InnovationActionsService extends BaseService {
           .where('user.id = :id', { id: dbAction.createdBy })
           .getOne();
 
-        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_DECLINED_UPDATE>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE },
           {
@@ -401,24 +401,20 @@ export class InnovationActionsService extends BaseService {
 
       if (data.status === InnovationActionStatusEnum.COMPLETED) {
 
-        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE },
-          {
-            actionId: dbAction.id
-          },
+          { actionId: dbAction.id }
         );
 
       }
 
       if (data.status === InnovationActionStatusEnum.REQUESTED) {
 
-        await this.domainService.innovations.addActivityLog<ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE },
-          {
-            actionId: dbAction.id
-          },
+          { actionId: dbAction.id }
         );
 
       }
