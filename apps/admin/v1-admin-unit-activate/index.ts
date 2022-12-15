@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
 } from '@admin/shared/services';
-import { AdminOrganisationsServiceSymbol, AdminOrganisationsServiceType } from '../_services/interfaces';
+import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -24,7 +24,7 @@ class V1AdminUnitActivate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const adminOrganisationsService = container.get<AdminOrganisationsServiceType>(AdminOrganisationsServiceSymbol);
+    const organisationsService = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
 
     try {
         const params = JoiHelper.Validate<ParamsType>(
@@ -42,7 +42,7 @@ class V1AdminUnitActivate {
         .checkAdminType()
         .verify();
 
-        const result = await adminOrganisationsService.activateUnit(
+        const result = await organisationsService.activateUnit(
             params.organisationId,
             params.organisationUnitId,
             body.userIds
