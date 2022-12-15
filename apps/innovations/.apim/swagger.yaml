@@ -12,7 +12,7 @@ paths:
       tags:
         - "[v1] Innovation Actions"
       parameters:
-        - name: property
+        - name: innovationId
           in: path
           required: true
           schema:

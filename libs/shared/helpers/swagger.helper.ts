@@ -14,7 +14,7 @@ export const paramJ2S = (data: {path?: ObjectSchema, query?: ObjectSchema}): Ope
     const swagger = j2s(data[type as keyof Parameters<typeof paramJ2S>[0]] as ObjectSchema).swagger;
     Object.entries(swagger['properties']).forEach(([property,schema]) => {
       res.push({
-        name: 'property',
+        name: property,
         in: type,
         required: swagger['required']?.includes(property) || false,
         schema: schema as OpenAPIV3.SchemaObject
