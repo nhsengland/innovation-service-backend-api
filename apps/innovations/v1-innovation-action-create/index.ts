@@ -2,8 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { bodyJ2S, paramJ2S } from '@innovations/shared/helpers/swagger.helper';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -55,8 +54,8 @@ export default openApi(V1InnovationActionCreate.httpTrigger as AzureFunction, '/
     description: 'Create a new innovation action.',
     operationId: 'v1-innovation-action-create',
     tags: ['[v1] Innovation Actions'],
-    parameters: paramJ2S({path: ParamsSchema}),
-    requestBody: bodyJ2S(BodySchema, 'The innovation action to create.'),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation action to create.' }),
     responses: {
       200: {
         description: 'The innovation action has been created.',

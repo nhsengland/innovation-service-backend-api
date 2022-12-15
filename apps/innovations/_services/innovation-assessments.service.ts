@@ -101,7 +101,10 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.update(InnovationEntity,
         { id: innovationId },
-        { status: InnovationStatusEnum.NEEDS_ASSESSMENT }
+        {
+          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString()
+        }
       );
 
       const assessment = await transaction.save(InnovationAssessmentEntity, InnovationAssessmentEntity.new({
@@ -196,12 +199,16 @@ export class InnovationAssessmentsService extends BaseService {
 
         assessment.finishedAt = new Date().toISOString();
 
-        // if it's first assessment submission
+        // If it's first assessment submission
         if (!dbAssessment.finishedAt) {
 
           await transaction.update(InnovationEntity,
             { id: innovationId },
-            { status: InnovationStatusEnum.IN_PROGRESS, updatedBy: user.id }
+            {
+              status: InnovationStatusEnum.IN_PROGRESS,
+              statusUpdatedAt: new Date().toISOString(),
+              updatedBy: user.id
+            }
           );
 
           await this.domainService.innovations.addActivityLog(
@@ -306,7 +313,11 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.update(InnovationEntity,
         { id: assessment.innovation.id },
-        { status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, updatedBy: assessment.createdBy }
+        {
+          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString(),
+          updatedBy: assessment.createdBy
+        }
       );
 
       const assessmentClone = await transaction.save(InnovationAssessmentEntity,
