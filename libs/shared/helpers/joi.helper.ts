@@ -1,5 +1,5 @@
-import Joi, { Context } from 'joi';
 import type { Root, Schema } from 'joi';
+import Joi, { Context } from 'joi';
 
 import { BadRequestError, GenericErrorsEnum } from '../errors';
 
