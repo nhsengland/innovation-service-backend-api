@@ -49,6 +49,7 @@ class V1InnovationInfo {
         name: result.name,
         description: result.description,
         status: result.status,
+        statusUpdatedAt: result.statusUpdatedAt,
         submittedAt: result.submittedAt,
         countryName: result.countryName,
         postCode: result.postCode,

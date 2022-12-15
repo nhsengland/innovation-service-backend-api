@@ -1,5 +1,6 @@
 import type { InnovationSectionEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums'
-import type { DateISOType } from '@notifications/shared/types'
+import type { DateISOType } from '@innovations/shared/types'
+
 
 export type ResponseDTO = {
   id: null | string,

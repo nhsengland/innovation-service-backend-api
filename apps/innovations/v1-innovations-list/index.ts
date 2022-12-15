@@ -54,6 +54,7 @@ class V1InnovationsList {
           name: item.name,
           description: item.description,
           status: item.status,
+          statusUpdatedAt: item.statusUpdatedAt,
           submittedAt: item.submittedAt,
           updatedAt: item.updatedAt,
           countryName: item.countryName,

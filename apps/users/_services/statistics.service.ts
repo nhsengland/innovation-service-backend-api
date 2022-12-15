@@ -1,24 +1,26 @@
+import { injectable } from 'inversify';
+
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
-import { injectable } from 'inversify';
+
 import { BaseService } from './base.service';
 
+
 @injectable()
-export class StatisticsService  extends BaseService {
+export class StatisticsService extends BaseService {
 
   constructor() {
     super();
   }
 
-  async waitingAssessment(): Promise<{count: number, overdue: number}> {
+  async waitingAssessment(): Promise<{ count: number, overdue: number }> {
 
     const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
       .getCount();
-
 
     const overdueCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
@@ -29,13 +31,14 @@ export class StatisticsService  extends BaseService {
     return {
       count: query,
       overdue: overdueCount
-    }
+    };
+
   }
 
 
- async assignedInnovations(userId: string): Promise<{count: number; total: number; overdue: number}> {
+  async assignedInnovations(userId: string): Promise<{ count: number; total: number; overdue: number }> {
 
-  const count = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const count = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
       .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
@@ -58,16 +61,17 @@ export class StatisticsService  extends BaseService {
       .getCount();
 
 
-  return {
-    count: count,
-    total: total,
-    overdue: overdueCount
+    return {
+      count: count,
+      total: total,
+      overdue: overdueCount
+    };
+
   }
- }
 
   async innovationsAssignedToMe(
     requestUser: DomainUserInfoType,
-  ): Promise<{count: number, total: number, lastSubmittedAt: null | DateISOType}> {
+  ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
 
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true);
 
@@ -94,19 +98,20 @@ export class StatisticsService  extends BaseService {
       count: myAssignedInnovationsCount,
       total: myUnitInnovationsCount,
       lastSubmittedAt: myUnitEngagingInnovations.find(_ => true)?.updatedAt || null,
-    }
+    };
+
   }
 
   async actionsToReview(
     requestUser: DomainUserInfoType,
-  ): Promise<{count: number, total: number, lastSubmittedAt: null | DateISOType}> {
+  ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
 
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
-      
+
     const myActionsCount = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
       .select('actions.status', 'status')
       .addSelect('count(*)', 'count')
@@ -116,33 +121,32 @@ export class StatisticsService  extends BaseService {
       .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
       .groupBy('actions.status')
       .getRawMany();
-  
+
     const actions: Record<string, any> = {
       IN_REVIEW: { count: 0, lastSubmittedAt: null },
       REQUESTED: { count: 0, lastSubmittedAt: null },
     }
-    for(const action of myActionsCount) {
-      actions[action.status] = {count: action.count, lastSubmittedAt: action.lastSubmittedAt} 
+    for (const action of myActionsCount) {
+      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt }
     }
-    
+
     return {
       count: actions['IN_REVIEW'].count,
       total: actions['IN_REVIEW'].count + actions['REQUESTED'].count,
-      lastSubmittedAt: Object.values(actions).map(_ => _.lastSubmittedAt).sort( (a, b) => b-a)[0] || null,
-    }
+      lastSubmittedAt: Object.values(actions).map(_ => _.lastSubmittedAt).sort((a, b) => b - a)[0] || null,
+    };
+
   }
 
   async innovationsToReview(
     requestUser: DomainUserInfoType,
-  ): Promise<{count: number, lastSubmittedAt: null | DateISOType}> {
-
+  ): Promise<{ count: number, lastSubmittedAt: null | DateISOType }> {
 
     const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
-
 
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .select('count(*)', 'count')
@@ -158,11 +162,13 @@ export class StatisticsService  extends BaseService {
       .andWhere('innovationSupports.id IS NULL')
       .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
 
-    const {count, lastSubmittedAt} = await baseQuery.getRawOne();
-  
+    const { count, lastSubmittedAt } = await baseQuery.getRawOne();
+
     return {
       count: count,
       lastSubmittedAt: lastSubmittedAt,
-    }
+    };
+
   }
+
 }

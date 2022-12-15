@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -59,17 +59,8 @@ export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{inn
     description: 'Pause an innovation.',
     operationId: 'v1-innovation-pause',
     tags: ['Innovation'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'Innovation ID',
-        required: true,
-        schema: {
-          type: 'string',
-        },
-      },
-    ],
+    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: {
         description: 'Innovation paused successfully.',

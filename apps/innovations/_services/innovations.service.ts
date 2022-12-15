@@ -49,6 +49,7 @@ export class InnovationsService extends BaseService {
       name: string,
       description: null | string,
       status: InnovationStatusEnum,
+      statusUpdatedAt: DateISOType,
       submittedAt: null | DateISOType,
       updatedAt: null | DateISOType,
       countryName: null | string,
@@ -317,6 +318,7 @@ export class InnovationsService extends BaseService {
             name: innovation.name,
             description: innovation.description,
             status: innovation.status,
+            statusUpdatedAt: innovation.statusUpdatedAt,
             submittedAt: innovation.submittedAt,
             updatedAt: innovation.updatedAt,
             countryName: innovation.countryName,
@@ -387,6 +389,7 @@ export class InnovationsService extends BaseService {
     name: string,
     description: null | string,
     status: InnovationStatusEnum,
+    statusUpdatedAt: DateISOType,
     submittedAt: null | DateISOType,
     countryName: null | string,
     postCode: null | string,
@@ -489,6 +492,7 @@ export class InnovationsService extends BaseService {
         name: result.name,
         description: result.description,
         status: result.status,
+        statusUpdatedAt: result.statusUpdatedAt,
         submittedAt: result.submittedAt,
         countryName: result.countryName,
         postCode: result.postcode,
@@ -592,6 +596,7 @@ export class InnovationsService extends BaseService {
         name: data.name,
         description: data.description,
         status: InnovationStatusEnum.CREATED,
+        statusUpdatedAt: new Date().toISOString(),
         countryName: data.countryName,
         postcode: data.postcode,
         organisationShares: data.organisationShares.map(id => OrganisationEntity.new({ id })),
@@ -684,12 +689,12 @@ export class InnovationsService extends BaseService {
 
     await this.sqlConnection.transaction(async transaction => {
 
-      const update = transaction.update(
-        InnovationEntity,
+      const update = transaction.update(InnovationEntity,
         { id: innovationId },
         {
           submittedAt: new Date().toISOString(),
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString(),
           updatedBy: user.id
         }
       );
@@ -720,51 +725,34 @@ export class InnovationsService extends BaseService {
 
   async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
 
-    // const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-    //   .innerJoinAndSelect('innovation.innovationSupports', 'innovationSupports')
-    // .innerJoinAndSelect('innovationSupports.organisationUnitUsers', 'organisationUnitUsers')
-    // .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
-    // .innerJoinAndSelect('organisationUsers.user', 'users')
-    //   .where('innovation.id = :innovationId', { innovationId: innovationId })
-    //   .getOne();
-
-    // if (!innovation) {
-    //   throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    // }
-
-
     return this.sqlConnection.transaction(async transaction => {
 
       const supports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
         .where('supports.innovation_id = :innovationId', { innovationId })
         .getMany();
 
-      // Decline all actions from all innovation supports.
+      // Decline all actions for all innovation supports.
       await transaction.getRepository(InnovationActionEntity).update(
         { innovationSupport: In(supports.map(item => item.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]) },
         { status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id }
       );
 
-      // Removes assigned accessors from each Support and soft deletes the support.
-      for (const support of supports) {
-        // support.status = InnovationSupportStatusEnum.UNASSIGNED;
-        // support.organisationUnitUsers = [];
-        // support.updatedBy = user.id;
-        // await transaction.save(InnovationSupportEntity, support);
-        await transaction.update(InnovationSupportEntity,
-          { id: support.id },
-          {
-            status: InnovationSupportStatusEnum.UNASSIGNED,
-            organisationUnitUsers: [],
-            updatedBy: user.id
-            // deletedAt = new Date().toISOString();
-          }
-        );
+      // Update all support to UNASSIGNED.
+      for (const innovationSupport of supports) {
+        innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
+        innovationSupport.organisationUnitUsers = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
+        innovationSupport.updatedBy = user.id;
+        await transaction.save(InnovationSupportEntity, innovationSupport);
       }
 
+      // Update innovation status.
       await transaction.update(InnovationEntity,
         { id: innovationId },
-        { status: InnovationStatusEnum.PAUSED, updatedBy: user.id }
+        {
+          status: InnovationStatusEnum.PAUSED,
+          statusUpdatedAt: new Date().toISOString(),
+          updatedBy: user.id
+        }
       );
 
       await this.domainService.innovations.addActivityLog(
@@ -773,31 +761,7 @@ export class InnovationsService extends BaseService {
         { message: data.message }
       );
 
-      // await transaction.createQueryBuilder().update(InnovationActionEntity)
-      //   .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id })
-      //   .where('innovation_support_id IN (:...supportIds)', { supportIds: innovation.innovationSupports.map(item => item.id) })
-      //   .andWhere('status IN (:...status)', { status: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW] })
-      //   .execute();
-
-      // Removes assigned accessors from each Support and soft deletes the support.
-      // for (const innovationSupport of innovation.innovationSupports) {
-      //   innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-      //   innovationSupport.organisationUnitUsers = [];
-      //   innovationSupport.updatedBy = user.id;
-      //   await transaction.save(InnovationSupportEntity, innovationSupport);
-      // }
-
-      // Updates the Innovation status to Withdrawn.
-      // innovation.status = InnovationStatusEnum.PAUSED;
-      // innovation.updatedBy = user.id;
-      // innovation.organisationShares = [];
-      // dbInnovation.withdrawReason = data.message
-
-      // const savedEntity = await transaction.save(InnovationEntity, innovation);
-
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-
-      // return { id: innovationId }
+      return { id: innovationId }
 
     });
 

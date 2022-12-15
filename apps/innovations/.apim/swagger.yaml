@@ -1001,10 +1001,24 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 200
+                  description: Message provided when pausing an innovation
+              required:
+                - message
+              additionalProperties: false
       responses:
         "200":
           description: Innovation paused successfully.
