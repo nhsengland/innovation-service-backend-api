@@ -101,7 +101,10 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.update(InnovationEntity,
         { id: innovationId },
-        { status: InnovationStatusEnum.NEEDS_ASSESSMENT }
+        {
+          status: InnovationStatusEnum.NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString()
+        }
       );
 
       const assessment = await transaction.save(InnovationAssessmentEntity, InnovationAssessmentEntity.new({
@@ -123,12 +126,10 @@ export class InnovationAssessmentsService extends BaseService {
         false
       );
 
-      await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_START'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START },
-        {
-          comment: { id: thread.thread.id, value: data.message }
-        }
+        { comment: { id: thread.thread.id, value: data.message } }
       );
 
       await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED>(
@@ -198,33 +199,32 @@ export class InnovationAssessmentsService extends BaseService {
 
         assessment.finishedAt = new Date().toISOString();
 
-        // if it's first assessment submission
+        // If it's first assessment submission
         if (!dbAssessment.finishedAt) {
 
           await transaction.update(InnovationEntity,
             { id: innovationId },
-            { status: InnovationStatusEnum.IN_PROGRESS, updatedBy: user.id }
-          );
-  
-          await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_COMPLETED'>(
-            transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED },
             {
-              assessmentId: assessment.id
+              status: InnovationStatusEnum.IN_PROGRESS,
+              statusUpdatedAt: new Date().toISOString(),
+              updatedBy: user.id
             }
           );
 
-        // if it's editing an already submitted assessment
-        } else { 
-          await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_EDITED'>(
+          await this.domainService.innovations.addActivityLog(
+            transaction,
+            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED },
+            { assessmentId: assessment.id }
+          );
+
+          // if it's editing an already submitted assessment
+        } else {
+          await this.domainService.innovations.addActivityLog(
             transaction,
             { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED },
-            {
-              assessmentId: assessment.id
-            }
+            { assessmentId: assessment.id }
           );
         }
-        
 
         // Add suggested organisations (NOT units) names to activity log.
         if ((data.suggestedOrganisationUnitsIds ?? []).length > 0) {
@@ -237,7 +237,7 @@ export class InnovationAssessmentsService extends BaseService {
             .andWhere('organisationUnits.inactivated_at IS NULL')
             .getMany();
 
-          await this.domainService.innovations.addActivityLog<'ORGANISATION_SUGGESTION'>(
+          await this.domainService.innovations.addActivityLog(
             transaction,
             { userId: user.id, innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION },
             { organisations: organisations.map(item => item.name) }
@@ -313,7 +313,11 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.update(InnovationEntity,
         { id: assessment.innovation.id },
-        { status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, updatedBy: assessment.createdBy }
+        {
+          status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          statusUpdatedAt: new Date().toISOString(),
+          updatedBy: assessment.createdBy
+        }
       );
 
       const assessmentClone = await transaction.save(InnovationAssessmentEntity,
@@ -334,7 +338,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await transaction.softDelete(InnovationAssessmentEntity, { id: assessment.id });
 
-      await this.domainService.innovations.addActivityLog<'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED },
         { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }

@@ -62,6 +62,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ type: 'simple-enum', enum: InnovationStatusEnum, nullable: false })
   status: InnovationStatusEnum;
 
+  @Column({ name: 'status_updated_at', type: 'datetime2' })
+  statusUpdatedAt: DateISOType;
+
   @Column({ name: 'survey_id', type: 'nvarchar', unique: true, nullable: true })
   surveyId: null | string;
 

@@ -223,7 +223,7 @@ export class InnovationTransferService extends BaseService {
             updatedBy: requestUser.id,
           });
 
-        await this.domainService.innovations.addActivityLog<'OWNERSHIP_TRANSFER'>(
+        await this.domainService.innovations.addActivityLog(
           transactionManager,
           { userId: requestUser.id, innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER },
           {

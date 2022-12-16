@@ -66,7 +66,7 @@ class V1Health {
               innovationSupport: {
                 id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, message: 'one test message', statusChanged: true, 
                 // first is the same as the sender, the second is another one (the first shouldn't receive the email notification)
-                newAssignedAccessors: [{ id: requestQA.id }, { id: 'CD136010-453F-4A7D-B9E6-B9B1D73D4CE2' }],
+                newAssignedAccessors: [{ id: requestQA.id }, { id: '3C05A679-7FD0-EC11-B656-0050F25A2AF6' }],
               }
             }
           );

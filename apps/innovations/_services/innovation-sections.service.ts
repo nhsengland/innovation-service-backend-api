@@ -33,6 +33,7 @@ export class InnovationSectionsService extends BaseService {
   }[]> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
     if (!innovation) {
@@ -41,22 +42,25 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = await innovation.sections;
 
-    const openActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
-      .select('sections.section', 'section')
-      .addSelect('COUNT(actions.id)', 'actionsCount')
-      .innerJoin('actions.innovationSection', 'sections')
-      .where('sections.innovation_id = :innovationId', { innovationId })
-      .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id) })
-      .groupBy('sections.section');
+    let openActions: { section: string, actionsCount: number }[] =  []
 
-    if (user.type === UserTypeEnum.ACCESSOR) {
-      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
-    } else if (user.type === UserTypeEnum.INNOVATOR) {
-      openActionsQuery.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+    if (sections.length > 0) {
+      const query = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+        .select('sections.section', 'section')
+        .addSelect('COUNT(actions.id)', 'actionsCount')
+        .innerJoin('actions.innovationSection', 'sections')
+        .where('sections.innovation_id = :innovationId', { innovationId })
+        .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id)})
+        .groupBy('sections.section');
+
+      if (user.type === UserTypeEnum.ACCESSOR) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
+      } else if (user.type === UserTypeEnum.INNOVATOR) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+      }
+
+      openActions = await query.getRawMany(); 
     }
-
-    const openActionsResult: { section: string, actionsCount: number }[] = await openActionsQuery.getRawMany();
-
 
     return Object.values(InnovationSectionEnum).map(sectionKey => {
 
@@ -64,7 +68,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (section) {
 
-        const openActionsCount = openActionsResult.find(item => item.section === sectionKey)?.actionsCount ?? 0;
+        const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
 
         return { id: section.id, section: section.section, status: section.status, submittedAt: section.submittedAt, openActionsCount };
 
@@ -209,7 +213,7 @@ export class InnovationSectionsService extends BaseService {
       await this.domainService.innovations.deleteInnovationFiles(transaction, sectionDeletedFiles);
 
       if (shouldAddActivityLog) {
-        await this.domainService.innovations.addActivityLog<'SECTION_DRAFT_UPDATE'>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE },
           { sectionId: sectionKey }
@@ -266,7 +270,7 @@ export class InnovationSectionsService extends BaseService {
       // Add activity logs.
       if (dbInnovation.status != InnovationStatusEnum.CREATED) {
         // BUSINESS RULE: Don't log section updates before innovation submission, only after.
-        await this.domainService.innovations.addActivityLog<'SECTION_SUBMISSION'>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION },
           { sectionId: savedSection.section }
@@ -274,7 +278,7 @@ export class InnovationSectionsService extends BaseService {
       }
 
       if (requestedStatusActions.length > 0) {
-        await this.domainService.innovations.addActivityLog<'ACTION_STATUS_IN_REVIEW_UPDATE'>(
+        await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
@@ -390,7 +394,7 @@ export class InnovationSectionsService extends BaseService {
       return { id: savedEvidence.id };
     });
   }
-  
+
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
     id: string,
     evidenceType: EvidenceTypeCatalogueEnum,

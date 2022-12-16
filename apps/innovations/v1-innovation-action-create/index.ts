@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -49,48 +49,13 @@ class V1InnovationActionCreate {
   }
 
 }
-
 export default openApi(V1InnovationActionCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/actions', {
   post: {
     description: 'Create a new innovation action.',
     operationId: 'v1-innovation-action-create',
     tags: ['[v1] Innovation Actions'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'The innovation id.',
-        required: true,
-        schema: {
-          type: 'string',
-          format: 'uuid',
-        },
-      },
-    ],
-    requestBody: {
-      description: 'The innovation action to create.',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object',
-            properties: {
-              description: {
-                type: 'string',
-                description: 'The description of the action.',
-                example: 'This is a description of the action.',
-              },
-              sectionKey: {
-                type: 'string',
-                description: 'The section key.',
-                example: 'ACCESS',
-              },
-            },
-            required: ['description', 'sectionKey'],
-          },
-        },
-      },
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation action to create.' }),
     responses: {
       200: {
         description: 'The innovation action has been created.',
