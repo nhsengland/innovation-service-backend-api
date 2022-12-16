@@ -1,8 +1,8 @@
-import type { AdminService } from './admin.service';
-import type { AdminTermsOfUseService } from './admin-terms-of-use.service';
+import type { TermsOfUseService } from './terms-of-use.service';
+import type { OrganisationsService } from './organisations.service';
 
-export type AdminServiceType = typeof AdminService.prototype;
-export const AdminServiceSymbol = Symbol('AdminService');
+export type TermsOfUseServiceType = typeof TermsOfUseService.prototype;
+export const TermsOfUseServiceSymbol = Symbol('TermsOfUseService');
 
-export type AdminTermsOfUseServiceType = typeof AdminTermsOfUseService.prototype;
-export const AdminTermsOfUseServiceSymbol = Symbol('AdminTermsOfUseService')
+export type OrganisationsServiceType = typeof OrganisationsService.prototype;
+export const OrganisationsServiceSymbol = Symbol('OrganisationsService');

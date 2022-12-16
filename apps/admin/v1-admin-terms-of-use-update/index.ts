@@ -1,15 +1,12 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { paramJ2S, bodyJ2S } from '@admin/shared/helpers/swagger.helper'
+import { SwaggerHelper } from '@admin/shared/helpers/swagger.helper'
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType,
-} from '@admin/shared/services';
-import { AdminTermsOfUseServiceSymbol, AdminTermsOfUseServiceType } from '../_services/interfaces';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
+import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -26,38 +23,38 @@ class V1AdminTermsOfUseUpdate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const adminToUService = container.get<AdminTermsOfUseServiceType>(AdminTermsOfUseServiceSymbol);
+    const toUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
 
     try {
 
-        const params = JoiHelper.Validate<ParamsType>(
-            ParamsSchema,
-            request.params
-        )
+      const params = JoiHelper.Validate<ParamsType>(
+        ParamsSchema,
+        request.params
+      )
 
-        const body = JoiHelper.Validate<BodyType>(
-            BodySchema,
-            request.body
-        );
+      const body = JoiHelper.Validate<BodyType>(
+        BodySchema,
+        request.body
+      );
 
-        const auth = await authorizationService
-            .validate(context.auth.user.identityId)
-            .checkAdminType()
-            .verify();
+      const auth = await authorizationService
+        .validate(context.auth.user.identityId)
+        .checkAdminType()
+        .verify();
 
-        const requestUser = auth.getUserInfo()
+      const requestUser = auth.getUserInfo()
 
-        const result = await adminToUService.updateTermsOfUse(
-            { id: requestUser.id },
-            body,
-            params.touId
-        );
+      const result = await toUService.updateTermsOfUse(
+        { id: requestUser.id },
+        body,
+        params.touId
+      );
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
-        return;
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
+      return;
     } catch (error) {
-        context.res = ResponseHelper.Error(context, error);
-        return;
+      context.res = ResponseHelper.Error(context, error);
+      return;
     }
   }
 }
@@ -69,8 +66,8 @@ export default openApi(
     put: {
       description: 'Update terms of use.',
       operationId: 'v1-admin-terms-of-use-update',
-      parameters: paramJ2S({path: ParamsSchema}),
-      requestBody: bodyJ2S(BodySchema, 'The terms of use to be updated.'),
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The terms of use to be updated.' }),
       responses: {
         '200': {
           description: 'The terms of use have been updated.',
