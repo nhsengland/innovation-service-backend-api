@@ -5,16 +5,15 @@ import { Container } from 'inversify';
 import {
   AuthorizationService, AuthorizationServiceType, DomainService, DomainServiceType, FileStorageService, FileStorageServiceType, HttpService, HttpServiceType, IdentityProviderService,
   IdentityProviderServiceType, LoggerService, LoggerServiceType, NOSQLConnectionService, NOSQLConnectionServiceType, NotifierService, NotifierServiceType, SQLConnectionService,
-  SQLConnectionServiceType, StorageQueueService, StorageQueueServiceType, IdentityOperationsQueueServiceType
+  SQLConnectionServiceType, StorageQueueService, StorageQueueServiceType
 } from '../services';
 import { AuditService } from '../services/integrations/audit.service';
 import {
   AuditServiceSymbol,
   AuditServiceType,
   AuthorizationServiceSymbol, DomainServiceSymbol, FileStorageServiceSymbol, HttpServiceSymbol, IdentityProviderServiceSymbol, LoggerServiceSymbol, NOSQLConnectionServiceSymbol,
-  NotifierServiceSymbol, SQLConnectionServiceSymbol, StorageQueueServiceSymbol, IdentityOperationsQueueServiceSymbol
+  NotifierServiceSymbol, SQLConnectionServiceSymbol, StorageQueueServiceSymbol
 } from '../services/interfaces';
-import { IdentityOperationsQueueService } from '../services/integrations/identity-operations-queue.service';
 
 export const container: Container = new Container();
 
@@ -29,4 +28,3 @@ container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConne
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<AuditServiceType>(AuditServiceSymbol).to(AuditService).inSingletonScope();
-container.bind<IdentityOperationsQueueServiceType>(IdentityOperationsQueueServiceSymbol).to(IdentityOperationsQueueService).inSingletonScope();

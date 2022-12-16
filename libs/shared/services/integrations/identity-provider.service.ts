@@ -305,8 +305,8 @@ export class IdentityProviderService {
     try {
       await this.storageQueueService.sendMessage(QueuesEnum.IDENTITY, {
         data: {
-          // requestUser: {id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type},
-          
+          identityId,
+          body
         }
       });
 

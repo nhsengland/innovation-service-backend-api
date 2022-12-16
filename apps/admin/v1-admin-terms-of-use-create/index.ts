@@ -4,7 +4,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
-import { AdminTermsOfUseServiceSymbol, AdminTermsOfUseServiceType } from '../_services/interfaces';
+import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -19,7 +19,7 @@ class V1AdminTermsOfUseCreate {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const adminToUService = container.get<AdminTermsOfUseServiceType>(AdminTermsOfUseServiceSymbol);
+    const toUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
 
     try {
 
@@ -30,7 +30,7 @@ class V1AdminTermsOfUseCreate {
         .verify();
       const requestUser = auth.getUserInfo()
 
-      const result = await adminToUService.createTermsOfUse({ id: requestUser.id }, body);
+      const result = await toUService.createTermsOfUse({ id: requestUser.id }, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
