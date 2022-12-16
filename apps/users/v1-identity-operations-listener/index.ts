@@ -21,7 +21,6 @@ class V1IdentityOperationsQueueListener {
 		}
 	): Promise<void> {
 
-		// use identityOperations service (need to create)
 		const identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
 		context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
