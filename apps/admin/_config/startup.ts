@@ -10,22 +10,16 @@ import {
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
-import { AdminService } from '../_services/admin.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
-import { UsersService } from '../_services/users.service';
 import { 
-  AdminServiceSymbol, AdminServiceType,
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  OrganisationsServiceType, OrganisationsServiceSymbol,
-  UsersServiceType, UsersServiceSymbol
+  OrganisationsServiceType, OrganisationsServiceSymbol
 } from '../_services/interfaces';
 
 
-container.bind<AdminServiceType>(AdminServiceSymbol).to(AdminService).inSingletonScope();
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
-container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
 
