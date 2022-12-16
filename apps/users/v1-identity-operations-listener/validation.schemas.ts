@@ -1,23 +1,25 @@
 import Joi from 'joi';
 
-import { IdentityOperationsTypeEnum } from '@users/shared/enums';
-
-
 export type IdentityOperationType = {
   data: {
-    type: IdentityOperationsTypeEnum,
-    identityId: string
+    identityId: string,
+    body: {
+      displayName?: string,
+      mobilePhone?: string | null,
+      accountEnabled?: boolean
+    }
   }
 }
 
 export const IdentityOperationSchema = Joi.object<IdentityOperationType>({
 
   data: Joi.object<IdentityOperationType['data']>({
-
-    type: Joi.string().valid(...Object.values(IdentityOperationsTypeEnum)).required(),
-
-    identityId: Joi.string().guid().required()
-
+    identityId: Joi.string().guid().required(),
+    body: Joi.object({
+      displayName: Joi.string().optional(),
+      mobilePhone: Joi.string().allow(null).optional(),
+      accountEnabled: Joi.boolean().optional()
+    }).required()
   }).required()
 
 }).required();

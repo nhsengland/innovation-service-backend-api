@@ -1,46 +1,48 @@
-import type { IdentityOperationsTypeEnum } from '@users/shared/enums';
 import type { Context } from '@azure/functions'
 import { JoiHelper } from '@users/shared/helpers';
 import { container } from '../_config';
 
 import { IdentityOperationType, IdentityOperationSchema } from './validation.schemas'
-import { IdentityOperationsServiceType, IdentityOperationsServiceSymbol } from '../_services/interfaces';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
 
 class V1IdentityOperationsQueueListener {
 
-    static async queueTrigger (
-        context: Context,
-        requestOperation: {
-            data: {
-                type: IdentityOperationsTypeEnum,
-                identityId : string
-            }
-        }
-    ) : Promise<void> {
+	static async queueTrigger(
+		context: Context,
+		requestOperation: {
+			data: {
+				identityId: string,
+				body: {
+					displayName?: string,
+					mobilePhone?: string | null,
+					accountEnabled?: boolean
+				}
+			}
+		}
+	): Promise<void> {
 
-        // use identityOperations service (need to create)
-        const identityOperationsService = container.get<IdentityOperationsServiceType>(IdentityOperationsServiceSymbol);
+		// use identityOperations service (need to create)
+		const identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
-        context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
+		context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
 
-        try {
+		try {
 
-            const operation = JoiHelper.Validate<IdentityOperationType>(IdentityOperationSchema, requestOperation);
-      
-            await identityOperationsService.updateUser(
-                operation.data.type,
-                operation.data.identityId,
-            );
-      
-            context.res = { done: true };
-            return;
-      
-          } catch (error) {
-            context.log.error('ERROR: Unexpected error parsing idendity operation: ', JSON.stringify(error));
-            throw error;
-          }
+			const operation = JoiHelper.Validate<IdentityOperationType>(IdentityOperationSchema, requestOperation);
 
-    }
+			await identityProviderService.updateUser(
+				operation.data.identityId,
+				operation.data.body
+			);
+
+			context.res = { done: true };
+			return;
+
+		} catch (error) {
+			context.log.error('ERROR: Unexpected error parsing idendity operation: ', JSON.stringify(error));
+			throw error;
+		}
+	}
 }
 
 

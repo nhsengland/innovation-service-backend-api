@@ -2,8 +2,9 @@ import { inject, injectable } from 'inversify';
 import axios, { AxiosResponse } from 'axios';
 
 import { NotFoundError, ServiceUnavailableError, UnauthorizedError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
-import { LoggerServiceSymbol, LoggerServiceType } from '../interfaces';
+import { LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
 import type { DateISOType } from '../../types/date.types';
+import { QueuesEnum } from './storage-queue.service';
 
 
 type b2cGetUserInfoDTO = {
@@ -83,7 +84,8 @@ export class IdentityProviderService {
 
 
   constructor(
-    @inject(LoggerServiceSymbol) private loggerService: LoggerServiceType
+    @inject(LoggerServiceSymbol) private loggerService: LoggerServiceType,
+    @inject(StorageQueueServiceSymbol) private storageQueueService: StorageQueueServiceType
   ) { }
 
 
@@ -275,8 +277,6 @@ export class IdentityProviderService {
 
   }
 
-
-  // MF - use this to lock user after reading lock request form queue
   async updateUser(identityId: string, body: { displayName?: string, mobilePhone?: string | null, accountEnabled?: boolean }): Promise<void> {
 
     await this.verifyAccessToken();
@@ -291,6 +291,31 @@ export class IdentityProviderService {
       throw this.getError(error.response.status, error.response.data.message);
     });
 
+  }
+
+  async updateUserAsync(
+    identityId: string,
+    body: {
+      displayName?: string,
+      mobilePhone?: string | null,
+      accountEnabled?: boolean
+    }
+  ): Promise<boolean> {
+
+    try {
+      await this.storageQueueService.sendMessage(QueuesEnum.IDENTITY, {
+        data: {
+          // requestUser: {id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type},
+          
+        }
+      });
+
+      this.loggerService.log(`Identity operation sent to queue`, { identityId, body });
+
+    } catch (error) {
+      this.loggerService.error('Error sending identity operation to queue', error);
+    }
+    return true;
   }
 
 
