@@ -1,8 +1,12 @@
 import type { TermsOfUseService } from './terms-of-use.service';
 import type { OrganisationsService } from './organisations.service';
+import type { UsersService } from './users.service';
 
 export type TermsOfUseServiceType = typeof TermsOfUseService.prototype;
 export const TermsOfUseServiceSymbol = Symbol('TermsOfUseService');
 
 export type OrganisationsServiceType = typeof OrganisationsService.prototype;
 export const OrganisationsServiceSymbol = Symbol('OrganisationsService');
+
+export type UsersServiceType = typeof UsersService.protoype;
+export const UsersServiceSymbol = Symbol('UsersService')
