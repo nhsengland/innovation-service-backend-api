@@ -456,6 +456,21 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map((u) => u.id) };
   }
 
+  async createUnit(
+    organisationId: string,
+    name: string,
+    acronym: string
+  ): Promise<{ id: string }> {
+
+    const unit = await this.sqlConnection.transaction(async transaction => {
+      
+      return this.createOrganisationUnit(organisationId, name, acronym, false, transaction)
+
+    });
+
+    return { id: unit.id }
+  }
+
   private async createOrganisationUnit(
     organisationId: string,
     name: string,
@@ -496,4 +511,6 @@ export class OrganisationsService extends BaseService {
 
     return savedUnit;
   }
+
+  
 }
