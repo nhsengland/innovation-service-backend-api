@@ -24,7 +24,7 @@ export class DomainInnovationsService {
   }
 
 
-  async archiveInnovations(
+  async withdrawInnovations(
     transactionManager: EntityManager,
     user: { id: string },
     innovations: { id: string, reason: null | string }[]
@@ -65,8 +65,8 @@ export class DomainInnovationsService {
           await transactionManager.save(InnovationSupportEntity, innovationSupport);
         }
 
-        // Lastly, lets update innovations to ARCHIVED.
-        innovation.status = InnovationStatusEnum.ARCHIVED;
+        // Lastly, lets update innovations to WITHDRAWN.
+        innovation.status = InnovationStatusEnum.WITHDRAWN;
         innovation.updatedBy = user.id;
         innovation.organisationShares = [];
         innovation.archiveReason = innovations.find(item => item.id === innovation.id)?.reason || null;
@@ -86,7 +86,7 @@ export class DomainInnovationsService {
       return toReturn;
 
     } catch (error) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ARCHIVE_ERROR);
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WIDTHRAW_ERROR);
     }
 
   }

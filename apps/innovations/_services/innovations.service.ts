@@ -1300,7 +1300,7 @@ export class InnovationsService extends BaseService {
       [InnovationGroupedStatusEnum.NEEDS_ASSESSMENT]: InnovationStatusEnum.NEEDS_ASSESSMENT,
       [InnovationGroupedStatusEnum.AWAITING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
       [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.ARCHIVED]: InnovationStatusEnum.ARCHIVED,
+      [InnovationGroupedStatusEnum.WITHDRAWN]: InnovationStatusEnum.WITHDRAWN,
     }
 
     const status = [];

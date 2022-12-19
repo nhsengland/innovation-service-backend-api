@@ -9,7 +9,7 @@ import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
   ActionUpdateHandler, BaseHandler, CommentCreationHandler, DailyDigestHandler,
-  IdleInnovatorsHandler, IdleSupportHandler, InnovationArchivedHandler,
+  IdleInnovatorsHandler, IdleSupportHandler, InnovationWithdrawnHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationSubmitedHandler,
   InnovationSupportStatusUpdateHandler, InnovationTransferOwnershipCompletedHandler, InnovationTransferOwnershipCreationHandler, InnovatorAccountCreationHandler,
@@ -131,10 +131,10 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_ARCHIVED]: {
-    handler: InnovationArchivedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVED]>({
-      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVED]['innovation']>({
+  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
+    handler: InnovationWithdrawnHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
+      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]['innovation']>({
         id: Joi.string().guid().required(),
         name: Joi.string().required(),
         assignedUserIds: Joi.array().items(Joi.string().guid()).required()
