@@ -112,7 +112,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         params: {
           qa_name: this.data.requestUserAdditionalInfo?.displayName ?? 'qualified accessor', // what should the default be, believe it will never happen
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('assessment/innovations/:innovationId')
+          .addPath('accessor/innovations/:innovationId')
           .setPathParams({ innovationId: this.inputData.innovationId })
           .buildUrl()
         }
