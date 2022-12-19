@@ -71,11 +71,14 @@ export class DomainInnovationsService {
 
   public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<InnovationEntity> {
     const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
-    await transactionManager.createQueryBuilder().update(InnovationActionEntity)
-      .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, deletedAt: new Date() })
-      .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
-      .execute();
 
+    if (innovationSupportIds.length > 0) {
+      await transactionManager.createQueryBuilder().update(InnovationActionEntity)
+        .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, deletedAt: new Date() })
+        .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
+        .execute();
+    }
+    
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {
       innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;

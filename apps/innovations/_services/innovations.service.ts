@@ -737,10 +737,10 @@ export class InnovationsService extends BaseService {
       const result = await this.sqlConnection.transaction(async transaction => {
 
         const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity,'innovations')
-          .innerJoinAndSelect('innovations.innovationSupports', 'supports')
-          .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
-          .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
-          .innerJoinAndSelect('organisationUsers.user', 'users')
+          .leftJoinAndSelect('innovations.innovationSupports', 'supports')
+          .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
+          .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
+          .leftJoinAndSelect('organisationUsers.user', 'users')
           .andWhere('innovations.id = :innovationId', { innovationId })
           .getOne();
 
