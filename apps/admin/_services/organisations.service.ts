@@ -441,7 +441,6 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map((u) => u.id) };
   }
 
-<<<<<<< HEAD
   async createUnit(
     organisationId: string,
     name: string,
@@ -456,8 +455,6 @@ export class OrganisationsService extends BaseService {
 
     return { id: unit.id }
   }
-=======
->>>>>>> 2945fb5293c3d20cf3ba58be45c4d8e7d2cfbe8c
 
   private async createOrganisationUnit(
     organisationId: string,
