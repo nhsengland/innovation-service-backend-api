@@ -31,10 +31,10 @@ paths:
           description: Forbidden
   /v1/organisations:
     post:
-      description: Create an organisation unit.
+      description: Create an organisation.
       operationId: v1-admin-organisation-create
       requestBody:
-        description: The organisation to create.
+        description: The organisation to be created.
         required: true
         content:
           application/json:
@@ -43,16 +43,35 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 100
                   description: Name of the organisation.
                 acronym:
                   type: string
+                  maxLength: 10
                   description: Acronym of the organisation.
-                unit:
-                  type: string
-                  description: Ids of the organistaion units.
+                units:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the organisaion unit.
+                      acronym:
+                        type: string
+                        description: Acronym of the organisation unit.
+                    required:
+                      - name
+                      - acronym
+                    additionalProperties: false
+                  description: Organistaion units to create.
+              required:
+                - name
+                - acronym
+              additionalProperties: false
       responses:
         "200":
-          description: The organisation unit has been created.
+          description: The organisation has been created.
           content:
             application/json:
               schema:
@@ -66,7 +85,7 @@ paths:
         "401":
           description: The user is not authorized to create an organisation.
         "500":
-          description: An error occurred while creating the organisation unit.
+          description: An error occurred while creating the organisation.
   "/v1/organisations/{organisationId}":
     patch:
       description: Update an organisation.
@@ -342,3 +361,52 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  "/v1/organisations/{organisationId}/units":
+    post:
+      description: Create an organisation unit.
+      operationId: v1-admin-unit-create
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the organisation to which the unit will belong to.
+      requestBody:
+        description: The organisation unit to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Name of the organisation unit.
+                acronym:
+                  type: string
+                  maxLength: 10
+                  description: Acronym of the organisation unit.
+              required:
+                - name
+                - acronym
+              additionalProperties: false
+      responses:
+        "200":
+          description: The organisation unit has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create an organisation unit.
+        "500":
+          description: An error occurred while creating the organisation unit.
