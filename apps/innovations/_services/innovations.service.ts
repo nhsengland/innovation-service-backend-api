@@ -723,6 +723,47 @@ export class InnovationsService extends BaseService {
 
   }
 
+  async withdrawInnovation(
+    user: { id: string, identityId: string, type: UserTypeEnum }, 
+    innovationId: string,
+    reason: string,
+    ): Promise<{
+      id: string;
+      name: string;
+      status: InnovationStatusEnum;
+      updatedAt: DateISOType;
+  }> {
+
+      const result = await this.sqlConnection.transaction(async transaction => {
+
+        const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity,'innovations')
+          .innerJoinAndSelect('innovations.innovationSupports', 'supports')
+          .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
+          .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
+          .innerJoinAndSelect('organisationUsers.user', 'users')
+          .andWhere('innovations.id = :innovationId', { innovationId })
+          .getOne();
+
+        if (!dbInnovation) {
+          throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+        }
+
+        return this.domainService.innovations.withdrawInnovation(
+          dbInnovation,
+          transaction,
+          user,
+          reason,
+        )
+      });
+
+      return {
+        id: result.id,
+        name: result.name,
+        status: result.status,
+        updatedAt: result.updatedAt,
+      };
+  }
+
   async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
 
     return this.sqlConnection.transaction(async transaction => {
