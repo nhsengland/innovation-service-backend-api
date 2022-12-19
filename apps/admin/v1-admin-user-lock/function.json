@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/users/{userId}"
+      "route": "v1/users/{userId}/lock"
     },
     { "type": "http", "direction": "out", "name": "res" }
   ]
