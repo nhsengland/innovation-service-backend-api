@@ -12,7 +12,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-class V1AdminUserLock {
+class V1AdminUserUnlock {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -32,7 +32,7 @@ class V1AdminUserLock {
         .checkAdminType()
         .verify();
       
-      const result = await usersService.lockUser(params.userId);
+      const result = await usersService.unlockUser(params.userId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -44,16 +44,16 @@ class V1AdminUserLock {
 }
 
 export default openApi(
-  V1AdminUserLock.httpTrigger as AzureFunction,
-  '/v1/users/{userId}',
+  V1AdminUserUnlock.httpTrigger as AzureFunction,
+  '/v1/users/{userId}/unlock',
   {
     patch: {
-      description: 'Lock a user.',
-      operationId: 'v1-admin-user-lock',
+      description: 'Unlock a user.',
+      operationId: 'v1-admin-user-unlock',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
-          description: 'The user has been locked.',
+          description: 'The user has been unlocked.',
           content: {
             'application/json': {
               schema: {
@@ -72,13 +72,13 @@ export default openApi(
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to lock a user.',
+          description: 'The user is not authorized to unlock a user.',
         },
         '404': {
           description: 'The user does not exist.',
         },
         '500': {
-          description: 'An error occurred while locking a user.',
+          description: 'An error occurred while unlocking a user.',
         },
       },
     },
