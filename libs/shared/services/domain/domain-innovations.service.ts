@@ -49,7 +49,7 @@ export class DomainInnovationsService {
       for (const innovation of dbInnovations) {
 
         const reason = innovations.find(item => item.id === innovation.id)?.reason || null;
-        await this.withdrawInnovation(innovation, transactionManager, user, null);
+        await this.withdrawInnovation(innovation, transactionManager, user, reason);
 
         toReturn.push({
           id: innovation.id,
