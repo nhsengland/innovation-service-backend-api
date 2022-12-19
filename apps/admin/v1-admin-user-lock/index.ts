@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
@@ -10,6 +10,7 @@ import { container } from '../_config';
 
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
+import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 class V1AdminUserLock {
   @JwtDecoder()
@@ -47,40 +48,21 @@ export default openApi(
   '/v1/users/{userId}',
   {
     patch: {
-      description: 'Lock a user in identity provider.',
-      operationId: 'v1-admin-unit-inactivate',
-      parameters: [
-        {
-          name: 'organisationId',
-          in: 'path',
-          description: 'The organisation id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-        {
-          name: 'organisationUnitId',
-          in: 'path',
-          description: 'The organisation unit id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
+      description: 'Lock a user.',
+      operationId: 'v1-admin-user-lock',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
-          description: 'The organisation unit has been inactivated.',
+          description: 'The user has been locked.',
           content: {
             'application/json': {
               schema: {
                 type: 'object',
                 properties: {
-                  unitId: {
+                  userId: {
                     type: 'string',
-                    description: 'The organisation unit id.',
-                  },
+                    description: 'Id of the user.',
+                  }
                 },
               },
             },
@@ -90,13 +72,13 @@ export default openApi(
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to inactivate an organisation unit.',
+          description: 'The user is not authorized to lock a user.',
         },
         '404': {
-          description: 'The organisation unit does not exist.',
+          description: 'The user does not exist.',
         },
         '500': {
-          description: 'An error occurred while inactivating the organisation unit.',
+          description: 'An error occurred while locking a user.',
         },
       },
     },

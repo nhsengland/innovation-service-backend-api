@@ -91,10 +91,14 @@ export default openApi(
               schema: {
                 type: 'object',
                 properties: {
-                  unitId: {
+                  id: {
                     type: 'string',
                     description: 'The organisation id.',
                   },
+                  units: {
+                    type: 'string',
+                    description: 'Ids of the organisation units belonging to the organisation.'
+                  }
                 },
               },
             },
