@@ -7,41 +7,41 @@ import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@use
 
 class V1IdentityOperationsQueueListener {
 
-	static async queueTrigger(
-		context: Context,
-		requestOperation: {
-			data: {
-				identityId: string,
-				body: {
-					displayName?: string,
-					mobilePhone?: string | null,
-					accountEnabled?: boolean
-				}
-			}
-		}
-	): Promise<void> {
+  static async queueTrigger(
+    context: Context,
+    requestOperation: {
+      data: {
+        identityId: string,
+        body: {
+          displayName?: string,
+          mobilePhone?: string | null,
+          accountEnabled?: boolean
+        }
+      }
+    }
+  ): Promise<void> {
 
-		const identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
+    const identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
-		context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
+    context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
 
-		try {
+    try {
 
-			const operation = JoiHelper.Validate<IdentityOperationType>(IdentityOperationSchema, requestOperation);
+      const operation = JoiHelper.Validate<IdentityOperationType>(IdentityOperationSchema, requestOperation);
 
-			await identityProviderService.updateUser(
-				operation.data.identityId,
-				operation.data.body
-			);
+      await identityProviderService.updateUser(
+        operation.data.identityId,
+        operation.data.body
+      );
 
-			context.res = { done: true };
-			return;
+      context.res = { done: true };
+      return;
 
-		} catch (error) {
-			context.log.error('ERROR: Unexpected error parsing idendity operation: ', JSON.stringify(error));
-			throw error;
-		}
-	}
+    } catch (error) {
+      context.log.error('ERROR: Unexpected error parsing idendity operation: ', JSON.stringify(error));
+      throw error;
+    }
+  }
 }
 
 
