@@ -729,9 +729,6 @@ export class InnovationsService extends BaseService {
     reason: string,
     ): Promise<{
       id: string;
-      name: string;
-      status: InnovationStatusEnum;
-      updatedAt: DateISOType;
   }> {
 
       const result = await this.sqlConnection.transaction(async transaction => {
@@ -756,11 +753,20 @@ export class InnovationsService extends BaseService {
         )
       });
 
+      await this.notifierService.send(
+        { id: user.id, identityId: user.identityId, type: user.type },
+        NotifierTypeEnum.INNOVATION_WITHDRAWN,
+        { 
+          innovation: {
+            id: result.id,
+            name: result.name,
+            assignedUserIds: result.supportingUserIds,
+          },
+        }
+      );
+
       return {
         id: result.id,
-        name: result.name,
-        status: result.status,
-        updatedAt: result.updatedAt,
       };
   }
 

@@ -69,7 +69,7 @@ export class DomainInnovationsService {
 
   }
 
-  public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<InnovationEntity> {
+  public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<{id: string, name: string, supportingUserIds: string[]}> {
     const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
 
     if (innovationSupportIds.length > 0) {
@@ -94,7 +94,17 @@ export class DomainInnovationsService {
     innovation.organisationShares = [];
     innovation.withdrawReason = reason;
     innovation.deletedAt = new Date().toISOString();
-    return transactionManager.save(InnovationEntity, innovation);
+    await transactionManager.save(InnovationEntity, innovation);
+
+    const supportingUserIds = innovation.innovationSupports.flatMap(item =>
+      item.organisationUnitUsers.map(su => su.organisationUser.user.id)
+    )
+
+    return {
+      id: innovation.id,
+      name: innovation.name,
+      supportingUserIds,
+    }
   }
 
   /**

@@ -41,6 +41,8 @@ class V1InnovationWithdraw {
         params.innovationId,
         body.message
       );
+
+      
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
