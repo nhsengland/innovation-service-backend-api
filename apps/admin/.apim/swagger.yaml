@@ -345,7 +345,7 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
-  "/v1/users/{userId}":
+  "/v1/users/{userId}/lock":
     patch:
       description: Lock a user.
       operationId: v1-admin-user-lock
@@ -376,3 +376,34 @@ paths:
           description: The user does not exist.
         "500":
           description: An error occurred while locking a user.
+  "/v1/users/{userId}/unlock":
+    patch:
+      description: Unlock a user.
+      operationId: v1-admin-user-unlock
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the user to lock.
+      responses:
+        "200":
+          description: The user has been unlocked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    description: Id of the user.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to unlock a user.
+        "404":
+          description: The user does not exist.
+        "500":
+          description: An error occurred while unlocking a user.
