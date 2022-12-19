@@ -1,7 +1,7 @@
 import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
-import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import type { DomainUserInfoType } from '@admin/shared/types';
 import { NotificationUserEntity } from '@admin/shared/entities';
 import { inject, injectable } from 'inversify';
@@ -12,17 +12,15 @@ import { BaseService } from './base.service';
 export class OrganisationsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
   ) {
     super();
   }
 
-  async inactivateUnit(
-    requestUser: DomainUserInfoType,
-    unitId: string
-  ): Promise<{
-    unitId: string;
-  }> {
+
+  async inactivateUnit(requestUser: DomainUserInfoType, unitId: string): Promise<{ unitId: string }> {
+
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_units')
@@ -30,76 +28,59 @@ export class OrganisationsService extends BaseService {
       .getOne();
 
     if (!unit) {
-      throw new NotFoundError(
-        OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND
-      );
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     // get users from unit
-    const users = await this.sqlConnection
-      .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-      .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-      .leftJoinAndSelect('org_user.user', 'user')
-      .where('org_unit_user.organisation_unit_id = :unitId', {
-        unitId,
-      })
-      .getMany();
+    const usersToLock = (
+      await this.sqlConnection
+        .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
+        .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
+        .leftJoinAndSelect('org_user.user', 'user')
+        .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
+        .getMany()
+    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }))
 
-    //get open actions issued by users from unit
-    const actions = await this.sqlConnection
-      .createQueryBuilder(InnovationActionEntity, 'actions')
-      .leftJoinAndSelect('actions.innovationSupport', 'supports')
-      .leftJoinAndSelect('supports.organisationUnit', 'unit')
-      .where('unit.id = :unitId', { unitId })
-      .getMany();
 
-    // get all supports from unit
-    const supports = await this.sqlConnection
+    // only want to clear actions with these statuses
+    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]
+
+    //get id of actions to clear issued by the unit users
+    const actionsToClear = (
+      await this.sqlConnection
+        .createQueryBuilder(InnovationActionEntity, 'action')
+        .leftJoinAndSelect('action.innovationSupport', 'support')
+        .leftJoinAndSelect('support.organisationUnit', 'unit')
+        .where('unit.id = :unitId', { unitId })
+        .andWhere('action.status IN (:...actionStatusToClear)', { actionStatusToClear })
+        .getMany()
+    ).map(a => a.id)
+
+    //only want to complete the support of innovations with these statuses
+    const supportStatusToComplete = [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
+
+    //get supports to complete
+    const supportsToComplete = await this.sqlConnection
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
       .leftJoinAndSelect('support.innovation', 'innovation')
       .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
       .where('unit.id = :unitId', { unitId })
-      .getMany();
+      .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
+      .getMany()
 
-    const usersToLock = users.map((u) => ({
-      id: u.organisationUser.user.id,
-    }));
-
-    const actionIds = actions.map((a) => a.id);
-    const supportIds = supports.map((s) => s.id);
-
-    const contexts = [...actionIds, ...supportIds];
+    const contexts = [...actionsToClear, ...(supportsToComplete.map(s => s.id))];
 
     let notificationsToMarkAsRead: NotificationEntity[] = [];
 
     if (contexts.length > 0) {
       notificationsToMarkAsRead = await this.sqlConnection
         .createQueryBuilder(NotificationEntity, 'notification')
-        .innerJoinAndSelect(
-          'notification.notificationUsers',
-          'notificationUser'
-        )
+        .innerJoinAndSelect('notification.notificationUsers', 'notificationUser')
         .where('notification.context_id IN (:...contexts)', { contexts })
         .andWhere('notificationUser.read_at IS NULL')
         .getMany();
     }
-
-    const actionsToClear = actions
-      .filter((a) =>
-        [
-          InnovationActionStatusEnum.REQUESTED,
-          InnovationActionStatusEnum.IN_REVIEW,
-        ].includes(a.status)
-      )
-      .map((aa) => aa.id);
-
-    const supportsToComplete = supports.filter((s) =>
-      [
-        InnovationSupportStatusEnum.ENGAGING,
-        InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-      ].includes(s.status)
-    );
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
       // Inactivate unit
@@ -119,16 +100,15 @@ export class OrganisationsService extends BaseService {
       }
 
       // Complete supports of unit
-      const updatedSupports = supportsToComplete.map((support) => ({
-        ...support,
-        status: InnovationSupportStatusEnum.COMPLETE,
-        organisationUnitUsers: [],
-      }));
-
-      if (updatedSupports.length > 0) {
-        await transaction
-          .getRepository(InnovationSupportEntity)
-          .save(updatedSupports, { chunk: 50 });
+      if (supportsToComplete.length > 0) {
+        await transaction.update(
+          InnovationSupportEntity,
+          { id: In(supportsToComplete.map(s => s.id)) },
+          {
+            status: InnovationSupportStatusEnum.COMPLETE,
+            organisationUnitUsers: []
+          }
+        )
       }
 
       // Mark as read notifications in the context of this unit
@@ -167,7 +147,7 @@ export class OrganisationsService extends BaseService {
         );
       }
 
-      for (const support of updatedSupports) {
+      for (const support of supportsToComplete) {
         await this.domainService.innovations.addSupportLog(
           transaction,
           { id: requestUser.id, organisationUnitId: unitId },
@@ -193,20 +173,25 @@ export class OrganisationsService extends BaseService {
           }
         );
       }
-
       return { unitId };
     });
 
+    // lock users in identity provider asynchronously
+    // using idendity-ops-queue
+    if (usersToLock.length > 0) {
+      for (const user of usersToLock) {
+        await this.identityProviderService.updateUserAsync(
+          user.identityId,
+          { accountEnabled: false }
+        )
+      }
+    }
     return result;
   }
 
-  async activateUnit(
-    organisationId: string,
-    unitId: string,
-    userIds: string[]
-  ): Promise<{
-    unitId: string;
-  }> {
+
+  async activateUnit(organisationId: string, unitId: string, userIds: string[]): Promise<{ unitId: string }> {
+
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
       .innerJoinAndSelect('org_unit.organisation', 'organisation')
@@ -220,11 +205,12 @@ export class OrganisationsService extends BaseService {
     }
 
     // get users entities
-    const usersToLock = await this.sqlConnection
+    const usersToUnlock = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
       .innerJoin('user.userOrganisations', 'org_user')
       .innerJoin('org_user.userOrganisationUnits', 'unit_user')
       .where('unit_user.id IN (:...userIds)', { userIds })
+      .andWhere('unit_user.organisationUnit.id = :unitId', { unitId }) //ensure users to unlock belong to unit
       .getMany();
 
     // get organisationUnitUser entities
@@ -234,20 +220,11 @@ export class OrganisationsService extends BaseService {
       .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
       .getMany();
 
-    //ensure users to activate belong to unit
-    userIds = userIds.filter((uId) => unitUsers.map((u) => u.id).includes(uId));
-
     //check if at least 1 user is QA
-    const canActivate = unitUsers.some(
-      (u) =>
-        u.organisationUser.role ===
-        AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
-    );
+    const canActivate = unitUsers.some(u => u.organisationUser.role === AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
 
     if (!canActivate) {
-      throw new UnprocessableEntityError(
-        OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA
-      );
+      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
     }
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
@@ -268,15 +245,24 @@ export class OrganisationsService extends BaseService {
       }
 
       //Activate users of unit
-      for (const u of usersToLock) {
+      for (const u of usersToUnlock) {
         await transaction.update(UserEntity, { id: u.id }, { lockedAt: null });
       }
-
       return { unitId };
     });
 
+    // unlock users in identity provider asynchronously
+    // using identity-ops-queue
+    for (const user of usersToUnlock) {
+      await this.identityProviderService.updateUserAsync(
+        user.identityId,
+        { accountEnabled: true }
+      )
+    }
+
     return result;
   }
+
 
   async updateUnit(
     unitId: string,
@@ -323,6 +309,7 @@ export class OrganisationsService extends BaseService {
       return { id: unit.id };
     });
   }
+
 
   async updateOrganisation(
     organisationId: string,
@@ -386,6 +373,7 @@ export class OrganisationsService extends BaseService {
       return { id: organisation.id };
     });
   }
+
 
   async createOrganisation(organisation: {
     name: string;
@@ -455,6 +443,7 @@ export class OrganisationsService extends BaseService {
 
     return { id: result.id, units: result.units.map((u) => u.id) };
   }
+
 
   private async createOrganisationUnit(
     organisationId: string,
