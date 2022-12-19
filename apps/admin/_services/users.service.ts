@@ -1,38 +1,26 @@
-import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
-import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
-import type { DomainUserInfoType } from '@admin/shared/types';
-import { NotificationUserEntity } from '@admin/shared/entities';
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol } from '@admin/shared/services';
 import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
-export class OrganisationsService extends BaseService {
+export class UsersService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
   ) {
     super();
   }
 
-  async inactivateUnit(
-    requestUser: DomainUserInfoType,
-    unitId: string
-  ): Promise<{
-    unitId: string;
-  }> {
-   
-      // lock users of unit
-      if (usersToLock.length > 0) {
-        await transaction.update(
-          UserEntity,
-          { id: In(usersToLock.map((u) => u.id)) },
-          { lockedAt: new Date().toISOString() }
-        );
-      }
+  async lockUser(userId: string ): Promise<{ userId: string, identityId: string }> {
 
+    //NEED TO LOCK ON IDP AND SQL
+    //SEPARATE ENDPOINTS?
+
+    const user = await this.domainService.users.getUserInfo({ userId })
+
+    await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: false })
+
+    return { userId: user.id, identityId: user.identityId }
   }
 
 }
