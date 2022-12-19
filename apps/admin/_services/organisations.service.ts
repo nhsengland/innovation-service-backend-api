@@ -387,16 +387,14 @@ export class OrganisationsService extends BaseService {
     });
   }
 
-  async createOrganisation(organisation: {
-    name: string;
-    acronym: string;
-    units?: { name: string; acronym: string }[];
-  }): Promise<{
+  async createOrganisation(
+    name: string,
+    acronym: string,
+    units?: { name: string; acronym: string }[]
+  ): Promise<{
     id: string;
     units: string[];
   }> {
-    const name = organisation.name;
-    const acronym = organisation.acronym;
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
       const orgNameOrAcronymAlreadyExists = await transaction
@@ -426,9 +424,9 @@ export class OrganisationsService extends BaseService {
           if > 1 -> create specified units
         */
       const savedUnits: OrganisationUnitEntity[] = [];
-      if (organisation.units && organisation.units.length > 1) {
+      if (units && units.length > 1) {
         //create specified units
-        for (const unit of organisation.units) {
+        for (const unit of units) {
           const u = await this.createOrganisationUnit(
             savedOrganisation.id,
             unit.name,
