@@ -45,7 +45,7 @@ class V1AdminUserLock {
 
 export default openApi(
   V1AdminUserLock.httpTrigger as AzureFunction,
-  '/v1/users/{userId}',
+  '/v1/users/{userId}/lock',
   {
     patch: {
       description: 'Lock a user.',
