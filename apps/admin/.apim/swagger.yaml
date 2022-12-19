@@ -58,9 +58,12 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
                     description: The organisation id.
+                  units:
+                    type: string
+                    description: Ids of the organisation units belonging to the organisation.
         "400":
           description: Bad request.
         "401":
@@ -97,9 +100,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  organisationId:
                     type: string
-                    description: The organisation unit id.
+                    description: The organisation id.
         "400":
           description: Bad request.
         "401":
@@ -342,3 +345,34 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  "/v1/users/{userId}":
+    patch:
+      description: Lock a user.
+      operationId: v1-admin-user-lock
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the user to lock.
+      responses:
+        "200":
+          description: The user has been locked.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    description: Id of the user.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to lock a user.
+        "404":
+          description: The user does not exist.
+        "500":
+          description: An error occurred while locking a user.

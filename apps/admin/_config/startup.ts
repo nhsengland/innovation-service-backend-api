@@ -12,7 +12,8 @@ import {
 
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
-import { 
+import { UsersService } from '../_services/users.service';
+import {
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
   OrganisationsServiceType, OrganisationsServiceSymbol, UsersServiceSymbol, UsersServiceType
 } from '../_services/interfaces';

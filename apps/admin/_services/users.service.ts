@@ -26,7 +26,9 @@ export class UsersService extends BaseService {
 
     //lock user in database
     await this.sqlConnection.transaction(async transaction => {
-      await transaction.update(UserEntity, { userId }, { lockedAt: new Date().toISOString() })
+
+      await transaction.update(UserEntity, { id: userId }, { lockedAt: new Date().toISOString() })
+    
     })
 
     //lock user in identity provider

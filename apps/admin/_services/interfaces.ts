@@ -8,5 +8,5 @@ export const TermsOfUseServiceSymbol = Symbol('TermsOfUseService');
 export type OrganisationsServiceType = typeof OrganisationsService.prototype;
 export const OrganisationsServiceSymbol = Symbol('OrganisationsService');
 
-export type UsersServiceType = typeof UsersService.protoype;
+export type UsersServiceType = typeof UsersService.prototype;
 export const UsersServiceSymbol = Symbol('UsersService')
