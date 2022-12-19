@@ -180,7 +180,7 @@ export class OrganisationsService extends BaseService {
     // using idendity-ops-queue
     if (usersToLock.length > 0) {
       for (const user of usersToLock) {
-        this.identityProviderService.updateUserAsync(
+        await this.identityProviderService.updateUserAsync(
           user.identityId,
           { accountEnabled: false }
         )
