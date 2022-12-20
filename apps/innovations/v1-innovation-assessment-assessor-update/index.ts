@@ -31,7 +31,7 @@ class V1InnovationAssessmentAssessorUpdate {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
+        .checkInnovation({ status: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
         .verify();
 
       const requestUser = auth.getUserInfo();

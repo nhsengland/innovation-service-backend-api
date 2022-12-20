@@ -484,59 +484,58 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/assessments":
-    post:
-      summary: Create an innovation assessment
-      description: Create an innovation assessment.
-      operationId: v1-innovation-assessment-create
-      tags:
-        - Innovation Assessment
+  "/v1/{innovationId}/assessments/{assessmentId}":
+    patch:
+      summary: Update the assigned assessor of an innovation.
+      description: Update the assigned assessor of an innovation.
+      operationId: v1-innovation-assessment-assessor-update
       parameters:
-        - name: innovationId
+        - name: assessmentId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
             format: uuid
+            description: Id of the assessment.
       requestBody:
-        description: The innovation assessment data.
+        description: The new assessor to be assigned.
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                comment:
+                assessorId:
                   type: string
-                  description: The comment for the assessment.
+                  format: uuid
+                  description: Id of the new assessor to assign.
               required:
-                - comment
+                - assessorId
+              additionalProperties: false
       responses:
         "200":
-          description: The innovation assessment has been created.
+          description: The assigned assessor has been successfully updated.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id:
+                  assessmentId:
                     type: string
                     format: uuid
-                    description: The innovation assessment id.
-                required:
-                  - id
+                  assessorId:
+                    type: string
+                    format: uuid
         "400":
-          description: The innovation assessment has not been created.
+          description: Bad request. Validation error.
         "401":
-          description: The user is not authenticated.
+          description: Unauthorized. Invalid authentication credentials.
         "403":
-          description: The user is not authorized to create an innovation assessment.
+          description: Forbidden. User does not have permission to assign a new assessor.
         "404":
-          description: The innovation does not exist.
+          description: Not found. Innovation or assessment not found.
         "500":
-          description: An error occurred while creating the innovation assessment.
-  "/v1/{innovationId}/assessments/{assessmentId}":
+          description: Internal server error.
     get:
       summary: Get Innovation Assessment Info
       description: Get Innovation Assessment Info
@@ -750,6 +749,58 @@ paths:
           description: Not found. Innovation or assessment not found.
         "500":
           description: Internal server error.
+  "/v1/{innovationId}/assessments":
+    post:
+      summary: Create an innovation assessment
+      description: Create an innovation assessment.
+      operationId: v1-innovation-assessment-create
+      tags:
+        - Innovation Assessment
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation assessment data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: The comment for the assessment.
+              required:
+                - comment
+      responses:
+        "200":
+          description: The innovation assessment has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The innovation assessment id.
+                required:
+                  - id
+        "400":
+          description: The innovation assessment has not been created.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create an innovation assessment.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the innovation assessment.
   /v1:
     post:
       description: Create an innovation
