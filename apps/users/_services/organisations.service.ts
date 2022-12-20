@@ -13,16 +13,23 @@ export class OrganisationsService extends BaseService {
   constructor() { super(); }
 
 
-  async getOrganisationsList(filters: { fields?: ('organisationUnits')[] }): Promise<{ id: string, name: string, acronym: string, organisationUnits?: { id: string; name: string; acronym: string; }[] }[]> {
+  async getOrganisationsList(filters: { fields?: ('organisationUnits')[], withInactive?: boolean }): Promise<{ id: string, name: string, acronym: string, organisationUnits?: { id: string; name: string; acronym: string; }[] }[]> {
 
     try {
 
       const query = this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
-        .where('organisation.type = :type AND organisation.inactivated_at IS NULL', { type: OrganisationTypeEnum.ACCESSOR });
+        .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR });
+
+      if (!filters.withInactive) {
+        query.andWhere('organisation.inactivated_at IS NULL');
+      }
 
       if (filters.fields?.includes('organisationUnits')) {
         query.innerJoinAndSelect('organisation.organisationUnits', 'organisationUnits');
-        query.andWhere('organisationUnits.inactivated_at IS NULL');
+
+        if (!filters.withInactive) {
+          query.andWhere('organisationUnits.inactivated_at IS NULL');
+        }
       }
 
       query.orderBy('organisation.name', 'ASC');

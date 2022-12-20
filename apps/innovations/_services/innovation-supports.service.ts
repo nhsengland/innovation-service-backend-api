@@ -267,7 +267,7 @@ export class InnovationSupportsService extends BaseService {
         true,
       );
 
-      await this.domainService.innovations.addActivityLog<'SUPPORT_STATUS_UPDATE'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
         {
@@ -369,7 +369,7 @@ export class InnovationSupportsService extends BaseService {
         true,
       );
 
-      await this.domainService.innovations.addActivityLog<'SUPPORT_STATUS_UPDATE'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE },
         {

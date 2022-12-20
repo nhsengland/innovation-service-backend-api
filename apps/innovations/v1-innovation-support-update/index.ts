@@ -1,5 +1,5 @@
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { AccessorOrganisationRoleEnum } from '@innovations/shared/enums';
@@ -56,18 +56,24 @@ export default openApi(V1InnovationSupportUpdate.httpTrigger as AzureFunction, '
   put: {
     description: 'Update support on innovation.',
     operationId: 'v1-innovation-support-update',
-    tags: ['Innovation Support'],
+    tags: ['[v1] Innovation Support'],
     parameters: [
       {
         in: 'path',
         name: 'innovationId',
         description: 'Unique innovation ID',
         required: true,
+        schema: {
+          type: 'string',
+        }
       },
       {
         in: 'path',
         name: 'supportId',
         required: true,
+        schema: {
+          type: 'string',
+        }
       },
     ],
     requestBody: {

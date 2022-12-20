@@ -44,7 +44,7 @@ export class ResponseHelper {
     if(isBaseErrorType(error)) { 
       const res = error.errorResponse();
       // Log 400s error, excluding 401 since they are normal in our execussion flow and 501 since it's not implemented to app insights as information.
-      if(res.status in [400, 403, 404, 422, 501]) {
+      if([400, 403, 404, 422, 501].includes(res.status)) {
         context.log.info(JSON.stringify({
           invocationId: context.invocationId,
           error: res.body.error,

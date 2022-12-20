@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -9,10 +9,10 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
-import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 import { UserTypeEnum } from '@innovations/shared/enums';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
+import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1InnovationInfo {
@@ -49,6 +49,7 @@ class V1InnovationInfo {
         name: result.name,
         description: result.description,
         status: result.status,
+        statusUpdatedAt: result.statusUpdatedAt,
         submittedAt: result.submittedAt,
         countryName: result.countryName,
         postCode: result.postCode,
@@ -92,6 +93,7 @@ export default openApi(V1InnovationInfo.httpTrigger as AzureFunction, '/v1/{inno
   get: {
     operationId: 'v1-innovation-info',
     description: 'Get innovation information.',
+    tags: ['[v1] Innovation'],
     parameters: [
       {
         name: 'innovationId',

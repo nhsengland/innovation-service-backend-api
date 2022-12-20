@@ -2,22 +2,22 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
+    AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 
 import type {
-  CustomContextType
+    CustomContextType
 } from '@innovations/shared/types';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
+import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
-import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 
 
 class CreateInnovationAssessment {
@@ -56,7 +56,7 @@ class CreateInnovationAssessment {
   }
 }
 
-export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments', {
+export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, '/v1/{innovationId}/assessments', {
   post: {
     summary: 'Create an innovation assessment',
     description: 'Create an innovation assessment.',

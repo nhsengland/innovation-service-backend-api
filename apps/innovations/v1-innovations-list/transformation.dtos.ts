@@ -9,6 +9,7 @@ export type ResponseDTO = {
     name: string,
     description: null | string,
     status: InnovationStatusEnum,
+    statusUpdatedAt: DateISOType,
     submittedAt: null | DateISOType,
     updatedAt: null | DateISOType,
     countryName: null | string,

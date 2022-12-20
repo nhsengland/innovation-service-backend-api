@@ -1,5 +1,5 @@
-import type { ActivityEnum, ActivityTypeEnum } from "@innovations/shared/enums";
-import type { ActivityLogListParamsType, DateISOType } from "@innovations/shared/types";
+import type { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
+import type { ActivityLogListParamsType, DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
   count: number;

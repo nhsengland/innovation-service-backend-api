@@ -30,7 +30,7 @@ class V1InnovationReassessmentRequestCreate {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
+        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.PAUSED] })
         .verify();
       const requestUser = auth.getUserInfo();
 
@@ -49,7 +49,7 @@ class V1InnovationReassessmentRequestCreate {
   }
 }
 
-export default openApi(V1InnovationReassessmentRequestCreate.httpTrigger as AzureFunction, 'v1/{innovationId}/reassessments', {
+export default openApi(V1InnovationReassessmentRequestCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/reassessments', {
   post: {
     operationId: 'v1-innovation-reassessment-request-create',
     description: 'Create a reassessment request for an innovation.',

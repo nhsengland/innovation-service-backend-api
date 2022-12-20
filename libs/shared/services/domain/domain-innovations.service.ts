@@ -3,7 +3,7 @@ import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
 import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity, NotificationEntity } from '../../entities';
 import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
-import type { ActivityLogTemplatesType, ActivitiesParamsType } from '../../types';
+import type { ActivitiesParamsType } from '../../types';
 
 import type { FileStorageServiceType } from '../interfaces';
 
@@ -129,9 +129,9 @@ export class DomainInnovationsService {
   }
 
 
-  async addActivityLog<T extends keyof ActivityLogTemplatesType>(
+  async addActivityLog<T extends ActivityEnum>(
     transactionManager: EntityManager,
-    configuration: { userId: string, innovationId: string, activity: ActivityEnum },
+    configuration: { userId: string, innovationId: string, activity: T },
     params: ActivitiesParamsType<T>
   ): Promise<void> {
 
@@ -161,6 +161,7 @@ export class DomainInnovationsService {
 
     switch (activity) {
       case ActivityEnum.INNOVATION_CREATION:
+      case ActivityEnum.INNOVATION_PAUSE:
       case ActivityEnum.OWNERSHIP_TRANSFER:
       case ActivityEnum.SHARING_PREFERENCES_UPDATE:
         return ActivityTypeEnum.INNOVATION_MANAGEMENT;
@@ -244,4 +245,5 @@ export class DomainInnovationsService {
 
     return innovation;
   }
+
 }

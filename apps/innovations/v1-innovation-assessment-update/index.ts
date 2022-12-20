@@ -11,9 +11,9 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
 
+import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
-import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 
 
 class V1InnovationAssessmentUpdate {
@@ -53,7 +53,7 @@ class V1InnovationAssessmentUpdate {
   }
 }
 
-export default openApi(V1InnovationAssessmentUpdate.httpTrigger as AzureFunction, 'v1/{innovationId}/assessments/{assessmentId}', {
+export default openApi(V1InnovationAssessmentUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/assessments/{assessmentId}', {
   put: {
     summary: 'Update an innovation assessment',
     description: 'Update an innovation assessment.',

@@ -4,11 +4,11 @@ import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '
 import type { ResponseDTO } from './transformation.dtos';
 
 import {
-    JwtDecoder
+  JwtDecoder
 } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import {
-    AuthorizationServiceSymbol, AuthorizationServiceType
+  AuthorizationServiceSymbol, AuthorizationServiceType
 } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -88,6 +88,7 @@ export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/
           },
         },
       },
+      422: {description: 'Unprocessable Entity'},
     },
   },
 });

@@ -10,8 +10,8 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container, INNOVATION_SECTIONS_CONFIG } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 
-import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationSectionUpdate {
@@ -48,13 +48,16 @@ class V1InnovationSectionUpdate {
 
 }
 
-export default openApi(V1InnovationSectionUpdate.httpTrigger as AzureFunction, 'v1/{innovationId}/sections/{sectionKey}', {
+export default openApi(V1InnovationSectionUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/sections/{sectionKey}', {
   put: {
     description: 'Update an innovation section info.',
     tags: ['Innovation'],
     summary: 'Update an innovation section info.',
     operationId: 'v1-innovation-section-update',
-    parameters: [],
+    parameters: [
+      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
+      { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } }
+    ],
     requestBody: {
       description: 'Innovation section info update request body.',
       content: {

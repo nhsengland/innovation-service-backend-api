@@ -39,7 +39,6 @@ export const NotifierServiceSymbol = Symbol('NotifierService');
 export type StorageQueueServiceType = typeof StorageQueueService.prototype;
 export const StorageQueueServiceSymbol = Symbol('StorageQueueService');
 
-
 export type FileStorageServiceType = typeof FileStorageService.prototype;
 export const FileStorageServiceSymbol = Symbol('FileStorageService');
 

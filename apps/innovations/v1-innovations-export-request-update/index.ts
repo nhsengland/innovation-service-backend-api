@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -58,7 +58,7 @@ class V1InnovationsExportRequestsUpdate {
 }
 
 
-export default openApi(V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests/{requestId}', {
+export default openApi(V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests/{requestId}/status', {
   patch: {
     operationId: 'v1-innovations-export-requests-update-status',
     description: 'updates export request status',

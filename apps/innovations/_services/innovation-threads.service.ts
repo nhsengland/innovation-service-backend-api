@@ -736,7 +736,7 @@ export class InnovationThreadsService extends BaseService {
       const messages = await result.messages;
       const messageId = messages.find((_: any) => true)!.id; // all threads have at least one message
 
-      await this.domainService.innovations.addActivityLog<'THREAD_CREATION'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: requestUser.id, innovationId: innovation.id, activity: ActivityEnum.THREAD_CREATION },
         {
@@ -766,7 +766,7 @@ export class InnovationThreadsService extends BaseService {
     );
 
     try {
-      await this.domainService.innovations.addActivityLog<'THREAD_MESSAGE_CREATION'>(
+      await this.domainService.innovations.addActivityLog(
         transaction,
         { userId: requestUser.id, innovationId: thread.innovation.id, activity: ActivityEnum.THREAD_MESSAGE_CREATION },
         {

@@ -35,6 +35,7 @@ class V1InnovationTransferCheck {
 export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, '/v1/transfers/{transferId}/check', {
   get: {
     description: 'Get details of pending innovations transfers',
+    operationId: 'v1-innovation-transfer-check',
     parameters: [
       { in: 'path', name: 'transferId', required: true, schema: { type: 'string' } }
     ],

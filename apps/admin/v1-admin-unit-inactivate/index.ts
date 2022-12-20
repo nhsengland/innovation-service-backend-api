@@ -1,19 +1,16 @@
-import { mapOpenApi3_1 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType,
-} from '@admin/shared/services';
-import { AdminServiceSymbol, AdminServiceType } from '../_services/interfaces';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
+import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 
 import { container } from '../_config';
 
-import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUnitInactivate {
   @JwtDecoder()
@@ -24,7 +21,7 @@ class V1AdminUnitInactivate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const adminService = container.get<AdminServiceType>(AdminServiceSymbol);
+    const organisationsService = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(
@@ -39,7 +36,7 @@ class V1AdminUnitInactivate {
 
       const requestUser = auth.getUserInfo();
       
-      const result = await adminService.inactivateUnit(
+      const result = await organisationsService.inactivateUnit(
         requestUser,
         params.organisationUnitId
       );
