@@ -362,12 +362,12 @@ export class InnovationAssessmentsService extends BaseService {
   async updateAssessor(
     user: { id: string, identityId: string, type: UserTypeEnum },
     assessmentId: string,
-    newAssessor: { id: string }
+    assessorId: string
   ): Promise<{ assessmentId: string, assessorId: string }> {
 
     const assessor = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = assessorId', { assessorId: newAssessor.id })
+      .where('user.id = assessorId', { assessorId })
       .getOne()
 
     if (!assessor) {
