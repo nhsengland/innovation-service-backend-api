@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { ORGANISATIONS_LENGTH_LIMITS } from '@admin/shared/constants';
+import { ORGANISATIONS_LENGTH_LIMITS } from '@users/shared/constants';
 
 export type DefaultUserBodyType = {
   displayName: string
