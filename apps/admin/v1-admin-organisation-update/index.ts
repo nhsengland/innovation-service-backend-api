@@ -100,9 +100,9 @@ export default openApi(
               schema: {
                 type: 'object',
                 properties: {
-                  unitId: {
+                  organisationId: {
                     type: 'string',
-                    description: 'The organisation unit id.',
+                    description: 'The organisation id.',
                   },
                 },
               },
