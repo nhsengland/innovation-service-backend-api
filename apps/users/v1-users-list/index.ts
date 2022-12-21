@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { AccessorOrganisationRoleEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, UserTypeEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
@@ -49,7 +49,11 @@ class V1UsersList {
         
         const validation = authorizationService.validate(context.auth.user.identityId)
           .checkAdminType()
-          .checkAssessmentType();
+        
+        // only allow NA users to list other NA users
+        if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === UserTypeEnum.ASSESSMENT) {
+          validation.checkAssessmentType()
+        }
           
         if(queryParams.organisationUnitId) {
           validation.checkAccessorType({
