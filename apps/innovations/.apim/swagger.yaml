@@ -1081,6 +1081,47 @@ paths:
                   id:
                     type: string
                     description: Innovation ID
+              
+  "/v1/{innovationId}/withdraw":
+    patch:
+      summary: Withdraws an innovation
+      description: Withdraws an innovation.
+      operationId: v1-innovation-withdraw
+      tags:
+        - Innovation
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 200
+                  description: Message provided when withdrawing an innovation
+              required:
+                - message
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation withdrawn successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation ID
+
   "/v1/{innovationId}/pdf":
     post:
       description: Generate PDF for an innovation
@@ -1508,9 +1549,15 @@ paths:
         - in: path
           name: innovationId
           description: Unique innovation ID
+          schema:
+            type: string
+            format: uuid
           required: true
         - in: path
           name: supportId
+          schema:
+            type: string
+            format: uuid
           required: true
       requestBody:
         description: ""

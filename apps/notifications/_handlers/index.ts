@@ -7,7 +7,7 @@ export { CommentCreationHandler } from './comment-creation.handler';
 export { DailyDigestHandler } from './daily-digest.handler';
 export { IdleInnovatorsHandler } from './idle-innovators.handler';
 export { IdleSupportHandler } from './idle-support.handler';
-export { InnovationArchivedHandler } from './innovation-archived.handler';
+export { InnovationWithdrawnHandler } from './innovation-withdrawn.handler';
 export { InnovationOrganisationUnitsSuggestionHandler } from './innovation-organisation-units-suggestion.handler';
 export { InnovationSubmitedHandler } from './innovation-submited.handler';
 export { InnovationSupportStatusUpdateHandler } from './innovation-support-status-update.handler';

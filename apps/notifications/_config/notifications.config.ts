@@ -9,7 +9,7 @@ import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
   ActionUpdateHandler, BaseHandler, CommentCreationHandler, DailyDigestHandler,
-  IdleInnovatorsHandler, IdleSupportHandler, InnovationArchivedHandler,
+  IdleInnovatorsHandler, IdleSupportHandler, InnovationWithdrawnHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationSubmitedHandler,
   InnovationSupportStatusUpdateHandler, InnovationTransferOwnershipCompletedHandler, InnovationTransferOwnershipCreationHandler, InnovatorAccountCreationHandler,
@@ -21,6 +21,8 @@ import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-r
 import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
 import type { EmailTypeEnum } from './emails.config';
 import { InnovationSupportStatusChangeRequestHandler } from '../_handlers/innovation-support-status-change-request.handler';
+import { InnovationStopSharingHandler } from '../_handlers/innovation-stop-sharing.handler';
+import { InnovationReassessmentRequestHandler } from '../_handlers/innovation-needs-reassessment-request.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -131,10 +133,10 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_ARCHIVED]: {
-    handler: InnovationArchivedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVED]>({
-      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVED]['innovation']>({
+  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
+    handler: InnovationWithdrawnHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]>({
+      innovation: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]['innovation']>({
         id: Joi.string().guid().required(),
         name: Joi.string().required(),
         assignedUserIds: Joi.array().items(Joi.string().guid()).required()
@@ -218,6 +220,20 @@ export const NOTIFICATIONS_CONFIG: {
       requestStatusUpdateComment: Joi.string().required(),
     }).required(),
   },
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    handler: InnovationStopSharingHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
+      innovationId: Joi.string().guid().required(),
+      stopSharingComment: Joi.string().required(),
+    }).required(),
+  },
+  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
+    handler: InnovationReassessmentRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+    }).required(),
+  },
+
   // RECURRENT
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,

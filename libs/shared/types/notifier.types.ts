@@ -57,7 +57,7 @@ export type NotifierTemplatesType = {
     messageId: string
   },
 
-  [NotifierTypeEnum.INNOVATION_ARCHIVED]: {
+  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
     innovation: { id: string, name: string, assignedUserIds: string[] }
   },
 
@@ -104,6 +104,14 @@ export type NotifierTemplatesType = {
     supportId: string,
     proposedStatus: InnovationSupportStatusEnum,
     requestStatusUpdateComment: string,
+  },
+
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    innovationId: string,
+    stopSharingComment: string,
+  },
+  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
+    innovationId: string,
   },
 
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
