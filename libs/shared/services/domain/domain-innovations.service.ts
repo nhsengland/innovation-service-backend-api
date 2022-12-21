@@ -69,7 +69,7 @@ export class DomainInnovationsService {
         innovation.status = InnovationStatusEnum.ARCHIVED;
         innovation.updatedBy = user.id;
         innovation.organisationShares = [];
-        innovation.archiveReason = innovations.find(item => item.id === innovation.id)?.reason || null;
+        innovation.withdrawReason = innovations.find(item => item.id === innovation.id)?.reason || null;
         innovation.deletedAt = new Date().toISOString();
         await transactionManager.save(InnovationEntity, innovation);
 

@@ -106,6 +106,14 @@ export type NotifierTemplatesType = {
     requestStatusUpdateComment: string,
   },
 
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    innovationId: string,
+    stopSharingComment: string,
+  },
+  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
+    innovationId: string,
+  },
+
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
   [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,

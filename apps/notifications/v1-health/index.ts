@@ -164,6 +164,25 @@ class V1Health {
           await notifierService.send(requestInnovator, NotifierTypeEnum.DAILY_DIGEST, {});
           break;
 
+        case NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST:
+          await notifierService.send(
+            requestInnovator, 
+            NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST, 
+            {
+            innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD'
+          });
+          break;
+        
+        case NotifierTypeEnum.INNOVATION_STOP_SHARING:
+          await notifierService.send(
+            requestInnovator,
+            NotifierTypeEnum.INNOVATION_STOP_SHARING,
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              stopSharingComment: 'This is a test comment',
+            });
+          break;
+
         default:
           throw new Error('WRONG TYPE');
       }
