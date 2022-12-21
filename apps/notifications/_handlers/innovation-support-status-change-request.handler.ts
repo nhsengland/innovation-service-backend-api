@@ -69,7 +69,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
           proposed_status: translate(this.inputData.proposedStatus),
           request_status_update_comment: this.inputData.requestStatusUpdateComment || '',
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('accessor/innovations/:innovationId/supports/:supportId')
+            .addPath('accessor/innovations/:innovationId/support/:supportId')
             .setPathParams({ innovationId: this.inputData.innovationId, supportId: this.inputData.supportId })
             .buildUrl()
         }

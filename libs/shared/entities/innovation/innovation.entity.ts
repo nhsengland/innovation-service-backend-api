@@ -233,8 +233,8 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'other_environmental_benefit', type: 'nvarchar', nullable: true })
   otherEnvironmentalBenefit: null | string;
 
-  @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
-  archiveReason: null | string;
+  @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
+  withdrawReason: null | string;
 
 
   @ManyToOne(() => UserEntity, { nullable: false })

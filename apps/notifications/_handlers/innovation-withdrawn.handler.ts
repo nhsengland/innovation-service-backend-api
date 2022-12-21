@@ -7,9 +7,9 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 import { BaseHandler } from './base.handler';
 
 
-export class InnovationArchivedHandler extends BaseHandler<
-  NotifierTypeEnum.INNOVATION_ARCHIVED,
-  EmailTypeEnum.INNOVATION_ARCHIVED_TO_ASSIGNED_USERS,
+export class InnovationWithdrawnHandler extends BaseHandler<
+  NotifierTypeEnum.INNOVATION_WITHDRAWN,
+  EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
   Record<string, never>
 > {
 
@@ -17,7 +17,7 @@ export class InnovationArchivedHandler extends BaseHandler<
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ARCHIVED]
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN]
   ) {
     super(requestUser, data);
   }
@@ -30,7 +30,7 @@ export class InnovationArchivedHandler extends BaseHandler<
     // Send emails only to users with email preference INSTANTLY.
     for (const user of assignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_ARCHIVED_TO_ASSIGNED_USERS,
+        templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.

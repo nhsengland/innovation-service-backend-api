@@ -24,7 +24,7 @@ export class DomainInnovationsService {
   }
 
 
-  async archiveInnovations(
+  async withdrawInnovations(
     transactionManager: EntityManager,
     user: { id: string },
     innovations: { id: string, reason: null | string }[]
@@ -48,30 +48,8 @@ export class DomainInnovationsService {
 
       for (const innovation of dbInnovations) {
 
-        // Update all support actions to DECLINED.
-        // This can be done one shot with QueryBuilder as no relation needs to be updated.
-        const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
-        await transactionManager.createQueryBuilder().update(InnovationActionEntity)
-          .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, deletedAt: new Date() })
-          .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
-          .execute();
-
-        // Update all supports to UNASSIGNED AND soft delete them.
-        for (const innovationSupport of innovation.innovationSupports) {
-          innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-          innovationSupport.organisationUnitUsers = [];
-          innovationSupport.updatedBy = user.id;
-          innovationSupport.deletedAt = new Date().toISOString();
-          await transactionManager.save(InnovationSupportEntity, innovationSupport);
-        }
-
-        // Lastly, lets update innovations to ARCHIVED.
-        innovation.status = InnovationStatusEnum.ARCHIVED;
-        innovation.updatedBy = user.id;
-        innovation.organisationShares = [];
-        innovation.archiveReason = innovations.find(item => item.id === innovation.id)?.reason || null;
-        innovation.deletedAt = new Date().toISOString();
-        await transactionManager.save(InnovationEntity, innovation);
+        const reason = innovations.find(item => item.id === innovation.id)?.reason || null;
+        await this.withdrawInnovation(innovation, transactionManager, user, reason);
 
         toReturn.push({
           id: innovation.id,
@@ -86,9 +64,47 @@ export class DomainInnovationsService {
       return toReturn;
 
     } catch (error) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ARCHIVE_ERROR);
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_WIDTHRAW_ERROR);
     }
 
+  }
+
+  public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<{id: string, name: string, supportingUserIds: string[]}> {
+    const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
+
+    if (innovationSupportIds.length > 0) {
+      await transactionManager.createQueryBuilder().update(InnovationActionEntity)
+        .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, deletedAt: new Date() })
+        .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
+        .execute();
+    }
+    
+    // Update all supports to UNASSIGNED AND soft delete them.
+    for (const innovationSupport of innovation.innovationSupports) {
+      innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
+      innovationSupport.organisationUnitUsers = [];
+      innovationSupport.updatedBy = user.id;
+      innovationSupport.deletedAt = new Date().toISOString();
+      await transactionManager.save(InnovationSupportEntity, innovationSupport);
+    }
+
+    // Lastly, lets update innovations to WITHDRAWN.
+    innovation.status = InnovationStatusEnum.WITHDRAWN;
+    innovation.updatedBy = user.id;
+    innovation.organisationShares = [];
+    innovation.withdrawReason = reason;
+    innovation.deletedAt = new Date().toISOString();
+    await transactionManager.save(InnovationEntity, innovation);
+
+    const supportingUserIds = innovation.innovationSupports.flatMap(item =>
+      item.organisationUnitUsers.map(su => su.organisationUser.user.id)
+    )
+
+    return {
+      id: innovation.id,
+      name: innovation.name,
+      supportingUserIds,
+    }
   }
 
   /**

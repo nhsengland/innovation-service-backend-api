@@ -723,6 +723,53 @@ export class InnovationsService extends BaseService {
 
   }
 
+  async withdrawInnovation(
+    user: { id: string, identityId: string, type: UserTypeEnum }, 
+    innovationId: string,
+    reason: string,
+    ): Promise<{
+      id: string;
+  }> {
+
+      const result = await this.sqlConnection.transaction(async transaction => {
+
+        const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity,'innovations')
+          .leftJoinAndSelect('innovations.innovationSupports', 'supports')
+          .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
+          .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
+          .leftJoinAndSelect('organisationUsers.user', 'users')
+          .andWhere('innovations.id = :innovationId', { innovationId })
+          .getOne();
+
+        if (!dbInnovation) {
+          throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+        }
+
+        return this.domainService.innovations.withdrawInnovation(
+          dbInnovation,
+          transaction,
+          user,
+          reason,
+        )
+      });
+
+      await this.notifierService.send(
+        { id: user.id, identityId: user.identityId, type: user.type },
+        NotifierTypeEnum.INNOVATION_WITHDRAWN,
+        { 
+          innovation: {
+            id: result.id,
+            name: result.name,
+            assignedUserIds: result.supportingUserIds,
+          },
+        }
+      );
+
+      return {
+        id: result.id,
+      };
+  }
+
   async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
 
     return this.sqlConnection.transaction(async transaction => {
@@ -1300,7 +1347,7 @@ export class InnovationsService extends BaseService {
       [InnovationGroupedStatusEnum.NEEDS_ASSESSMENT]: InnovationStatusEnum.NEEDS_ASSESSMENT,
       [InnovationGroupedStatusEnum.AWAITING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
       [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.ARCHIVED]: InnovationStatusEnum.ARCHIVED,
+      [InnovationGroupedStatusEnum.WITHDRAWN]: InnovationStatusEnum.WITHDRAWN,
     }
 
     const status = [];
