@@ -10,7 +10,7 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
-  EmailTypeEnum.INNOVATOR_TO_ENGAGING_A_STOP_SHARING | EmailTypeEnum.INNOVATOR_TO_SELF_STOP_SHARING,
+  EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
   { innovationId: string }
 > {
 
@@ -44,7 +44,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
     this.emails.push({
-      templateId: EmailTypeEnum.INNOVATOR_TO_SELF_STOP_SHARING,
+      templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
       to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
       params: {
         innovation_name: innovation.name,
@@ -65,7 +65,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     for (const user of assignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATOR_TO_ENGAGING_A_STOP_SHARING,
+        templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.

@@ -10,7 +10,7 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationReassessmentRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
-  EmailTypeEnum.NA_INNOVATION_REASSESSMENT_REQUEST | EmailTypeEnum.INNOVATOR_INNOVATION_REASSESSMENT_REQUEST,
+  EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT | EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
   { innovationId: string }
 > {
 
@@ -44,7 +44,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
     this.emails.push({
-      templateId: EmailTypeEnum.INNOVATOR_INNOVATION_REASSESSMENT_REQUEST,
+      templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
       to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
       params: {
         innovation_name: innovation.name,
@@ -60,7 +60,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
 
     for (const user of naUsers) {
       this.emails.push({
-        templateId: EmailTypeEnum.NA_INNOVATION_REASSESSMENT_REQUEST,
+        templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
           innovation_name: innovation.name,
