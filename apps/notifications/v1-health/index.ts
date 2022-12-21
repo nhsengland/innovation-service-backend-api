@@ -64,8 +64,8 @@ class V1Health {
               {
                 innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
                 assessmentId: 'E10ACCD6-E9F6-EC11-B47A-501AC5B0E5F0',
-                previousAssessor: { id: requestAssessment.id, identityId: requestAssessment.identityId },
-                newAssessor: { id: 'FC50FA11-D1D1-EC11-B656-0050F25A2AF6', identityId: 'dfd44b3a-d795-4914-81cb-9b7232c89aa1' }
+                previousAssessor: { identityId: requestAssessment.identityId },
+                newAssessor: { identityId: 'dfd44b3a-d795-4914-81cb-9b7232c89aa1' }
               }
             );
             break;

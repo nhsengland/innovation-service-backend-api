@@ -19,8 +19,8 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
     innovationId: string
     assessmentId: string,
-    previousAssessor: { id: string, identityId: string },
-    newAssessor: { id: string, identityId: string }
+    previousAssessor: { identityId: string },
+    newAssessor: { identityId: string }
   },
 
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {

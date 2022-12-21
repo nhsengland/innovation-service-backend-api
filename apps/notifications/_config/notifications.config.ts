@@ -68,11 +68,9 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       assessmentId: Joi.string().guid().required(),
       previousAssessor: Joi.object({
-        id: Joi.string().guid().required(),
         identityId: Joi.string().guid().required()
       }).required(),
       newAssessor: Joi.object({
-        id: Joi.string().guid().required(),
         identityId: Joi.string().guid().required()
       }).required()
     }).required()

@@ -411,8 +411,8 @@ export class InnovationAssessmentsService extends BaseService {
       {
         innovationId,
         assessmentId: updatedAssessment.id,
-        previousAssessor: { id: previousAssessor.id, identityId: previousAssessor.identityId },
-        newAssessor: updatedAssessment.newAssessor
+        previousAssessor: { identityId: previousAssessor.identityId },
+        newAssessor: { identityId: updatedAssessment.newAssessor.identityId }
       }
     );
 
