@@ -48,7 +48,9 @@ class V1UsersList {
       } else if ('userTypes' in queryParams) {
         
         const validation = authorizationService.validate(context.auth.user.identityId)
-          .checkAdminType();
+          .checkAdminType()
+          .checkAssessmentType();
+          
         if(queryParams.organisationUnitId) {
           validation.checkAccessorType({
             organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
