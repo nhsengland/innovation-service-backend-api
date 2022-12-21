@@ -111,8 +111,8 @@ class V1Health {
           });
           break;
 
-        case NotifierTypeEnum.INNOVATION_ARCHIVED:
-          await notifierService.send(requestInnovator, NotifierTypeEnum.INNOVATION_ARCHIVED, {
+        case NotifierTypeEnum.INNOVATION_WITHDRAWN:
+          await notifierService.send(requestInnovator, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
             innovation: {
               id: '2CE7E825-3FCD-EC11-997E-0050F25A43BD',
               name: 'ArchivalTest03',
