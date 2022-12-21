@@ -111,8 +111,8 @@ class V1Health {
           });
           break;
 
-        case NotifierTypeEnum.INNOVATION_ARCHIVED:
-          await notifierService.send(requestInnovator, NotifierTypeEnum.INNOVATION_ARCHIVED, {
+        case NotifierTypeEnum.INNOVATION_WITHDRAWN:
+          await notifierService.send(requestInnovator, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
             innovation: {
               id: '2CE7E825-3FCD-EC11-997E-0050F25A43BD',
               name: 'ArchivalTest03',
@@ -162,6 +162,25 @@ class V1Health {
 
         case NotifierTypeEnum.DAILY_DIGEST:
           await notifierService.send(requestInnovator, NotifierTypeEnum.DAILY_DIGEST, {});
+          break;
+
+        case NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST:
+          await notifierService.send(
+            requestInnovator, 
+            NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST, 
+            {
+            innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD'
+          });
+          break;
+        
+        case NotifierTypeEnum.INNOVATION_STOP_SHARING:
+          await notifierService.send(
+            requestInnovator,
+            NotifierTypeEnum.INNOVATION_STOP_SHARING,
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              stopSharingComment: 'This is a test comment',
+            });
           break;
 
         default:
