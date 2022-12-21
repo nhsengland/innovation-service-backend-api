@@ -386,9 +386,6 @@ export class InnovationAssessmentsService extends BaseService {
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
     }
-    if (assessment.assignTo.id !== user.id) {
-      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSOR_CHANGE_REQUEST_NOT_FROM_CURRENT_ASSESSOR)
-    }
 
     return this.sqlConnection.transaction(async transaction => {
       await transaction.update(
