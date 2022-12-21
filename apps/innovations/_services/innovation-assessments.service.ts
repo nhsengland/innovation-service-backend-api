@@ -382,22 +382,31 @@ export class InnovationAssessmentsService extends BaseService {
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .where('assessment.id = assessmentId', { assessmentId })
       .getOne()
-    
+
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
     }
 
-    return this.sqlConnection.transaction(async transaction => {
+    const updatedAssessment = await this.sqlConnection.transaction(async transaction => {
       await transaction.update(
         InnovationAssessmentEntity,
         { id: assessment.id },
         { assignTo: assessor }
       )
 
-      
+
       return { assessmentId: assessment.id, assessorId: assessor.id }
 
-    })
+    });
+
+    await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE>(
+      { id: user.id, identityId: user.identityId, type: user.type },
+      NotifierTypeEnum.INNOVATION_SUBMITED,
+      { innovationId: result.assessment.id }
+    );
+
+    return { assessmentId: updatedAssessment.assessmentId, assessorId: updatedAssessment.assessorId }
+
   }
 
 }

@@ -16,6 +16,12 @@ export type NotifierTemplatesType = {
     organisationUnitIds: string[] // Suggested organisation units.
   },
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+    assessmentId: string
+    oldAssessorId: string,
+    newAssessorId: string,
+  },
+
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
     innovationId: string,
     innovationSupport: {
