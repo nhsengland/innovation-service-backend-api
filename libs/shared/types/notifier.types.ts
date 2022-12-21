@@ -16,6 +16,13 @@ export type NotifierTemplatesType = {
     organisationUnitIds: string[] // Suggested organisation units.
   },
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+    innovationId: string
+    assessmentId: string,
+    previousAssessor: { identityId: string },
+    newAssessor: { identityId: string }
+  },
+
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
     innovationId: string,
     innovationSupport: {
@@ -93,7 +100,7 @@ export type NotifierTemplatesType = {
     innovationId: string,
     requestId: string,
   },
-  
+
   [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
     innovationId: string,
     requestId: string

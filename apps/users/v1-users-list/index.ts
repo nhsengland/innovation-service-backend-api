@@ -2,9 +2,9 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { AccessorOrganisationRoleEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, UserTypeEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
@@ -48,7 +48,13 @@ class V1UsersList {
       } else if ('userTypes' in queryParams) {
         
         const validation = authorizationService.validate(context.auth.user.identityId)
-          .checkAdminType();
+          .checkAdminType()
+        
+        // only allow NA users to list other NA users
+        if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === UserTypeEnum.ASSESSMENT) {
+          validation.checkAssessmentType()
+        }
+          
         if(queryParams.organisationUnitId) {
           validation.checkAccessorType({
             organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
@@ -79,7 +85,7 @@ export default openApi(V1UsersList.httpTrigger as AzureFunction, '/v1', {
     operationId: 'v1-users-list',
     description: 'Get users list',
     tags: ['[v1] Users'],
-    parameters: [],
+    parameters: [], // TODO: Add query params. Swagger helper doesn't support Joi.alternatives()
     responses: {
       200: {
         description: 'Success',

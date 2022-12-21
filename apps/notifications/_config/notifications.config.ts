@@ -15,7 +15,8 @@ import {
   InnovationSupportStatusUpdateHandler, InnovationTransferOwnershipCompletedHandler, InnovationTransferOwnershipCreationHandler, InnovatorAccountCreationHandler,
   LockUserHandler, NeedsAssessmentCompletedHandler, NeedsAssessmentStartedHandler, SLSValidationHandler, ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler
+  UnitInactivationSupportStatusCompletedHandler,
+  NeedsAssessmentAssessorUpdateHandler
 } from '../_handlers';
 import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
 import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
@@ -58,6 +59,20 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       assessmentId: Joi.string().guid().required(),
       organisationUnitIds: Joi.array().items(Joi.string().guid()).required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+    handler: NeedsAssessmentAssessorUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required(),
+      previousAssessor: Joi.object({
+        identityId: Joi.string().guid().required()
+      }).required(),
+      newAssessor: Joi.object({
+        identityId: Joi.string().guid().required()
+      }).required()
     }).required()
   },
 

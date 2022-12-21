@@ -15,12 +15,13 @@ export type QueryParamsType = {
 
 export const QueryParamsSchema = Joi.alternatives().try(
   Joi.object<QueryParamsType>({
-    email: Joi.string().email().lowercase().required(),
-    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(UserTypeEnum))).required()
+    email: Joi.string().email().lowercase().required().description('Email of a user.'),
+    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(UserTypeEnum))).required().description('Types of user to filter.')
   }),
   Joi.object<QueryParamsType>({
-    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(UserTypeEnum))).min(1),
-    organisationUnitId: Joi.string().guid().optional(),
-    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('organisations', 'units')).default([])
+    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(UserTypeEnum))).min(1).description('Types of user to filter.'),
+    organisationUnitId: Joi.string().guid().optional().description('Id of the organisation unit the user belongs to.'),
+    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('organisations', 'units')).default([]).description('Additional fields to display in response.')
   })
 );
+

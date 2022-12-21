@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DomainUserInfoType } from '@innovations/shared/types';
 
@@ -357,6 +357,66 @@ export class InnovationAssessmentsService extends BaseService {
 
     return { assessment: { id: result.assessment.id }, reassessment: { id: result.reassessment.id } };
 
+  }
+
+  async updateAssessor(
+    user: { id: string, identityId: string, type: UserTypeEnum },
+    innovationId: string,
+    assessmentId: string,
+    assessorId: string
+  ): Promise<{
+    assessmentId: string, assessorId: string }> {
+
+    const newAssessor = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :assessorId', { assessorId })
+      .getOne()
+
+    if (!newAssessor) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+    }
+
+    if (newAssessor.type !== UserTypeEnum.ASSESSMENT) {
+      throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID)
+    }
+
+    const assessment = await this.sqlConnection
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .innerJoinAndSelect('assessment.assignTo', 'assignedAssessor')
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .getOne()
+
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
+    }
+
+    const previousAssessor = assessment.assignTo
+
+    const updatedAssessment = await this.sqlConnection.transaction(async transaction => {
+      await transaction.update(
+        InnovationAssessmentEntity,
+        { id: assessment.id },
+        { assignTo: newAssessor }
+      )
+
+      return {
+        id: assessment.id,
+        newAssessor: { id: newAssessor.id, identityId: newAssessor.identityId }
+      }
+    });
+
+    await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE>(
+      { id: user.id, identityId: user.identityId, type: user.type },
+      NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
+      {
+        innovationId,
+        assessmentId: updatedAssessment.id,
+        previousAssessor: { identityId: previousAssessor.identityId },
+        newAssessor: { identityId: updatedAssessment.newAssessor.identityId }
+      }
+    );
+
+    return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id }
   }
 
 }
