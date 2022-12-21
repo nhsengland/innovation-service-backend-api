@@ -361,52 +361,66 @@ export class InnovationAssessmentsService extends BaseService {
 
   async updateAssessor(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    innovationId: string,
     assessmentId: string,
     assessorId: string
-  ): Promise<{ assessmentId: string, assessorId: string }> {
+  ): Promise<{
+    assessmentId: string, assessorId: string }> {
 
-    const assessor = await this.sqlConnection
+    const newAssessor = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = assessorId', { assessorId })
+      .where('user.id = :assessorId', { assessorId })
       .getOne()
 
-    if (!assessor) {
+    if (!newAssessor) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
     }
 
-    if (assessor.type !== UserTypeEnum.ASSESSMENT) {
+    if (newAssessor.type !== UserTypeEnum.ASSESSMENT) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID)
     }
 
     const assessment = await this.sqlConnection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .where('assessment.id = assessmentId', { assessmentId })
+      .innerJoinAndSelect('assessment.assignTo', 'assignedAssessor')
+      .where('assessment.id = :assessmentId', { assessmentId })
       .getOne()
 
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
     }
 
+    const previousAssessor = assessment.assignTo
+
+    if (previousAssessor.id === newAssessor.id) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSOR_ALREADY_ASSIGNED)
+    }
+
     const updatedAssessment = await this.sqlConnection.transaction(async transaction => {
       await transaction.update(
         InnovationAssessmentEntity,
         { id: assessment.id },
-        { assignTo: assessor }
+        { assignTo: newAssessor }
       )
 
-
-      return { assessmentId: assessment.id, assessorId: assessor.id }
-
+      return {
+        id: assessment.id,
+        newAssessor: { id: newAssessor.id, identityId: newAssessor.identityId }
+      }
     });
 
     await this.notifierService.send<NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE>(
       { id: user.id, identityId: user.identityId, type: user.type },
-      NotifierTypeEnum.INNOVATION_SUBMITED,
-      { innovationId: result.assessment.id }
+      NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
+      {
+        innovationId,
+        assessmentId: updatedAssessment.id,
+        previousAssessor: { id: previousAssessor.id, identityId: previousAssessor.identityId },
+        newAssessor: updatedAssessment.newAssessor
+      }
     );
 
-    return { assessmentId: updatedAssessment.assessmentId, assessorId: updatedAssessment.assessorId }
-
+    return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id }
   }
 
 }

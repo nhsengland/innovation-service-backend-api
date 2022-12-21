@@ -35,9 +35,11 @@ class V1InnovationAssessmentAssessorUpdate {
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const innovation = auth.getInnovationInfo();
 
       const result = await innovationAssessmentsService.updateAssessor(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        innovation.id,
         params.assessmentId,
         body.assessorId
       );

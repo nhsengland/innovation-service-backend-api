@@ -5,6 +5,7 @@ export type ParamsType = {
   assessmentId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
+  innovationId: Joi.string().guid().required().description('Id of the innovation.'),
   assessmentId: Joi.string().guid().required().description('Id of the assessment.')
 }).required();
 
