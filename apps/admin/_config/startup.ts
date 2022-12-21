@@ -12,14 +12,16 @@ import {
 
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
-import { 
+import { UsersService } from '../_services/users.service';
+import {
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  OrganisationsServiceType, OrganisationsServiceSymbol
+  OrganisationsServiceType, OrganisationsServiceSymbol, UsersServiceSymbol, UsersServiceType
 } from '../_services/interfaces';
 
 
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
+container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
 
