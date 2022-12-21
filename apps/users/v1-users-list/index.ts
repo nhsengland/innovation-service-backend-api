@@ -4,7 +4,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { AccessorOrganisationRoleEnum, UserTypeEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
@@ -85,7 +85,7 @@ export default openApi(V1UsersList.httpTrigger as AzureFunction, '/v1', {
     operationId: 'v1-users-list',
     description: 'Get users list',
     tags: ['[v1] Users'],
-    parameters: [],
+    parameters: [], // TODO: Add query params. Swagger helper doesn't support Joi.alternatives()
     responses: {
       200: {
         description: 'Success',
