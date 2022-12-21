@@ -15,7 +15,7 @@ export enum EmailTypeEnum {
   COMMENT_CREATION_TO_INNOVATOR = 'fc3a50df-ee25-46e4-a51d-33e98406b124', // TODO: Deprecated!
   COMMENT_CREATION_TO_ASSIGNED_USERS = 'bea1d925-1fa9-47c2-9fa2-6d630779e06b', // TODO: Deprecated!
   COMMENT_REPLY_TO_ALL = '7c9a754c-4310-44f5-950a-74cbbabd2c57', // TODO: Deprecated!
-  INNOVATION_ARCHIVED_TO_ASSIGNED_USERS = 'fa1bda41-8022-42cb-b66a-2db6de23c07d',
+  INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS = 'fa1bda41-8022-42cb-b66a-2db6de23c07d',
   INNOVATION_TRANSFER_TO_NEW_USER = '94cab12f-7fb9-40f4-bb36-2f54dc96c801',
   INNOVATION_TRANSFER_TO_EXISTING_USER = '756c062e-d7c3-490b-99fe-6a57e809c32e',
   INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER = 'b8814f94-f067-4549-aba0-4f0ff435ca38',
@@ -62,7 +62,7 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.COMMENT_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, comment_url: string },
   [EmailTypeEnum.COMMENT_CREATION_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string, comment_url: string },
   [EmailTypeEnum.COMMENT_REPLY_TO_ALL]: { display_name?: string, innovation_name: string, comment_url: string },
-  [EmailTypeEnum.INNOVATION_ARCHIVED_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string },
+  [EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string },
   [EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER]: { innovator_name: string, innovation_name: string, transfer_url: string },
   [EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER]: { innovator_name: string, innovation_name: string, transfer_url: string },
   [EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER]: { innovator_name?: string, innovation_name: string, new_innovator_name: string, new_innovator_email: string },
