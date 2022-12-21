@@ -32,16 +32,49 @@ export class UsersService extends BaseService {
     })
 
     //lock user in identity provider
-    await this.lockUserIdP(userId)
+    await this.lockUserIdP (userId)
 
     return { userId: user.id }
   }
 
-  private async lockUserIdP(userId: string ): Promise<void> {
+  async unlockUser(userId: string): Promise<{ userId: string }> {
+
+    const user = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :userId', { userId })
+      .getOne()
+
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+    }
+
+    //unlock user in database
+    await this.sqlConnection.transaction(async transaction => {
+
+      await transaction.update(UserEntity, { id: userId }, { lockedAt: null })
+    
+    })
+
+    //unlock user in identity provider
+    await this.unlockUserIdP (userId)
+
+    return { userId: user.id }
+  }
+
+
+  private async lockUserIdP (userId: string ): Promise<void> {
 
     const user = await this.domainService.users.getUserInfo({ userId })
 
     await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: false })
+
+  }
+
+  private async unlockUserIdP (userId: string): Promise<void> {
+
+    const user = await this.domainService.users.getUserInfo({ userId })
+
+    await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: true })
 
   }
 
