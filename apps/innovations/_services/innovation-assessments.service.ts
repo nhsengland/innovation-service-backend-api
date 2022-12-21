@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
-import { BadRequestError, ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
+import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DomainUserInfoType } from '@innovations/shared/types';
 
@@ -391,10 +391,6 @@ export class InnovationAssessmentsService extends BaseService {
     }
 
     const previousAssessor = assessment.assignTo
-
-    if (previousAssessor.id === newAssessor.id) {
-      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSOR_ALREADY_ASSIGNED)
-    }
 
     const updatedAssessment = await this.sqlConnection.transaction(async transaction => {
       await transaction.update(
