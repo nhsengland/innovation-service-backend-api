@@ -35,6 +35,7 @@
     "mongoose": "^6.6.0",
     "mssql": "^9.0.1",
     "pdfmake": "^0.2.6",
+    "redis": "^4.5.1",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.3.10",
     "uuid": "^9.0.0",

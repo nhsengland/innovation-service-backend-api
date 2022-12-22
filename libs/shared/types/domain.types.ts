@@ -142,3 +142,6 @@ export type ActivityLogTemplatesType = {
     params: { message: string }
   }
 }
+
+// This is the type for B2C user info.
+export type IdentityUserInfo = { identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, passwordResetAt: null | DateISOType, lastLoginAt: null | DateISOType }

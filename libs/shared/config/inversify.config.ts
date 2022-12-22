@@ -11,9 +11,10 @@ import { AuditService } from '../services/integrations/audit.service';
 import {
   AuditServiceSymbol,
   AuditServiceType,
-  AuthorizationServiceSymbol, DomainServiceSymbol, FileStorageServiceSymbol, HttpServiceSymbol, IdentityProviderServiceSymbol, LoggerServiceSymbol, NOSQLConnectionServiceSymbol,
+  AuthorizationServiceSymbol, CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, FileStorageServiceSymbol, HttpServiceSymbol, IdentityProviderServiceSymbol, LoggerServiceSymbol, NOSQLConnectionServiceSymbol,
   NotifierServiceSymbol, SQLConnectionServiceSymbol, StorageQueueServiceSymbol
 } from '../services/interfaces';
+import { CacheService } from '../services/storage/cache.service';
 
 export const container: Container = new Container();
 
@@ -28,3 +29,4 @@ container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConne
 container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<AuditServiceType>(AuditServiceSymbol).to(AuditService).inSingletonScope();
+container.bind<CacheServiceType>(CacheServiceSymbol).to(CacheService).inSingletonScope();

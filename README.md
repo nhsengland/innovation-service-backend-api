@@ -84,6 +84,8 @@ These files are needed to provide environment variables to the app function when
 
     "AZURE_STORAGE_CONNECTIONSTRING": "{secret}",
 
+    "REDIS_CACHE_CONNECTIONSTRING": "{secret}",
+
     "SLS_TTL": 300,
     "ADMIN_OID": "{secret}",
 

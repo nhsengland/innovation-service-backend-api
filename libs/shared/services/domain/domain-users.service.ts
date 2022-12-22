@@ -54,7 +54,7 @@ export class DomainUsersService {
         displayName: authUser.displayName,
         type: dbUser.type,
         roles: dbUser.serviceRoles.map(item => item.role.name),
-        phone: authUser.phone,
+        phone: authUser.mobilePhone,
         isActive: !dbUser.lockedAt,
         passwordResetAt: authUser.passwordResetAt,
         firstTimeSignInAt: dbUser.firstTimeSignInAt,

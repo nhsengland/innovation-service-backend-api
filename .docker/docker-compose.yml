@@ -24,3 +24,14 @@ services:
     # 2. Replace the value of the setting with the connection string below.
     # "AZURE_STORAGE_CONNECTIONSTRING": "DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;",
     
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    # HOW TO USE THIS CONTAINER
+    #
+    # 1. Open the local.settings.json file and locate the "REDIS_CACHE_CONNECTIONSTRING" setting.
+    # 2. Replace the value of the setting with the connection string below.
+    # "REDIS_CACHE_CONNECTIONSTRING": "localhost:6379,password=,ssl=False,abortConnect=False",

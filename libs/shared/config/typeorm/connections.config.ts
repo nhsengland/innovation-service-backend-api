@@ -1,5 +1,5 @@
-import { join } from 'path';
 import * as dotenv from 'dotenv';
+import { join } from 'path';
 
 import type { DataSourceOptions } from 'typeorm';
 

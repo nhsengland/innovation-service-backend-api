@@ -5,6 +5,8 @@ import { join } from 'path';
 import YAML from 'yaml';
 
 import {
+  CacheServiceSymbol,
+  CacheServiceType,
   HttpServiceSymbol,
   HttpServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
@@ -29,10 +31,12 @@ export const startup = async (): Promise<void> => {
 
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+  const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
 
   try {
 
     await sqlConnectionService.init();
+    await cacheService.init();
 
     console.log('Initialization complete');
 

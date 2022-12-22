@@ -4,7 +4,7 @@ import fs from 'fs';
 import { join } from 'path';
 import YAML from 'yaml';
 
-import { HttpServiceSymbol, HttpServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@users/shared/services';
+import { CacheServiceSymbol, CacheServiceType, HttpServiceSymbol, HttpServiceType, NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@users/shared/services';
 
 import {
   NotificationsServiceSymbol,
@@ -38,6 +38,7 @@ export const startup = async (): Promise<void> => {
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
   const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
 
   try {
 
@@ -45,6 +46,7 @@ export const startup = async (): Promise<void> => {
 
     await sqlConnectionService.init();
     await noSqlConnectionService.init();
+    await cacheService.init();
 
     console.log('Initialization complete');
     console.groupEnd();
