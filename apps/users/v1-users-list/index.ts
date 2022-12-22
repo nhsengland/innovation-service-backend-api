@@ -4,7 +4,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { AccessorOrganisationRoleEnum, UserTypeEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
+import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
