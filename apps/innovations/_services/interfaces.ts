@@ -1,9 +1,10 @@
 import type { InnovationActionsService } from './innovation-actions.service';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
+import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationSectionsService } from './innovation-sections.service';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
-import type { InnovationTransferService } from './innovation-transfer.service'
+import type { InnovationTransferService } from './innovation-transfer.service';
 import type { InnovationsService } from './innovations.service';
 import type { PDFService } from './pdf.service';
 import type { StatisticsService } from './statistics.service';
@@ -14,6 +15,9 @@ export const InnovationActionsServiceSymbol = Symbol('InnovationActionsService')
 
 export type InnovationAssessmentsServiceType = typeof InnovationAssessmentsService.prototype;
 export const InnovationAssessmentsServiceSymbol = Symbol('InnovationAssessmentsService');
+
+export type InnovationFileServiceType = typeof InnovationFileService.prototype;
+export const InnovationFileServiceSymbol = Symbol('InnovationFileService');
 
 export type InnovationSectionsServiceType = typeof InnovationSectionsService.prototype;
 export const InnovationSectionsServiceSymbol = Symbol('InnovationSectionsService');

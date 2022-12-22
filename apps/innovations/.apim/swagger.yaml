@@ -985,6 +985,56 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+  "/v1/{innovationId}/upload":
+    post:
+      operationId: v1-innovation-file-upload
+      description: Upload an innovation file.
+      tags:
+        - "[v1] Innovation"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: the innovation id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileName:
+                  type: string
+                  description: the file name
+                context:
+                  type: string
+                  maxLength: 100
+                  description: optional context for the file
+              required:
+                - fileName
+              additionalProperties: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  displayFileName:
+                    type: string
+                  url:
+                    type: string
+                    description: url for file upload
+        "400":
+          description: Invalid payload
+        "404":
+          description: Innovation not found
   "/v1/{innovationId}":
     get:
       operationId: v1-innovation-info
