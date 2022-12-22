@@ -398,7 +398,7 @@ export class InnovationsService extends BaseService {
     owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
     lastEndSupportAt: null | DateISOType,
     export: { canUserExport: boolean, pendingRequestsCount: number },
-    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
+    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
     supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
   }> {
 
@@ -460,7 +460,7 @@ export class InnovationsService extends BaseService {
       }
 
       // Assessment parsing.
-      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
+      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number };
 
       if (filters.fields?.includes('assessment')) {
 
@@ -472,12 +472,12 @@ export class InnovationsService extends BaseService {
           }
 
           if (result.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
-
+            const assignTo = usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive)
             assessment = {
               id: result.assessments[0].id,
               createdAt: result.assessments[0].createdAt,
               finishedAt: result.assessments[0].finishedAt,
-              assignedTo: { name: usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? '' },
+              assignedTo: { id: assignTo?.id ?? '' , name: assignTo?.displayName ?? '' },
               reassessmentCount: (await result.reassessmentRequests).length
             };
 
