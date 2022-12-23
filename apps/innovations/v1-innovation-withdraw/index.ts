@@ -2,7 +2,6 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
-import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
@@ -32,7 +31,7 @@ class V1InnovationWithdraw {
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
+        .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
 
@@ -42,7 +41,7 @@ class V1InnovationWithdraw {
         body.message
       );
 
-      
+
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
@@ -61,7 +60,7 @@ export default openApi(V1InnovationWithdraw.httpTrigger as AzureFunction, '/v1/{
     description: 'Withdraw an innovation.',
     operationId: 'v1-innovation-withdraw',
     tags: ['Innovation'],
-    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: {
