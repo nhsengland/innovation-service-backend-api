@@ -137,6 +137,8 @@ export class UsersService extends BaseService {
         await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role }))
       }
 
+      //missing assessor type
+
       return { id: user.id }
     })
   }
