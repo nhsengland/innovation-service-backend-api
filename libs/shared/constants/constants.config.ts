@@ -1,5 +1,3 @@
-export const DEFAULT_CACHE_TTL = 300000; // 5 minutes (this will be increased in the future)
-
 export const TEXTAREA_LENGTH_LIMIT = { small: 200, medium: 500, large: 2000 };
 
 export const ORGANISATIONS_LENGTH_LIMITS = {

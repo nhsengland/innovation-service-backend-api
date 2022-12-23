@@ -4,10 +4,11 @@ import type { Repository } from 'typeorm';
 import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
-import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
+import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
 import { InternalServerError } from '@users/shared/errors/errors.config';
+import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import { BaseService } from './base.service';
 
 
@@ -16,8 +17,10 @@ export class UsersService extends BaseService {
 
   userRepository: Repository<UserEntity>;
   organisationRepository: Repository<OrganisationEntity>;
+  private cache: CacheConfigType['IdentityUserInfo']
 
   constructor(
+    @inject(CacheServiceSymbol) cacheService: CacheServiceType,
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
@@ -25,6 +28,7 @@ export class UsersService extends BaseService {
     super();
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
     this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
+    this.cache = cacheService.get('IdentityUserInfo');
   }
 
 
@@ -185,6 +189,9 @@ export class UsersService extends BaseService {
       }
 
     }
+
+    // Remove the cache entry on update
+    await this.cache.delete(user.identityId);
 
     return { id: user.id };
   }

@@ -1,81 +1,51 @@
 import { UserEntity } from '@admin/shared/entities';
 import { NotFoundError, UserErrorsEnum } from '@admin/shared/errors';
-import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol } from '@admin/shared/services';
+import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol } from '@admin/shared/services';
+import { CacheConfigType, CacheService } from '@admin/shared/services/storage/cache.service';
 import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
+  private cache: CacheConfigType['IdentityUserInfo']
+
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
+    @inject(CacheServiceSymbol) cacheService: CacheService,
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
   ) {
     super();
+    this.cache = cacheService.get('IdentityUserInfo');
   }
 
-  async lockUser(userId: string): Promise<{ userId: string }> {
+  /**
+   * updates a user info in the database and in the identity provider if needed
+   * @param userId the user id
+   * @param data partial user update options (currently only supports accountEnabled)
+   *   - accountEnabled: enable or disable the user
+   */
+  async updateUser(userId: string, data: {accountEnabled?: boolean | null}): Promise<void> {
+      await this.sqlConnection.transaction(async transaction => {
+        const user = await this.sqlConnection
+          .createQueryBuilder(UserEntity, 'user')
+          .where('user.id = :userId', { userId })
+          .getOne()
 
-    const user = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId })
-      .getOne()
+        if (!user) {
+          throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+        }
+        
+        await transaction.update(UserEntity, { id: userId }, {
+          ...data.accountEnabled !=null && {lockedAt: data.accountEnabled === false ? new Date().toISOString() : null}
+        })
 
-    if (!user) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
-    }
+        // Update identity provider if needed
+        if (data.accountEnabled !=null) {
+          await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled !== false })
+        }
 
-    //lock user in database
-    await this.sqlConnection.transaction(async transaction => {
-
-      await transaction.update(UserEntity, { id: userId }, { lockedAt: new Date().toISOString() })
-    
-    })
-
-    //lock user in identity provider
-    await this.lockUserIdP (userId)
-
-    return { userId: user.id }
-  }
-
-  async unlockUser(userId: string): Promise<{ userId: string }> {
-
-    const user = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId })
-      .getOne()
-
-    if (!user) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
-    }
-
-    //unlock user in database
-    await this.sqlConnection.transaction(async transaction => {
-
-      await transaction.update(UserEntity, { id: userId }, { lockedAt: null })
-    
-    })
-
-    //unlock user in identity provider
-    await this.unlockUserIdP (userId)
-
-    return { userId: user.id }
-  }
-
-
-  private async lockUserIdP (userId: string ): Promise<void> {
-
-    const user = await this.domainService.users.getUserInfo({ userId })
-
-    await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: false })
-
-  }
-
-  private async unlockUserIdP (userId: string): Promise<void> {
-
-    const user = await this.domainService.users.getUserInfo({ userId })
-
-    await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: true })
-
+        // Remove cache entry
+        await this.cache.delete(user.identityId)
+      })
   }
 
 }

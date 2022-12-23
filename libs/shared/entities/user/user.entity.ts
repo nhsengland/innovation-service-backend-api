@@ -2,10 +2,10 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { UserRoleEntity } from './user-role.entity';
-import { NotificationPreferenceEntity } from './notification-preference.entity';
 import { TermsOfUseUserEntity } from '../general/terms-of-use-user.entity';
 import { OrganisationUserEntity } from '../organisation/organisation-user.entity';
+import { NotificationPreferenceEntity } from './notification-preference.entity';
+import { UserRoleEntity } from './user-role.entity';
 
 import { UserTypeEnum } from '../../enums/user.enums';
 import type { DateISOType } from '../../types/date.types';

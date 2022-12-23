@@ -1,6 +1,7 @@
 import type { createClient } from 'redis';
-import { DEFAULT_CACHE_TTL } from '../../constants';
 import type { LoggerServiceType } from '../interfaces';
+
+const DEFAULT_CACHE_TTL = Number(process.env['REDIS_CACHE_TTL']) || 24*3600;  // This is really || since we want to use the default if the env variable is not set or NaN
 
 export class RedisCache<T> {
   /**
@@ -11,7 +12,7 @@ export class RedisCache<T> {
    * @param ttl the default ttl if not specified in the set method
    */
   constructor(private redis: ReturnType<typeof createClient>, private logger: LoggerServiceType, private name: string, private ttl = DEFAULT_CACHE_TTL) {
-    this.logger.log(`Cache ${this.name} created with ttl ${this.ttl}ms`)
+    this.logger.log(`Cache ${this.name} created with ttl ${this.ttl}s`)
   }
 
   /**
@@ -47,7 +48,7 @@ export class RedisCache<T> {
    * sets single value in the cache
    * @param key the cache key
    * @param value the value to be set
-   * @param _ttl the ttl in ms, currently ignored
+   * @param _ttl the ttl in seconds, currently ignored
    */
   async set(key: string, value: T, ttl?: number): Promise<void> {
     try {
@@ -60,7 +61,7 @@ export class RedisCache<T> {
   /**
    * sets multiple values in the cache
    * @param values list of key value pairs to be set
-   * @param _ttl the ttl in ms, currently ignored
+   * @param _ttl the ttl in seconds, currently ignored
    */
   async setMany(values: {key: string, value: T}[], _ttl?: number): Promise<void> {
     try {

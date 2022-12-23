@@ -9,16 +9,15 @@ import {
   CacheServiceType,
   HttpServiceSymbol,
   HttpServiceType,
+  NOSQLConnectionServiceSymbol,
+  NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
+import { OrganisationsServiceSymbol, OrganisationsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
-import {
-  TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  OrganisationsServiceType, OrganisationsServiceSymbol, UsersServiceSymbol, UsersServiceType
-} from '../_services/interfaces';
 
 
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
@@ -31,11 +30,13 @@ export const startup = async (): Promise<void> => {
 
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
 
   try {
 
     await sqlConnectionService.init();
+    await noSqlConnectionService.init();
     await cacheService.init();
 
     console.log('Initialization complete');

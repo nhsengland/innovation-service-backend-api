@@ -364,10 +364,10 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
-  "/v1/users/{userId}/lock":
+  "/v1/users/{userId}":
     patch:
-      description: Lock a user.
-      operationId: v1-admin-user-lock
+      description: Update a user.
+      operationId: v1-admin-user-update
       parameters:
         - name: userId
           in: path
@@ -376,9 +376,33 @@ paths:
             type: string
             format: uuid
             description: Id of the user to lock.
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Id of the SLS.
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Code of the SLS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountEnabled:
+                  type: boolean
+                  nullable: true
+                  description: Enable or disable the user.
+              additionalProperties: false
       responses:
         "200":
-          description: The user has been locked.
+          description: The user has been updated.
           content:
             application/json:
               schema:
@@ -395,37 +419,6 @@ paths:
           description: The user does not exist.
         "500":
           description: An error occurred while locking a user.
-  "/v1/users/{userId}/unlock":
-    patch:
-      description: Unlock a user.
-      operationId: v1-admin-user-unlock
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: Id of the user to lock.
-      responses:
-        "200":
-          description: The user has been unlocked.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  userId:
-                    type: string
-                    description: Id of the user.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to unlock a user.
-        "404":
-          description: The user does not exist.
-        "500":
-          description: An error occurred while unlocking a user.
   "/v1/organisations/{organisationId}/units":
     post:
       description: Create an organisation unit.

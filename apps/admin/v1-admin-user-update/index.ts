@@ -8,11 +8,12 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { SLSEventTypeEnum, SLSQueryParam, SLSQuerySchema } from '@admin/shared/schemas/sls.schema';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-class V1AdminUserLock {
+class V1AdminUserUpdate {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -26,15 +27,19 @@ class V1AdminUserLock {
         ParamsSchema,
         request.params
       );
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       await authorizationService
         .validate(context.auth.user.identityId)
         .checkAdminType()
         .verify();
-      
-      const result = await usersService.lockUser(params.userId);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(result);
+      const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_UPDATE_USER, sls.id, sls.code);
+      
+      await usersService.updateUser(params.userId, body);
+
+      context.res = ResponseHelper.Ok<ResponseDTO>({ userId: params.userId});
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -44,16 +49,17 @@ class V1AdminUserLock {
 }
 
 export default openApi(
-  V1AdminUserLock.httpTrigger as AzureFunction,
-  '/v1/users/{userId}/lock',
+  V1AdminUserUpdate.httpTrigger as AzureFunction,
+  '/v1/users/{userId}',
   {
     patch: {
-      description: 'Lock a user.',
-      operationId: 'v1-admin-user-lock',
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      description: 'Update a user.',
+      operationId: 'v1-admin-user-update',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: SLSQuerySchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
         '200': {
-          description: 'The user has been locked.',
+          description: 'The user has been updated.',
           content: {
             'application/json': {
               schema: {
