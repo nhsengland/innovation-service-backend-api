@@ -281,6 +281,55 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while activating the organisation unit.
+  "/v1/organisations/{organisationId}/units":
+    post:
+      description: Create an organisation unit.
+      operationId: v1-admin-unit-create
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the organisation to which the unit will belong to.
+      requestBody:
+        description: The organisation unit to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Name of the organisation unit.
+                acronym:
+                  type: string
+                  maxLength: 10
+                  description: Acronym of the organisation unit.
+              required:
+                - name
+                - acronym
+              additionalProperties: false
+      responses:
+        "200":
+          description: The organisation unit has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create an organisation unit.
+        "500":
+          description: An error occurred while creating the organisation unit.
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
     patch:
       description: Inactivate an organisation unit.
@@ -364,6 +413,79 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  /v1/users:
+    post:
+      description: Create a user.
+      operationId: v1-admin-user-create
+      parameters: []
+      requestBody:
+        description: The user to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the user.
+                email:
+                  type: string
+                  format: email
+                  description: Email of the user.
+                type:
+                  type: string
+                  enum:
+                    - ADMIN
+                    - INNOVATOR
+                    - ACCESSOR
+                    - ASSESSMENT
+                  description: Type of the user.
+                organisation:
+                  type: object
+                  properties:
+                    acronym:
+                      type: string
+                      maxLength: 10
+                      description: Acronym of the organisation.
+                    unitAcronym:
+                      type: string
+                      maxLength: 10
+                      description: Acronym of the organisation unit.
+                    role:
+                      type: string
+                      enum:
+                        - ACCESSOR
+                        - QUALIFYING_ACCESSOR
+                      description: Role of the user within the organisation.
+                  required:
+                    - acronym
+                    - unitAcronym
+                    - role
+                  additionalProperties: false
+                  description: Organisation and Unit to which the user belongs.
+              required:
+                - name
+                - email
+                - type
+              additionalProperties: false
+      responses:
+        "200":
+          description: The user has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The user id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create a user.
+        "500":
+          description: An error occurred while creating the user.
   "/v1/users/{userId}":
     patch:
       description: Update a user.
@@ -419,52 +541,3 @@ paths:
           description: The user does not exist.
         "500":
           description: An error occurred while locking a user.
-  "/v1/organisations/{organisationId}/units":
-    post:
-      description: Create an organisation unit.
-      operationId: v1-admin-unit-create
-      parameters:
-        - name: organisationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: Id of the organisation to which the unit will belong to.
-      requestBody:
-        description: The organisation unit to be created.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  maxLength: 100
-                  description: Name of the organisation unit.
-                acronym:
-                  type: string
-                  maxLength: 10
-                  description: Acronym of the organisation unit.
-              required:
-                - name
-                - acronym
-              additionalProperties: false
-      responses:
-        "200":
-          description: The organisation unit has been created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  unitId:
-                    type: string
-                    description: The organisation id.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to create an organisation unit.
-        "500":
-          description: An error occurred while creating the organisation unit.
