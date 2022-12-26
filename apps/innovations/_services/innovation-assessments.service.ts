@@ -177,6 +177,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     const dbAssessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
+      .leftJoinAndSelect('assessment.reassessmentRequest', 'reassessmentRequest')
       .where('assessment.id = :assessmentId', { assessmentId })
       .getOne();
     if (!dbAssessment) {
@@ -245,7 +246,20 @@ export class InnovationAssessmentsService extends BaseService {
 
         }
 
-      }
+      } else {
+        // it's not submission (it's draft)
+        // if the innovation has a reassessment request change innovation state to NEEDS_ASSESSMENT
+        if (dbAssessment.reassessmentRequest) {
+          await transaction.update(InnovationEntity,
+            { id: innovationId },
+            {
+              status: InnovationStatusEnum.NEEDS_ASSESSMENT,
+              statusUpdatedAt: new Date().toISOString(),
+              updatedBy: user.id
+            }
+          );
+        }
+      } 
 
       const savedAssessment = await transaction.save(InnovationAssessmentEntity, assessment);
 
