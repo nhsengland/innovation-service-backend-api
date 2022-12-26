@@ -80,17 +80,22 @@ export class DomainInnovationsService {
         .execute();
     }
 
-    const exportRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .where('request.status IN (:...statuses)', { statuses: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED] })
-      .getMany();
-
-    // Reject all PENDING AND APPROVE export requests
-    for (const exportRequest of exportRequests.filter((r) => r.status !== InnovationExportRequestStatusEnum.EXPIRED)) {
-      exportRequest.status = InnovationExportRequestStatusEnum.REJECTED;
-      exportRequest.rejectReason = TranslationHelper.translate("DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW");
-      exportRequest.updatedBy = user.id;
-      await transactionManager.save(InnovationExportRequestEntity, exportRequest);
-    }
+    // Reject all PENDING AND APPROVED export requests
+    await transactionManager.createQueryBuilder(InnovationExportRequestEntity, 'request')
+    .update({
+      status: InnovationExportRequestStatusEnum.REJECTED,
+      rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
+      updatedBy: user.id
+    })
+    .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
+      {
+        innovationId: innovation.id,
+        pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+        approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+        expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
+      }
+    )
+    .execute()
 
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {

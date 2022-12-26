@@ -802,17 +802,22 @@ export class InnovationsService extends BaseService {
         }
       );
 
-      const exportRequests = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .where('request.status IN (:...statuses)', { statuses: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED] })
-        .getMany();
-
-      // Reject all PENDING AND APPROVE export requests
-      for (const exportRequest of exportRequests.filter((r) => r.status !== InnovationExportRequestStatusEnum.EXPIRED)) {
-        exportRequest.status = InnovationExportRequestStatusEnum.REJECTED;
-        exportRequest.rejectReason = TranslationHelper.translate("DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING");
-        exportRequest.updatedBy = user.id;
-        await transaction.save(InnovationExportRequestEntity, exportRequest);
-      }
+      // Reject all PENDING AND APPROVED export requests
+      await transaction.createQueryBuilder(InnovationExportRequestEntity, 'request')
+        .update({
+          status: InnovationExportRequestStatusEnum.REJECTED,
+          rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'),
+          updatedBy: user.id
+        })
+        .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
+          {
+            innovationId,
+            pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+            approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+            expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
+          }
+        )
+        .execute()
 
       await this.domainService.innovations.addActivityLog(
         transaction,
