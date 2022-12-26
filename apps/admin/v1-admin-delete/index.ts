@@ -16,7 +16,7 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 import { SLSEventTypeEnum, SLSQueryParam, SLSQuerySchema } from '@admin/shared/schemas/sls.schema';
 
-class V1AdminAdminDelete {
+class V1AdminDelete {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
@@ -49,13 +49,13 @@ class V1AdminAdminDelete {
 }
 
 export default openApi(
-  V1AdminAdminDelete.httpTrigger as AzureFunction,
+  V1AdminDelete.httpTrigger as AzureFunction,
   '/v1/users/{userId}/delete',
   {
     patch: {
       description: 'Delete an admin user.',
-      operationId: 'v1-admin-admin-delete',
-      parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
+      operationId: 'v1-admin-delete',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
           description: 'The admin account has been deleted.',
