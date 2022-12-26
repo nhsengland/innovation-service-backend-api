@@ -5,6 +5,35 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  "/v1/users/{userId}/delete":
+    patch:
+      description: Delete an admin user.
+      operationId: v1-admin-admin-delete
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the admin user.
+      responses:
+        "200":
+          description: The admin account has been deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to delete an admin account.
+        "500":
+          description: An error occurred while deleting the admin account.
   /v1/health:
     get:
       summary: Get admin health
@@ -437,7 +466,6 @@ paths:
                   type: string
                   enum:
                     - ADMIN
-                    - INNOVATOR
                     - ACCESSOR
                     - ASSESSMENT
                   description: Type of the user.
@@ -477,7 +505,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
                     description: The user id.
         "400":
