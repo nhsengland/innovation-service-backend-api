@@ -24,28 +24,28 @@ class V1AdminUserCreate {
     );
 
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
-    
+
     try {
 
-        const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-        const auth = await authorizationService
-            .validate(context.auth.user.identityId)
-            .checkAdminType()
-            .verify();
+      const auth = await authorizationService
+        .validate(context.auth.user.identityId)
+        .checkAdminType()
+        .verify();
 
-        const requestUser = auth.getUserInfo()
+      const requestUser = auth.getUserInfo()
 
-        const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
-        await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_CREATE_USER, sls.id, sls.code);
+      const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_CREATE_USER, sls.id, sls.code);
 
-        const result = await usersService.createUser(requestUser, body);
+      const result = await usersService.createUser(requestUser, body);
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
-        return;
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
+      return;
     } catch (error) {
-        context.res = ResponseHelper.Error(context, error);
-        return;
+      context.res = ResponseHelper.Error(context, error);
+      return;
     }
   }
 }

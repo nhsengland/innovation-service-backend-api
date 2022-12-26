@@ -153,7 +153,7 @@ export class UsersService extends BaseService {
             updatedBy: requestUser.id
           })
         )
-        
+
         await transaction.save(OrganisationUnitUserEntity,
           OrganisationUnitUserEntity.new({
             organisationUnit: unit,
@@ -161,7 +161,7 @@ export class UsersService extends BaseService {
             createdBy: requestUser.id,
             updatedBy: requestUser.id
           }))
-        
+
       }
 
       return { id: user.id }
