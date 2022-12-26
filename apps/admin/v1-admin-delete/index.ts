@@ -12,11 +12,11 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType } from './validation.schemas';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 import { SLSEventTypeEnum, SLSQueryParam, SLSQuerySchema } from '@admin/shared/schemas/sls.schema';
 
-class V1AdminUserCreate {
+class V1AdminDelete {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
@@ -27,19 +27,17 @@ class V1AdminUserCreate {
 
     try {
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService
+      await authorizationService
         .validate(context.auth.user.identityId)
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo()
-
       const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
-      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_CREATE_USER, sls.id, sls.code);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_DELETE_ADMIN, sls.id, sls.code);
 
-      const result = await usersService.createUser(requestUser, body);
+      const result = await usersService.deleteAdmin(params.userId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
@@ -51,17 +49,16 @@ class V1AdminUserCreate {
 }
 
 export default openApi(
-  V1AdminUserCreate.httpTrigger as AzureFunction,
-  '/v1/users',
+  V1AdminDelete.httpTrigger as AzureFunction,
+  '/v1/users/{userId}/delete',
   {
-    post: {
-      description: 'Create a user.',
-      operationId: 'v1-admin-user-create',
-      parameters: [],
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The user to be created.' }),
+    patch: {
+      description: 'Delete an admin user.',
+      operationId: 'v1-admin-delete',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
-          description: 'The user has been created.',
+          description: 'The admin account has been deleted.',
           content: {
             'application/json': {
               schema: {
@@ -80,10 +77,10 @@ export default openApi(
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to create a user.',
+          description: 'The user is not authorized to delete an admin account.',
         },
         '500': {
-          description: 'An error occurred while creating the user.',
+          description: 'An error occurred while deleting the admin account.',
         },
       },
     },
