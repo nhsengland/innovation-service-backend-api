@@ -35,7 +35,7 @@ class V1AdminDelete {
         .verify();
 
       const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
-      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_CREATE_USER, sls.id, sls.code);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_DELETE_ADMIN, sls.id, sls.code);
 
       const result = await usersService.deleteAdmin(params.userId);
 
