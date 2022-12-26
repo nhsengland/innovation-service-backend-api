@@ -105,10 +105,8 @@ export class UsersService extends BaseService {
 
     const b2cUser = await this.identityProviderService.getUserInfoByEmail(data.email)
 
-
     if (b2cUser) {
       identityId = b2cUser.identityId
-
       // user exists in b2c, check if it also exists in DB
       const user = await this.sqlConnection
         .createQueryBuilder(UserEntity, 'user')
