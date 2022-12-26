@@ -67,34 +67,31 @@ export class UsersService extends BaseService {
       throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS)
     }
 
-    let organisation: OrganisationEntity
-    let unit: OrganisationUnitEntity
+    let organisation: OrganisationEntity | null
+    let unit: OrganisationUnitEntity | null
     let role: AccessorOrganisationRoleEnum
 
     if (data.organisation) {
-      const org = await this.sqlConnection
+      organisation = await this.sqlConnection
         .createQueryBuilder(OrganisationEntity, 'organisation')
         .where('organisation.acronym = :acronym', { acronym: data.organisation.acronym })
         .getOne()
 
-      if (!org) {
+      if (!organisation) {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
       }
 
-      organisation = org
-
-      const orgUnit = await this.sqlConnection
+      unit = await this.sqlConnection
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
         .innerJoin('org_unit.organisation', 'org')
         .where('org.id = :orgId', { orgId: organisation.id })
         .andWhere('unit.acronym = :acronym', { acronym: data.organisation.unitAcronym })
         .getOne()
 
-      if (!orgUnit) {
+      if (!unit) {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       }
 
-      unit = orgUnit
       role = data.organisation.role
     }
 
@@ -143,7 +140,7 @@ export class UsersService extends BaseService {
       }
 
       // accessor type
-      if (user.type === UserTypeEnum.ACCESSOR) {
+      if (user.type === UserTypeEnum.ACCESSOR && organisation && unit) {
         const orgUser = await transaction.save(OrganisationUserEntity,
           OrganisationUserEntity.new({
             organisation,
