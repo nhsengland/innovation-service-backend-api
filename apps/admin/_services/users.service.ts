@@ -1,10 +1,8 @@
-import { OrganisationEntity, OrganisationUnitEntity, RoleEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, RoleEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, ServiceRoleEnum, UserTypeEnum } from '@admin/shared/enums';
 import { BadRequestError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@admin/shared/errors';
 import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol } from '@admin/shared/services';
 import { CacheConfigType, CacheService } from '@admin/shared/services/storage/cache.service';
-import { userAgentPolicy } from '@azure/core-http';
-import { throws } from 'assert';
 import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
@@ -57,45 +55,54 @@ export class UsersService extends BaseService {
       name: string,
       email: string,
       type: UserTypeEnum,
-      role?: AccessorOrganisationRoleEnum
       organisation?: {
         acronym: string,
         unitAcronym: string
+        role: AccessorOrganisationRoleEnum
       }
     }
   ): Promise<{ id: string }> {
 
-    if (data.type === UserTypeEnum.ACCESSOR &&
-      (!data.role || !data.organisation)) {
+    if (data.type === UserTypeEnum.ACCESSOR && !data.organisation) {
       throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS)
     }
 
-    data.email = data.email.toLowerCase()
-    const password = Math.random().toString(36).slice(2) + '0aA!'
+    let organisation: OrganisationEntity
+    let unit: OrganisationUnitEntity
+    let role: AccessorOrganisationRoleEnum
 
     if (data.organisation) {
-      const organisation = await this.sqlConnection
+      const org = await this.sqlConnection
         .createQueryBuilder(OrganisationEntity, 'organisation')
         .where('organisation.acronym = :acronym', { acronym: data.organisation.acronym })
         .getOne()
 
-      if (!organisation) {
+      if (!org) {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
       }
 
-      const unit = await this.sqlConnection
+      organisation = org
+
+      const orgUnit = await this.sqlConnection
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
         .innerJoin('org_unit.organisation', 'org')
         .where('org.id = :orgId', { orgId: organisation.id })
         .andWhere('unit.acronym = :acronym', { acronym: data.organisation.unitAcronym })
         .getOne()
 
-      if (!unit) {
+      if (!orgUnit) {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       }
+
+      unit = orgUnit
+      role = data.organisation.role
     }
 
     let identityId: string;
+
+    data.email = data.email.toLowerCase()
+    const password = Math.random().toString(36).slice(2) + '0aA!'
+
     const b2cUser = await this.identityProviderService.getUserInfoByEmail(data.email)
 
 
@@ -128,7 +135,7 @@ export class UsersService extends BaseService {
         updatedBy: requestUser.id
       }))
 
-
+      // admin type
       if (user.type === UserTypeEnum.ADMIN) {
         const role = await transaction.createQueryBuilder(RoleEntity, 'role')
           .where('role.name = :adminRole', { adminRole: ServiceRoleEnum.ADMIN })
@@ -137,7 +144,27 @@ export class UsersService extends BaseService {
         await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role }))
       }
 
-      //missing assessor type
+      // accessor type
+      if (user.type === UserTypeEnum.ACCESSOR) {
+        const orgUser = await transaction.save(OrganisationUserEntity,
+          OrganisationUserEntity.new({
+            organisation,
+            user,
+            role,
+            createdBy: requestUser.id,
+            updatedBy: requestUser.id
+          })
+        )
+        
+        await transaction.save(OrganisationUnitUserEntity,
+          OrganisationUnitUserEntity.new({
+            organisationUnit: unit,
+            organisationUser: orgUser,
+            createdBy: requestUser.id,
+            updatedBy: requestUser.id
+          }))
+        
+      }
 
       return { id: user.id }
     })
