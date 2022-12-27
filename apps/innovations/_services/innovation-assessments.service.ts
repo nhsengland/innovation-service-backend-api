@@ -252,8 +252,7 @@ export class InnovationAssessmentsService extends BaseService {
 
         }
 
-      } else {
-        // it's draft
+      } else { // it's draft
         // if the innovation has a reassessment request and is in state WAITING_NEEDS_ASSESSMENT
         // change innovation state to NEEDS_ASSESSMENT
         if (dbAssessment.reassessmentRequest && innovation.status === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT) {
