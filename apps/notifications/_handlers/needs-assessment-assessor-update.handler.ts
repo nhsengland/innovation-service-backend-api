@@ -50,7 +50,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
         // display_name: '', // This will be filled by the email-listener function.
         innovation_name: innovation.name,
         innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId')
+          .addPath('assessment/innovations/:innovationId')
           .setPathParams({ innovationId: this.inputData.innovationId, assessmentId: this.inputData.assessmentId })
           .buildUrl()
       }
