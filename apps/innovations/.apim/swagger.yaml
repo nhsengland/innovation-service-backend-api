@@ -836,7 +836,185 @@ paths:
     get:
       operationId: v1-innovations-list
       description: Get innovations list
-      parameters: []
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+        - name: mainCategories
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MEDICAL_DEVICE
+                - PHARMACEUTICAL
+                - DIGITAL
+                - AI
+                - EDUCATION
+                - PPE
+                - OTHER
+        - name: locations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - England
+                - Scotland
+                - Wales
+                - Northern Ireland
+                - Based outside UK
+        - name: status
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - WAITING_NEEDS_ASSESSMENT
+                    - NEEDS_ASSESSMENT
+                    - IN_PROGRESS
+                x-required: true
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - IN_PROGRESS
+                    - COMPLETE
+                x-required: true
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - CREATED
+                    - WAITING_NEEDS_ASSESSMENT
+                    - NEEDS_ASSESSMENT
+                    - IN_PROGRESS
+                    - WITHDRAWN
+                    - COMPLETE
+                    - PAUSED
+        - name: assessmentSupportStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - UNASSIGNED
+              - ENGAGING
+              - NOT_ENGAGING
+        - name: engagingOrganisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: supportStatuses
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - COMPLETE
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - UNASSIGNED
+                    - FURTHER_INFO_REQUIRED
+                    - WAITING
+                    - NOT_YET
+                    - ENGAGING
+                    - UNSUITABLE
+                    - WITHDRAWN
+                    - COMPLETE
+        - name: groupedStatuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - RECORD_NOT_SHARED
+                - AWAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - AWAITING_SUPPORT
+                - RECEIVING_SUPPORT
+                - AWAITING_NEEDS_REASSESSMENT
+                - WITHDRAWN
+        - name: assignedToMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: suggestedOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: latestWorkedByMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: order
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: object
+                properties: {}
+                additionalProperties:
+                  type: string
+                  enum:
+                    - ASC
+                    - DESC
+                default:
+                  default: DESC
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - isAssessmentOverdue
+                - assessment
+                - supports
+                - notifications
+                - statistics
       responses:
         "200":
           description: Success

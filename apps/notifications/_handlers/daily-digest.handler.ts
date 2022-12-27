@@ -9,7 +9,7 @@ import { BaseHandler } from './base.handler';
 
 export class DailyDigestHandler extends BaseHandler<
   NotifierTypeEnum.DAILY_DIGEST,
-  EmailTypeEnum.INNOVATOR_DAILY_DIGEST | EmailTypeEnum.ACCESSOR_DAILY_DIGEST | EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
+  EmailTypeEnum.INNOVATOR_DAILY_DIGEST | EmailTypeEnum.ACCESSOR_DAILY_DIGEST,
   Record<string, never>
 > {
 

@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -91,7 +91,7 @@ export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
   get: {
     operationId: 'v1-innovations-list',
     description: 'Get innovations list',
-    parameters: [],
+    parameters: SwaggerHelper.paramJ2S({query: QueryParamsSchema}),
     responses: {
       200: {
         description: 'Success',
