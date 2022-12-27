@@ -1,0 +1,13 @@
+{
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": ["get"],
+      "route": "v1/users/{userId}/lock/validate"
+    },
+    { "type": "http", "direction": "out", "name": "res" }
+  ]
+}
