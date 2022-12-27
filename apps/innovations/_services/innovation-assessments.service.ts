@@ -184,6 +184,12 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
+    const innovation = await this.domainService.innovations.getInnovationInfo(innovationId)
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+    }
+ 
     const result = await this.sqlConnection.transaction(async transaction => {
 
       // Merge new data with assessment record.
@@ -247,9 +253,10 @@ export class InnovationAssessmentsService extends BaseService {
         }
 
       } else {
-        // it's not submission (it's draft)
-        // if the innovation has a reassessment request change innovation state to NEEDS_ASSESSMENT
-        if (dbAssessment.reassessmentRequest) {
+        // it's draft
+        // if the innovation has a reassessment request and is in state WAITING_NEEDS_ASSESSMENT
+        // change innovation state to NEEDS_ASSESSMENT
+        if (dbAssessment.reassessmentRequest && innovation.status === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT) {
           await transaction.update(InnovationEntity,
             { id: innovationId },
             {
@@ -340,7 +347,7 @@ export class InnovationAssessmentsService extends BaseService {
           ...item
         }) => item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
       );
-
+      
       const reassessment = await transaction.save(InnovationReassessmentRequestEntity, InnovationReassessmentRequestEntity.new({
         assessment: InnovationAssessmentEntity.new({ id: assessmentClone.id }),
         innovation: InnovationEntity.new({ id: innovationId }),
