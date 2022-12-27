@@ -1,10 +1,11 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
-import { ActivityLogEntity, InnovationEntity, InnovationActionEntity, InnovationSupportEntity, InnovationFileEntity, InnovationSupportLogEntity, OrganisationUnitEntity, NotificationEntity } from '../../entities';
-import { UnprocessableEntityError, InnovationErrorsEnum } from '../../errors';
+import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSupportEntity, InnovationSupportLogEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
+import { InnovationErrorsEnum, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType } from '../../types';
 
+import { TranslationHelper } from '../../helpers';
 import type { FileStorageServiceType } from '../interfaces';
 
 
@@ -69,7 +70,7 @@ export class DomainInnovationsService {
 
   }
 
-  public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<{id: string, name: string, supportingUserIds: string[]}> {
+  public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<{ id: string, name: string, supportingUserIds: string[] }> {
     const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
 
     if (innovationSupportIds.length > 0) {
@@ -78,7 +79,24 @@ export class DomainInnovationsService {
         .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
         .execute();
     }
-    
+
+    // Reject all PENDING AND APPROVED export requests
+    await transactionManager.createQueryBuilder(InnovationExportRequestEntity, 'request')
+    .update({
+      status: InnovationExportRequestStatusEnum.REJECTED,
+      rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
+      updatedBy: user.id
+    })
+    .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
+      {
+        innovationId: innovation.id,
+        pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+        approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+        expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
+      }
+    )
+    .execute()
+
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {
       innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;

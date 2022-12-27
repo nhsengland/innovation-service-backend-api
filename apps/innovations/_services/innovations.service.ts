@@ -4,7 +4,7 @@ import { In, SelectQueryBuilder } from 'typeorm';
 import { ActivityLogEntity, InnovationActionEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
-import { DatesHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from '@innovations/shared/types';
@@ -724,50 +724,50 @@ export class InnovationsService extends BaseService {
   }
 
   async withdrawInnovation(
-    user: { id: string, identityId: string, type: UserTypeEnum }, 
+    user: { id: string, identityId: string, type: UserTypeEnum },
     innovationId: string,
     reason: string,
-    ): Promise<{
-      id: string;
+  ): Promise<{
+    id: string;
   }> {
 
-      const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await this.sqlConnection.transaction(async transaction => {
 
         const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity,'innovations')
-          .leftJoinAndSelect('innovations.innovationSupports', 'supports')
-          .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
-          .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
-          .leftJoinAndSelect('organisationUsers.user', 'users')
-          .andWhere('innovations.id = :innovationId', { innovationId })
-          .getOne();
+        .leftJoinAndSelect('innovations.innovationSupports', 'supports')
+        .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
+        .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
+        .leftJoinAndSelect('organisationUsers.user', 'users')
+        .andWhere('innovations.id = :innovationId', { innovationId })
+        .getOne();
 
-        if (!dbInnovation) {
-          throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-        }
+      if (!dbInnovation) {
+        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+      }
 
-        return this.domainService.innovations.withdrawInnovation(
-          dbInnovation,
-          transaction,
-          user,
-          reason,
-        )
-      });
+      return this.domainService.innovations.withdrawInnovation(
+        dbInnovation,
+        transaction,
+        user,
+        reason,
+      )
+    });
 
-      await this.notifierService.send(
-        { id: user.id, identityId: user.identityId, type: user.type },
-        NotifierTypeEnum.INNOVATION_WITHDRAWN,
-        { 
-          innovation: {
-            id: result.id,
-            name: result.name,
-            assignedUserIds: result.supportingUserIds,
-          },
-        }
-      );
+    await this.notifierService.send(
+      { id: user.id, identityId: user.identityId, type: user.type },
+      NotifierTypeEnum.INNOVATION_WITHDRAWN,
+      {
+        innovation: {
+          id: result.id,
+          name: result.name,
+          assignedUserIds: result.supportingUserIds,
+        },
+      }
+    );
 
-      return {
-        id: result.id,
-      };
+    return {
+      id: result.id,
+    };
   }
 
   async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
@@ -801,6 +801,23 @@ export class InnovationsService extends BaseService {
           updatedBy: user.id
         }
       );
+
+      // Reject all PENDING AND APPROVED export requests
+      await transaction.createQueryBuilder(InnovationExportRequestEntity, 'request')
+        .update({
+          status: InnovationExportRequestStatusEnum.REJECTED,
+          rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'),
+          updatedBy: user.id
+        })
+        .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
+          {
+            innovationId,
+            pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+            approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+            expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
+          }
+        )
+        .execute()
 
       await this.domainService.innovations.addActivityLog(
         transaction,
