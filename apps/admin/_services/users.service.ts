@@ -51,7 +51,7 @@ export class UsersService extends BaseService {
   }
 
   async validateLockUser(id: string): Promise<ValidationResult[]> {
-    return DomainRulesHelper.validate(DomainOperationEnum.LOCK_USER, id)
+    return DomainRulesHelper.validate(this.sqlConnection, DomainOperationEnum.LOCK_USER, id)
   }
 
   async createUser(

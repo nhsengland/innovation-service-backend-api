@@ -1,7 +1,7 @@
-import { SQLDB_DATASOURCE } from '@admin/shared/config';
 import { UserEntity, InnovationEntity, OrganisationUserEntity } from '@admin/shared/entities';
 import { UserTypeEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum } from '@admin/shared/enums';
 import { UserErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
+import type { DataSource } from 'typeorm';
 
 export enum DomainOperationEnum {
   LOCK_USER = 'LOCK_USER',
@@ -52,12 +52,11 @@ export const RuleMapper: { [operationKey in DomainOperationEnum]: { [userTypeKey
 
 
 export class DomainRulesHelper {
+  
+  static async validate(sqlConnection: DataSource, operation: DomainOperationEnum, userId: string): Promise<ValidationResult[]> {
 
-  static async validate(operation: DomainOperationEnum, userId: string): Promise<ValidationResult[]> {
-
-    const userRepository = SQLDB_DATASOURCE.getRepository(UserEntity);
-
-    const dbUser = await userRepository.createQueryBuilder('user')
+    const dbUser = await sqlConnection.createQueryBuilder(UserEntity, 'user')
+      .leftJoinAndSelect('user.serviceRoles', 'userRoles')
       .leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
       .leftJoinAndSelect('userOrganisations.organisation', 'organisation')
       .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
@@ -92,7 +91,7 @@ export class DomainRulesHelper {
 
       switch (rule) {
         case DomainOperationRulesEnum.AssessmentUserIsNotTheOnlyOne:
-          result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(userInfo.id));
+          result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(sqlConnection, userInfo.id));
           break;
 
         case DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit:
@@ -100,11 +99,11 @@ export class DomainRulesHelper {
           if (!organisationUnit) {
             throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
           }
-          result.push(await this.checkIfQualifyingAccessorIsNotTheLastOneOfUnit({ id: userInfo.id, organisationUnit: organisationUnit }));
+          result.push(await this.checkIfQualifyingAccessorIsNotTheLastOneOfUnit(sqlConnection, { id: userInfo.id, organisationUnit: organisationUnit }));
           break;
 
         case DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport:
-          result.push(await this.checkIfNoInnovationIsBeingSupportedByAUnitWithOnlyThisAccessor({ id: userInfo.id }));
+          result.push(await this.checkIfNoInnovationIsBeingSupportedByAUnitWithOnlyThisAccessor(sqlConnection, { id: userInfo.id }));
           break;
 
       }
@@ -119,11 +118,9 @@ export class DomainRulesHelper {
    * Returns TRUE if there's any other active assessment type user on the platform,
    * excluding the user being checked.
    */
-  private static async checkIfAssessmentUserIsNotTheOnlyOne(userId: string): Promise<ValidationResult> {
+  private static async checkIfAssessmentUserIsNotTheOnlyOne(connection: DataSource, userId: string): Promise<ValidationResult> {
 
-    const userRepository = SQLDB_DATASOURCE.getRepository(UserEntity);
-
-    const otherAssessmentUsersCount = await userRepository.createQueryBuilder('user')
+    const otherAssessmentUsersCount = await connection.createQueryBuilder(UserEntity, 'user')
       .where('user.type = :userType', { userType: UserTypeEnum.ASSESSMENT })
       .andWhere('user.id != :userId', { userId })
       .andWhere('user.locked_at IS NULL')
@@ -140,11 +137,9 @@ export class DomainRulesHelper {
    * Returns TRUE if there's any other active qualifying accessors on the supplied organisation unit,
    * excluding the user being checked.
    */
-  private static async checkIfQualifyingAccessorIsNotTheLastOneOfUnit(user: { id: string, organisationUnit: { id: string, name: string, acronym: string } }): Promise<ValidationResult> {
+  private static async checkIfQualifyingAccessorIsNotTheLastOneOfUnit(connection: DataSource, user: { id: string, organisationUnit: { id: string, name: string, acronym: string } }): Promise<ValidationResult> {
 
-    const organisationUserRepository = SQLDB_DATASOURCE.getRepository(OrganisationUserEntity);
-
-    const otherQualifyingAccessorUsersCount = await organisationUserRepository.createQueryBuilder('organisationUser')
+    const otherQualifyingAccessorUsersCount = await connection.createQueryBuilder(OrganisationUserEntity, 'organisationUser')
       .innerJoinAndSelect('organisationUser.userOrganisationUnits', 'userOrganisationUnits')
       .where('organisationUser.user_id != :userId', { userId: user.id })
       .andWhere('organisationUser.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
@@ -162,11 +157,9 @@ export class DomainRulesHelper {
   /**
    * Returns TRUE if there's NO innovations being supported by an organisation unit WITH ONLY this (accessor) user (I believe that's the rule...),
    */
-  private static async checkIfNoInnovationIsBeingSupportedByAUnitWithOnlyThisAccessor(user: { id: string }): Promise<ValidationResult> {
+  private static async checkIfNoInnovationIsBeingSupportedByAUnitWithOnlyThisAccessor(connection: DataSource, user: { id: string }): Promise<ValidationResult> {
 
-    const innovationRepository = SQLDB_DATASOURCE.getRepository(InnovationEntity);
-
-    const query = innovationRepository.createQueryBuilder('innovation')
+    const query = connection.createQueryBuilder(InnovationEntity, 'innovation')
       .select('innovation.id', 'innovationId')
       .addSelect('innovation.name', 'innovationName')
       .addSelect('unit.id', 'unitId')

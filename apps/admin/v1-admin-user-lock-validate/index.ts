@@ -46,11 +46,11 @@ class V1AdminUserLockValidate {
 
 export default openApi(
   V1AdminUserLockValidate.httpTrigger as AzureFunction,
-  '/v1/users',
+  '/v1/users/{userId}/lock/validate',
   {
     post: {
-      description: 'Create a user.',
-      operationId: 'v1-admin-user-create',
+      description: 'Get validation information when locking a user.',
+      operationId: 'v1-admin-user-lock-validate',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
@@ -62,7 +62,7 @@ export default openApi(
                 properties: {
                   validations: {
                     type: 'object',
-                    description: 'All the validations.',
+                    description: 'Validation data.',
                   },
                 },
               },
