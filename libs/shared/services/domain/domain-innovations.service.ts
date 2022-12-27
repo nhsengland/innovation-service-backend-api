@@ -5,7 +5,7 @@ import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationE
 import { InnovationErrorsEnum, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType } from '../../types';
 
-import { TranslationHelper } from '@innovations/shared/helpers';
+import { TranslationHelper } from '../../helpers';
 import type { FileStorageServiceType } from '../interfaces';
 
 
