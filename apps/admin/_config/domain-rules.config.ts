@@ -1,7 +1,7 @@
 import { SQLDB_DATASOURCE } from '@admin/shared/config';
 import { UserEntity, InnovationEntity, OrganisationUserEntity } from '@admin/shared/entities';
 import { UserTypeEnum, AccessorOrganisationRoleEnum, InnovationSupportStatusEnum } from '@admin/shared/enums';
-import { UserErrorsEnum, InternalServerError } from '@admin/shared/errors';
+import { UserErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
 
 export enum DomainOperationEnum {
   LOCK_USER = 'LOCK_USER',
@@ -88,7 +88,10 @@ export class DomainRulesHelper {
           break;
 
         case DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit:
-          const organisationUnit = userInfo.organisations[0]?.organisationUnits[0] ?? { id: '' };
+          const organisationUnit = userInfo.organisations[0]?.organisationUnits[0];
+          if (!organisationUnit) {
+            throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+          }
           result.push(await this.checkIfQualifyingAccessorIsNotTheLastOneOfUnit({ id: userInfo.id, organisationUnit: organisationUnit }));
           break;
 
@@ -129,7 +132,7 @@ export class DomainRulesHelper {
    * Returns TRUE if there's any other active qualifying accessors on the supplied organisation unit,
    * excluding the user being checked.
    */
-  private static async checkIfQualifyingAccessorIsNotTheLastOneOfUnit(user: { id: string, organisationUnit: { id: string } }): Promise<ValidationResult> {
+  private static async checkIfQualifyingAccessorIsNotTheLastOneOfUnit(user: { id: string, organisationUnit: { id: string, name: string, acronym: string } }): Promise<ValidationResult> {
 
     const organisationUserRepository = SQLDB_DATASOURCE.getRepository(OrganisationUserEntity);
 
