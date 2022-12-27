@@ -42,7 +42,6 @@ export const RuleMapper: { [operationKey in DomainOperationEnum]: { [userTypeKey
   },
 
   'CHANGE_UNIT': {
-    // TODO
     [UserTypeEnum.ACCESSOR]: [
       DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport,
       DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit
