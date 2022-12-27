@@ -6,6 +6,7 @@ import { UserErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsE
 export enum DomainOperationEnum {
   LOCK_USER = 'LOCK_USER',
   UPDATE_USER_ROLE = 'UPDATE_USER_ROLE',
+  CHANGE_UNIT = 'CHANGE_UNIT'
 }
 
 export enum DomainOperationRulesEnum {
@@ -38,6 +39,14 @@ export const RuleMapper: { [operationKey in DomainOperationEnum]: { [userTypeKey
 
   'UPDATE_USER_ROLE': {
     [UserTypeEnum.ACCESSOR]: [DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit]
+  },
+
+  'CHANGE_UNIT': {
+    // TODO
+    [UserTypeEnum.ACCESSOR]: [
+      DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport,
+      DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit
+    ]
   }
 
 };

@@ -4,6 +4,7 @@ import { BadRequestError, NotFoundError, OrganisationErrorsEnum, UnprocessableEn
 import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol } from '@admin/shared/services';
 import { CacheConfigType, CacheService } from '@admin/shared/services/storage/cache.service';
 import { inject, injectable } from 'inversify';
+import { DomainOperationEnum, DomainRulesHelper, ValidationResult } from '../_config/domain-rules.config';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -41,12 +42,16 @@ export class UsersService extends BaseService {
 
       // Update identity provider if needed
       if (data.accountEnabled != null) {
-        await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled !== false })
+        await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled })
       }
 
       // Remove cache entry
       await this.cache.delete(user.identityId)
     })
+  }
+
+  async validateLockUser(id: string): Promise<ValidationResult[]> {
+    return DomainRulesHelper.validate(DomainOperationEnum.LOCK_USER, id)
   }
 
   async createUser(
