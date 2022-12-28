@@ -4,6 +4,16 @@ const TRANSLATIONS = {
       STOP_SHARING: "Since the innovator stopped sharing his innovation, this export request was rejected automatically.",
       WITHDRAW: "Since the innovator withdrew his innovation, this export request was automatically rejected.",
     }
+  },
+  SUPPORT_STATUS: {
+    ENGAGING: 'Engaging',
+    FURTHER_INFO_REQUIRED: 'Further info',
+    COMPLETE: 'Completed',
+    WAITING: 'Waiting',
+    NOT_YET: 'Not yet',
+    UNASSIGNED: 'Unassigned',
+    UNSUITABLE: 'Unsuitable',
+    WITHDRAWN: 'Withdrawn'
   }
 }
 
@@ -17,7 +27,7 @@ type TranslationsType = typeof TRANSLATIONS;
 
 export class TranslationHelper {
 
-  static translate(key: NestedKeyOf<TranslationsType>) {
+  static translate(key: NestedKeyOf<TranslationsType>): string {
     let translation: any = TRANSLATIONS;
     const keys = key.split(".");
     for (const key of keys) {

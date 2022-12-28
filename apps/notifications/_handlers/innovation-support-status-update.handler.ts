@@ -2,11 +2,11 @@ import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationS
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
+import { TranslationHelper } from '@notifications/shared/helpers';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { translate } from '../_helpers/translate.helper';
 import { BaseHandler } from './base.handler';
 
 
@@ -90,7 +90,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: this.data.innovation?.name || '',
           organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
-          support_status: translate(this.inputData.innovationSupport.status),
+          support_status: TranslationHelper.translate(`SUPPORT_STATUS.${this.inputData.innovationSupport.status}`).toLowerCase(),
           support_status_change_comment: this.inputData.innovationSupport.message,
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/support')
