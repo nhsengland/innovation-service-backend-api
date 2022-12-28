@@ -8,7 +8,7 @@ paths:
   "/v1/users/{userId}/delete":
     patch:
       description: Delete an admin user.
-      operationId: v1-admin-admin-delete
+      operationId: v1-admin-delete
       parameters:
         - name: userId
           in: path
@@ -514,6 +514,45 @@ paths:
           description: The user is not authorized to create a user.
         "500":
           description: An error occurred while creating the user.
+  "/v1/users/{userId}/validate":
+    post:
+      description: Get validation information.
+      operationId: v1-admin-validate
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the user.
+        - name: operation
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - LOCK_USER
+              - UPDATE_USER_ROLE
+              - CHANGE_UNIT
+            description: Type of the operation to validate.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validations:
+                    type: object
+                    description: Validation data.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to access validation data.
+        "500":
+          description: An error occurred while fetching the validation data.
   "/v1/users/{userId}":
     patch:
       description: Update a user.

@@ -41,7 +41,7 @@ export class UsersService extends BaseService {
 
       // Update identity provider if needed
       if (data.accountEnabled != null) {
-        await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled !== false })
+        await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled })
       }
 
       // Remove cache entry
