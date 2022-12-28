@@ -103,7 +103,7 @@ export class ValidationService extends BaseService {
       .innerJoinAndSelect('organisationUser.userOrganisationUnits', 'userOrganisationUnits')
       .where('organisationUser.user_id != :userId', { userId: user.id })
       .andWhere('organisationUser.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
-      .andWhere('userOrganisationUnits.organisation_unit_id = :organisationUnitId)', { organisationUnitId: user.organisationUnit.id })
+      .andWhere('userOrganisationUnits.organisation_unit_id = :organisationUnitId', { organisationUnitId: user.organisationUnit.id })
       .getCount();
 
     return {
@@ -122,8 +122,6 @@ export class ValidationService extends BaseService {
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .select('innovation.id', 'innovationId')
       .addSelect('innovation.name', 'innovationName')
-      .addSelect('unit.id', 'unitId')
-      .addSelect('unit.name', 'unitName')
       .innerJoin('innovation_support', 'supports', 'innovation.id = supports.innovation_id')
       .innerJoin('innovation_support_user', 'userSupport', 'supports.id = userSupport.innovation_support_id')
       .innerJoin('organisation_unit_user', 'unitUsers', 'userSupport.organisation_unit_user_id = unitUsers.id')
@@ -148,7 +146,7 @@ export class ValidationService extends BaseService {
     return {
       operation: DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport,
       valid: innovations.length === 0,
-      meta: { supports: { count: innovations.length, innovations: innovations.map(item => ({ id: item.id, name: item.name })) } }
+      meta: { supports: { count: innovations.length, innovations: innovations.map(item => ({ id: item.innovationId, name: item.innovationName })) } }
     }
 
   }
