@@ -1231,7 +1231,7 @@ export class InnovationsService extends BaseService {
 
   async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
 
-    return this.sqlConnection.transaction(async transaction => {
+    const retVal = await this.sqlConnection.transaction(async transaction => {
 
       const supports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
         .where('supports.innovation_id = :innovationId', { innovationId })
@@ -1284,10 +1284,17 @@ export class InnovationsService extends BaseService {
         { message: data.message }
       );
 
+      
       return { id: innovationId }
-
+      
     });
-
+    
+    await this.notifierService.send(
+      user, NotifierTypeEnum.INNOVATION_STOP_SHARING, 
+      { innovationId, stopSharingComment: data.message }
+    );
+    
+    return retVal;
   }
 
   async getInnovationActivitiesLog(
