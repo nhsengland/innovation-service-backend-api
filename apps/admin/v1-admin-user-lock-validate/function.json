@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/users/{userId}/lock/validate"
+      "route": "v1/users/{userId}/validate"
     },
     { "type": "http", "direction": "out", "name": "res" }
   ]
