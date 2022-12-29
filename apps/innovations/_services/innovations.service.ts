@@ -194,7 +194,7 @@ export class InnovationsService extends BaseService {
     }
 
     if (filters.name) {
-      innovationFetchQuery.andWhere('innovations.name LIKE :name', { name: `%${decodeURIComponent(filters.name)}%` });
+      innovationFetchQuery.andWhere('innovations.name LIKE :name', { name: `%${filters.name}%` });
     }
 
     if (filters.mainCategories && filters.mainCategories.length > 0) {
