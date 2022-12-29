@@ -33,7 +33,7 @@ export class JoiHelper {
   }
 
 
-  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema } {
+  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema, decodeURIString: () => Joi.StringSchema } {
 
     return Joi.extend(
 
@@ -51,6 +51,14 @@ export class JoiHelper {
         coerce(value) {
           try { return { value: JSON.parse(value) }; }
           catch (err) { return { value }; }
+        }
+      },
+
+      {
+        type: 'decodeURIString',
+        base: Joi.string().meta({ baseType: 'string' }),
+        coerce(value) {
+          return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value)}
         }
       }
 
