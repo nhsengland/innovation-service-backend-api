@@ -164,12 +164,11 @@ export class InnovationTransferService extends BaseService {
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
 
-      await this.notifierService.send<NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION>({
-        id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type,
-      },
+      await this.notifierService.send(
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, {
         innovationId: innovation.id,
-        transferId: transfer.id,
+        transferId: transfer.id
       });
 
       return { id: transfer.id };
@@ -234,7 +233,7 @@ export class InnovationTransferService extends BaseService {
       }
 
       // It should send a notification for all cases
-      await this.notifierService.send<NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED>(
+      await this.notifierService.send(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
         { innovationId: transfer.innovation.id, transferId: transfer.id });

@@ -42,7 +42,7 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = await innovation.sections;
 
-    let openActions: { section: string, actionsCount: number }[] =  []
+    let openActions: { section: string, actionsCount: number }[] = [];
 
     if (sections.length > 0) {
       const query = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
@@ -50,7 +50,7 @@ export class InnovationSectionsService extends BaseService {
         .addSelect('COUNT(actions.id)', 'actionsCount')
         .innerJoin('actions.innovationSection', 'sections')
         .where('sections.innovation_id = :innovationId', { innovationId })
-        .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id)})
+        .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id) })
         .groupBy('sections.section');
 
       if (user.type === UserTypeEnum.ACCESSOR) {
@@ -59,7 +59,7 @@ export class InnovationSectionsService extends BaseService {
         query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
       }
 
-      openActions = await query.getRawMany(); 
+      openActions = await query.getRawMany();
     }
 
     return Object.values(InnovationSectionEnum).map(sectionKey => {
@@ -284,7 +284,7 @@ export class InnovationSectionsService extends BaseService {
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 
-        await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+        await this.notifierService.send(
           { id: user.id, identityId: user.identityId, type: user.type },
           NotifierTypeEnum.ACTION_UPDATE,
           {

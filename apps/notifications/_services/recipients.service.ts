@@ -86,8 +86,9 @@ export class RecipientsService extends BaseService {
     email: string;
     isActive: boolean;
   }[]> {
+
     if (!userIds.length) { return []; }
-    
+
     const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
       .where(`users.id IN (:...userIds)`, { userIds })
       .andWhere(`users.locked_at IS NULL`)
@@ -178,7 +179,7 @@ export class RecipientsService extends BaseService {
     const dbInnovationSupport = await query.getOne();
 
     if (!dbInnovationSupport) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+      return [];
     }
 
     return Promise.all(dbInnovationSupport.organisationUnitUsers.map(async item => ({
@@ -563,18 +564,19 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async idleSupportsByInnovation() : Promise<{
+  async idleSupportsByInnovation(): Promise<{
     innovationId: string;
     values: {
-        identityId: string;
-        innovationId: string;
-        ownerId: string;
-        ownerIdentityId: string;
-        unitId: string;
-        unitName: string;
-        innovationName: string;
+      identityId: string;
+      innovationId: string;
+      ownerId: string;
+      ownerIdentityId: string;
+      unitId: string;
+      unitName: string;
+      innovationName: string;
     }[];
-  }[]>{
+  }[]> {
+
     try {
 
       const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
@@ -598,14 +600,16 @@ export class RecipientsService extends BaseService {
     } catch (error) {
       throw error;
     }
+
   }
 
-  async getExportRequestWithRelations(requestId: string): Promise<{exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; }}> {
+  async getExportRequestWithRelations(requestId: string): Promise<{ exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; } }> {
+
     const request = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .where('request.id = :requestId', { requestId })
       .getOne();
-    
+
     if (!request) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
@@ -618,15 +622,16 @@ export class RecipientsService extends BaseService {
     }
 
     const createdByUser = await this.identityProviderService.getUserInfo(createdBy.identityId);
-    
+
     return {
       exportRequest: request,
       createdBy: {
         id: createdBy.id,
         identityId: createdBy.identityId,
         name: createdByUser.displayName,
-      },
-    }
+      }
+    };
+
   }
 
 }

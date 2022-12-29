@@ -27,57 +27,44 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   async run(): Promise<this> {
 
     if (this.requestUser.type !== UserTypeEnum.INNOVATOR) {
-      return this; 
+      return this;
     }
 
-    await this.prepareNotificationForInnovator();
-    await this.prepareNotificationForNeedsAssessmentUsers();
-
-    return this;
-  }
-
-
-  // Private methods.
-
-  private async prepareNotificationForInnovator(): Promise<void> {
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const needAssessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
     this.emails.push({
       templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
       to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
       params: {
-        innovation_name: innovation.name,
+        innovation_name: innovation.name
       }
     });
-    
-  }
 
-  private async prepareNotificationForNeedsAssessmentUsers(): Promise<void> {
-
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const naUsers = await this.recipientsService.needsAssessmentUsers();
-
-    for (const user of naUsers) {
+    for (const user of needAssessmentUsers) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath(':userBasePath/innovations/:innovationId')
-          .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId })
-          .buildUrl(),
+            .addPath(':userBasePath/innovations/:innovationId')
+            .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId })
+            .buildUrl()
         }
       });
-      
+
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
-        userIds: naUsers.map(item => item.id),
+        userIds: needAssessmentUsers.map(item => item.id),
         params: { innovationId: this.inputData.innovationId }
       });
     }
+
+    return this;
+
   }
 
 }

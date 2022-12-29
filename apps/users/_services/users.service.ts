@@ -3,12 +3,11 @@ import type { Repository } from 'typeorm';
 
 import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
-import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { GenericErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
+import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
-import { InternalServerError } from '@users/shared/errors/errors.config';
-import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import { BaseService } from './base.service';
 
 
@@ -134,7 +133,7 @@ export class UsersService extends BaseService {
         }));
       }
 
-      await this.notifierService.send<NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION>(
+      await this.notifierService.send(
         { id: dbUser.id, identityId: dbUser.identityId, type: dbUser.type },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
         {}
@@ -241,7 +240,7 @@ export class UsersService extends BaseService {
    * @returns user object with extra selected fields
    */
   async getUserList(
-    filters: {userTypes: UserTypeEnum[], organisationUnitId?: string}, 
+    filters: { userTypes: UserTypeEnum[], organisationUnitId?: string },
     fields: ('organisations' | 'units')[]
   ): Promise<{
     id: string,
@@ -252,29 +251,29 @@ export class UsersService extends BaseService {
     organisations?: {
       name: string,
       role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-      units?: {name: string, organisationUnitUserId: string}[]
+      units?: { name: string, organisationUnitUserId: string }[]
     }[]
-  }[]>{
+  }[]> {
     // [TechDebt]: add pagination if this gets used outside of admin bulk export, other cases always have narrower conditions
     const query = this.sqlConnection.createQueryBuilder(UserEntity, 'user');
     const fieldSet = new Set(fields);
 
     // Relations
-    if(fieldSet.has('organisations') || fieldSet.has('units') || filters.organisationUnitId){
+    if (fieldSet.has('organisations') || fieldSet.has('units') || filters.organisationUnitId) {
       query.leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
         .leftJoinAndSelect('userOrganisations.organisation', 'organisation')
 
-      if(fieldSet.has('units') || filters.organisationUnitId) {
+      if (fieldSet.has('units') || filters.organisationUnitId) {
         query.leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
           .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit');
       }
     }
 
     // Filters
-    if(filters.userTypes.length > 0) {
+    if (filters.userTypes.length > 0) {
       query.andWhere('user.type IN (:...userTypes)', { userTypes: filters.userTypes })
     }
-    if(filters.organisationUnitId) {
+    if (filters.organisationUnitId) {
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId })
     }
 
@@ -282,15 +281,15 @@ export class UsersService extends BaseService {
     const usersFromSQL = await query.getMany()
     const usersMap = new Map((await Promise.all(usersFromSQL.map(async user => {
       let organisations = undefined;
-      if(fieldSet.has('organisations') || fieldSet.has('units')){
+      if (fieldSet.has('organisations') || fieldSet.has('units')) {
         const userOrganisations = await user.userOrganisations;
         organisations = userOrganisations.map(o => ({
           name: o.organisation.name,
           role: o.role,
-          ...(fieldSet.has('units') ? {units: o.userOrganisationUnits.map(u => ({name: u.organisationUnit.name, organisationUnitUserId: u.id}))} : {})
+          ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
         }))
       }
-        
+
       return {
         id: user.id,
         externalId: user.identityId,
@@ -301,11 +300,11 @@ export class UsersService extends BaseService {
     )).map(user => [user.externalId, user]));
 
     // Get users from identity provider
-    const users = (await this.domainService.users.getUsersList({identityIds: [...usersMap.keys()]}))
+    const users = (await this.domainService.users.getUsersList({ identityIds: [...usersMap.keys()] }))
       .map(user => {
         const dbUser = usersMap.get(user.identityId);
-        if(!dbUser) {
-          throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, {message: `domainService returned user not found in db ${user.identityId}`});
+        if (!dbUser) {
+          throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, { message: `domainService returned user not found in db ${user.identityId}` });
         }
         return {
           id: dbUser.id,
@@ -313,8 +312,8 @@ export class UsersService extends BaseService {
           isActive: user.isActive,
           name: user.displayName,
           type: dbUser.type,
-          ...(dbUser.organisations ? {organisations: dbUser.organisations} : {})
-        } 
+          ...(dbUser.organisations ? { organisations: dbUser.organisations } : {})
+        }
       });
 
     return users;

@@ -244,7 +244,7 @@ export class InnovationActionsService extends BaseService {
 
     });
 
-    await this.notifierService.send<NotifierTypeEnum.ACTION_CREATION>(
+    await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.ACTION_CREATION,
       {
@@ -284,7 +284,7 @@ export class InnovationActionsService extends BaseService {
     const result = await this.saveAction(user, innovationId, dbAction, data);
 
     // Send action status update to innovation owner
-    await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+    await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.ACTION_UPDATE,
       {
@@ -323,7 +323,7 @@ export class InnovationActionsService extends BaseService {
 
     const result = await this.saveAction(user, innovationId, dbAction, data);
 
-    await this.notifierService.send<NotifierTypeEnum.ACTION_UPDATE>(
+    await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.ACTION_UPDATE,
       {

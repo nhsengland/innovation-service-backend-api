@@ -5,14 +5,13 @@ import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, Inno
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, type UserTypeEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
+import type { DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
+import type { InnovationSupportsLogType } from '../_types/innovation.types';
 
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
-import type { InnovationSupportsLogType } from '../_types/innovation.types';
-import type { DomainUserInfoType } from '@innovations/shared/types';
-
 
 
 @injectable()
@@ -123,11 +122,10 @@ export class InnovationSupportsService extends BaseService {
 
     const usersIds = supportLogs.map(item => item.createdBy);
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...usersIds] }));
-    const userNames: {[key: string]: string} = usersInfo.reduce((map: {[key: string]: string}, obj) => {
+    const userNames: { [key: string]: string } = usersInfo.reduce((map: { [key: string]: string }, obj) => {
       map[obj.id] = obj.displayName;
       return map;
     }, {});
-   
 
     const response: InnovationSupportsLogType[] = supportLogs.map((log) => {
       const rec: InnovationSupportsLogType = {
@@ -154,15 +152,15 @@ export class InnovationSupportsService extends BaseService {
         log.suggestedOrganisationUnits.length > 0
       ) {
         rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
-            id: orgUnit.id,
-            name: orgUnit.name,
-            acronym: orgUnit.acronym,
-            organisation: {
-              id: orgUnit.organisation.id,
-              name: orgUnit.organisation.name,
-              acronym: orgUnit.organisation.acronym,
-            },
-          })
+          id: orgUnit.id,
+          name: orgUnit.name,
+          acronym: orgUnit.acronym,
+          organisation: {
+            id: orgUnit.organisation.id,
+            name: orgUnit.organisation.name,
+            acronym: orgUnit.organisation.acronym,
+          },
+        })
         );
       }
 
@@ -289,7 +287,7 @@ export class InnovationSupportsService extends BaseService {
 
     });
 
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE>(
+    await this.notifierService.send(
       user,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
@@ -391,7 +389,7 @@ export class InnovationSupportsService extends BaseService {
 
     });
 
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE>(
+    await this.notifierService.send(
       user,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
@@ -415,10 +413,10 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async changeInnovationSupportStatusRequest(requestUser: DomainUserInfoType, innovationId: string, supportId: string, status: InnovationSupportStatusEnum, requestReason: string): Promise<boolean> {
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST>(
+    await this.notifierService.send(
       requestUser,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
-      { innovationId, supportId ,proposedStatus: status, requestStatusUpdateComment: requestReason },
+      { innovationId, supportId, proposedStatus: status, requestStatusUpdateComment: requestReason }
     );
 
     return true;
