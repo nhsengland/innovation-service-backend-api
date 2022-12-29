@@ -31,7 +31,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     }
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const assignedUsers = await this.recipientsService.innovationAssignedUsers({ innovationId: this.inputData.innovationId });
+    const previousAssignedUsers = await this.recipientsService.usersInfo(this.inputData.previousAssignedAssessors.map(item => item.id));
     const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
     this.emails.push({
@@ -46,7 +46,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
       }
     });
 
-    for (const user of assignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
+    for (const user of previousAssignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
@@ -54,7 +54,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
           innovator_name: owner.name,
-          stop_sharing_comment: this.inputData.stopSharingComment
+          stop_sharing_comment: this.inputData.message
         }
       });
     }

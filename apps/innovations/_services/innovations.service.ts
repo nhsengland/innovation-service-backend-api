@@ -1239,20 +1239,27 @@ export class InnovationsService extends BaseService {
     data: { message: string }
   ): Promise<{ id: string }> {
 
-    const retVal = await this.sqlConnection.transaction(async transaction => {
+    const dbSupports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
+      .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
+      .leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
+      .leftJoinAndSelect('organisationUser.user', 'user')
+      .where('supports.innovation_id = :innovationId', { innovationId })
+      .getMany();
 
-      const supports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
-        .where('supports.innovation_id = :innovationId', { innovationId })
-        .getMany();
+    const previousAssignedAssessors = dbSupports.flatMap(support => support.organisationUnitUsers.map(item => ({
+      id: item.organisationUser.user.id
+    })));
+
+    const result = await this.sqlConnection.transaction(async transaction => {
 
       // Decline all actions for all innovation supports.
       await transaction.getRepository(InnovationActionEntity).update(
-        { innovationSupport: In(supports.map(item => item.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]) },
+        { innovationSupport: In(dbSupports.map(item => item.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]) },
         { status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id }
       );
 
       // Update all support to UNASSIGNED.
-      for (const innovationSupport of supports) {
+      for (const innovationSupport of dbSupports) {
         innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
         innovationSupport.organisationUnitUsers = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
         innovationSupport.updatedBy = user.id;
@@ -1299,10 +1306,11 @@ export class InnovationsService extends BaseService {
     await this.notifierService.send(
       user,
       NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, stopSharingComment: data.message }
+      { innovationId, previousAssignedAssessors, message: data.message }
     );
 
-    return retVal;
+    return result;
+
   }
 
   async getInnovationActivitiesLog(

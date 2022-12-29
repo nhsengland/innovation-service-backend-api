@@ -219,7 +219,8 @@ export const NOTIFICATIONS_CONFIG: {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
-      stopSharingComment: Joi.string().required(),
+      previousAssignedAssessors: Joi.array().items(Joi.object({ id: Joi.string().guid() })).required(),
+      message: Joi.string().required()
     }).required()
   },
 
