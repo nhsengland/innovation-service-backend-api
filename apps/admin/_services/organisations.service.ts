@@ -1,12 +1,14 @@
-import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
+import { inject, injectable } from 'inversify';
+import { EntityManager, In } from 'typeorm';
+
+import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import type { DomainUserInfoType } from '@admin/shared/types';
-import { NotificationUserEntity } from '@admin/shared/entities';
-import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+
 import { BaseService } from './base.service';
+
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -160,17 +162,10 @@ export class OrganisationsService extends BaseService {
           }
         );
 
-        await this.notifierService.send<NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED>(
-          {
-            id: requestUser.id,
-            identityId: requestUser.identityId,
-            type: requestUser.type,
-          },
+        await this.notifierService.send(
+          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
           NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-          {
-            innovationId: support.innovation.id,
-            unitId,
-          }
+          { innovationId: support.innovation.id, unitId }
         );
       }
       return { unitId };
@@ -448,8 +443,8 @@ export class OrganisationsService extends BaseService {
   ): Promise<{ id: string }> {
 
     const unit = await this.sqlConnection.transaction(async transaction => {
-      
-      return this.createOrganisationUnit(organisationId, name, acronym, false, transaction)
+
+      return this.createOrganisationUnit(organisationId, name, acronym, false, transaction);
 
     });
 
@@ -497,5 +492,4 @@ export class OrganisationsService extends BaseService {
     return savedUnit;
   }
 
-  
 }

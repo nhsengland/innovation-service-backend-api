@@ -37,15 +37,15 @@ class V1Health {
             { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD' }
           );
           break;
-        
+
         case NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED:
-          await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, 
+          await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
             {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
               threadId: '90D96FD1-B469-ED11-AC20-281878FB7B33'
             });
-            break;
-        
+          break;
+
         case NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED:
           await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
             {
@@ -59,23 +59,23 @@ class V1Health {
           );
           break;
 
-          case NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE:
-            await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
-              {
-                innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
-                assessmentId: 'E10ACCD6-E9F6-EC11-B47A-501AC5B0E5F0',
-                previousAssessor: { identityId: requestAssessment.identityId },
-                newAssessor: { identityId: 'dfd44b3a-d795-4914-81cb-9b7232c89aa1' }
-              }
-            );
-            break;
+        case NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE:
+          await notifierService.send(requestAssessment, NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
+            {
+              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              assessmentId: 'E10ACCD6-E9F6-EC11-B47A-501AC5B0E5F0',
+              previousAssessor: { identityId: requestAssessment.identityId },
+              newAssessor: { identityId: 'dfd44b3a-d795-4914-81cb-9b7232c89aa1' }
+            }
+          );
+          break;
 
         case NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE:
           await notifierService.send(requestQA, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
             {
               innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
               innovationSupport: {
-                id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, message: 'one test message', statusChanged: true, 
+                id: '347CB3EB-C1F7-EC11-B47A-501AC5B0E5F0', status: InnovationSupportStatusEnum.ENGAGING, message: 'one test message', statusChanged: true,
                 // first is the same as the sender, the second is another one (the first shouldn't receive the email notification)
                 newAssignedAccessors: [{ id: requestQA.id }, { id: '3C05A679-7FD0-EC11-B656-0050F25A2AF6' }],
               }
@@ -91,7 +91,7 @@ class V1Health {
                 '7CD3B905-7CB6-EC11-997E-0050F25A43BD', // Shared
                 '729BF5B6-5BBA-EC11-997E-0050F25A43BD', // NOT shared
               ]
-          });
+            });
           break;
 
         case NotifierTypeEnum.ACTION_CREATION:
@@ -177,19 +177,18 @@ class V1Health {
 
         case NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST:
           await notifierService.send(
-            requestInnovator, 
-            NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST, 
-            {
-            innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD'
-          });
+            requestInnovator,
+            NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
+            { innovationId: 'BFDA8C77-3129-ED11-AE83-0050F25A312B' }
+          );
           break;
-        
+
         case NotifierTypeEnum.INNOVATION_STOP_SHARING:
           await notifierService.send(
             requestInnovator,
             NotifierTypeEnum.INNOVATION_STOP_SHARING,
             {
-              innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD',
+              innovationId: 'BFDA8C77-3129-ED11-AE83-0050F25A312B',
               stopSharingComment: 'This is a test comment',
             });
           break;

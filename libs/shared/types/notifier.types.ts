@@ -10,6 +10,11 @@ export type NotifierTemplatesType = {
     innovationId: string
   },
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    innovationId: string,
+    threadId: string
+  },
+
   [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     innovationId: string,
     assessmentId: string,
@@ -78,6 +83,34 @@ export type NotifierTemplatesType = {
     transferId: string
   },
 
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    innovationId: string,
+    requestId: string,
+  },
+
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    innovationId: string,
+    requestId: string
+  },
+
+  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+    innovationId: string,
+    supportId: string,
+    proposedStatus: InnovationSupportStatusEnum,
+    requestStatusUpdateComment: string
+  },
+
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    innovationId: string,
+    stopSharingComment: string
+  },
+
+  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
+    innovationId: string
+  },
+
+
+  // Admin module.
   [NotifierTypeEnum.SLS_VALIDATION]: {
     code: string
   },
@@ -96,38 +129,10 @@ export type NotifierTemplatesType = {
     innovationId: string,
     unitId: string
   },
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    innovationId: string,
-    requestId: string,
-  },
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    innovationId: string,
-    requestId: string
-  },
-
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
-    innovationId: string,
-    supportId: string,
-    proposedStatus: InnovationSupportStatusEnum,
-    requestStatusUpdateComment: string,
-  },
-
-  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
-    innovationId: string,
-    stopSharingComment: string,
-  },
-  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
-    innovationId: string,
-  },
-
+  // Recurrent notifications.
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
-  [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
-    innovationId: string,
-    threadId: string
-  },
+  [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>
 
 }

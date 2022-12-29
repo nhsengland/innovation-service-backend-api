@@ -25,23 +25,14 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
 
   async run(): Promise<this> {
-    
+
     if (this.requestUser.type !== UserTypeEnum.INNOVATOR) {
-      return this; 
+      return this;
     }
 
-    await this.prepareNotificationForInnovator();
-    await this.prepareNotificationForAssignedUsers();
-
-    return this;
-  }
-
-
-  // Private methods.
-
-  private async prepareNotificationForInnovator(): Promise<void> {
-
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const assignedUsers = await this.recipientsService.innovationAssignedUsers({ innovationId: this.inputData.innovationId });
+    const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
     this.emails.push({
       templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
@@ -54,14 +45,6 @@ export class InnovationStopSharingHandler extends BaseHandler<
           .buildUrl()
       }
     });
-    
-  }
-
-  private async prepareNotificationForAssignedUsers(): Promise<void> {
-
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const assignedUsers = await this.recipientsService.innovationAssignedUsers({ innovationId: this.inputData.innovationId });
-    const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
     for (const user of assignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({
@@ -71,10 +54,12 @@ export class InnovationStopSharingHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
           innovator_name: owner.name,
-          stop_sharing_comment: this.inputData.stopSharingComment,
+          stop_sharing_comment: this.inputData.stopSharingComment
         }
       });
     }
+
+    return this;
   }
 
 }

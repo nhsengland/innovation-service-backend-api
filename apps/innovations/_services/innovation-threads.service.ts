@@ -933,13 +933,13 @@ export class InnovationThreadsService extends BaseService {
     messageId: string,
     thread: InnovationThreadEntity
   ): Promise<void> {
-    await this.notifierService.send<NotifierTypeEnum.THREAD_CREATION>(
+    await this.notifierService.send(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.THREAD_CREATION,
       {
         threadId: thread.id,
         messageId,
-        innovationId: thread.innovation.id,
+        innovationId: thread.innovation.id
       });
   }
 
@@ -949,13 +949,13 @@ export class InnovationThreadsService extends BaseService {
     threadMessage: InnovationThreadMessageEntity
   ): Promise<void> {
 
-    await this.notifierService.send<NotifierTypeEnum.THREAD_MESSAGE_CREATION>(
+    await this.notifierService.send(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.THREAD_MESSAGE_CREATION,
       {
         threadId: thread.id,
         messageId: threadMessage.id,
-        innovationId: thread.innovation.id,
+        innovationId: thread.innovation.id
       });
   }
 }

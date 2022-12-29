@@ -93,10 +93,10 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description');
 
     // Assessment relations.
-    if ( filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
+    if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
       innovationFetchQuery.leftJoin('innovations.assessments', 'assessments');
       // These two are required for the order by
-      if(pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
+      if (pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
         innovationFetchQuery.addSelect('assessments.createdAt', 'assessments_created_at');
         innovationFetchQuery.addSelect('assessments.finishedAt', 'assessments_finished_at');
       }
@@ -274,15 +274,15 @@ export class InnovationsService extends BaseService {
     const [innovations, innovationsCount] = await innovationFetchQuery.getManyAndCount();
     const innovationsIds = [...new Set(innovations.map(item => item.id))]; // there shouldn't be repeated ids, but just in case...
     //#endregion
-    
+
     // Fallback fast if no innovations
-    if (innovationsCount === 0) return {count: 0, data: []};
-    
+    if (innovationsCount === 0) return { count: 0, data: [] };
+
     //#region fetch assessments
     // Grab the assessments for the innovations (if required)
     let assessmentsMap = new Map<string, InnovationAssessmentEntity>(); // not exactly InnovationAssessmentEntity, but just the required fields
     let innovationsReassessmentCount = new Map<string, number>();
-    if(filters.fields?.includes('assessment')) {
+    if (filters.fields?.includes('assessment')) {
       const innovationsAssessmentsQuery = this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessments')
         .select('assessments.id', 'assessments_id')
         .addSelect('assessments.createdAt', 'assessments_created_at')
@@ -290,14 +290,14 @@ export class InnovationsService extends BaseService {
         .innerJoin('assessments.innovation', 'innovation')
         .addSelect('innovation.id', 'innovation_id')
         .where('assessments.innovation_id IN (:...innovationsIds)', { innovationsIds })
-  
+
       if (fetchUsers) {
         innovationsAssessmentsQuery.leftJoin('assessments.assignTo', 'assignTo');
         innovationsAssessmentsQuery.addSelect('assignTo.id', 'assignTo_id');
       }
-  
+
       assessmentsMap = new Map((await innovationsAssessmentsQuery.getMany()).map(a => [a.innovation.id, a]));
-      
+
       // Required to count reassessments
       innovationsReassessmentCount = new Map((await this.sqlConnection.createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessments')
         .select('innovation_id', 'innovation_id')
@@ -307,27 +307,27 @@ export class InnovationsService extends BaseService {
         .getRawMany()).map(r => [r.innovation_id, r.reassessments_count]));
     }
     //#endregion
-        
-    
+
+
     //#region fetch supporting organisations
     // Grab the supporting organisations for the innovations (if required)
     const supportingOrganisationsMap = new Map<string, InnovationSupportEntity[]>(); // not exactly InnovationSupportEntity, but just the required fields
-    if(filters.fields?.includes('supports')) {
-     const innovationsSupportsQuery = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
-      .select('supports.id', 'supports_id')
-      .addSelect('supports.status', 'supports_status')
-      .addSelect('supports.updatedAt', 'supports_updated_at')
-      .innerJoin('supports.innovation', 'innovation')
-      .addSelect('innovation.id', 'innovation_id')
-      .innerJoin('supports.organisationUnit', 'organisationUnit')
-      .addSelect('organisationUnit.id', 'organisationUnit_id')
-      .addSelect('organisationUnit.name', 'organisationUnit_name')
-      .addSelect('organisationUnit.acronym', 'organisationUnit_acronym')
-      .innerJoin('organisationUnit.organisation', 'organisation')
-      .addSelect('organisation.id', 'organisation_id')
-      .addSelect('organisation.name', 'organisation_name')
-      .addSelect('organisation.acronym', 'organisation_acronym')
-      .where('supports.innovation_id IN (:...innovationsIds)', { innovationsIds });
+    if (filters.fields?.includes('supports')) {
+      const innovationsSupportsQuery = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
+        .select('supports.id', 'supports_id')
+        .addSelect('supports.status', 'supports_status')
+        .addSelect('supports.updatedAt', 'supports_updated_at')
+        .innerJoin('supports.innovation', 'innovation')
+        .addSelect('innovation.id', 'innovation_id')
+        .innerJoin('supports.organisationUnit', 'organisationUnit')
+        .addSelect('organisationUnit.id', 'organisationUnit_id')
+        .addSelect('organisationUnit.name', 'organisationUnit_name')
+        .addSelect('organisationUnit.acronym', 'organisationUnit_acronym')
+        .innerJoin('organisationUnit.organisation', 'organisation')
+        .addSelect('organisation.id', 'organisation_id')
+        .addSelect('organisation.name', 'organisation_name')
+        .addSelect('organisation.acronym', 'organisation_acronym')
+        .where('supports.innovation_id IN (:...innovationsIds)', { innovationsIds });
 
       if (fetchUsers) {
         innovationsSupportsQuery
@@ -340,16 +340,16 @@ export class InnovationsService extends BaseService {
       }
 
       (await innovationsSupportsQuery.getMany()).forEach(s => {
-        if(!supportingOrganisationsMap.has(s.innovation.id)) {
+        if (!supportingOrganisationsMap.has(s.innovation.id)) {
           supportingOrganisationsMap.set(s.innovation.id, []);
         }
         supportingOrganisationsMap.get(s.innovation.id)?.push(s);
       });
     }
     //#endregion
-    
+
     // Fetch users names.
-    let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>() ;
+    let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
     if (fetchUsers) {
       const assessmentUsersIds = new Set([...assessmentsMap.values()].map(a => a.assignTo.id));
       const supportingUsersIds = new Set([...supportingOrganisationsMap.values()].flatMap(s => s.flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id))));
@@ -358,7 +358,7 @@ export class InnovationsService extends BaseService {
 
     //#region notifications
     // Notifications.
-    const notificationsMap = new Map<string, {notificationsUnread: number, actions: number, messages: number}>(); // not exactly NotificationEntity, but just the required fields
+    const notificationsMap = new Map<string, { notificationsUnread: number, actions: number, messages: number }>(); // not exactly NotificationEntity, but just the required fields
     if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
       const notificationsQuery = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notifications')
         .select('notifications.id', 'notifications_id')
@@ -377,7 +377,7 @@ export class InnovationsService extends BaseService {
 
       // Process the notification / statistics.
       (await notificationsQuery.getMany()).forEach(n => {
-        if(!notificationsMap.has(n.innovation.id)) {
+        if (!notificationsMap.has(n.innovation.id)) {
           notificationsMap.set(n.innovation.id, {
             notificationsUnread: 0,
             actions: 0,
@@ -387,7 +387,7 @@ export class InnovationsService extends BaseService {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const notificationCounter = notificationsMap.get(n.innovation.id)!;
         notificationCounter.notificationsUnread++;
-        
+
         if (filters.fields?.includes('statistics')) {
           if (n.contextType === NotificationContextTypeEnum.THREAD) {
             notificationCounter.messages++;
@@ -396,7 +396,7 @@ export class InnovationsService extends BaseService {
             notificationCounter.actions++;
           }
         }
-      })      
+      })
     }
 
     try {
@@ -407,15 +407,15 @@ export class InnovationsService extends BaseService {
 
           let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
           const supports = supportingOrganisationsMap.get(innovation.id);
-          
+
           // Assessment parsing.
           if (filters.fields?.includes('assessment')) {
             const assessmentRaw = assessmentsMap.get(innovation.id);
-            if(assessmentRaw) {
+            if (assessmentRaw) {
               assessment = {
                 id: assessmentRaw.id,
                 createdAt: assessmentRaw.createdAt,
-                assignedTo: {name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? ''},
+                assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' },
                 finishedAt: assessmentRaw.finishedAt,
                 reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0
               }
@@ -438,37 +438,41 @@ export class InnovationsService extends BaseService {
             otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
             ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
-            ...(assessment && { assessment } ),
-            ...(supports && { supports: supports.map(support => ({
-              id: support.id,
-              status: support.status,
-              updatedAt: support.updatedAt,
-              organisation: {
-                id: support.organisationUnit.organisation.id,
-                name: support.organisationUnit.organisation.name,
-                acronym: support.organisationUnit.organisation.acronym,
-                unit: {
-                  id: support.organisationUnit.id,
-                  name: support.organisationUnit.name,
-                  acronym: support.organisationUnit.acronym,
-                  // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
-                  ...((support.organisationUnitUsers ?? []).length > 0 && {
-                    users: support.organisationUnitUsers.map(su => ({
-                      name: usersInfo.get(su.organisationUser.user.id)?.displayName || '',
-                      role: su.organisationUser.role
-                    })).filter(authUser => authUser.name)
-                  })
+            ...(assessment && { assessment }),
+            ...(supports && {
+              supports: supports.map(support => ({
+                id: support.id,
+                status: support.status,
+                updatedAt: support.updatedAt,
+                organisation: {
+                  id: support.organisationUnit.organisation.id,
+                  name: support.organisationUnit.organisation.name,
+                  acronym: support.organisationUnit.organisation.acronym,
+                  unit: {
+                    id: support.organisationUnit.id,
+                    name: support.organisationUnit.name,
+                    acronym: support.organisationUnit.acronym,
+                    // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
+                    ...((support.organisationUnitUsers ?? []).length > 0 && {
+                      users: support.organisationUnitUsers.map(su => ({
+                        name: usersInfo.get(su.organisationUser.user.id)?.displayName || '',
+                        role: su.organisationUser.role
+                      })).filter(authUser => authUser.name)
+                    })
+                  }
                 }
-              }
-            }))}),
+              }))
+            }),
             // Add notifications
             ...filters.fields?.includes('notifications') && { notifications: notificationsMap.get(innovation.id)?.notificationsUnread ?? 0 },
 
             // Add statistics
-            ...filters.fields?.includes('statistics') && { statistics: {
-              actions: notificationsMap.get(innovation.id)?.actions ?? 0,
-              messages: notificationsMap.get(innovation.id)?.messages ?? 0,
-            }},
+            ...filters.fields?.includes('statistics') && {
+              statistics: {
+                actions: notificationsMap.get(innovation.id)?.actions ?? 0,
+                messages: notificationsMap.get(innovation.id)?.messages ?? 0,
+              }
+            },
           };
 
         }))
@@ -721,9 +725,9 @@ export class InnovationsService extends BaseService {
   //     }
   //   }
 
-    
+
   //   const result = await query.getManyAndCount();
-    
+
   //   // Fetch users names.
   //   const assessmentUsersIds = filters.fields?.includes('assessment') ? result[0]
   //     .filter(innovation => innovation.assessments?.length > 0)
@@ -936,7 +940,7 @@ export class InnovationsService extends BaseService {
               id: result.assessments[0].id,
               createdAt: result.assessments[0].createdAt,
               finishedAt: result.assessments[0].finishedAt,
-              assignedTo: { id: assignTo?.id ?? '' , name: assignTo?.displayName ?? '' },
+              assignedTo: { id: assignTo?.id ?? '', name: assignTo?.displayName ?? '' },
               reassessmentCount: (await result.reassessmentRequests).length
             };
 
@@ -1169,7 +1173,7 @@ export class InnovationsService extends BaseService {
     });
 
     // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_SUBMITED>(
+    await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.INNOVATION_SUBMITED,
       { innovationId }
@@ -1192,7 +1196,7 @@ export class InnovationsService extends BaseService {
 
     const result = await this.sqlConnection.transaction(async transaction => {
 
-        const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity,'innovations')
+      const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
         .leftJoinAndSelect('innovations.innovationSupports', 'supports')
         .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
         .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
@@ -1219,8 +1223,8 @@ export class InnovationsService extends BaseService {
         innovation: {
           id: result.id,
           name: result.name,
-          assignedUserIds: result.supportingUserIds,
-        },
+          assignedUserIds: result.supportingUserIds
+        }
       }
     );
 
@@ -1229,7 +1233,11 @@ export class InnovationsService extends BaseService {
     };
   }
 
-  async pauseInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string, data: { message: string }): Promise<{ id: string }> {
+  async pauseInnovation(
+    user: { id: string, identityId: string, type: UserTypeEnum },
+    innovationId: string,
+    data: { message: string }
+  ): Promise<{ id: string }> {
 
     const retVal = await this.sqlConnection.transaction(async transaction => {
 
@@ -1284,16 +1292,16 @@ export class InnovationsService extends BaseService {
         { message: data.message }
       );
 
-      
       return { id: innovationId }
-      
+
     });
-    
+
     await this.notifierService.send(
-      user, NotifierTypeEnum.INNOVATION_STOP_SHARING, 
+      user,
+      NotifierTypeEnum.INNOVATION_STOP_SHARING,
       { innovationId, stopSharingComment: data.message }
     );
-    
+
     return retVal;
   }
 
@@ -1410,13 +1418,10 @@ export class InnovationsService extends BaseService {
 
     // Create notification
 
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST>(
+    await this.notifierService.send(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-      {
-        innovationId: innovationId,
-        requestId: request.id,
-      }
+      { innovationId: innovationId, requestId: request.id }
     );
 
     return {
@@ -1471,13 +1476,10 @@ export class InnovationsService extends BaseService {
 
 
     // Create notification
-    await this.notifierService.send<NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK>(
+    await this.notifierService.send(
       { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
       NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
-      {
-        innovationId: exportRequest.innovation.id,
-        requestId: updatedRequest.id,
-      }
+      { innovationId: exportRequest.innovation.id, requestId: updatedRequest.id }
     );
 
     return {

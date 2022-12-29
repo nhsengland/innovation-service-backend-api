@@ -59,7 +59,7 @@ export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{inn
     description: 'Pause an innovation.',
     operationId: 'v1-innovation-pause',
     tags: ['Innovation'],
-    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: {

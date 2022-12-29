@@ -5,25 +5,39 @@ import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
+import type { EmailTypeEnum } from './emails.config';
 import {
+  BaseHandler,
   AccessorUnitChangeHandler,
   ActionCreationHandler,
-  ActionUpdateHandler, BaseHandler, CommentCreationHandler, DailyDigestHandler,
-  IdleInnovatorsHandler, IdleSupportHandler, InnovationWithdrawnHandler,
+  ActionUpdateHandler,
+  CommentCreationHandler,
+  DailyDigestHandler,
+  IdleInnovatorsHandler,
+  IdleSupportHandler,
   InnovationOrganisationUnitsSuggestionHandler,
+  InnovationReassessmentRequestHandler,
+  // InnovationRecordExportApprovedHandler,
+  InnovationRecordExportFeedbackHandler,
+  // InnovationRecordExportRejectedHandler,
+  InnovationRecordExportRequestHandler,
+  InnovationStopSharingHandler,
   InnovationSubmitedHandler,
-  InnovationSupportStatusUpdateHandler, InnovationTransferOwnershipCompletedHandler, InnovationTransferOwnershipCreationHandler, InnovatorAccountCreationHandler,
-  LockUserHandler, NeedsAssessmentCompletedHandler, NeedsAssessmentStartedHandler, SLSValidationHandler, ThreadCreationHandler,
+  InnovationSupportStatusChangeRequestHandler,
+  InnovationSupportStatusUpdateHandler,
+  InnovationTransferOwnershipCompletedHandler,
+  InnovationTransferOwnershipCreationHandler,
+  InnovationWithdrawnHandler,
+  InnovatorAccountCreationHandler,
+  LockUserHandler,
+  NeedsAssessmentAssessorUpdateHandler,
+  NeedsAssessmentCompletedHandler,
+  NeedsAssessmentStartedHandler,
+  SLSValidationHandler,
+  ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler,
-  NeedsAssessmentAssessorUpdateHandler
+  UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import { InnovationRecordExportFeedbackHandler } from '../_handlers/innovation-record-export-feedback.handler';
-import { InnovationRecordExportRequestHandler } from '../_handlers/innovation-record-export-request.handler';
-import type { EmailTypeEnum } from './emails.config';
-import { InnovationSupportStatusChangeRequestHandler } from '../_handlers/innovation-support-status-change-request.handler';
-import { InnovationStopSharingHandler } from '../_handlers/innovation-stop-sharing.handler';
-import { InnovationReassessmentRequestHandler } from '../_handlers/innovation-needs-reassessment-request.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -84,7 +98,7 @@ export const NOTIFICATIONS_CONFIG: {
         id: Joi.string().guid().required(),
         status: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
         statusChanged: Joi.boolean().strict().required(),
-        newAssignedAccessors: Joi.array().items(Joi.object({id: Joi.string().guid().required()})),
+        newAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required() })),
         message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required()
       }).required()
     }).required()
@@ -175,6 +189,49 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    handler: InnovationRecordExportRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      requestId: Joi.string().guid().required(),
+    }).required()
+  },
+
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    handler: InnovationRecordExportFeedbackHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
+      innovationId: Joi.string().guid().required(),
+      requestId: Joi.string().guid().required(),
+    }).required()
+  },
+
+  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+    handler: InnovationSupportStatusChangeRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+      supportId: Joi.string().guid().required(),
+      proposedStatus: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
+      requestStatusUpdateComment: Joi.string().required(),
+    }).required()
+  },
+
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    handler: InnovationStopSharingHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
+      innovationId: Joi.string().guid().required(),
+      stopSharingComment: Joi.string().required(),
+    }).required()
+  },
+
+  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
+    handler: InnovationReassessmentRequestHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]>({
+      innovationId: Joi.string().guid().required(),
+    }).required()
+  },
+
+
+  // Admin module.
   [NotifierTypeEnum.SLS_VALIDATION]: {
     handler: SLSValidationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SLS_VALIDATION]>({
@@ -211,45 +268,8 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    handler: InnovationRecordExportRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required(),
-    }).required(),
-  },
 
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    handler: InnovationRecordExportFeedbackHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]>({
-      innovationId: Joi.string().guid().required(),
-      requestId: Joi.string().guid().required(),
-    }).required(),
-  },
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
-    handler: InnovationSupportStatusChangeRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-      supportId: Joi.string().guid().required(),
-      proposedStatus: Joi.string().valid(...Object.values(InnovationSupportStatusEnum)).required(),
-      requestStatusUpdateComment: Joi.string().required(),
-    }).required(),
-  },
-  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
-    handler: InnovationStopSharingHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
-      innovationId: Joi.string().guid().required(),
-      stopSharingComment: Joi.string().required(),
-    }).required(),
-  },
-  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
-    handler: InnovationReassessmentRequestHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]>({
-      innovationId: Joi.string().guid().required(),
-    }).required(),
-  },
-
-  // RECURRENT
+  // Recurrent notifications.
   [NotifierTypeEnum.DAILY_DIGEST]: {
     handler: DailyDigestHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]>({})
@@ -263,6 +283,6 @@ export const NOTIFICATIONS_CONFIG: {
   [NotifierTypeEnum.IDLE_SUPPORT]: {
     handler: IdleSupportHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
-  },
+  }
 
 }
