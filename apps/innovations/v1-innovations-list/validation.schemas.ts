@@ -34,7 +34,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({
-  name: JoiHelper.AppCustomJoi().inputString().trim().allow(null, '').optional(),
+  name: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional(),
   mainCategories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationCategoryCatalogueEnum))).optional(),
   locations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationLocationEnum))).optional(),
   status:
