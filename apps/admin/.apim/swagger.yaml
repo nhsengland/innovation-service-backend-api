@@ -469,33 +469,30 @@ paths:
                     - ACCESSOR
                     - ASSESSMENT
                   description: Type of the user.
-                organisation:
-                  type: object
-                  properties:
-                    acronym:
-                      type: string
-                      maxLength: 10
-                      description: Acronym of the organisation.
-                    unitAcronym:
-                      type: string
-                      maxLength: 10
-                      description: Acronym of the organisation unit.
-                    role:
-                      type: string
-                      enum:
-                        - ACCESSOR
-                        - QUALIFYING_ACCESSOR
-                      description: Role of the user within the organisation.
-                  required:
-                    - acronym
-                    - unitAcronym
-                    - role
-                  additionalProperties: false
-                  description: Organisation and Unit to which the user belongs.
+                organisationAcronym:
+                  type: string
+                  maxLength: 10
+                  nullable: true
+                  description: Acronym of the organisation.
+                organisationUnitAcronym:
+                  type: string
+                  maxLength: 10
+                  nullable: true
+                  description: Acronym of the organisation unit.
+                role:
+                  type: string
+                  enum:
+                    - ACCESSOR
+                    - QUALIFYING_ACCESSOR
+                  nullable: true
+                  description: Role of the user within the organisation.
               required:
                 - name
                 - email
                 - type
+                - organisationAcronym
+                - organisationUnitAcronym
+                - role
               additionalProperties: false
       responses:
         "200":

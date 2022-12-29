@@ -11,9 +11,10 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   name: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.name).required().description('Name of the organisation.'),
   acronym: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.acronym).required().description('Acronym of the organisation.'),
-  units: Joi.array().items(Joi.object({
-    name: Joi.string().required().description('Name of the organisation unit.'),
-    acronym: Joi.string().required().description('Acronym of the organisation unit.')
-  }).required()
+  units: Joi.array().items(
+    Joi.object({
+      name: Joi.string().required().description('Name of the organisation unit.'),
+      acronym: Joi.string().required().description('Acronym of the organisation unit.')
+    })
   ).optional().description('Organisation units to create.')
 }).required();
