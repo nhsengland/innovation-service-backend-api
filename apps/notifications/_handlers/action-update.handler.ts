@@ -1,8 +1,5 @@
-import {
-  InnovationActionStatusEnum, InnovationSectionEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum
-} from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
-
 
 import { container, EmailTypeEnum } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
