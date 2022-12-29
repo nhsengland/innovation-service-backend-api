@@ -189,7 +189,13 @@ class V1Health {
             NotifierTypeEnum.INNOVATION_STOP_SHARING,
             {
               innovationId: 'BFDA8C77-3129-ED11-AE83-0050F25A312B',
-              stopSharingComment: 'This is a test comment',
+              previousAssignedAssessors: [
+                { id: '38B95318-16C0-4E9B-A691-8D69ED25ECFD' },
+                { id: '34CD0E56-F41A-ED11-BD6E-501AC5B0D993' },
+                { id: '02531C5F-D1D1-EC11-B656-0050F25A2AF6' },
+                { id: '829E13B3-242A-4DC5-BDB9-3F45FA0BF307' }
+              ],
+              message: 'This is a test comment'
             });
           break;
 

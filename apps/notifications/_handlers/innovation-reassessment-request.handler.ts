@@ -50,18 +50,19 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(UserTypeEnum.ASSESSMENT), innovationId: this.inputData.innovationId })
             .buildUrl()
         }
       });
 
-      this.inApp.push({
-        innovationId: this.inputData.innovationId,
-        context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
-        userIds: needAssessmentUsers.map(item => item.id),
-        params: { innovationId: this.inputData.innovationId }
-      });
     }
+
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
+      userIds: needAssessmentUsers.map(item => item.id),
+      params: { innovationId: this.inputData.innovationId }
+    });
 
     return this;
 

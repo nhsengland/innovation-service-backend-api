@@ -102,7 +102,8 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string,
-    stopSharingComment: string
+    previousAssignedAssessors: { id: string }[],
+    message: string
   },
 
   [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {

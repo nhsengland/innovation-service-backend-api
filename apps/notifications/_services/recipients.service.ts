@@ -179,7 +179,7 @@ export class RecipientsService extends BaseService {
     const dbInnovationSupport = await query.getOne();
 
     if (!dbInnovationSupport) {
-      return [];
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
     return Promise.all(dbInnovationSupport.organisationUnitUsers.map(async item => ({
