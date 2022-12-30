@@ -1,4 +1,4 @@
-import { NotifierTypeEnum, UserTypeEnum, EmailNotificationTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, UserTypeEnum, EmailNotificationTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -11,7 +11,7 @@ import { BaseHandler } from './base.handler';
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
   EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
-  { innovationId: string }
+  Record<string, never>
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
@@ -59,7 +59,15 @@ export class InnovationStopSharingHandler extends BaseHandler<
       });
     }
 
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_STOP_SHARING, id: this.inputData.innovationId },
+      userIds: previousAssignedUsers.map(item => item.id),
+      params: {}
+    });
+
     return this;
+
   }
 
 }

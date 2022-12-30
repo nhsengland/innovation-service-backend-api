@@ -11,7 +11,7 @@ import { BaseHandler } from './base.handler';
 export class InnovationReassessmentRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
   EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT | EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
-  { innovationId: string }
+  Record<string, never>
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
@@ -37,9 +37,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     this.emails.push({
       templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
       to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: {
-        innovation_name: innovation.name
-      }
+      params: { innovation_name: innovation.name }
     });
 
     for (const user of needAssessmentUsers) {
@@ -61,7 +59,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
       userIds: needAssessmentUsers.map(item => item.id),
-      params: { innovationId: this.inputData.innovationId }
+      params: {}
     });
 
     return this;
