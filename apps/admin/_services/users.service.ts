@@ -55,44 +55,41 @@ export class UsersService extends BaseService {
       name: string,
       email: string,
       type: UserTypeEnum,
-      organisation?: {
-        acronym: string,
-        unitAcronym: string
-        role: AccessorOrganisationRoleEnum
-      }
+      organisationAcronym: string | null,
+      organisationUnitAcronym: string | null,
+      role: AccessorOrganisationRoleEnum | null      
     }
   ): Promise<{ id: string }> {
 
-    if (data.type === UserTypeEnum.ACCESSOR && !data.organisation) {
+    if (data.type === UserTypeEnum.ACCESSOR && (!data.organisationAcronym || !data.organisationUnitAcronym || !data.role)) {
       throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS)
     }
 
     let organisation: OrganisationEntity | null
     let unit: OrganisationUnitEntity | null
-    let role: AccessorOrganisationRoleEnum
 
-    if (data.organisation) {
+    if (data.organisationAcronym) {
       organisation = await this.sqlConnection
         .createQueryBuilder(OrganisationEntity, 'organisation')
-        .where('organisation.acronym = :acronym', { acronym: data.organisation.acronym })
+        .where('organisation.acronym = :acronym', { acronym: data.organisationAcronym })
         .getOne()
 
       if (!organisation) {
         throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
       }
 
-      unit = await this.sqlConnection
-        .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-        .innerJoin('org_unit.organisation', 'org')
-        .where('org.id = :orgId', { orgId: organisation.id })
-        .andWhere('unit.acronym = :acronym', { acronym: data.organisation.unitAcronym })
-        .getOne()
+      if (data.organisationUnitAcronym) {
+        unit = await this.sqlConnection
+          .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
+          .innerJoin('org_unit.organisation', 'org')
+          .where('org.id = :orgId', { orgId: organisation.id })
+          .andWhere('unit.acronym = :acronym', { acronym: data.organisationUnitAcronym })
+          .getOne();
 
-      if (!unit) {
-        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+        if (!unit) {
+          throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+        }
       }
-
-      role = data.organisation.role
     }
 
     let identityId: string;
@@ -140,12 +137,12 @@ export class UsersService extends BaseService {
       }
 
       // accessor type
-      if (user.type === UserTypeEnum.ACCESSOR && organisation && unit) {
+      if (user.type === UserTypeEnum.ACCESSOR && organisation && unit && data.role) {
         const orgUser = await transaction.save(OrganisationUserEntity,
           OrganisationUserEntity.new({
             organisation,
             user,
-            role,
+            role: data.role,
             createdBy: requestUser.id,
             updatedBy: requestUser.id
           })
