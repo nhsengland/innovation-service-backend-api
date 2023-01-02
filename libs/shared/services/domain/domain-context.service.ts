@@ -1,5 +1,5 @@
 
-import type { ContextType } from '../../types';
+import type { DomainContextType } from '../../types';
 import type { DataSource, Repository } from 'typeorm';
 
 import { ActivityLogEntity, OrganisationUnitUserEntity } from '../../entities';
@@ -18,7 +18,7 @@ export class DomainContextService {
     this.activityLogRepository = this.sqlConnection.getRepository(ActivityLogEntity);
   }
 
-  async getContextInfo(organisationUnitId: string, identityId: string): Promise<ContextType> {
+  async getContextInfo(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
     const entityManager = this.sqlConnection.manager;
     const organisationUnitUser = await entityManager.createQueryBuilder(OrganisationUnitUserEntity, 'organisationUnitUser')
     .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')

@@ -28,16 +28,21 @@ class V1InnovationActionCreate {
 
       const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
+        .setContext(context.auth.organisationUnitId)
         .checkAccessorType()
         .checkInnovation()
         .verify();
+        
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationActionsService.createAction(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, organisationUnitId: requestUser.organisations[0]?.organisationUnits[0]?.id || '' },
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        domainContext,
         params.innovationId,
         body
       );
+
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 

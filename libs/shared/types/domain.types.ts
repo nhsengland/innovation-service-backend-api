@@ -28,7 +28,7 @@ export type DomainUserInfoType = {
   }[]
 }
 
-export type ContextType = {
+export type DomainContextType = {
   organisation: {
     id: string,
     name: string,
@@ -38,7 +38,7 @@ export type ContextType = {
     size: null | string,
     organisationUnit: { id: string, name: string, acronym: string }
   }
-}
+} | null;
 
 
 // Organisations types.

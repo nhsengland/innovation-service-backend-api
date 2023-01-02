@@ -5,7 +5,7 @@ import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum,
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType } from '@innovations/shared/types';
+import type { DateISOType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
@@ -182,7 +182,8 @@ export class InnovationActionsService extends BaseService {
 
 
   async createAction(
-    user: { id: string, identityId: string, type: UserTypeEnum, organisationUnitId: string },
+    user: { id: string, identityId: string, type: UserTypeEnum},
+    domainContext: DomainContextType,
     innovationId: string,
     data: { section: InnovationSectionEnum, description: string }
   ): Promise<{ id: string }> {
@@ -206,7 +207,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     const innovationSupport = innovation.innovationSupports.find(
-      is => is.organisationUnit.id === user.organisationUnitId
+      is => is.organisationUnit.id === domainContext?.organisation.organisationUnit.id
     );
 
     let actionCounter = (await innovationSection.actions).length;
