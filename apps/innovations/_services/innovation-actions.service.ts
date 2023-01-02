@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types';
@@ -277,8 +277,13 @@ export class InnovationActionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
     }
 
-    if (dbAction.status !== InnovationActionStatusEnum.IN_REVIEW) {
+    if (![InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED].includes(dbAction.status)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
+    }
+
+    //Accessor can only decline actions requested by himself
+    if (dbAction.status === InnovationActionStatusEnum.REQUESTED && dbAction.createdBy !== user.id) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER)
     }
 
     const result = await this.saveAction(user, innovationId, dbAction, data);
@@ -414,6 +419,16 @@ export class InnovationActionsService extends BaseService {
         await this.domainService.innovations.addActivityLog(
           transaction,
           { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE },
+          { actionId: dbAction.id }
+        );
+
+      }
+
+      if (data.status === InnovationActionStatusEnum.CANCELLED) {
+
+        await this.domainService.innovations.addActivityLog(
+          transaction,
+          { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE },
           { actionId: dbAction.id }
         );
 
