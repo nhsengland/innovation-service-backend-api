@@ -25,14 +25,17 @@ class V1InnovationActionInfo {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context.auth.user.identityId)
         .setInnovation(params.innovationId)
+        .setContext(context.auth.organisationUnitId)
         .checkAccessorType()
         .checkInnovatorType()
         .checkInnovation()
         .checkAdminType()
         .verify();
 
+      const authContext = auth.getContext();
+      console.log(authContext);
       const result = await innovationActionsService.getActionInfo(params.actionId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,

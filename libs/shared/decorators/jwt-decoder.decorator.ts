@@ -37,6 +37,7 @@ export function JwtDecoder() {
       const context: CustomContextType = args[0];
       const request: HttpRequest = args[1];
       const token = request.headers['authorization'] || '';
+      const organisationUnitId = request.headers['x-organisation-unit-id'] || '';
 
       try {
 
@@ -45,9 +46,9 @@ export function JwtDecoder() {
         context.auth = {
           user: {
             identityId: jwt.oid,
-            name: jwt.name
-            // surveyId: jwt.extension_surveyId
-          }
+            name: jwt.name,
+          },
+          organisationUnitId,
         };
 
       }

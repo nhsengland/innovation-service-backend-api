@@ -3,10 +3,10 @@ import 'reflect-metadata';
 import {
   InnovationStatusEnum, InnovationSupportStatusEnum,
   AccessorOrganisationRoleEnum,
-  ServiceRoleEnum, UserTypeEnum
+  ServiceRoleEnum, UserTypeEnum,
 } from '../../enums';
 import { ForbiddenError } from '../../errors';
-import type { DomainUserInfoType } from '../../types';
+import type { ContextType, DomainUserInfoType } from '../../types';
 
 import type { DomainServiceType } from '../interfaces';
 
@@ -24,7 +24,8 @@ export enum AuthErrorsEnum {
   AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED = 'AUTH.0010',
   AUTH_INNOVATION_NOT_LOADED = 'AUTH.0101',
   AUTH_INNOVATION_UNAUTHORIZED = 'AUTH.0102',
-  AUTH_INNOVATION_STATUS_NOT_ALLOWED = 'AUTH.0103'
+  AUTH_INNOVATION_STATUS_NOT_ALLOWED = 'AUTH.0103',
+  AUTH_MISSING_ORGANISATION_UNIT_CONTEXT = 'AUTH.0201',
 }
 
 enum UserValidationKeys {
@@ -38,11 +39,11 @@ enum InnovationValidationKeys {
   checkInnovation = 'innovationValidation'
 }
 
-
 export class AuthorizationValidationModel {
 
   private user: { identityId?: string, data?: DomainUserInfoType } = {};
   private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum } } = {};
+  private context: { organisationUnitId?: string; data?: ContextType  } = { };
 
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
@@ -56,16 +57,27 @@ export class AuthorizationValidationModel {
     this.user = { identityId };
     return this;
   }
+
   setInnovation(innovationId: string): this {
     this.innovation = { id: innovationId };
     return this;
   }
 
+  setContext(organisationUnitId: string): this {
+    this.context = { organisationUnitId };
+    return this;
+  }
 
   getUserInfo(): DomainUserInfoType {
     if (this.user.data) { return this.user.data; }
     throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED);
   }
+
+  getContext(): ContextType {
+    if (this.context.data) { return this.context.data; }
+    throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
+  }
+
   getInnovationInfo(): { id: string, name: string, status: InnovationStatusEnum } {
     if (this.innovation.data) { return this.innovation.data; }
     throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED);
@@ -85,6 +97,7 @@ export class AuthorizationValidationModel {
     this.userValidations.set(UserValidationKeys.checkAdminType, () => this.adminTypeValidation(data));
     return this;
   }
+
   private adminTypeValidation(data?: { role?: ServiceRoleEnum[] }): null | AuthErrorsEnum {
 
     let error: null | AuthErrorsEnum = null;
@@ -161,7 +174,6 @@ export class AuthorizationValidationModel {
 
   }
 
-
   // Innovation validations.
   checkInnovation(data?: { status?: InnovationStatusEnum[] }): this {
     this.innovationValidations.set(InnovationValidationKeys.checkInnovation, () => this.innovationValidation(data));
@@ -182,13 +194,17 @@ export class AuthorizationValidationModel {
 
   }
 
-
   async verify(): Promise<this> {
 
     let validations: (null | AuthErrorsEnum)[] = [];
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     if (!this.user.data) { this.user.data = await this.fetchUserData(this.user.identityId); }
+
+    const organisationUnit = this.context.organisationUnitId || this.user.data?.organisations[0]?.organisationUnits[0]?.id;
+    if (organisationUnit) {
+      if (!this.context.data) { this.context.data = await this.fetchContextData(organisationUnit, this.user.identityId)}
+    }
 
     if (!this.user.data.isActive) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_ACTIVE);
@@ -228,6 +244,10 @@ export class AuthorizationValidationModel {
   // Data fetching methods.
   private async fetchUserData(identityId: string): Promise<DomainUserInfoType> {
     return this.domainService.users.getUserInfo({ identityId });
+  }
+
+  private async fetchContextData(organisationUnitId: string, identityId: string): Promise<ContextType> {
+    return this.domainService.context.getContextInfo(organisationUnitId, identityId)
   }
 
   private async fetchInnovationData(user: DomainUserInfoType, innovationId: string): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {

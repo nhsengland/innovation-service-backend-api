@@ -28,6 +28,18 @@ export type DomainUserInfoType = {
   }[]
 }
 
+export type ContextType = {
+  organisation: {
+    id: string,
+    name: string,
+    acronym: null | string,
+    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
+    isShadow: boolean,
+    size: null | string,
+    organisationUnit: { id: string, name: string, acronym: string }
+  }
+}
+
 
 // Organisations types.
 export type OrganisationWithUnitsType = {
