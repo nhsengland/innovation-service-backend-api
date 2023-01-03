@@ -21,7 +21,7 @@ export const BodySchema = Joi.object<BodyType>({
   status:
     Joi.when('$userType', {
       is: UserTypeEnum.ACCESSOR,
-      then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED).required()
+      then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.CANCELLED).required()
     }).when('$userType', {
       is: UserTypeEnum.INNOVATOR,
       then: Joi.string().valid(InnovationActionStatusEnum.DECLINED).required()
