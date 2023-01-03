@@ -1,13 +1,16 @@
 import type { Context } from '@azure/functions';
+import type { UserTypeEnum } from '../enums';
 
 export type CustomContextType = Context & {
   auth: {
     user: {
       identityId: string,
       name: string
-      // surveyId?: string
     },
-    organisationUnitId: string,
+    context: {
+      userType?: UserTypeEnum,
+      organisationUnitId?: string,
+    },
   }
 }
 

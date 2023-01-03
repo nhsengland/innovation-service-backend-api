@@ -43,7 +43,7 @@ export class AuthorizationValidationModel {
 
   private user: { identityId?: string, data?: DomainUserInfoType } = {};
   private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum } } = {};
-  private context: { organisationUnitId?: string; data?: DomainContextType  } = { };
+  private domainContext: { userType?: UserTypeEnum, organisationUnitId?: string , data?: DomainContextType  } = { };
 
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
@@ -63,8 +63,8 @@ export class AuthorizationValidationModel {
     return this;
   }
 
-  setContext(organisationUnitId: string): this {
-    this.context = { organisationUnitId };
+  setContext(context: { userType?: UserTypeEnum, organisationUnitId?: string }): this {
+    this.domainContext = context;
     return this;
   }
 
@@ -74,7 +74,7 @@ export class AuthorizationValidationModel {
   }
 
   getContext(): DomainContextType {
-    if (this.context.data) { return this.context.data; }
+    if (this.domainContext.data) { return this.domainContext.data; }
     throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
   }
 
@@ -135,13 +135,13 @@ export class AuthorizationValidationModel {
     if (!error && this.user.data?.organisations.length === 0) { // Accessors should ALWAYS have an organisation. This is just a sanity check!
       error = AuthErrorsEnum.AUTH_USER_WITHOUT_ORGANISATION;
     }
-    if (!error && data?.organisationRole && !data.organisationRole.some(role => role === this.context.data?.organisation.role)) {
+    if (!error && data?.organisationRole && !data.organisationRole.some(role => role === this.domainContext.data?.organisation.role)) {
       error = AuthErrorsEnum.AUTH_USER_ORGANISATION_ROLE_NOT_ALLOWED;
     }
-    if (!error && data?.organisationId && data.organisationId !== this.context.data?.organisation.id) {
+    if (!error && data?.organisationId && data.organisationId !== this.domainContext.data?.organisation.id) {
       error = AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED;
     }
-    if (!error && data?.organisationUnitId && data.organisationUnitId !== this.context.data?.organisation.organisationUnit.id) {
+    if (!error && data?.organisationUnitId && data.organisationUnitId !== this.domainContext.data?.organisation.organisationUnit.id) {
       error = AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED;
     }
 
@@ -163,10 +163,10 @@ export class AuthorizationValidationModel {
     if (!error && this.user.data?.organisations.length === 0) { // Innovators should ALWAYS have an organisation. This is just a sanity check!
       error = AuthErrorsEnum.AUTH_USER_WITHOUT_ORGANISATION;
     }
-    if (!error && data?.organisationId && data.organisationId !== this.context.data?.organisation.id) {
+    if (!error && data?.organisationId && data.organisationId !== this.domainContext.data?.organisation.id) {
       error = AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED;
     }
-    if (!error && data?.organisationUnitId && data.organisationUnitId !== this.context.data?.organisation.organisationUnit.id) {
+    if (!error && data?.organisationUnitId && data.organisationUnitId !== this.domainContext.data?.organisation.organisationUnit.id) {
       error = AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED;
     }
 
@@ -201,13 +201,9 @@ export class AuthorizationValidationModel {
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     if (!this.user.data) { this.user.data = await this.fetchUserData(this.user.identityId); }
 
-    if (![UserTypeEnum.ADMIN, UserTypeEnum.ASSESSMENT].includes(this.user.data.type)) {
-      
-      const organisationUnit = this.context.organisationUnitId || this.user.data?.organisations[0]?.organisationUnits[0]?.id;
-      
-      if (!organisationUnit) { throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT); }
-
-      if (!this.context.data) { this.context.data = await this.fetchContextData(organisationUnit, this.user.identityId)}
+    // organisation unit context is only required for accessor type users.
+    if (this.user.data?.type === UserTypeEnum.ACCESSOR) {
+      await this.getOrganisationUnitContextData(this.user.data, this.domainContext.organisationUnitId);
     }
 
     if (!this.user.data.isActive) {
@@ -231,7 +227,7 @@ export class AuthorizationValidationModel {
       validations = [];
       if (!this.innovation.id) { throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED); }
       
-      if (!this.innovation.data) { this.innovation.data = await this.fetchInnovationData(this.user.data, this.innovation.id, this.context.data); }
+      if (!this.innovation.data) { this.innovation.data = await this.fetchInnovationData(this.user.data, this.innovation.id, this.domainContext.data); }
 
       this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
       if (!validations.some(item => item === null)) {
@@ -246,12 +242,29 @@ export class AuthorizationValidationModel {
   }
 
 
+  private async getOrganisationUnitContextData(userData: DomainUserInfoType, organisationUnitId?: string): Promise<void> {
+    
+    if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
+    // if an organisation unit was not issued, use the first organisation unit of 
+    // the first organisation on a user's organisation list as the context.
+    const organisationUnit = organisationUnitId || userData.organisations[0]?.organisationUnits[0]?.id;
+
+    if (!organisationUnit) { throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT); }
+
+    // if issued organisation unit is not present in the user's organisation units, throw an error.
+    if (!this.user.data?.organisations[0]?.organisationUnits.some(u => u.id === organisationUnit)) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED);
+    }
+
+    if (!this.domainContext.data) { this.domainContext.data = await this.fetchOrganisationUnitContextData(organisationUnit, userData.identityId); }
+  }
+
   // Data fetching methods.
   private async fetchUserData(identityId: string): Promise<DomainUserInfoType> {
     return this.domainService.users.getUserInfo({ identityId });
   }
 
-  private async fetchContextData(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
+  private async fetchOrganisationUnitContextData(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
     return this.domainService.context.getContextInfo(organisationUnitId, identityId)
   }
 

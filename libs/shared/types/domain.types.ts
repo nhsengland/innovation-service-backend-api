@@ -31,12 +31,13 @@ export type DomainUserInfoType = {
 export type DomainContextType = {
   organisation: {
     id: string,
+    organisationUser: { id: string }
     name: string,
     acronym: null | string,
     role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
     isShadow: boolean,
     size: null | string,
-    organisationUnit: { id: string, name: string, acronym: string }
+    organisationUnit: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
   }
 } | null;
 

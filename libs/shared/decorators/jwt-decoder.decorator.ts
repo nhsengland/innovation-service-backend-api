@@ -48,7 +48,9 @@ export function JwtDecoder() {
             identityId: jwt.oid,
             name: jwt.name,
           },
-          organisationUnitId,
+          context: { 
+            organisationUnitId,
+          },
         };
 
       }

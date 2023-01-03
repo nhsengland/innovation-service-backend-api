@@ -41,10 +41,12 @@ export class DomainContextService {
         isShadow: organisationUnitUser.organisationUnit.organisation.isShadow,
         role: organisationUnitUser.organisationUser.role,
         size: organisationUnitUser.organisationUnit.organisation.size,
+        organisationUser: { id: organisationUnitUser.organisationUser.id },
         organisationUnit: {
           id: organisationUnitUser.organisationUnit.id,
           name: organisationUnitUser.organisationUnit.name,
           acronym: organisationUnitUser.organisationUnit.acronym,
+          organisationUnitUser:  { id: organisationUnitUser.id },
         },
       }
     };
