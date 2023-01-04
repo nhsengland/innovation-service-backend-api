@@ -7,5 +7,6 @@ export type ResponseDTO = {
   section: InnovationSectionEnum,
   status: InnovationSectionStatusEnum,
   submittedAt: null | DateISOType
-  data: null | { [key: string]: any }
+  data: null | { [key: string]: any },
+  actionsIds?: string[]
 }
