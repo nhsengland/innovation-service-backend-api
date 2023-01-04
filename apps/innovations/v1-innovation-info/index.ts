@@ -29,7 +29,7 @@ class V1InnovationInfo {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovation()
         .verify();
@@ -40,7 +40,7 @@ class V1InnovationInfo {
         {
           id: requestUser.id,
           type: requestUser.type,
-          ...(domainContext?.organisation.organisationUnit.id ? { organisationUnitId: domainContext?.organisation.organisationUnit.id } : {}),
+          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {}),
         },
         params.innovationId,
         queryParams

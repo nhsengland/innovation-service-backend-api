@@ -70,11 +70,10 @@ export class StatisticsService  extends BaseService {
 
   async actionsToReview(
     innovationId: string,
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
   ): Promise<{count: number, lastSubmittedSection: null | string, lastSubmittedAt: null | DateISOType}> {
 
-    const organisationUnit = domainContext?.organisation.organisationUnit.id;
+    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -98,7 +97,7 @@ export class StatisticsService  extends BaseService {
 
   async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<[InnovationSectionEntity[], number]> {
    
-    const organisationUnit = domainContext?.organisation.organisationUnit.id;
+    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);

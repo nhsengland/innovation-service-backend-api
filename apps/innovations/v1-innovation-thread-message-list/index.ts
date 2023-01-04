@@ -26,7 +26,7 @@ class V1InnovationThreadMessageList {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()

@@ -22,7 +22,7 @@ class V1MeTermsOfUseAccept {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()

@@ -2,7 +2,7 @@
 import type { DomainContextType } from '../../types';
 import type { DataSource, Repository } from 'typeorm';
 
-import { ActivityLogEntity, OrganisationUnitUserEntity } from '../../entities';
+import { ActivityLogEntity, OrganisationUnitUserEntity, OrganisationUserEntity } from '../../entities';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '../../errors';
 
 
@@ -18,7 +18,7 @@ export class DomainContextService {
     this.activityLogRepository = this.sqlConnection.getRepository(ActivityLogEntity);
   }
 
-  async getContextInfo(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
+  async getContextFromUnitInfo(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
     const entityManager = this.sqlConnection.manager;
     const organisationUnitUser = await entityManager.createQueryBuilder(OrganisationUnitUserEntity, 'organisationUnitUser')
     .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
@@ -52,4 +52,31 @@ export class DomainContextService {
     };
   }
 
+
+  async getContextFromOrganisationInfo(organisationId: string, identityId: string): Promise<DomainContextType> {
+    const entityManager = this.sqlConnection.manager;
+    const organisationUser = await entityManager.createQueryBuilder(OrganisationUserEntity, 'organisationUser')
+    .innerJoinAndSelect('organisationUser.organisation', 'organisation')
+    .innerJoinAndSelect('organisationUser.user', 'user')
+    .where('organisation.id = :organisationId', { organisationId })
+    .andWhere('user.external_id = :identityId', { identityId })
+    .getOne();
+
+    if (!organisationUser?.organisation) {
+      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    }
+
+    return {
+      organisation: {
+        id: organisationUser.organisation.id,
+        name: organisationUser.organisation.name,
+        acronym: organisationUser.organisation.acronym,
+        isShadow: organisationUser.organisation.isShadow,
+        role: organisationUser.role,
+        size: organisationUser.organisation.size,
+        organisationUser: { id: organisationUser.id },
+        organisationUnit: null,
+      }
+    };
+  }
 }

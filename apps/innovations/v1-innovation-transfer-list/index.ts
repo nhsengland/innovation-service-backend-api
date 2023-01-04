@@ -25,7 +25,7 @@ class V1InnovationTransferList {
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();

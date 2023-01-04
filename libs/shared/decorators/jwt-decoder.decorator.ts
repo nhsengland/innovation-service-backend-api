@@ -1,5 +1,6 @@
 import type { HttpRequest } from '@azure/functions';
 import jwt_decode from 'jwt-decode';
+import type { UserTypeEnum } from '../enums';
 
 import { UnauthorizedError, UserErrorsEnum } from '../errors';
 import { ResponseHelper } from '../helpers';
@@ -38,6 +39,8 @@ export function JwtDecoder() {
       const request: HttpRequest = args[1];
       const token = request.headers['authorization'] || '';
       const organisationUnitId = request.headers['x-organisation-unit-id'] || '';
+      const organisationId = request.headers['x-organisation-id'] || '';
+      const userType = request.headers['x-user-type'] as UserTypeEnum;
 
       try {
 
@@ -50,6 +53,8 @@ export function JwtDecoder() {
           },
           context: { 
             organisationUnitId,
+            organisationId,
+            userType,
           },
         };
 

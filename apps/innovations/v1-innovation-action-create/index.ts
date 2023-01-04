@@ -26,7 +26,7 @@ class V1InnovationActionCreate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId, context.auth.context)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovation()

@@ -207,7 +207,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     const innovationSupport = innovation.innovationSupports.find(
-      is => is.organisationUnit.id === domainContext?.organisation.organisationUnit.id
+      is => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
     );
 
     let actionCounter = (await innovationSection.actions).length;

@@ -27,7 +27,7 @@ class V1InnovationSupportCreate {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
@@ -37,7 +37,7 @@ class V1InnovationSupportCreate {
 
       const result = await innovationSupportsService.createInnovationSupport(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-        domainContext?.organisation.organisationUnit.id || '',
+        domainContext.organisation?.organisationUnit?.id || '',
         params.innovationId,
         body
       );

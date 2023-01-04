@@ -1,7 +1,8 @@
+import type { CustomContextType } from '@innovations/shared/types';
 import { randomBytes, scrypt } from 'crypto';
 import { inject, injectable } from 'inversify';
 
-import { NotifierTypeEnum, UserTypeEnum } from '../../enums';
+import { NotifierTypeEnum } from '../../enums';
 import { ForbiddenError, GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 import { SLSEventTypeEnum, SLSModel } from '../../schemas/sls.schema';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '../interfaces';
@@ -20,10 +21,10 @@ export class AuthorizationService {
   /**
   * Authorization validations methods.
   */
-  validate(identityId?: string, context?: {userType?: UserTypeEnum, organisationUnitId?: string}): AuthorizationValidationModel {
+  validate(ctx: CustomContextType): AuthorizationValidationModel {
     const authInstance = new AuthorizationValidationModel(this.domainService);
-    if (identityId) { authInstance.setUser(identityId); }
-    if (context) { authInstance.setContext(context); }
+    if (ctx.auth.user.identityId) { authInstance.setUser(ctx.auth.user.identityId); }
+    if (ctx.auth.context) { authInstance.setContext(ctx.auth.context); }
     return authInstance;
   }
 

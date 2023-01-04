@@ -23,7 +23,7 @@ class GetUserStatistics {
 
       const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkAccessorType()
         .checkInnovatorType()
         .checkAssessmentType()

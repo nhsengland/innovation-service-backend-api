@@ -1442,7 +1442,7 @@ export class InnovationsService extends BaseService {
 
     // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
 
-    const organisationUnitId = domainContext?.organisation.organisationUnit.id;
+    const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
 
     if (requestUser.type === UserTypeEnum.ACCESSOR) {
       if (!organisationUnitId) {
@@ -1516,7 +1516,7 @@ export class InnovationsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId })
 
     if (requestUser.type === 'ACCESSOR') {
-      const organisationUnitId = domainContext?.organisation.organisationUnit.id;
+      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
       
       if (!organisationUnitId) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -1595,7 +1595,7 @@ export class InnovationsService extends BaseService {
 
 
     if (requestUser.type === 'ACCESSOR') {
-      const organisationUnitId = domainContext?.organisation.organisationUnit.id;
+      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
       
       if (!organisationUnitId) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -1647,13 +1647,23 @@ export class InnovationsService extends BaseService {
       .where('request.id = :exportRequestId', { exportRequestId })
 
     if (requestUser.type === 'ACCESSOR') {
-      const organisationUnitId = domainContext?.organisation.organisationUnit.id;
+
+      if (!domainContext.organisation) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+      }
+
+      if(!domainContext.organisation.organisationUnit) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
+      const organisationUnitId = domainContext.organisation.organisationUnit.id;
       
       if (!organisationUnitId) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
 
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+      
     }
 
     const request = await query.getOne();

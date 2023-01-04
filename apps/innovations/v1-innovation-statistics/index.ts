@@ -26,7 +26,7 @@ class GetInnovationStatistics {
 
       const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()

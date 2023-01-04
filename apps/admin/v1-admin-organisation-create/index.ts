@@ -34,7 +34,7 @@ class V1AdminOrganisationCreate {
       );
 
       await authorizationService
-        .validate(context.auth.user.identityId)
+        .validate(context)
         .checkAdminType()
         .verify();
 

@@ -25,7 +25,7 @@ class V1InnovationsOverdueAssessments {
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authorizationService.validate(context.auth.user.identityId)
+      await authorizationService.validate(context)
         .checkAssessmentType()
         .verify();
 

@@ -23,7 +23,7 @@ class V1InnovationsList {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -41,8 +41,8 @@ class V1InnovationsList {
           id: requestUser.id,
           type: requestUser.type,
           ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(domainContext?.organisation.organisationUnit.id ? { organisationUnitId: domainContext?.organisation.organisationUnit.id } : {}),
-          ...( domainContext?.organisation.role ? { organisationRole: domainContext.organisation.role } : {})
+          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext?.organisation.organisationUnit.id } : {}),
+          ...( domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {})
         },
         filters,
         { skip, take, order }
