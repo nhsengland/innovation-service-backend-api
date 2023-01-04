@@ -8,11 +8,17 @@ export type CustomContextType = Context & {
       name: string
     },
     context: {
-      userType?: UserTypeEnum,
+      userType: UserTypeEnum,
       organisationUnitId?: string,
       organisationId?: string,
     },
   }
+}
+
+export type AuthContextType = {
+  userType: UserTypeEnum,
+  organisationUnitId?: string,
+  organisationId?: string,
 }
 
 export type AppResponse<T = any> = {

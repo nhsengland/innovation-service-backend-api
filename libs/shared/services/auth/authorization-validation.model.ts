@@ -6,7 +6,7 @@ import {
   ServiceRoleEnum, UserTypeEnum,
 } from '../../enums';
 import { ForbiddenError } from '../../errors';
-import type { DomainContextType, DomainUserInfoType } from '../../types';
+import type { AuthContextType, DomainContextType, DomainUserInfoType } from '../../types';
 
 import type { DomainServiceType } from '../interfaces';
 
@@ -64,7 +64,7 @@ export class AuthorizationValidationModel {
     return this;
   }
 
-  setContext(context: { userType?: UserTypeEnum, organisationUnitId?: string }): this {
+  setContext(context: AuthContextType): this {
     this.domainContext = context;
     return this;
   }
