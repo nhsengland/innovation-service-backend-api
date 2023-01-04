@@ -73,21 +73,8 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     tags: ['[v1] Users'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Successful operation',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Unique identifier for the game' },
-                state: { type: 'string', description: 'The status of the game', enum: ['WaitingForPlayers', 'Started', 'Complete'] }
-              }
-            }
-          }
-        }
-      },
-      404: { description: 'Unable to find a game with that id' }
+      200: { description: 'Successful operation'},
+      404: { description: 'Not found' }
     }
   }
 });
