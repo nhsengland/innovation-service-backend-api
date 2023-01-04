@@ -156,12 +156,14 @@ export class InnovationActionsService extends BaseService {
     section: InnovationSectionEnum,
     description: string,
     createdAt: DateISOType,
-    createdBy: string
+    createdBy: { name: string, organisationUnit: string }
   }> {
 
     const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
       .innerJoinAndSelect('action.createdByUser', 'createdByUser')
+      .innerJoinAndSelect('action.innovationSupport', 'innovationSupport')
+      .innerJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
       .where('action.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
@@ -175,7 +177,10 @@ export class InnovationActionsService extends BaseService {
       description: dbAction.description,
       section: dbAction.innovationSection.section,
       createdAt: dbAction.createdAt,
-      createdBy: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName
+      createdBy: {
+        name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
+        organisationUnit: dbAction.innovationSupport.organisationUnit.name
+      }
     };
 
   }
