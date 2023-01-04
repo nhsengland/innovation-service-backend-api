@@ -30,6 +30,7 @@ class V1InnovationsList {
         .checkAdminType()
         .verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext();
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role });
 
@@ -40,8 +41,8 @@ class V1InnovationsList {
           id: requestUser.id,
           type: requestUser.type,
           ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organisationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
-          ...(requestUser.organisations[0]?.role ? { organisationRole: requestUser.organisations[0]?.role } : {})
+          ...(domainContext?.organisation.organisationUnit.id ? { organisationUnitId: domainContext?.organisation.organisationUnit.id } : {}),
+          ...( domainContext?.organisation.role ? { organisationRole: domainContext.organisation.role } : {})
         },
         filters,
         { skip, take, order }

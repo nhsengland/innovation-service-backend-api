@@ -34,12 +34,13 @@ class V1InnovationInfo {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationsService.getInnovationInfo(
         {
           id: requestUser.id,
           type: requestUser.type,
-          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organisationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
+          ...(domainContext?.organisation.organisationUnit.id ? { organisationUnitId: domainContext?.organisation.organisationUnit.id } : {}),
         },
         params.innovationId,
         queryParams

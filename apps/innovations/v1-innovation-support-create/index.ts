@@ -33,10 +33,11 @@ class V1InnovationSupportCreate {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationSupportsService.createInnovationSupport(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-        requestUser.organisations[0]?.organisationUnits[0]?.id || '',
+        domainContext?.organisation.organisationUnit.id || '',
         params.innovationId,
         body
       );
