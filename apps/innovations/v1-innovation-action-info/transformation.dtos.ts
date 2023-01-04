@@ -8,5 +8,5 @@ export type ResponseDTO = {
   section: InnovationSectionEnum,
   description: string,
   createdAt: DateISOType,
-  createdBy: string
+  createdBy: { name: string, organisationUnit: string }
 }
