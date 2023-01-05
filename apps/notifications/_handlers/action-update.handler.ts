@@ -42,6 +42,7 @@ export class ActionUpdateHandler extends BaseHandler<
     switch (this.requestUser.type) {
       case UserTypeEnum.INNOVATOR:
         await this.prepareInAppForAccessor();
+        await this.prepareEmailForAccessor();
         if (this.data.actionInfo.status === InnovationActionStatusEnum.DECLINED) {
           await this.prepareInAppForInnovator();
           await this.prepareEmailForInnovator();
