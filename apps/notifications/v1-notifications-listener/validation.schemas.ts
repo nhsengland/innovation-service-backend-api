@@ -9,7 +9,7 @@ export type MessageType = {
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
     action: NotifierTypeEnum,
     params: { [key: string]: any },
-    domainContext?: { [key: string]: any }
+    domainContext?: DomainContextType,
   }
 }
 

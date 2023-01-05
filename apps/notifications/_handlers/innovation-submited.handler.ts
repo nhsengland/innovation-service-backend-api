@@ -55,6 +55,7 @@ export class InnovationSubmitedHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION, id: this.inputData.innovationId },
       userIds: assessmentUsers.map(user => user.id),
       params: {}

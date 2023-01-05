@@ -131,6 +131,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     if (inAppRecipients.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, id: this.inputData.threadId },
         userIds: inAppRecipients,
         params: { subject: thread.subject, messageId: this.inputData.messageId }

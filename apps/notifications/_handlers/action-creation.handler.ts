@@ -2,7 +2,7 @@ import { EmailNotificationTypeEnum, NotifierTypeEnum, NotificationContextTypeEnu
 import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
@@ -22,9 +22,10 @@ export class ActionCreationHandler extends BaseHandler<
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION]
+    data: NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION],
+    domainContext?: DomainContextType
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -59,11 +60,12 @@ export class ActionCreationHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_CREATION, id: this.inputData.action.id },
       userIds: [innovation?.owner.id || ''],
       params: {
         section: this.inputData.action.section
-      }
+      },
     });
 
     return this;

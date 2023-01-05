@@ -124,6 +124,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
       userIds: [this.data.innovation?.owner.id || ''],
       params: {
@@ -142,6 +143,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
       userIds: assignedUsers.map(item => item.id),
       params: {
@@ -158,6 +160,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
       userIds: assessmentUsers.map(item => item.id),
       params: {
