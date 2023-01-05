@@ -32,6 +32,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
+    // TODO: GET PROPER ORGANISATION UNIT
     const organisationUnit = requestUserInfo.organisations[0]?.organisationUnits[0]?.id || '';
     const qualifyingAccessors = await this.recipientsService.organisationUnitsQualifyingAccessors([organisationUnit]);
 

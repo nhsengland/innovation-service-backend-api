@@ -39,6 +39,7 @@ export class ActionCreationHandler extends BaseHandler<
 
     if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences)) {
 
+      // TODO: GET PROPER UNIT NAME OF THE ACCESSOR. THIS IS DONE BY RELATING THE INNOVATION_SUPPORT_ID WITH THE CREATED ACTION.
       this.emails.push({
         templateId: EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
         to: { type: 'identityId', value: innovation?.owner.identityId || '', displayNameParam: 'display_name' },

@@ -28,6 +28,7 @@ class PostInnovationPDFExport {
         .verify();
 
       const requestUser =  auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const innovation = await domainService.innovations.getInnovationInfo(params.innovationId);
 
@@ -37,7 +38,7 @@ class PostInnovationPDFExport {
 
       const documentDefinition = pdfService.buildDocumentHeaderDefinition(innovation.name, body);
 
-      const pdf = await pdfService.generatePDF(requestUser , params.innovationId ,documentDefinition);
+      const pdf = await pdfService.generatePDF(requestUser, domainContext , params.innovationId ,documentDefinition);
 
       context.res = {
         body: pdf,

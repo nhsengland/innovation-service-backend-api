@@ -103,6 +103,9 @@ export class CommentCreationHandler extends BaseHandler<
   private async prepareNotificationForInnovator(): Promise<void> {
 
     const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
+
+    // TODO: GET PROPER ORGANISATION UNIT NAME.
+
     const unitName = requestInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : requestInfo.organisations[0]?.organisationUnits[0]?.name ?? '';
 
     // Send email only to user if email preference INSTANTLY.
