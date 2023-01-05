@@ -12,7 +12,7 @@ import { BaseHandler } from './base.handler';
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
-  EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR,
+  EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR |EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR ,
   { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionEnum }
 > {
 
@@ -21,7 +21,8 @@ export class ActionUpdateHandler extends BaseHandler<
 
   private data: {
     innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum } },
-    actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, owner: { id: string; identityId: string } }
+    actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, owner: { id: string; identityId: string } },
+    comment?: string
   } = {};
 
 
@@ -75,6 +76,40 @@ export class ActionUpdateHandler extends BaseHandler<
       }
     });
 
+  }
+
+  private async prepareEmailForAccessor(): Promise<void> {
+
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences)) {
+
+      let templateId: EmailTypeEnum
+      switch (this.data.actionInfo?.status) {
+        case InnovationActionStatusEnum.DECLINED:
+          templateId = EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR
+          break
+        default:
+          throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND)
+      }
+
+      const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
+
+      this.emails.push({
+        templateId: templateId,
+        to: { type: 'identityId', value: this.data.actionInfo?.owner.identityId || '', displayNameParam: 'display_name' },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovator_name: requestInfo.displayName,
+          innovation_name: innovation.name,
+          action_status_update_comment: '', // MF - How to get this comment?
+          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+              .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
+              .buildUrl() 
+        }
+      })
+    }
   }
 
   private async prepareInAppForInnovator(): Promise<void> {
