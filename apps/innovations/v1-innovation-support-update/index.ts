@@ -33,9 +33,11 @@ class V1InnovationSupportUpdate {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationSupportsService.updateInnovationSupport(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        domainContext,
         params.innovationId,
         params.supportId,
         body

@@ -35,9 +35,11 @@ class V1InnovationThreadMessageCreate {
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await threadsService.createEditableMessage(
         requestUser,
+        domainContext,
         pathParams.threadId,
         body.message,
         true,

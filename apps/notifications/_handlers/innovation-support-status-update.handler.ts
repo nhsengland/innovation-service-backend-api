@@ -45,8 +45,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       displayName: requestUserInfo.displayName,
       organisation: { id: requestUserInfo.organisations[0]?.id ?? '', name: requestUserInfo.organisations[0]?.name ?? '' },
       organisationUnit: {
-        // TODO: GET PROPER ORGANISATION UNIT.
-        id: requestUserInfo.organisations[0]?.organisationUnits[0]?.id ?? '', name: requestUserInfo.organisations[0]?.organisationUnits[0]?.name ?? ''
+        // TODO: (done) GET PROPER ORGANISATION UNIT.
+        id: this.domainContext?.organisation?.organisationUnit?.id ?? '', name: this.domainContext?.organisation?.organisationUnit?.name ?? ''
       }
     };
 

@@ -261,6 +261,7 @@ export class InnovationActionsService extends BaseService {
 
   async updateActionAsAccessor(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
     data: { status: InnovationActionStatusEnum }
@@ -282,7 +283,7 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const result = await this.saveAction(user, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -304,6 +305,7 @@ export class InnovationActionsService extends BaseService {
 
   async updateActionAsInnovator(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
     data: { status: InnovationActionStatusEnum, message: string }
@@ -322,7 +324,7 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const result = await this.saveAction(user, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
 
     await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
@@ -359,6 +361,7 @@ export class InnovationActionsService extends BaseService {
 
   private async saveAction(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     dbAction: InnovationActionEntity,
     data: { status: InnovationActionStatusEnum, message?: string }
@@ -372,6 +375,7 @@ export class InnovationActionsService extends BaseService {
 
         thread = await this.innovationThreadsService.createThreadOrMessage(
           { id: user.id, identityId: user.identityId, type: user.type },
+          domainContext,
           innovationId,
           this.getSaveActionSubject(dbAction, data.status),
           data.message,

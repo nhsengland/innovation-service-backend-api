@@ -34,6 +34,7 @@ class V1InnovationActionUpdate {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: requestUser.type });
 
@@ -41,6 +42,7 @@ class V1InnovationActionUpdate {
 
         const accessorResult = await innovationActionsService.updateActionAsAccessor(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          domainContext,
           params.innovationId,
           params.actionId,
           { status: body.status }
@@ -53,6 +55,7 @@ class V1InnovationActionUpdate {
 
         const innovatorResult = await innovationActionsService.updateActionAsInnovator(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          domainContext,
           params.innovationId,
           params.actionId,
           { status: body.status, message: body.message ?? '' } // Joi will make sure that message is never empty for an innovator.

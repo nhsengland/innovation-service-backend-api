@@ -35,10 +35,11 @@ class V1InnovationThreadCreate {
         .verify();
 
       const requestUser = auth.getUserInfo();
-
+      const domainContext = auth.getContext();
 
       const result = await threadsService.createEditableThread(
         requestUser,
+        domainContext,
         pathParams.innovationId,
         body.subject,
         body.message,
