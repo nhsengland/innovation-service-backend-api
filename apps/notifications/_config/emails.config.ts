@@ -12,6 +12,7 @@ export enum EmailTypeEnum {
   INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS = 'f63b1459-c1ee-48b3-b0da-12bb19863d19',
   ACTION_CREATION_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
   ACTION_CANCELLED_TO_INNOVATOR = '1bac0f02-25b1-42c1-843d-c97d58ad3db2',
+  ACTION_DECLINED_TO_INNOVATOR = '3ac886c6-8352-4047-874f-66183d2d2d82',
   THREAD_CREATION_TO_INNOVATOR = '193601d9-4e46-4129-8f79-0f45e015410d',
   THREAD_CREATION_TO_ASSIGNED_USERS = '59838237-8909-42ca-a708-de38e29a4d65',
   THREAD_MESSAGE_CREATION_TO_ALL = 'e5b8f107-0af2-441e-9856-e93f8ea2a123',
@@ -61,6 +62,7 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS]: { display_name?: string, qa_name: string, innovation_url: string},
   [EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
   [EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },  
+  [EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },    
   [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, thread_url: string }
   [EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string, thread_url: string }
   [EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL]: { display_name?: string, subject: string, innovation_name: string, thread_url: string }

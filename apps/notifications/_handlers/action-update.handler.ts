@@ -1,4 +1,5 @@
 import { EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationSectionEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -40,6 +41,10 @@ export class ActionUpdateHandler extends BaseHandler<
     switch (this.requestUser.type) {
       case UserTypeEnum.INNOVATOR:
         await this.prepareInAppForAccessor();
+        if (this.data.actionInfo.status === InnovationActionStatusEnum.DECLINED) {
+          await this.prepareInAppForInnovator();
+          await this.prepareEmailForInnovator();
+        }
         break;
 
       case UserTypeEnum.ACCESSOR:
@@ -54,8 +59,7 @@ export class ActionUpdateHandler extends BaseHandler<
     return this;
 
   }
-
-
+  
   // Private methods.
 
   private async prepareInAppForAccessor(): Promise<void> {
@@ -94,10 +98,22 @@ export class ActionUpdateHandler extends BaseHandler<
 
     if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences)) {
 
+      let templateId: EmailTypeEnum
+      switch (this.data.actionInfo?.status) {
+        case InnovationActionStatusEnum.CANCELLED:
+          templateId = EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR
+          break
+        case InnovationActionStatusEnum.DECLINED:
+          templateId = EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR
+          break
+        default:
+          throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND)
+      }
+
       const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
 
       this.emails.push({
-        templateId: EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR,
+        templateId: templateId,
         to: { type: 'identityId', value: this.data.innovation?.owner.identityId || '', displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
