@@ -10,10 +10,10 @@ import { container } from '../_config';
 import { NotificationsServiceSymbol, NotificationsServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
-import { PathParamsSchema, PathParamType } from './validation.schemas';
+import { BodySchema, BodyType } from './validation.schemas';
 
 
-class V1UserNotificationsDelete {
+class V1UserNotificationsDismiss {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -29,12 +29,10 @@ class V1UserNotificationsDelete {
         .verify();
       const userInfo = authInstance.getUserInfo();
 
-      const queryParams = JoiHelper.Validate<PathParamType>(PathParamsSchema, request.params);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      await notificationsService.deleteUserNotification(userInfo.id, queryParams.notificationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: queryParams.notificationId
-      });
+      const affected = await notificationsService.dismissUserNotifications(userInfo.id, body);
+      context.res = ResponseHelper.Ok<ResponseDTO>({affected});
       return;
 
     } catch (error) {
@@ -46,12 +44,12 @@ class V1UserNotificationsDelete {
 
 }
 
-export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '/v1/notifications/{notificationId}', {
-  delete: {
-    description: 'Returns the id of the deleted notification',
-    operationId: 'v1-notifications-delete',
+export default openApi(V1UserNotificationsDismiss.httpTrigger as AzureFunction, '/v1/notifications/dismiss', {
+  patch: {
+    description: 'Returns the number of affected notifications',
+    operationId: 'v1-notifications-dismiss',
     tags: ['[v1] Notifications'],
-    parameters: SwaggerHelper.paramJ2S({path: PathParamsSchema}),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: {
         description: 'Success',
@@ -60,7 +58,7 @@ export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'The notification id' }
+                affected: { type: 'number', description: 'The number of affected notifications' },
               }
             }
           }

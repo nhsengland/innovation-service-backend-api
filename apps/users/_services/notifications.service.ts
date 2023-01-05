@@ -1,5 +1,6 @@
-import { NotificationUserEntity } from '@users/shared/entities';
+import { NotificationEntity, NotificationUserEntity } from '@users/shared/entities';
 import type { InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
+import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import type { DateISOType } from '@users/shared/types';
 import { injectable } from 'inversify';
@@ -121,5 +122,66 @@ export class NotificationsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     await em.update(NotificationUserEntity, { user: userId, notification: notificationId }, { deletedAt: (new Date()).toISOString() });
+  }
+
+  /**
+   * dismisses the user notifications by the given conditions (cumulative)
+   * @param userId the user id
+   * @param conditions the conditions to apply
+   * - notificationIds: the notification ids to dismiss
+   * - contextIds: the context ids to dismiss
+   * - contextTypes: the context types to dismiss
+   * - dismissAll: if true, dismisses all the notifications
+   * @param entityManager 
+   * @returns the number of affected rows
+   */
+  async dismissUserNotifications(
+    userId: string,
+    conditions: {
+      notificationIds: string[];
+      contextIds: string[];
+      contextTypes: NotificationContextTypeEnum[];
+      dismissAll: boolean;
+    },
+    entityManager?: EntityManager
+  ): Promise<number> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    if ( !conditions.dismissAll && conditions.notificationIds.length === 0 && conditions.contextTypes.length === 0 && conditions.contextIds.length === 0) {
+      throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'})
+    }
+
+    const params: { userId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: userId };
+    const query = em.createQueryBuilder(NotificationUserEntity, 'user').update()
+      .set({ readAt: new Date().toISOString() })
+      .where('user_id = :userId')
+      .andWhere('deleted_at IS NULL')
+      .andWhere('read_at IS NULL');
+      
+    if(!conditions.dismissAll) {
+      const notificationQuery = em.createQueryBuilder(NotificationEntity, 'notification')
+        .innerJoin('notification.notificationUsers', 'user')
+        .select('notification.id')
+        .andWhere('user.id = :userId')
+        .andWhere('user.read_at IS NULL');
+  
+      if (conditions.notificationIds.length > 0) {
+        notificationQuery.andWhere('notification.id IN (:...notificationIds)');
+        params.notificationIds = conditions.notificationIds;
+      }
+      if (conditions.contextIds.length > 0) {
+        notificationQuery.andWhere('notification.contextId IN (:...contextIds)');
+        params.contextIds = conditions.contextIds;
+      }
+      if (conditions.contextTypes.length > 0) {
+        notificationQuery.andWhere('notification.contextType IN (:...contextTypes)');
+        params.contextTypes = conditions.contextTypes;
+      }
+
+      query.andWhere('notification_id IN ( ' + notificationQuery.getQuery() + ' )')
+    }
+
+    const res = await query.setParameters(params).execute();
+    return res.affected ?? 0;
   }
 }
