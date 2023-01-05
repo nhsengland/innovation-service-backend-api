@@ -38,9 +38,17 @@ export function JwtDecoder() {
       const context: CustomContextType = args[0];
       const request: HttpRequest = args[1];
       const token = request.headers['authorization'] || '';
-      const organisationUnitId = request.headers['x-organisation-unit-id'] || '';
-      const organisationId = request.headers['x-organisation-id'] || '';
-      const userType = request.headers['x-user-type'] as UserTypeEnum;
+      const domainContextHeader = request.headers['x-is-domain-context'];
+
+      let domainContext: {
+        userType?: UserTypeEnum;
+        organisationId?: string;
+        innovationId?: string;
+      } = { };
+
+      if (domainContextHeader) {
+        domainContext = JSON.parse(domainContextHeader);
+      }
 
       try {
 
@@ -51,11 +59,7 @@ export function JwtDecoder() {
             identityId: jwt.oid,
             name: jwt.name,
           },
-          context: { 
-            organisationUnitId,
-            organisationId,
-            userType,
-          },
+          context: domainContext,
         };
 
       }

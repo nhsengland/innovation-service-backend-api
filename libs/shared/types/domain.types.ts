@@ -39,6 +39,7 @@ export type DomainContextType = {
     size: null | string,
     organisationUnit: null | { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
   },
+  userType: UserTypeEnum,
 };
 
 

@@ -8,7 +8,7 @@ export type CustomContextType = Context & {
       name: string
     },
     context: {
-      userType: UserTypeEnum,
+      userType?: UserTypeEnum,
       organisationUnitId?: string,
       organisationId?: string,
     },
