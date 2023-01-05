@@ -251,7 +251,8 @@ export class InnovationActionsService extends BaseService {
       {
         innovationId: innovation.id,
         action: { id: result.id, section: data.section }
-      }
+      },
+      domainContext,
     );
 
     return result;

@@ -54,7 +54,6 @@ export class ThreadCreationHandler extends BaseHandler<
   private async prepareNotificationForInnovator(): Promise<void> {
 
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-    // TODO: (done) GET PROPER ORGANISATION UNIT
     const requestUserUnitName = requestUserInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : this.domainContext?.organisation?.organisationUnit?.name ?? '';
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
