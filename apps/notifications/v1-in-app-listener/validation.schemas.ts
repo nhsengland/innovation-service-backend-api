@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
-import type { DomainContextType } from '@notifications/shared/types';
+import { DomainContextSchema, DomainContextType } from '@notifications/shared/types';
 
 
 export type MessageType = {
@@ -23,7 +23,7 @@ export const MessageSchema = Joi.object<MessageType>({
       id: Joi.string().guid().required()
     }).required(),
 
-    domainContext: Joi.object<DomainContextType>().optional(),
+    domainContext: DomainContextSchema.optional(),
 
     innovationId: Joi.string().guid().required(),
 

@@ -1,7 +1,8 @@
+import Joi from 'joi';
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
-import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
+import { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
 import type { DateISOType } from './date.types';
 
 
@@ -41,6 +42,29 @@ export type DomainContextType = {
   },
   userType: UserTypeEnum,
 };
+
+export const DomainContextSchema = Joi.object<DomainContextType>({
+  organisation: Joi.object({
+    id: Joi.string().uuid().required(),
+    organisationUser: Joi.object({
+      id: Joi.string().uuid().required(),
+    }).required(),
+    name: Joi.string().required(),
+    acronym: Joi.string().allow(null).required(),
+    role: Joi.string().required(),
+    isShadow: Joi.boolean().required(),
+    size: Joi.string().allow(null).required(),
+    organisationUnit: Joi.object({
+      id: Joi.string().uuid().required(),
+      name: Joi.string().required(),
+      acronym: Joi.string().required(),
+      organisationUnitUser: Joi.object({
+        id: Joi.string().uuid().required(),
+      }).required(),
+    }).allow(null).required(),
+  }).allow(null).required(),
+  userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(),
+});
 
 
 // Organisations types.
