@@ -39,7 +39,7 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
         innovation_name: innovation.name,
         innovator_name: innovatorName.name,
         innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
-        .addPath('innovator/innovations/:innovationId')
+        .addPath('accessor/innovations/:innovationId')
         .setPathParams({ innovationId: this.inputData.innovationId })
         .buildUrl(),
         pdf_rejection_comment: request.exportRequest.rejectReason,
