@@ -1,5 +1,5 @@
-import { NotificationEntity, NotificationUserEntity } from '@users/shared/entities';
-import type { InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
+import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import type { DateISOType } from '@users/shared/types';
@@ -9,7 +9,6 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-
   constructor() { super(); }
 
   /**
@@ -184,4 +183,51 @@ export class NotificationsService extends BaseService {
     const res = await query.setParameters(params).execute();
     return res.affected ?? 0;
   }
+
+  /**
+   * returns the user email notification preferences
+   * @param userId the user id
+   * @param entityManager optional entity manager to run the query (for transactions)
+   * @returns array of notification types and preferences
+   */
+  async getUserEmailPreferences(userId: string, entityManager?: EntityManager) : Promise<{
+    notificationType: EmailNotificationTypeEnum,
+    preference: EmailNotificationPreferenceEnum
+  }[]>{
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const userPreferences = await em.createQueryBuilder(NotificationPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getMany();
+    const userPreferencesMap = new Map(userPreferences.map(p => ([p.notification_id, p.preference])));
+    return [
+      {notificationType: EmailNotificationTypeEnum.ACTION, preference: userPreferencesMap.get(EmailNotificationTypeEnum.ACTION) ?? EmailNotificationPreferenceEnum.INSTANTLY},
+      {notificationType: EmailNotificationTypeEnum.SUPPORT, preference: userPreferencesMap.get(EmailNotificationTypeEnum.SUPPORT) ?? EmailNotificationPreferenceEnum.INSTANTLY},
+      {notificationType: EmailNotificationTypeEnum.COMMENT, preference: userPreferencesMap.get(EmailNotificationTypeEnum.COMMENT) ?? EmailNotificationPreferenceEnum.INSTANTLY},
+    ];
+  }
+
+  /**
+   * upserts the user email notification preferences
+   * @param userId the user id
+   * @param preferences the preferences array to upsert
+   * @param entityManager optional entity manager to run the query (for transactions)
+   */
+  async upsertUserEmailPreferences(
+    userId: string,
+    preferences: {
+      notificationType: EmailNotificationTypeEnum,
+      preference: EmailNotificationPreferenceEnum
+    }[],
+    entityManager?: EntityManager
+  ) : Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+    const saveData = preferences.map(p => ({
+      user: {id: userId},
+      notification_id: p.notificationType,
+      preference: p.preference,
+      createdBy: userId,  // this is only for the first time as BaseEntity defines it as update: false
+      updatedBy: userId
+    }));
+    await em.save(NotificationPreferenceEntity, saveData);
+  }
+
 }

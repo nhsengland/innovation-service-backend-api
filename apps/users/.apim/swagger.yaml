@@ -5,6 +5,70 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  /v1/email-preferences:
+    get:
+      description: Returns the user email notifications preferences
+      operationId: v1-email-notification-preferences-info
+      tags:
+        - "[v1] Email Preferences"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    notificationType:
+                      type: string
+                      description: The type of notification
+                      enum:
+                        - ACTION
+                        - COMMENT
+                        - SUPPORT
+                    preference:
+                      type: string
+                      description: The preference of the notification
+                      enum:
+                        - NEVER
+                        - INSTANTLY
+                        - DAILY
+    patch:
+      description: "Updates the user email preferences "
+      operationId: v1-email-notification-preferences-upsert
+      tags:
+        - "[v1] Email Preferences"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  notificationType:
+                    type: string
+                    enum:
+                      - ACTION
+                      - COMMENT
+                      - SUPPORT
+                  preference:
+                    type: string
+                    enum:
+                      - NEVER
+                      - INSTANTLY
+                      - DAILY
+                required:
+                  - notificationType
+                  - preference
+                additionalProperties: false
+              minItems: 1
+      responses:
+        "204":
+          description: The user email preferences were updated successfully
   /v1/me:
     post:
       summary: Create a new user on DB

@@ -36,7 +36,20 @@ class V1UserNotifications {
       const notifications = await notificationsService.getUserNotifications(userInfo.id, filters, { skip, take, order });
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: notifications.total,
-        data: notifications.data
+        data: notifications.data.map(notification => ({
+          id: notification.id,
+          innovation: {
+            id: notification.innovation.id,
+            name: notification.innovation.name,
+            status: notification.innovation.status
+          },
+          contextType: notification.contextType,
+          contextDetail: notification.contextDetail,
+          contextId: notification.contextId,
+          createdAt: notification.createdAt,
+          readAt: notification.readAt,
+          params: notification.params
+        }))
       });
       return;
 
