@@ -5,6 +5,9 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
 
+/**
+ * @deprecated see InnovationRecordExportFeedbackHandler, this doesn't seem to be used any longer - to be removed (2023-01-06)
+ */
 export class InnovationRecordExportRejectedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
   EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR,
@@ -35,7 +38,7 @@ export class InnovationRecordExportRejectedHandler extends BaseHandler<
         innovation_name: innovation.name,
         innovator_name: innovatorName.name,
         innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
-        .addPath('innovator/innovations/:innovationId')
+        .addPath('accessor/innovations/:innovationId')
         .setPathParams({ innovationId: this.inputData.innovationId })
         .buildUrl(),
         pdf_rejection_comment: request.exportRequest.rejectReason || 'reject reason not provided', // should never occur given that the request entity conditionally requires this property
