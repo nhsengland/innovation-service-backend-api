@@ -1,10 +1,10 @@
-import { container } from '../../_config';
-import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_services/interfaces';
-import type { InnovationStatisticsParamsTemplateType, InnovationStatisticsTemplateType } from '../../_config/statistics.config';
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
-import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import { InnovationSectionEnum } from '@innovations/shared/enums';
-import { InnovationsStatisticsHandler } from 'apps/innovations/_types/statistics-handlers.types';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import { container } from '../../_config';
+import type { InnovationStatisticsParamsTemplateType, InnovationStatisticsTemplateType } from '../../_config/statistics.config';
+import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
+import { StatisticsServiceSymbol, type StatisticsServiceType } from '../../_services/interfaces';
+import { InnovationsStatisticsHandler } from '../../_types/statistics-handlers.types';
 
 export class SectionsSubmittedSinceSupportStartStatisticsHandler extends InnovationsStatisticsHandler {
 
