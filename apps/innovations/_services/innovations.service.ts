@@ -899,98 +899,92 @@ export class InnovationsService extends BaseService {
 
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
 
-    try {
+    const categories = (await result.categories).map(item => item.type);
+    const ownerInfo = usersInfo.find(item => item.id === result.owner.id);
 
-      const categories = (await result.categories).map(item => item.type);
-      const ownerInfo = usersInfo.find(item => item.id === result.owner.id);
+    // Export requests parsing.
+    const innovationExport = {
+      canUserExport: false,
+      pendingRequestsCount: (await result.exportRequests).filter(item => item.isRequestPending).length
+    };
 
-      // Export requests parsing.
-      const innovationExport = {
-        canUserExport: false,
-        pendingRequestsCount: (await result.exportRequests).filter(item => item.isRequestPending).length
-      };
+    switch (user.type) {
+      case UserTypeEnum.INNOVATOR:
+        innovationExport.canUserExport = true;
+        break;
+      case UserTypeEnum.ASSESSMENT:
+        innovationExport.canUserExport = false;
+        break;
+      case UserTypeEnum.ACCESSOR:
+        innovationExport.canUserExport = (await result.exportRequests).filter(item => item.isExportActive).length > 0;
+        break;
+    }
 
-      switch (user.type) {
-        case UserTypeEnum.INNOVATOR:
-          innovationExport.canUserExport = true;
-          break;
-        case UserTypeEnum.ASSESSMENT:
-          innovationExport.canUserExport = false;
-          break;
-        case UserTypeEnum.ACCESSOR:
-          innovationExport.canUserExport = (await result.exportRequests).filter(item => item.isExportActive).length > 0;
-          break;
-      }
+    // Assessment parsing.
+    let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number };
 
-      // Assessment parsing.
-      let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number };
+    if (filters.fields?.includes('assessment')) {
 
-      if (filters.fields?.includes('assessment')) {
+      if (result.assessments.length === 0) { assessment = null; }
+      else {
 
-        if (result.assessments.length === 0) { assessment = null; }
-        else {
+        if (result.assessments.length > 1) { // This should never happen, but...
+          this.logger.error(`Innovation ${result.id} with ${result.assessments.length} assessments detected`);
+        }
 
-          if (result.assessments.length > 1) { // This should never happen, but...
-            this.logger.error(`Innovation ${result.id} with ${result.assessments.length} assessments detected`);
-          }
-
-          if (result.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
-            const assignTo = usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive)
-            assessment = {
-              id: result.assessments[0].id,
-              createdAt: result.assessments[0].createdAt,
-              finishedAt: result.assessments[0].finishedAt,
-              assignedTo: { id: assignTo?.id ?? '', name: assignTo?.displayName ?? '' },
-              reassessmentCount: (await result.reassessmentRequests).length
-            };
-
-          }
+        if (result.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
+          const assignTo = usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive)
+          assessment = {
+            id: result.assessments[0].id,
+            createdAt: result.assessments[0].createdAt,
+            finishedAt: result.assessments[0].finishedAt,
+            assignedTo: { id: assignTo?.id ?? '', name: assignTo?.displayName ?? '' },
+            reassessmentCount: (await result.reassessmentRequests).length
+          };
 
         }
 
       }
 
-      return {
-        id: result.id,
-        name: result.name,
-        description: result.description,
-        status: result.status,
-        statusUpdatedAt: result.statusUpdatedAt,
-        submittedAt: result.submittedAt,
-        countryName: result.countryName,
-        postCode: result.postcode,
-        categories,
-        otherCategoryDescription: result.otherCategoryDescription,
-        owner: {
-          id: result.owner.id,
-          name: ownerInfo?.displayName || '',
-          email: ownerInfo?.email || '',
-          mobilePhone: ownerInfo?.mobilePhone || '',
-          isActive: !!ownerInfo?.isActive,
-          lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-          organisations: (await result.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
-            name: item.organisation.name,
-            size: item.organisation.size
-          }))
-        },
-        lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(result.id),
-
-        export: innovationExport,
-
-        ...(assessment === undefined ? {} : { assessment }),
-
-        ...(!filters.fields?.includes('supports') ? {} : {
-          supports: (result.innovationSupports || []).map(support => ({
-            id: support.id,
-            status: support.status,
-            organisationUnitId: support.organisationUnit.id
-          }))
-        })
-      };
-
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
     }
+
+    return {
+      id: result.id,
+      name: result.name,
+      description: result.description,
+      status: result.status,
+      statusUpdatedAt: result.statusUpdatedAt,
+      submittedAt: result.submittedAt,
+      countryName: result.countryName,
+      postCode: result.postcode,
+      categories,
+      otherCategoryDescription: result.otherCategoryDescription,
+      owner: {
+        id: result.owner.id,
+        name: ownerInfo?.displayName || '',
+        email: ownerInfo?.email || '',
+        mobilePhone: ownerInfo?.mobilePhone || '',
+        isActive: !!ownerInfo?.isActive,
+        lastLoginAt: ownerInfo?.lastLoginAt ?? null,
+        organisations: (await result.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
+          name: item.organisation.name,
+          size: item.organisation.size
+        }))
+      },
+      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(result.id),
+
+      export: innovationExport,
+
+      ...(assessment === undefined ? {} : { assessment }),
+
+      ...(!filters.fields?.includes('supports') ? {} : {
+        supports: (result.innovationSupports || []).map(support => ({
+          id: support.id,
+          status: support.status,
+          organisationUnitId: support.organisationUnit.id
+        }))
+      })
+    };
 
   }
 

@@ -1,4 +1,4 @@
-import type { ObjectSchema } from 'joi';
+import type { ObjectSchema, Schema } from 'joi';
 import j2s from 'joi-to-swagger';
 import type { OpenAPIV3 } from 'openapi-types';
 
@@ -37,7 +37,7 @@ export class SwaggerHelper {
    * @param required if it's required or not (default true)
    * @returns swagger schema
    */
-  static bodyJ2S = (data: ObjectSchema, options?: { description?: string, required?: boolean }): OpenAPIV3.RequestBodyObject => {
+  static bodyJ2S = (data: Schema, options?: { description?: string, required?: boolean }): OpenAPIV3.RequestBodyObject => {
 
     const swaggerSchema = j2s(data).swagger;
 

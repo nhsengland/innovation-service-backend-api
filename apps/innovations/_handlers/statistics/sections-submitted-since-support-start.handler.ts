@@ -17,15 +17,15 @@ export class SectionsSubmittedSinceSupportStartStatisticsHandler extends Innovat
 
   async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]> {
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
-
+  
     const submittedSections = await statisticsService.getSubmittedSectionsSinceSupportStart(this.data.innovationId, this.domainContext)
-
-    const [sections, count] = submittedSections;
+  
+    const sections = submittedSections[0];
     const totalSections = Object.keys(InnovationSectionEnum).length;
     const lastSubmittedSection = sections.find(_ => true);
 
     return {
-      count,
+      count: sections.length,
       total: totalSections,
       lastSubmittedSection: lastSubmittedSection?.section || null,
       lastSubmittedAt: lastSubmittedSection?.updatedAt || null,

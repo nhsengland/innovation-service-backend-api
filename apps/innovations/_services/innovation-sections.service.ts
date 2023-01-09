@@ -81,12 +81,13 @@ export class InnovationSectionsService extends BaseService {
   }
 
 
-  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum): Promise<{
+  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum, filters: { fields?: ('actions'[]) }): Promise<{
     id: null | string,
     section: InnovationSectionEnum,
     status: InnovationSectionStatusEnum,
     submittedAt: null | DateISOType
-    data: null | { [key: string]: any }
+    data: null | { [key: string]: any },
+    actionsIds?: string[]
   }> {
 
     const sectionFields = INNOVATION_SECTIONS_CONFIG[sectionKey];
@@ -124,12 +125,23 @@ export class InnovationSectionsService extends BaseService {
       )
     }
 
+    let actions: null | InnovationActionEntity[] = null;
+
+    if (filters.fields?.includes('actions')) {
+      actions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
+        .andWhere('actions.status = :requestedStatus', { requestedStatus: InnovationActionStatusEnum.REQUESTED })
+        .orderBy('actions.updated_at', 'DESC')
+        .getMany();
+    }
+
     return {
       id: dbSection?.id || null,
       section: sectionKey,
       status: dbSection?.status || InnovationSectionStatusEnum.NOT_STARTED,
       submittedAt: dbSection?.submittedAt || null,
-      data: sectionData
+      data: sectionData,
+      ...(filters.fields?.includes('actions') && actions ? { actionsIds: actions?.map(action => (action.id)) } : {})
     };
 
   }

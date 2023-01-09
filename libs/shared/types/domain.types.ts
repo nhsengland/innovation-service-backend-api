@@ -161,6 +161,9 @@ export type ActivityLogTemplatesType = {
   [ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE]: {
     params: { actionId: string }
   },
+  [ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE]: {
+    params: { actionId: string }
+  },
   [ActivityEnum.ACTION_STATUS_DECLINED_UPDATE]: {
     params: { actionId: string, interveningUserId: string, comment: { id: string, value: string } }
   },

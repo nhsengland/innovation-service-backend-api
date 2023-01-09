@@ -20,12 +20,12 @@ export class SectionsSubmittedSinceAssessmentStartStatisticsHandler extends Inno
   
     const submittedSections = await statisticsService.getSubmittedSectionsSinceAssessmentStart(this.data.innovationId, this.requestUser)
   
-    const [sections, count] = submittedSections;
+    const sections = submittedSections;
     const totalSections = Object.keys(InnovationSectionEnum).length;
     const lastSubmittedSection = sections.find(_ => true);
   
     return {
-      count,
+      count: sections.length,
       total: totalSections,
       lastSubmittedSection: lastSubmittedSection?.section || null,
       lastSubmittedAt: lastSubmittedSection?.updatedAt || null,

@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -41,7 +41,10 @@ class V1InnovationActionInfo {
         description: result.description,
         section: result.section,
         createdAt: result.createdAt,
-        createdBy: result.createdBy
+        createdBy: { 
+          name: result.createdBy.name,
+          organisationUnit: result.createdBy.organisationUnit
+        }
       });
       return;
 
@@ -57,28 +60,7 @@ export default openApi(V1InnovationActionInfo.httpTrigger as AzureFunction, '/v1
     description: 'Get an innovation action.',
     operationId: 'v1-innovation-action-info',
     tags: ['[v1] Innovation Actions'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        required: true,
-        description: 'The innovation id.',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      },
-      {
-        name: 'actionId',
-        in: 'path',
-        required: true,
-        description: 'The innovation action id.',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema}),
     responses: {
       200: {
         description: 'The innovation action.',
@@ -114,7 +96,15 @@ export default openApi(V1InnovationActionInfo.httpTrigger as AzureFunction, '/v1
                   format: 'date-time'
                 },
                 createdBy: {
-                  type: 'string'
+                  type: 'object',
+                  properties: {
+                    name: {
+                      type: 'string'
+                    },
+                    organisationUnit: {
+                      type: 'string'
+                    },
+                  }
                 }
               }
             }

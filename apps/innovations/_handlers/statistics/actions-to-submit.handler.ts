@@ -24,7 +24,7 @@ export class ActionsToSubmitStatisticsHandler extends InnovationsStatisticsHandl
 
     return {
       count:requestedActions.length,
-      lastSubmittedSection: lastRequestedAction?.innovationSection.section || null,
+      lastSubmittedSection: lastRequestedAction?.section || null,
       lastSubmittedAt: lastRequestedAction?.updatedAt || null,
     }
   }
