@@ -25,7 +25,7 @@ class V1InnovationSectionsList {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()

@@ -32,7 +32,7 @@ class V1AdminUnitCreate {
         const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
         await authorizationService
-            .validate(context.auth.user.identityId)
+            .validate(context)
             .checkAdminType()
             .verify();
 

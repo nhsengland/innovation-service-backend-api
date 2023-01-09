@@ -30,7 +30,7 @@ class V1AdminDelete {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       await authorizationService
-        .validate(context.auth.user.identityId)
+        .validate(context)
         .checkAdminType()
         .verify();
 

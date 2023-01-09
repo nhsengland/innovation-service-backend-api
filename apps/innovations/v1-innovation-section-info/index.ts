@@ -24,7 +24,7 @@ class GetInnovationSectionInfo {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()

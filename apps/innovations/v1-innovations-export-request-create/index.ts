@@ -23,11 +23,12 @@ class V1InnovationsExportRequestsCreate {
 
     try {
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkAccessorType()
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<PathParamsType>(
         PathParamsSchema,
@@ -37,7 +38,12 @@ class V1InnovationsExportRequestsCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const organisationUnitId = requestUser.organisations.find(_ => true)!.organisationUnits.find(_ => true)!.id;
+      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
+
+      if (!organisationUnitId) {
+        context.res = ResponseHelper.Error(context, 'Organisation unit not found.');
+        return;
+      }
 
       const { requestReason } = body;
 

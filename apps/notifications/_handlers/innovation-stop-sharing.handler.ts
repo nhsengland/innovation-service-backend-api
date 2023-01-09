@@ -61,6 +61,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_STOP_SHARING, id: this.inputData.innovationId },
       userIds: previousAssignedUsers.map(item => item.id),
       params: {}

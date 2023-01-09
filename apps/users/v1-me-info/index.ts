@@ -24,7 +24,7 @@ class V1MeInfo {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
+      const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
 
       let termsOfUseAccepted = false;

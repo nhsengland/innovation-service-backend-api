@@ -30,7 +30,7 @@ class V1AdminValidate {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       await authorizationService
-        .validate(context.auth.user.identityId)
+        .validate(context)
         .checkAdminType()
         .verify();
 

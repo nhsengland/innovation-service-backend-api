@@ -26,16 +26,18 @@ class V1InnovationSupportChangeRequest{
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovation()
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationSupportsService.changeInnovationSupportStatusRequest(
         requestUser,
+        domainContext,
         params.innovationId,
         params.supportId,
         body.status,

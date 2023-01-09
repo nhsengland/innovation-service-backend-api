@@ -4,7 +4,7 @@ import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentReq
 import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
 import type { InnovationAssessmentType } from '../_types/innovation.types';
@@ -85,6 +85,7 @@ export class InnovationAssessmentsService extends BaseService {
 
   async createInnovationAssessment(
     user: DomainUserInfoType,
+    domainContext: DomainContextType,
     innovationId: string,
     data: { message: string; }
   ): Promise<{ id: string; }> {
@@ -117,6 +118,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       const thread = await this.threadService.createThreadOrMessage(
         user,
+        domainContext,
         innovationId,
         'Initial needs assessment',
         data.message,

@@ -5,7 +5,7 @@ import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum,
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType } from '@innovations/shared/types';
+import type { DateISOType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
@@ -187,7 +187,8 @@ export class InnovationActionsService extends BaseService {
 
 
   async createAction(
-    user: { id: string, identityId: string, type: UserTypeEnum, organisationUnitId: string },
+    user: { id: string, identityId: string, type: UserTypeEnum},
+    domainContext: DomainContextType,
     innovationId: string,
     data: { section: InnovationSectionEnum, description: string }
   ): Promise<{ id: string }> {
@@ -211,7 +212,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     const innovationSupport = innovation.innovationSupports.find(
-      is => is.organisationUnit.id === user.organisationUnitId
+      is => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
     );
 
     let actionCounter = (await innovationSection.actions).length;
@@ -255,7 +256,8 @@ export class InnovationActionsService extends BaseService {
       {
         innovationId: innovation.id,
         action: { id: result.id, section: data.section }
-      }
+      },
+      domainContext,
     );
 
     return result;
@@ -265,6 +267,7 @@ export class InnovationActionsService extends BaseService {
 
   async updateActionAsAccessor(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
     data: { status: InnovationActionStatusEnum }
@@ -291,7 +294,7 @@ export class InnovationActionsService extends BaseService {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER)
     }
 
-    const result = await this.saveAction(user, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -313,6 +316,7 @@ export class InnovationActionsService extends BaseService {
 
   async updateActionAsInnovator(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
     data: { status: InnovationActionStatusEnum, message: string }
@@ -331,7 +335,7 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const result = await this.saveAction(user, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
 
     await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
@@ -368,6 +372,7 @@ export class InnovationActionsService extends BaseService {
 
   private async saveAction(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     dbAction: InnovationActionEntity,
     data: { status: InnovationActionStatusEnum, message?: string }
@@ -381,6 +386,7 @@ export class InnovationActionsService extends BaseService {
 
         thread = await this.innovationThreadsService.createThreadOrMessage(
           { id: user.id, identityId: user.identityId, type: user.type },
+          domainContext,
           innovationId,
           this.getSaveActionSubject(dbAction, data.status),
           data.message,

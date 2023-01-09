@@ -4,7 +4,7 @@ import {
   UserTypeEnum
 } from '@notifications/shared/enums';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -31,9 +31,10 @@ export class CommentCreationHandler extends BaseHandler<
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.COMMENT_CREATION]
+    data: NotifierTemplatesType[NotifierTypeEnum.COMMENT_CREATION],
+    domainContext?: DomainContextType
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -92,6 +93,7 @@ export class CommentCreationHandler extends BaseHandler<
     if (commentIntervenientUsers.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_REPLY, id: this.inputData.commentId },
         userIds: commentIntervenientUsers.map(item => item.id),
         params: {}
@@ -103,8 +105,9 @@ export class CommentCreationHandler extends BaseHandler<
   private async prepareNotificationForInnovator(): Promise<void> {
 
     const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-    const unitName = requestInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : requestInfo.organisations[0]?.organisationUnits[0]?.name ?? '';
-
+  
+    const unitName = requestInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : this.domainContext?.organisation?.organisationUnit?.name ?? '';
+    
     // Send email only to user if email preference INSTANTLY.
     if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, this.data.innovation?.owner.emailNotificationPreferences || [])) {
       this.emails.push({
@@ -121,6 +124,7 @@ export class CommentCreationHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
       userIds: [this.data.innovation?.owner.id || ''],
       params: {}
@@ -148,6 +152,7 @@ export class CommentCreationHandler extends BaseHandler<
     if (assignedUsers.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
         userIds: assignedUsers.map(item => item.id),
         params: {}

@@ -21,7 +21,7 @@ class V1UserNotificationsCounter {
     const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
 
     try {
-      const authInstance = await authService.validate(context.auth.user.identityId).verify();
+      const authInstance = await authService.validate(context).verify();
       const userInfo = authInstance.getUserInfo();
 
       const total = await notificationsService.getUserActiveNotificationsCounter(userInfo.id);

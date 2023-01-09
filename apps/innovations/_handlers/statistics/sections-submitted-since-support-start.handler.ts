@@ -1,18 +1,24 @@
-import { InnovationSectionEnum } from '@innovations/shared/enums';
-import type { DomainUserInfoType } from '@innovations/shared/types';
 import { container } from '../../_config';
-import type { InnovationStatisticsTemplateType } from '../../_config/statistics.config';
+import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_services/interfaces';
+import type { InnovationStatisticsParamsTemplateType, InnovationStatisticsTemplateType } from '../../_config/statistics.config';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
-import { StatisticsServiceSymbol, type StatisticsServiceType } from '../../_services/interfaces';
+import { InnovationSectionEnum } from '@innovations/shared/enums';
+import { InnovationsStatisticsHandler } from 'apps/innovations/_types/statistics-handlers.types';
 
-export const sectionsSubmittedSinceSupportStartStatisticsHandler = async (
-  requestUser: DomainUserInfoType,
-  data : { innovationId: string },
-): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]> => {
-  
+export class SectionsSubmittedSinceSupportStartStatisticsHandler extends InnovationsStatisticsHandler {
+
+  constructor(
+    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
+    data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]) {
+    super(requestUser, domainContext, data)
+  }
+
+  async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]> {
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const submittedSections = await statisticsService.getSubmittedSectionsSinceSupportStart(data.innovationId, requestUser)
+    const submittedSections = await statisticsService.getSubmittedSectionsSinceSupportStart(this.data.innovationId, this.domainContext)
   
     const sections = submittedSections;
     const totalSections = Object.keys(InnovationSectionEnum).length;
@@ -24,4 +30,5 @@ export const sectionsSubmittedSinceSupportStartStatisticsHandler = async (
       lastSubmittedSection: lastSubmittedSection?.section || null,
       lastSubmittedAt: lastSubmittedSection?.updatedAt || null,
     }
+  }
 }

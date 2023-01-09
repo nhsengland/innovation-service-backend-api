@@ -1,7 +1,7 @@
 import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity } from '@innovations/shared/entities';
 import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
-import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
 
@@ -62,10 +62,10 @@ export class StatisticsService  extends BaseService {
 
   async actionsToReview(
     innovationId: string,
-    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
   ): Promise<{count: number, lastSubmittedSection: null | string, lastSubmittedAt: null | DateISOType}> {
 
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -90,9 +90,9 @@ export class StatisticsService  extends BaseService {
     }
   }
 
-  async getSubmittedSectionsSinceSupportStart(innovationId: string, requestUser: DomainUserInfoType): Promise<{section: InnovationSectionEnum, updatedAt: DateISOType}[]> {
+  async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{section: InnovationSectionEnum, updatedAt: DateISOType}[]> {
    
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);

@@ -3,7 +3,7 @@ import { injectable } from 'inversify';
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
-import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
+import type { DateISOType, DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -71,9 +71,10 @@ export class StatisticsService extends BaseService {
 
   async innovationsAssignedToMe(
     requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
   ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
 
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true);
+    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -84,7 +85,7 @@ export class StatisticsService extends BaseService {
       .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .where('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit.id });
+      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit });
 
     const [myUnitEngagingInnovations, myUnitInnovationsCount] = await baseQuery
       .orderBy('innovationSupports.updated_at', 'DESC')
@@ -104,9 +105,10 @@ export class StatisticsService extends BaseService {
 
   async actionsToReview(
     requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
   ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
 
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -140,9 +142,10 @@ export class StatisticsService extends BaseService {
 
   async innovationsToReview(
     requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
   ): Promise<{ count: number, lastSubmittedAt: null | DateISOType }> {
 
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);

@@ -28,7 +28,7 @@ class CreateInnovationTransfer {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(body.innovationId)
         .checkAdminType()
         .checkInnovatorType()
