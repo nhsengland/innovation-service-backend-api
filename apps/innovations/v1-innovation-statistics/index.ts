@@ -35,9 +35,11 @@ class GetInnovationStatistics {
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
         const stats = await StatisticsHandlersHelper.runHandler(
           requestUser,
+          domainContext,
           query.statistics,
           { innovationId: params.innovationId }
         ); 

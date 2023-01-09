@@ -30,12 +30,14 @@ class GetUserStatistics {
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-        const stats = await StatisticsHandlersHelper.runHandler(
-          requestUser,
-          query.statistics,
-        ); 
-    
+      const stats = await StatisticsHandlersHelper.runHandler(
+        requestUser,
+        domainContext,
+        query.statistics,
+      ); 
+  
       context.res = ResponseHelper.Ok<ResponseDTO>(stats);
       return;
 

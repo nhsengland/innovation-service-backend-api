@@ -74,7 +74,7 @@ export class StatisticsService extends BaseService {
     domainContext: DomainContextType,
   ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
 
-    const organisationUnit = domainContext?.organisation.organisationUnit.id;
+    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -85,7 +85,7 @@ export class StatisticsService extends BaseService {
       .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .where('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit.id });
+      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit });
 
     const [myUnitEngagingInnovations, myUnitInnovationsCount] = await baseQuery
       .orderBy('innovationSupports.updated_at', 'DESC')
@@ -108,7 +108,7 @@ export class StatisticsService extends BaseService {
     domainContext: DomainContextType,
   ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
 
-    const organisationUnit = domainContext?.organisation.organisationUnit.id;
+    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -145,7 +145,7 @@ export class StatisticsService extends BaseService {
     domainContext: DomainContextType,
   ): Promise<{ count: number, lastSubmittedAt: null | DateISOType }> {
 
-    const organisationUnit = domainContext?.organisation.organisationUnit.id;
+    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
