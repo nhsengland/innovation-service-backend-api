@@ -23,7 +23,7 @@ class V1UserNotifications {
     const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
 
     try {
-      const authInstance = await authService.validate(context.auth.user.identityId)
+      const authInstance = await authService.validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()

@@ -20,7 +20,7 @@ export class SectionsSubmittedSinceSupportStartStatisticsHandler extends Innovat
   
     const submittedSections = await statisticsService.getSubmittedSectionsSinceSupportStart(this.data.innovationId, this.domainContext)
   
-    const sections = submittedSections[0];
+    const sections = submittedSections;
     const totalSections = Object.keys(InnovationSectionEnum).length;
     const lastSubmittedSection = sections.find(_ => true);
 
