@@ -1,13 +1,14 @@
 import { inject, injectable } from 'inversify';
 
 import type { NotificationContextTypeEnum, NotificationContextDetailEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
-import { InnovationEntity, NotificationEntity, NotificationUserEntity, UserEntity } from '@notifications/shared/entities';
+import { InnovationEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity, UserEntity } from '@notifications/shared/entities';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
 import { BaseService } from './base.service';
 import { EmailServiceSymbol, EmailServiceType } from './interfaces';
+import type { DomainContextType } from '@notifications/shared/types';
 
 
 @injectable()
@@ -57,7 +58,8 @@ export class DispatchService extends BaseService {
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
     userIds: string[],
-    params: { [key: string]: string | number | string[] }
+    params: { [key: string]: string | number | string[] },
+    domainContext?: DomainContextType,
   ): Promise<{ id: string }> {
 
     return this.sqlConnection.transaction(async transactionManager => {
@@ -71,10 +73,14 @@ export class DispatchService extends BaseService {
         createdBy: requestUser.id
       }));
 
+      const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
+
+
       await transactionManager.save(NotificationUserEntity, userIds.map(userId => NotificationUserEntity.new({
         user: UserEntity.new({ id: userId }),
         notification: dbNotification,
-        createdBy: requestUser.id
+        createdBy: requestUser.id,
+        organisationUnit: organisationUnit ? OrganisationUnitEntity.new({ id: organisationUnit }) : undefined,
       })));
 
       return { id: dbNotification.id };

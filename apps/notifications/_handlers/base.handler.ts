@@ -23,6 +23,7 @@ type HandlerInAppResponseType<T> = Array<{
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
   userIds: string[];
   params: T;
+  domainContext: undefined | DomainContextType;
 }>;
 
 

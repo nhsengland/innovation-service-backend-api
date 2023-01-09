@@ -93,6 +93,7 @@ export class CommentCreationHandler extends BaseHandler<
     if (commentIntervenientUsers.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_REPLY, id: this.inputData.commentId },
         userIds: commentIntervenientUsers.map(item => item.id),
         params: {}
@@ -123,6 +124,7 @@ export class CommentCreationHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
       userIds: [this.data.innovation?.owner.id || ''],
       params: {}
@@ -150,6 +152,7 @@ export class CommentCreationHandler extends BaseHandler<
     if (assignedUsers.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
         userIds: assignedUsers.map(item => item.id),
         params: {}

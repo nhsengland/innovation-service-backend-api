@@ -220,6 +220,15 @@ export class AuthorizationValidationModel {
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     if (!this.user.data) { this.user.data = await this.fetchUserData(this.user.identityId); }
 
+    // SETS THE USER TYPE
+    this.domainContext = {
+      ...this.domainContext,
+      data: {
+        organisation: null,
+        userType: this.user.data.type,
+      }
+    }
+
     // organisation unit context is only required for accessor type users.
     if (this.user.data?.type === UserTypeEnum.ACCESSOR) {
       await this.getOrganisationUnitContextData(this.user.data, this.domainContext.organisationUnitId);
@@ -227,14 +236,6 @@ export class AuthorizationValidationModel {
 
     if (this.user.data?.type === UserTypeEnum.INNOVATOR) {
       await this.getOrganisationContextData(this.user.data, this.domainContext.organisationId);
-    }
-
-    if (this.user.data.type === UserTypeEnum.ASSESSMENT) {
-      this.domainContext.data = { organisation: null, }
-    }
-
-    if (this.user.data.type === UserTypeEnum.ADMIN) {
-      this.domainContext.data = { organisation: null, }
     }
 
     if (!this.user.data.isActive) {
@@ -313,11 +314,20 @@ export class AuthorizationValidationModel {
   }
 
   private async fetchOrganisationUnitContextData(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
-    return this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId)
+    const unitContext = await  this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId)
+
+    return this.domainContext.data = {
+      ...this.domainContext.data,
+      ...unitContext
+    }
   }
 
   private async fetchOrganisationContextData(organisationId: string, identityId: string): Promise<DomainContextType> {
-    return this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId)
+    const orgContext = await  this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId)
+    return this.domainContext.data = {
+      ...this.domainContext.data,
+      ...orgContext
+    }
   }
 
   private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context?: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {

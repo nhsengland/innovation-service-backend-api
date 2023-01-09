@@ -1,6 +1,6 @@
 import type { HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from '@notifications/shared/decorators';
+//import { JwtDecoder } from '@notifications/shared/decorators';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { ResponseHelper } from '@notifications/shared/helpers';
 import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 class V1Health {
 
-  @JwtDecoder()
+  //@JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const notifierService = container.get<NotifierServiceType>(NotifierServiceSymbol);

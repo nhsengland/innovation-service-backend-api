@@ -57,6 +57,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
       userIds: needAssessmentUsers.map(item => item.id),
       params: {}

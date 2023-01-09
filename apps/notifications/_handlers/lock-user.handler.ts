@@ -48,6 +48,7 @@ export class LockUserHandler extends BaseHandler<
 
         this.inApp.push({
           innovationId: innovation.id,
+          domainContext: this.domainContext,
           context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.LOCK_USER, id: innovation.id },
           userIds: uniqueUserIds,
           params: {}

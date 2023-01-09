@@ -50,6 +50,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     if (organisationUnitsSuggestedNotSharedIds.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION, id: this.inputData.assessmentId },
         userIds: [innovation.owner.id || ''],
         params: {}
@@ -77,6 +78,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     if (organisationUnitsSuggestedAndSharedQAs.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_COMPLETED, id: this.inputData.assessmentId },
         userIds: organisationUnitsSuggestedAndSharedQAs.map(item => item.id),
         params: {}
