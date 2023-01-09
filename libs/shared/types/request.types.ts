@@ -16,7 +16,7 @@ export type CustomContextType = Context & {
 }
 
 export type AuthContextType = {
-  userType: UserTypeEnum,
+  userType?: UserTypeEnum,
   organisationUnitId?: string,
   organisationId?: string,
 }

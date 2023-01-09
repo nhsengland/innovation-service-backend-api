@@ -47,7 +47,7 @@ export function JwtDecoder() {
       } = { };
 
       if (domainContextHeader) {
-        domainContext = JSON.parse(domainContextHeader);
+        domainContext = JSON.parse(domainContextHeader).user;
       }
 
       try {

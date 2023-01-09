@@ -48,7 +48,8 @@ export class DomainContextService {
           acronym: organisationUnitUser.organisationUnit.acronym,
           organisationUnitUser:  { id: organisationUnitUser.id },
         },
-      }
+      },
+      userType: organisationUnitUser.organisationUser.user.type
     };
   }
 
@@ -76,7 +77,8 @@ export class DomainContextService {
         size: organisationUser.organisation.size,
         organisationUser: { id: organisationUser.id },
         organisationUnit: null,
-      }
+      },
+      userType: organisationUser.user.type
     };
   }
 }

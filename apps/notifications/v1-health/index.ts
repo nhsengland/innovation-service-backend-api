@@ -125,7 +125,8 @@ class V1Health {
                   'id':'FEB4CF83-89B6-EC11-997E-0050F25A43BD'
                 }
               }
-             }
+             },
+             'userType':UserTypeEnum.ACCESSOR
             }
           );
           break;

@@ -44,7 +44,7 @@ export class AuthorizationValidationModel {
 
   private user: { identityId?: string, data?: DomainUserInfoType } = {};
   private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum } } = {};
-  private domainContext: { userType?: UserTypeEnum, organisationUnitId?: string, organisationId?: string , data?: DomainContextType  } = { };
+  private domainContext: { userType?: UserTypeEnum, organisationUnitId?: string, organisationId?: string, data?: DomainContextType } = {};
 
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
@@ -184,7 +184,7 @@ export class AuthorizationValidationModel {
     }
     // As an innovator you don't have an organisation unit.
     // We should remove this?
-   
+
     // if (!error && data?.organisationUnitId && data.organisationUnitId !== this.domainContext.data?.organisation.organisationUnit?.id) {
     //   error = AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED;
     // }
@@ -258,7 +258,7 @@ export class AuthorizationValidationModel {
 
       validations = [];
       if (!this.innovation.id) { throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED); }
-      
+
       if (!this.innovation.data) { this.innovation.data = await this.fetchInnovationData(this.user.data, this.innovation.id, this.domainContext.data); }
 
       this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
@@ -275,37 +275,43 @@ export class AuthorizationValidationModel {
 
 
   private async getOrganisationUnitContextData(userData: DomainUserInfoType, organisationUnitId?: string): Promise<void> {
-    
+
+
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     // if an organisation unit was not issued, use the first organisation unit of 
     // the first organisation on a user's organisation list as the context.
-    const organisationUnit = organisationUnitId || userData.organisations[0]?.organisationUnits[0]?.id;
 
-    if (!organisationUnit) { throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT); }
+    const organisationUnit = organisationUnitId ?? userData.organisations[0]?.organisationUnits[0]?.id;
+
+    if (!organisationUnit) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
+    }
 
     // if issued organisation unit is not present in the user's organisation units, throw an error.
     if (!this.user.data?.organisations[0]?.organisationUnits.some(u => u.id === organisationUnit)) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED);
     }
 
-    if (!this.domainContext.data) { this.domainContext.data = await this.fetchOrganisationUnitContextData(organisationUnit, userData.identityId); }
+    if (!this.domainContext.data?.organisation) { this.domainContext.data = await this.fetchOrganisationUnitContextData(organisationUnit, userData.identityId); }
   }
 
   private async getOrganisationContextData(userData: DomainUserInfoType, organisationId?: string): Promise<void> {
-    
+
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     // if an organisation unit was not issued, use the first organisation unit of 
     // the first organisation on a user's organisation list as the context.
     const organisation = organisationId || userData.organisations[0]?.id;
 
-    if (!organisation) { throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT); }
+    if (!organisation) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
+    }
 
     // if issued organisation unit is not present in the user's organisation units, throw an error.
     if (!this.user.data?.organisations.some(u => u.id === organisation)) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED);
     }
 
-    if (!this.domainContext.data) { this.domainContext.data = await this.fetchOrganisationContextData(organisation, userData.identityId); }
+    if (!this.domainContext.data?.organisation) { this.domainContext.data = await this.fetchOrganisationContextData(organisation, userData.identityId); }
   }
 
   // Data fetching methods.
@@ -314,8 +320,7 @@ export class AuthorizationValidationModel {
   }
 
   private async fetchOrganisationUnitContextData(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
-    const unitContext = await  this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId)
-
+    const unitContext = await this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId)
     return this.domainContext.data = {
       ...this.domainContext.data,
       ...unitContext
@@ -323,7 +328,7 @@ export class AuthorizationValidationModel {
   }
 
   private async fetchOrganisationContextData(organisationId: string, identityId: string): Promise<DomainContextType> {
-    const orgContext = await  this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId)
+    const orgContext = await this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId)
     return this.domainContext.data = {
       ...this.domainContext.data,
       ...orgContext
@@ -346,12 +351,12 @@ export class AuthorizationValidationModel {
     if (user.type === UserTypeEnum.ACCESSOR) {
 
       // Sanity checks!
-      if (!context || 
-          !context.organisation || 
-          !context.organisation.id || 
-          !context.organisation.role || 
-          !context.organisation.organisationUnit || 
-          !context.organisation.organisationUnit.id) {
+      if (!context ||
+        !context.organisation ||
+        !context.organisation.id ||
+        !context.organisation.role ||
+        !context.organisation.organisationUnit ||
+        !context.organisation.organisationUnit.id) {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
       }
 
