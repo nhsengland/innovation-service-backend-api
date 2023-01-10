@@ -55,9 +55,9 @@ export class UsersService extends BaseService {
       name: string,
       email: string,
       type: UserTypeEnum,
-      organisationAcronym?: string,
-      organisationUnitAcronym?: string,
-      role?: AccessorOrganisationRoleEnum      
+      organisationAcronym?: string | null,
+      organisationUnitAcronym?: string | null,
+      role?: AccessorOrganisationRoleEnum | null      
     }
   ): Promise<{ id: string }> {
 

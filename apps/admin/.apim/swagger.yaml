@@ -472,16 +472,19 @@ paths:
                 organisationAcronym:
                   type: string
                   maxLength: 10
+                  nullable: true
                   description: Acronym of the organisation.
                 organisationUnitAcronym:
                   type: string
                   maxLength: 10
+                  nullable: true
                   description: Acronym of the organisation unit.
                 role:
                   type: string
                   enum:
                     - ACCESSOR
                     - QUALIFYING_ACCESSOR
+                  nullable: true
                   description: Role of the user within the organisation.
               required:
                 - name
