@@ -4,7 +4,6 @@ import {
   UserTypeEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
 
@@ -23,7 +22,7 @@ type HandlerInAppResponseType<T> = Array<{
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
   userIds: string[];
   params: T;
-  domainContext: undefined | DomainContextType;
+  domainContext: DomainContextType | undefined;
 }>;
 
 

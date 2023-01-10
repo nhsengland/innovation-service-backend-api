@@ -49,6 +49,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.ACTION_UPDATE]: {
     innovationId: string,
     action: { id: string, section: InnovationSectionEnum, status: InnovationActionStatusEnum }
+    comment?: string
   },
 
   [NotifierTypeEnum.COMMENT_CREATION]: {
