@@ -23,12 +23,13 @@ class V1InnovationsExportRequestsUpdate {
 
     try {
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<PathParamsType>(
         PathParamsSchema,
@@ -41,6 +42,7 @@ class V1InnovationsExportRequestsUpdate {
 
       const result = await innovationsService.updateInnovationRecordExportRequest(
         requestUser,
+        domainContext,
         params.requestId,
         { rejectReason, status }
       );

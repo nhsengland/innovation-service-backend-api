@@ -27,7 +27,7 @@ class V1InnovationFileUpload {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()

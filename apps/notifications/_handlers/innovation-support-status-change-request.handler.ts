@@ -2,7 +2,7 @@ import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -21,9 +21,10 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST],
+    domainContext?: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -32,7 +33,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
-    const organisationUnit = requestUserInfo.organisations[0]?.organisationUnits[0]?.id || '';
+    const organisationUnit = this.domainContext?.organisation?.organisationUnit?.id || '';
     const qualifyingAccessors = await this.recipientsService.organisationUnitsQualifyingAccessors([organisationUnit]);
 
     // does not check email preferences. QA will always receive this email.

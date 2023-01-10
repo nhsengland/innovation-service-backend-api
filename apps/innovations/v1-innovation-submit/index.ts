@@ -27,7 +27,7 @@ class V1InnovationSubmit {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()

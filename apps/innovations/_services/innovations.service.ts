@@ -7,7 +7,7 @@ import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServer
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType, type DomainUsersService } from '@innovations/shared/services';
-import type { ActivityLogListParamsType, DateISOType, DomainUserInfoType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType, DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
@@ -1432,11 +1432,11 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async updateInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string, data: { status: InnovationExportRequestStatusEnum, rejectReason: null | string }): Promise<{ id: string; }> {
+  async updateInnovationRecordExportRequest(requestUser: DomainUserInfoType, domainContext: DomainContextType, exportRequestId: string, data: { status: InnovationExportRequestStatusEnum, rejectReason: null | string }): Promise<{ id: string; }> {
 
     // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
 
-    const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
 
     if (requestUser.type === UserTypeEnum.ACCESSOR) {
       if (!organisationUnitId) {
@@ -1492,6 +1492,7 @@ export class InnovationsService extends BaseService {
 
   async getInnovationRecordExportRequests(
     requestUser: { id: string, type: UserTypeEnum, organisations: DomainUserInfoType['organisations'] },
+    domainContext: DomainContextType,
     innovationId: string,
     filters: {
       statuses?: InnovationExportRequestStatusEnum[]
@@ -1509,7 +1510,12 @@ export class InnovationsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId })
 
     if (requestUser.type === 'ACCESSOR') {
-      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
+      
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
 
@@ -1574,7 +1580,7 @@ export class InnovationsService extends BaseService {
     }
   }
 
-  async getInnovationRecordExportRequestInfo(requestUser: DomainUserInfoType, exportRequestId: string): Promise<InnovationExportRequestItemType> {
+  async getInnovationRecordExportRequestInfo(requestUser: DomainUserInfoType, domainContext: DomainContextType, exportRequestId: string): Promise<InnovationExportRequestItemType> {
 
     const requestQuery = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
@@ -1583,7 +1589,12 @@ export class InnovationsService extends BaseService {
 
 
     if (requestUser.type === 'ACCESSOR') {
-      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
+      
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
       requestQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
 
@@ -1621,7 +1632,7 @@ export class InnovationsService extends BaseService {
     };
   }
 
-  async checkInnovationRecordExportRequest(requestUser: DomainUserInfoType, exportRequestId: string): Promise<{ canExport: boolean }> {
+  async checkInnovationRecordExportRequest(requestUser: DomainUserInfoType, domainContext: DomainContextType, exportRequestId: string): Promise<{ canExport: boolean }> {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
@@ -1630,8 +1641,23 @@ export class InnovationsService extends BaseService {
       .where('request.id = :exportRequestId', { exportRequestId })
 
     if (requestUser.type === 'ACCESSOR') {
-      const organisationUnitId = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+
+      if (!domainContext.organisation) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+      }
+
+      if(!domainContext.organisation.organisationUnit) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
+      const organisationUnitId = domainContext.organisation.organisationUnit.id;
+      
+      if (!organisationUnitId) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
+      
     }
 
     const request = await query.getOne();

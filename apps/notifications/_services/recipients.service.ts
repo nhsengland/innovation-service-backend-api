@@ -218,6 +218,7 @@ export class RecipientsService extends BaseService {
 
   async actionInfoWithOwner(actionId: string): Promise<{
     id: string, displayId: string, status: InnovationActionStatusEnum,
+    organisationUnit: { id: string, name: string, acronym: string },
     owner: { id: string; identityId: string }
   }> {
 
@@ -227,7 +228,12 @@ export class RecipientsService extends BaseService {
       .addSelect('action.status', 'actionStatus')
       .addSelect('user.id', 'userId')
       .addSelect('user.external_id', 'userIdentityId')
+      .addSelect('unit.id', 'organisationUnitId')
+      .addSelect('unit.name', 'organisationUnitName')
+      .addSelect('unit.acronym', 'organisationUnitAcronym')
       .innerJoin(UserEntity, 'user', 'user.id = action.created_by AND user.locked_at IS NULL')
+      .innerJoin('action.innovationSupport', 'support')
+      .innerJoin('support.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
       .getRawOne();
 
@@ -239,6 +245,7 @@ export class RecipientsService extends BaseService {
       id: dbAction.actionId,
       displayId: dbAction.actionDisplayId,
       status: dbAction.actionStatus,
+      organisationUnit: {id: dbAction.organisationUnitId, name: dbAction.organisationUnitName, acronym: dbAction.organisationUnitAcronym },
       owner: { id: dbAction.userId, identityId: dbAction.userIdentityId },
     };
 

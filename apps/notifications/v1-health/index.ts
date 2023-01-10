@@ -1,7 +1,7 @@
 import type { HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from '@notifications/shared/decorators';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+//import { JwtDecoder } from '@notifications/shared/decorators';
+import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { ResponseHelper } from '@notifications/shared/helpers';
 import { NotifierServiceSymbol, NotifierServiceType } from '@notifications/shared/services';
 import type { CustomContextType } from '@notifications/shared/types';
@@ -13,7 +13,7 @@ import { container } from '../_config';
 
 class V1Health {
 
-  @JwtDecoder()
+  //@JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const notifierService = container.get<NotifierServiceType>(NotifierServiceSymbol);
@@ -95,8 +95,39 @@ class V1Health {
           break;
 
         case NotifierTypeEnum.ACTION_CREATION:
-          await notifierService.send(requestQA, NotifierTypeEnum.ACTION_CREATION,
-            { innovationId: 'EE08565E-8BB6-EC11-997E-0050F25A43BD', action: { id: 'F5820C8D-04D5-EC11-B656-0050F25A2AF6', section: InnovationSectionEnum.INNOVATION_DESCRIPTION } }
+          await notifierService.send(
+            {
+              'id': 'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
+              'identityId': 'b7e3de07-a826-4e15-adcc-e8cca874d65e',
+              'type': UserTypeEnum.ACCESSOR,
+            },
+            NotifierTypeEnum.ACTION_CREATION,
+            {
+              'innovationId': 'BD8DD738-9866-ED11-AC20-281878FB7B33',
+              'action': { 'id': 'FAD3433E-F36B-1410-8AA9-00C89B874089', 'section':  InnovationSectionEnum.INNOVATION_DESCRIPTION}
+            },
+            {
+              'organisation':{
+              'id':'7BD3B905-7CB6-EC11-997E-0050F25A43BD',
+              'name':'AHSN Network ',
+              'acronym':'AHSN ',
+              'isShadow':false,
+              'role':AccessorOrganisationRoleEnum.ACCESSOR,
+              'size':null,
+              'organisationUser':{
+                'id':'FDB4CF83-89B6-EC11-997E-0050F25A43BD'
+              },
+              'organisationUnit':{
+                'id':'982AB20B-7CB6-EC11-997E-0050F25A43BD',
+                'name':'Eastern AHSN',
+                'acronym':'EAST',
+                'organisationUnitUser':{
+                  'id':'FEB4CF83-89B6-EC11-997E-0050F25A43BD'
+                }
+              }
+             },
+             'userType':UserTypeEnum.ACCESSOR
+            }
           );
           break;
 

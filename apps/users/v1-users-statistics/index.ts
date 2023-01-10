@@ -23,19 +23,21 @@ class GetUserStatistics {
 
       const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkAccessorType()
         .checkInnovatorType()
         .checkAssessmentType()
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-        const stats = await StatisticsHandlersHelper.runHandler(
-          requestUser,
-          query.statistics,
-        ); 
-    
+      const stats = await StatisticsHandlersHelper.runHandler(
+        requestUser,
+        domainContext,
+        query.statistics,
+      ); 
+  
       context.res = ResponseHelper.Ok<ResponseDTO>(stats);
       return;
 

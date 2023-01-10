@@ -28,7 +28,7 @@ class V1InnovationThreadInfo {
 
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context.auth.user.identityId)
+      await authorizationService.validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()

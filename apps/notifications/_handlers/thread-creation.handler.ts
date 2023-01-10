@@ -1,3 +1,4 @@
+import type { DomainContextType } from '@innovations/shared/types';
 import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, UserTypeEnum, EmailNotificationTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
@@ -20,9 +21,10 @@ export class ThreadCreationHandler extends BaseHandler<
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]
+    data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
+    domainContext: DomainContextType
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -52,7 +54,7 @@ export class ThreadCreationHandler extends BaseHandler<
   private async prepareNotificationForInnovator(): Promise<void> {
 
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-    const requestUserUnitName = requestUserInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : requestUserInfo.organisations[0]?.organisationUnits[0]?.name ?? '';
+    const requestUserUnitName = requestUserInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : this.domainContext?.organisation?.organisationUnit?.name ?? '';
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
@@ -76,6 +78,7 @@ export class ThreadCreationHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
       userIds: [innovation.owner.id],
       params: { subject: thread.subject, messageId: this.inputData.messageId }
@@ -108,6 +111,7 @@ export class ThreadCreationHandler extends BaseHandler<
     if (assignedUsers.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
+        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
         userIds: assignedUsers.map(item => item.id),
         params: { subject: thread.subject, messageId: this.inputData.messageId }

@@ -28,17 +28,18 @@ class V1InnovationThreadCreate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .verify();
 
       const requestUser = auth.getUserInfo();
-
+      const domainContext = auth.getContext();
 
       const result = await threadsService.createEditableThread(
         requestUser,
+        domainContext,
         pathParams.innovationId,
         body.subject,
         body.message,

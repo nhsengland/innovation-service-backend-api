@@ -38,7 +38,7 @@ class V1AdminUnitUpdate {
         );
 
         await authorizationService
-        .validate(context.auth.user.identityId)
+        .validate(context)
         .checkAdminType()
         .verify();
 

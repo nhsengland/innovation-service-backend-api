@@ -23,11 +23,12 @@ class V1InnovationsExportRequestInfo {
 
     try {
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkAccessorType()
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<PathParamsType>(
         PathParamsSchema,
@@ -37,6 +38,7 @@ class V1InnovationsExportRequestInfo {
 
       const result = await innovationsService.checkInnovationRecordExportRequest(
         requestUser,
+        domainContext,
         params.requestId
       );
 

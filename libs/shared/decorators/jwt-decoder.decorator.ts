@@ -1,5 +1,6 @@
 import type { HttpRequest } from '@azure/functions';
 import jwt_decode from 'jwt-decode';
+import type { UserTypeEnum } from '../enums';
 
 import { UnauthorizedError, UserErrorsEnum } from '../errors';
 import { ResponseHelper } from '../helpers';
@@ -37,6 +38,17 @@ export function JwtDecoder() {
       const context: CustomContextType = args[0];
       const request: HttpRequest = args[1];
       const token = request.headers['authorization'] || '';
+      const domainContextHeader = request.headers['x-is-domain-context'];
+
+      let domainContext: {
+        userType?: UserTypeEnum;
+        organisationId?: string;
+        innovationId?: string;
+      } = { };
+
+      if (domainContextHeader) {
+        domainContext = JSON.parse(domainContextHeader).user;
+      }
 
       try {
 
@@ -45,9 +57,9 @@ export function JwtDecoder() {
         context.auth = {
           user: {
             identityId: jwt.oid,
-            name: jwt.name
-            // surveyId: jwt.extension_surveyId
-          }
+            name: jwt.name,
+          },
+          context: domainContext,
         };
 
       }

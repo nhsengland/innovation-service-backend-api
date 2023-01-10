@@ -29,7 +29,7 @@ class V1UsersList {
 
       if ('email' in queryParams) {
 
-        await authorizationService.validate(context.auth.user.identityId)
+        await authorizationService.validate(context)
           .checkAdminType()
           .verify();
 
@@ -47,7 +47,7 @@ class V1UsersList {
 
       } else if ('userTypes' in queryParams) {
         
-        const validation = authorizationService.validate(context.auth.user.identityId)
+        const validation = authorizationService.validate(context)
           .checkAdminType()
         
         // only allow NA users to list other NA users

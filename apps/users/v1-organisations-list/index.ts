@@ -23,7 +23,7 @@ class V1OrganisationsList {
 
     try {
 
-      const auth = await authService.validate(context.auth.user.identityId)
+      const auth = await authService.validate(context)
         .checkAdminType()
         .checkAssessmentType()
         .checkAccessorType()

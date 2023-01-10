@@ -68,6 +68,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
       userIds: [this.data.actionInfo?.owner.id || ''],
       params: {
@@ -117,6 +118,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
+      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
       userIds: [this.data.innovation?.owner.id || ''],
       params: {

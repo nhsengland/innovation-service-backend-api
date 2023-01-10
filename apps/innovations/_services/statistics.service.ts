@@ -1,7 +1,7 @@
 import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity } from '@innovations/shared/entities';
-import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
-import type { DateISOType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
 
@@ -12,26 +12,30 @@ export class StatisticsService  extends BaseService {
     super();
   }
 
-  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<InnovationActionEntity[]> {
+  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<{updatedAt: DateISOType, section: InnovationSectionEnum}[]> {
     
     const openActions = await  this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
-    .innerJoinAndSelect('action.innovationSection', 'section')
-    .innerJoinAndSelect('section.innovation', 'innovation')
+    .innerJoin('action.innovationSection', 'section')
+    .innerJoin('section.innovation', 'innovation')
+    .select('action.updatedAt', 'updatedAt')
+    .addSelect('section.section', 'section')
     .where('innovation.id = :innovationId', { innovationId })
     .andWhere('action.status IN(:...statuses)', { statuses })
     .orderBy('action.createdAt', 'DESC')
-    .getMany();
+    .getRawMany();
 
     return openActions;
   }
 
-  async getSubmittedSections(innovationId: string): Promise<InnovationSectionEntity[]> {
+  async getSubmittedSections(innovationId: string): Promise<{updatedAt: DateISOType, section: InnovationSectionEnum}[]> {
     const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
-    .innerJoinAndSelect('section.innovation', 'innovation')
+    .innerJoin('section.innovation', 'innovation')
+    .select('section.section', 'section')
+    .addSelect('section.updatedAt', 'updatedAt')
     .where('innovation.id = :innovationId', { innovationId })
     .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED })
     .orderBy('section.updatedAt', 'DESC')
-    .getMany();
+    .getRawMany();
 
     return sections;
   }
@@ -42,70 +46,61 @@ export class StatisticsService  extends BaseService {
   }> {
 
     const unreadMessages = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
-    .innerJoinAndSelect('notification.innovation', 'innovation')
-    .innerJoinAndSelect('notification.notificationUsers', 'users')
+    .innerJoin('notification.innovation', 'innovation')
+    .innerJoin('notification.notificationUsers', 'users')
+    .select('count(*)', 'count')
+    .addSelect('max(notification.createdAt)', 'lastSubmittedAt')
     .where('innovation.id = :innovationId', { innovationId })
     .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
     .andWhere('notification.context_detail IN (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
     .andWhere('users.user_id = :userId', { userId })
     .andWhere('users.readAt IS NULL')
-    .getMany();
+    .getRawOne();
 
-    if (unreadMessages.length === 0) {
-      return {
-        count: 0,
-        lastSubmittedAt: null,
-      }
-    }
-
-    const latestMessage = unreadMessages.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    }).find(_ => true);
-
-    return {
-      count: unreadMessages.length,
-      lastSubmittedAt: latestMessage?.createdAt || null,
-    }
+    return unreadMessages;
   }
 
   async actionsToReview(
     innovationId: string,
-    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
   ): Promise<{count: number, lastSubmittedSection: null | string, lastSubmittedAt: null | DateISOType}> {
 
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     const baseQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
-    .innerJoinAndSelect('actions.innovationSupport', 'innovationSupport')
-    .innerJoinAndSelect('actions.innovationSection', 'section')
+    .innerJoin('actions.innovationSupport', 'innovationSupport')
+    .innerJoin('actions.innovationSection', 'section')
+    .select('actions.updatedAt', 'updatedAt')
+    .addSelect('section.section', 'section')
     .where('innovationSupport.organisation_unit_id = :organisationUnit', { organisationUnit })
     .andWhere('innovationSupport.innovation_id = :innovationId', { innovationId })
-    .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW });
+    .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.IN_REVIEW })
+    .orderBy('actions.createdAt', 'DESC');
     
-    const [myActions, myActionsCount] = await baseQuery.getManyAndCount();    
+    const actions = await baseQuery.getRawMany();
 
     return {
-      count: myActionsCount,
-      lastSubmittedSection: myActions.find(_ => true)?.innovationSection?.section || null,
-      lastSubmittedAt: myActions.find(_ => true)?.updatedAt || null,
+      count: actions.length,
+      lastSubmittedSection: actions.length > 0 ? actions[0].section : null,
+      lastSubmittedAt: actions.length > 0 ? actions[0].updatedAt : null,
     }
   }
 
-  async getSubmittedSectionsSinceSupportStart(innovationId: string, requestUser: DomainUserInfoType): Promise<[InnovationSectionEntity[], number]> {
+  async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{section: InnovationSectionEnum, updatedAt: DateISOType}[]> {
    
-    const organisationUnit = requestUser.organisations.find(_ => true)?.organisationUnits.find(_ => true)?.id;
+    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     const innovationSupport  = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupport')
-      .innerJoinAndSelect('innovationSupport.innovation', 'innovation')
-      .innerJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
+      .innerJoin('innovationSupport.innovation', 'innovation')
+      .innerJoin('innovationSupport.organisationUnit', 'organisationUnit')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('organisationUnit.id = :organisationUnit', { organisationUnit })
       .andWhere('innovationSupport.status IN (:...status)', { status:[InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED] })
@@ -114,21 +109,23 @@ export class StatisticsService  extends BaseService {
     const supportStartedAt = innovationSupport?.updatedAt;
     
     const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
-      .innerJoinAndSelect('section.innovation', 'innovation')
+      .innerJoin('section.innovation', 'innovation')
+      .select('section.section', 'section_section')
+      .addSelect('section.updatedAt', 'section_updated_at')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED })
       .andWhere('section.updated_at >= :supportStartedAt', { supportStartedAt })
       .orderBy('section.updatedAt', 'DESC')
-      .getManyAndCount();
+      .getMany();
 
     return sections;
   }
 
-  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<[InnovationSectionEntity[], number]> {
+  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<{section: InnovationSectionEnum, updatedAt: DateISOType}[]> {
    
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessments')
-      .innerJoinAndSelect('assessments.assignTo', 'assignTo')
-      .innerJoinAndSelect('assessments.innovation', 'innovation')
+      .innerJoin('assessments.assignTo', 'assignTo')
+      .innerJoin('assessments.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('assignTo.id = :userId', { userId: requestUser.id })
       .getOne();
@@ -137,11 +134,13 @@ export class StatisticsService  extends BaseService {
  
     const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoinAndSelect('section.innovation', 'innovation')
+      .select('section.section', 'section_section')
+      .addSelect('section.updatedAt', 'section_updated_at')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED })
       .andWhere('section.updated_at >= :assessmentStartedAt', { assessmentStartedAt })
       .orderBy('section.updatedAt', 'DESC')
-      .getManyAndCount();
+      .getMany();
 
     return sections;
   }

@@ -490,9 +490,6 @@ paths:
                 - name
                 - email
                 - type
-                - organisationAcronym
-                - organisationUnitAcronym
-                - role
               additionalProperties: false
       responses:
         "200":

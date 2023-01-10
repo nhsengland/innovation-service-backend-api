@@ -1,23 +1,31 @@
-import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
-import { InnovationActionStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { StatisticsServiceSymbol, StatisticsServiceType } from '../../_services/interfaces';
+import { InnovationActionStatusEnum } from '@innovations/shared/enums';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import { container } from '../../_config';
-import type { InnovationStatisticsTemplateType } from '../../_config/statistics.config';
+import type { InnovationStatisticsParamsTemplateType, InnovationStatisticsTemplateType } from '../../_config/statistics.config';
+import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
+import { StatisticsServiceSymbol, StatisticsServiceType } from '../../_services/interfaces';
+import { InnovationsStatisticsHandler } from '../../_types/statistics-handlers.types';
 
-export const actionsToSubmitStatisticsHandler = async (
-  _: { id: string, identityId: string, type: UserTypeEnum },
-  data: { innovationId: string;}
-): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]> => {
+
+export class ActionsToSubmitStatisticsHandler extends InnovationsStatisticsHandler {
+
+  constructor(
+    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
+    data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]
+  ) { super(requestUser, domainContext, data) }
   
+  async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]> {
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const requestedActions = await statisticsService.getActions(data.innovationId, [InnovationActionStatusEnum.REQUESTED]);  
+    const requestedActions = await statisticsService.getActions(this.data.innovationId, [InnovationActionStatusEnum.REQUESTED]);  
     
     const lastRequestedAction = requestedActions.find(_ => true)
 
     return {
       count:requestedActions.length,
-      lastSubmittedSection: lastRequestedAction?.innovationSection.section || null,
+      lastSubmittedSection: lastRequestedAction?.section || null,
       lastSubmittedAt: lastRequestedAction?.updatedAt || null,
     }
+  }
 }

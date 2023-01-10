@@ -28,7 +28,7 @@ class V1InnovationSectionUpdate {
       const key = params.sectionKey;
       const body = JoiHelper.Validate<{ [key: string]: any }>(INNOVATION_SECTIONS_CONFIG[key].validation, request.body);
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()

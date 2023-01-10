@@ -18,7 +18,7 @@ class V1Health {
 
     try {
       const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-      await authorizationService.validate(context.auth.user.identityId).checkAdminType().verify();
+      await authorizationService.validate(context).checkAdminType().verify();
       context.res = ResponseHelper.Ok<ResponseDTO>({
         status: 'OK'
       });
