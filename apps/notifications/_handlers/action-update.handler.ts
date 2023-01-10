@@ -2,7 +2,7 @@ import { EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationSectio
 import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -12,7 +12,7 @@ import { BaseHandler } from './base.handler';
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
-  EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR |EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR ,
+  EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR ,
   { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionEnum }
 > {
 
@@ -28,9 +28,10 @@ export class ActionUpdateHandler extends BaseHandler<
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]
+    data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE],
+    domainContext?: DomainContextType 
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -156,7 +157,7 @@ export class ActionUpdateHandler extends BaseHandler<
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           accessor_name: requestInfo.displayName ,
-          unit_name: '' , // MF - NEED NEW CONTEXT HERE
+          unit_name: this.domainContext?.organisation?.organisationUnit?.name ?? '',
           action_url: new UrlModel(ENV.webBaseTransactionalUrl)
               .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
               .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })

@@ -307,7 +307,8 @@ export class InnovationActionsService extends BaseService {
           section: dbAction.innovationSection.section,
           status: result.status
         }
-      }
+      },
+      domainContext
     );
 
     return { id: result.id };
