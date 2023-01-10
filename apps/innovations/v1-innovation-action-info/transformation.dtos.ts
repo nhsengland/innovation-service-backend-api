@@ -9,4 +9,5 @@ export type ResponseDTO = {
   description: string,
   createdAt: DateISOType,
   createdBy: { name: string, organisationUnit: string }
+  declineReason?: string
 }
