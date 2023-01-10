@@ -95,10 +95,11 @@ export class ActionUpdateHandler extends BaseHandler<
     }
 
     const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
+    const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id)
 
     this.emails.push({
       templateId: templateId,
-      to: { type: 'identityId', value: this.data.actionInfo?.owner.identityId || '', displayNameParam: 'display_name' },
+      to: { type: 'identityId', value: actionInfo.owner.id, displayNameParam: 'display_name' },
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
