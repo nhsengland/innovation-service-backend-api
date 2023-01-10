@@ -347,7 +347,8 @@ export class InnovationActionsService extends BaseService {
           id: dbAction.id,
           section: dbAction.innovationSection.section,
           status: result.status
-        }
+        },
+        comment: data.message
       }
     );
 

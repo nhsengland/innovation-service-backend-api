@@ -64,7 +64,7 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
   [EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
   [EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
-  [EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR]: { display_name?: string, innovator_name: string, innovation_name: string, action_status_update_comment: string, action_url: string },
+  [EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR]: { display_name?: string, innovator_name: string, innovation_name: string, declined_action_reason: string, action_url: string },
   [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, thread_url: string }
   [EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string, thread_url: string }
   [EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL]: { display_name?: string, subject: string, innovation_name: string, thread_url: string }

@@ -12,7 +12,7 @@ import { BaseHandler } from './base.handler';
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
-  EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR ,
+  EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR,
   { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionEnum }
 > {
 
@@ -29,7 +29,7 @@ export class ActionUpdateHandler extends BaseHandler<
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE],
-    domainContext?: DomainContextType 
+    domainContext?: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
@@ -62,7 +62,7 @@ export class ActionUpdateHandler extends BaseHandler<
     return this;
 
   }
-  
+
   // Private methods.
 
   private async prepareInAppForAccessor(): Promise<void> {
@@ -105,11 +105,11 @@ export class ActionUpdateHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovator_name: requestInfo.displayName,
           innovation_name: innovation.name,
-          action_status_update_comment: '', // MF - How to get this comment?
+          declined_action_reason: this.inputData.comment ?? '',
           action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
-              .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
-              .buildUrl() 
+            .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+            .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
+            .buildUrl()
         }
       })
     }
@@ -151,17 +151,25 @@ export class ActionUpdateHandler extends BaseHandler<
 
       const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
 
+      let accessor_name = requestInfo.displayName
+      let unit_name = this.domainContext?.organisation?.organisationUnit?.name ?? ''
+
+      if (requestInfo.type === UserTypeEnum.INNOVATOR) {
+        accessor_name = (await this.domainService.users.getUserInfo({ userId: this.data.actionInfo.owner.id })).displayName
+        unit_name = (await this.recipientsService.actionInfoWithOwner(this.data.actionInfo.id)).organisationUnit.name
+      }
+
       this.emails.push({
         templateId: templateId,
         to: { type: 'identityId', value: this.data.innovation?.owner.identityId || '', displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          accessor_name: requestInfo.displayName ,
-          unit_name: this.domainContext?.organisation?.organisationUnit?.name ?? '',
+          accessor_name: accessor_name,
+          unit_name: unit_name,
           action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
-              .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
-              .buildUrl() 
+            .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+            .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
+            .buildUrl()
         }
       })
     }

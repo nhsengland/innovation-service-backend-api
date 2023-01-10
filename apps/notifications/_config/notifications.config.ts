@@ -131,7 +131,8 @@ export const NOTIFICATIONS_CONFIG: {
         id: Joi.string().guid().required(),
         section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required(),
         status: Joi.string().valid(...Object.values(InnovationActionStatusEnum)).required()
-      }).required()
+      }).required(),
+      comment: Joi.string().optional()
     }).required()
   },
 
