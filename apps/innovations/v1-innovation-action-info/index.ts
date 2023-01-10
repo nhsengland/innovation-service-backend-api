@@ -42,6 +42,7 @@ class V1InnovationActionInfo {
         section: result.section,
         createdAt: result.createdAt,
         createdBy: {
+          id: result.createdBy.id,
           name: result.createdBy.name,
           organisationUnit: result.createdBy.organisationUnit
         },

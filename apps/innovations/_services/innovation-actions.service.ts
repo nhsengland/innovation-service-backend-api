@@ -156,7 +156,7 @@ export class InnovationActionsService extends BaseService {
     section: InnovationSectionEnum,
     description: string,
     createdAt: DateISOType,
-    createdBy: { name: string, organisationUnit: string },
+    createdBy: { id: string, name: string, organisationUnit: string },
     declineReason?: string
   }> {
 
@@ -195,6 +195,7 @@ export class InnovationActionsService extends BaseService {
       section: dbAction.innovationSection.section,
       createdAt: dbAction.createdAt,
       createdBy: {
+        id: dbAction.createdByUser.id,
         name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
         organisationUnit: dbAction.innovationSupport.organisationUnit.name
       },
