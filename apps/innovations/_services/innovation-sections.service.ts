@@ -391,6 +391,10 @@ export class InnovationSectionsService extends BaseService {
 
     const evidence = InnovationEvidenceEntity.new({
       innovation: InnovationEntity.new({ id: innovationId }),
+      evidenceType: evidenceData.evidenceType,
+      clinicalEvidenceType: evidenceData.clinicalEvidenceType,
+      description: evidenceData.description,
+      summary: evidenceData.summary,
       files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
       createdBy: user.id,
       updatedBy: user.id
@@ -400,8 +404,8 @@ export class InnovationSectionsService extends BaseService {
 
     return this.sqlConnection.transaction(async (transaction) => {
       const savedEvidence = await transaction.save(
-        InnovationEntity,
-        innovation
+        InnovationEvidenceEntity,
+        evidence
       );
       return { id: savedEvidence.id };
     });
