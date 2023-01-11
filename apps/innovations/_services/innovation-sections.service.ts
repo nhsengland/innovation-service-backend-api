@@ -10,6 +10,7 @@ import { BaseService } from './base.service';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
+import { In } from 'typeorm';
 
 @injectable()
 export class InnovationSectionsService extends BaseService {
@@ -447,6 +448,11 @@ export class InnovationSectionsService extends BaseService {
       .where('file.id IN (:...fileIds)', { fileIds: evidence.files.map(f => f.id) })
       .getMany()
 
+    const fileIds = evidenceFiles.map(f => f.id)
+
+    const filesToDelete = fileIds.filter(fId => !evidenceData.files.includes(fId))
+    const filesToSave = evidenceData.files.filter(fId => !fileIds.includes(fId))
+
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
     }
@@ -460,11 +466,13 @@ export class InnovationSectionsService extends BaseService {
           clinicalEvidenceType: evidenceData.clinicalEvidenceType,
           description: evidenceData.description,
           summary: evidenceData.summary,
-          files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
+          // files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
           createdBy: user.id,
           updatedBy: user.id
         }
       );
+
+      await transaction.delete(InnovationFileEntity, { id: In(filesToDelete) })
 
       await transaction.update(
         InnovationSectionEntity,
