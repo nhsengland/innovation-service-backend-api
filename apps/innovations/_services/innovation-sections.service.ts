@@ -426,7 +426,7 @@ export class InnovationSectionsService extends BaseService {
     
     const evidence = await this.sqlConnection
       .createQueryBuilder(InnovationEvidenceEntity, 'evidence')
-      .innerJoin('evidence.innovation', 'innovation')
+      .innerJoinAndSelect('evidence.innovation', 'innovation')
       .where('evidence.id = :evidenceId', { evidenceId })
       .getOne();
 

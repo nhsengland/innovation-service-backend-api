@@ -5,7 +5,7 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["put"],
+      "methods": ["post"],
       "route": "v1/{innovationId}/evidence"
     },
     { "type": "http", "direction": "out", "name": "res" }

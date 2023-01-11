@@ -61,7 +61,7 @@ export default openApi(
   CreateInnovationEvidence.httpTrigger as AzureFunction,
   '/v1/{innovationId}/evidence',
   {
-    post: {
+    put: {
       description: 'Update an innovation evidence entry.',
       tags: ['Innovation'],
       summary: 'Update an innovation evidence entry.',

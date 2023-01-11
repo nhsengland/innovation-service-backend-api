@@ -1041,13 +1041,13 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
             format: uuid
+            description: The innovation id.
       requestBody:
-        description: The innovation evidence to create.
+        description: The evidence data to create.
         required: true
         content:
           application/json:
@@ -1056,19 +1056,110 @@ paths:
               properties:
                 evidenceType:
                   type: string
-                  description: Type of the evidence.
-                  example: CLINICAL
+                  nullable: true
+                  description: The evidence type.
                 clinicalEvidenceType:
                   type: string
-                  description: Type of clinical evidence.
-                  example: DATA_PUBLISHED
+                  nullable: true
+                  description: The clinical evidence type.
                 description:
                   type: string
-                  description: Description of the evidence.
-                  example: Example evidence.
-                files:
+                  nullable: true
+                  description: The evidence description.
+                summary:
                   type: string
-                  description: Ids of the uploaded files.
+                  maxLength: 50
+                  nullable: true
+                  description: Small summary of the evidence.
+                files:
+                  type: array
+                  items:
+                    type: string
+                  description: Files to support the evidence.
+              required:
+                - evidenceType
+                - description
+                - summary
+                - files
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation evidence id.
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+    put:
+      description: Update an innovation evidence entry.
+      tags:
+        - Innovation
+      summary: Update an innovation evidence entry.
+      operationId: v1-innovation-evidence-create
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The innovation id.
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The evidence id.
+      requestBody:
+        description: The evidence data to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidenceType:
+                  type: string
+                  nullable: true
+                  description: The evidence type.
+                clinicalEvidenceType:
+                  type: string
+                  nullable: true
+                  description: The clinical evidence type.
+                description:
+                  type: string
+                  nullable: true
+                  description: The evidence description.
+                summary:
+                  type: string
+                  maxLength: 50
+                  nullable: true
+                  description: Small summary of the evidence.
+                files:
+                  type: array
+                  items:
+                    type: string
+                  description: Files to support the evidence.
+              required:
+                - evidenceType
+                - description
+                - summary
+                - files
+              additionalProperties: false
       responses:
         "200":
           description: Innovation evidence info.
