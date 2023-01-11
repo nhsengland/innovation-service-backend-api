@@ -412,6 +412,68 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
+  async updateInnovationEvidence(
+    user: { id: string },
+    evidenceId: string,
+    evidenceData: {
+      evidenceType: EvidenceTypeCatalogueEnum;
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+      description: string;
+      summary: string;
+      files: string[];
+    }
+  ): Promise<{ id: string }> {
+    
+    const evidence = await this.sqlConnection
+      .createQueryBuilder(InnovationEvidenceEntity, 'evidence')
+      .innerJoin('evidence.innovation', 'innovation')
+      .where('evidence.id = :evidenceId', { evidenceId })
+      .getOne();
+
+    if (!evidence) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
+    }
+
+    const section = await this.sqlConnection
+        .createQueryBuilder(InnovationSectionEntity, 'section')
+        .innerJoin('section.innovation', 'innovation')
+        .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
+        .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
+        .getOne()
+        
+    if (!section) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
+    }
+
+    return this.sqlConnection.transaction(async (transaction) => {
+      await transaction.update(
+        InnovationEvidenceEntity,
+        { id: evidence.id },
+        {
+          evidenceType: evidenceData.evidenceType,
+          clinicalEvidenceType: evidenceData.clinicalEvidenceType,
+          description: evidenceData.description,
+          summary: evidenceData.summary,
+          files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
+          createdBy: user.id,
+          updatedBy: user.id
+        }
+      );
+
+      await transaction.update(
+        InnovationSectionEntity,
+        { id: section.id },
+        { 
+          status: InnovationSectionStatusEnum.DRAFT,
+          updatedAt: new Date().toISOString(),
+          updatedBy: user.id
+        }
+      ) 
+
+      return { id: evidence.id };
+    });
+  }
+
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
     id: string,
     evidenceType: EvidenceTypeCatalogueEnum,
@@ -444,23 +506,6 @@ export class InnovationSectionsService extends BaseService {
       }))
     };
 
-  }
-
-  async updateInnovationEvidence(
-    user: { id: string },
-    innovationId: string,
-    evidenceData: {
-      evidenceType: EvidenceTypeCatalogueEnum;
-      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
-      description: string;
-      summary: string;
-      files: string[];
-    }
-  ): Promise<{ id: string }> {
-
-    
-
-    return { id: 'to do' }
   }
 
   private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {
