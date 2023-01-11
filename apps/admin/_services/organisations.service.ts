@@ -103,14 +103,21 @@ export class OrganisationsService extends BaseService {
 
       // Complete supports of unit
       if (supportsToComplete.length > 0) {
+
+        const supportIds = supportsToComplete.map(s => s.id)
+
         await transaction.update(
           InnovationSupportEntity,
-          { id: In(supportsToComplete.map(s => s.id)) },
+          { id: In(supportIds) },
           {
             status: InnovationSupportStatusEnum.COMPLETE,
-            organisationUnitUsers: []
           }
         )
+
+        await transaction.createQueryBuilder().delete()
+          .from('innovation_support_user')
+          .where('innovation_support_id IN (:...supports)', { supports: supportIds })
+          .execute()
       }
 
       // Mark as read notifications in the context of this unit
