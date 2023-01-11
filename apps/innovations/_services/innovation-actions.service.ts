@@ -1,11 +1,11 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainContextType } from '@innovations/shared/types';
+import type { DateISOType, DomainContextType, ActivityLogListParamsType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
@@ -156,11 +156,13 @@ export class InnovationActionsService extends BaseService {
     section: InnovationSectionEnum,
     description: string,
     createdAt: DateISOType,
-    createdBy: { name: string, organisationUnit: string }
+    createdBy: { id: string, name: string, organisationUnit: string },
+    declineReason?: string
   }> {
 
     const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
+      .innerJoinAndSelect('innovationSection.innovation', 'innovation')
       .innerJoinAndSelect('action.createdByUser', 'createdByUser')
       .innerJoinAndSelect('action.innovationSupport', 'innovationSupport')
       .innerJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
@@ -168,6 +170,21 @@ export class InnovationActionsService extends BaseService {
       .getOne();
     if (!dbAction) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
+    }
+
+    let declineReason: string | null = null;
+    if (dbAction.status === InnovationActionStatusEnum.DECLINED) {
+      const activityLogDeclineReason = await this.sqlConnection
+        .createQueryBuilder(ActivityLogEntity, 'activityLog')
+        .where('activityLog.innovation_id = :innovationId', { innovationId: dbAction.innovationSection.innovation.id })
+        .andWhere('activity = :activity', { activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE })
+        .andWhere('JSON_VALUE(param, \'$.actionId\') = :actionId', { actionId })
+        .getOne();
+
+      if (activityLogDeclineReason?.param) {
+        const params = JSON.parse(activityLogDeclineReason.param) as ActivityLogListParamsType;
+        declineReason = params.comment?.value ?? null;
+      }
     }
 
     return {
@@ -178,16 +195,18 @@ export class InnovationActionsService extends BaseService {
       section: dbAction.innovationSection.section,
       createdAt: dbAction.createdAt,
       createdBy: {
+        id: dbAction.createdByUser.id,
         name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
         organisationUnit: dbAction.innovationSupport.organisationUnit.name
-      }
+      },
+      ...(declineReason ? { declineReason } : {})
     };
 
   }
 
 
   async createAction(
-    user: { id: string, identityId: string, type: UserTypeEnum},
+    user: { id: string, identityId: string, type: UserTypeEnum },
     domainContext: DomainContextType,
     innovationId: string,
     data: { section: InnovationSectionEnum, description: string }

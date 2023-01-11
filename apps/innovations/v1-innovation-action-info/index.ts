@@ -41,10 +41,12 @@ class V1InnovationActionInfo {
         description: result.description,
         section: result.section,
         createdAt: result.createdAt,
-        createdBy: { 
+        createdBy: {
+          id: result.createdBy.id,
           name: result.createdBy.name,
           organisationUnit: result.createdBy.organisationUnit
-        }
+        },
+        ...(result.declineReason ? { declineReason: result.declineReason } : {})
       });
       return;
 
@@ -60,7 +62,7 @@ export default openApi(V1InnovationActionInfo.httpTrigger as AzureFunction, '/v1
     description: 'Get an innovation action.',
     operationId: 'v1-innovation-action-info',
     tags: ['[v1] Innovation Actions'],
-    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'The innovation action.',

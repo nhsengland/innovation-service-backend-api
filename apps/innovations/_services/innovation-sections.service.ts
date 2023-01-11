@@ -128,9 +128,10 @@ export class InnovationSectionsService extends BaseService {
     let actions: null | InnovationActionEntity[] = null;
 
     if (filters.fields?.includes('actions')) {
+      const requestedStatus = user.type === UserTypeEnum.ACCESSOR ? InnovationActionStatusEnum.IN_REVIEW : InnovationActionStatusEnum.REQUESTED;
       actions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
-        .andWhere('actions.status = :requestedStatus', { requestedStatus: InnovationActionStatusEnum.REQUESTED })
+        .andWhere('actions.status = :requestedStatus', { requestedStatus })
         .orderBy('actions.updated_at', 'DESC')
         .getMany();
     }
