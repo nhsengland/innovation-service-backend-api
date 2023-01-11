@@ -3,7 +3,7 @@ import { In, SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { ForbiddenError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType, type DomainUsersService } from '@innovations/shared/services';
@@ -399,91 +399,82 @@ export class InnovationsService extends BaseService {
       })
     }
 
-    try {
+    return {
+      count: innovationsCount,
+      data: await Promise.all(innovations.map(async innovation => {
 
-      return {
-        count: innovationsCount,
-        data: await Promise.all(innovations.map(async innovation => {
+        let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
+        const supports = supportingOrganisationsMap.get(innovation.id);
 
-          let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
-          const supports = supportingOrganisationsMap.get(innovation.id);
-
-          // Assessment parsing.
-          if (filters.fields?.includes('assessment')) {
-            const assessmentRaw = assessmentsMap.get(innovation.id);
-            if (assessmentRaw) {
-              assessment = {
-                id: assessmentRaw.id,
-                createdAt: assessmentRaw.createdAt,
-                assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' },
-                finishedAt: assessmentRaw.finishedAt,
-                reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0
-              }
-            } else {
-              assessment = null;
+        // Assessment parsing.
+        if (filters.fields?.includes('assessment')) {
+          const assessmentRaw = assessmentsMap.get(innovation.id);
+          if (assessmentRaw) {
+            assessment = {
+              id: assessmentRaw.id,
+              createdAt: assessmentRaw.createdAt,
+              assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' },
+              finishedAt: assessmentRaw.finishedAt,
+              reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0
             }
+          } else {
+            assessment = null;
           }
+        }
 
-          return {
-            id: innovation.id,
-            name: innovation.name,
-            description: innovation.description,
-            status: innovation.status,
-            statusUpdatedAt: innovation.statusUpdatedAt,
-            submittedAt: innovation.submittedAt,
-            updatedAt: innovation.updatedAt,
-            countryName: innovation.countryName,
-            postCode: innovation.postcode,
-            mainCategory: innovation.mainCategory,
-            otherMainCategoryDescription: innovation.otherMainCategoryDescription,
+        return {
+          id: innovation.id,
+          name: innovation.name,
+          description: innovation.description,
+          status: innovation.status,
+          statusUpdatedAt: innovation.statusUpdatedAt,
+          submittedAt: innovation.submittedAt,
+          updatedAt: innovation.updatedAt,
+          countryName: innovation.countryName,
+          postCode: innovation.postcode,
+          mainCategory: innovation.mainCategory,
+          otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
-            ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
-            ...(assessment && { assessment }),
-            ...(supports && {
-              supports: supports.map(support => ({
-                id: support.id,
-                status: support.status,
-                updatedAt: support.updatedAt,
-                organisation: {
-                  id: support.organisationUnit.organisation.id,
-                  name: support.organisationUnit.organisation.name,
-                  acronym: support.organisationUnit.organisation.acronym,
-                  unit: {
-                    id: support.organisationUnit.id,
-                    name: support.organisationUnit.name,
-                    acronym: support.organisationUnit.acronym,
-                    // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
-                    ...((support.organisationUnitUsers ?? []).length > 0 && {
-                      users: support.organisationUnitUsers.map(su => ({
-                        name: usersInfo.get(su.organisationUser.user.id)?.displayName || '',
-                        role: su.organisationUser.role
-                      })).filter(authUser => authUser.name)
-                    })
-                  }
+          ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
+          ...(assessment && { assessment }),
+          ...(supports && {
+            supports: supports.map(support => ({
+              id: support.id,
+              status: support.status,
+              updatedAt: support.updatedAt,
+              organisation: {
+                id: support.organisationUnit.organisation.id,
+                name: support.organisationUnit.organisation.name,
+                acronym: support.organisationUnit.organisation.acronym,
+                unit: {
+                  id: support.organisationUnit.id,
+                  name: support.organisationUnit.name,
+                  acronym: support.organisationUnit.acronym,
+                  // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
+                  ...((support.organisationUnitUsers ?? []).length > 0 && {
+                    users: support.organisationUnitUsers.map(su => ({
+                      name: usersInfo.get(su.organisationUser.user.id)?.displayName || '',
+                      role: su.organisationUser.role
+                    })).filter(authUser => authUser.name)
+                  })
                 }
-              }))
-            }),
-            // Add notifications
-            ...filters.fields?.includes('notifications') && { notifications: notificationsMap.get(innovation.id)?.notificationsUnread ?? 0 },
-
-            // Add statistics
-            ...filters.fields?.includes('statistics') && {
-              statistics: {
-                actions: notificationsMap.get(innovation.id)?.actions ?? 0,
-                messages: notificationsMap.get(innovation.id)?.messages ?? 0,
               }
-            },
-          };
+            }))
+          }),
+          // Add notifications
+          ...filters.fields?.includes('notifications') && { notifications: notificationsMap.get(innovation.id)?.notificationsUnread ?? 0 },
 
-        }))
-      };
+          // Add statistics
+          ...filters.fields?.includes('statistics') && {
+            statistics: {
+              actions: notificationsMap.get(innovation.id)?.actions ?? 0,
+              messages: notificationsMap.get(innovation.id)?.messages ?? 0,
+            }
+          },
+        };
 
-    } catch (error: any) {
-      if (Object.values(InnovationErrorsEnum).includes(error.name)) { throw error; }
-      else {
-        throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-      }
-    }
+      }))
+    };
 
   }
 
@@ -1362,32 +1353,25 @@ export class InnovationsService extends BaseService {
 
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...usersIds] }));
 
-    try {
-      return {
-        count: dbActivitiesCount,
-        data: dbActivities.map(item => {
-          const params = JSON.parse(item.param) as ActivityLogListParamsType;
+    return {
+      count: dbActivitiesCount,
+      data: dbActivities.map(item => {
+        const params = JSON.parse(item.param) as ActivityLogListParamsType;
 
-          if (params.actionUserId) {
-            params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '';
-          }
-          if (params.interveningUserId) {
-            params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '';
-          }
+        if (params.actionUserId) {
+          params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '';
+        }
+        if (params.interveningUserId) {
+          params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '';
+        }
 
-          return {
-            activity: item.activity,
-            type: item.type,
-            date: item.createdAt,
-            params
-          }
-        })
-      }
-    } catch (error: any) {
-      if (Object.values(InnovationErrorsEnum).includes(error.name)) { throw error; }
-      else {
-        throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-      }
+        return {
+          activity: item.activity,
+          type: item.type,
+          date: item.createdAt,
+          params
+        }
+      })
     }
 
   }

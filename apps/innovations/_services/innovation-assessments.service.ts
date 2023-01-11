@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
-import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
+import { BadRequestError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
@@ -42,44 +42,38 @@ export class InnovationAssessmentsService extends BaseService {
     // Fetch users names.
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [assessment.assignTo.id, assessment.updatedBy] }));
 
-    try {
-
-      return {
-        id: assessment.id,
-        ...(!assessment.reassessmentRequest ? {} : { reassessment: { updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord, description: assessment.reassessmentRequest.description } }),
-        summary: assessment.summary,
-        description: assessment.description,
-        finishedAt: assessment.finishedAt,
-        assignTo: { id: assessment.assignTo.id, name: usersInfo.find(user => user.id === assessment.assignTo.id)?.displayName || '' },
-        maturityLevel: assessment.maturityLevel,
-        maturityLevelComment: assessment.maturityLevelComment,
-        hasRegulatoryApprovals: assessment.hasRegulatoryApprovals,
-        hasRegulatoryApprovalsComment: assessment.hasRegulatoryApprovalsComment,
-        hasEvidence: assessment.hasEvidence,
-        hasEvidenceComment: assessment.hasEvidenceComment,
-        hasValidation: assessment.hasValidation,
-        hasValidationComment: assessment.hasValidationComment,
-        hasProposition: assessment.hasProposition,
-        hasPropositionComment: assessment.hasPropositionComment,
-        hasCompetitionKnowledge: assessment.hasCompetitionKnowledge,
-        hasCompetitionKnowledgeComment: assessment.hasCompetitionKnowledgeComment,
-        hasImplementationPlan: assessment.hasImplementationPlan,
-        hasImplementationPlanComment: assessment.hasImplementationPlanComment,
-        hasScaleResource: assessment.hasScaleResource,
-        hasScaleResourceComment: assessment.hasScaleResourceComment,
-        suggestedOrganisations: InnovationHelper.parseOrganisationUnitsToOrganisationsFormat(
-          assessment.organisationUnits.map(item => ({
-            id: item.id, name: item.name, acronym: item.acronym,
-            organisation: { id: item.organisation.id, name: item.organisation.name, acronym: item.organisation.acronym }
-          }))
-        ),
-        updatedAt: assessment.updatedAt,
-        updatedBy: { id: assessment.updatedBy, name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || '' }
-      };
-
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
+    return {
+      id: assessment.id,
+      ...(!assessment.reassessmentRequest ? {} : { reassessment: { updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord, description: assessment.reassessmentRequest.description } }),
+      summary: assessment.summary,
+      description: assessment.description,
+      finishedAt: assessment.finishedAt,
+      assignTo: { id: assessment.assignTo.id, name: usersInfo.find(user => user.id === assessment.assignTo.id)?.displayName || '' },
+      maturityLevel: assessment.maturityLevel,
+      maturityLevelComment: assessment.maturityLevelComment,
+      hasRegulatoryApprovals: assessment.hasRegulatoryApprovals,
+      hasRegulatoryApprovalsComment: assessment.hasRegulatoryApprovalsComment,
+      hasEvidence: assessment.hasEvidence,
+      hasEvidenceComment: assessment.hasEvidenceComment,
+      hasValidation: assessment.hasValidation,
+      hasValidationComment: assessment.hasValidationComment,
+      hasProposition: assessment.hasProposition,
+      hasPropositionComment: assessment.hasPropositionComment,
+      hasCompetitionKnowledge: assessment.hasCompetitionKnowledge,
+      hasCompetitionKnowledgeComment: assessment.hasCompetitionKnowledgeComment,
+      hasImplementationPlan: assessment.hasImplementationPlan,
+      hasImplementationPlanComment: assessment.hasImplementationPlanComment,
+      hasScaleResource: assessment.hasScaleResource,
+      hasScaleResourceComment: assessment.hasScaleResourceComment,
+      suggestedOrganisations: InnovationHelper.parseOrganisationUnitsToOrganisationsFormat(
+        assessment.organisationUnits.map(item => ({
+          id: item.id, name: item.name, acronym: item.acronym,
+          organisation: { id: item.organisation.id, name: item.organisation.name, acronym: item.organisation.acronym }
+        }))
+      ),
+      updatedAt: assessment.updatedAt,
+      updatedBy: { id: assessment.updatedBy, name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || '' }
+    };
 
   }
 

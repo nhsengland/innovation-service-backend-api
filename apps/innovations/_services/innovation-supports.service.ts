@@ -3,7 +3,7 @@ import { In } from 'typeorm';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, InnovationSupportLogEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, type UserTypeEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, InnovationErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
@@ -66,41 +66,35 @@ export class InnovationSupportsService extends BaseService {
 
     }
 
-    try {
+    return innovationSupports.map(support => {
 
-      return innovationSupports.map(support => {
+      let engagingAccessors: { id: string, organisationUnitUserId: string, name: string }[] | undefined = undefined;
 
-        let engagingAccessors: { id: string, organisationUnitUserId: string, name: string }[] | undefined = undefined;
+      if (filters.fields.includes('engagingAccessors')) {
+        engagingAccessors = support.organisationUnitUsers.map(su => ({
+          id: su.organisationUser.user.id,
+          organisationUnitUserId: su.id,
+          name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
+        })).filter(authUser => authUser.name);
+      }
 
-        if (filters.fields.includes('engagingAccessors')) {
-          engagingAccessors = support.organisationUnitUsers.map(su => ({
-            id: su.organisationUser.user.id,
-            organisationUnitUserId: su.id,
-            name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
-          })).filter(authUser => authUser.name);
-        }
+      return {
+        id: support.id,
+        status: support.status,
+        organisation: {
+          id: support.organisationUnit.organisation.id,
+          name: support.organisationUnit.organisation.name,
+          acronym: support.organisationUnit.organisation.acronym,
+          unit: {
+            id: support.organisationUnit.id,
+            name: support.organisationUnit.name,
+            acronym: support.organisationUnit.acronym,
+          }
+        },
+        ...(engagingAccessors === undefined ? {} : { engagingAccessors })
+      };
 
-        return {
-          id: support.id,
-          status: support.status,
-          organisation: {
-            id: support.organisationUnit.organisation.id,
-            name: support.organisationUnit.organisation.name,
-            acronym: support.organisationUnit.organisation.acronym,
-            unit: {
-              id: support.organisationUnit.id,
-              name: support.organisationUnit.name,
-              acronym: support.organisationUnit.acronym,
-            }
-          },
-          ...(engagingAccessors === undefined ? {} : { engagingAccessors })
-        };
-
-      });
-
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
+    });
   }
 
   async getInnovationSupportLogs(
@@ -199,21 +193,15 @@ export class InnovationSupportsService extends BaseService {
     const assignedAccessorsIds = innovationSupport.organisationUnitUsers.map(item => item.organisationUser.user.id);
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds }));
 
-    try {
-
-      return {
-        id: innovationSupport.id,
-        status: innovationSupport.status,
-        engagingAccessors: innovationSupport.organisationUnitUsers.map(su => ({
-          id: su.organisationUser.user.id,
-          organisationUnitUserId: su.id,
-          name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
-        })).filter(authUser => authUser.name)
-      };
-
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
+    return {
+      id: innovationSupport.id,
+      status: innovationSupport.status,
+      engagingAccessors: innovationSupport.organisationUnitUsers.map(su => ({
+        id: su.organisationUser.user.id,
+        organisationUnitUserId: su.id,
+        name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
+      })).filter(authUser => authUser.name)
+    };
 
   }
 

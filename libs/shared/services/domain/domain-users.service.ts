@@ -2,7 +2,7 @@ import type { DataSource, Repository } from 'typeorm';
 
 import { UserEntity } from '../../entities';
 import type { UserTypeEnum } from '../../enums';
-import { GenericErrorsEnum, InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
+import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DateISOType, DomainUserInfoType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
@@ -45,44 +45,38 @@ export class DomainUsersService {
 
     const authUser = await this.identityProviderService.getUserInfo(dbUser.identityId);
 
-    try {
+    return {
+      id: dbUser.id,
+      identityId: authUser.identityId,
+      email: authUser.email,
+      displayName: authUser.displayName,
+      type: dbUser.type,
+      roles: dbUser.serviceRoles.map(item => item.role.name),
+      phone: authUser.mobilePhone,
+      isActive: !dbUser.lockedAt,
+      passwordResetAt: authUser.passwordResetAt,
+      firstTimeSignInAt: dbUser.firstTimeSignInAt,
+      surveyId: dbUser.surveyId,
+      organisations: (await dbUser.userOrganisations).map(userOrganisation => {
 
-      return {
-        id: dbUser.id,
-        identityId: authUser.identityId,
-        email: authUser.email,
-        displayName: authUser.displayName,
-        type: dbUser.type,
-        roles: dbUser.serviceRoles.map(item => item.role.name),
-        phone: authUser.mobilePhone,
-        isActive: !dbUser.lockedAt,
-        passwordResetAt: authUser.passwordResetAt,
-        firstTimeSignInAt: dbUser.firstTimeSignInAt,
-        surveyId: dbUser.surveyId,
-        organisations: (await dbUser.userOrganisations).map(userOrganisation => {
+        const organisation = userOrganisation.organisation;
+        const organisationUnits = userOrganisation.userOrganisationUnits;
 
-          const organisation = userOrganisation.organisation;
-          const organisationUnits = userOrganisation.userOrganisationUnits;
+        return {
+          id: organisation.id,
+          name: organisation.name,
+          size: organisation.size,
+          role: userOrganisation.role,
+          isShadow: organisation.isShadow,
+          organisationUnits: organisationUnits.map(item => ({
+            id: item.organisationUnit.id,
+            acronym: item.organisationUnit.acronym,
+            name: item.organisationUnit.name
+          }))
+        }
 
-          return {
-            id: organisation.id,
-            name: organisation.name,
-            size: organisation.size,
-            role: userOrganisation.role,
-            isShadow: organisation.isShadow,
-            organisationUnits: organisationUnits.map(item => ({
-              id: item.organisationUnit.id,
-              acronym: item.organisationUnit.acronym,
-              name: item.organisationUnit.name
-            }))
-          }
-
-        })
-      };
-
-    } catch (error) {
-      throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-    }
+      })
+    };
 
   }
 
