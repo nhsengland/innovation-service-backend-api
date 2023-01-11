@@ -446,6 +446,23 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
+  async updateInnovationEvidence(
+    user: { id: string },
+    innovationId: string,
+    evidenceData: {
+      evidenceType: EvidenceTypeCatalogueEnum;
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+      description: string;
+      summary: string;
+      files: string[];
+    }
+  ): Promise<{ id: string }> {
+
+    
+
+    return { id: 'to do' }
+  }
+
   private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {
 
     let result: InnovationSectionModel;
