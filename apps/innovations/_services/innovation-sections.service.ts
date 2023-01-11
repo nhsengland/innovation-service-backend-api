@@ -389,8 +389,6 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const evidences = await innovation.evidences;
-
     const evidence = InnovationEvidenceEntity.new({
       innovation: InnovationEntity.new({ id: innovationId }),
       evidenceType: evidenceData.evidenceType,
@@ -402,13 +400,33 @@ export class InnovationSectionsService extends BaseService {
       updatedBy: user.id
     });
 
-    evidences.push(evidence);
+    const section = await this.sqlConnection
+        .createQueryBuilder(InnovationSectionEntity, 'section')
+        .innerJoin('section.innovation', 'innovation')
+        .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
+        .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
+        .getOne()
+
+    if (!section) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
+    }
 
     return this.sqlConnection.transaction(async (transaction) => {
       const savedEvidence = await transaction.save(
         InnovationEvidenceEntity,
         evidence
       );
+      
+      await transaction.update(
+        InnovationSectionEntity,
+        { id: section.id },
+        { 
+          status: InnovationSectionStatusEnum.DRAFT,
+          updatedAt: new Date().toISOString(),
+          updatedBy: user.id
+        }
+      ) 
+
       return { id: savedEvidence.id };
     });
   }
