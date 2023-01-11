@@ -1,45 +1,25 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
-import {
-  InnovationSectionsServiceSymbol,
-  InnovationSectionsServiceType
-} from '../_services/interfaces';
+import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
-import {
-  BodySchema,
-  BodyType,
-  ParamsSchema,
-  ParamsType
-} from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class CreateInnovationEvidence {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService =
-      container.get<InnovationSectionsServiceType>(
-        InnovationSectionsServiceSymbol
-      );
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
 
     try {
-      const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params
-      );
+
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const auth = await authorizationService
@@ -57,9 +37,8 @@ class CreateInnovationEvidence {
         innovation.id,
         body
       );
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
-      });
+
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -77,50 +56,8 @@ export default openApi(
       tags: ['Innovation'],
       summary: 'Create an innovation evidence entry.',
       operationId: 'v1-innovation-evidence-create',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'The innovation id.',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid',
-          },
-        },
-      ],
-      requestBody: {
-        description: 'The innovation evidence to create.',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                evidenceType: {
-                  type: 'string',
-                  description: 'Type of the evidence.',
-                  example: 'CLINICAL',
-                },
-                clinicalEvidenceType: {
-                  type: 'string',
-                  description: 'Type of clinical evidence.',
-                  example: 'DATA_PUBLISHED',
-                },
-                description: {
-                  type: 'string',
-                  description: 'Description of the evidence.',
-                  example: 'Example evidence.'
-                },
-                files: {
-                  type: 'string',
-                  description: 'Ids of the uploaded files.'
-                }
-              },
-            },
-          },
-        },
-      },
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The evidence data to create.' }),
       responses: {
         200: {
           description: 'Innovation evidence info.',
