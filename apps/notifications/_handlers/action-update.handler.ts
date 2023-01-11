@@ -52,6 +52,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
       case UserTypeEnum.ACCESSOR:
         await this.prepareInAppForInnovator();
+        if ([InnovationActionStatusEnum.DECLINED, InnovationActionStatusEnum.DELETED].includes(this.data.actionInfo.status))
         await this.prepareEmailForInnovator();
         break;
 
