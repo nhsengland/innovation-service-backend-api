@@ -423,10 +423,11 @@ export class InnovationSectionsService extends BaseService {
       files: string[];
     }
   ): Promise<{ id: string }> {
-    
+
     const evidence = await this.sqlConnection
       .createQueryBuilder(InnovationEvidenceEntity, 'evidence')
       .innerJoinAndSelect('evidence.innovation', 'innovation')
+      .innerJoinAndSelect('evidence.files', 'files')
       .where('evidence.id = :evidenceId', { evidenceId })
       .getOne();
 
@@ -435,12 +436,17 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const section = await this.sqlConnection
-        .createQueryBuilder(InnovationSectionEntity, 'section')
-        .innerJoin('section.innovation', 'innovation')
-        .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
-        .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
-        .getOne()
-        
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .innerJoin('section.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
+      .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
+      .getOne()
+
+    const evidenceFiles = await this.sqlConnection
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .where('file.id IN (:...fileIds)', { fileIds: evidence.files.map(f => f.id) })
+      .getMany()
+
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
     }
@@ -463,12 +469,12 @@ export class InnovationSectionsService extends BaseService {
       await transaction.update(
         InnovationSectionEntity,
         { id: section.id },
-        { 
+        {
           status: InnovationSectionStatusEnum.DRAFT,
           updatedAt: new Date().toISOString(),
           updatedBy: user.id
         }
-      ) 
+      )
 
       return { id: evidence.id };
     });
