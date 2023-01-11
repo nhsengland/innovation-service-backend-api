@@ -106,7 +106,7 @@ export class ActionUpdateHandler extends BaseHandler<
         innovation_name: innovation.name,
         declined_action_reason: this.inputData.comment ?? '',
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+          .addPath('accessor/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
           .buildUrl()
       }
