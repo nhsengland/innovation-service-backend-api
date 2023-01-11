@@ -469,28 +469,27 @@ export class InnovationSectionsService extends BaseService {
     const fileIds = evidenceFiles.map(f => f.id)
 
     const filesToDelete = fileIds.filter(fId => !evidenceData.files.includes(fId))
-    const filesToSave = evidenceData.files.filter(fId => !fileIds.includes(fId))
 
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
     }
 
     return this.sqlConnection.transaction(async (transaction) => {
-      await transaction.update(
+
+      await transaction.delete(InnovationFileEntity, { id: In(filesToDelete) })
+
+      await transaction.save(
         InnovationEvidenceEntity,
-        { id: evidence.id },
         {
+          id: evidence.id,
           evidenceType: evidenceData.evidenceType,
           clinicalEvidenceType: evidenceData.clinicalEvidenceType,
           description: evidenceData.description,
           summary: evidenceData.summary,
-          // files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
-          createdBy: user.id,
+          files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
           updatedBy: user.id
         }
       );
-
-      await transaction.delete(InnovationFileEntity, { id: In(filesToDelete) })
 
       await transaction.update(
         InnovationSectionEntity,
