@@ -1103,84 +1103,6 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-    put:
-      description: Update an innovation evidence entry.
-      tags:
-        - Innovation
-      summary: Update an innovation evidence entry.
-      operationId: v1-innovation-evidence-create
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: The innovation id.
-        - name: evidenceId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: The evidence id.
-      requestBody:
-        description: The evidence data to update.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                evidenceType:
-                  type: string
-                  nullable: true
-                  description: The evidence type.
-                clinicalEvidenceType:
-                  type: string
-                  nullable: true
-                  description: The clinical evidence type.
-                description:
-                  type: string
-                  nullable: true
-                  description: The evidence description.
-                summary:
-                  type: string
-                  maxLength: 50
-                  nullable: true
-                  description: Small summary of the evidence.
-                files:
-                  type: array
-                  items:
-                    type: string
-                  description: Files to support the evidence.
-              required:
-                - evidenceType
-                - description
-                - summary
-                - files
-              additionalProperties: false
-      responses:
-        "200":
-          description: Innovation evidence info.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
-        "400":
-          description: Bad Request
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not found
-        "500":
-          description: Internal server error
   "/v1/{innovationId}/evidences/{evidenceId}":
     get:
       description: Get an innovation evidence info.
@@ -1249,6 +1171,85 @@ paths:
                         url:
                           type: string
                           description: File url.
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+  "/v1/{innovationId}/evidence/{evidenceId}":
+    put:
+      description: Update an innovation evidence entry.
+      tags:
+        - Innovation
+      summary: Update an innovation evidence entry.
+      operationId: v1-innovation-evidence-update
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The innovation id.
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The evidence id.
+      requestBody:
+        description: The evidence data to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidenceType:
+                  type: string
+                  nullable: true
+                  description: The evidence type.
+                clinicalEvidenceType:
+                  type: string
+                  nullable: true
+                  description: The clinical evidence type.
+                description:
+                  type: string
+                  nullable: true
+                  description: The evidence description.
+                summary:
+                  type: string
+                  maxLength: 50
+                  nullable: true
+                  description: Small summary of the evidence.
+                files:
+                  type: array
+                  items:
+                    type: string
+                  description: Files to support the evidence.
+              required:
+                - evidenceType
+                - description
+                - summary
+                - files
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation evidence id.
+        "400":
+          description: Bad Request
         "401":
           description: Unauthorized
         "403":
