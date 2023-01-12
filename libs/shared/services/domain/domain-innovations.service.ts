@@ -223,7 +223,7 @@ export class DomainInnovationsService {
         return ActivityTypeEnum.THREADS;
 
       case ActivityEnum.ACTION_CREATION:
-      case ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE:
+      case ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE:
       case ActivityEnum.ACTION_STATUS_DECLINED_UPDATE:
       case ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE:
       case ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE:

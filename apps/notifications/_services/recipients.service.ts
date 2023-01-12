@@ -245,7 +245,7 @@ export class RecipientsService extends BaseService {
       id: dbAction.actionId,
       displayId: dbAction.actionDisplayId,
       status: dbAction.actionStatus,
-      organisationUnit: {id: dbAction.organisationUnitId, name: dbAction.organisationUnitName, acronym: dbAction.organisationUnitAcronym },
+      organisationUnit: { id: dbAction.organisationUnitId, name: dbAction.organisationUnitName, acronym: dbAction.organisationUnitAcronym },
       owner: { id: dbAction.userId, identityId: dbAction.userIdentityId },
     };
 
@@ -481,7 +481,7 @@ export class RecipientsService extends BaseService {
    * @description Looks for Innovations actively supported by organisation units (ENGAGING, FURTHER INFO) whose assigned accessors have not interacted with the innovations for a given amount of time.
    * @description Inactivity is measured by:
    * @description - The last time an Innovation Support was updated (change the status from A to B) AND;
-   * @description - The last time an Innovation Action was completed by an Innovator (Changed its status from REQUESTED to IN_REVIEW) OR no Innovation Actions are found AND;
+   * @description - The last time an Innovation Action was completed by an Innovator (Changed its status from REQUESTED to SUBMITTED) OR no Innovation Actions are found AND;
    * @description - The last message posted on a thread or a thread was created (which also creates a message, so checking thread messages is enough) OR no messages or threads are found.
    * @param idlePeriod How many days are considered to be idle
    * @returns Promise<{userId: string; identityId: string, latestInteractionDate: Date}[]>
@@ -506,7 +506,7 @@ export class RecipientsService extends BaseService {
       .innerJoin('i.innovationSupports', 's')
       .innerJoin('s.organisationUnit', 'u')
       .leftJoin('s.action', 'actions')
-      .where(`actions.status = '${InnovationActionStatusEnum.IN_REVIEW}'`)
+      .where(`actions.status = '${InnovationActionStatusEnum.SUBMITTED}'`)
       .groupBy('u.id')
       .addGroupBy('i.id')
 
@@ -534,7 +534,7 @@ export class RecipientsService extends BaseService {
          * maxSupports 01/01/2022 10:00:00
          * maxActions 02/01/2022 09:00:00
          * maxMessages 02/01/2022 09:01:00
-         * 
+         *
          * latestInteractionDate = maxMessages = 02/01/2022 09:01:00
         */
         .addSelect('(SELECT MAX(v) FROM (VALUES (MAX(L.latest)), (MAX(l2.latest)), (MAX(l3.latest))) as value(v))', 'latestInteractionDate')

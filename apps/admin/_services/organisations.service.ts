@@ -45,7 +45,7 @@ export class OrganisationsService extends BaseService {
 
 
     // only want to clear actions with these statuses
-    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]
+    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (

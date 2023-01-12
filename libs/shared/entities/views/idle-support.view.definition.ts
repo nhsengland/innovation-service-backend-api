@@ -41,7 +41,7 @@ const expression = `
     INNER JOIN innovation I_I ON I_I.id = S_S.innovation_id
     INNER JOIN organisation_unit U_U ON U_U.id = S_S.organisation_unit_id
     LEFT JOIN innovation_action A_A on A_A.innovation_support_id = S_S.id
-    WHERE A_A.status = 'IN_REVIEW'
+    WHERE A_A.status = 'SUBMITTED'
     GROUP BY U_U.id, I_I.id
     ) L2 ON I.id = L2.innovation and S.id = L2.maxSupport and l2.latest = S.updated_at
     LEFT JOIN (
