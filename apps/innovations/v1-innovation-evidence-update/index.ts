@@ -1,27 +1,16 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
-import {
-  InnovationSectionsServiceSymbol,
-  InnovationSectionsServiceType
-} from '../_services/interfaces';
+import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
-import {
-  BodySchema,
-  BodyType,
-  ParamsSchema,
-  ParamsType
-} from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-class CreateInnovationEvidence {
+class UpdateInnovationEvidence {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
@@ -58,16 +47,16 @@ class CreateInnovationEvidence {
 }
 
 export default openApi(
-  CreateInnovationEvidence.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidence',
+  UpdateInnovationEvidence.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/evidence/{evidenceId}',
   {
     put: {
       description: 'Update an innovation evidence entry.',
       tags: ['Innovation'],
       summary: 'Update an innovation evidence entry.',
-      operationId: 'v1-innovation-evidence-create',
-      parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, {description: 'The evidence data to update.'}),
+      operationId: 'v1-innovation-evidence-update',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The evidence data to update.' }),
       responses: {
         200: {
           description: 'Innovation evidence info.',
