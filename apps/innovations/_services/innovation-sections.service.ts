@@ -440,11 +440,17 @@ export class InnovationSectionsService extends BaseService {
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.evidences', 'evidences')
       .innerJoinAndSelect('evidences.files', 'files')
+      .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne()
 
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+    }
+
+    const section = (await innovation.sections).find(s => s.section === InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS)
+    if (!section) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
     }
 
     const evidence = (await innovation.evidences).find(e => e.id === evidenceId)
@@ -461,6 +467,17 @@ export class InnovationSectionsService extends BaseService {
       //soft-delete evidence
       await transaction.update(InnovationEvidenceEntity, { id: evidenceId }, { updatedBy: user.id })
       await transaction.softDelete(InnovationEvidenceEntity, { id: evidence.id })
+
+      //update section status to draft
+      await transaction.update(
+        InnovationSectionEntity,
+        { id: section.id },
+        {
+          updatedAt: new Date().toISOString(),
+          updatedBy: user.id,
+          status: InnovationSectionStatusEnum.DRAFT
+        }
+      )
 
       return { id: evidence.id }
     })
