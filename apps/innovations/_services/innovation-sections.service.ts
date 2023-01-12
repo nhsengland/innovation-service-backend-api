@@ -10,6 +10,7 @@ import { BaseService } from './base.service';
 
 import type { InnovationSectionModel } from '../_types/innovation.types';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
+import { In } from 'typeorm';
 
 @injectable()
 export class InnovationSectionsService extends BaseService {
@@ -400,11 +401,11 @@ export class InnovationSectionsService extends BaseService {
     });
 
     const section = await this.sqlConnection
-        .createQueryBuilder(InnovationSectionEntity, 'section')
-        .innerJoin('section.innovation', 'innovation')
-        .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
-        .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
-        .getOne()
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .innerJoin('section.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
+      .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
+      .getOne()
 
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
@@ -415,19 +416,54 @@ export class InnovationSectionsService extends BaseService {
         InnovationEvidenceEntity,
         evidence
       );
-      
+
       await transaction.update(
         InnovationSectionEntity,
         { id: section.id },
-        { 
+        {
           status: InnovationSectionStatusEnum.DRAFT,
           updatedAt: new Date().toISOString(),
           updatedBy: user.id
         }
-      ) 
+      )
 
       return { id: savedEvidence.id };
     });
+  }
+
+  async deleteInnovationEvidence(
+    user: { id: string },
+    innovationId: string,
+    evidenceId: string
+  ): Promise<{ id: string }> {
+
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.evidences', 'evidences')
+      .innerJoinAndSelect('evidences.files', 'files')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne()
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+    }
+
+    const evidence = (await innovation.evidences).find(e => e.id === evidenceId)
+
+    if (!evidence) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND)
+    }
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      //delete files
+      await transaction.delete(InnovationFileEntity, { id: In(evidence.files.map(f => f.id)) })
+
+      //soft-delete evidence
+      await transaction.update(InnovationEvidenceEntity, { id: evidenceId }, { updatedBy: user.id })
+      await transaction.softDelete(InnovationEvidenceEntity, { id: evidence.id })
+
+      return { id: evidence.id }
+    })
   }
 
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
