@@ -59,7 +59,7 @@ export class alterActionStatusInReviewToSubmitted1673448916947 implements Migrat
               INNER JOIN innovation_support S ON i.id = s.innovation_id
               INNER JOIN organisation_unit U ON s.organisation_unit_id = U.id
               INNER JOIN innovation_action A ON a.innovation_support_id = s.id
-              WHERE A.status IN ('SUBMITTED', 'REQUESTED')
+              WHERE A.status IN ('SUBMITTED', 'IN_REVIEW', 'REQUESTED')
               GROUP BY u.id, i.id
           ),
           messagesByInnovationAndUnit AS (
