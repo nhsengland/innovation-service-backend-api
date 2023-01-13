@@ -54,7 +54,7 @@ export class InnovationSectionsService extends BaseService {
         .groupBy('sections.section');
 
       if (user.type === UserTypeEnum.ACCESSOR) {
-        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.IN_REVIEW });
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.SUBMITTED });
       } else if (user.type === UserTypeEnum.INNOVATOR) {
         query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
       }
@@ -128,7 +128,7 @@ export class InnovationSectionsService extends BaseService {
     let actions: null | InnovationActionEntity[] = null;
 
     if (filters.fields?.includes('actions')) {
-      const requestedStatus = user.type === UserTypeEnum.ACCESSOR ? InnovationActionStatusEnum.IN_REVIEW : InnovationActionStatusEnum.REQUESTED;
+      const requestedStatus = user.type === UserTypeEnum.ACCESSOR ? InnovationActionStatusEnum.SUBMITTED : InnovationActionStatusEnum.REQUESTED;
       actions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
         .andWhere('actions.status = :requestedStatus', { requestedStatus })
@@ -274,7 +274,7 @@ export class InnovationSectionsService extends BaseService {
       // Update section actions.
       const requestedStatusActions = (await dbSection.actions).filter(action => action.status === InnovationActionStatusEnum.REQUESTED);
       for (const action of requestedStatusActions) {
-        action.status = InnovationActionStatusEnum.IN_REVIEW;
+        action.status = InnovationActionStatusEnum.SUBMITTED;
         action.updatedBy = user.id;
       }
 
@@ -293,7 +293,7 @@ export class InnovationSectionsService extends BaseService {
       if (requestedStatusActions.length > 0) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE },
+          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 
@@ -305,7 +305,7 @@ export class InnovationSectionsService extends BaseService {
             action: {
               id: requestedStatusActions[0]!.id,
               section: savedSection.section,
-              status: InnovationActionStatusEnum.IN_REVIEW
+              status: InnovationActionStatusEnum.SUBMITTED
             }
           });
       }

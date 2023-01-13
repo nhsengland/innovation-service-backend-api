@@ -304,7 +304,7 @@ export class InnovationActionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
     }
 
-    if (![InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED].includes(dbAction.status)) {
+    if (![InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED].includes(dbAction.status)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
