@@ -110,10 +110,6 @@ export class StatisticsService extends BaseService {
 
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
-    if (!organisationUnit) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-    }
-
     const myActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
       .select('actions.status', 'status')
       .addSelect('count(*)', 'count')
@@ -124,6 +120,9 @@ export class StatisticsService extends BaseService {
       .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] })
 
     if (domainContext.userType === UserTypeEnum.ACCESSOR) {
+      if (!organisationUnit) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
       myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit })
     }
 
