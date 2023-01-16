@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
@@ -110,17 +110,23 @@ export class StatisticsService extends BaseService {
 
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
-    if (!organisationUnit) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-    }
-
-    const myActionsCount = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+    const myActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
       .select('actions.status', 'status')
       .addSelect('count(*)', 'count')
       .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
       .innerJoin('actions.innovationSupport', 'innovationSupport')
+      .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
       .where('actions.created_by = :userId', { userId: requestUser.id })
       .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] })
+
+    if (domainContext.userType === UserTypeEnum.ACCESSOR) {
+      if (!organisationUnit) {
+        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      }
+      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit })
+    }
+
+    const myActionsCount = await myActionsQuery
       .groupBy('actions.status')
       .getRawMany();
 
