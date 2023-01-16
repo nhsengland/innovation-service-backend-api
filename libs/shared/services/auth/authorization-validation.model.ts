@@ -292,7 +292,7 @@ export class AuthorizationValidationModel {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED);
     }
 
-    if (!this.domainContext.data?.organisation) { this.domainContext.data = await this.fetchOrganisationUnitContextData(organisationUnit, userData.identityId); }
+    if (!this.domainContext.data?.organisation?.organisationUnit) { this.domainContext.data = await this.fetchOrganisationUnitContextData(organisationUnit, userData.identityId); }
   }
 
   private async getOrganisationContextData(userData: DomainUserInfoType, organisationId?: string): Promise<void> {
@@ -373,6 +373,7 @@ export class AuthorizationValidationModel {
     }
 
     const innovation = await query.getOne();
+
     return (innovation ? { id: innovation.id, name: innovation.name, status: innovation.status } : undefined);
 
   }

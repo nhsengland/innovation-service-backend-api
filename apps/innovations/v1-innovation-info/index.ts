@@ -33,6 +33,7 @@ class V1InnovationInfo {
         .setInnovation(params.innovationId)
         .checkInnovation()
         .verify();
+
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
