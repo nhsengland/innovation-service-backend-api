@@ -10,7 +10,7 @@ import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-class CreateInnovationEvidence {
+class UpdateInnovationEvidence {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
@@ -30,11 +30,10 @@ class CreateInnovationEvidence {
         .verify();
 
       const requestUser = auth.getUserInfo();
-      const innovation = auth.getInnovationInfo();
 
-      const result = await innovationSectionsService.createInnovationEvidence(
+      const result = await innovationSectionsService.updateInnovationEvidence(
         { id: requestUser.id },
-        innovation.id,
+        params.evidenceId,
         body
       );
 
@@ -48,16 +47,16 @@ class CreateInnovationEvidence {
 }
 
 export default openApi(
-  CreateInnovationEvidence.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidence',
+  UpdateInnovationEvidence.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/evidence/{evidenceId}',
   {
-    post: {
-      description: 'Create an innovation evidence entry.',
+    put: {
+      description: 'Update an innovation evidence entry.',
       tags: ['Innovation'],
-      summary: 'Create an innovation evidence entry.',
-      operationId: 'v1-innovation-evidence-create',
+      summary: 'Update an innovation evidence entry.',
+      operationId: 'v1-innovation-evidence-update',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The evidence data to create.' }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The evidence data to update.' }),
       responses: {
         200: {
           description: 'Innovation evidence info.',

@@ -6,9 +6,11 @@ import Joi from 'joi';
 
 export type ParamsType = {
   innovationId: string;
+  evidenceId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required().description('The innovation id.'),  
+  evidenceId: Joi.string().guid().required().description('The evidence id.'),
 });
 
 export type BodyType = {

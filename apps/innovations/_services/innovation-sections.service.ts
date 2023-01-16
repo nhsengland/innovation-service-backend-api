@@ -431,6 +431,81 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
+  async updateInnovationEvidence(
+    user: { id: string },
+    evidenceId: string,
+    evidenceData: {
+      evidenceType: EvidenceTypeCatalogueEnum;
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+      description: string;
+      summary: string;
+      files: string[];
+    }
+  ): Promise<{ id: string }> {
+
+    const evidence = await this.sqlConnection
+      .createQueryBuilder(InnovationEvidenceEntity, 'evidence')
+      .innerJoinAndSelect('evidence.innovation', 'innovation')
+      .innerJoinAndSelect('evidence.files', 'files')
+      .where('evidence.id = :evidenceId', { evidenceId })
+      .getOne();
+
+    if (!evidence) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
+    }
+
+    const section = await this.sqlConnection
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .innerJoin('section.innovation', 'innovation')
+      .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
+      .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
+      .getOne()
+
+    if (!section) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
+    }
+
+    const evidenceFiles = await this.sqlConnection
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .where('file.id IN (:...fileIds)', { fileIds: evidence.files.map(f => f.id) })
+      .getMany()
+
+    const fileIds = evidenceFiles.map(f => f.id)
+
+    const filesToDelete = fileIds.filter(fId => !evidenceData.files.includes(fId))
+
+    return this.sqlConnection.transaction(async (transaction) => {
+
+      await transaction.delete(InnovationFileEntity, { id: In(filesToDelete) })
+
+      await transaction.save(
+        InnovationEvidenceEntity,
+        {
+          id: evidence.id,
+          evidenceType: evidenceData.evidenceType,
+          clinicalEvidenceType: evidenceData.clinicalEvidenceType,
+          description: evidenceData.description,
+          summary: evidenceData.summary,
+          files: evidenceData.files.map((id: string) => (InnovationFileEntity.new({ id }))),
+          updatedBy: user.id
+        }
+      );
+
+      await transaction.update(
+        InnovationSectionEntity,
+        { id: section.id },
+        {
+          status: InnovationSectionStatusEnum.DRAFT,
+          updatedAt: new Date().toISOString(),
+          updatedBy: user.id
+        }
+      );
+
+      return { id: evidence.id };
+    });
+
+  }
+
   async deleteInnovationEvidence(
     user: { id: string },
     innovationId: string,
@@ -449,6 +524,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const section = (await innovation.sections).find(s => s.section === InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS)
+
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
     }
@@ -477,7 +553,7 @@ export class InnovationSectionsService extends BaseService {
           updatedBy: user.id,
           status: InnovationSectionStatusEnum.DRAFT
         }
-      )
+      );
 
       return { id: evidence.id }
     })
