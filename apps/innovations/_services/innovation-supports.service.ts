@@ -337,7 +337,7 @@ export class InnovationSupportsService extends BaseService {
             .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: user.id })
             .where({
               innovationSupport: dbSupport.id,
-              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW])
+              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
             })
             .execute();
         }

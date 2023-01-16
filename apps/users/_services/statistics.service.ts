@@ -120,12 +120,12 @@ export class StatisticsService extends BaseService {
       .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .where('actions.created_by = :userId', { userId: requestUser.id })
-      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.IN_REVIEW, InnovationActionStatusEnum.REQUESTED] })
+      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] })
       .groupBy('actions.status')
       .getRawMany();
 
     const actions: Record<string, any> = {
-      IN_REVIEW: { count: 0, lastSubmittedAt: null },
+      SUBMITTED: { count: 0, lastSubmittedAt: null },
       REQUESTED: { count: 0, lastSubmittedAt: null },
     }
     for (const action of myActionsCount) {
@@ -133,8 +133,8 @@ export class StatisticsService extends BaseService {
     }
 
     return {
-      count: actions['IN_REVIEW'].count,
-      total: actions['IN_REVIEW'].count + actions['REQUESTED'].count,
+      count: actions['SUBMITTED'].count,
+      total: actions['SUBMITTED'].count + actions['REQUESTED'].count,
       lastSubmittedAt: Object.values(actions).map(_ => _.lastSubmittedAt).sort((a, b) => b - a)[0] || null,
     };
 

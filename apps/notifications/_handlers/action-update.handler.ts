@@ -43,8 +43,8 @@ export class ActionUpdateHandler extends BaseHandler<
     switch (this.requestUser.type) {
       case UserTypeEnum.INNOVATOR:
         await this.prepareInAppForAccessor();
-        await this.prepareEmailForAccessor();
         if (this.data.actionInfo.status === InnovationActionStatusEnum.DECLINED) {
+          await this.prepareEmailForAccessor();
           await this.prepareInAppForInnovator();
           await this.prepareEmailForInnovator();
         }
@@ -52,7 +52,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
       case UserTypeEnum.ACCESSOR:
         await this.prepareInAppForInnovator();
-        if ([InnovationActionStatusEnum.DECLINED, InnovationActionStatusEnum.DELETED].includes(this.data.actionInfo.status)) {
+        if (this.data.actionInfo.status === InnovationActionStatusEnum.CANCELLED) {
           await this.prepareEmailForInnovator();
         }
         break;
