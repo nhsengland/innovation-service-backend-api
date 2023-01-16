@@ -41,7 +41,7 @@ export class NotificationsService extends BaseService {
    * @returns the total and the notifications
    */
   public async getUserNotifications(
-    userId: string,
+    user: { id: string, organisationUnitId: string | undefined },
     filters: {
       contextTypes: NotificationContextTypeEnum[];
       unreadOnly: boolean;
@@ -62,11 +62,16 @@ export class NotificationsService extends BaseService {
 
     const query = em.createQueryBuilder(NotificationUserEntity, 'user')
       .innerJoinAndSelect('user.notification', 'notification')
+      .innerJoinAndSelect('user.organisationUnit', 'unit')
       .innerJoin('notification.innovation', 'innovation')
       .addSelect('innovation.id', 'innovation_id')
       .addSelect('innovation.status', 'innovation_status')
       .addSelect('innovation.name', 'innovation_name')
-      .where('user.user = :userId', { userId: userId })
+      .where('user.user = :userId', { userId: user.id })
+    
+    if (user.organisationUnitId) {
+      query.andWhere('unit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+    }
 
     // optional filters
     if (filters.unreadOnly) {

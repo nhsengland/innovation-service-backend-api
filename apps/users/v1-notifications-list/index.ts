@@ -29,11 +29,12 @@ class V1UserNotifications {
         .checkInnovatorType()
         .verify();
       const userInfo = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext(); 
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order, ...filters } = queryParams;
 
-      const notifications = await notificationsService.getUserNotifications(userInfo.id, filters, { skip, take, order });
+      const notifications = await notificationsService.getUserNotifications({id: userInfo.id, organisationUnitId: domainContext.organisation?.organisationUnit?.id}, filters, { skip, take, order });
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: notifications.total,
         data: notifications.data.map(notification => ({
