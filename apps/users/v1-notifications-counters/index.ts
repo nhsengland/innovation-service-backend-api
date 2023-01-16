@@ -23,8 +23,9 @@ class V1UserNotificationsCounter {
     try {
       const authInstance = await authService.validate(context).verify();
       const userInfo = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext()
 
-      const total = await notificationsService.getUserActiveNotificationsCounter(userInfo.id);
+      const total = await notificationsService.getUserActiveNotificationsCounter(userInfo.id, domainContext.organisation?.organisationUnit?.id);
       context.res = ResponseHelper.Ok<ResponseDTO>({total: total});
       return;
 

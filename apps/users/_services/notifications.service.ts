@@ -17,15 +17,22 @@ export class NotificationsService extends BaseService {
    * @param entityManager optional entity manager to run the query (for transactions)
    * @returns the total
    */
-  public async getUserActiveNotificationsCounter(userId: string, entityManager?: EntityManager): Promise<number> {
+  public async getUserActiveNotificationsCounter(userId: string, organisationUnitId: string | undefined, entityManager?: EntityManager): Promise<number> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const total = await em.createQueryBuilder(NotificationUserEntity, 'notificationUser')
+    const query = em.createQueryBuilder(NotificationUserEntity, 'notificationUser')
       .innerJoin('notificationUser.notification', 'notification')
       .innerJoin('notification.innovation', 'innovation')             // fixes #104377
+      .innerJoin('notificationUser.organisationUnit', 'orgUnit')
       .where('notificationUser.user = :id', { id: userId })
       .andWhere('notificationUser.readAt IS NULL')
-      .getCount();
+
+    if (organisationUnitId) {
+      query.andWhere('orgUnit.id = :organisationUnitId', { organisationUnitId })
+    }
+
+    const total = await query.getCount()
+
     return total;
   }
 
