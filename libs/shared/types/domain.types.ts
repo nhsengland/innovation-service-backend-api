@@ -150,7 +150,7 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   [ActivityEnum.ACTION_CREATION]: {
-    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string } }
+    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string }, role: UserTypeEnum }
   },
   [ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE]: {
     params: { sectionId: InnovationSectionEnum, totalActions: number }

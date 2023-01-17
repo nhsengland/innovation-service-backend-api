@@ -29,6 +29,7 @@ class V1InnovationActionCreate {
       const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
+        .checkAssessmentType()
         .checkInnovation()
         .verify();
         

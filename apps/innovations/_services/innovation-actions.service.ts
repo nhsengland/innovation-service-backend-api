@@ -261,7 +261,8 @@ export class InnovationActionsService extends BaseService {
         {
           sectionId: data.section,
           actionId: actionResult.id,
-          comment: { value: data.description }
+          comment: { value: data.description },
+          role: domainContext.userType
         }
       );
 
