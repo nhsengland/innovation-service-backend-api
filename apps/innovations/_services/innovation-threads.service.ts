@@ -127,6 +127,7 @@ export class InnovationThreadsService extends BaseService {
     if (transaction) {
       result = await this.createThreadWithTransaction(
         requestUser,
+        domainContext,
         innovationId,
         subject,
         message,
@@ -138,6 +139,7 @@ export class InnovationThreadsService extends BaseService {
     } else {
       result = await this.createThreadNoTransaction(
         requestUser,
+        domainContext,
         innovationId,
         subject,
         message,
@@ -261,6 +263,7 @@ export class InnovationThreadsService extends BaseService {
       threadMessage = await this.createThreadMessageTransaction(
         threadMessageObj,
         requestUser,
+        domainContext,
         thread,
         transaction
       );
@@ -269,6 +272,7 @@ export class InnovationThreadsService extends BaseService {
         return this.createThreadMessageTransaction(
           threadMessageObj,
           requestUser,
+          domainContext,
           thread,
           transaction
         );
@@ -742,6 +746,7 @@ export class InnovationThreadsService extends BaseService {
     transaction: EntityManager,
     threadObj: InnovationThreadEntity,
     requestUser: { id: string },
+    domainContext: DomainContextType,
     innovation: InnovationEntity
   ): Promise<InnovationThreadEntity> {
     const result = await transaction.save<InnovationThreadEntity>(threadObj);
@@ -753,7 +758,7 @@ export class InnovationThreadsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: requestUser.id, innovationId: innovation.id, activity: ActivityEnum.THREAD_CREATION },
+        { userId: requestUser.id, innovationId: innovation.id, activity: ActivityEnum.THREAD_CREATION, domainContext },
         {
           thread: { id: result.id, subject: result.subject },
           message: { id: messageId }
@@ -773,6 +778,7 @@ export class InnovationThreadsService extends BaseService {
   private async createThreadMessageTransaction(
     threadMessageObj: InnovationThreadMessageEntity,
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     thread: InnovationThreadEntity,
     transaction: EntityManager
   ): Promise<InnovationThreadMessageEntity> {
@@ -783,7 +789,7 @@ export class InnovationThreadsService extends BaseService {
     try {
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: requestUser.id, innovationId: thread.innovation.id, activity: ActivityEnum.THREAD_MESSAGE_CREATION },
+        { userId: requestUser.id, innovationId: thread.innovation.id, activity: ActivityEnum.THREAD_MESSAGE_CREATION, domainContext },
         {
           thread: { id: thread.id, subject: thread.subject },
           message: { id: result.id },
@@ -836,6 +842,7 @@ export class InnovationThreadsService extends BaseService {
 
   private async createThreadNoTransaction(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     subject: string,
     message: string,
@@ -877,6 +884,7 @@ export class InnovationThreadsService extends BaseService {
         transaction,
         threadObj,
         requestUser,
+        domainContext,
         innovation
       );
     });
@@ -891,6 +899,7 @@ export class InnovationThreadsService extends BaseService {
 
   private async createThreadWithTransaction(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     subject: string,
     message: string,
@@ -933,6 +942,7 @@ export class InnovationThreadsService extends BaseService {
       transaction,
       threadObj,
       requestUser,
+      domainContext,
       innovation
     );
 

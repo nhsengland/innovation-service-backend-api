@@ -34,8 +34,9 @@ class V1InnovationSectionUpdate {
         .checkInnovation()
         .verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext()
 
-      const result = await innovationSectionsService.updateInnovationSectionInfo({ id: requestUser.id }, params.innovationId, params.sectionKey, body);
+      const result = await innovationSectionsService.updateInnovationSectionInfo({ id: requestUser.id }, domainContext, params.innovationId, params.sectionKey, body);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result?.id });
       return;
 

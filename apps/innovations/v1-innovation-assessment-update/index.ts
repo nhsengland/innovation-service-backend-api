@@ -36,9 +36,11 @@ class V1InnovationAssessmentUpdate {
         .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationAssessmentsService.updateInnovationAssessment(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        domainContext,
         params.innovationId,
         params.assessmentId,
         body

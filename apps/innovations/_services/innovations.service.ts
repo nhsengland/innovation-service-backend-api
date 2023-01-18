@@ -997,6 +997,7 @@ export class InnovationsService extends BaseService {
 
   async createInnovation(
     user: { id: string },
+    domainContext: DomainContextType,
     data: { name: string, description: string, countryName: string, postcode: null | string, organisationShares: string[] },
     surveyId: null | string
   ): Promise<{ id: string }> {
@@ -1083,7 +1084,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.INNOVATION_CREATION },
+        { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.INNOVATION_CREATION, domainContext },
         {}
       );
 
@@ -1113,7 +1114,7 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async submitInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, innovationId: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
+  async submitInnovation(user: { id: string, identityId: string, type: UserTypeEnum }, domainContext: DomainContextType, innovationId: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
       .leftJoinAndSelect('innovations.sections', 'sections')
@@ -1149,7 +1150,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION },
+        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION, domainContext },
         {}
       );
 
@@ -1220,6 +1221,7 @@ export class InnovationsService extends BaseService {
 
   async pauseInnovation(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     data: { message: string }
   ): Promise<{ id: string }> {
@@ -1280,7 +1282,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId, activity: ActivityEnum.INNOVATION_PAUSE },
+        { userId: user.id, innovationId, activity: ActivityEnum.INNOVATION_PAUSE, domainContext },
         { message: data.message }
       );
 
