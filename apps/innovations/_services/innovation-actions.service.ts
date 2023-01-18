@@ -51,8 +51,7 @@ export class InnovationActionsService extends BaseService {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
-      .innerJoinAndSelect('innovationSection.innovation', 'innovation')
-      .innerJoinAndSelect('action.innovationSupport', 'support');
+      .innerJoinAndSelect('innovationSection.innovation', 'innovation');
 
 
     if (user.type === UserTypeEnum.INNOVATOR) {
@@ -97,7 +96,8 @@ export class InnovationActionsService extends BaseService {
     if (filters.createdByMe) {
       query.andWhere('action.created_by = :createdBy', { createdBy: user.id });
       if (user.organisationUnitId) {
-        query.andWhere('support.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
+        query.innerJoinAndSelect('action.innovationSupport', 'support')
+        .andWhere('support.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
       }
     }
 
