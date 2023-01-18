@@ -29,8 +29,9 @@ class V1InnovationActionInfo {
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovatorType()
-        .checkInnovation()
+        .checkAssessmentType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
       const result = await innovationActionsService.getActionInfo(params.actionId);
@@ -44,7 +45,7 @@ class V1InnovationActionInfo {
         createdBy: {
           id: result.createdBy.id,
           name: result.createdBy.name,
-          organisationUnit: result.createdBy.organisationUnit
+          organisationUnit: result.createdBy?.organisationUnit
         },
         ...(result.declineReason ? { declineReason: result.declineReason } : {})
       });

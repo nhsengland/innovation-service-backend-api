@@ -156,7 +156,7 @@ export class InnovationActionsService extends BaseService {
     section: InnovationSectionEnum,
     description: string,
     createdAt: DateISOType,
-    createdBy: { id: string, name: string, organisationUnit: string },
+    createdBy: { id: string, name: string, organisationUnit?: string },
     declineReason?: string
   }> {
 
@@ -164,8 +164,8 @@ export class InnovationActionsService extends BaseService {
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
       .innerJoinAndSelect('innovationSection.innovation', 'innovation')
       .innerJoinAndSelect('action.createdByUser', 'createdByUser')
-      .innerJoinAndSelect('action.innovationSupport', 'innovationSupport')
-      .innerJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('action.innovationSupport', 'innovationSupport')
+      .leftJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
       .where('action.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
@@ -197,7 +197,7 @@ export class InnovationActionsService extends BaseService {
       createdBy: {
         id: dbAction.createdByUser.id,
         name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
-        organisationUnit: dbAction.innovationSupport.organisationUnit.name
+        organisationUnit: dbAction.innovationSupport?.organisationUnit?.name
       },
       ...(declineReason ? { declineReason } : {})
     };
