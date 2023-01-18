@@ -194,19 +194,27 @@ export class AuthorizationValidationModel {
   }
 
   // Innovation validations.
-  checkInnovation(data?: { status?: InnovationStatusEnum[] }): this {
+  checkInnovation(data?: { status?: InnovationStatusEnum[] | { [key in UserTypeEnum]?: InnovationStatusEnum[] } }): this {
     this.innovationValidations.set(InnovationValidationKeys.checkInnovation, () => this.innovationValidation(data));
     return this;
   }
-  private innovationValidation(data?: { status?: InnovationStatusEnum[] }): null | AuthErrorsEnum {
+  private innovationValidation(data?: { status?: InnovationStatusEnum[] | { [key in UserTypeEnum]?: InnovationStatusEnum[] } }): null | AuthErrorsEnum {
 
     let error: null | AuthErrorsEnum = null;
 
     if (!this.innovation.data) {
       error = AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
     }
-    if (!error && data?.status && !data.status.some(status => status === this.innovation.data?.status)) {
-      error = AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
+
+    const domainContext = this.getContext();
+    if (!error && data?.status && domainContext.userType) {
+
+      const status = Array.isArray(data.status) ? data.status : data.status[domainContext.userType];
+
+      if (!(status ?? []).some(status => status === this.innovation.data?.status)) {
+        error = AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
+      }
+
     }
 
     return error;
@@ -278,7 +286,7 @@ export class AuthorizationValidationModel {
 
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
-    // if an organisation unit was not issued, use the first organisation unit of 
+    // if an organisation unit was not issued, use the first organisation unit of
     // the first organisation on a user's organisation list as the context.
 
     const organisationUnit = organisationUnitId ?? userData.organisations[0]?.organisationUnits[0]?.id;
@@ -298,7 +306,7 @@ export class AuthorizationValidationModel {
   private async getOrganisationContextData(userData: DomainUserInfoType, organisationId?: string): Promise<void> {
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
-    // if an organisation unit was not issued, use the first organisation unit of 
+    // if an organisation unit was not issued, use the first organisation unit of
     // the first organisation on a user's organisation list as the context.
     const organisation = organisationId || userData.organisations[0]?.id;
 
