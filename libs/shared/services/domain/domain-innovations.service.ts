@@ -1,6 +1,6 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSupportEntity, InnovationSupportLogEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityLogEntity, InnovationSectionEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSupportEntity, InnovationSupportLogEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
 import { InnovationErrorsEnum, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType } from '../../types';
@@ -71,31 +71,43 @@ export class DomainInnovationsService {
   }
 
   public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<{ id: string, name: string, supportingUserIds: string[] }> {
-    const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
+    const sections = await transactionManager
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .select(["section.id"])
+      .addSelect('section.innovation_id')
+      .where('section.innovation_id = :innovationId', { innovationId: innovation.id })
+      .getMany();
+    const sectionsIds = sections.map(section => section.id);
 
-    if (innovationSupportIds.length > 0) {
-      await transactionManager.createQueryBuilder().update(InnovationActionEntity)
-        .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, deletedAt: new Date() })
-        .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
-        .execute();
-    }
+    await transactionManager.createQueryBuilder().update(InnovationActionEntity)
+      .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id })
+      .where('innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)', {
+        sectionsIds,
+        innovationActionStatus: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+      })
+      .execute();
+
+    await transactionManager.createQueryBuilder().update(InnovationActionEntity)
+      .set({ updatedBy: user.id, deletedAt: new Date() })
+      .where('innovation_section_id IN (:...sectionsIds)', { sectionsIds })
+      .execute();
 
     // Reject all PENDING AND APPROVED export requests
     await transactionManager.createQueryBuilder(InnovationExportRequestEntity, 'request')
-    .update({
-      status: InnovationExportRequestStatusEnum.REJECTED,
-      rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
-      updatedBy: user.id
-    })
-    .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
-      {
-        innovationId: innovation.id,
-        pendingStatus: InnovationExportRequestStatusEnum.PENDING,
-        approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
-        expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
-      }
-    )
-    .execute()
+      .update({
+        status: InnovationExportRequestStatusEnum.REJECTED,
+        rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
+        updatedBy: user.id
+      })
+      .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
+        {
+          innovationId: innovation.id,
+          pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+          approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+          expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
+        }
+      )
+      .execute()
 
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {

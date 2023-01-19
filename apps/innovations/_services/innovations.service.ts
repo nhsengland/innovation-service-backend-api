@@ -1236,10 +1236,16 @@ export class InnovationsService extends BaseService {
     })));
 
     const result = await this.sqlConnection.transaction(async transaction => {
+      const sections = await transaction
+        .createQueryBuilder(InnovationSectionEntity, 'section')
+        .select(["section.id"])
+        .addSelect('section.innovation_id')
+        .where('section.innovation_id = :innovationId', { innovationId })
+        .getMany();
 
       // Decline all actions for all innovation supports.
       await transaction.getRepository(InnovationActionEntity).update(
-        { innovationSupport: In(dbSupports.map(item => item.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]) },
+        { innovationSection: In(sections.map(section => section.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]) },
         { status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id }
       );
 
