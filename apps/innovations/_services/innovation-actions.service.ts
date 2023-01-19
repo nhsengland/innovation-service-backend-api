@@ -309,9 +309,65 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
+    if (
+      dbAction.status === InnovationActionStatusEnum.REQUESTED && data.status !== InnovationActionStatusEnum.CANCELLED
+      || dbAction.status === InnovationActionStatusEnum.SUBMITTED && ![InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.REQUESTED].includes(data.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
+    }
+
     //Accessor can only decline actions requested by himself
     if (dbAction.status === InnovationActionStatusEnum.REQUESTED && dbAction.createdBy !== user.id) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER)
+    }
+
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+
+    // Send action status update to innovation owner
+    await this.notifierService.send(
+      { id: user.id, identityId: user.identityId, type: user.type },
+      NotifierTypeEnum.ACTION_UPDATE,
+      {
+        innovationId: dbAction.innovationSection.innovation.id,
+        action: {
+          id: dbAction.id,
+          section: dbAction.innovationSection.section,
+          status: result.status
+        }
+      },
+      domainContext
+    );
+
+    return { id: result.id };
+
+  }
+
+  async updateActionAsNeedsAccessor(
+    user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
+    innovationId: string,
+    actionId: string,
+    data: { status: InnovationActionStatusEnum }
+  ): Promise<{ id: string }> {
+
+    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
+      .innerJoinAndSelect('ia.innovationSection', 'is')
+      .innerJoinAndSelect('is.innovation', 'i')
+      .leftJoinAndSelect('ia.innovationSupport', 'isup')
+      .where('ia.id = :actionId', { actionId })
+      .andWhere('ia.innovationSupport.id IS NULL')
+      .getOne();
+    if (!dbAction) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
+    }
+
+    if (![InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED].includes(dbAction.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
+    }
+
+    if (
+      dbAction.status === InnovationActionStatusEnum.REQUESTED && data.status !== InnovationActionStatusEnum.CANCELLED
+      || dbAction.status === InnovationActionStatusEnum.SUBMITTED && ![InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.REQUESTED].includes(data.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
