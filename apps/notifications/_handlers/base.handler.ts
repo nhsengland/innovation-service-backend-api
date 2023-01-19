@@ -20,9 +20,8 @@ type HandlerEmailResponseType<T> = Array<{
 type HandlerInAppResponseType<T> = Array<{
   innovationId: string;
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-  userIds: string[];
+  users: { userId: string, userType: UserTypeEnum, organisationUnitId?: string | undefined }[];
   params: T;
-  domainContext: DomainContextType | undefined;
 }>;
 
 

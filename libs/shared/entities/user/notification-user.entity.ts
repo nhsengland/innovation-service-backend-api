@@ -28,7 +28,7 @@ export class NotificationUserEntity extends BaseEntity {
 
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })
-  organisationUnit: undefined | OrganisationUnitEntity;
+  organisationUnit: OrganisationUnitEntity | null;
 
   static new(data: Partial<NotificationUserEntity>): NotificationUserEntity {
     const instance = new NotificationUserEntity();

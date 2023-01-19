@@ -1,5 +1,5 @@
 import type { DomainContextType } from '@innovations/shared/types';
-import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, UserTypeEnum, EmailNotificationTypeEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -78,9 +78,8 @@ export class ThreadCreationHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-      userIds: [innovation.owner.id],
+      users: [{ userId: innovation.owner.id, userType: UserTypeEnum.INNOVATOR }],
       params: { subject: thread.subject, messageId: this.inputData.messageId }
     });
 
@@ -111,9 +110,8 @@ export class ThreadCreationHandler extends BaseHandler<
     if (assignedUsers.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-        userIds: assignedUsers.map(item => item.id),
+        users: assignedUsers.map(item => ({ userId: item.id, userType: UserTypeEnum.ACCESSOR, organisationUnitId: item.organisationUnitId })),
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

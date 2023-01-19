@@ -95,6 +95,10 @@ export class InnovationActionsService extends BaseService {
 
     if (filters.createdByMe) {
       query.andWhere('action.created_by = :createdBy', { createdBy: user.id });
+      if (user.organisationUnitId) {
+        query.innerJoinAndSelect('action.innovationSupport', 'support')
+        .andWhere('support.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
+      }
     }
 
 

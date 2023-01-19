@@ -7,6 +7,7 @@ import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 import * as _ from 'lodash';
+import type { EntityManager } from 'typeorm';
 
 
 @injectable()
@@ -156,7 +157,7 @@ export class RecipientsService extends BaseService {
   }
 
   async innovationAssignedUsers(data: { innovationId?: string, innovationSupportId?: string }): Promise<{
-    id: string, identityId: string, type: UserTypeEnum,
+    id: string, identityId: string, type: UserTypeEnum, organisationUnitId: string,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
 
@@ -166,6 +167,7 @@ export class RecipientsService extends BaseService {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences');
@@ -186,6 +188,7 @@ export class RecipientsService extends BaseService {
       id: item.organisationUser.user.id,
       identityId: item.organisationUser.user.identityId,
       type: item.organisationUser.user.type,
+      organisationUnitId: item.organisationUnit.id,
       emailNotificationPreferences: (await item.organisationUser.user.notificationPreferences).map(emailPreference => ({
         type: emailPreference.notification_id,
         preference: emailPreference.preference,
@@ -194,10 +197,11 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async userInnovationsWithAssignedUsers(userId: string): Promise<{ id: string, assignedUsers: { id: string, identityId: string }[] }[]> {
+  async userInnovationsWithAssignedUsers(userId: string): Promise<{ id: string, assignedUsers: { id: string, identityId: string, organisationUnitId: string }[] }[]> {
 
     const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.innovationSupports', 'support')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
       .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
@@ -210,6 +214,7 @@ export class RecipientsService extends BaseService {
         .flatMap(support => support.organisationUnitUsers.map(item => ({
           id: item.organisationUser.user.id,
           identityId: item.organisationUser.user.identityId,
+          organisationUnitId: item.organisationUnit.id
           // type: item.organisationUser.user.type
         })))
     }));
@@ -283,29 +288,27 @@ export class RecipientsService extends BaseService {
    * Fetch a thread intervenient users.
    * We only need to go by the thread messages because the first one, has also the thread author.
    */
-  async threadIntervenientUsers(threadId: string): Promise<{
-    id: string, identityId: string, type: UserTypeEnum,
+  async threadIntervenientUsers(threadId: string, entityManager?: EntityManager): Promise<{
+    id: string, identityId: string, type: UserTypeEnum, organisationUnitId?: string | null,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
+    const connection = entityManager ?? this.sqlConnection.manager;
 
-    const dbThreadUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+    const dbThreadUsers = await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
+      .innerJoinAndSelect('threadMessage.author', 'user')
       .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
-      .innerJoin(subQuery => subQuery
-        .select('subQ_User.id', 'id')
-        .from(InnovationThreadMessageEntity, 'subQ_TMessage')
-        .innerJoin(UserEntity, 'subQ_User', 'subQ_User.id = subQ_TMessage.author_id AND subQ_User.locked_at IS NULL')
-        .andWhere('subQ_TMessage.innovation_thread_id = :threadId', { threadId })
-        .groupBy('subQ_User.id')
-        , 'threadMessageUsers', 'threadMessageUsers.id = user.id')
-      .getMany() || [];
+      .where('threadMessage.innovation_thread_id = :threadId', { threadId })
+      .andWhere('threadMessage.deleted_at IS NULL')
+      .getMany();
 
+    
     return Promise.all(dbThreadUsers.map(async item => ({
-      id: item.id,
-      identityId: item.identityId,
-      type: item.type,
-      emailNotificationPreferences: (await item.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
+      id: item.author.id,
+      identityId: item.author.identityId,
+      type: item.author.type,
+      organisationUnitId: item.authorOrganisationUnit ? item.authorOrganisationUnit?.id : null,
+      emailNotificationPreferences: (await item.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
     })));
-
   }
 
   // TODO: Deprecated!
@@ -392,24 +395,23 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async organisationUnitsQualifyingAccessors(organisationUnitIds: string[]): Promise<{ id: string; identityId: string }[]> {
+  async organisationUnitsQualifyingAccessors(organisationUnitIds: string[]): Promise<{ id: string; identityId: string, organisationUnitId: string }[]> {
 
     if (organisationUnitIds.length === 0) { return []; }
 
     const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
       .innerJoin('user.userOrganisations', 'userOrganisations')
       .innerJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-      .innerJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
-      .innerJoin('organisationUnit.organisation', 'organisation')
+      .select('user.id', 'id')
+      .addSelect('user.external_id', 'identityId')
+      .addSelect('userOrganisationUnits.organisation_unit_id', 'organisationUnitId')
       .where('userOrganisationUnits.organisation_unit_id IN (:...organisationUnitIds)', { organisationUnitIds })
       .andWhere('userOrganisations.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
-      .andWhere('organisation.inactivated_at IS NULL')
-      .andWhere('organisationUnit.inactivated_at IS NULL')
-      .andWhere('user.locked_at IS NULL')
-      .getMany() || [];
+      .andWhere('user.deleted_at IS NULL')
+      // TODO confirm the deleted at on inner join for ou and ouu
+      .getRawMany();
 
-    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId }));
-
+    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId, organisationUnitId: item.organisationUnitId }));
   }
 
   /**
