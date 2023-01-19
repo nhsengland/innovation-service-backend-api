@@ -1,4 +1,4 @@
-import { NotifierTypeEnum, UserTypeEnum, EmailNotificationTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -31,7 +31,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
     }
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const previousAssignedUsers = await this.recipientsService.usersInfo(this.inputData.previousAssignedAssessors.map(item => item.id));
+    const previousAssignedUsers = await this.recipientsService.usersInfo(this.inputData.previousAssignedAccessors.map(item => item.id));
     const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
     this.emails.push({
@@ -61,9 +61,8 @@ export class InnovationStopSharingHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_STOP_SHARING, id: this.inputData.innovationId },
-      userIds: previousAssignedUsers.map(item => item.id),
+      users: this.inputData.previousAssignedAccessors.map(item => ({ userId: item.id, userType: item.userType, organisationUnitId: item.organisationUnitId })),
       params: {}
     });
 

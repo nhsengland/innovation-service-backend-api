@@ -21,7 +21,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
   private data: {
     innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum } },
-    actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, owner: { id: string; identityId: string } },
+    actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, organisationUnit: { id: string}, owner: { id: string; identityId: string } },
     comment?: string
   } = {};
 
@@ -71,9 +71,8 @@ export class ActionUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
-      userIds: [this.data.actionInfo?.owner.id || ''],
+      users: [{ userId: this.data.actionInfo?.owner.id || '',  userType: UserTypeEnum.ACCESSOR, organisationUnitId: this.data.actionInfo?.organisationUnit.id }],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
@@ -119,9 +118,8 @@ export class ActionUpdateHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
-      userIds: [this.data.innovation?.owner.id || ''],
+      users: [{ userId: this.data.innovation?.owner.id || '', userType: UserTypeEnum.INNOVATOR }],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.

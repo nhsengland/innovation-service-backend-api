@@ -19,6 +19,7 @@ type ThreadIntervinientUserTypeAlias = {
   id: string;
   identityId: string;
   type: UserTypeEnum;
+  organisationUnitId?: string | null;
   emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
 };
 
@@ -114,7 +115,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
   private pushInAppNotifications( threadIntervenientUsers: ThreadIntervinientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
     
-    const inAppRecipients = threadIntervenientUsers.map(item => item.id);
+    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userType: item.type, organisationUnitId: item.organisationUnitId ?? undefined}));
 
     // Always include Innovation owner in the notification center recipients
     const owner = innovation.owner;
@@ -125,15 +126,14 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // In the case the owner is not on the recipients list and the creator of the reply is not the owner her/himself
     // Add her/him to the recipients list of in app notifications
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      inAppRecipients.push(owner.id);
+      inAppRecipients.push({userId: owner.id, userType: owner.type, organisationUnitId: undefined});
     }
 
     if (inAppRecipients.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, id: this.inputData.threadId },
-        userIds: inAppRecipients,
+        users: inAppRecipients,
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }
