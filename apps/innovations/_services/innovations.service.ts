@@ -374,6 +374,11 @@ export class InnovationsService extends BaseService {
         .addSelect('innovation.id', 'innovation_id')
         .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
+      
+      if (user.organisationUnitId) {
+        notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
+        .where('organisationUnit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+      }
 
       if (filters.fields?.includes('statistics')) {
         notificationsQuery

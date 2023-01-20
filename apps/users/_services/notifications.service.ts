@@ -23,12 +23,13 @@ export class NotificationsService extends BaseService {
     const query = em.createQueryBuilder(NotificationUserEntity, 'notificationUser')
       .innerJoin('notificationUser.notification', 'notification')
       .innerJoin('notification.innovation', 'innovation')             // fixes #104377
-      .innerJoin('notificationUser.organisationUnit', 'orgUnit')
       .where('notificationUser.user = :id', { id: userId })
       .andWhere('notificationUser.readAt IS NULL')
 
     if (organisationUnitId) {
-      query.andWhere('orgUnit.id = :organisationUnitId', { organisationUnitId })
+      query.innerJoin('notificationUser.organisationUnit', 'orgUnit')
+      .andWhere('orgUnit.id = :organisationUnitId', { organisationUnitId })
+      
     }
 
     const total = await query.getCount()

@@ -32,7 +32,7 @@ class V1InnovationsList {
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.userType, userOrganisationRole: domainContext.organisation?.role });
 
       const { skip, take, order, ...filters } = queryParams;
 
@@ -40,9 +40,9 @@ class V1InnovationsList {
         {
           id: requestUser.id,
           type: requestUser.type,
-          ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext?.organisation.organisationUnit.id } : {}),
-          ...( domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {})
+          ...(domainContext.organisation?.id ? { organisationId: domainContext.organisation.id } : {}),
+          ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {}),
+          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {})
         },
         filters,
         { skip, take, order }
