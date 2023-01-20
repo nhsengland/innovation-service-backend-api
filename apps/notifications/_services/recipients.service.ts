@@ -1,6 +1,6 @@
 import { CommentEntity, IdleSupportViewEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, OrganisationEntity, UserEntity } from '@notifications/shared/entities';
 import { AccessorOrganisationRoleEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@notifications/shared/errors';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UserErrorsEnum } from '@notifications/shared/errors';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
 
@@ -156,14 +156,18 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async innovationAssignedUsers(data: { innovationId?: string, innovationSupportId?: string }): Promise<{
+  /**
+   * returns the innovation assigned users to an innovation/support.
+   * @param data the parameters is either:
+   *  - innovationId - to get all the users assigned to the innovation
+   *  - innovationSupportId - to get all the users assigned to the innovation support
+   * @returns a list of users with their email notification preferences
+   * @throws {NotFoundError} if the support is not found when using innovationSupportId
+   */
+  async innovationAssignedUsers(data: { innovationId: string} | { innovationSupportId : string }): Promise<{
     id: string, identityId: string, type: UserTypeEnum, organisationUnitId: string,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
-
-    if (!data.innovationId && !data.innovationSupportId) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_INFO_EMPTY_INPUT);
-    }
 
     const query = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
@@ -172,29 +176,29 @@ export class RecipientsService extends BaseService {
       .innerJoinAndSelect('organisationUser.user', 'user')
       .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences');
 
-    if (data.innovationId) {
+    if ('innovationId' in data) {
       query.where('support.innovation_id = :innovationId', { innovationId: data.innovationId });
-    } else if (data.innovationSupportId) {
+    } else if ('innovationSupportId' in data) {
       query.where('support.id = :innovationSupportId', { innovationSupportId: data.innovationSupportId });
     }
 
-    const dbInnovationSupport = await query.getOne();
+    const dbInnovationSupports = await query.getMany();
 
-    if (!dbInnovationSupport) {
+    // keep previous behavior throwing an error when searching for a specific support
+    if ('innovationSupportId' in data && !dbInnovationSupports.length) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-
-    return Promise.all(dbInnovationSupport.organisationUnitUsers.map(async item => ({
+    
+    return Promise.all(dbInnovationSupports.flatMap(support => support.organisationUnitUsers.map(async item => ({
       id: item.organisationUser.user.id,
       identityId: item.organisationUser.user.identityId,
       type: item.organisationUser.user.type,
-      organisationUnitId: item.organisationUnit.id,
+      organisationUnitId: support.organisationUnit.id,
       emailNotificationPreferences: (await item.organisationUser.user.notificationPreferences).map(emailPreference => ({
         type: emailPreference.notification_id,
         preference: emailPreference.preference,
       }))
-    })));
-
+    }))));
   }
 
   async userInnovationsWithAssignedUsers(userId: string): Promise<{ id: string, assignedUsers: { id: string, identityId: string, organisationUnitId: string }[] }[]> {
