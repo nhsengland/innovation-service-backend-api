@@ -1,7 +1,5 @@
 import {
-  EmailNotificationPreferenceEnum, EmailNotificationTypeEnum,
-  NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum,
-  UserTypeEnum
+  EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum
 } from '@notifications/shared/enums';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -89,15 +87,17 @@ export class CommentCreationHandler extends BaseHandler<
         }
       });
     }
-
+    
     if (commentIntervenientUsers.length > 0) {
+      /* Todo: this isn't working with contextSwtich, needs re-checking 
       this.inApp.push({
         innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
+        // domainContext: this.domainContext, // this domain context needs re-checking
         context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_REPLY, id: this.inputData.commentId },
-        userIds: commentIntervenientUsers.map(item => item.id),
+        users: commentIntervenientUsers.map(item => ({ userId: item.id, userType: item.type, organisationUnitId: ??})),
         params: {}
       });
+      */   
     }
 
   }
@@ -124,9 +124,9 @@ export class CommentCreationHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
+      // domainContext: { userType: UserTypeEnum.INNOVATOR, organisation: null },
       context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
-      userIds: [this.data.innovation?.owner.id || ''],
+      users: [{ userId: this.data.innovation?.owner.id || '', userType: UserTypeEnum.INNOVATOR }],
       params: {}
     });
 
@@ -149,15 +149,17 @@ export class CommentCreationHandler extends BaseHandler<
       });
     }
 
-    if (assignedUsers.length > 0) {
-      this.inApp.push({
-        innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
-        context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
-        userIds: assignedUsers.map(item => item.id),
-        params: {}
-      });
-    }
+    // const domContext = await this.domainService.context.getContextFromUnitInfo(user.organisationUnitId, user.identityId)
+
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      // domainContext: domContext,
+      context: { type: NotificationContextTypeEnum.COMMENT, detail: NotificationContextDetailEnum.COMMENT_CREATION, id: this.inputData.commentId },
+      users: assignedUsers.map(user => ({ userId: user.id, userType: user.type, organisationUnitId: user.organisationUnitId })),
+      params: {}
+    });
+
+    
 
   }
 

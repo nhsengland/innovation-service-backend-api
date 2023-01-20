@@ -61,9 +61,9 @@ class V1NotificationsListener {
             requestUser: { id: message.data.requestUser.id },
             innovationId: item.innovationId,
             context: { type: item.context.type, detail: item.context.detail, id: item.context.id },
-            userIds: item.userIds,
+            users: item.users,
             params: item.params,
-            domainContext: message.data.domainContext,
+            // domainContext: message.data.domainContext,
           }
         });
 

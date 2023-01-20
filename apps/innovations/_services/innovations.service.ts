@@ -1232,14 +1232,17 @@ export class InnovationsService extends BaseService {
   ): Promise<{ id: string }> {
 
     const dbSupports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
-      .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
-      .leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
-      .leftJoinAndSelect('organisationUser.user', 'user')
+      .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('organisationUser.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
       .getMany();
 
-    const previousAssignedAssessors = dbSupports.flatMap(support => support.organisationUnitUsers.map(item => ({
-      id: item.organisationUser.user.id
+    const previousAssignedAccessors = dbSupports.flatMap(support => support.organisationUnitUsers.map(item => ({
+      id: item.organisationUser.user.id,
+      organisationUnitId: item.organisationUnit.id,
+      userType: item.organisationUser.user.type as UserTypeEnum.ACCESSOR // it is always accessor
     })));
 
     const result = await this.sqlConnection.transaction(async transaction => {
@@ -1298,7 +1301,7 @@ export class InnovationsService extends BaseService {
     await this.notifierService.send(
       user,
       NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, previousAssignedAssessors, message: data.message }
+      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message }
     );
 
     return result;
