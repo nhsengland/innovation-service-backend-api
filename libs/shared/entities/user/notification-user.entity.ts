@@ -26,6 +26,8 @@ export class NotificationUserEntity extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 
+  // Note: because of this "primary column" being nullable, we need to drop the primary key and create a unique index
+  @PrimaryColumn({ name: 'organisation_unit_id', type: 'uniqueidentifier' })
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity | null;
