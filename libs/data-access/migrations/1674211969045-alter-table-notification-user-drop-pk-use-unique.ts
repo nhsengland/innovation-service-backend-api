@@ -21,7 +21,7 @@ export class alterTableNotificationUserDropPkUseUnique1674211969045 implements M
     `)
 
     await queryRunner.query(`
-      ALTER TABLE notification_user ADD PRIMARY KEY ("notification_id", "user_id");
+      ALTER TABLE notification_user ADD CONSTRAINT [pk_notification_user_id] PRIMARY KEY ("notification_id", "user_id");
     `);
   }
 

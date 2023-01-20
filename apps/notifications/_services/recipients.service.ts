@@ -294,20 +294,30 @@ export class RecipientsService extends BaseService {
   }[]> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const dbThreadUsers = await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
-      .innerJoinAndSelect('threadMessage.author', 'user')
-      .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
+    const authors = new Map((await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
       .where('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .andWhere('threadMessage.deleted_at IS NULL')
+      .select('threadMessage.author_id', 'author_id')
+      .addSelect('threadMessage.author_organisation_unit_id', 'author_organisation_unit_id')
+      .where('threadMessage.deleted_at IS NULL')
+      .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
+      .distinct()
+      .getRawMany()).map(item => [item.author_id, item.author_organisation_unit_id]));
+
+    if(authors.size === 0) {
+      return [];
+    }
+
+    const dbThreadUsers = await connection.createQueryBuilder(UserEntity, 'user')
+      .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
+      .where('user.id IN (:...ids)', { ids: Array.from(authors.keys()) })
       .getMany();
 
-    
     return Promise.all(dbThreadUsers.map(async item => ({
-      id: item.author.id,
-      identityId: item.author.identityId,
-      type: item.author.type,
-      organisationUnitId: item.authorOrganisationUnit ? item.authorOrganisationUnit?.id : null,
-      emailNotificationPreferences: (await item.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
+      id: item.id,
+      identityId: item.identityId,
+      type: item.type,
+      organisationUnitId: authors.get(item.id) ?? null,
+      emailNotificationPreferences: (await item.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
     })));
   }
 
