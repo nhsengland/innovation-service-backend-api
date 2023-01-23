@@ -70,7 +70,6 @@ export class NotificationsService extends BaseService {
 
     const query = em.createQueryBuilder(NotificationUserEntity, 'user')
       .innerJoinAndSelect('user.notification', 'notification')
-      .innerJoinAndSelect('user.organisationUnit', 'unit')
       .innerJoin('notification.innovation', 'innovation')
       .addSelect('innovation.id', 'innovation_id')
       .addSelect('innovation.status', 'innovation_status')
@@ -78,7 +77,7 @@ export class NotificationsService extends BaseService {
       .where('user.user = :userId', { userId: user.id })
     
     if (user.organisationUnitId) {
-      query.andWhere('unit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+      query.innerJoinAndSelect('user.organisationUnit', 'unit').andWhere('unit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
     }
 
     // optional filters
