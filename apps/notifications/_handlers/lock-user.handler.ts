@@ -44,7 +44,7 @@ export class LockUserHandler extends BaseHandler<
       for (const innovation of userInnovations) {
 
         // Filter duplicated ids..
-        const uniqueUsers = [...new Set(innovation.assignedUsers)]; // check Set for objects
+        const uniqueUsers = [...new Map(innovation.assignedUsers.map(item => [`${item.id}_${item.organisationUnitId}`, item])).values()];
 
         this.inApp.push({
           innovationId: innovation.id,

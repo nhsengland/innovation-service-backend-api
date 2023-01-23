@@ -97,7 +97,7 @@ export class InnovationActionsService extends BaseService {
       query.andWhere('action.created_by = :createdBy', { createdBy: user.id });
       if (user.organisationUnitId) {
         query.innerJoinAndSelect('action.innovationSupport', 'support')
-        .andWhere('support.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
+          .andWhere('support.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
       }
     }
 
@@ -160,7 +160,7 @@ export class InnovationActionsService extends BaseService {
     section: InnovationSectionEnum,
     description: string,
     createdAt: DateISOType,
-    createdBy: { id: string, name: string, organisationUnit?: string },
+    createdBy: { id: string, name: string, organisationUnit?: { id: string, name: string, acronym?: string } },
     declineReason?: string
   }> {
 
@@ -191,6 +191,7 @@ export class InnovationActionsService extends BaseService {
       }
     }
 
+
     return {
       id: dbAction.id,
       displayId: dbAction.displayId,
@@ -201,7 +202,11 @@ export class InnovationActionsService extends BaseService {
       createdBy: {
         id: dbAction.createdByUser.id,
         name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
-        organisationUnit: dbAction.innovationSupport?.organisationUnit?.name
+        organisationUnit: {
+          id: dbAction.innovationSupport?.organisationUnit?.id,
+          name: dbAction.innovationSupport?.organisationUnit?.name,
+          acronym: dbAction.innovationSupport?.organisationUnit?.acronym
+        }
       },
       ...(declineReason ? { declineReason } : {})
     };

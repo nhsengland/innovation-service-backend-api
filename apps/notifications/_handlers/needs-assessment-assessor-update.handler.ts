@@ -5,7 +5,7 @@ import type { NotifierTemplatesType } from '@notifications/shared/types';
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler, } from './base.handler';
+import { BaseHandler } from './base.handler';
 
 
 export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
@@ -26,7 +26,6 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   async run(): Promise<this> {
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    this.recipientsService.innovationAssignedUsers
 
     // Prepare email for previous NA.
     this.emails.push({

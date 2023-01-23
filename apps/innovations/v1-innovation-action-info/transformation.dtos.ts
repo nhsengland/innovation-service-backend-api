@@ -8,6 +8,6 @@ export type ResponseDTO = {
   section: InnovationSectionEnum,
   description: string,
   createdAt: DateISOType,
-  createdBy: { id: string, name: string, organisationUnit: undefined | string }
+  createdBy: { id: string, name: string, organisationUnit?: { id: string, name: string, acronym?: string } }
   declineReason?: string
 }

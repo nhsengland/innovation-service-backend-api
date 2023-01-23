@@ -12,16 +12,17 @@ import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity
 @Entity('notification_user')
 export class NotificationUserEntity extends BaseEntity {
 
+  @PrimaryColumn({ name: 'id', type: 'bigint', generated: true })
+  id: number;
+
   @Column({ name: 'read_at', type: 'datetime2', nullable: true })
   readAt: DateISOType;
 
 
-  @PrimaryColumn({ name: 'notification_id', type: 'uniqueidentifier' })
   @ManyToOne(() => NotificationEntity)
   @JoinColumn({ name: 'notification_id' })
   notification: NotificationEntity;
 
-  @PrimaryColumn({ name: 'user_id', type: 'uniqueidentifier' })
   @ManyToOne(() => UserEntity)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;

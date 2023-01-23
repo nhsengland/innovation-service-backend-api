@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { In, SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -95,6 +95,7 @@ export class InnovationsService extends BaseService {
     // Assessment relations.
     if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
       innovationFetchQuery.leftJoin('innovations.assessments', 'assessments');
+
       // These two are required for the order by
       if (pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
         innovationFetchQuery.addSelect('assessments.createdAt', 'assessments_created_at');
@@ -245,7 +246,13 @@ export class InnovationsService extends BaseService {
 
     if (filters.suggestedOnly) {
       innovationFetchQuery.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
-      innovationFetchQuery.andWhere('assessmentOrganisationUnits.id = :suggestedOrganisationUnitId', { suggestedOrganisationUnitId: user.organisationUnitId });
+      innovationFetchQuery.leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION });
+      innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
+      
+      innovationFetchQuery.andWhere(
+        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogs.organisation_unit_id =:suggestedOrganisationUnitId)`,
+        { suggestedOrganisationUnitId: user.organisationUnitId }
+      );
     }
 
     // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs
@@ -367,6 +374,11 @@ export class InnovationsService extends BaseService {
         .addSelect('innovation.id', 'innovation_id')
         .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
+      
+      if (user.organisationUnitId) {
+        notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
+        .where('organisationUnit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+      }
 
       if (filters.fields?.includes('statistics')) {
         notificationsQuery
