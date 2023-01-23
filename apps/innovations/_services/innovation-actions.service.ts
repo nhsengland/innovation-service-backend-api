@@ -160,7 +160,9 @@ export class InnovationActionsService extends BaseService {
     section: InnovationSectionEnum,
     description: string,
     createdAt: DateISOType,
-    createdBy: { id: string, name: string, organisationUnit?: { id: string, name: string, acronym?: string } },
+    updatedAt: DateISOType,
+    updatedBy: { name: string, role: UserTypeEnum },
+    createdBy: { id: string, name: string, role: UserTypeEnum, organisationUnit?: { id: string, name: string, acronym?: string } },
     declineReason?: string
   }> {
 
@@ -191,6 +193,7 @@ export class InnovationActionsService extends BaseService {
       }
     }
 
+    const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: dbAction.updatedBy });
 
     return {
       id: dbAction.id,
@@ -199,9 +202,15 @@ export class InnovationActionsService extends BaseService {
       description: dbAction.description,
       section: dbAction.innovationSection.section,
       createdAt: dbAction.createdAt,
+      updatedAt: dbAction.updatedAt,
+      updatedBy: {
+        name: lastUpdatedByUser.displayName,
+        role: lastUpdatedByUser.type
+      },
       createdBy: {
         id: dbAction.createdByUser.id,
         name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
+        role: dbAction.createdByUser.type,
         organisationUnit: {
           id: dbAction.innovationSupport?.organisationUnit?.id,
           name: dbAction.innovationSupport?.organisationUnit?.name,

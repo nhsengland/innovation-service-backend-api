@@ -42,6 +42,11 @@ class V1InnovationActionInfo {
         description: result.description,
         section: result.section,
         createdAt: result.createdAt,
+        updatedAt: result.updatedAt,
+        updatedBy: {
+          name: result.updatedBy.name,
+          role: result.updatedBy.role
+        },
         createdBy: { ...result.createdBy },
         ...(result.declineReason ? { declineReason: result.declineReason } : {})
       });
