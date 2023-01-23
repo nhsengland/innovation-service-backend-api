@@ -1,7 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 
-export class alterTableNotificationUserDropPkUseUnique1674211969045 implements MigrationInterface {
+export class alterTableNotificationUserAddSequencePK1674467472273 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
 
