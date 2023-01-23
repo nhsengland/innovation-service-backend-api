@@ -80,25 +80,25 @@ export class StatisticsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const baseQuery = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
-      .innerJoinAndSelect('innovationSupports.organisationUnitUsers', 'organisationUnitUsers')
-      .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
-      .innerJoinAndSelect('organisationUser.user', 'user')
+    const {myUnitInnovationsCount, lastSubmittedAt} = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
+      .select('count(*)', 'myUnitInnovationsCount')
+      .addSelect('MAX(innovationSupports.updated_at)', 'lastSubmittedAt')
       .where('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit });
-
-    const [myUnitEngagingInnovations, myUnitInnovationsCount] = await baseQuery
-      .orderBy('innovationSupports.updated_at', 'DESC')
-      .getManyAndCount();
-
-    const myAssignedInnovationsCount = await baseQuery
+      .andWhere('innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
+      .getRawOne();
+      
+    const myAssignedInnovationsCount = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
+      .innerJoin('innovationSupports.organisationUnitUsers', 'unitUsers')
+      .innerJoin('unitUsers.organisationUser', 'orgUsers')
+      .innerJoin('orgUsers.user', 'user')
+      .where('unitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
       .andWhere('user.id = :userId', { userId: requestUser.id })
       .getCount();
 
     return {
       count: myAssignedInnovationsCount,
       total: myUnitInnovationsCount,
-      lastSubmittedAt: myUnitEngagingInnovations.find(_ => true)?.updatedAt || null,
+      lastSubmittedAt: lastSubmittedAt,
     };
 
   }

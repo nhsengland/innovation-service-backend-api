@@ -242,6 +242,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
       innovationFetchQuery.innerJoin('supportingOrganisationUser.user', 'supportingUsers');
       innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', { supportingUserId: user.id });
+      innovationFetchQuery.andWhere('supportingUnitUsers.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
     }
 
     if (filters.suggestedOnly) {
