@@ -147,7 +147,7 @@ export class NotificationsService extends BaseService {
    * @returns the number of affected rows
    */
   async dismissUserNotifications(
-    userId: string,
+    user: { id: string, organisationUnitId?: string | undefined },
     conditions: {
       notificationIds: string[];
       contextIds: string[];
@@ -162,18 +162,24 @@ export class NotificationsService extends BaseService {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'})
     }
 
-    const params: { userId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: userId };
+    const params: { userId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: user.id };
     const query = em.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: new Date().toISOString() })
       .where('user_id = :userId')
       .andWhere('deleted_at IS NULL')
       .andWhere('read_at IS NULL');
+
+    if (user.organisationUnitId) {
+      query.andWhere('organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+    } else {
+      query.andWhere('organisation_unit_id IS NULL')
+    }
       
     if(!conditions.dismissAll) {
       const notificationQuery = em.createQueryBuilder(NotificationEntity, 'notification')
         .innerJoin('notification.notificationUsers', 'user')
         .select('notification.id')
-        .andWhere('user.id = :userId')
+        .andWhere('user.id = :userId', { userId: user.id })
         .andWhere('user.read_at IS NULL');
   
       if (conditions.notificationIds.length > 0) {
