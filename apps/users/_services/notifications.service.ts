@@ -171,6 +171,8 @@ export class NotificationsService extends BaseService {
 
     if (user.organisationUnitId) {
       query.andWhere('organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+    } else {
+      query.andWhere('organisation_unit_id IS NULL')
     }
       
     if(!conditions.dismissAll) {
