@@ -396,23 +396,10 @@ export class InnovationThreadsService extends BaseService {
       .addSelect('messages.created_at', 'createdAt')
       .leftJoinAndSelect('messages.author', 'messageAuthor')
       .leftJoinAndSelect('messages.thread', 'thread')
+      .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
+      .leftJoinAndSelect('orgUnit.organisation', 'org')
       .leftJoinAndSelect('thread.innovation', 'innovation')
       .leftJoinAndSelect('thread.author', 'users')
-      .leftJoinAndSelect('users.userOrganisations', 'userOrgs')
-      .leftJoinAndSelect('userOrgs.organisation', 'organisation')
-      .leftJoinAndSelect('userOrgs.userOrganisationUnits', 'userOrgUnits')
-      .leftJoinAndSelect('userOrgUnits.organisationUnit', 'orgUnit')
-      .leftJoinAndSelect('messageAuthor.userOrganisations', 'messageUserOrgs')
-      .leftJoinAndSelect('messageUserOrgs.user', 'messageUser') // load user relation
-      .leftJoinAndSelect(
-        'messageUserOrgs.userOrganisationUnits',
-        'messageUserOrgUnits'
-      )
-      .leftJoinAndSelect('messageUserOrgs.organisation', 'messageOrganisation')
-      .leftJoinAndSelect(
-        'messageUserOrgUnits.organisationUnit',
-        'messageOrgUnits'
-      );
 
     threadMessageQuery.where('thread.id = :threadId', { threadId });
 
@@ -436,7 +423,7 @@ export class InnovationThreadsService extends BaseService {
     //   .checkInnovationOwner()
     //   .validate();
 
-    const threadAuthor = firstMessage!.thread.author.identityId; // a thread always have at least 1 message
+    const threadAuthor = firstMessage!.thread.author.identityId; // a thread always has at least 1 message
     const threadMessagesAuthors = messages.map((tm) => tm.author.identityId);
 
     const authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
@@ -450,13 +437,6 @@ export class InnovationThreadsService extends BaseService {
       identityIds: authors,
     });
 
-    const messageAuthorOrgsanisationsPromises = await Promise.all(
-      messages.map((tm) => tm.author.userOrganisations)
-    );
-    const messageAuthorOrganisations = messageAuthorOrgsanisationsPromises.flatMap(
-      (maop) => maop.map((mao) => mao)
-    );
-
     const notifications = await this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notification')
       .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
@@ -469,38 +449,13 @@ export class InnovationThreadsService extends BaseService {
       .getMany();
 
     const messageResult = messages.map((tm) => {
-      const organisationUser = messageAuthorOrganisations.find(
-        (mao) => mao.user.id === tm.author.id
-      );
-      const organisationObj = organisationUser?.organisation;
-
-      const organisationUnitObj = organisationUser?.userOrganisationUnits?.find(
-        (_) => true
-      )?.organisationUnit;
 
       const author = authorsMap.find(
         (author) => author.identityId === tm.author.identityId
       );
-
-      let organisation;
-
-      if (organisationObj) {
-        organisation = {
-          id: organisationObj.id,
-          name: organisationObj.name,
-          acronym: organisationObj.acronym,
-        };
-      }
-
-      let organisationUnit;
-
-      if (organisationUnitObj) {
-        organisationUnit = {
-          id: organisationUnitObj.id,
-          name: organisationUnitObj.name,
-          acronym: organisationUnitObj.acronym,
-        };
-      }
+      
+      const organisationUnit = tm.authorOrganisationUnit ?? undefined
+      const organisation = tm.authorOrganisationUnit?.organisation
 
       return {
         id: tm.id,
