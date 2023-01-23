@@ -35,7 +35,7 @@ paths:
                         - NEVER
                         - INSTANTLY
                         - DAILY
-    patch:
+    put:
       description: "Updates the user email preferences "
       operationId: v1-email-notification-preferences-upsert
       tags:

@@ -43,7 +43,7 @@ class V1UserEmailNotificationsInfo {
 }
 
 export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction, '/v1/email-preferences', {
-  patch: {
+  put: {
     description: 'Updates the user email preferences ',
     operationId: 'v1-email-notification-preferences-upsert',
     tags: ['[v1] Email Preferences'],
