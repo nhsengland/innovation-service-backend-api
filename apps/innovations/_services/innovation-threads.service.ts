@@ -564,9 +564,6 @@ export class InnovationThreadsService extends BaseService {
       .innerJoinAndSelect('messages.author', 'author')
       .innerJoinAndSelect('messages.thread', 'thread')
       .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
-      // .leftJoinAndSelect('author.userOrganisations', 'userOrgs')
-      // .leftJoinAndSelect('userOrgs.userOrganisationUnits', 'userOrgUnits')
-      // .leftJoinAndSelect('userOrgUnits.organisationUnit', 'unit')
       .where('thread.id IN (:...threadIds)', { threadIds })
       .orderBy('messages.created_at', 'DESC');
 
@@ -605,12 +602,6 @@ export class InnovationThreadsService extends BaseService {
         );
 
         const organisationUnit = message?.authorOrganisationUnit ?? undefined
-
-        // const userOrganisations = await message?.author.userOrganisations || [];
-
-        // const organisationUnit = userOrganisations
-        //   ?.find((_) => true)
-        //   ?.userOrganisationUnits?.find((_) => true)?.organisationUnit;
 
         const hasUnreadNotification = notifications.find(
           (n) => n.contextId === t.thread_id
