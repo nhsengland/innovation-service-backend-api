@@ -8,9 +8,9 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { BaseService } from './base.service';
 
-import type { InnovationSectionModel } from '../_types/innovation.types';
+import type { EntityManager } from 'typeorm';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
-import { In } from 'typeorm';
+import type { InnovationSectionModel } from '../_types/innovation.types';
 
 @injectable()
 export class InnovationSectionsService extends BaseService {
@@ -24,7 +24,8 @@ export class InnovationSectionsService extends BaseService {
 
   async getInnovationSectionsList(
     user: { type: UserTypeEnum },
-    innovationId: string
+    innovationId: string,
+    entityManager?: EntityManager
   ): Promise<{
     id: null | string,
     section: InnovationSectionEnum,
@@ -33,7 +34,9 @@ export class InnovationSectionsService extends BaseService {
     openActionsCount: number
   }[]> {
 
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -46,7 +49,7 @@ export class InnovationSectionsService extends BaseService {
     let openActions: { section: string, actionsCount: number }[] = [];
 
     if (sections.length > 0) {
-      const query = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+      const query = connection.createQueryBuilder(InnovationActionEntity, 'actions')
         .select('sections.section', 'section')
         .addSelect('COUNT(actions.id)', 'actionsCount')
         .innerJoin('actions.innovationSection', 'sections')
@@ -62,6 +65,7 @@ export class InnovationSectionsService extends BaseService {
 
       openActions = await query.getRawMany();
     }
+
 
     return Object.values(InnovationSectionEnum).map(sectionKey => {
 
@@ -82,7 +86,13 @@ export class InnovationSectionsService extends BaseService {
   }
 
 
-  async getInnovationSectionInfo(user: { type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum, filters: { fields?: ('actions'[]) }): Promise<{
+  async getInnovationSectionInfo(
+    user: { type: UserTypeEnum },
+    innovationId: string,
+    sectionKey: InnovationSectionEnum,
+    filters: { fields?: ('actions'[]) },
+    entityManager?: EntityManager
+  ): Promise<{
     id: null | string,
     section: InnovationSectionEnum,
     status: InnovationSectionStatusEnum,
@@ -91,12 +101,14 @@ export class InnovationSectionsService extends BaseService {
     actionsIds?: string[]
   }> {
 
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     const sectionFields = INNOVATION_SECTIONS_CONFIG[sectionKey];
     if (!sectionFields) {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('sections.files', 'sectionFiles')
       .where('innovation.id = :innovationId', { innovationId })
@@ -123,7 +135,7 @@ export class InnovationSectionsService extends BaseService {
           dependencies: sectionFields.innovationDependencies,
           allowFileUploads: sectionFields.allowFileUploads
         }
-      )
+      );
     }
 
     let actions: null | InnovationActionEntity[] = null;
@@ -243,9 +255,16 @@ export class InnovationSectionsService extends BaseService {
   }
 
 
-  async submitInnovationSection(user: { id: string, identityId: string; type: UserTypeEnum }, innovationId: string, sectionKey: InnovationSectionEnum): Promise<{ id: string }> {
+  async submitInnovationSection(
+    user: { id: string, identityId: string; type: UserTypeEnum },
+    innovationId: string,
+    sectionKey: InnovationSectionEnum,
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
 
-    const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbInnovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId AND innovation.owner_id = :userId', { innovationId, userId: user.id })
       .getOne();
@@ -265,7 +284,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
 
-    return this.sqlConnection.transaction(async transaction => {
+    return connection.transaction(async transaction => {
 
       // Update section.
       dbSection.status = InnovationSectionStatusEnum.SUBMITTED;
@@ -377,9 +396,13 @@ export class InnovationSectionsService extends BaseService {
       description: string;
       summary: string;
       files: string[];
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    const innovation = await this.sqlConnection
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.evidences', 'evidences')
       .where('innovation.id = :innovationId', { innovationId })
@@ -405,13 +428,13 @@ export class InnovationSectionsService extends BaseService {
       .innerJoin('section.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
       .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
-      .getOne()
+      .getOne();
 
     if (!section) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    return this.sqlConnection.transaction(async (transaction) => {
+    return connection.transaction(async (transaction) => {
       const savedEvidence = await transaction.save(
         InnovationEvidenceEntity,
         evidence
@@ -425,7 +448,7 @@ export class InnovationSectionsService extends BaseService {
           updatedAt: new Date().toISOString(),
           updatedBy: user.id
         }
-      )
+      );
 
       return { id: savedEvidence.id };
     });
@@ -459,24 +482,24 @@ export class InnovationSectionsService extends BaseService {
       .innerJoin('section.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId: evidence.innovation.id })
       .andWhere('section.section = :sectionName', { sectionName: InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS })
-      .getOne()
+      .getOne();
 
     if (!section) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
     const evidenceFiles = await this.sqlConnection
       .createQueryBuilder(InnovationFileEntity, 'file')
       .where('file.id IN (:...fileIds)', { fileIds: evidence.files.map(f => f.id) })
-      .getMany()
+      .getMany();
 
-    const fileIds = evidenceFiles.map(f => f.id)
+    const fileIds = evidenceFiles.map(f => f.id);
 
-    const filesToDelete = fileIds.filter(fId => !evidenceData.files.includes(fId))
+    const filesToDelete = fileIds.filter(fId => !evidenceData.files.includes(fId));
 
     return this.sqlConnection.transaction(async (transaction) => {
 
-      await transaction.delete(InnovationFileEntity, { id: In(filesToDelete) })
+      await transaction.delete(InnovationFileEntity, { id: In(filesToDelete) });
 
       await transaction.save(
         InnovationEvidenceEntity,
@@ -517,32 +540,32 @@ export class InnovationSectionsService extends BaseService {
       .innerJoinAndSelect('evidences.files', 'files')
       .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
-      .getOne()
+      .getOne();
 
     if (!innovation) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const section = (await innovation.sections).find(s => s.section === InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS)
+    const section = (await innovation.sections).find(s => s.section === InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS);
 
     if (!section) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    const evidence = (await innovation.evidences).find(e => e.id === evidenceId)
+    const evidence = (await innovation.evidences).find(e => e.id === evidenceId);
 
     if (!evidence) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
     return this.sqlConnection.transaction(async transaction => {
 
       //delete files
-      await transaction.delete(InnovationFileEntity, { id: In(evidence.files.map(f => f.id)) })
+      await transaction.delete(InnovationFileEntity, { id: In(evidence.files.map(f => f.id)) });
 
       //soft-delete evidence
-      await transaction.update(InnovationEvidenceEntity, { id: evidenceId }, { updatedBy: user.id })
-      await transaction.softDelete(InnovationEvidenceEntity, { id: evidence.id })
+      await transaction.update(InnovationEvidenceEntity, { id: evidenceId }, { updatedBy: user.id });
+      await transaction.softDelete(InnovationEvidenceEntity, { id: evidence.id });
 
       //update section status to draft
       await transaction.update(
@@ -555,8 +578,8 @@ export class InnovationSectionsService extends BaseService {
         }
       );
 
-      return { id: evidence.id }
-    })
+      return { id: evidence.id };
+    });
   }
 
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
@@ -572,7 +595,7 @@ export class InnovationSectionsService extends BaseService {
       .leftJoinAndSelect('evidences.files', 'files')
       .where('evidences.innovation_id = :innovationId', { innovationId })
       .andWhere('evidences.id = :evidenceId', { evidenceId })
-      .getOne()
+      .getOne();
 
     if (!evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);

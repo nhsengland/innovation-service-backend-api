@@ -237,9 +237,15 @@ export class DomainInnovationsService {
   }
 
 
-  async getUnreadNotifications(userId: string, contextIds: string[]): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
+  async getUnreadNotifications(
+    userId: string,
+    contextIds: string[],
+    entityManager?: EntityManager
+  ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
 
-    const notifications = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const notifications = await em.createQueryBuilder(NotificationEntity, 'notification')
       .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
       .innerJoinAndSelect('notificationUsers.user', 'user')
       .where('notification.context_id IN (:...contextIds)', { contextIds })

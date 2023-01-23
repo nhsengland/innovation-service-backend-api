@@ -41,7 +41,7 @@ export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
 });
 
 export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
-  name: 'tests',
+  name: 'default',
   type: 'mssql',
   host: process.env['DB_TESTS_HOST'] || '',
   username: process.env['DB_TESTS_USER'] || '',
