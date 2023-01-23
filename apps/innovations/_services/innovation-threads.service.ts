@@ -563,9 +563,10 @@ export class InnovationThreadsService extends BaseService {
       .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
       .innerJoinAndSelect('messages.author', 'author')
       .innerJoinAndSelect('messages.thread', 'thread')
-      .leftJoinAndSelect('author.userOrganisations', 'userOrgs')
-      .leftJoinAndSelect('userOrgs.userOrganisationUnits', 'userOrgUnits')
-      .leftJoinAndSelect('userOrgUnits.organisationUnit', 'unit')
+      .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
+      // .leftJoinAndSelect('author.userOrganisations', 'userOrgs')
+      // .leftJoinAndSelect('userOrgs.userOrganisationUnits', 'userOrgUnits')
+      // .leftJoinAndSelect('userOrgUnits.organisationUnit', 'unit')
       .where('thread.id IN (:...threadIds)', { threadIds })
       .orderBy('messages.created_at', 'DESC');
 
@@ -603,11 +604,13 @@ export class InnovationThreadsService extends BaseService {
           (ma) => ma.id === message?.author.id
         );
 
-        const userOrganisations = await message?.author.userOrganisations || [];
+        const organisationUnit = message?.authorOrganisationUnit ?? undefined
 
-        const organisationUnit = userOrganisations
-          ?.find((_) => true)
-          ?.userOrganisationUnits?.find((_) => true)?.organisationUnit;
+        // const userOrganisations = await message?.author.userOrganisations || [];
+
+        // const organisationUnit = userOrganisations
+        //   ?.find((_) => true)
+        //   ?.userOrganisationUnits?.find((_) => true)?.organisationUnit;
 
         const hasUnreadNotification = notifications.find(
           (n) => n.contextId === t.thread_id
