@@ -126,7 +126,6 @@ export class InnovationsService extends BaseService {
 
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
         innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
-        // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
 
       if (filters.supportStatuses && filters.supportStatuses.length > 0) {
