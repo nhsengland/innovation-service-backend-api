@@ -83,7 +83,7 @@ export class UsersService extends BaseService {
           .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
           .innerJoin('org_unit.organisation', 'org')
           .where('org.id = :orgId', { orgId: organisation.id })
-          .andWhere('unit.acronym = :acronym', { acronym: data.organisationUnitAcronym })
+          .andWhere('org_unit.acronym = :acronym', { acronym: data.organisationUnitAcronym })
           .getOne();
 
         if (!unit) {
