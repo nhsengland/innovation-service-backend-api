@@ -7,6 +7,7 @@ import type { UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainInnovationsService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
+import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from './interfaces';
 
@@ -39,13 +40,13 @@ describe('Innovation Actions Suite', () => {
     // arrange
     
     const accessor = testData.baseUsers.accessor;
-    const unit = testData.organisationUnit.accessor;
 
     jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
     jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
     const action = await sut.createAction(
-      { id: accessor.id, identityId: accessor.identityId , organisationUnitId: unit.id , type: accessor.type },
+      { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+      testData.domainContexts.accessor,
       testData.innovation.id,
       {
         description: randText(),
@@ -61,6 +62,8 @@ describe('Innovation Actions Suite', () => {
   it('should not create an action if organisation unit is not supporting innovation', async () => {
     // arrange
     const accessor = testData.baseUsers.accessor;
+    const context = cloneDeep(testData.domainContexts.accessor);
+    context.organisation!.organisationUnit!.id = randUuid();
 
     jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
     jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
@@ -69,7 +72,8 @@ describe('Innovation Actions Suite', () => {
     let err: UnprocessableEntityError | null = null;
     try {
       await sut.createAction(
-        { id: accessor.id, identityId: accessor.identityId , organisationUnitId: randUuid() , type: accessor.type },
+        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        context,
         testData.innovation.id,
         {
           description: randText(),

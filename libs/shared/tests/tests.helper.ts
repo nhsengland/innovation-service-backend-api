@@ -5,6 +5,7 @@ import { TestDataBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
 import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, UserTypeEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
+import type { DomainContextType } from '../types';
 
 
 export type TestDataType = {
@@ -14,7 +15,13 @@ export type TestDataType = {
     qualifyingAccessor: UserEntity; 
     assessmentUser: UserEntity; 
     innovator: UserEntity; 
-  }; 
+  };
+  domainContexts: {
+    accessor: DomainContextType,
+    qualifyingAccessor: DomainContextType,
+    assessmentUser: DomainContextType,
+    innovator: DomainContextType,
+  } 
   organisationUsers: { 
     innovator: OrganisationUserEntity; 
     accessor: OrganisationUserEntity; 
@@ -31,7 +38,7 @@ export type TestDataType = {
   organisationUnit: { 
     accessor: 
     OrganisationUnitEntity; 
-  }; 
+  };
 }
 
 // In jest the static classes are not shared between test suites so it ended up not making much difference to use static
@@ -104,6 +111,72 @@ export class TestsHelper {
           assessmentUser,
           innovator,
         },
+        //#region DomainContexts
+        domainContexts: {
+          // We could probably have a createDomainContext method on the test data builder, keeping it simple for now
+          accessor: {
+            userType: UserTypeEnum.ACCESSOR,
+            organisation: {
+              id: accessorOrganisation.id,
+              organisationUser: {
+                id: accessorOrgU.id,
+              },
+              name: accessorOrganisation.name,
+              acronym: accessorOrganisation.acronym,
+              role: accessorOrgU.role,
+              isShadow: false,
+              size: accessorOrganisation.size,
+              organisationUnit: {
+                id: organisationUnit.id,
+                name: organisationUnit.name,
+                acronym: organisationUnit.acronym,
+                organisationUnitUser: {
+                  id: accessorOrgUnitUser.id,
+                }
+              }
+            }
+          } as DomainContextType,
+          qualifyingAccessor: {
+            userType: UserTypeEnum.ACCESSOR,
+            organisation: {
+              id: accessorOrganisation.id,
+              organisationUser: {
+                id: qualifyingAccessorOrgU.id,
+              },
+              name: accessorOrganisation.name,
+              acronym: accessorOrganisation.acronym,
+              role: qualifyingAccessorOrgU.role,
+              isShadow: false,
+              size: accessorOrganisation.size,
+              organisationUnit: {
+                id: organisationUnit.id,
+                name: organisationUnit.name,
+                acronym: organisationUnit.acronym,
+                organisationUnitUser: {
+                  id: qaOrgUnitUser.id,
+                }
+              }
+            }
+          } as DomainContextType,
+          assessmentUser: {
+            userType: UserTypeEnum.ASSESSMENT,
+          } as DomainContextType,
+          innovator: {
+            userType: UserTypeEnum.INNOVATOR,
+            organisation: {
+              id: innovatorOrganisation.id,
+              organisationUser: {
+                id: innovatorOrgUser.id,
+              },
+              name: innovatorOrganisation.name,
+              acronym: innovatorOrganisation.acronym,
+              role: innovatorOrgUser.role,
+              isShadow: true,
+              size: innovatorOrganisation.size,
+            }
+          } as DomainContextType
+        },
+        //#endregion
         organisationUsers: {
           innovator: innovatorOrgUser,
           accessor: accessorOrgU,

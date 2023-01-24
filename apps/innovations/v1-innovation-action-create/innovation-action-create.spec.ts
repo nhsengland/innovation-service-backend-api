@@ -52,7 +52,7 @@ describe('v1-innovation-action-create Suite', () => {
         .setContext()
         .setParams({ innovationId: testData.innovation.id })
         .setMethod('POST')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() })
+        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
         .setBody({
           section: InnovationSectionEnum.COST_OF_INNOVATION,
           description: randText(),

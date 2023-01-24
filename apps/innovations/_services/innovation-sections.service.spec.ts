@@ -105,7 +105,8 @@ describe('Innovation Sections Suite', () => {
     const sectionsList = await sut.getInnovationSectionInfo(
       { type: assessor.type },
       innovation.id,
-      sectionKey
+      sectionKey,
+      {}
     );
 
     expect(sectionsList.id).toBeDefined();
@@ -130,6 +131,7 @@ describe('Innovation Sections Suite', () => {
       { type: accessor.type },
       innovation.id,
       sectionKey,
+      {},
       em
     );
 
@@ -216,7 +218,7 @@ describe('Innovation Sections Suite', () => {
       innovation.id,
       {
         evidenceType: rand(allowedEvidenceTypes),
-        clinicalEvidenceType: null,
+        clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum.OTHER,
         description: randText(),
         summary: randText(),
         files: [file.id]

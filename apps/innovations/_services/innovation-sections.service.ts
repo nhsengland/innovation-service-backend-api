@@ -8,7 +8,7 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { BaseService } from './base.service';
 
-import type { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 

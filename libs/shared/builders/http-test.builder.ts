@@ -1,6 +1,7 @@
 
 import type { Context, HttpMethod, HttpRequest, Logger } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
+import { UserTypeEnum } from '../enums';
 import type { CustomContextType } from '../types';
 
 
@@ -34,6 +35,9 @@ export class HttpTestBuilder {
           identityId: randUuid(),
           name: randUserName(),
         },
+        context: {
+          userType: UserTypeEnum.INNOVATOR
+        }
       },
       log: this.logger,
       done: () => {},
@@ -64,7 +68,7 @@ export class HttpTestBuilder {
         tracestate: randUuid(),
         attributes: {},
       },
-    }
+    };
 
     this.context = context as CustomContextType;
     return this;
@@ -95,8 +99,8 @@ export class HttpTestBuilder {
     return this;
   }
 
-  public setAuth(user: { identityId: string, name: string }): HttpTestBuilder {
-    this.context.auth = { user };
+  public setAuth(user: { identityId: string, name: string }, context: CustomContextType['auth']['context']): HttpTestBuilder {
+    this.context.auth = { user, context };
     return this;
   }
 
