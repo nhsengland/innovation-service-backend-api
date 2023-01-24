@@ -101,7 +101,7 @@ export class ThreadCreationHandler extends BaseHandler<
           innovation_name: innovation.name,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(UserTypeEnum.ACCESSOR), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
             .buildUrl()
         }
       });
