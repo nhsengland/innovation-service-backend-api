@@ -1,18 +1,19 @@
 import { OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, RoleEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, ServiceRoleEnum, UserTypeEnum } from '@admin/shared/enums';
+import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserTypeEnum } from '@admin/shared/enums';
 import { BadRequestError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@admin/shared/errors';
-import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol } from '@admin/shared/services';
+import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import { CacheConfigType, CacheService } from '@admin/shared/services/storage/cache.service';
 import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
-  private cache: CacheConfigType['IdentityUserInfo']
+  private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
     @inject(CacheServiceSymbol) cacheService: CacheService,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
   ) {
     super();
     this.cache = cacheService.get('IdentityUserInfo');
@@ -24,29 +25,38 @@ export class UsersService extends BaseService {
    * @param data partial user update options (currently only supports accountEnabled)
    *   - accountEnabled: enable or disable the user
    */
-  async updateUser(userId: string, data: { accountEnabled?: boolean | null }): Promise<void> {
+  async updateUser(requestUser: {id: string, identityId: string, type: UserTypeEnum}, userId: string, data: { accountEnabled?: boolean | null }): Promise<void> {
     await this.sqlConnection.transaction(async transaction => {
       const user = await this.sqlConnection
         .createQueryBuilder(UserEntity, 'user')
         .where('user.id = :userId', { userId })
-        .getOne()
+        .getOne();
 
       if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+        throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
       }
 
       await transaction.update(UserEntity, { id: userId }, {
         ...data.accountEnabled != null && { lockedAt: data.accountEnabled === false ? new Date().toISOString() : null }
-      })
+      });
 
       // Update identity provider if needed
       if (data.accountEnabled != null) {
-        await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled })
+        await this.identityProviderService.updateUserAsync(user.identityId, { accountEnabled: data.accountEnabled });
+
+        // Send notification to user when locked
+        if(!data.accountEnabled) {
+          await this.notifierService.send(
+            { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+            NotifierTypeEnum.LOCK_USER,
+            { user: { id: user.id, identityId: user.identityId } }
+          );
+        }
       }
 
       // Remove cache entry
-      await this.cache.delete(user.identityId)
-    })
+      await this.cache.delete(user.identityId);
+    });
   }
 
   async createUser(
@@ -62,20 +72,20 @@ export class UsersService extends BaseService {
   ): Promise<{ id: string }> {
 
     if (data.type === UserTypeEnum.ACCESSOR && (!data.organisationAcronym || !data.organisationUnitAcronym || !data.role)) {
-      throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS)
+      throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
     }
 
-    let organisation: OrganisationEntity | null
-    let unit: OrganisationUnitEntity | null
+    let organisation: OrganisationEntity | null;
+    let unit: OrganisationUnitEntity | null;
 
     if (data.organisationAcronym) {
       organisation = await this.sqlConnection
         .createQueryBuilder(OrganisationEntity, 'organisation')
         .where('organisation.acronym = :acronym', { acronym: data.organisationAcronym })
-        .getOne()
+        .getOne();
 
       if (!organisation) {
-        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
+        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
       }
 
       if (data.organisationUnitAcronym) {
@@ -94,28 +104,28 @@ export class UsersService extends BaseService {
 
     let identityId: string;
 
-    data.email = data.email.toLowerCase()
-    const password = Math.random().toString(36).slice(2) + '0aA!'
+    data.email = data.email.toLowerCase();
+    const password = Math.random().toString(36).slice(2) + '0aA!';
 
-    const b2cUser = await this.identityProviderService.getUserInfoByEmail(data.email)
+    const b2cUser = await this.identityProviderService.getUserInfoByEmail(data.email);
 
     if (b2cUser) {
-      identityId = b2cUser.identityId
+      identityId = b2cUser.identityId;
       // user exists in b2c, check if it also exists in DB
       const user = await this.sqlConnection
         .createQueryBuilder(UserEntity, 'user')
         .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
-        .getOne()
+        .getOne();
 
       if (user) {
-        throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS)
+        throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
       }
     } else {
       // b2c user doesn't exist, create it
       const iId = await this.identityProviderService
-        .createUser({ name: data.name, email: data.email, password: password })
+        .createUser({ name: data.name, email: data.email, password: password });
 
-      identityId = iId
+      identityId = iId;
     }
 
     return await this.sqlConnection.transaction(async transaction => {
@@ -125,15 +135,15 @@ export class UsersService extends BaseService {
         type: data.type,
         createdBy: requestUser.id,
         updatedBy: requestUser.id
-      }))
+      }));
 
       // admin type
       if (user.type === UserTypeEnum.ADMIN) {
         const role = await transaction.createQueryBuilder(RoleEntity, 'role')
           .where('role.name = :adminRole', { adminRole: ServiceRoleEnum.ADMIN })
-          .getOneOrFail()
+          .getOneOrFail();
 
-        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role }))
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role }));
       }
 
       // accessor type
@@ -146,7 +156,7 @@ export class UsersService extends BaseService {
             createdBy: requestUser.id,
             updatedBy: requestUser.id
           })
-        )
+        );
 
         await transaction.save(OrganisationUnitUserEntity,
           OrganisationUnitUserEntity.new({
@@ -154,12 +164,12 @@ export class UsersService extends BaseService {
             organisationUser: orgUser,
             createdBy: requestUser.id,
             updatedBy: requestUser.id
-          }))
+          }));
 
       }
 
-      return { id: user.id }
-    })
+      return { id: user.id };
+    });
   }
 
   async deleteAdmin(id: string): Promise<{ id: string }> {
@@ -167,18 +177,18 @@ export class UsersService extends BaseService {
     const user = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
       .where('user.id = :id', { id })
-      .getOne()
+      .getOne();
 
     if (!user) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
     if (user.type !== UserTypeEnum.ADMIN) {
-      throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID)
+      throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
     //delete in b2C
-    await this.identityProviderService.deleteUser(user.identityId)
+    await this.identityProviderService.deleteUser(user.identityId);
 
     //set deleted in BD
     return this.sqlConnection.transaction(async transaction => {
@@ -186,9 +196,9 @@ export class UsersService extends BaseService {
         UserEntity,
         { id: user.id },
         { deletedAt: new Date().toISOString()}
-      )
+      );
 
-      return { id: user.id }
-    })
+      return { id: user.id };
+    });
   }
 }

@@ -8,7 +8,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
   userId: Joi.string().guid().required().description('Id of the user to lock.')
 }).required();
 
-export type BodyType = Parameters<UsersService['updateUser']>[1]
+export type BodyType = Parameters<UsersService['updateUser']>[2]
 
 export const BodySchema = Joi.object<BodyType>({
   accountEnabled: Joi.boolean().description('Enable or disable the user.').allow(null)

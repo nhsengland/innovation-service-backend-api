@@ -50,15 +50,20 @@ export class RecipientsService extends BaseService {
   /**
    * Fetch user information with notification preferences.
    */
-  async userInfo(userId: string): Promise<{
+  async userInfo(userId: string, options?: {withDeleted?: boolean}): Promise<{
     id: string, identityId: string, name: string, email: string, type: UserTypeEnum, isActive: boolean,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }> {
 
-    const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+    const dbUserQuery = this.sqlConnection.createQueryBuilder(UserEntity, 'user')
       .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
-      .where('user.id = :userId', { userId })
-      .getOne();
+      .where('user.id = :userId', { userId });
+
+    if (options?.withDeleted) {
+      dbUserQuery.withDeleted();
+    }
+    
+    const dbUser = await dbUserQuery.getOne();
 
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -218,7 +223,7 @@ export class RecipientsService extends BaseService {
         .flatMap(support => support.organisationUnitUsers.map(item => ({
           id: item.organisationUser.user.id,
           identityId: item.organisationUser.user.identityId,
-          organisationUnitId: item.organisationUnit.id
+          organisationUnitId: support.organisationUnit.id
           // type: item.organisationUser.user.type
         })))
     }));
@@ -512,7 +517,7 @@ export class RecipientsService extends BaseService {
       .innerJoinAndSelect('i.innovationSupports', 's')
       .innerJoinAndSelect('s.organisationUnit', 'u')
       .groupBy('u.id')
-      .addGroupBy('i.id')
+      .addGroupBy('i.id');
 
     const latestActionQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
       .select('u.id', 'unitId')
@@ -524,7 +529,7 @@ export class RecipientsService extends BaseService {
       .leftJoin('s.action', 'actions')
       .where(`actions.status = '${InnovationActionStatusEnum.SUBMITTED}'`)
       .groupBy('u.id')
-      .addGroupBy('i.id')
+      .addGroupBy('i.id');
 
 
     const latestMessageQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
@@ -537,7 +542,7 @@ export class RecipientsService extends BaseService {
       .innerJoin(InnovationThreadEntity, 'threads', 'threads.innovation_id = i.id')
       .innerJoin(InnovationThreadMessageEntity, 'messages', 'threads.id = messages.innovation_thread_id')
       .groupBy('u.id')
-      .addGroupBy('i.id')
+      .addGroupBy('i.id');
 
 
     const mainQuery =
@@ -579,7 +584,7 @@ export class RecipientsService extends BaseService {
         .andWhere(`(DATEDIFF(day, maxActions.latest, GETDATE()) >= ${idlePeriod} OR maxActions IS NULL)`)
         .andWhere(`(DATEDIFF(day, maxMessages.latest, GETDATE()) >= ${idlePeriod} OR maxMessages IS NULL)`)
         .groupBy('users.id')
-        .addGroupBy('users.external_id')
+        .addGroupBy('users.external_id');
 
     const result = await mainQuery.getRawMany<{ userId: string, identityId: string; latestInteractionDate: Date }>();
 
