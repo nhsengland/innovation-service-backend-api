@@ -1210,7 +1210,7 @@ export class InnovationsService extends BaseService {
         transaction,
         user,
         reason,
-      )
+      );
     });
 
     await this.notifierService.send(
