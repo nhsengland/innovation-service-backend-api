@@ -1,5 +1,5 @@
 import { type HttpServiceType, HttpServiceSymbol, type SQLConnectionServiceType, SQLConnectionServiceSymbol, type NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, CacheServiceType, CacheServiceSymbol } from '@users/shared/services';
-import { join } from 'lodash';
+import { join } from 'path';
 import fs from 'fs';
 import YAML from 'yaml';
 import type { Container } from 'inversify';
