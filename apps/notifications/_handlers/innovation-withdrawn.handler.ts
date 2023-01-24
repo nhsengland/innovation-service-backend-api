@@ -27,6 +27,8 @@ export class InnovationWithdrawnHandler extends BaseHandler<
 
     const assignedUsers = await this.recipientsService.usersInfo(this.inputData.innovation.assignedUserIds);
 
+    console.log('assignedUsers: ', assignedUsers);
+
     // Send emails only to users with email preference INSTANTLY.
     for (const user of assignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({

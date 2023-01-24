@@ -97,9 +97,11 @@ export class DomainInnovationsService {
     )
     .execute();
     
-    const supportingUserIds = innovation.innovationSupports.flatMap(item =>
-      item.organisationUnitUsers.map(su => su.organisationUser.user.id)
-    );
+    // supporting users without duplicates (handles users with multiple engaging organisation units)
+    const supportingUserIds = [...(new Set(
+      innovation.innovationSupports.flatMap(item => item.organisationUnitUsers
+        .map(su => su.organisationUser.user.id)
+    )))];
 
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {
