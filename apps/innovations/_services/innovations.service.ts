@@ -250,7 +250,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
       
       innovationFetchQuery.andWhere(
-        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogs.organisation_unit_id =:suggestedOrganisationUnitId)`,
+        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogs_supportLogOrgUnit.organisation_unit_id =:suggestedOrganisationUnitId)`,
         { suggestedOrganisationUnitId: user.organisationUnitId }
       );
     }
