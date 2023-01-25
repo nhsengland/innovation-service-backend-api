@@ -58,7 +58,10 @@ class V1MeUpdate {
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, firstTimeSignInAt: requestUser.firstTimeSignInAt },
           {
             displayName: innovatorBody.displayName,
+            ...(innovatorBody.contactPreferences !== undefined ? { contactPreferences: innovatorBody.contactPreferences } : {}),
+            ...(innovatorBody.phoneTimePreferences !== undefined ? { phoneTimePreferences: innovatorBody.phoneTimePreferences } : {}),
             ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
+            ...(innovatorBody.contactDetails !== undefined ? { contactDetails: innovatorBody.contactDetails } : {}),
             organisation: innovatorBody.organisation
           }
         );

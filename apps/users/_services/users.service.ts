@@ -150,7 +150,10 @@ export class UsersService extends BaseService {
     user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
     data: {
       displayName: string,
+      contactPreferences?: string | null,
+      phoneTimePreferences?: string | null,
       mobilePhone?: string | null,
+      contactDetails?: string | null,
       organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string }
     }
   ): Promise<{ id: string }> {
@@ -167,6 +170,13 @@ export class UsersService extends BaseService {
       // Updates the firstTimeSignInAt with the current date.
       if (!user.firstTimeSignInAt) {
         await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() })
+      } else {
+        
+        await this.userRepository.update(user.id, { 
+          ...(data.contactPreferences !== undefined ? { contactPreferences: data.contactPreferences } : {}),
+          ...(data.phoneTimePreferences !== undefined ? { phoneTimePreferences: data.phoneTimePreferences } : {}),
+          ...(data.contactDetails !== undefined ? { contactDetails: data.contactDetails } : {}),
+        })
       }
 
       if (data.organisation) {
