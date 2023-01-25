@@ -61,7 +61,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (user.type === UserTypeEnum.ASSESSMENT) {
         query.andWhere('actions.innovation_support_id IS NULL');
-      } else {
+      } else if(user.type === UserTypeEnum.ACCESSOR) {
         query.andWhere('actions.innovation_support_id IS NOT NULL');
       }
 
@@ -143,7 +143,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (user.type === UserTypeEnum.ASSESSMENT) {
         actionsQuery.andWhere('actions.innovation_support_id IS NULL');
-      } else {
+      } else if(user.type === UserTypeEnum.ACCESSOR) {
         actionsQuery.andWhere('actions.innovation_support_id IS NOT NULL');
       }
 
