@@ -44,7 +44,8 @@ class V1InnovationActionsList {
           ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {})
         },
         filters,
-        { skip, take, order }
+        { skip, take, order },
+        domainContext
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -58,6 +59,11 @@ class V1InnovationActionsList {
           section: item.section,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
+          updatedBy: {
+            name: item.updatedBy.name,
+            role: item.updatedBy.role
+          },
+          createdBy: { ...item.createdBy },
           ...(item.notifications === undefined ? {} : { notifications: item.notifications })
         }))
       });

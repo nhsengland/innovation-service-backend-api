@@ -31,10 +31,13 @@ export class InnovationActionsService extends BaseService {
       innovationName?: string,
       sections?: InnovationSectionEnum[],
       status?: InnovationActionStatusEnum[],
+      innovationStatus?: InnovationStatusEnum[],
       createdByMe?: boolean,
+      allActions?: boolean,
       fields: ('notifications')[]
     },
     pagination: PaginationQueryParamsType<'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'>,
+    domainContext: DomainContextType,
     entityManager?: EntityManager,
   ): Promise<{
     count: number,
@@ -47,6 +50,8 @@ export class InnovationActionsService extends BaseService {
       section: InnovationSectionEnum,
       createdAt: DateISOType,
       updatedAt: DateISOType,
+      updatedBy: { name: string, role: UserTypeEnum },
+      createdBy: { id: string, name: string, role: UserTypeEnum, organisationUnit?: { id: string, name: string, acronym?: string } },
       notifications?: number
     }[]
   }> {
@@ -55,14 +60,19 @@ export class InnovationActionsService extends BaseService {
 
     const query = em.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
-      .innerJoinAndSelect('innovationSection.innovation', 'innovation');
-
+      .innerJoinAndSelect('innovationSection.innovation', 'innovation')
+      .innerJoinAndSelect('action.createdByUser', 'createdByUser')
+      .leftJoinAndSelect('action.innovationSupport', 'innovationSupport')
+      .leftJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit');
 
     if (user.type === UserTypeEnum.INNOVATOR) {
       query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: user.id });
     }
 
     if (user.type === UserTypeEnum.ASSESSMENT) {
+      if(!filters.allActions) {
+        query.andWhere('action.innovation_support_id IS NULL');
+      }
       query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] });
     }
 
@@ -76,6 +86,10 @@ export class InnovationActionsService extends BaseService {
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
         // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
+      }
+
+      if(!filters.allActions) {
+        query.andWhere('action.innovation_support_id IS NOT NULL');
       }
 
     }
@@ -97,14 +111,16 @@ export class InnovationActionsService extends BaseService {
       query.andWhere('action.status IN (:...statuses)', { statuses: filters.status });
     }
 
-    if (filters.createdByMe) {
-      query.andWhere('action.created_by = :createdBy', { createdBy: user.id });
-      if (user.organisationUnitId) {
-        query.innerJoinAndSelect('action.innovationSupport', 'support')
-          .andWhere('support.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
-      }
+    if (filters.innovationStatus && filters.innovationStatus.length > 0) {
+      query.andWhere('innovation.status IN (:...statuses)', { statuses: filters.innovationStatus });
     }
 
+    if (filters.createdByMe) {
+      query.andWhere('createdByUser.id = :createdBy', { createdBy: user.id });
+      if (domainContext.organisation &&  domainContext.organisation.organisationUnit) {
+        query.andWhere('innovationSupport.organisation_unit_id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
+      }
+    }
 
     // Pagination and ordering.
     query.skip(pagination.skip);
@@ -117,6 +133,7 @@ export class InnovationActionsService extends BaseService {
         case 'section': field = 'innovationSection.section'; break;
         case 'innovationName': field = 'innovation.name'; break;
         case 'createdAt': field = 'action.createdAt'; break;
+        case 'updatedAt': field = 'action.updatedAt'; break;
         case 'status': field = 'action.status'; break;
         default:
           field = 'action.createdAt'; break;
@@ -139,18 +156,39 @@ export class InnovationActionsService extends BaseService {
 
     return {
       count: dbActions[1],
-      data: dbActions[0].map(action => ({
-        id: action.id,
-        displayId: action.displayId,
-        description: action.description,
-        innovation: { id: action.innovationSection.innovation.id, name: action.innovationSection.innovation.name },
-        status: action.status,
-        section: action.innovationSection.section,
-        createdAt: action.createdAt,
-        updatedAt: action.updatedAt,
-        ...(!filters.fields?.includes('notifications') ? {} : {
-          notifications: notifications.filter(item => item.contextId === action.id).length
-        })
+      data: await Promise.all(dbActions[0].map(async (action) => {
+
+        const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: action.updatedBy });
+
+        return {
+          id: action.id,
+          displayId: action.displayId,
+          description: action.description,
+          innovation: { id: action.innovationSection.innovation.id, name: action.innovationSection.innovation.name },
+          status: action.status,
+          section: action.innovationSection.section,
+          createdAt: action.createdAt,
+          updatedAt: action.updatedAt,
+          updatedBy: {
+            name: lastUpdatedByUser.displayName,
+            role: lastUpdatedByUser.type
+          },
+          createdBy: {
+            id: action.createdByUser.id,
+            name: (await this.identityProviderService.getUserInfo(action.createdByUser.identityId)).displayName,
+            role: action.createdByUser.type,
+            ...(action.innovationSupport ? {
+              organisationUnit: {
+                id: action.innovationSupport?.organisationUnit?.id,
+                name: action.innovationSupport?.organisationUnit?.name,
+                acronym: action.innovationSupport?.organisationUnit?.acronym
+              }
+            } : {})
+          },
+          ...(!filters.fields?.includes('notifications') ? {} : {
+            notifications: notifications.filter(item => item.contextId === action.id).length
+          })
+        }
       }))
     };
 
@@ -215,11 +253,13 @@ export class InnovationActionsService extends BaseService {
         id: dbAction.createdByUser.id,
         name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
         role: dbAction.createdByUser.type,
-        organisationUnit: {
-          id: dbAction.innovationSupport?.organisationUnit?.id,
-          name: dbAction.innovationSupport?.organisationUnit?.name,
-          acronym: dbAction.innovationSupport?.organisationUnit?.acronym
-        }
+        ...(dbAction.innovationSupport ? {
+          organisationUnit: {
+            id: dbAction.innovationSupport?.organisationUnit?.id,
+            name: dbAction.innovationSupport?.organisationUnit?.name,
+            acronym: dbAction.innovationSupport?.organisationUnit?.acronym
+          }
+        } : {})
       },
       ...(declineReason ? { declineReason } : {})
     };
@@ -273,7 +313,7 @@ export class InnovationActionsService extends BaseService {
 
     if (innovationSupport) {
       actionObj.innovationSupport = InnovationSupportEntity.new({ id: innovationSupport.id });
-    } else {
+    } else if(!innovationSupport && domainContext.userType === UserTypeEnum.ACCESSOR) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
