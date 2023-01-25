@@ -109,6 +109,12 @@ export class DomainInnovationsService {
       )
       .execute()
 
+    // supporting users without duplicates (handles users with multiple engaging organisation units)
+    const supportingUserIds = [...(new Set(
+      innovation.innovationSupports.flatMap(item => item.organisationUnitUsers
+        .map(su => su.organisationUser.user.id)
+    )))];
+
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {
       innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
@@ -126,15 +132,13 @@ export class DomainInnovationsService {
     innovation.deletedAt = new Date().toISOString();
     await transactionManager.save(InnovationEntity, innovation);
 
-    const supportingUserIds = innovation.innovationSupports.flatMap(item =>
-      item.organisationUnitUsers.map(su => su.organisationUser.user.id)
-    )
+    
 
     return {
       id: innovation.id,
       name: innovation.name,
       supportingUserIds,
-    }
+    };
   }
 
   /**
@@ -249,9 +253,15 @@ export class DomainInnovationsService {
   }
 
 
-  async getUnreadNotifications(userId: string, contextIds: string[]): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
+  async getUnreadNotifications(
+    userId: string,
+    contextIds: string[],
+    entityManager?: EntityManager
+  ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
 
-    const notifications = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const notifications = await em.createQueryBuilder(NotificationEntity, 'notification')
       .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
       .innerJoinAndSelect('notificationUsers.user', 'user')
       .where('notification.context_id IN (:...contextIds)', { contextIds })

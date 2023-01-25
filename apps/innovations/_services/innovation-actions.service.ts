@@ -5,10 +5,11 @@ import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum,
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainContextType, ActivityLogListParamsType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType, DateISOType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
+import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
 
@@ -33,7 +34,8 @@ export class InnovationActionsService extends BaseService {
       createdByMe?: boolean,
       fields: ('notifications')[]
     },
-    pagination: PaginationQueryParamsType<'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'>
+    pagination: PaginationQueryParamsType<'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'>,
+    entityManager?: EntityManager,
   ): Promise<{
     count: number,
     data: {
@@ -49,7 +51,9 @@ export class InnovationActionsService extends BaseService {
     }[]
   }> {
 
-    const query = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
       .innerJoinAndSelect('innovationSection.innovation', 'innovation');
 
@@ -130,7 +134,7 @@ export class InnovationActionsService extends BaseService {
     let notifications: { id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[] = [];
 
     if (filters.fields?.includes('notifications')) {
-      notifications = await this.domainService.innovations.getUnreadNotifications(user.id, dbActions[0].map(action => action.id));
+      notifications = await this.domainService.innovations.getUnreadNotifications(user.id, dbActions[0].map(action => action.id), em);
     }
 
     return {
@@ -227,10 +231,13 @@ export class InnovationActionsService extends BaseService {
     user: { id: string, identityId: string, type: UserTypeEnum },
     domainContext: DomainContextType,
     innovationId: string,
-    data: { section: InnovationSectionEnum, description: string }
+    data: { section: InnovationSectionEnum, description: string },
+    entityManager?: EntityManager,
   ): Promise<{ id: string }> {
 
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
@@ -266,10 +273,12 @@ export class InnovationActionsService extends BaseService {
 
     if (innovationSupport) {
       actionObj.innovationSupport = InnovationSupportEntity.new({ id: innovationSupport.id });
+    } else {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
     // Add new action to db and log action creation to innovation's activity log
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await connection.transaction(async transaction => {
 
       const actionResult = await transaction.save<InnovationActionEntity>(actionObj);
 
@@ -335,7 +344,7 @@ export class InnovationActionsService extends BaseService {
 
     //Accessor can only decline actions requested by himself
     if (dbAction.status === InnovationActionStatusEnum.REQUESTED && dbAction.createdBy !== user.id) {
-      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER)
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER);
     }
 
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);

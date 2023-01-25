@@ -25,7 +25,7 @@ export class LockUserHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id);
+    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id, {withDeleted: true});
 
     // E-mail to the user who is being locked.
     this.emails.push({
