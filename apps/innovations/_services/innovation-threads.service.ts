@@ -9,7 +9,6 @@ import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innova
 
 import { BaseService } from './base.service';
 
-
 @injectable()
 export class InnovationThreadsService extends BaseService {
 
@@ -345,6 +344,7 @@ export class InnovationThreadsService extends BaseService {
       },
     };
   }
+  
 
   async getThreadMessageInfo(
     messageId: string

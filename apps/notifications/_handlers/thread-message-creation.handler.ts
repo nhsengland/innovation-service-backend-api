@@ -2,6 +2,7 @@ import {
   EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
+import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
@@ -51,6 +52,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
+  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
@@ -64,15 +66,15 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-    const owner = innovation.owner
+    const owner = innovation.owner;
     // Fetch all thread intervenients, excluding the request user.
-    const threadIntervenientUsers = (await this.recipientsService.threadIntervenientUsers(this.inputData.threadId)).filter(item => item.id !== this.requestUser.id);
+    const threadIntervenientUsers = (await this.domainService.innovations.threadIntervenients(this.inputData.threadId)).filter(item => item.id !== this.requestUser.id);
     
-    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id)
+    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id);
 
     // ensure innovation owner is included when he's not the request user
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      threadIntervenientUsers.push(owner)
+      threadIntervenientUsers.push({...owner, organisationUnit: null});
     }
 
     // exclude all assessment users
@@ -84,6 +86,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
         id: thread.author.id,
         identityId: thread.author.identityId,
         type: thread.author.type,
+        organisationUnit: null,
         emailNotificationPreferences: thread.author.emailNotificationPreferences,
       })
     }

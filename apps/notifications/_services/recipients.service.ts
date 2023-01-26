@@ -7,8 +7,6 @@ import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 import * as _ from 'lodash';
-import type { EntityManager } from 'typeorm';
-
 
 @injectable()
 export class RecipientsService extends BaseService {
@@ -291,43 +289,6 @@ export class RecipientsService extends BaseService {
       }
     };
 
-  }
-
-  /**
-   * Fetch a thread intervenient users.
-   * We only need to go by the thread messages because the first one, has also the thread author.
-   */
-  async threadIntervenientUsers(threadId: string, entityManager?: EntityManager): Promise<{
-    id: string, identityId: string, type: UserTypeEnum, organisationUnitId?: string | null,
-    emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
-  }[]> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const authors = new Map((await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
-      .where('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .select('threadMessage.author_id', 'author_id')
-      .addSelect('threadMessage.author_organisation_unit_id', 'author_organisation_unit_id')
-      .where('threadMessage.deleted_at IS NULL')
-      .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .distinct()
-      .getRawMany()).map(item => [item.author_id, item.author_organisation_unit_id]));
-
-    if(authors.size === 0) {
-      return [];
-    }
-
-    const dbThreadUsers = await connection.createQueryBuilder(UserEntity, 'user')
-      .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
-      .where('user.id IN (:...ids)', { ids: Array.from(authors.keys()) })
-      .getMany();
-
-    return Promise.all(dbThreadUsers.map(async item => ({
-      id: item.id,
-      identityId: item.identityId,
-      type: item.type,
-      organisationUnitId: authors.get(item.id) ?? null,
-      emailNotificationPreferences: (await item.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
-    })));
   }
 
   // TODO: Deprecated!
