@@ -1,4 +1,4 @@
-import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -59,12 +59,16 @@ export class InnovationStopSharingHandler extends BaseHandler<
       });
     }
 
+    /*
+     * Disable the inApp notifications for now in accordance with the XLS
+     *
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_STOP_SHARING, id: this.inputData.innovationId },
       users: this.inputData.previousAssignedAccessors.map(item => ({ userId: item.id, userType: item.userType, organisationUnitId: item.organisationUnitId })),
       params: {}
     });
+    */
 
     return this;
 

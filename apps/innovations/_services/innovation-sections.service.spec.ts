@@ -59,6 +59,7 @@ describe('Innovation Sections Suite', () => {
       innovator,
       { innovationId: innovation.id, status: [InnovationActionStatusEnum.REQUESTED], fields: [] },
       { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+      testData.domainContexts.innovator,
       em
     );
 
@@ -87,6 +88,7 @@ describe('Innovation Sections Suite', () => {
       assessor,
       { innovationId: innovation.id, status: [InnovationActionStatusEnum.REQUESTED], fields: [] },
       { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+      testData.domainContexts.accessor,
       em
     );
 

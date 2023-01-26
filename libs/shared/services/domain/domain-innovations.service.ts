@@ -1,12 +1,12 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { ActivityLogEntity, InnovationSectionEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSupportEntity, InnovationSupportLogEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
-import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum } from '../../enums';
-import { InnovationErrorsEnum, UnprocessableEntityError } from '../../errors';
+import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, UserTypeEnum } from '../../enums';
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType } from '../../types';
 
 import { TranslationHelper } from '../../helpers';
-import type { FileStorageServiceType } from '../interfaces';
+import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
 
 export class DomainInnovationsService {
@@ -17,7 +17,8 @@ export class DomainInnovationsService {
 
   constructor(
     private sqlConnection: DataSource,
-    private fileStorageService: FileStorageServiceType
+    private fileStorageService: FileStorageServiceType,
+    private identityProviderService: IdentityProviderServiceType
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -113,7 +114,7 @@ export class DomainInnovationsService {
     const supportingUserIds = [...(new Set(
       innovation.innovationSupports.flatMap(item => item.organisationUnitUsers
         .map(su => su.organisationUser.user.id)
-    )))];
+      )))];
 
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {
@@ -132,7 +133,7 @@ export class DomainInnovationsService {
     innovation.deletedAt = new Date().toISOString();
     await transactionManager.save(InnovationEntity, innovation);
 
-    
+
 
     return {
       id: innovation.id,
@@ -301,6 +302,69 @@ export class DomainInnovationsService {
       .getOne();
 
     return innovation;
+  }
+
+  /**
+   * Gets the intervinients of a thread, i.e. all the message authors and the context
+   * in which the messages were created (organisationUnit) without duplicates
+   * @param threadId
+   * @param entityManager
+   * @returns object with user info and organisation unit
+   */
+  async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
+    id: string, identityId: string, name?: string, type: UserTypeEnum,
+    organisationUnit: { id: string, acronym: string } | null,
+    emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
+  }[]> {
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const thread = connection.createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.id = :threadId', { threadId })
+      .getOne();
+
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    const messages = await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
+      .innerJoinAndSelect('threadMessage.author', 'author')
+      .leftJoinAndSelect('threadMessage.authorOrganisationUnit', 'organisation_unit')
+      .leftJoinAndSelect('author.notificationPreferences', 'notificationPreferences')
+      .where('threadMessage.innovation_thread_id = :threadId', { threadId })
+      .andWhere('threadMessage.deleted_at IS NULL')
+      .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
+      .getMany();
+
+    const participants: {
+      id: string, identityId: string, name?: string, type: UserTypeEnum,
+      organisationUnit: { id: string, acronym: string } | null,
+      emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
+    }[] = [];
+
+    const authorIds = messages.map(m => m.author.identityId);
+
+    const usersInfo = await this.identityProviderService.getUsersList(authorIds);
+
+    for (const message of messages) {
+      // filter duplicates based on user.id and organisationUnit.id
+      if (!participants.find(p => p.id === message.author.id && p.organisationUnit?.id === message.authorOrganisationUnit?.id)) {
+
+        participants.push({
+          id: message.author.id,
+          identityId: message.author.identityId,
+          name: usersInfo.find(u => u.identityId === message.author.identityId)?.displayName ?? '',
+          type: message.author.type,
+          organisationUnit: message.authorOrganisationUnit ? {
+            id: message.authorOrganisationUnit.id,
+            acronym: message.authorOrganisationUnit.acronym
+          } : null,
+          emailNotificationPreferences: (await message.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
+        });
+      }
+    }
+
+    return participants;
   }
 
 }

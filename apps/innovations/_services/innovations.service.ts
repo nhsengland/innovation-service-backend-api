@@ -250,7 +250,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
       
       innovationFetchQuery.andWhere(
-        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogs.organisation_unit_id =:suggestedOrganisationUnitId)`,
+        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
         { suggestedOrganisationUnitId: user.organisationUnitId }
       );
     }
@@ -1686,12 +1686,12 @@ export class InnovationsService extends BaseService {
    *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
    *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
    */
-  async dismissNotifications(requestUser: DomainUserInfoType, innovationId: string, conditions: {
+  async dismissNotifications(requestUser: DomainUserInfoType, domainContext: DomainContextType, innovationId: string, conditions: {
     notificationIds: string[],
     contextTypes: string[],
     contextIds: string[]
   }): Promise<void> {
-    const params: { userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: requestUser.id, innovationId };
+    const params: { userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[], organisationUnitId?: string } = { userId: requestUser.id, innovationId };
     const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
       .select('notification.id')
       .where('notification.innovation_id = :innovationId', { innovationId });
@@ -1704,17 +1704,24 @@ export class InnovationsService extends BaseService {
       query.andWhere('notification.contextId IN (:...contextIds)');
       params.contextIds = conditions.contextIds;
     }
+
     if (conditions.contextTypes.length > 0) {
       query.andWhere('notification.contextType IN (:...contextTypes)');
       params.contextTypes = conditions.contextTypes;
     }
 
-    await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
+    const updateQuery = this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
       .where('notification_id IN ( ' + query.getQuery() + ' )')
-      .andWhere('user_id = :userId AND read_at IS NULL')
-      .setParameters(params)
-      .execute();
+      .andWhere('user_id = :userId AND read_at IS NULL');
+      
+    if (domainContext.organisation?.organisationUnit?.id) {
+      params.organisationUnitId = domainContext.organisation.organisationUnit.id;
+      updateQuery.andWhere('organisation_unit_id = :organisationUnitId');
+    }
+
+    await updateQuery.setParameters(params).execute();
+
   }
 
   async getInnovationSubmissionsState(innovationId: string): Promise<{ submittedAllSections: boolean, submittedForNeedsAssessment: boolean }> {

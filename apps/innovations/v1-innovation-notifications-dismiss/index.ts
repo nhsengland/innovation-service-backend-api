@@ -31,8 +31,9 @@ class V1InnovationNotificationsDismiss {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-      await innovationsService.dismissNotifications(requestUser, params.innovationId, body);
+      await innovationsService.dismissNotifications(requestUser, domainContext, params.innovationId, body);
       context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {

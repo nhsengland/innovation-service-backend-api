@@ -4,6 +4,7 @@ import { BadRequestError, NotFoundError, OrganisationErrorsEnum, UnprocessableEn
 import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import { CacheConfigType, CacheService } from '@admin/shared/services/storage/cache.service';
 import { inject, injectable } from 'inversify';
+import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -22,13 +23,17 @@ export class UsersService extends BaseService {
   /**
    * updates a user info in the database and in the identity provider if needed
    * @param userId the user id
-   * @param data partial user update options (currently only supports accountEnabled)
+   * @param data partial user update options)
    *   - accountEnabled: enable or disable the user
+   *   - role: change the user role
    */
-  async updateUser(requestUser: {id: string, identityId: string, type: UserTypeEnum}, userId: string, data: { accountEnabled?: boolean | null }): Promise<void> {
-    await this.sqlConnection.transaction(async transaction => {
+  async updateUser(requestUser: {id: string, identityId: string, type: UserTypeEnum}, userId: string, data: { accountEnabled?: boolean | null, role?: null | { name: AccessorOrganisationRoleEnum, organisationId: string } }, entityManager?: EntityManager): Promise<void> {
+    const manager = entityManager || this.sqlConnection.manager;
+
+    await manager.transaction(async transaction => {
       const user = await this.sqlConnection
         .createQueryBuilder(UserEntity, 'user')
+        .leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
         .where('user.id = :userId', { userId })
         .getOne();
 
@@ -37,8 +42,21 @@ export class UsersService extends BaseService {
       }
 
       await transaction.update(UserEntity, { id: userId }, {
-        ...data.accountEnabled != null && { lockedAt: data.accountEnabled === false ? new Date().toISOString() : null }
+        ...data.accountEnabled != null && { lockedAt: data.accountEnabled === false ? new Date().toISOString() : null },
       });
+
+      if (data.role) {
+        const organisationUser = await transaction.createQueryBuilder(OrganisationUserEntity, 'organisationUser')
+          .where('organisationUser.organisation_id = :organisationId', { organisationId: data.role.organisationId })
+          .andWhere('organisationUser.user_id = :userId', { userId })
+          .getOne();
+
+        if (!organisationUser) {
+          throw new NotFoundError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
+        }
+
+        await transaction.update(OrganisationUserEntity, { id: organisationUser.id }, { role: data.role.name });
+      }
 
       // Update identity provider if needed
       if (data.accountEnabled != null) {
@@ -56,7 +74,9 @@ export class UsersService extends BaseService {
 
       // Remove cache entry
       await this.cache.delete(user.identityId);
+
     });
+
   }
 
   async createUser(
