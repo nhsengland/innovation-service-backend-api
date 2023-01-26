@@ -63,8 +63,8 @@ export default openApi(V1InnovationThreadParticipants.httpTrigger as AzureFuncti
     summary: 'Get Innovation Thread Participants',
     description: 'Get Innovation Thread Participants',
     tags: ['Innovation Thread'],
-    operationId: 'v1-innovation-thread-info',
-    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
+    operationId: 'v1-innovation-thread-participants',
+    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema }),
     responses: {
       200: {
         description: 'Success',
@@ -73,32 +73,37 @@ export default openApi(V1InnovationThreadParticipants.httpTrigger as AzureFuncti
             schema: {
               type: 'object',
               properties: {
-                id: {
-                  type: 'string',
-                },
-                subject: {
-                  type: 'string',
-                },
-                createdAt: {
-                  type: 'string',
-                },
-                createdBy: {
-                  type: 'object',
-                  properties: {
-                    id: {
-                      type: 'string',
-                    },
-                    name: {
-                      type: 'string',
-                    },
-                    type: {
-                      type: 'string',
-                    },
-                  },
-                },
-              },
-            },
-          },
+                participants: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: {
+                        type: 'string',
+                      },
+                      name: {
+                        type: 'string',
+                      },
+                      type: {
+                        type: 'string',
+                      },
+                      organisationUnit: {
+                        type: 'object',
+                        properties: {
+                          id: {
+                            type: 'string',
+                          },
+                          acronym: {
+                            type: 'string',
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }            
         },
       },
       401: {
