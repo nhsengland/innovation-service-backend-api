@@ -148,6 +148,7 @@ describe('Innovation Sections Suite', () => {
 
     const section = await sut.updateInnovationSectionInfo(
       { id: innovator.id },
+      testData.domainContexts.innovator,
       innovation.id,
       InnovationSectionEnum.INNOVATION_DESCRIPTION,
       { summary: randText() }
@@ -173,6 +174,7 @@ describe('Innovation Sections Suite', () => {
 
     const section = await sut.submitInnovationSection(
       innovator,
+      testData.domainContexts.innovator,
       innovation.id,
       sectionKey,
       em

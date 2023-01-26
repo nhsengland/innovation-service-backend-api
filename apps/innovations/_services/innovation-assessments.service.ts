@@ -124,7 +124,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START },
+        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START, domainContext },
         { comment: { id: thread.thread.id, value: data.message } }
       );
 
@@ -142,6 +142,7 @@ export class InnovationAssessmentsService extends BaseService {
 
   async updateInnovationAssessment(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     assessmentId: string,
     data: {
@@ -213,7 +214,7 @@ export class InnovationAssessmentsService extends BaseService {
 
           await this.domainService.innovations.addActivityLog(
             transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED },
+            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED, domainContext },
             { assessmentId: assessment.id }
           );
 
@@ -221,7 +222,7 @@ export class InnovationAssessmentsService extends BaseService {
         } else {
           await this.domainService.innovations.addActivityLog(
             transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED },
+            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED, domainContext },
             { assessmentId: assessment.id }
           );
         }
@@ -239,7 +240,7 @@ export class InnovationAssessmentsService extends BaseService {
 
           await this.domainService.innovations.addActivityLog(
             transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION },
+            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION, domainContext },
             { organisations: organisations.map(item => item.name) }
           );
 
@@ -288,6 +289,7 @@ export class InnovationAssessmentsService extends BaseService {
    */
   async createInnovationReassessment(
     user: { id: string, identityId: string, type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     data: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string; },
   ): Promise<{ assessment: { id: string; }, reassessment: { id: string; }; }> {
@@ -353,7 +355,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED },
+        { userId: user.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED, domainContext },
         { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }
       );
 

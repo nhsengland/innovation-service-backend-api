@@ -10,6 +10,7 @@ import { BaseService } from './base.service';
 
 import { EntityManager, In } from 'typeorm';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
+import type { DomainContextType } from '@innovations/shared/types';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
 @injectable()
@@ -176,6 +177,7 @@ export class InnovationSectionsService extends BaseService {
 
   async updateInnovationSectionInfo(
     user: { id: string },
+    domainContext: DomainContextType,
     innovationId: string,
     sectionKey: InnovationSectionEnum,
     dataToUpdate: { [key: string]: any }
@@ -254,7 +256,7 @@ export class InnovationSectionsService extends BaseService {
       if (shouldAddActivityLog) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE },
+          { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE, domainContext },
           { sectionId: sectionKey }
         );
       }
@@ -270,6 +272,7 @@ export class InnovationSectionsService extends BaseService {
 
   async submitInnovationSection(
     user: { id: string, identityId: string; type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     sectionKey: InnovationSectionEnum,
     entityManager?: EntityManager
@@ -318,7 +321,7 @@ export class InnovationSectionsService extends BaseService {
         // BUSINESS RULE: Don't log section updates before innovation submission, only after.
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION },
+          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION, domainContext },
           { sectionId: savedSection.section }
         );
       }
@@ -326,7 +329,7 @@ export class InnovationSectionsService extends BaseService {
       if (requestedStatusActions.length > 0) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE },
+          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE, domainContext },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 

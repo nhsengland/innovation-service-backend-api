@@ -3,7 +3,7 @@ import type { DataSource, EntityManager, Repository } from 'typeorm';
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
 import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, UserTypeEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
-import type { ActivitiesParamsType } from '../../types';
+import type { ActivitiesParamsType, DomainContextType } from '../../types';
 
 import { TranslationHelper } from '../../helpers';
 import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
@@ -182,7 +182,7 @@ export class DomainInnovationsService {
 
   async addActivityLog<T extends ActivityEnum>(
     transactionManager: EntityManager,
-    configuration: { userId: string, innovationId: string, activity: T },
+    configuration: { userId: string, innovationId: string, activity: T, domainContext: DomainContextType },
     params: ActivitiesParamsType<T>
   ): Promise<void> {
 
@@ -194,6 +194,8 @@ export class DomainInnovationsService {
       updatedBy: configuration.userId,
       param: JSON.stringify({
         actionUserId: configuration.userId,
+        actionUserRole: configuration.domainContext.userType,
+        actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id, 
         ...params
       })
     });
