@@ -1,15 +1,14 @@
 import { inject, injectable } from 'inversify';
-import type { Repository } from 'typeorm';
+import type { EntityManager, Repository } from 'typeorm';
 
-import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
+import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
-
 
 @injectable()
 export class UsersService extends BaseService {
@@ -150,10 +149,11 @@ export class UsersService extends BaseService {
     user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
     data: {
       displayName: string,
-      contactPreferences?: string | null,
-      phoneTimePreferences?: string | null,
-      mobilePhone?: string | null,
+      contactByEmail?: boolean,
+      contactByPhone?: boolean,
+      contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null,
       contactDetails?: string | null,
+      mobilePhone?: string | null,
       organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string }
     }
   ): Promise<{ id: string }> {
@@ -170,13 +170,6 @@ export class UsersService extends BaseService {
       // Updates the firstTimeSignInAt with the current date.
       if (!user.firstTimeSignInAt) {
         await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() })
-      } else {
-        
-        await this.userRepository.update(user.id, { 
-          ...(data.contactPreferences !== undefined ? { contactPreferences: data.contactPreferences } : {}),
-          ...(data.phoneTimePreferences !== undefined ? { phoneTimePreferences: data.phoneTimePreferences } : {}),
-          ...(data.contactDetails !== undefined ? { contactDetails: data.contactDetails } : {}),
-        })
       }
 
       if (data.organisation) {
@@ -197,6 +190,14 @@ export class UsersService extends BaseService {
 
       }
 
+      const preferences: { contactByPhone: boolean, contactByEmail: boolean, contactByPhoneTimeframe: null | PhoneUserPreferenceEnum, contactDetails: null | string } = {
+        contactByPhone: data.contactByPhone as boolean,
+        contactByEmail: data.contactByEmail as boolean,
+        contactByPhoneTimeframe: data.contactByPhoneTimeframe  ?? null,
+        contactDetails: data.contactDetails ?? null
+      };
+
+      await this.upsertUserPreferences(user.id, preferences);
     }
 
     // Remove the cache entry on update
@@ -327,6 +328,34 @@ export class UsersService extends BaseService {
       });
 
     return users;
+  }
+
+  /**
+   * upserts the user preferences
+   * @param userId the user id
+   * @param preferences the preferences to upsert
+   */
+  async upsertUserPreferences(
+    userId: string,
+    preferences: {
+      contactByPhone: boolean,
+      contactByEmail:  boolean,
+      contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
+      contactDetails: string | null,
+    },
+    entityManager?: EntityManager
+  ) : Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    await em.save(UserPreferenceEntity, {
+      user: {id: userId},
+      contactByPhone: preferences.contactByPhone,
+      contactByEmail: preferences.contactByEmail,
+      contactByPhoneTimeframe: preferences.contactByPhoneTimeframe,
+      contactDetails: preferences.contactDetails,
+      createdBy: userId,  // this is only for the first time as BaseEntity defines it as update: false
+      updatedBy: userId
+    });
   }
 
 }

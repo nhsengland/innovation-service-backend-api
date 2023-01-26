@@ -34,7 +34,7 @@ class V1MeInfo {
         termsOfUseAccepted = true;
         hasInnovationTransfers = false;
       } else {
-        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type })).isAccepted;
+        // termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type })).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
       }
 
@@ -44,13 +44,10 @@ class V1MeInfo {
         displayName: requestUser.displayName,
         type: requestUser.type,
         roles: requestUser.roles,
-        contactPreferences: requestUser.contactPreferences,
-        phoneTimePreferences: requestUser.phoneTimePreferences,
         phone: requestUser.phone,
-        contactDetails: requestUser.contactDetails,
         passwordResetAt: requestUser.passwordResetAt,
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
-        termsOfUseAccepted,
+        termsOfUseAccepted: true,
         hasInnovationTransfers,
         organisations: requestUser.organisations
       });

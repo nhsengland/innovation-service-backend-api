@@ -35,15 +35,6 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;
 
-  @Column({ name: 'contact_preferences', type: 'nvarchar', nullable: true })
-  contactPreferences: null | string;
-
-  @Column({ name: 'phone_time_preferences', type: 'nvarchar', nullable: true })
-  phoneTimePreferences: null | string;
-
-  @Column({ name: 'contact_details', type: 'nvarchar', nullable: true })
-  contactDetails: null | string;
-
   @OneToMany(() => OrganisationUserEntity, record => record.user, { lazy: true })
   userOrganisations: Promise<OrganisationUserEntity[]>;
 
