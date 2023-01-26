@@ -1,2 +1,3 @@
-export { container } from './startup';
+export { container } from './inversify';
+export { startup } from './startup';
 

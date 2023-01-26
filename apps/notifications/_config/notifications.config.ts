@@ -2,16 +2,13 @@ import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
-import type { EmailTypeEnum } from './emails.config';
 import {
-  BaseHandler,
   AccessorUnitChangeHandler,
   ActionCreationHandler,
-  ActionUpdateHandler,
-  CommentCreationHandler,
+  ActionUpdateHandler, BaseHandler, CommentCreationHandler,
   DailyDigestHandler,
   IdleInnovatorsHandler,
   IdleSupportHandler,
@@ -38,6 +35,7 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
+import type { EmailTypeEnum } from './emails.config';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -220,7 +218,7 @@ export const NOTIFICATIONS_CONFIG: {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
-      previousAssignedAssessors: Joi.array().items(Joi.object({ id: Joi.string().guid() })).required(),
+      previousAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required(), userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(), organisationUnitId: Joi.string().guid().required() })).required(),
       message: Joi.string().required()
     }).required()
   },
@@ -287,4 +285,4 @@ export const NOTIFICATIONS_CONFIG: {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.IDLE_SUPPORT]>({})
   }
 
-}
+};

@@ -1,3 +1,4 @@
+import type { UserTypeEnum } from '../enums';
 import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 
@@ -103,7 +104,7 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string,
-    previousAssignedAssessors: { id: string }[],
+    previousAssignedAccessors: { id: string, userType: UserTypeEnum.ACCESSOR, organisationUnitId: string }[],
     message: string
   },
 

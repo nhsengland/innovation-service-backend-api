@@ -1,4 +1,4 @@
-import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -55,9 +55,8 @@ export class InnovationSubmitedHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION, id: this.inputData.innovationId },
-      userIds: assessmentUsers.map(user => user.id),
+      users: assessmentUsers.map(user => ({ userId: user.id, userType: UserTypeEnum.ASSESSMENT })),
       params: {}
     });
 

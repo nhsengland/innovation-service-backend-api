@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { In, SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -95,6 +95,7 @@ export class InnovationsService extends BaseService {
     // Assessment relations.
     if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
       innovationFetchQuery.leftJoin('innovations.assessments', 'assessments');
+
       // These two are required for the order by
       if (pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
         innovationFetchQuery.addSelect('assessments.createdAt', 'assessments_created_at');
@@ -125,7 +126,6 @@ export class InnovationsService extends BaseService {
 
       if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
         innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
-        // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
 
       if (filters.supportStatuses && filters.supportStatuses.length > 0) {
@@ -241,11 +241,18 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
       innovationFetchQuery.innerJoin('supportingOrganisationUser.user', 'supportingUsers');
       innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', { supportingUserId: user.id });
+      innovationFetchQuery.andWhere('supportingUnitUsers.organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
     }
 
     if (filters.suggestedOnly) {
       innovationFetchQuery.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
-      innovationFetchQuery.andWhere('assessmentOrganisationUnits.id = :suggestedOrganisationUnitId', { suggestedOrganisationUnitId: user.organisationUnitId });
+      innovationFetchQuery.leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION });
+      innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
+      
+      innovationFetchQuery.andWhere(
+        `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
+        { suggestedOrganisationUnitId: user.organisationUnitId }
+      );
     }
 
     // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs
@@ -367,6 +374,11 @@ export class InnovationsService extends BaseService {
         .addSelect('innovation.id', 'innovation_id')
         .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
+      
+      if (user.organisationUnitId) {
+        notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
+        .where('organisationUnit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+      }
 
       if (filters.fields?.includes('statistics')) {
         notificationsQuery
@@ -1199,7 +1211,7 @@ export class InnovationsService extends BaseService {
         transaction,
         user,
         reason,
-      )
+      );
     });
 
     await this.notifierService.send(
@@ -1227,14 +1239,17 @@ export class InnovationsService extends BaseService {
   ): Promise<{ id: string }> {
 
     const dbSupports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
-      .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
-      .leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
-      .leftJoinAndSelect('organisationUser.user', 'user')
+      .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
+      .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('organisationUser.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
       .getMany();
 
-    const previousAssignedAssessors = dbSupports.flatMap(support => support.organisationUnitUsers.map(item => ({
-      id: item.organisationUser.user.id
+    const previousAssignedAccessors = dbSupports.flatMap(support => support.organisationUnitUsers.map(item => ({
+      id: item.organisationUser.user.id,
+      organisationUnitId: item.organisationUnit.id,
+      userType: item.organisationUser.user.type as UserTypeEnum.ACCESSOR // it is always accessor
     })));
 
     const result = await this.sqlConnection.transaction(async transaction => {
@@ -1293,7 +1308,7 @@ export class InnovationsService extends BaseService {
     await this.notifierService.send(
       user,
       NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, previousAssignedAssessors, message: data.message }
+      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message }
     );
 
     return result;
@@ -1667,12 +1682,12 @@ export class InnovationsService extends BaseService {
    *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
    *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
    */
-  async dismissNotifications(requestUser: DomainUserInfoType, innovationId: string, conditions: {
+  async dismissNotifications(requestUser: DomainUserInfoType, domainContext: DomainContextType, innovationId: string, conditions: {
     notificationIds: string[],
     contextTypes: string[],
     contextIds: string[]
   }): Promise<void> {
-    const params: { userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: requestUser.id, innovationId };
+    const params: { userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[], organisationUnitId?: string } = { userId: requestUser.id, innovationId };
     const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
       .select('notification.id')
       .where('notification.innovation_id = :innovationId', { innovationId });
@@ -1685,17 +1700,24 @@ export class InnovationsService extends BaseService {
       query.andWhere('notification.contextId IN (:...contextIds)');
       params.contextIds = conditions.contextIds;
     }
+
     if (conditions.contextTypes.length > 0) {
       query.andWhere('notification.contextType IN (:...contextTypes)');
       params.contextTypes = conditions.contextTypes;
     }
 
-    await this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
+    const updateQuery = this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
       .where('notification_id IN ( ' + query.getQuery() + ' )')
-      .andWhere('user_id = :userId AND read_at IS NULL')
-      .setParameters(params)
-      .execute();
+      .andWhere('user_id = :userId AND read_at IS NULL');
+      
+    if (domainContext.organisation?.organisationUnit?.id) {
+      params.organisationUnitId = domainContext.organisation.organisationUnit.id;
+      updateQuery.andWhere('organisation_unit_id = :organisationUnitId');
+    }
+
+    await updateQuery.setParameters(params).execute();
+
   }
 
   async getInnovationSubmissionsState(innovationId: string): Promise<{ submittedAllSections: boolean, submittedForNeedsAssessment: boolean }> {

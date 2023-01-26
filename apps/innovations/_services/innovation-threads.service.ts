@@ -1,14 +1,13 @@
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, UserEntity } from '@innovations/shared/entities';
+import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import { GenericErrorsEnum, InnovationErrorsEnum, UserErrorsEnum } from '@innovations/shared/errors';
+import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { BaseService } from './base.service';
-
 
 @injectable()
 export class InnovationThreadsService extends BaseService {
@@ -117,37 +116,25 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity;
     messageCount: number;
   }> {
-    this.createThreadGuard(requestUser, innovationId, message, subject);
-
-    let result: {
-      thread: InnovationThreadEntity;
-      messageCount: number;
-    };
-
-    if (transaction) {
-      result = await this.createThreadWithTransaction(
-        requestUser,
-        domainContext,
-        innovationId,
-        subject,
-        message,
-        transaction,
-        contextId,
-        contextType,
-        editableMessage
-      );
-    } else {
-      result = await this.createThreadNoTransaction(
-        requestUser,
-        domainContext,
-        innovationId,
-        subject,
-        message,
-        editableMessage,
-        contextId,
-        contextType
-      );
+    if(!transaction) {
+      return this.sqlConnection.transaction( t => this.createThread(requestUser, domainContext, innovationId, subject, message, sendNotification, contextId, contextType, t, editableMessage));
     }
+    
+    if ( innovationId.length === 0 || message.length === 0 || subject.length === 0) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+    }
+
+    const result = await this.createThreadWithTransaction(
+      requestUser,
+      domainContext,
+      innovationId,
+      subject,
+      message,
+      transaction,
+      contextId,
+      contextType,
+      editableMessage
+    );
 
     if (sendNotification) {
       const messages = await result.thread.messages;
@@ -201,83 +188,48 @@ export class InnovationThreadsService extends BaseService {
   ): Promise<{
     threadMessage: InnovationThreadMessageEntity;
   }> {
-    this.createThreadMessageGuard(requestUser, threadId, message);
 
-    let author: UserEntity;
-    if (!transaction) {
-      try {
-        author = await this.sqlConnection
-          .createQueryBuilder(UserEntity, 'user')
-          .where('user.id = :userId', { userId: requestUser.id })
-          .andWhere('user.locked_at IS NULL')
-          .getOneOrFail();
-      } catch (error) {
-        throw new Error(UserErrorsEnum.USER_SQL_NOT_FOUND);
-      }
-    } else {
+    const connection = transaction || this.sqlConnection.manager;
 
-      try {
-        author = await transaction
-          .createQueryBuilder(UserEntity, 'users')
-          .where('users.id = :userId', { userId: requestUser.id })
-          .andWhere('users.locked_at IS NULL')
-          .getOneOrFail();
-      } catch (error) {
-        throw new Error(UserErrorsEnum.USER_SQL_NOT_FOUND);
-      }
+    if ( threadId.length === 0 || message.length === 0) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
     }
 
-    let thread: InnovationThreadEntity;
-    try {
+    const author = await connection.createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :userId', { userId: requestUser.id })
+      .andWhere('user.locked_at IS NULL')
+      .getOne();
 
-      if (!transaction) {
-        thread = await this.sqlConnection
-          .createQueryBuilder(InnovationThreadEntity, 'threads')
-          .innerJoinAndSelect('threads.innovation', 'innovations')
-          .innerJoinAndSelect('threads.author', 'users')
-          .where('threads.id = :threadId', { threadId })
-          .getOneOrFail();
-      } else {
-        thread = await transaction
-          .createQueryBuilder(InnovationThreadEntity, 'threads')
-          .innerJoinAndSelect('threads.innovation', 'innovations')
-          .innerJoinAndSelect('threads.author', 'users')
-          .where('threads.id = :threadId', { threadId })
-          .getOneOrFail();
-      }
+    if (!author) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
 
-    } catch (error) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
+    const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'threads')
+      .innerJoinAndSelect('threads.innovation', 'innovations')
+      .innerJoinAndSelect('threads.author', 'users')
+      .where('threads.id = :threadId', { threadId })
+      .getOne();
+
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
     }
 
     const threadMessageObj = InnovationThreadMessageEntity.new({
       author,
+      authorOrganisationUnit: domainContext.organisation?.organisationUnit?.id ? OrganisationUnitEntity.new({id: domainContext.organisation.organisationUnit.id}) : null,
       message,
       thread: InnovationThreadEntity.new({ id: threadId }),
       createdBy: author.id,
       isEditable,
     });
 
-    let threadMessage: InnovationThreadMessageEntity;
-    if (transaction) {
-      threadMessage = await this.createThreadMessageTransaction(
-        threadMessageObj,
-        requestUser,
-        domainContext,
-        thread,
-        transaction
-      );
-    } else {
-      threadMessage = await this.sqlConnection.transaction(async (transaction: EntityManager) => {
-        return this.createThreadMessageTransaction(
-          threadMessageObj,
-          requestUser,
-          domainContext,
-          thread,
-          transaction
-        );
-      });
-    }
+    const threadMessage: InnovationThreadMessageEntity = await this.createThreadMessageTransaction(
+      threadMessageObj,
+      requestUser,
+      domainContext,
+      thread,
+      connection
+    );
 
     if (sendNotification) {
       await this.sendThreadMessageCreateNotification(
@@ -393,6 +345,7 @@ export class InnovationThreadsService extends BaseService {
       },
     };
   }
+  
 
   async getThreadMessageInfo(
     messageId: string
@@ -444,23 +397,10 @@ export class InnovationThreadsService extends BaseService {
       .addSelect('messages.created_at', 'createdAt')
       .leftJoinAndSelect('messages.author', 'messageAuthor')
       .leftJoinAndSelect('messages.thread', 'thread')
+      .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
+      .leftJoinAndSelect('orgUnit.organisation', 'org')
       .leftJoinAndSelect('thread.innovation', 'innovation')
       .leftJoinAndSelect('thread.author', 'users')
-      .leftJoinAndSelect('users.userOrganisations', 'userOrgs')
-      .leftJoinAndSelect('userOrgs.organisation', 'organisation')
-      .leftJoinAndSelect('userOrgs.userOrganisationUnits', 'userOrgUnits')
-      .leftJoinAndSelect('userOrgUnits.organisationUnit', 'orgUnit')
-      .leftJoinAndSelect('messageAuthor.userOrganisations', 'messageUserOrgs')
-      .leftJoinAndSelect('messageUserOrgs.user', 'messageUser') // load user relation
-      .leftJoinAndSelect(
-        'messageUserOrgs.userOrganisationUnits',
-        'messageUserOrgUnits'
-      )
-      .leftJoinAndSelect('messageUserOrgs.organisation', 'messageOrganisation')
-      .leftJoinAndSelect(
-        'messageUserOrgUnits.organisationUnit',
-        'messageOrgUnits'
-      );
 
     threadMessageQuery.where('thread.id = :threadId', { threadId });
 
@@ -484,7 +424,7 @@ export class InnovationThreadsService extends BaseService {
     //   .checkInnovationOwner()
     //   .validate();
 
-    const threadAuthor = firstMessage!.thread.author.identityId; // a thread always have at least 1 message
+    const threadAuthor = firstMessage!.thread.author.identityId; // a thread always has at least 1 message
     const threadMessagesAuthors = messages.map((tm) => tm.author.identityId);
 
     const authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
@@ -498,13 +438,6 @@ export class InnovationThreadsService extends BaseService {
       identityIds: authors,
     });
 
-    const messageAuthorOrgsanisationsPromises = await Promise.all(
-      messages.map((tm) => tm.author.userOrganisations)
-    );
-    const messageAuthorOrganisations = messageAuthorOrgsanisationsPromises.flatMap(
-      (maop) => maop.map((mao) => mao)
-    );
-
     const notifications = await this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notification')
       .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
@@ -517,38 +450,13 @@ export class InnovationThreadsService extends BaseService {
       .getMany();
 
     const messageResult = messages.map((tm) => {
-      const organisationUser = messageAuthorOrganisations.find(
-        (mao) => mao.user.id === tm.author.id
-      );
-      const organisationObj = organisationUser?.organisation;
-
-      const organisationUnitObj = organisationUser?.userOrganisationUnits?.find(
-        (_) => true
-      )?.organisationUnit;
 
       const author = authorsMap.find(
         (author) => author.identityId === tm.author.identityId
       );
-
-      let organisation;
-
-      if (organisationObj) {
-        organisation = {
-          id: organisationObj.id,
-          name: organisationObj.name,
-          acronym: organisationObj.acronym,
-        };
-      }
-
-      let organisationUnit;
-
-      if (organisationUnitObj) {
-        organisationUnit = {
-          id: organisationUnitObj.id,
-          name: organisationUnitObj.name,
-          acronym: organisationUnitObj.acronym,
-        };
-      }
+      
+      const organisationUnit = tm.authorOrganisationUnit ?? undefined
+      const organisation = tm.authorOrganisationUnit?.organisation
 
       return {
         id: tm.id,
@@ -656,9 +564,7 @@ export class InnovationThreadsService extends BaseService {
       .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
       .innerJoinAndSelect('messages.author', 'author')
       .innerJoinAndSelect('messages.thread', 'thread')
-      .leftJoinAndSelect('author.userOrganisations', 'userOrgs')
-      .leftJoinAndSelect('userOrgs.userOrganisationUnits', 'userOrgUnits')
-      .leftJoinAndSelect('userOrgUnits.organisationUnit', 'unit')
+      .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
       .where('thread.id IN (:...threadIds)', { threadIds })
       .orderBy('messages.created_at', 'DESC');
 
@@ -696,11 +602,7 @@ export class InnovationThreadsService extends BaseService {
           (ma) => ma.id === message?.author.id
         );
 
-        const userOrganisations = await message?.author.userOrganisations || [];
-
-        const organisationUnit = userOrganisations
-          ?.find((_) => true)
-          ?.userOrganisationUnits?.find((_) => true)?.organisationUnit;
+        const organisationUnit = message?.authorOrganisationUnit ?? undefined
 
         const hasUnreadNotification = notifications.find(
           (n) => n.contextId === t.thread_id
@@ -806,96 +708,6 @@ export class InnovationThreadsService extends BaseService {
     return result;
   }
 
-  private createThreadGuard(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    innovationId: string,
-    message: string,
-    subject: string
-  ): void {
-    if (
-      !requestUser ||
-      !innovationId ||
-      !message ||
-      message.length === 0 ||
-      !subject ||
-      subject.length === 0
-    ) {
-      throw new Error(GenericErrorsEnum.INVALID_PAYLOAD);
-    }
-  }
-
-  private createThreadMessageGuard(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    threadId: string,
-    message: string
-  ): void {
-    if (
-      !requestUser ||
-      !threadId ||
-      threadId.length === 0 ||
-      !message ||
-      message.length === 0
-    ) {
-      throw new Error(GenericErrorsEnum.INVALID_PAYLOAD);
-    }
-  }
-
-  private async createThreadNoTransaction(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    domainContext: DomainContextType,
-    innovationId: string,
-    subject: string,
-    message: string,
-    editableMessage = false,
-    contextId?: string,
-    contextType?: ThreadContextTypeEnum,
-  ): Promise<{
-    thread: InnovationThreadEntity;
-    messageCount: number;
-  }> {
-
-    const author = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId: requestUser.id })
-      .andWhere('locked_at IS NULL')
-      .getOneOrFail();
-
-    const innovation = await this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'innovations')
-      .innerJoinAndSelect('innovations.owner', 'owner')
-      .where('innovations.id = :innovationId', { innovationId })
-      .getOneOrFail();
-
-    const threadObj = InnovationThreadEntity.new({
-      subject,
-      author,
-      innovation,
-      contextId,
-      contextType,
-      messages: Promise.resolve([InnovationThreadMessageEntity.new({
-        author,
-        message,
-        isEditable: editableMessage,
-      })]),
-      createdBy: author.id,
-    });
-
-    const thread = await this.sqlConnection.transaction(async (transaction: EntityManager) => {
-      return this.threadCreateTransaction(
-        transaction,
-        threadObj,
-        requestUser,
-        domainContext,
-        innovation
-      );
-    });
-
-    const messages = await thread.messages;
-
-    return {
-      thread,
-      messageCount: messages.length,
-    };
-  }
 
   private async createThreadWithTransaction(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
@@ -932,19 +744,14 @@ export class InnovationThreadsService extends BaseService {
       contextType,
       messages: [InnovationThreadMessageEntity.new({
         author,
+        authorOrganisationUnit: domainContext.organisation?.organisationUnit?.id ? OrganisationUnitEntity.new({id: domainContext.organisation.organisationUnit.id}) : null,
         message,
         isEditable: editableMessage,
       })] as any,
       createdBy: author.id,
     });
 
-    const thread = await this.threadCreateTransaction(
-      transaction,
-      threadObj,
-      requestUser,
-      domainContext,
-      innovation
-    );
+    const thread = await this.threadCreateTransaction(transaction, threadObj, requestUser, domainContext, innovation);
 
     const messages = await thread.messages;
     return {

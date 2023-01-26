@@ -1,25 +1,9 @@
-import { createConnection, getConnection } from 'typeorm';
+import { env } from 'process';
 
-import { SQLDB_TESTS_CONNECTION } from './libs/shared/src/lib/config/connections.config';
+// Disable console.log in tests
+// global.console.log = jest.fn();
 
-
-beforeAll(async () => {
-
-  // console.log(`Preparing tests environment...`);
-
-  const connection = await createConnection(SQLDB_TESTS_CONNECTION);
-
-  // console.log(`Running migrations...`);
-  await connection.runMigrations();
-
-  // console.log(`Migrations Successfuly runned!`);
-  // console.log(`Successfuly connected to "${SQLDB_TESTS_CONNECTION.name}" DB!`);
-
-});
-
-
-afterAll(async () => {
-
-  getConnection(SQLDB_TESTS_CONNECTION.name).close();
-
-});
+// This is such an ugly hack to support running in parallel
+// runInBand works with the global, run in parallel does not
+// an alternative could be export to a file on setup then read it here instead of using the env
+(global as any).sampleData = (global as any).sampleData || JSON.parse(env['sampleData'] as string);

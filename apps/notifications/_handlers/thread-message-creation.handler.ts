@@ -2,6 +2,7 @@ import {
   EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
+import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
@@ -19,6 +20,7 @@ type ThreadIntervinientUserTypeAlias = {
   id: string;
   identityId: string;
   type: UserTypeEnum;
+  organisationUnitId?: string | null;
   emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
 };
 
@@ -50,6 +52,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
+  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
@@ -63,15 +66,15 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-    const owner = innovation.owner
+    const owner = innovation.owner;
     // Fetch all thread intervenients, excluding the request user.
-    const threadIntervenientUsers = (await this.recipientsService.threadIntervenientUsers(this.inputData.threadId)).filter(item => item.id !== this.requestUser.id);
+    const threadIntervenientUsers = (await this.domainService.innovations.threadIntervenients(this.inputData.threadId)).filter(item => item.id !== this.requestUser.id);
     
-    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id)
+    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id);
 
     // ensure innovation owner is included when he's not the request user
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      threadIntervenientUsers.push(owner)
+      threadIntervenientUsers.push({...owner, organisationUnit: null});
     }
 
     // exclude all assessment users
@@ -83,6 +86,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
         id: thread.author.id,
         identityId: thread.author.identityId,
         type: thread.author.type,
+        organisationUnit: null,
         emailNotificationPreferences: thread.author.emailNotificationPreferences,
       })
     }
@@ -114,7 +118,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
   private pushInAppNotifications( threadIntervenientUsers: ThreadIntervinientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
     
-    const inAppRecipients = threadIntervenientUsers.map(item => item.id);
+    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userType: item.type, organisationUnitId: item.organisationUnitId ?? undefined}));
 
     // Always include Innovation owner in the notification center recipients
     const owner = innovation.owner;
@@ -125,15 +129,14 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // In the case the owner is not on the recipients list and the creator of the reply is not the owner her/himself
     // Add her/him to the recipients list of in app notifications
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      inAppRecipients.push(owner.id);
+      inAppRecipients.push({userId: owner.id, userType: owner.type, organisationUnitId: undefined});
     }
 
     if (inAppRecipients.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, id: this.inputData.threadId },
-        userIds: inAppRecipients,
+        users: inAppRecipients,
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

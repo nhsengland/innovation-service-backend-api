@@ -5,13 +5,15 @@ import { injectable } from 'inversify';
 @injectable()
 export class LoggerService {
 
-  private runningLocally = process.env['LOCAL_MODE'] || false;
+  private runningLocally = process.env['LOCAL_MODE'] || process.env['JEST_WORKER_ID'] || false;
 
   constructor() {
-    appInsights
-      .setup()
-      .setDistributedTracingMode(appInsights.DistributedTracingModes.AI_AND_W3C)
-      .start();
+    if (!this.runningLocally) {
+      appInsights
+        .setup()
+        .setDistributedTracingMode(appInsights.DistributedTracingModes.AI_AND_W3C)
+        .start();
+    }
   }
 
   // let client = appInsights.defaultClient;
