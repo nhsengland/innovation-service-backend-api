@@ -79,6 +79,8 @@ export type OrganisationWithUnitsType = {
 export type ActivityLogDBParamsType = {
 
   actionUserId: string;
+  actionUserRole: UserTypeEnum;
+  actionUserOrganisationUnit: string;
   interveningUserId?: string;
 
   assessmentId?: string;
