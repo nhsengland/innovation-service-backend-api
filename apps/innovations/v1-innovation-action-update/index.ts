@@ -31,6 +31,7 @@ class V1InnovationActionUpdate {
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAssessmentType()
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
@@ -51,7 +52,24 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
 
-      } else if (requestUser.type === UserTypeEnum.INNOVATOR) {
+      }
+
+      if (requestUser.type === UserTypeEnum.ASSESSMENT) {
+
+        const assessmentResult = await innovationActionsService.updateActionAsNeedsAccessor(
+          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          domainContext,
+          params.innovationId,
+          params.actionId,
+          { status: body.status }
+        );
+
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: assessmentResult.id });
+        return;
+
+      }
+
+      if (requestUser.type === UserTypeEnum.INNOVATOR) {
 
         const innovatorResult = await innovationActionsService.updateActionAsInnovator(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
@@ -64,11 +82,9 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
         return;
 
-      } else {
-
-        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
-
       }
+
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
 
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

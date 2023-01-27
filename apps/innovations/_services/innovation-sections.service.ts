@@ -50,18 +50,23 @@ export class InnovationSectionsService extends BaseService {
     let openActions: { section: string, actionsCount: number }[] = [];
 
     if (sections.length > 0) {
+      const actionStatus = [UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(user.type)
+        ? InnovationActionStatusEnum.SUBMITTED
+        : InnovationActionStatusEnum.REQUESTED;
+
       const query = connection.createQueryBuilder(InnovationActionEntity, 'actions')
         .select('sections.section', 'section')
         .addSelect('COUNT(actions.id)', 'actionsCount')
         .innerJoin('actions.innovationSection', 'sections')
         .where('sections.innovation_id = :innovationId', { innovationId })
         .andWhere(`sections.id IN (:...sectionIds)`, { sectionIds: sections.map(item => item.id) })
+        .andWhere('actions.status = :actionStatus', { actionStatus })
         .groupBy('sections.section');
 
-      if (user.type === UserTypeEnum.ACCESSOR) {
-        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.SUBMITTED });
-      } else if (user.type === UserTypeEnum.INNOVATOR) {
-        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+      if (user.type === UserTypeEnum.ASSESSMENT) {
+        query.andWhere('actions.innovation_support_id IS NULL');
+      } else if(user.type === UserTypeEnum.ACCESSOR) {
+        query.andWhere('actions.innovation_support_id IS NOT NULL');
       }
 
       openActions = await query.getRawMany();
@@ -140,14 +145,22 @@ export class InnovationSectionsService extends BaseService {
     }
 
     let actions: null | InnovationActionEntity[] = null;
-
     if (filters.fields?.includes('actions')) {
-      const requestedStatus = user.type === UserTypeEnum.ACCESSOR ? InnovationActionStatusEnum.SUBMITTED : InnovationActionStatusEnum.REQUESTED;
-      actions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+      const requestedStatus = [UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(user.type)
+        ? InnovationActionStatusEnum.SUBMITTED
+        : InnovationActionStatusEnum.REQUESTED;
+
+      const actionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
-        .andWhere('actions.status = :requestedStatus', { requestedStatus })
-        .orderBy('actions.updated_at', 'DESC')
-        .getMany();
+        .andWhere('actions.status = :requestedStatus', { requestedStatus });
+
+      if (user.type === UserTypeEnum.ASSESSMENT) {
+        actionsQuery.andWhere('actions.innovation_support_id IS NULL');
+      } else if(user.type === UserTypeEnum.ACCESSOR) {
+        actionsQuery.andWhere('actions.innovation_support_id IS NOT NULL');
+      }
+
+      actions = await actionsQuery.orderBy('actions.updated_at', 'DESC').getMany();
     }
 
     return {

@@ -98,6 +98,7 @@ describe('Innovation Actions Suite', () => {
       { id: innovator.id, type: innovator.type },
       { innovationId: testData.innovation.id, fields: [ ] },
       { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+      testData.domainContexts.innovator,
       em
     );
 
@@ -126,6 +127,7 @@ describe('Innovation Actions Suite', () => {
       { id: innovator.id, type: innovator.type },
       { innovationId: testData.innovation.id, fields: ['notifications'] },
       { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+      testData.domainContexts.innovator,
       em
     );
     

@@ -1,6 +1,6 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
 import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, UserTypeEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
@@ -72,37 +72,49 @@ export class DomainInnovationsService {
   }
 
   public async withdrawInnovation(innovation: InnovationEntity, transactionManager: EntityManager, user: { id: string; }, reason: null | string): Promise<{ id: string, name: string, supportingUserIds: string[] }> {
-    const innovationSupportIds = innovation.innovationSupports.map(item => item.id);
+    const sections = await transactionManager
+      .createQueryBuilder(InnovationSectionEntity, 'section')
+      .select(["section.id"])
+      .addSelect('section.innovation_id')
+      .where('section.innovation_id = :innovationId', { innovationId: innovation.id })
+      .getMany();
+    const sectionsIds = sections.map(section => section.id);
 
-    if (innovationSupportIds.length > 0) {
-      await transactionManager.createQueryBuilder().update(InnovationActionEntity)
-        .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, deletedAt: new Date() })
-        .where('innovation_support_id IN (:...innovationSupportIds)', { innovationSupportIds })
-        .execute();
-    }
+    await transactionManager.createQueryBuilder().update(InnovationActionEntity)
+      .set({ status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id })
+      .where('innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)', {
+        sectionsIds,
+        innovationActionStatus: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+      })
+      .execute();
+
+    await transactionManager.createQueryBuilder().update(InnovationActionEntity)
+      .set({ updatedBy: user.id, deletedAt: new Date() })
+      .where('innovation_section_id IN (:...sectionsIds)', { sectionsIds })
+      .execute();
 
     // Reject all PENDING AND APPROVED export requests
     await transactionManager.createQueryBuilder(InnovationExportRequestEntity, 'request')
-    .update({
-      status: InnovationExportRequestStatusEnum.REJECTED,
-      rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
-      updatedBy: user.id
-    })
-    .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
-      {
-        innovationId: innovation.id,
-        pendingStatus: InnovationExportRequestStatusEnum.PENDING,
-        approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
-        expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
-      }
-    )
-    .execute();
-    
+      .update({
+        status: InnovationExportRequestStatusEnum.REJECTED,
+        rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
+        updatedBy: user.id
+      })
+      .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
+        {
+          innovationId: innovation.id,
+          pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+          approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+          expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
+        }
+      )
+      .execute()
+
     // supporting users without duplicates (handles users with multiple engaging organisation units)
     const supportingUserIds = [...(new Set(
       innovation.innovationSupports.flatMap(item => item.organisationUnitUsers
         .map(su => su.organisationUser.user.id)
-    )))];
+      )))];
 
     // Update all supports to UNASSIGNED AND soft delete them.
     for (const innovationSupport of innovation.innovationSupports) {
@@ -121,7 +133,7 @@ export class DomainInnovationsService {
     innovation.deletedAt = new Date().toISOString();
     await transactionManager.save(InnovationEntity, innovation);
 
-    
+
 
     return {
       id: innovation.id,
@@ -297,12 +309,12 @@ export class DomainInnovationsService {
   /**
    * Gets the intervinients of a thread, i.e. all the message authors and the context
    * in which the messages were created (organisationUnit) without duplicates
-   * @param threadId 
-   * @param entityManager 
+   * @param threadId
+   * @param entityManager
    * @returns object with user info and organisation unit
    */
   async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
-    id: string, identityId: string, name?:string, type: UserTypeEnum,
+    id: string, identityId: string, name?: string, type: UserTypeEnum,
     organisationUnit: { id: string, acronym: string } | null,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
@@ -348,7 +360,7 @@ export class DomainInnovationsService {
           organisationUnit: message.authorOrganisationUnit ? {
             id: message.authorOrganisationUnit.id,
             acronym: message.authorOrganisationUnit.acronym
-          }: null,
+          } : null,
           emailNotificationPreferences: (await message.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
         });
       }

@@ -29,7 +29,7 @@ export class InnovationActionEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_section_id' })
   innovationSection: InnovationSectionEntity;
 
-  @ManyToOne(() => InnovationSupportEntity, { nullable: false })
+  @ManyToOne(() => InnovationSupportEntity, { nullable: true })
   @JoinColumn({ name: 'innovation_support_id' })
   innovationSupport: InnovationSupportEntity;
 
