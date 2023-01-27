@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import type { EntityManager, Repository } from 'typeorm';
+import type { Repository } from 'typeorm';
 
 import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
@@ -342,20 +342,54 @@ export class UsersService extends BaseService {
       contactByEmail:  boolean,
       contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
       contactDetails: string | null,
-    },
-    entityManager?: EntityManager
+    }
   ) : Promise<void> {
-    const em = entityManager ?? this.sqlConnection.manager;
 
-    await em.save(UserPreferenceEntity, {
+    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    let preference: {
+      user: {
+        id: string,
+      },
+      contactByPhone: boolean,
+      contactByEmail:  boolean,
+      contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
+      contactDetails: string | null,
+      createdBy: string,
+      updatedBy: string,
+      id?: string
+    } = {
       user: {id: userId},
-      contactByPhone: preferences.contactByPhone,
-      contactByEmail: preferences.contactByEmail,
-      contactByPhoneTimeframe: preferences.contactByPhoneTimeframe,
-      contactDetails: preferences.contactDetails,
       createdBy: userId,  // this is only for the first time as BaseEntity defines it as update: false
-      updatedBy: userId
-    });
+      updatedBy: userId,
+      ...preferences
+    };
+
+    if(userPreferences) {
+      preference = {
+        id: userPreferences.id,
+        ...preference
+      }
+
+    }
+
+    await this.sqlConnection.manager.save(UserPreferenceEntity, preference);
+  }
+
+  async getUserPreferences(userId: string): Promise<{
+    contactByPhone: boolean,
+    contactByEmail:  boolean,
+    contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
+    contactDetails: null | string,
+  }> {
+    
+    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    
+    return {
+      contactByPhone: userPreferences?.contactByPhone ?? false,
+      contactByEmail: userPreferences?.contactByEmail ?? false,
+      contactByPhoneTimeframe: userPreferences?.contactByPhoneTimeframe ?? null,
+      contactDetails: userPreferences?.contactDetails ?? null,
+    };
   }
 
 }

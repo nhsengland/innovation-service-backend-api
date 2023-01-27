@@ -1,5 +1,5 @@
 import type { PhoneUserPreferenceEnum } from 'libs/shared/enums';
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -19,13 +19,13 @@ export class UserPreferenceEntity extends BaseEntity {
   contactByEmail: boolean;
 
   @Column({ name: 'contact_by_phone_timeframe', type: 'nvarchar', nullable: true })
-  contactByPhoneTimeframe: PhoneUserPreferenceEnum | null;
+  contactByPhoneTimeframe: null | PhoneUserPreferenceEnum;
 
   @Column({ name: 'contact_details', type: 'nvarchar', nullable: true })
   contactDetails: string | null;
 
   @PrimaryColumn({ name: 'user_id', type: 'uniqueidentifier' })
-  @ManyToOne(() => UserEntity)
+  @OneToOne(() => UserEntity)
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 

@@ -11,14 +11,14 @@ export class createUserPreferenceTable1674736281926 implements MigrationInterfac
             "updated_by" nvarchar(255),
             "deleted_at" datetime2,
             "user_id" uniqueidentifier NOT NULL,
-            "id" nvarchar(255) NOT NULL,
+            "id" uniqueidentifier NOT NULL CONSTRAINT "df_user_preference_id" DEFAULT NEWSEQUENTIALID(),
             "contact_by_phone" bit NOT NULL DEFAULT 0,
             "contact_by_email" bit NOT NULL DEFAULT 0,
             "contact_by_phone_timeframe" nvarchar(255),
             "contact_details" nvarchar(255),
             CONSTRAINT "pk_user_preference_id" PRIMARY KEY ("user_id", "id")
         );`);
-
+        
         await queryRunner.query(
             `ALTER TABLE "user_preference" ADD CONSTRAINT "fk_user_preference_user_user_id" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
         );

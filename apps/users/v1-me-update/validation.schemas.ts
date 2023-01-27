@@ -30,7 +30,7 @@ export type InnovatorBodyType = {
 export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
   displayName: Joi.string().required(),
   mobilePhone: Joi.string().optional().allow(null),
-  contactByEmail: Joi.boolean().required(),
+  contactByEmail: Joi.boolean().optional(),
   contactByPhone: Joi.boolean().optional(),
   contactByPhoneTimeframe: Joi.valid(...Object.values(PhoneUserPreferenceEnum)).optional().allow(null),
   contactDetails: Joi.string().allow(null),

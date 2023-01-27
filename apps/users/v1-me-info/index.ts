@@ -9,7 +9,7 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import { UserTypeEnum } from '@users/shared/enums';
+import { PhoneUserPreferenceEnum, UserTypeEnum } from '@users/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
 
 
@@ -29,13 +29,28 @@ class V1MeInfo {
 
       let termsOfUseAccepted = false;
       let hasInnovationTransfers = false;
+      let userPreferences: {
+        contactByPhone: boolean,
+        contactByEmail:  boolean,
+        contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
+        contactDetails: null | string,
+      } = {
+        contactByEmail: false,
+        contactByPhone: false,
+        contactByPhoneTimeframe: null,
+        contactDetails: null,
+      }
 
       if (requestUser.type === UserTypeEnum.ADMIN) {
         termsOfUseAccepted = true;
         hasInnovationTransfers = false;
       } else {
-        // termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type })).isAccepted;
+        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type })).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
+      }
+
+      if (requestUser.type === UserTypeEnum.INNOVATOR) {
+        userPreferences = (await usersService.getUserPreferences(requestUser.id));
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -44,20 +59,22 @@ class V1MeInfo {
         displayName: requestUser.displayName,
         type: requestUser.type,
         roles: requestUser.roles,
+        contactByEmail: userPreferences.contactByEmail,
+        contactByPhone: userPreferences.contactByPhone,
+        contactByPhoneTimeframe: userPreferences.contactByPhoneTimeframe,
+        contactDetails: userPreferences.contactDetails,
         phone: requestUser.phone,
         passwordResetAt: requestUser.passwordResetAt,
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
-        termsOfUseAccepted: true,
+        termsOfUseAccepted,
         hasInnovationTransfers,
         organisations: requestUser.organisations
       });
       return;
 
     } catch (error) {
-
       context.res = ResponseHelper.Error(context, error);
       return;
-
     }
 
   }
