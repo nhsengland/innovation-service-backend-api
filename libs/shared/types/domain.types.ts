@@ -49,7 +49,7 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
     organisationUser: Joi.object({
       id: Joi.string().uuid().required(),
     }).required(),
-    name: Joi.string().required(),
+    name: Joi.string().allow('').required(),
     acronym: Joi.string().allow(null).required(),
     role: Joi.string().required(),
     isShadow: Joi.boolean().required(),
