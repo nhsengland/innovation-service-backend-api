@@ -93,6 +93,7 @@ export class StatisticsService extends BaseService {
       .innerJoin('orgUsers.user', 'user')
       .where('unitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
       .andWhere('user.id = :userId', { userId: requestUser.id })
+      .andWhere('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
       .getCount();
 
     return {

@@ -11,11 +11,11 @@ export const innovationsAssignedToMeStatisticsHandler = async (
   
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const innovations = await statisticsService.innovationsAssignedToMe(requestUser, domainContext)
+    const innovations = await statisticsService.innovationsAssignedToMe(requestUser, domainContext);
   
     return {
       count: innovations.count,
       total: innovations.total,
       lastSubmittedAt: innovations.lastSubmittedAt,
-    }
-}
+    };
+};
