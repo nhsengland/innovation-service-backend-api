@@ -78,7 +78,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     }
 
     // exclude all assessment users
-    const recipients = threadIntervenientUsers.filter(i => i.type !== UserTypeEnum.ASSESSMENT)
+    const recipients = threadIntervenientUsers.filter(i => i.type !== UserTypeEnum.ASSESSMENT);
 
     // if thread author is an assessment user and the request user is an innovator, push the author back into the thread
     if (thread.author.type === UserTypeEnum.ASSESSMENT && this.requestUser.type === UserTypeEnum.INNOVATOR) {
@@ -88,7 +88,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
         type: thread.author.type,
         organisationUnit: null,
         emailNotificationPreferences: thread.author.emailNotificationPreferences,
-      })
+      });
     }
 
     // Send emails only to users with email preference INSTANTLY.
@@ -102,7 +102,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
           subject: thread.subject,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(user.type), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
             .buildUrl()
         }
       });
