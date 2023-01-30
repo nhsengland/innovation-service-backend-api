@@ -1,15 +1,14 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
+import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
-
 
 @injectable()
 export class UsersService extends BaseService {
@@ -150,6 +149,10 @@ export class UsersService extends BaseService {
     user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
     data: {
       displayName: string,
+      contactByEmail?: boolean,
+      contactByPhone?: boolean,
+      contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null,
+      contactDetails?: string | null,
       mobilePhone?: string | null,
       organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string }
     }
@@ -187,6 +190,14 @@ export class UsersService extends BaseService {
 
       }
 
+      const preferences: { contactByPhone: boolean, contactByEmail: boolean, contactByPhoneTimeframe: null | PhoneUserPreferenceEnum, contactDetails: null | string } = {
+        contactByPhone: data.contactByPhone as boolean,
+        contactByEmail: data.contactByEmail as boolean,
+        contactByPhoneTimeframe: data.contactByPhoneTimeframe  ?? null,
+        contactDetails: data.contactDetails ?? null
+      };
+
+      await this.upsertUserPreferences(user.id, preferences);
     }
 
     // Remove the cache entry on update
@@ -317,6 +328,68 @@ export class UsersService extends BaseService {
       });
 
     return users;
+  }
+
+  /**
+   * upserts the user preferences
+   * @param userId the user id
+   * @param preferences the preferences to upsert
+   */
+  async upsertUserPreferences(
+    userId: string,
+    preferences: {
+      contactByPhone: boolean,
+      contactByEmail:  boolean,
+      contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
+      contactDetails: string | null,
+    }
+  ) : Promise<void> {
+
+    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    let preference: {
+      user: {
+        id: string,
+      },
+      contactByPhone: boolean,
+      contactByEmail:  boolean,
+      contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
+      contactDetails: string | null,
+      createdBy: string,
+      updatedBy: string,
+      id?: string
+    } = {
+      user: {id: userId},
+      createdBy: userId,  // this is only for the first time as BaseEntity defines it as update: false
+      updatedBy: userId,
+      ...preferences
+    };
+
+    if(userPreferences) {
+      preference = {
+        id: userPreferences.id,
+        ...preference
+      }
+
+    }
+
+    await this.sqlConnection.manager.save(UserPreferenceEntity, preference);
+  }
+
+  async getUserPreferences(userId: string): Promise<{
+    contactByPhone: boolean,
+    contactByEmail:  boolean,
+    contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
+    contactDetails: null | string,
+  }> {
+    
+    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    
+    return {
+      contactByPhone: userPreferences?.contactByPhone ?? false,
+      contactByEmail: userPreferences?.contactByEmail ?? false,
+      contactByPhoneTimeframe: userPreferences?.contactByPhoneTimeframe ?? null,
+      contactDetails: userPreferences?.contactDetails ?? null,
+    };
   }
 
 }

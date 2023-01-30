@@ -58,6 +58,10 @@ class V1MeUpdate {
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, firstTimeSignInAt: requestUser.firstTimeSignInAt },
           {
             displayName: innovatorBody.displayName,
+            contactByEmail: innovatorBody.contactByEmail,
+            contactByPhone: innovatorBody.contactByPhone,
+            contactByPhoneTimeframe: innovatorBody.contactByPhoneTimeframe,
+            contactDetails: innovatorBody.contactDetails,
             ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
             organisation: innovatorBody.organisation
           }

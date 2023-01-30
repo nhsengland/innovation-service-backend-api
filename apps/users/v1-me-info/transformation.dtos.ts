@@ -1,4 +1,4 @@
-import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum, UserTypeEnum } from '@users/shared/enums';
+import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, UserTypeEnum } from '@users/shared/enums';
 import type { DateISOType } from '@users/shared/types';
 
 export type ResponseDTO = {
@@ -7,6 +7,10 @@ export type ResponseDTO = {
   displayName: string,
   type: UserTypeEnum,
   roles: ServiceRoleEnum[],
+  contactByEmail: boolean,
+  contactByPhone: boolean,
+  contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
+  contactDetails: null | string,
   phone: null | string,
   termsOfUseAccepted: boolean,
   hasInnovationTransfers: boolean,
