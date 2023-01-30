@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { In, SelectQueryBuilder } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -861,7 +861,7 @@ export class InnovationsService extends BaseService {
     postCode: null | string,
     categories: InnovationCategoryCatalogueEnum[],
     otherCategoryDescription: null | string,
-    owner: { id: string, name: string, email: string, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
+    owner: { id: string, name: string, email: string, contactByEmail: boolean, contactByPhone: boolean, contactByPhoneTimeframe: PhoneUserPreferenceEnum | null, contactDetails: string | null, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
     lastEndSupportAt: null | DateISOType,
     export: { canUserExport: boolean, pendingRequestsCount: number },
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
@@ -904,6 +904,7 @@ export class InnovationsService extends BaseService {
 
     const categories = (await result.categories).map(item => item.type);
     const ownerInfo = usersInfo.find(item => item.id === result.owner.id);
+    const ownerPreferences = (await this.domainService.users.getUserPreferences(ownerId));
 
     // Export requests parsing.
     const innovationExport = {
@@ -966,6 +967,10 @@ export class InnovationsService extends BaseService {
         id: result.owner.id,
         name: ownerInfo?.displayName || '',
         email: ownerInfo?.email || '',
+        contactByEmail: ownerPreferences.contactByEmail,
+        contactByPhone: ownerPreferences.contactByPhone,
+        contactByPhoneTimeframe: ownerPreferences.contactByPhoneTimeframe,
+        contactDetails: ownerPreferences.contactDetails,
         mobilePhone: ownerInfo?.mobilePhone || '',
         isActive: !!ownerInfo?.isActive,
         lastLoginAt: ownerInfo?.lastLoginAt ?? null,

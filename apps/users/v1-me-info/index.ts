@@ -3,7 +3,7 @@ import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -21,6 +21,7 @@ class V1MeInfo {
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
     const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
 
@@ -50,7 +51,7 @@ class V1MeInfo {
       }
 
       if (requestUser.type === UserTypeEnum.INNOVATOR) {
-        userPreferences = (await usersService.getUserPreferences(requestUser.id));
+        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({

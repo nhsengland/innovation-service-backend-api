@@ -1,7 +1,7 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { UserEntity } from '../../entities';
-import type { UserTypeEnum } from '../../enums';
+import { UserEntity, UserPreferenceEntity } from '../../entities';
+import type { PhoneUserPreferenceEnum, UserTypeEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DateISOType, DomainUserInfoType } from '../../types';
 
@@ -133,6 +133,23 @@ export class DomainUsersService {
 
     });
 
+  }
+
+  async getUserPreferences(userId: string): Promise<{
+    contactByPhone: boolean,
+    contactByEmail:  boolean,
+    contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
+    contactDetails: null | string,
+  }> {
+    
+    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    
+    return {
+      contactByPhone: userPreferences?.contactByPhone ?? false,
+      contactByEmail: userPreferences?.contactByEmail ?? false,
+      contactByPhoneTimeframe: userPreferences?.contactByPhoneTimeframe ?? null,
+      contactDetails: userPreferences?.contactDetails ?? null,
+    };
   }
 
 }
