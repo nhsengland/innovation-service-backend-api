@@ -16,11 +16,14 @@ type EmailNotificationPreferenceTypeAlias = {
   preference: EmailNotificationPreferenceEnum;
 };
 
-type ThreadIntervinientUserTypeAlias = {
+type ThreadIntervenientUserTypeAlias = {
   id: string;
   identityId: string;
   type: UserTypeEnum;
-  organisationUnitId?: string | null;
+  organisationUnit: {
+    id: string;
+    acronym: string;
+  } | null,
   emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
 };
 
@@ -116,9 +119,9 @@ export class ThreadMessageCreationHandler extends BaseHandler<
   }
 
 
-  private pushInAppNotifications( threadIntervenientUsers: ThreadIntervinientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
+  private pushInAppNotifications( threadIntervenientUsers: ThreadIntervenientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
     
-    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userType: item.type, organisationUnitId: item.organisationUnitId ?? undefined}));
+    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userType: item.type, organisationUnitId: item.organisationUnit?.id ?? undefined}));
 
     // Always include Innovation owner in the notification center recipients
     const owner = innovation.owner;
