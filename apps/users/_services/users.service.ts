@@ -374,22 +374,4 @@ export class UsersService extends BaseService {
 
     await this.sqlConnection.manager.save(UserPreferenceEntity, preference);
   }
-
-  async getUserPreferences(userId: string): Promise<{
-    contactByPhone: boolean,
-    contactByEmail:  boolean,
-    contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
-    contactDetails: null | string,
-  }> {
-    
-    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
-    
-    return {
-      contactByPhone: userPreferences?.contactByPhone ?? false,
-      contactByEmail: userPreferences?.contactByEmail ?? false,
-      contactByPhoneTimeframe: userPreferences?.contactByPhoneTimeframe ?? null,
-      contactDetails: userPreferences?.contactDetails ?? null,
-    };
-  }
-
 }
