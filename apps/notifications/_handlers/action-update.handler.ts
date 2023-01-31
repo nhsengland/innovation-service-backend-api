@@ -21,7 +21,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
   private data: {
     innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum } },
-    actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, organisationUnit: { id: string}, owner: { id: string; identityId: string } },
+    actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, organisationUnit: { id: string }, owner: { id: string; identityId: string } },
     comment?: string
   } = {};
 
@@ -51,6 +51,7 @@ export class ActionUpdateHandler extends BaseHandler<
         break;
 
       case UserTypeEnum.ACCESSOR:
+      case UserTypeEnum.ASSESSMENT:
         await this.prepareInAppForInnovator();
         if (this.data.actionInfo.status === InnovationActionStatusEnum.CANCELLED) {
           await this.prepareEmailForInnovator();
@@ -72,7 +73,7 @@ export class ActionUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
-      users: [{ userId: this.data.actionInfo?.owner.id || '',  userType: UserTypeEnum.ACCESSOR, organisationUnitId: this.data.actionInfo?.organisationUnit.id }],
+      users: [{ userId: this.data.actionInfo?.owner.id || '', userType: UserTypeEnum.ACCESSOR, organisationUnitId: this.data.actionInfo?.organisationUnit.id }],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.

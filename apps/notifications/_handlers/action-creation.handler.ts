@@ -31,7 +31,7 @@ export class ActionCreationHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    if (this.requestUser.type !== UserTypeEnum.ACCESSOR) {
+    if (![UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(this.requestUser.type)) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 

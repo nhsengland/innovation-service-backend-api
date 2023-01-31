@@ -48,7 +48,7 @@ export class RecipientsService extends BaseService {
   /**
    * Fetch user information with notification preferences.
    */
-  async userInfo(userId: string, options?: {withDeleted?: boolean}): Promise<{
+  async userInfo(userId: string, options?: { withDeleted?: boolean }): Promise<{
     id: string, identityId: string, name: string, email: string, type: UserTypeEnum, isActive: boolean,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }> {
@@ -60,7 +60,7 @@ export class RecipientsService extends BaseService {
     if (options?.withDeleted) {
       dbUserQuery.withDeleted();
     }
-    
+
     const dbUser = await dbUserQuery.getOne();
 
     if (!dbUser) {
@@ -167,7 +167,7 @@ export class RecipientsService extends BaseService {
    * @returns a list of users with their email notification preferences
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
-  async innovationAssignedUsers(data: { innovationId: string} | { innovationSupportId : string }): Promise<{
+  async innovationAssignedUsers(data: { innovationId: string } | { innovationSupportId: string }): Promise<{
     id: string, identityId: string, type: UserTypeEnum, organisationUnitId: string,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
@@ -191,7 +191,7 @@ export class RecipientsService extends BaseService {
     if ('innovationSupportId' in data && !dbInnovationSupports.length) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-    
+
     return Promise.all(dbInnovationSupports.flatMap(support => support.organisationUnitUsers.map(async item => ({
       id: item.organisationUser.user.id,
       identityId: item.organisationUser.user.identityId,
@@ -244,8 +244,8 @@ export class RecipientsService extends BaseService {
       .addSelect('unit.name', 'organisationUnitName')
       .addSelect('unit.acronym', 'organisationUnitAcronym')
       .innerJoin(UserEntity, 'user', 'user.id = action.created_by AND user.locked_at IS NULL')
-      .innerJoin('action.innovationSupport', 'support')
-      .innerJoin('support.organisationUnit', 'unit')
+      .leftJoin('action.innovationSupport', 'support')
+      .leftJoin('support.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
       .getRawOne();
 
