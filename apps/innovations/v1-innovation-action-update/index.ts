@@ -27,13 +27,15 @@ class V1InnovationActionUpdate {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovatorType()
+        .checkAssessmentType()
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: requestUser.type });
 
@@ -41,6 +43,7 @@ class V1InnovationActionUpdate {
 
         const accessorResult = await innovationActionsService.updateActionAsAccessor(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          domainContext,
           params.innovationId,
           params.actionId,
           { status: body.status }
@@ -49,10 +52,28 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
 
-      } else if (requestUser.type === UserTypeEnum.INNOVATOR) {
+      }
+
+      if (requestUser.type === UserTypeEnum.ASSESSMENT) {
+
+        const assessmentResult = await innovationActionsService.updateActionAsNeedsAccessor(
+          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          domainContext,
+          params.innovationId,
+          params.actionId,
+          { status: body.status }
+        );
+
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: assessmentResult.id });
+        return;
+
+      }
+
+      if (requestUser.type === UserTypeEnum.INNOVATOR) {
 
         const innovatorResult = await innovationActionsService.updateActionAsInnovator(
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          domainContext,
           params.innovationId,
           params.actionId,
           { status: body.status, message: body.message ?? '' } // Joi will make sure that message is never empty for an innovator.
@@ -61,11 +82,9 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
         return;
 
-      } else {
-
-        throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
-
       }
+
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
 
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

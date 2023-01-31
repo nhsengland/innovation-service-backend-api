@@ -3,13 +3,13 @@ import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
 import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import { UserTypeEnum } from '@users/shared/enums';
+import { PhoneUserPreferenceEnum, UserTypeEnum } from '@users/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
 
 
@@ -21,14 +21,26 @@ class V1MeInfo {
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
     const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
+      const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
 
       let termsOfUseAccepted = false;
       let hasInnovationTransfers = false;
+      let userPreferences: {
+        contactByPhone: boolean,
+        contactByEmail:  boolean,
+        contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
+        contactDetails: null | string,
+      } = {
+        contactByEmail: false,
+        contactByPhone: false,
+        contactByPhoneTimeframe: null,
+        contactDetails: null,
+      }
 
       if (requestUser.type === UserTypeEnum.ADMIN) {
         termsOfUseAccepted = true;
@@ -38,12 +50,20 @@ class V1MeInfo {
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
       }
 
+      if (requestUser.type === UserTypeEnum.INNOVATOR) {
+        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
+      }
+
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: requestUser.id,
         email: requestUser.email,
         displayName: requestUser.displayName,
         type: requestUser.type,
         roles: requestUser.roles,
+        contactByEmail: userPreferences.contactByEmail,
+        contactByPhone: userPreferences.contactByPhone,
+        contactByPhoneTimeframe: userPreferences.contactByPhoneTimeframe,
+        contactDetails: userPreferences.contactDetails,
         phone: requestUser.phone,
         passwordResetAt: requestUser.passwordResetAt,
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
@@ -54,10 +74,8 @@ class V1MeInfo {
       return;
 
     } catch (error) {
-
       context.res = ResponseHelper.Error(context, error);
       return;
-
     }
 
   }
@@ -73,21 +91,8 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     tags: ['[v1] Users'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Successful operation',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Unique identifier for the game' },
-                state: { type: 'string', description: 'The status of the game', enum: ['WaitingForPlayers', 'Started', 'Complete'] }
-              }
-            }
-          }
-        }
-      },
-      404: { description: 'Unable to find a game with that id' }
+      200: { description: 'Successful operation'},
+      404: { description: 'Not found' }
     }
   }
 });

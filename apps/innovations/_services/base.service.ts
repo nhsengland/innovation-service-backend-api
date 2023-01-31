@@ -10,7 +10,7 @@ import {
 } from '@innovations/shared/services';
 
 
-import { container } from '../_config'
+import container from '../_config/init'
 
 @injectable()
 export class BaseService {

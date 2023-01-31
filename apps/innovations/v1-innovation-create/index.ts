@@ -28,14 +28,15 @@ class V1InnovationCreate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query)
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const surveyId = queryParams.useSurvey ? requestUser.surveyId : null;
 
-      const result = await innovationService.createInnovation({ id: requestUser.id }, body, surveyId);
+      const result = await innovationService.createInnovation({ id: requestUser.id }, domainContext, body, surveyId);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 

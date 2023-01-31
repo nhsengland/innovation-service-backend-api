@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import type { NotifierTypeEnum, UserTypeEnum } from '../../enums';
-import type { NotifierTemplatesType } from '../../types';
+import type { DomainContextType, NotifierTemplatesType } from '../../types';
 
 import { LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
 import { QueuesEnum } from './storage-queue.service';
@@ -19,7 +19,8 @@ export class NotifierService {
   async send<T extends NotifierTypeEnum>( // This typing strategy, validades the correct properties for the supplied notifierType.
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
     notifierType: T,
-    params: NotifierTemplatesType[T]
+    params: NotifierTemplatesType[T],
+    domainContext?: DomainContextType,
   ): Promise<boolean> {
 
     try {
@@ -28,7 +29,8 @@ export class NotifierService {
         data: {
           requestUser: {id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type},
           action: notifierType,
-          params
+          params,
+          domainContext,
         }
       });
 

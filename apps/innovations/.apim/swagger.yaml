@@ -86,14 +86,12 @@ paths:
         - name: innovationId
           in: path
           required: true
-          description: The innovation id.
           schema:
             type: string
             format: uuid
         - name: actionId
           in: path
           required: true
-          description: The innovation action id.
           schema:
             type: string
             format: uuid
@@ -125,7 +123,12 @@ paths:
                     type: string
                     format: date-time
                   createdBy:
-                    type: string
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      organisationUnit:
+                        type: string
         "401":
           description: Unauthorized
         "403":
@@ -484,59 +487,65 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
-  "/v1/{innovationId}/assessments":
-    post:
-      summary: Create an innovation assessment
-      description: Create an innovation assessment.
-      operationId: v1-innovation-assessment-create
-      tags:
-        - Innovation Assessment
+  "/v1/{innovationId}/assessments/{assessmentId}":
+    patch:
+      summary: Update the assigned assessor of an innovation.
+      description: Update the assigned assessor of an innovation.
+      operationId: v1-innovation-assessment-assessor-update
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
             format: uuid
+            description: Id of the innovation.
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the assessment.
       requestBody:
-        description: The innovation assessment data.
+        description: The new assessor to be assigned.
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                comment:
+                assessorId:
                   type: string
-                  description: The comment for the assessment.
+                  format: uuid
+                  description: Id of the new assessor to assign.
               required:
-                - comment
+                - assessorId
+              additionalProperties: false
       responses:
         "200":
-          description: The innovation assessment has been created.
+          description: The assigned assessor has been successfully updated.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  id:
+                  assessmentId:
                     type: string
                     format: uuid
-                    description: The innovation assessment id.
-                required:
-                  - id
+                  assessorId:
+                    type: string
+                    format: uuid
         "400":
-          description: The innovation assessment has not been created.
+          description: Bad request. Validation error.
         "401":
-          description: The user is not authenticated.
+          description: Unauthorized. Invalid authentication credentials.
         "403":
-          description: The user is not authorized to create an innovation assessment.
+          description: Forbidden. User does not have permission to assign a new assessor.
         "404":
-          description: The innovation does not exist.
+          description: Not found. Innovation or assessment not found.
         "500":
-          description: An error occurred while creating the innovation assessment.
-  "/v1/{innovationId}/assessments/{assessmentId}":
+          description: Internal server error.
     get:
       summary: Get Innovation Assessment Info
       description: Get Innovation Assessment Info
@@ -750,6 +759,58 @@ paths:
           description: Not found. Innovation or assessment not found.
         "500":
           description: Internal server error.
+  "/v1/{innovationId}/assessments":
+    post:
+      summary: Create an innovation assessment
+      description: Create an innovation assessment.
+      operationId: v1-innovation-assessment-create
+      tags:
+        - Innovation Assessment
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation assessment data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: The comment for the assessment.
+              required:
+                - comment
+      responses:
+        "200":
+          description: The innovation assessment has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    description: The innovation assessment id.
+                required:
+                  - id
+        "400":
+          description: The innovation assessment has not been created.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to create an innovation assessment.
+        "404":
+          description: The innovation does not exist.
+        "500":
+          description: An error occurred while creating the innovation assessment.
   /v1:
     post:
       description: Create an innovation
@@ -778,7 +839,185 @@ paths:
     get:
       operationId: v1-innovations-list
       description: Get innovations list
-      parameters: []
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+        - name: mainCategories
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - MEDICAL_DEVICE
+                - PHARMACEUTICAL
+                - DIGITAL
+                - AI
+                - EDUCATION
+                - PPE
+                - OTHER
+        - name: locations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - England
+                - Scotland
+                - Wales
+                - Northern Ireland
+                - Based outside UK
+        - name: status
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - WAITING_NEEDS_ASSESSMENT
+                    - NEEDS_ASSESSMENT
+                    - IN_PROGRESS
+                x-required: true
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - IN_PROGRESS
+                    - COMPLETE
+                x-required: true
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - CREATED
+                    - WAITING_NEEDS_ASSESSMENT
+                    - NEEDS_ASSESSMENT
+                    - IN_PROGRESS
+                    - WITHDRAWN
+                    - COMPLETE
+                    - PAUSED
+        - name: assessmentSupportStatus
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - UNASSIGNED
+              - ENGAGING
+              - NOT_ENGAGING
+        - name: engagingOrganisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: supportStatuses
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - ENGAGING
+                    - COMPLETE
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - UNASSIGNED
+                    - FURTHER_INFO_REQUIRED
+                    - WAITING
+                    - NOT_YET
+                    - ENGAGING
+                    - UNSUITABLE
+                    - WITHDRAWN
+                    - COMPLETE
+        - name: groupedStatuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - RECORD_NOT_SHARED
+                - AWAITING_NEEDS_ASSESSMENT
+                - NEEDS_ASSESSMENT
+                - AWAITING_SUPPORT
+                - RECEIVING_SUPPORT
+                - AWAITING_NEEDS_REASSESSMENT
+                - WITHDRAWN
+        - name: assignedToMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: suggestedOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: latestWorkedByMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: order
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: object
+                properties: {}
+                additionalProperties:
+                  type: string
+                  enum:
+                    - ASC
+                    - DESC
+                default:
+                  default: DESC
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - isAssessmentOverdue
+                - assessment
+                - supports
+                - notifications
+                - statistics
       responses:
         "200":
           description: Success
@@ -802,13 +1041,13 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: The innovation id.
           required: true
           schema:
             type: string
             format: uuid
+            description: The innovation id.
       requestBody:
-        description: The innovation evidence to create.
+        description: The evidence data to create.
         required: true
         content:
           application/json:
@@ -817,19 +1056,151 @@ paths:
               properties:
                 evidenceType:
                   type: string
-                  description: Type of the evidence.
-                  example: CLINICAL
+                  nullable: true
+                  description: The evidence type.
                 clinicalEvidenceType:
                   type: string
-                  description: Type of clinical evidence.
-                  example: DATA_PUBLISHED
+                  nullable: true
+                  description: The clinical evidence type.
                 description:
                   type: string
-                  description: Description of the evidence.
-                  example: Example evidence.
-                files:
+                  nullable: true
+                  description: The evidence description.
+                summary:
                   type: string
-                  description: Ids of the uploaded files.
+                  maxLength: 50
+                  nullable: true
+                  description: Small summary of the evidence.
+                files:
+                  type: array
+                  items:
+                    type: string
+                  description: Files to support the evidence.
+              required:
+                - evidenceType
+                - description
+                - summary
+                - files
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation evidence id.
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+  "/v1/{innovationId}/evidence/{evidenceId}":
+    delete:
+      description: Delete an innovation evidence entry.
+      tags:
+        - Innovation
+      summary: Delete an innovation evidence entry.
+      operationId: v1-innovation-evidence-delete
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation evidence id.
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
+    put:
+      description: Update an innovation evidence entry.
+      tags:
+        - Innovation
+      summary: Update an innovation evidence entry.
+      operationId: v1-innovation-evidence-update
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The innovation id.
+        - name: evidenceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The evidence id.
+      requestBody:
+        description: The evidence data to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                evidenceType:
+                  type: string
+                  nullable: true
+                  description: The evidence type.
+                clinicalEvidenceType:
+                  type: string
+                  nullable: true
+                  description: The clinical evidence type.
+                description:
+                  type: string
+                  nullable: true
+                  description: The evidence description.
+                summary:
+                  type: string
+                  maxLength: 50
+                  nullable: true
+                  description: Small summary of the evidence.
+                files:
+                  type: array
+                  items:
+                    type: string
+                  description: Files to support the evidence.
+              required:
+                - evidenceType
+                - description
+                - summary
+                - files
+              additionalProperties: false
       responses:
         "200":
           description: Innovation evidence info.
@@ -927,6 +1298,56 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+  "/v1/{innovationId}/upload":
+    post:
+      operationId: v1-innovation-file-upload
+      description: Upload an innovation file.
+      tags:
+        - "[v1] Innovation"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: the innovation id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fileName:
+                  type: string
+                  description: the file name
+                context:
+                  type: string
+                  maxLength: 100
+                  description: optional context for the file
+              required:
+                - fileName
+              additionalProperties: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  displayFileName:
+                    type: string
+                  url:
+                    type: string
+                    description: url for file upload
+        "400":
+          description: Invalid payload
+        "404":
+          description: Innovation not found
   "/v1/{innovationId}":
     get:
       operationId: v1-innovation-info
@@ -1111,16 +1532,32 @@ paths:
       summary: Get an innovation section info.
       operationId: v1-innovation-section-info
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: sectionKey
+            format: uuid
+        - name: sectionKey
+          in: path
           required: true
           schema:
             type: string
+            enum:
+              - INNOVATION_DESCRIPTION
+              - VALUE_PROPOSITION
+              - UNDERSTANDING_OF_NEEDS
+              - UNDERSTANDING_OF_BENEFITS
+              - EVIDENCE_OF_EFFECTIVENESS
+              - MARKET_RESEARCH
+              - INTELLECTUAL_PROPERTY
+              - REGULATIONS_AND_STANDARDS
+              - CURRENT_CARE_PATHWAY
+              - TESTING_WITH_USERS
+              - COST_OF_INNOVATION
+              - COMPARATIVE_COST_BENEFIT
+              - REVENUE_MODEL
+              - IMPLEMENTATION_PLAN
       responses:
         "200":
           description: Innovation section info.
@@ -1171,6 +1608,11 @@ paths:
                               type: string
                               description: Innovation section question text.
                               example: Question text
+                  actionsIds:
+                    type: array
+                    items:
+                      type: string
+                      description: The id of the action.
         "401":
           description: Unauthorized
         "403":
@@ -2144,6 +2586,60 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/v1/{innovationId}/threads/{threadId}/participants":
+    get:
+      summary: Get Innovation Thread Participants
+      description: Get Innovation Thread Participants
+      tags:
+        - Innovation Thread
+      operationId: v1-innovation-thread-participants
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        organisationUnit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            acronym:
+                              type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/v1/transfers/{transferId}/check":
     get:
       description: Get details of pending innovations transfers
@@ -2256,6 +2752,45 @@ paths:
           description: The innovation transfer does not exist
         "500":
           description: An error occurred while updating the innovation transfer status
+  "/v1/{innovationId}/withdraw":
+    patch:
+      summary: Withdraw an innovation
+      description: Withdraw an innovation.
+      operationId: v1-innovation-withdraw
+      tags:
+        - Innovation
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 200
+                  description: Message provided when withdrawing an innovation
+              required:
+                - message
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation withdrawn successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Innovation ID
   "/v1/{innovationId}/export-requests":
     head:
       operationId: v1-innovations-export-request-check

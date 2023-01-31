@@ -3,12 +3,12 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class GetInnovationSectionInfo {
@@ -22,8 +22,9 @@ class GetInnovationSectionInfo {
     try {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
@@ -33,13 +34,14 @@ class GetInnovationSectionInfo {
         .verify();
       const requestUser = authInstance.getUserInfo();
 
-      const result = await innovationSectionsService.getInnovationSectionInfo({ type: requestUser.type }, params.innovationId, params.sectionKey);
+      const result = await innovationSectionsService.getInnovationSectionInfo({ type: requestUser.type }, params.innovationId, params.sectionKey, queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         section: result.section,
         status: result.status,
         submittedAt: result.submittedAt,
-        data: result.data
+        data: result.data,
+        ...(result.actionsIds ? { actionsIds: result.actionsIds } : {})
       });
       return;
 
@@ -58,10 +60,7 @@ export default openApi(GetInnovationSectionInfo.httpTrigger as AzureFunction, '/
     tags: ['Innovation'],
     summary: 'Get an innovation section info.',
     operationId: 'v1-innovation-section-info',
-    parameters: [
-      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-      { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'Innovation section info.',
@@ -124,6 +123,13 @@ export default openApi(GetInnovationSectionInfo.httpTrigger as AzureFunction, '/
                       },
                     },
                   },
+                },
+                actionsIds: {
+                  type: 'array',
+                  items: {
+                    type: 'string',
+                    description: 'The id of the action.'
+                  }
                 },
               },
             },

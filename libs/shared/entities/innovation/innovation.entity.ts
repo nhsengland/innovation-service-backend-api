@@ -48,6 +48,7 @@ import type {
 } from '../../enums/catalog.enums';
 
 import type { DateISOType } from '../../types/date.types';
+import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 
 
 @Entity('innovation')
@@ -233,8 +234,8 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'other_environmental_benefit', type: 'nvarchar', nullable: true })
   otherEnvironmentalBenefit: null | string;
 
-  @Column({ name: 'archive_reason', type: 'nvarchar', nullable: true })
-  archiveReason: null | string;
+  @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
+  withdrawReason: null | string;
 
 
   @ManyToOne(() => UserEntity, { nullable: false })
@@ -359,6 +360,9 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation, { cascade: ['insert', 'update'] })
   innovationSupports: InnovationSupportEntity[];
+
+  @OneToMany(() => InnovationSupportLogEntity, record => record.innovation, { cascade: ['insert', 'update'] })
+  innovationSupportLogs: InnovationSupportLogEntity[];
 
   @OneToMany(() => NotificationEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
   notifications: Promise<NotificationEntity[]>;

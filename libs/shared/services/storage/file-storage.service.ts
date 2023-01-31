@@ -55,7 +55,7 @@ export class FileStorageService {
   }
 
   getUploadUrl(id: string, filename: string): string {
-    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.CREATE + StoragePermissionsEnum.WRITE);
+    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ + StoragePermissionsEnum.CREATE + StoragePermissionsEnum.WRITE);
   }
 
 

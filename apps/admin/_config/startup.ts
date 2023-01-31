@@ -5,21 +5,28 @@ import { join } from 'path';
 import YAML from 'yaml';
 
 import {
+  CacheServiceSymbol,
+  CacheServiceType,
   HttpServiceSymbol,
   HttpServiceType,
+  NOSQLConnectionServiceSymbol,
+  NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
+import { 
+  OrganisationsServiceSymbol, OrganisationsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType,
+  UsersServiceSymbol, UsersServiceType, ValidationServiceSymbol, ValidationServiceType } from '../_services/interfaces';
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
-import { 
-  TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  OrganisationsServiceType, OrganisationsServiceSymbol
-} from '../_services/interfaces';
+import { UsersService } from '../_services/users.service';
+import { ValidationService } from '../_services/validation.service';
 
 
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
+container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
+container.bind<ValidationServiceType>(ValidationServiceSymbol).to(ValidationService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
 
@@ -27,10 +34,14 @@ export const startup = async (): Promise<void> => {
 
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
 
   try {
 
     await sqlConnectionService.init();
+    await noSqlConnectionService.init();
+    await cacheService.init();
 
     console.log('Initialization complete');
 

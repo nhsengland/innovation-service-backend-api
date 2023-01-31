@@ -1,3 +1,4 @@
+import type { CustomContextType } from '@innovations/shared/types';
 import { randomBytes, scrypt } from 'crypto';
 import { inject, injectable } from 'inversify';
 
@@ -20,9 +21,10 @@ export class AuthorizationService {
   /**
   * Authorization validations methods.
   */
-  validate(identityId?: string): AuthorizationValidationModel {
+  validate(ctx: CustomContextType): AuthorizationValidationModel {
     const authInstance = new AuthorizationValidationModel(this.domainService);
-    if (identityId) { authInstance.setUser(identityId); }
+    if (ctx.auth.user.identityId) { authInstance.setUser(ctx.auth.user.identityId); }
+    if (ctx.auth.context) { authInstance.setContext(ctx.auth.context); }
     return authInstance;
   }
 
@@ -92,7 +94,7 @@ export class AuthorizationService {
     });
 
     // Send notification to user with code.
-    await this.notifierService.send<NotifierTypeEnum.SLS_VALIDATION>(
+    await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },
       NotifierTypeEnum.SLS_VALIDATION,
       { code }

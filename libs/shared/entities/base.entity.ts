@@ -5,10 +5,10 @@ import type { DateISOType } from '../types';
 
 export class BaseEntity {
 
-  @CreateDateColumn({ name: 'created_at', type: 'datetime2' })
+  @CreateDateColumn({ name: 'created_at', type: 'datetime2', update: false })
   createdAt: DateISOType;
 
-  @Column({ name: 'created_by' })
+  @Column({ name: 'created_by', update: false })
   createdBy: string;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'datetime2' })

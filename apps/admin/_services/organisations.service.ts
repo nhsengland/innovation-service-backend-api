@@ -1,12 +1,14 @@
-import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
+import { inject, injectable } from 'inversify';
+import { EntityManager, In } from 'typeorm';
+
+import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import type { DomainUserInfoType } from '@admin/shared/types';
-import { NotificationUserEntity } from '@admin/shared/entities';
-import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+
 import { BaseService } from './base.service';
+
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -43,7 +45,7 @@ export class OrganisationsService extends BaseService {
 
 
     // only want to clear actions with these statuses
-    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.IN_REVIEW]
+    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
@@ -101,14 +103,21 @@ export class OrganisationsService extends BaseService {
 
       // Complete supports of unit
       if (supportsToComplete.length > 0) {
+
+        const supportIds = supportsToComplete.map(s => s.id)
+
         await transaction.update(
           InnovationSupportEntity,
-          { id: In(supportsToComplete.map(s => s.id)) },
+          { id: In(supportIds) },
           {
             status: InnovationSupportStatusEnum.COMPLETE,
-            organisationUnitUsers: []
           }
         )
+
+        await transaction.createQueryBuilder().delete()
+          .from('innovation_support_user')
+          .where('innovation_support_id IN (:...supports)', { supports: supportIds })
+          .execute()
       }
 
       // Mark as read notifications in the context of this unit
@@ -160,17 +169,10 @@ export class OrganisationsService extends BaseService {
           }
         );
 
-        await this.notifierService.send<NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED>(
-          {
-            id: requestUser.id,
-            identityId: requestUser.identityId,
-            type: requestUser.type,
-          },
+        await this.notifierService.send(
+          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
           NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-          {
-            innovationId: support.innovation.id,
-            unitId,
-          }
+          { innovationId: support.innovation.id, unitId }
         );
       }
       return { unitId };
@@ -374,17 +376,14 @@ export class OrganisationsService extends BaseService {
     });
   }
 
-
-  async createOrganisation(organisation: {
-    name: string;
-    acronym: string;
-    units?: { name: string; acronym: string }[];
-  }): Promise<{
+  async createOrganisation(
+    name: string,
+    acronym: string,
+    units?: { name: string; acronym: string }[]
+  ): Promise<{
     id: string;
     units: string[];
   }> {
-    const name = organisation.name;
-    const acronym = organisation.acronym;
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
       const orgNameOrAcronymAlreadyExists = await transaction
@@ -414,9 +413,9 @@ export class OrganisationsService extends BaseService {
           if > 1 -> create specified units
         */
       const savedUnits: OrganisationUnitEntity[] = [];
-      if (organisation.units && organisation.units.length > 1) {
+      if (units && units.length > 1) {
         //create specified units
-        for (const unit of organisation.units) {
+        for (const unit of units) {
           const u = await this.createOrganisationUnit(
             savedOrganisation.id,
             unit.name,
@@ -444,6 +443,20 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map((u) => u.id) };
   }
 
+  async createUnit(
+    organisationId: string,
+    name: string,
+    acronym: string
+  ): Promise<{ id: string }> {
+
+    const unit = await this.sqlConnection.transaction(async transaction => {
+
+      return this.createOrganisationUnit(organisationId, name, acronym, false, transaction);
+
+    });
+
+    return { id: unit.id }
+  }
 
   private async createOrganisationUnit(
     organisationId: string,
@@ -485,4 +498,5 @@ export class OrganisationsService extends BaseService {
 
     return savedUnit;
   }
+
 }

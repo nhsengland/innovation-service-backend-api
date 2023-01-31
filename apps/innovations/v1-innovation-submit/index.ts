@@ -27,15 +27,17 @@ class V1InnovationSubmit {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const result = await innovationsService.submitInnovation(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        domainContext,
         params.innovationId
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({

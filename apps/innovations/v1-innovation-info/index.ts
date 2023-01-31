@@ -29,17 +29,19 @@ class V1InnovationInfo {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovation()
         .verify();
+
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationsService.getInnovationInfo(
         {
           id: requestUser.id,
           type: requestUser.type,
-          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organisationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
+          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {}),
         },
         params.innovationId,
         queryParams
@@ -61,6 +63,10 @@ class V1InnovationInfo {
           isActive: result.owner.isActive,
           // Contact details only sent to Assessment and Admin users.
           ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { email: result.owner.email } : {}),
+          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactByEmail: result.owner.contactByEmail } : {}),
+          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactByPhone: result.owner.contactByPhone } : {}),
+          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe } : {}),
+          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactDetails: result.owner.contactDetails } : {}),
           ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { mobilePhone: result.owner.mobilePhone } : {}),
           organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
           ...([UserTypeEnum.ADMIN].includes(requestUser.type) ? { lastLoginAt: result.owner.lastLoginAt } : {}),

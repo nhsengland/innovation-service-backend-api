@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -23,15 +23,16 @@ class V1InnovationsList {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .checkAdminType()
         .verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.userType, userOrganisationRole: domainContext.organisation?.role });
 
       const { skip, take, order, ...filters } = queryParams;
 
@@ -39,9 +40,9 @@ class V1InnovationsList {
         {
           id: requestUser.id,
           type: requestUser.type,
-          ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(requestUser.organisations[0]?.organisationUnits[0]?.id ? { organisationUnitId: requestUser.organisations[0].organisationUnits[0].id } : {}),
-          ...(requestUser.organisations[0]?.role ? { organisationRole: requestUser.organisations[0]?.role } : {})
+          ...(domainContext.organisation?.id ? { organisationId: domainContext.organisation.id } : {}),
+          ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {}),
+          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {})
         },
         filters,
         { skip, take, order }
@@ -91,7 +92,7 @@ export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
   get: {
     operationId: 'v1-innovations-list',
     description: 'Get innovations list',
-    parameters: [],
+    parameters: SwaggerHelper.paramJ2S({query: QueryParamsSchema}),
     responses: {
       200: {
         description: 'Success',

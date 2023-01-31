@@ -33,13 +33,13 @@ export class JoiHelper {
   }
 
 
-  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema } {
+  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema, decodeURIString: () => Joi.StringSchema } {
 
     return Joi.extend(
 
       {
         type: 'stringArray',
-        base: Joi.array(),
+        base: Joi.array().meta({ baseType: 'array' }),
         coerce(value) {
           return typeof value !== 'string' ? { value } : { value: value.replace(/(^,+)|(,+$)/mg, '').split(',').filter(item => item) };
         }
@@ -47,10 +47,18 @@ export class JoiHelper {
 
       {
         type: 'stringObject',
-        base: Joi.object(),
+        base: Joi.object().meta({ baseType: 'object' }),
         coerce(value) {
           try { return { value: JSON.parse(value) }; }
           catch (err) { return { value }; }
+        }
+      },
+
+      {
+        type: 'decodeURIString',
+        base: Joi.string().meta({ baseType: 'string' }),
+        coerce(value) {
+          return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value)}
         }
       }
 
@@ -63,7 +71,7 @@ export class JoiHelper {
 
     return Joi.object({
       skip: Joi.number().default(data.skip ?? 0),
-      take: Joi.number().default(data.take ?? 20),
+      take: Joi.number().max(100).default(data.take ?? 20),
       order: this.AppCustomJoi().stringObject()
         // This validates if the format is { field: 'ASC' | 'DESC' } (and uppercase 'asc' to 'ASC').
         .pattern(Joi.string().valid(...data.orderKeys), Joi.string().valid('ASC', 'DESC').uppercase())

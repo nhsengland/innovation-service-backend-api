@@ -29,15 +29,17 @@ class V1InnovationPause {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const result = await innovationsService.pauseInnovation(
         { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        domainContext,
         params.innovationId,
         { message: body.message }
       );
@@ -59,7 +61,7 @@ export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{inn
     description: 'Pause an innovation.',
     operationId: 'v1-innovation-pause',
     tags: ['Innovation'],
-    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       200: {

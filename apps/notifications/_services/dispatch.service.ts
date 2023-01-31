@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import type { NotificationContextTypeEnum, NotificationContextDetailEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
-import { InnovationEntity, NotificationEntity, NotificationUserEntity, UserEntity } from '@notifications/shared/entities';
+import { InnovationEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity, UserEntity } from '@notifications/shared/entities';
+import type { NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
@@ -56,8 +56,8 @@ export class DispatchService extends BaseService {
     requestUser: { id: string },
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-    userIds: string[],
-    params: { [key: string]: string | number | string[] }
+    users: { userId: string, userType: UserTypeEnum, organisationUnitId?: string | undefined}[],
+    params: { [key: string]: string | number | string[] },
   ): Promise<{ id: string }> {
 
     return this.sqlConnection.transaction(async transactionManager => {
@@ -71,10 +71,11 @@ export class DispatchService extends BaseService {
         createdBy: requestUser.id
       }));
 
-      await transactionManager.save(NotificationUserEntity, userIds.map(userId => NotificationUserEntity.new({
-        user: UserEntity.new({ id: userId }),
+      await transactionManager.save(NotificationUserEntity, users.map(user => NotificationUserEntity.new({
+        user: UserEntity.new({ id: user.userId }),
         notification: dbNotification,
-        createdBy: requestUser.id
+        createdBy: requestUser.id,
+        organisationUnit: user.organisationUnitId ? OrganisationUnitEntity.new({ id: user.organisationUnitId }) : null,
       })));
 
       return { id: dbNotification.id };

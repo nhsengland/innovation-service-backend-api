@@ -5,6 +5,35 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  "/v1/users/{userId}/delete":
+    patch:
+      description: Delete an admin user.
+      operationId: v1-admin-delete
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the admin user.
+      responses:
+        "200":
+          description: The admin account has been deleted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to delete an admin account.
+        "500":
+          description: An error occurred while deleting the admin account.
   /v1/health:
     get:
       summary: Get admin health
@@ -31,10 +60,10 @@ paths:
           description: Forbidden
   /v1/organisations:
     post:
-      description: Create an organisation unit.
+      description: Create an organisation.
       operationId: v1-admin-organisation-create
       requestBody:
-        description: The organisation to create.
+        description: The organisation to be created.
         required: true
         content:
           application/json:
@@ -43,30 +72,52 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 100
                   description: Name of the organisation.
                 acronym:
                   type: string
+                  maxLength: 10
                   description: Acronym of the organisation.
-                unit:
-                  type: string
-                  description: Ids of the organistaion units.
+                units:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: Name of the organisation unit.
+                      acronym:
+                        type: string
+                        description: Acronym of the organisation unit.
+                    required:
+                      - name
+                      - acronym
+                    additionalProperties: false
+                  description: Organisation units to create.
+              required:
+                - name
+                - acronym
+              additionalProperties: false
       responses:
         "200":
-          description: The organisation unit has been created.
+          description: The organisation has been created.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
                     description: The organisation id.
+                  units:
+                    type: string
+                    description: Ids of the organisation units belonging to the organisation.
         "400":
           description: Bad request.
         "401":
           description: The user is not authorized to create an organisation.
         "500":
-          description: An error occurred while creating the organisation unit.
+          description: An error occurred while creating the organisation.
   "/v1/organisations/{organisationId}":
     patch:
       description: Update an organisation.
@@ -97,9 +148,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  organisationId:
                     type: string
-                    description: The organisation unit id.
+                    description: The organisation id.
         "400":
           description: Bad request.
         "401":
@@ -259,6 +310,55 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while activating the organisation unit.
+  "/v1/organisations/{organisationId}/units":
+    post:
+      description: Create an organisation unit.
+      operationId: v1-admin-unit-create
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the organisation to which the unit will belong to.
+      requestBody:
+        description: The organisation unit to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Name of the organisation unit.
+                acronym:
+                  type: string
+                  maxLength: 10
+                  description: Acronym of the organisation unit.
+              required:
+                - name
+                - acronym
+              additionalProperties: false
+      responses:
+        "200":
+          description: The organisation unit has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create an organisation unit.
+        "500":
+          description: An error occurred while creating the organisation unit.
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/inactivate":
     patch:
       description: Inactivate an organisation unit.
@@ -342,3 +442,163 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  /v1/users:
+    post:
+      description: Create a user.
+      operationId: v1-admin-user-create
+      parameters: []
+      requestBody:
+        description: The user to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the user.
+                email:
+                  type: string
+                  format: email
+                  description: Email of the user.
+                type:
+                  type: string
+                  enum:
+                    - ADMIN
+                    - ACCESSOR
+                    - ASSESSMENT
+                  description: Type of the user.
+                organisationAcronym:
+                  type: string
+                  maxLength: 10
+                  nullable: true
+                  description: Acronym of the organisation.
+                organisationUnitAcronym:
+                  type: string
+                  maxLength: 10
+                  nullable: true
+                  description: Acronym of the organisation unit.
+                role:
+                  type: string
+                  enum:
+                    - ACCESSOR
+                    - QUALIFYING_ACCESSOR
+                  nullable: true
+                  description: Role of the user within the organisation.
+              required:
+                - name
+                - email
+                - type
+              additionalProperties: false
+      responses:
+        "200":
+          description: The user has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create a user.
+        "500":
+          description: An error occurred while creating the user.
+  "/v1/users/{userId}":
+    patch:
+      description: Update a user.
+      operationId: v1-admin-user-update
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the user to lock.
+        - name: id
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Id of the SLS.
+        - name: code
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Code of the SLS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                accountEnabled:
+                  type: boolean
+                  nullable: true
+                  description: Enable or disable the user.
+              additionalProperties: false
+      responses:
+        "200":
+          description: The user has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                    description: Id of the user.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to lock a user.
+        "404":
+          description: The user does not exist.
+        "500":
+          description: An error occurred while locking a user.
+  "/v1/users/{userId}/validate":
+    post:
+      description: Get validation information.
+      operationId: v1-admin-validate
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: Id of the user.
+        - name: operation
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - LOCK_USER
+              - UPDATE_USER_ROLE
+              - CHANGE_UNIT
+            description: Type of the operation to validate.
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  validations:
+                    type: object
+                    description: Validation data.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to access validation data.
+        "500":
+          description: An error occurred while fetching the validation data.

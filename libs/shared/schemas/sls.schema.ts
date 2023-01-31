@@ -1,3 +1,4 @@
+import Joi from 'joi';
 import { model, Model, models, Schema } from 'mongoose';
 
 const ttl = process.env['SLS_TTL'] ? parseInt(process.env['SLS_TTL']) : 300;
@@ -10,7 +11,8 @@ export enum SLSEventTypeEnum {
   ADMIN_UNLOCK_USER = 'ADMIN_UNLOCK_USER',
   // ADMIN_SEARCH_USER = 'ADMIN_SEARCH_USER', // TODO: On search???
   ADMIN_LOCK_VALIDATION = 'ADMIN_LOCK_VALIDATION',
-  ADMIN_UPDATE_USER = 'ADMIN_UPDATE_USER'
+  ADMIN_UPDATE_USER = 'ADMIN_UPDATE_USER',
+  ADMIN_DELETE_ADMIN = 'ADMIN_DELETE_ADMIN'
 }
 
 
@@ -23,6 +25,12 @@ type SLSSchemaType = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type SLSQueryParam = Pick<SLSSchemaType, 'id' | 'code'>;
+export const SLSQuerySchema = Joi.object<SLSQueryParam>({
+  id: Joi.string().description('Id of the SLS.'),
+  code: Joi.string().description('Code of the SLS.')
+}).required();
 
 const SLSSchema = new Schema<SLSSchemaType>(
   {

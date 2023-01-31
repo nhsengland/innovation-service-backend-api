@@ -25,7 +25,7 @@ class V1MeUpdate {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId).verify();
+      const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
 
       if ([UserTypeEnum.ADMIN, UserTypeEnum.ASSESSMENT, UserTypeEnum.ACCESSOR].includes(requestUser.type)) {
@@ -58,6 +58,10 @@ class V1MeUpdate {
           { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, firstTimeSignInAt: requestUser.firstTimeSignInAt },
           {
             displayName: innovatorBody.displayName,
+            contactByEmail: innovatorBody.contactByEmail,
+            contactByPhone: innovatorBody.contactByPhone,
+            contactByPhoneTimeframe: innovatorBody.contactByPhoneTimeframe,
+            contactDetails: innovatorBody.contactDetails,
             ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
             organisation: innovatorBody.organisation
           }

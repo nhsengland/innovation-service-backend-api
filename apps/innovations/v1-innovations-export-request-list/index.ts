@@ -23,12 +23,13 @@ class V1InnovationsExportRequestList {
 
     try {
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
@@ -37,6 +38,7 @@ class V1InnovationsExportRequestList {
 
       const result = await innovationsService.getInnovationRecordExportRequests(
         { id: requestUser.id, type: requestUser.type, organisations: requestUser.organisations },
+        domainContext,
         params.innovationId,
         filters,
         { skip, take, order }

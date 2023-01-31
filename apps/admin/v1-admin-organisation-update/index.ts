@@ -38,7 +38,7 @@ class V1AdminOrganisationUpdate {
         );
 
         await authorizationService
-        .validate(context.auth.user.identityId)
+        .validate(context)
         .checkAdminType()
         .verify();
 
@@ -100,9 +100,9 @@ export default openApi(
               schema: {
                 type: 'object',
                 properties: {
-                  unitId: {
+                  organisationId: {
                     type: 'string',
-                    description: 'The organisation unit id.',
+                    description: 'The organisation id.',
                   },
                 },
               },

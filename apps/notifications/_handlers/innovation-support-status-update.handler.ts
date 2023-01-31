@@ -1,4 +1,5 @@
 import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
@@ -6,7 +7,6 @@ import type { NotifierTemplatesType } from '@notifications/shared/types';
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { translate } from '../_helpers/translate.helper';
 import { BaseHandler } from './base.handler';
 
 
@@ -45,11 +45,16 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       displayName: requestUserInfo.displayName,
       organisation: { id: requestUserInfo.organisations[0]?.id ?? '', name: requestUserInfo.organisations[0]?.name ?? '' },
       organisationUnit: {
-        id: requestUserInfo.organisations[0]?.organisationUnits[0]?.id ?? '', name: requestUserInfo.organisations[0]?.organisationUnits[0]?.name ?? ''
+        id: this.domainContext?.organisation?.organisationUnit?.id ?? '', name: this.domainContext?.organisation?.organisationUnit?.name ?? ''
       }
     };
 
     this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+
+    // If the innovation is not found, then we don't need to send any notification. (This could probably throw an error as it should not happen, but leaving like this.)
+    if(!this.data.innovation) {
+      return this;
+    }
 
     if (this.inputData.innovationSupport.statusChanged) {
       await this.prepareEmailForInnovator();
@@ -90,7 +95,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: this.data.innovation?.name || '',
           organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
-          support_status: translate(this.inputData.innovationSupport.status),
+          support_status: TranslationHelper.translate(`SUPPORT_STATUS.${this.inputData.innovationSupport.status}`).toLowerCase(),
           support_status_change_comment: this.inputData.innovationSupport.message,
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/support')
@@ -125,7 +130,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      userIds: [this.data.innovation?.owner.id || ''],
+      users: [{ userId: this.data.innovation?.owner.id || '', userType: UserTypeEnum.INNOVATOR }],
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
@@ -143,13 +148,12 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      userIds: assignedUsers.map(item => item.id),
+      users: assignedUsers.map(user => ({ userId: user.id, userType: user.type, organisationUnitId: user.organisationUnitId })),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
       }
     });
-
   }
 
   private async prepareInAppForAssessmentWhenWaitingStatus(): Promise<void> {
@@ -159,7 +163,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      userIds: assessmentUsers.map(item => item.id),
+      users: assessmentUsers.map(item => ({ userId: item.id, userType: UserTypeEnum.ASSESSMENT })),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status

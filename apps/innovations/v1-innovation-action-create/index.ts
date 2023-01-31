@@ -26,18 +26,23 @@ class V1InnovationActionCreate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
+        .checkAssessmentType()
         .checkInnovation()
         .verify();
+        
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationActionsService.createAction(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, organisationUnitId: requestUser.organisations[0]?.organisationUnits[0]?.id || '' },
+        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        domainContext,
         params.innovationId,
         body
       );
+
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 
@@ -49,6 +54,7 @@ class V1InnovationActionCreate {
   }
 
 }
+
 export default openApi(V1InnovationActionCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/actions', {
   post: {
     description: 'Create a new innovation action.',

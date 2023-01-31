@@ -25,7 +25,7 @@ export class LockUserHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id);
+    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id, {withDeleted: true});
 
     // E-mail to the user who is being locked.
     this.emails.push({
@@ -44,12 +44,12 @@ export class LockUserHandler extends BaseHandler<
       for (const innovation of userInnovations) {
 
         // Filter duplicated ids..
-        const uniqueUserIds = [...new Set(innovation.assignedUsers.map(item => item.id))];
+        const uniqueUsers = [...new Map(innovation.assignedUsers.map(item => [`${item.id}_${item.organisationUnitId}`, item])).values()];
 
         this.inApp.push({
           innovationId: innovation.id,
           context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.LOCK_USER, id: innovation.id },
-          userIds: uniqueUserIds,
+          users: uniqueUsers.map(user => ({ userId: user.id, userType: UserTypeEnum.ACCESSOR, organisationUnitId: user.organisationUnitId })),
           params: {}
         });
       }

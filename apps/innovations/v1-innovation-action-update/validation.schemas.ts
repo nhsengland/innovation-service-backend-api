@@ -21,7 +21,10 @@ export const BodySchema = Joi.object<BodyType>({
   status:
     Joi.when('$userType', {
       is: UserTypeEnum.ACCESSOR,
-      then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED).required()
+      then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.CANCELLED).required()
+    }).when('$userType', {
+      is: UserTypeEnum.ASSESSMENT,
+      then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.CANCELLED).required()
     }).when('$userType', {
       is: UserTypeEnum.INNOVATOR,
       then: Joi.string().valid(InnovationActionStatusEnum.DECLINED).required()
@@ -29,11 +32,9 @@ export const BodySchema = Joi.object<BodyType>({
 
   message:
     Joi.when('$userType', {
-      is: UserTypeEnum.ACCESSOR,
-      then: Joi.forbidden()
-    }).when('$userType', {
       is: UserTypeEnum.INNOVATOR,
-      then: Joi.string().max(500).required()
+      then: Joi.string().max(500).required(),
+      otherwise: Joi.forbidden()
     })
 
 }).required();

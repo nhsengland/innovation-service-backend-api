@@ -1,13 +1,12 @@
 import { CommentEntity, IdleSupportViewEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, OrganisationEntity, UserEntity } from '@notifications/shared/entities';
 import { AccessorOrganisationRoleEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, OrganisationTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@notifications/shared/errors';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UserErrorsEnum } from '@notifications/shared/errors';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
 import * as _ from 'lodash';
-
 
 @injectable()
 export class RecipientsService extends BaseService {
@@ -49,15 +48,20 @@ export class RecipientsService extends BaseService {
   /**
    * Fetch user information with notification preferences.
    */
-  async userInfo(userId: string): Promise<{
+  async userInfo(userId: string, options?: {withDeleted?: boolean}): Promise<{
     id: string, identityId: string, name: string, email: string, type: UserTypeEnum, isActive: boolean,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }> {
 
-    const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+    const dbUserQuery = this.sqlConnection.createQueryBuilder(UserEntity, 'user')
       .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
-      .where('user.id = :userId', { userId })
-      .getOne();
+      .where('user.id = :userId', { userId });
+
+    if (options?.withDeleted) {
+      dbUserQuery.withDeleted();
+    }
+    
+    const dbUser = await dbUserQuery.getOne();
 
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -86,8 +90,9 @@ export class RecipientsService extends BaseService {
     email: string;
     isActive: boolean;
   }[]> {
+
     if (!userIds.length) { return []; }
-    
+
     const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
       .where(`users.id IN (:...userIds)`, { userIds })
       .andWhere(`users.locked_at IS NULL`)
@@ -154,49 +159,56 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async innovationAssignedUsers(data: { innovationId?: string, innovationSupportId?: string }): Promise<{
-    id: string, identityId: string, type: UserTypeEnum,
+  /**
+   * returns the innovation assigned users to an innovation/support.
+   * @param data the parameters is either:
+   *  - innovationId - to get all the users assigned to the innovation
+   *  - innovationSupportId - to get all the users assigned to the innovation support
+   * @returns a list of users with their email notification preferences
+   * @throws {NotFoundError} if the support is not found when using innovationSupportId
+   */
+  async innovationAssignedUsers(data: { innovationId: string} | { innovationSupportId : string }): Promise<{
+    id: string, identityId: string, type: UserTypeEnum, organisationUnitId: string,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
 
-    if (!data.innovationId && !data.innovationSupportId) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_INFO_EMPTY_INPUT);
-    }
-
     const query = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences');
 
-    if (data.innovationId) {
+    if ('innovationId' in data) {
       query.where('support.innovation_id = :innovationId', { innovationId: data.innovationId });
-    } else if (data.innovationSupportId) {
+    } else if ('innovationSupportId' in data) {
       query.where('support.id = :innovationSupportId', { innovationSupportId: data.innovationSupportId });
     }
 
-    const dbInnovationSupport = await query.getOne();
+    const dbInnovationSupports = await query.getMany();
 
-    if (!dbInnovationSupport) {
+    // keep previous behavior throwing an error when searching for a specific support
+    if ('innovationSupportId' in data && !dbInnovationSupports.length) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
-
-    return Promise.all(dbInnovationSupport.organisationUnitUsers.map(async item => ({
+    
+    return Promise.all(dbInnovationSupports.flatMap(support => support.organisationUnitUsers.map(async item => ({
       id: item.organisationUser.user.id,
       identityId: item.organisationUser.user.identityId,
       type: item.organisationUser.user.type,
+      organisationUnitId: support.organisationUnit.id,
       emailNotificationPreferences: (await item.organisationUser.user.notificationPreferences).map(emailPreference => ({
         type: emailPreference.notification_id,
         preference: emailPreference.preference,
       }))
-    })));
-
+    }))));
   }
 
-  async userInnovationsWithAssignedUsers(userId: string): Promise<{ id: string, assignedUsers: { id: string, identityId: string }[] }[]> {
+  async userInnovationsWithAssignedUsers(userId: string): Promise<{ id: string, assignedUsers: { id: string, identityId: string, organisationUnitId: string }[] }[]> {
 
     const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.innovationSupports', 'support')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
       .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
       .innerJoinAndSelect('organisationUser.user', 'user')
@@ -209,6 +221,7 @@ export class RecipientsService extends BaseService {
         .flatMap(support => support.organisationUnitUsers.map(item => ({
           id: item.organisationUser.user.id,
           identityId: item.organisationUser.user.identityId,
+          organisationUnitId: support.organisationUnit.id
           // type: item.organisationUser.user.type
         })))
     }));
@@ -217,6 +230,7 @@ export class RecipientsService extends BaseService {
 
   async actionInfoWithOwner(actionId: string): Promise<{
     id: string, displayId: string, status: InnovationActionStatusEnum,
+    organisationUnit: { id: string, name: string, acronym: string },
     owner: { id: string; identityId: string }
   }> {
 
@@ -226,7 +240,12 @@ export class RecipientsService extends BaseService {
       .addSelect('action.status', 'actionStatus')
       .addSelect('user.id', 'userId')
       .addSelect('user.external_id', 'userIdentityId')
+      .addSelect('unit.id', 'organisationUnitId')
+      .addSelect('unit.name', 'organisationUnitName')
+      .addSelect('unit.acronym', 'organisationUnitAcronym')
       .innerJoin(UserEntity, 'user', 'user.id = action.created_by AND user.locked_at IS NULL')
+      .innerJoin('action.innovationSupport', 'support')
+      .innerJoin('support.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
       .getRawOne();
 
@@ -238,6 +257,7 @@ export class RecipientsService extends BaseService {
       id: dbAction.actionId,
       displayId: dbAction.actionDisplayId,
       status: dbAction.actionStatus,
+      organisationUnit: { id: dbAction.organisationUnitId, name: dbAction.organisationUnitName, acronym: dbAction.organisationUnitAcronym },
       owner: { id: dbAction.userId, identityId: dbAction.userIdentityId },
     };
 
@@ -268,35 +288,6 @@ export class RecipientsService extends BaseService {
         emailNotificationPreferences: (await dbThread.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
       }
     };
-
-  }
-
-  /**
-   * Fetch a thread intervenient users.
-   * We only need to go by the thread messages because the first one, has also the thread author.
-   */
-  async threadIntervenientUsers(threadId: string): Promise<{
-    id: string, identityId: string, type: UserTypeEnum,
-    emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
-  }[]> {
-
-    const dbThreadUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
-      .innerJoin(subQuery => subQuery
-        .select('subQ_User.id', 'id')
-        .from(InnovationThreadMessageEntity, 'subQ_TMessage')
-        .innerJoin(UserEntity, 'subQ_User', 'subQ_User.id = subQ_TMessage.author_id AND subQ_User.locked_at IS NULL')
-        .andWhere('subQ_TMessage.innovation_thread_id = :threadId', { threadId })
-        .groupBy('subQ_User.id')
-        , 'threadMessageUsers', 'threadMessageUsers.id = user.id')
-      .getMany() || [];
-
-    return Promise.all(dbThreadUsers.map(async item => ({
-      id: item.id,
-      identityId: item.identityId,
-      type: item.type,
-      emailNotificationPreferences: (await item.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
-    })));
 
   }
 
@@ -384,24 +375,23 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async organisationUnitsQualifyingAccessors(organisationUnitIds: string[]): Promise<{ id: string; identityId: string }[]> {
+  async organisationUnitsQualifyingAccessors(organisationUnitIds: string[]): Promise<{ id: string; identityId: string, organisationUnitId: string }[]> {
 
     if (organisationUnitIds.length === 0) { return []; }
 
     const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
       .innerJoin('user.userOrganisations', 'userOrganisations')
       .innerJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-      .innerJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
-      .innerJoin('organisationUnit.organisation', 'organisation')
+      .select('user.id', 'id')
+      .addSelect('user.external_id', 'identityId')
+      .addSelect('userOrganisationUnits.organisation_unit_id', 'organisationUnitId')
       .where('userOrganisationUnits.organisation_unit_id IN (:...organisationUnitIds)', { organisationUnitIds })
       .andWhere('userOrganisations.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
-      .andWhere('organisation.inactivated_at IS NULL')
-      .andWhere('organisationUnit.inactivated_at IS NULL')
-      .andWhere('user.locked_at IS NULL')
-      .getMany() || [];
+      .andWhere('user.deleted_at IS NULL')
+      // TODO confirm the deleted at on inner join for ou and ouu
+      .getRawMany();
 
-    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId }));
-
+    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId, organisationUnitId: item.organisationUnitId }));
   }
 
   /**
@@ -473,7 +463,7 @@ export class RecipientsService extends BaseService {
    * @description Looks for Innovations actively supported by organisation units (ENGAGING, FURTHER INFO) whose assigned accessors have not interacted with the innovations for a given amount of time.
    * @description Inactivity is measured by:
    * @description - The last time an Innovation Support was updated (change the status from A to B) AND;
-   * @description - The last time an Innovation Action was completed by an Innovator (Changed its status from REQUESTED to IN_REVIEW) OR no Innovation Actions are found AND;
+   * @description - The last time an Innovation Action was completed by an Innovator (Changed its status from REQUESTED to SUBMITTED) OR no Innovation Actions are found AND;
    * @description - The last message posted on a thread or a thread was created (which also creates a message, so checking thread messages is enough) OR no messages or threads are found.
    * @param idlePeriod How many days are considered to be idle
    * @returns Promise<{userId: string; identityId: string, latestInteractionDate: Date}[]>
@@ -488,7 +478,7 @@ export class RecipientsService extends BaseService {
       .innerJoinAndSelect('i.innovationSupports', 's')
       .innerJoinAndSelect('s.organisationUnit', 'u')
       .groupBy('u.id')
-      .addGroupBy('i.id')
+      .addGroupBy('i.id');
 
     const latestActionQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
       .select('u.id', 'unitId')
@@ -498,9 +488,9 @@ export class RecipientsService extends BaseService {
       .innerJoin('i.innovationSupports', 's')
       .innerJoin('s.organisationUnit', 'u')
       .leftJoin('s.action', 'actions')
-      .where(`actions.status = '${InnovationActionStatusEnum.IN_REVIEW}'`)
+      .where(`actions.status = '${InnovationActionStatusEnum.SUBMITTED}'`)
       .groupBy('u.id')
-      .addGroupBy('i.id')
+      .addGroupBy('i.id');
 
 
     const latestMessageQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'i')
@@ -513,7 +503,7 @@ export class RecipientsService extends BaseService {
       .innerJoin(InnovationThreadEntity, 'threads', 'threads.innovation_id = i.id')
       .innerJoin(InnovationThreadMessageEntity, 'messages', 'threads.id = messages.innovation_thread_id')
       .groupBy('u.id')
-      .addGroupBy('i.id')
+      .addGroupBy('i.id');
 
 
     const mainQuery =
@@ -526,7 +516,7 @@ export class RecipientsService extends BaseService {
          * maxSupports 01/01/2022 10:00:00
          * maxActions 02/01/2022 09:00:00
          * maxMessages 02/01/2022 09:01:00
-         * 
+         *
          * latestInteractionDate = maxMessages = 02/01/2022 09:01:00
         */
         .addSelect('(SELECT MAX(v) FROM (VALUES (MAX(L.latest)), (MAX(l2.latest)), (MAX(l3.latest))) as value(v))', 'latestInteractionDate')
@@ -555,7 +545,7 @@ export class RecipientsService extends BaseService {
         .andWhere(`(DATEDIFF(day, maxActions.latest, GETDATE()) >= ${idlePeriod} OR maxActions IS NULL)`)
         .andWhere(`(DATEDIFF(day, maxMessages.latest, GETDATE()) >= ${idlePeriod} OR maxMessages IS NULL)`)
         .groupBy('users.id')
-        .addGroupBy('users.external_id')
+        .addGroupBy('users.external_id');
 
     const result = await mainQuery.getRawMany<{ userId: string, identityId: string; latestInteractionDate: Date }>();
 
@@ -563,18 +553,19 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async idleSupportsByInnovation() : Promise<{
+  async idleSupportsByInnovation(): Promise<{
     innovationId: string;
     values: {
-        identityId: string;
-        innovationId: string;
-        ownerId: string;
-        ownerIdentityId: string;
-        unitId: string;
-        unitName: string;
-        innovationName: string;
+      identityId: string;
+      innovationId: string;
+      ownerId: string;
+      ownerIdentityId: string;
+      unitId: string;
+      unitName: string;
+      innovationName: string;
     }[];
-  }[]>{
+  }[]> {
+
     try {
 
       const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
@@ -598,14 +589,16 @@ export class RecipientsService extends BaseService {
     } catch (error) {
       throw error;
     }
+
   }
 
-  async getExportRequestWithRelations(requestId: string): Promise<{exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; }}> {
+  async getExportRequestWithRelations(requestId: string): Promise<{ exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; } }> {
+
     const request = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .where('request.id = :requestId', { requestId })
       .getOne();
-    
+
     if (!request) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
     }
@@ -618,15 +611,16 @@ export class RecipientsService extends BaseService {
     }
 
     const createdByUser = await this.identityProviderService.getUserInfo(createdBy.identityId);
-    
+
     return {
       exportRequest: request,
       createdBy: {
         id: createdBy.id,
         identityId: createdBy.identityId,
         name: createdByUser.displayName,
-      },
-    }
+      }
+    };
+
   }
 
 }

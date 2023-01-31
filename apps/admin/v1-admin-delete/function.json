@@ -1,0 +1,13 @@
+{
+  "bindings": [
+    {
+      "authLevel": "anonymous",
+      "type": "httpTrigger",
+      "direction": "in",
+      "name": "req",
+      "methods": ["patch"],
+      "route": "v1/users/{userId}/delete"
+    },
+    { "type": "http", "direction": "out", "name": "res" }
+  ]
+}

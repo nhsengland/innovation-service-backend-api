@@ -22,7 +22,7 @@ class V1MeTermsOfUseInfo {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -60,21 +60,8 @@ export default openApi(V1MeTermsOfUseInfo.httpTrigger as AzureFunction, '/v1/me/
     tags: ['[v1] Terms of Use'],
     parameters: [],
     responses: {
-      200: {
-        description: 'Successful operation',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Unique identifier for the game' },
-                state: { type: 'string', description: 'The status of the game', enum: ['WaitingForPlayers', 'Started', 'Complete'] }
-              }
-            }
-          }
-        }
-      },
-      404: { description: 'Unable to find a game with that id' }
+      200: { description: 'Successful operation'},
+      404: { description: 'Terms of use not found' }
     }
   }
 });

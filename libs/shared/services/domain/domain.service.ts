@@ -5,6 +5,7 @@ import {
   IdentityProviderServiceSymbol, IdentityProviderServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '../interfaces';
+import { DomainContextService } from './domain-context.service';
 
 import { DomainInnovationsService } from './domain-innovations.service';
 import { DomainUsersService } from './domain-users.service';
@@ -15,6 +16,7 @@ export class DomainService {
 
   users: DomainUsersService;
   innovations: DomainInnovationsService;
+  context: DomainContextService;
 
   constructor(
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
@@ -22,7 +24,8 @@ export class DomainService {
     @inject(SQLConnectionServiceSymbol) private sqlConnectionService: SQLConnectionServiceType,
   ) {
     this.users = new DomainUsersService(this.sqlConnectionService.getConnection(), this.identityProviderService);
-    this.innovations = new DomainInnovationsService(this.sqlConnectionService.getConnection(), this.fileStorageService);
+    this.innovations = new DomainInnovationsService(this.sqlConnectionService.getConnection(), this.fileStorageService, this.identityProviderService);
+    this.context = new DomainContextService(this.sqlConnectionService.getConnection());
   }
 
 }

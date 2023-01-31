@@ -1,7 +1,8 @@
+import Joi from 'joi';
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
-import type { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
+import { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
 import type { DateISOType } from './date.types';
 
 
@@ -28,6 +29,43 @@ export type DomainUserInfoType = {
   }[]
 }
 
+export type DomainContextType = {
+  organisation: null | {
+    id: string,
+    organisationUser: { id: string }
+    name: string,
+    acronym: null | string,
+    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
+    isShadow: boolean,
+    size: null | string,
+    organisationUnit: null | { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
+  },
+  userType: UserTypeEnum,
+};
+
+export const DomainContextSchema = Joi.object<DomainContextType>({
+  organisation: Joi.object({
+    id: Joi.string().uuid().required(),
+    organisationUser: Joi.object({
+      id: Joi.string().uuid().required(),
+    }).required(),
+    name: Joi.string().allow('').required(),
+    acronym: Joi.string().allow(null).required(),
+    role: Joi.string().required(),
+    isShadow: Joi.boolean().required(),
+    size: Joi.string().allow(null).required(),
+    organisationUnit: Joi.object({
+      id: Joi.string().uuid().required(),
+      name: Joi.string().required(),
+      acronym: Joi.string().required(),
+      organisationUnitUser: Joi.object({
+        id: Joi.string().uuid().required(),
+      }).required(),
+    }).allow(null).required(),
+  }).allow(null).required(),
+  userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(),
+});
+
 
 // Organisations types.
 export type OrganisationWithUnitsType = {
@@ -41,6 +79,8 @@ export type OrganisationWithUnitsType = {
 export type ActivityLogDBParamsType = {
 
   actionUserId: string;
+  actionUserRole: UserTypeEnum;
+  actionUserOrganisationUnit: string;
   interveningUserId?: string;
 
   assessmentId?: string;
@@ -112,15 +152,18 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   [ActivityEnum.ACTION_CREATION]: {
-    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string } }
+    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string }, role: UserTypeEnum }
   },
-  [ActivityEnum.ACTION_STATUS_IN_REVIEW_UPDATE]: {
+  [ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE]: {
     params: { sectionId: InnovationSectionEnum, totalActions: number }
   },
   [ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE]: {
     params: { actionId: string }
   },
   [ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE]: {
+    params: { actionId: string }
+  },
+  [ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE]: {
     params: { actionId: string }
   },
   [ActivityEnum.ACTION_STATUS_DECLINED_UPDATE]: {
@@ -142,3 +185,6 @@ export type ActivityLogTemplatesType = {
     params: { message: string }
   }
 }
+
+// This is the type for B2C user info.
+export type IdentityUserInfo = { identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, passwordResetAt: null | DateISOType, lastLoginAt: null | DateISOType }

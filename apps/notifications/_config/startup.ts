@@ -1,6 +1,6 @@
 import { container } from '@notifications/shared/config/inversify.config';
 
-import { SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@notifications/shared/services';
+import { CacheServiceSymbol, CacheServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@notifications/shared/services';
 
 import { DispatchService } from '../_services/dispatch.service';
 import { EmailService } from '../_services/email.service';
@@ -22,10 +22,12 @@ export const startup = async (): Promise<void> => {
   console.log('Initializing Notifications app function');
 
   const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+  const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
 
   try {
 
     await sqlConnectionService.init();
+    await cacheService.init();
 
     console.log('Initialization complete');
 

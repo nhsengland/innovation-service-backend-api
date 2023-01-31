@@ -12,6 +12,8 @@ import type { StorageQueueService } from '../services/integrations/storage-queue
 import type { FileStorageService } from '../services/storage/file-storage.service';
 import type { NOSQLConnectionService } from '../services/storage/nosql-connection.service';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
+import type { CacheService } from './storage/cache.service';
+import type { SQLConnectionTestService } from './storage/sql-connection-test.service';
 
 export type AuditServiceType = typeof AuditService.prototype;
 export const AuditServiceSymbol = Symbol('AuditService');
@@ -19,6 +21,8 @@ export const AuditServiceSymbol = Symbol('AuditService');
 export type AuthorizationServiceType = typeof AuthorizationService.prototype;
 export const AuthorizationServiceSymbol = Symbol('AuthorizationService');
 
+export type CacheServiceType = typeof CacheService.prototype;
+export const CacheServiceSymbol = Symbol('CacheService');
 
 export type DomainServiceType = typeof DomainService.prototype;
 export const DomainServiceSymbol = Symbol('DomainService');
@@ -47,3 +51,5 @@ export const SQLConnectionServiceSymbol = Symbol('SQLConnectionService');
 
 export type NOSQLConnectionServiceType = typeof NOSQLConnectionService.prototype;
 export const NOSQLConnectionServiceSymbol = Symbol('NOSQLConnectionService');
+
+export type SQLConnectionTestServiceType = typeof SQLConnectionTestService.prototype;

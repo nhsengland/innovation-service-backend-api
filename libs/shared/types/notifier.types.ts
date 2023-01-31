@@ -1,3 +1,4 @@
+import type { UserTypeEnum } from '../enums';
 import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 
@@ -10,10 +11,22 @@ export type NotifierTemplatesType = {
     innovationId: string
   },
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    innovationId: string,
+    threadId: string
+  },
+
   [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     innovationId: string,
     assessmentId: string,
     organisationUnitIds: string[] // Suggested organisation units.
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
+    innovationId: string
+    assessmentId: string,
+    previousAssessor: { identityId: string },
+    newAssessor: { identityId: string }
   },
 
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
@@ -37,6 +50,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.ACTION_UPDATE]: {
     innovationId: string,
     action: { id: string, section: InnovationSectionEnum, status: InnovationActionStatusEnum }
+    comment?: string
   },
 
   [NotifierTypeEnum.COMMENT_CREATION]: {
@@ -57,7 +71,7 @@ export type NotifierTemplatesType = {
     messageId: string
   },
 
-  [NotifierTypeEnum.INNOVATION_ARCHIVED]: {
+  [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
     innovation: { id: string, name: string, assignedUserIds: string[] }
   },
 
@@ -71,6 +85,35 @@ export type NotifierTemplatesType = {
     transferId: string
   },
 
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
+    innovationId: string,
+    requestId: string,
+  },
+
+  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
+    innovationId: string,
+    requestId: string
+  },
+
+  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
+    innovationId: string,
+    supportId: string,
+    proposedStatus: InnovationSupportStatusEnum,
+    requestStatusUpdateComment: string
+  },
+
+  [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
+    innovationId: string,
+    previousAssignedAccessors: { id: string, userType: UserTypeEnum.ACCESSOR, organisationUnitId: string }[],
+    message: string
+  },
+
+  [NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]: {
+    innovationId: string
+  },
+
+
+  // Admin module.
   [NotifierTypeEnum.SLS_VALIDATION]: {
     code: string
   },
@@ -89,30 +132,10 @@ export type NotifierTemplatesType = {
     innovationId: string,
     unitId: string
   },
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
-    innovationId: string,
-    requestId: string,
-  },
-  
-  [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK]: {
-    innovationId: string,
-    requestId: string
-  },
 
-  [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST]: {
-    innovationId: string,
-    supportId: string,
-    proposedStatus: InnovationSupportStatusEnum,
-    requestStatusUpdateComment: string,
-  },
-
+  // Recurrent notifications.
   [NotifierTypeEnum.DAILY_DIGEST]: Record<string, never>,
   [NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD]: Record<string, never>,
-  [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>,
-
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
-    innovationId: string,
-    threadId: string
-  },
+  [NotifierTypeEnum.IDLE_SUPPORT]: Record<string, never>
 
 }

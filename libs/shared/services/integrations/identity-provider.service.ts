@@ -1,29 +1,13 @@
-import { inject, injectable } from 'inversify';
 import axios, { AxiosResponse } from 'axios';
+import { inject, injectable } from 'inversify';
 
-import { NotFoundError, ServiceUnavailableError, UnauthorizedError, GenericErrorsEnum, UserErrorsEnum } from '../../errors';
-import { LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
+import { GenericErrorsEnum, NotFoundError, ServiceUnavailableError, UnauthorizedError, UserErrorsEnum } from '../../errors';
 import type { DateISOType } from '../../types/date.types';
+import type { IdentityUserInfo } from '../../types/domain.types';
+import { CacheServiceSymbol, LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
+import type { CacheConfigType, CacheService } from '../storage/cache.service';
 import { QueuesEnum } from './storage-queue.service';
 
-
-type b2cGetUserInfoDTO = {
-  id: string;
-  mail: string;
-  displayName: string;
-  givenName: string;
-  surname: string;
-  userPrincipalName: string;
-  jobTitle: string;
-  mobilePhone?: string;
-  officeLocation: string;
-  preferredLanguage: string;
-  identities: {
-    signInType: 'emailAddress' | 'userPrincipalName';
-    issuer: string;
-    issuerAssignedId: string;
-  }[];
-}
 
 type b2cGetUserInfoByEmailDTO = {
   value: {
@@ -60,6 +44,7 @@ type b2cGetUsersListDTO = {
     accountEnabled: boolean;
     createdDateTime: string;
     deletedDateTime: null | string;
+    lastPasswordChangeDateTime: null | DateISOType;
     signInActivity: {
       lastSignInDateTime: null | string;
       lastSignInRequestId: null | string;
@@ -81,12 +66,16 @@ export class IdentityProviderService {
     client_secret: process.env['AD_CLIENT_SECRET'] || ''
   };
   private sessionData: { token: string, expiresAt: number } = { token: '', expiresAt: 0 };
+  private cache: CacheConfigType['IdentityUserInfo']
 
 
   constructor(
+    @inject(CacheServiceSymbol) cacheService: CacheService,
     @inject(LoggerServiceSymbol) private loggerService: LoggerServiceType,
     @inject(StorageQueueServiceSymbol) private storageQueueService: StorageQueueServiceType
-  ) { }
+  ) {
+    this.cache = cacheService.get('IdentityUserInfo');
+  }
 
 
   private encodeAuthData(): string {
@@ -129,31 +118,18 @@ export class IdentityProviderService {
   }
 
 
-  async getUserInfo(identityId: string): Promise<{
-    identityId: string,
-    displayName: string,
-    email: string,
-    phone: null | string,
-    passwordResetAt: null | DateISOType
-  }> {
+  /**
+   * get a user from the identity provider
+   * 
+   * this function is an envelope for the getUsersList function
+   * @param identityId the user identity id
+   * @returns the user
+   */
+  async getUserInfo(identityId: string): Promise<IdentityUserInfo> {
+    const users = await this.getUsersList([identityId]);
+    if(!users[0]) throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
 
-    await this.verifyAccessToken();
-
-    const response = await axios.get<b2cGetUserInfoDTO>(
-      `https://graph.microsoft.com/beta/users/${identityId}`,
-      { headers: { Authorization: `Bearer ${this.sessionData.token}` } }
-    ).catch(error => {
-      throw this.getError(error.response.status, error.response.data.message);
-    });
-
-    return {
-      identityId: response.data.id,
-      displayName: response.data.displayName,
-      email: response.data.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
-      phone: response.data.mobilePhone ?? null,
-      passwordResetAt: (response.data as any)[`extension_${this.tenantExtensionId}_passwordResetOn`] || null
-    };
-
+    return users[0];
   }
 
 
@@ -188,8 +164,35 @@ export class IdentityProviderService {
 
   }
 
+  /**
+   * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
+   * 
+   * @param entityIds the user identities
+   * @returns list of users
+   */
+  async getUsersList(entityIds: string[]): Promise<IdentityUserInfo[]> {
+    const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
+    
+    const res = await this.cache.getMany(uniqueUserIds);
+    if(res.length !== uniqueUserIds.length) {
+      const cachedUserIds = new Set(res.map(user => user.identityId));
+      const nonCachedUsers = await this.getUsersListFromB2C(uniqueUserIds.filter(id => !cachedUserIds.has(id)));
+      // Add new users to cache.
+      await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
+      res.push(...nonCachedUsers);
+    }
 
-  async getUsersList(entityIds: string[]): Promise<{ identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, lastLoginAt: null | DateISOType }[]> {
+    return res;
+  }
+
+  /**
+   * returns the list of users from the identity provider
+   * 
+   * this function splits the number of users to be fetched into chunks of 10 users
+   * @param entityIds user identities to be fetched
+   * @returns list of users
+   */
+  private async getUsersListFromB2C(entityIds: string[]): Promise<IdentityUserInfo[]> {
 
     if ((entityIds || []).length === 0) { return []; }
 
@@ -218,7 +221,7 @@ export class IdentityProviderService {
       const userIds = userId.map(item => `"${item}"`).join(',');
       const odataFilter = `$filter=id in (${userIds})`;
 
-      const fields = ['displayName', 'identities', 'email', 'mobilePhone', 'accountEnabled', 'signInActivity'];
+      const fields = ['displayName', 'identities', 'email', 'mobilePhone', 'accountEnabled', 'lastPasswordChangeDateTime', 'signInActivity'];
 
       const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`
 
@@ -238,7 +241,8 @@ export class IdentityProviderService {
         email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
         mobilePhone: u.mobilePhone,
         isActive: u.accountEnabled,
-        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime
+        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime,
+        passwordResetAt: u.lastPasswordChangeDateTime,
       }))
     ));
 

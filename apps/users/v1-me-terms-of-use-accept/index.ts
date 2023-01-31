@@ -22,7 +22,7 @@ class V1MeTermsOfUseAccept {
 
     try {
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -67,7 +67,7 @@ export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/m
           }
         }
       },
-      404: { description: 'Unable to find a game with that id' }
+      422: {description: 'Unprocessable Entity'},
     }
   }
 });

@@ -4,6 +4,7 @@ import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums
 import { JoiHelper } from '@notifications/shared/helpers';
 import { StorageQueueServiceSymbol, StorageQueueServiceType } from '@notifications/shared/services';
 import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
+import type { DomainContextType } from '@notifications/shared/types';
 
 import { container } from '../_config';
 import { HandlersHelper } from '../_helpers/handlers.helper';
@@ -20,6 +21,7 @@ class V1NotificationsListener {
         requestUser: { id: string, identityId: string, type: UserTypeEnum },
         action: NotifierTypeEnum,
         params: { [key: string]: any }
+        domainContext?: DomainContextType,
       }
     }
   ): Promise<void> {
@@ -33,7 +35,7 @@ class V1NotificationsListener {
       const message = JoiHelper.Validate<MessageType>(MessageSchema, requestMessage);
       JoiHelper.Validate(HandlersHelper.handlerJoiDefinition(message.data.action), message.data.params);
 
-      const notificationsInstance = await HandlersHelper.runHandler(message.data.requestUser, message.data.action, message.data.params);
+      const notificationsInstance = await HandlersHelper.runHandler(message.data.requestUser, message.data.action, message.data.params, message.data.domainContext) ;
 
       context.log.info('RESULT::Emails', JSON.stringify(notificationsInstance.getEmails()));
       context.log.info('RESULT::InApp', JSON.stringify(notificationsInstance.getInApp()));
@@ -59,8 +61,9 @@ class V1NotificationsListener {
             requestUser: { id: message.data.requestUser.id },
             innovationId: item.innovationId,
             context: { type: item.context.type, detail: item.context.detail, id: item.context.id },
-            userIds: item.userIds,
-            params: item.params
+            users: item.users,
+            params: item.params,
+            // domainContext: message.data.domainContext,
           }
         });
 

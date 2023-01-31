@@ -26,14 +26,15 @@ class V1InnovationTransferUpdate {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const result = await transferService.updateInnovationTransferStatus({
         id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
-      }, params.transferId, body.status);
+      }, domainContext, params.transferId, body.status);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

@@ -28,14 +28,15 @@ class V1InnovationSectionUpdate {
       const key = params.sectionKey;
       const body = JoiHelper.Validate<{ [key: string]: any }>(INNOVATION_SECTIONS_CONFIG[key].validation, request.body);
 
-      const authInstance = await authorizationService.validate(context.auth.user.identityId)
+      const authInstance = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()
         .verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext()
 
-      const result = await innovationSectionsService.updateInnovationSectionInfo({ id: requestUser.id }, params.innovationId, params.sectionKey, body);
+      const result = await innovationSectionsService.updateInnovationSectionInfo({ id: requestUser.id }, domainContext, params.innovationId, params.sectionKey, body);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result?.id });
       return;
 

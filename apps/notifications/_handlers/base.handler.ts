@@ -3,8 +3,7 @@ import {
   NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum, NotifierTypeEnum,
   UserTypeEnum
 } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
-
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
 
@@ -21,7 +20,7 @@ type HandlerEmailResponseType<T> = Array<{
 type HandlerInAppResponseType<T> = Array<{
   innovationId: string;
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-  userIds: string[];
+  users: { userId: string, userType: UserTypeEnum, organisationUnitId?: string | undefined }[];
   params: T;
 }>;
 
@@ -34,17 +33,20 @@ export abstract class BaseHandler<
 
   requestUser: { id: string, identityId: string, type: UserTypeEnum };
   inputData: NotifierTemplatesType[InputDataType];
+  domainContext: DomainContextType | undefined;
 
   emails: HandlerEmailResponseType<EmailTemplatesType[EmailResponseType]> = [];
   inApp: HandlerInAppResponseType<InAppResponseType> = [];
 
   constructor(
     requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[InputDataType]
+    data: NotifierTemplatesType[InputDataType],
+    domainContext?: DomainContextType
   ) {
 
     this.requestUser = requestUser;
     this.inputData = data;
+    this.domainContext = domainContext;
 
   }
 

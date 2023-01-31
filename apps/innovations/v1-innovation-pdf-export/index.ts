@@ -22,12 +22,13 @@ class PostInnovationPDFExport {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       
-      const auth = await authorizationService.validate(context.auth.user.identityId)
+      const auth = await authorizationService.validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .verify();
 
       const requestUser =  auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const innovation = await domainService.innovations.getInnovationInfo(params.innovationId);
 
@@ -37,7 +38,7 @@ class PostInnovationPDFExport {
 
       const documentDefinition = pdfService.buildDocumentHeaderDefinition(innovation.name, body);
 
-      const pdf = await pdfService.generatePDF(requestUser , params.innovationId ,documentDefinition);
+      const pdf = await pdfService.generatePDF(requestUser, domainContext , params.innovationId ,documentDefinition);
 
       context.res = {
         body: pdf,

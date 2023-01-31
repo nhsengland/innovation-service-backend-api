@@ -30,7 +30,7 @@ class V1AdminUnitInactivate {
       );
 
       const auth = await authorizationService
-        .validate(context.auth.user.identityId)
+        .validate(context)
         .checkAdminType()
         .verify();
 
