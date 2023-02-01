@@ -15,6 +15,11 @@ const jestBaseConfig: Config = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
   globalSetup: '<rootDir>/jest.global-setup.ts',
   globalTeardown: '<rootDir>/jest.global-teardown.ts',
+  coverageReporters: [
+    'text',
+    'cobertura'
+  ],
+  testTimeout: 15000,
 };
 
 export default jestBaseConfig;

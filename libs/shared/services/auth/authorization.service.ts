@@ -1,10 +1,10 @@
-import type { CustomContextType } from '@innovations/shared/types';
 import { randomBytes, scrypt } from 'crypto';
 import { inject, injectable } from 'inversify';
 
 import { NotifierTypeEnum } from '../../enums';
 import { ForbiddenError, GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 import { SLSEventTypeEnum, SLSModel } from '../../schemas/sls.schema';
+import type { CustomContextType } from '../../types';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '../interfaces';
 import { AuthorizationValidationModel } from './authorization-validation.model';
 

@@ -40,9 +40,8 @@ class V1InnovationsList {
         {
           id: requestUser.id,
           type: requestUser.type,
-          ...(domainContext.organisation?.id ? { organisationId: domainContext.organisation.id } : {}),
-          ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {}),
-          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {})
+          ...('organisation' in domainContext ? { organisationId: domainContext.organisation.id, role: domainContext.organisation.role } : {}),
+          ...('organisation' in domainContext && 'organisationUnit' in domainContext.organisation ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {})
         },
         filters,
         { skip, take, order }

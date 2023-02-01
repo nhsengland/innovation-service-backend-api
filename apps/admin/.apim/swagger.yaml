@@ -543,6 +543,24 @@ paths:
                   type: boolean
                   nullable: true
                   description: Enable or disable the user.
+                role:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      enum:
+                        - ACCESSOR
+                        - QUALIFYING_ACCESSOR
+                      description: Name of the role.
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                  required:
+                    - name
+                    - organisationId
+                  additionalProperties: false
+                  nullable: true
               additionalProperties: false
       responses:
         "200":

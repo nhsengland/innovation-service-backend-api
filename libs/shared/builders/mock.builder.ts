@@ -1,7 +1,7 @@
-import type { EntityManager } from 'typeorm';
 import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
-import { DomainUsersService, NOSQLConnectionService } from '../services';
+import type { EntityManager } from 'typeorm';
 import { UserEntity } from '../entities';
+import { DomainUsersService, NOSQLConnectionService } from '../services';
 import { CacheService } from '../services/storage/cache.service';
 import type { DomainUserInfoType } from '../types';
 
@@ -90,8 +90,8 @@ class DomainUserInfoBuilder {
     const organisation = organisationUser?.organisation;
 
     if (organisation) {
-
-      const organisationUnit = organisationUser.userOrganisationUnits.find(_=>true)?.organisationUnit;
+      const organisationUnitUser = organisationUser.userOrganisationUnits.find(_=>true);
+      const organisationUnit = organisationUnitUser?.organisationUnit;
 
       this.user = {
         ...this.user,
@@ -99,6 +99,7 @@ class DomainUserInfoBuilder {
           {
             id: organisation.id,
             name: organisation.name,
+            acronym: organisation.acronym,
             role: organisationUser.role,
             isShadow: organisation.isShadow,
             size: organisation.size,
@@ -106,6 +107,9 @@ class DomainUserInfoBuilder {
               id: organisationUnit.id,
               name: organisationUnit.name,
               acronym: organisationUnit.acronym,
+              organisationUnitUser: {
+                id: organisationUnitUser.id,
+              }
             }] : [],
           }
         ]

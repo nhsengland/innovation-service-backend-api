@@ -1,12 +1,10 @@
 import 'reflect-metadata';
 
 import {
-  InnovationStatusEnum, InnovationSupportStatusEnum,
-  AccessorOrganisationRoleEnum,
-  ServiceRoleEnum, UserTypeEnum,
+  AccessorOrganisationRoleEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum, UserTypeEnum
 } from '../../enums';
-import { ForbiddenError } from '../../errors';
-import type { AuthContextType, DomainContextType, DomainUserInfoType } from '../../types';
+import { ForbiddenError, UnprocessableEntityError } from '../../errors';
+import type { AccessorDomainContextType, AuthContextType, DomainContextType, DomainUserInfoType, InnovatorDomainContextType } from '../../types';
 
 import type { DomainServiceType } from '../interfaces';
 
@@ -22,11 +20,13 @@ export enum AuthErrorsEnum {
   AUTH_USER_ORGANISATION_NOT_ALLOWED = 'AUTH.0008',
   AUTH_USER_ORGANISATION_ROLE_NOT_ALLOWED = 'AUTH.0009',
   AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED = 'AUTH.0010',
+  AUTH_USER_TYPE_UNKNOWN = 'AUTH.0011',
   AUTH_INNOVATION_NOT_LOADED = 'AUTH.0101',
   AUTH_INNOVATION_UNAUTHORIZED = 'AUTH.0102',
   AUTH_INNOVATION_STATUS_NOT_ALLOWED = 'AUTH.0103',
   AUTH_MISSING_ORGANISATION_UNIT_CONTEXT = 'AUTH.0201',
   AUTH_MISSING_ORGANISATION_CONTEXT = 'AUTH.0202',
+  AUTH_INCONSISTENT_DATABASE_STATE = 'AUTH.0203',
 }
 
 enum UserValidationKeys {
@@ -220,22 +220,25 @@ export class AuthorizationValidationModel {
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     if (!this.user.data) { this.user.data = await this.fetchUserData(this.user.identityId); }
 
-    // SETS THE USER TYPE
-    this.domainContext = {
-      ...this.domainContext,
-      data: {
-        organisation: null,
-        userType: this.user.data.type,
-      }
-    }
-
-    // organisation unit context is only required for accessor type users.
-    if (this.user.data?.type === UserTypeEnum.ACCESSOR) {
-      await this.getOrganisationUnitContextData(this.user.data, this.domainContext.organisationUnitId);
-    }
-
-    if (this.user.data?.type === UserTypeEnum.INNOVATOR) {
-      await this.getOrganisationContextData(this.user.data, this.domainContext.organisationId);
+    // TODO: This will change with the roles and the selection will be by role in the near future but should be basically the same
+    // Assigns the correct domainContext based on the user type
+    switch(this.user.data.type) {
+      case 'INNOVATOR':
+        this.domainContext.data = this.getInnovatorDomainContextType(this.user.data, this.domainContext.organisationId);
+        break;
+      case UserTypeEnum.ACCESSOR:
+        this.domainContext.data = this.getAccessorDomainContextType(this.user.data, this.domainContext.organisationUnitId);
+        break;
+      case 'ASSESSMENT':
+      case 'ADMIN':
+        this.domainContext.data = {
+          id: this.user.data.id,
+          identityId: this.user.data.identityId,
+          userType: this.user.data.type
+        };
+        break;
+      default:
+        throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN);
     }
 
     if (!this.user.data.isActive) {
@@ -274,44 +277,90 @@ export class AuthorizationValidationModel {
   }
 
 
-  private async getOrganisationUnitContextData(userData: DomainUserInfoType, organisationUnitId?: string): Promise<void> {
+  private getAccessorDomainContextType(userData: DomainUserInfoType, organisationUnitId?: string): AccessorDomainContextType {
 
+    // This should never happen, but just in case. If the method wasn't private I'd force it in the signature but this is all changing soon.
+    if(userData.type !== 'ACCESSOR') { throw new ForbiddenError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE); }
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     // if an organisation unit was not issued, use the first organisation unit of 
     // the first organisation on a user's organisation list as the context.
 
-    const organisationUnit = organisationUnitId ?? userData.organisations[0]?.organisationUnits[0]?.id;
+    // If no organisation unit was issued, use the first organisation unit of the first organisation on a user's organisation list as the context.
+    organisationUnitId = organisationUnitId ?? userData.organisations[0]?.organisationUnits[0]?.id ?? '';
 
-    if (!organisationUnit) {
+    // Using '' as false on purpose.
+    if (!organisationUnitId) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
     }
+    
+    const organisation = userData.organisations.find(o => o.organisationUnits.find(ou => ou.id === organisationUnitId) );
+    const organisationUnit = organisation?.organisationUnits.find(ou => ou.id === organisationUnitId);
 
     // if issued organisation unit is not present in the user's organisation units, throw an error.
-    if (!this.user.data?.organisations[0]?.organisationUnits.some(u => u.id === organisationUnit)) {
+    if (!organisation || !organisationUnit) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED);
     }
 
-    if (!this.domainContext.data?.organisation?.organisationUnit) { this.domainContext.data = await this.fetchOrganisationUnitContextData(organisationUnit, userData.identityId); }
+    if(organisation.role !== AccessorOrganisationRoleEnum.ACCESSOR && organisation.role !== AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR) { 
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE);
+    }
+
+    return {
+      id: userData.id,
+      identityId: userData.identityId,
+      userType: userData.type,
+      organisation: {
+        id: organisation.id,
+        name: organisation.name,
+        acronym: organisation.acronym,
+        role: organisation.role,
+        size: organisation.size,
+        isShadow: organisation.isShadow,
+        organisationUnit: {
+          id: organisationUnit.id,
+          name: organisationUnit.name,
+          acronym: organisationUnit.acronym,
+          organisationUnitUser: {
+            id: organisationUnit.organisationUnitUser.id,
+          }
+        },
+      },
+    };
   }
 
-  private async getOrganisationContextData(userData: DomainUserInfoType, organisationId?: string): Promise<void> {
+  private getInnovatorDomainContextType(userData: DomainUserInfoType, organisationId?: string): InnovatorDomainContextType {
+
+    // This should never happen, but just in case. If the method wasn't private I'd force it in the signature but this is all changing soon.
+    if(userData.type !== 'INNOVATOR') { throw new ForbiddenError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE); }
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     // if an organisation unit was not issued, use the first organisation unit of 
     // the first organisation on a user's organisation list as the context.
-    const organisation = organisationId || userData.organisations[0]?.id;
-
+    const organisation = organisationId ? userData.organisations.find(o => o.id === organisationId) : userData.organisations[0];
+    
+    // if issued organisation is not present in the user's organisations, throw an error.
     if (!organisation) {
-      throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
-    }
-
-    // if issued organisation unit is not present in the user's organisation units, throw an error.
-    if (!this.user.data?.organisations.some(u => u.id === organisation)) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED);
     }
 
-    if (!this.domainContext.data?.organisation) { this.domainContext.data = await this.fetchOrganisationContextData(organisation, userData.identityId); }
+    if(organisation.role !== InnovatorOrganisationRoleEnum.INNOVATOR_OWNER) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE);
+    }
+
+    return {
+      id: userData.id,
+      identityId: userData.identityId,
+      userType: userData.type,
+      organisation: {
+        id: organisation.id,
+        name: organisation.name,
+        acronym: organisation.acronym,
+        role: organisation.role,
+        size: organisation.size,
+        isShadow: organisation.isShadow,
+      },
+    };
   }
 
   // Data fetching methods.
@@ -319,21 +368,25 @@ export class AuthorizationValidationModel {
     return this.domainService.users.getUserInfo({ identityId });
   }
 
+  /** @deprecated no need to query the database
   private async fetchOrganisationUnitContextData(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
-    const unitContext = await this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId)
+    const unitContext = await this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId);
     return this.domainContext.data = {
       ...this.domainContext.data,
       ...unitContext
-    }
+    };
   }
+  */
 
+  /** @deprecated no need to query the database
   private async fetchOrganisationContextData(organisationId: string, identityId: string): Promise<DomainContextType> {
-    const orgContext = await this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId)
+    const orgContext = await this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId);
     return this.domainContext.data = {
       ...this.domainContext.data,
       ...orgContext
-    }
+    };
   }
+  */
 
   private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context?: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
 

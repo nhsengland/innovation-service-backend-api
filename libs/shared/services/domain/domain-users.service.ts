@@ -65,15 +65,19 @@ export class DomainUsersService {
         return {
           id: organisation.id,
           name: organisation.name,
+          acronym: organisation.acronym,
           size: organisation.size,
           role: userOrganisation.role,
           isShadow: organisation.isShadow,
           organisationUnits: organisationUnits.map(item => ({
             id: item.organisationUnit.id,
             acronym: item.organisationUnit.acronym,
-            name: item.organisationUnit.name
+            name: item.organisationUnit.name,
+            organisationUnitUser: {
+              id: item.id
+            }
           }))
-        }
+        };
 
       })
     };

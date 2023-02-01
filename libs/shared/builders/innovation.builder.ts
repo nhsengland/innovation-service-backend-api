@@ -16,6 +16,7 @@ export class InnovationBuilder {
   private _withSupports = false;
   private _withSupportsAndAccessors = false;
   private _withActions = false;
+  private _withActionCreatedBy = '';
   private _withAssessments = false;
 
   private _organisationUnit: OrganisationUnitEntity;
@@ -113,8 +114,9 @@ export class InnovationBuilder {
     return this;
   }
 
-  withActions(): InnovationBuilder {
+  withActions(createdBy: string): InnovationBuilder {
     this._withActions = true;
+    this._withActionCreatedBy = createdBy;
     return this;
   }
 
@@ -179,7 +181,7 @@ export class InnovationBuilder {
           .setStatus(InnovationSupportStatusEnum.WAITING).build(entityManager);
       }
 
-      await new InnovationActionBuilder(section, support).build(entityManager);
+      await new InnovationActionBuilder(this._withActionCreatedBy, section, support).build(entityManager);
     }
 
     if (this._withAssessments) {

@@ -1,12 +1,16 @@
 
-import type { DomainContextType } from '../../types';
 import type { DataSource, Repository } from 'typeorm';
+import type { AccessorDomainContextType, InnovatorDomainContextType } from '../../types';
 
 import { ActivityLogEntity, OrganisationUnitUserEntity, OrganisationUserEntity } from '../../entities';
+import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, UserTypeEnum } from '../../enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '../../errors';
+import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 
-
-
+/**
+ * TODO validate if this is still needed
+ * @deprecated
+ */
 export class DomainContextService {
 
   activityLogRepository: Repository<ActivityLogEntity>;
@@ -18,7 +22,11 @@ export class DomainContextService {
     this.activityLogRepository = this.sqlConnection.getRepository(ActivityLogEntity);
   }
 
-  async getContextFromUnitInfo(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
+  /**
+   * TODO this is called for the accessors and should probably be renamed
+   * @deprecated
+   */
+  async getContextFromUnitInfo(organisationUnitId: string, identityId: string): Promise<AccessorDomainContextType> {
     const entityManager = this.sqlConnection.manager;
     const organisationUnitUser = await entityManager.createQueryBuilder(OrganisationUnitUserEntity, 'organisationUnitUser')
     .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
@@ -33,7 +41,17 @@ export class DomainContextService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
+    // These sanity checks should never happen in the database
+    if(organisationUnitUser.organisationUser.user.type !== UserTypeEnum.ACCESSOR) throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE);
+    if( organisationUnitUser.organisationUser.role !== AccessorOrganisationRoleEnum.ACCESSOR &&
+      organisationUnitUser.organisationUser.role !== AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+    ) {
+      throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE);
+    }
+
     return {
+      id: organisationUnitUser.organisationUser.user.id,
+      identityId: organisationUnitUser.organisationUser.user.identityId,
       organisation: {
         id: organisationUnitUser.organisationUnit.organisation.id,
         name: organisationUnitUser.organisationUnit.organisation.name,
@@ -41,7 +59,7 @@ export class DomainContextService {
         isShadow: organisationUnitUser.organisationUnit.organisation.isShadow,
         role: organisationUnitUser.organisationUser.role,
         size: organisationUnitUser.organisationUnit.organisation.size,
-        organisationUser: { id: organisationUnitUser.organisationUser.id },
+        // organisationUser: { id: organisationUnitUser.organisationUser.id },
         organisationUnit: {
           id: organisationUnitUser.organisationUnit.id,
           name: organisationUnitUser.organisationUnit.name,
@@ -54,7 +72,11 @@ export class DomainContextService {
   }
 
 
-  async getContextFromOrganisationInfo(organisationId: string, identityId: string): Promise<DomainContextType> {
+  /**
+   * TODO This is called for the innovators should probably be renamed
+   * @deprecated
+   */
+  async getContextFromOrganisationInfo(organisationId: string, identityId: string): Promise<InnovatorDomainContextType> {
     const entityManager = this.sqlConnection.manager;
     const organisationUser = await entityManager.createQueryBuilder(OrganisationUserEntity, 'organisationUser')
     .innerJoinAndSelect('organisationUser.organisation', 'organisation')
@@ -67,7 +89,12 @@ export class DomainContextService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
 
+    if(organisationUser.user.type !== UserTypeEnum.INNOVATOR) throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE);
+    if(organisationUser.role !== InnovatorOrganisationRoleEnum.INNOVATOR_OWNER) throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE);
+
     return {
+      id: organisationUser.user.id,
+      identityId: organisationUser.user.identityId,
       organisation: {
         id: organisationUser.organisation.id,
         name: organisationUser.organisation.name,
@@ -75,8 +102,7 @@ export class DomainContextService {
         isShadow: organisationUser.organisation.isShadow,
         role: organisationUser.role,
         size: organisationUser.organisation.size,
-        organisationUser: { id: organisationUser.id },
-        organisationUnit: null,
+        // organisationUser: { id: organisationUser.id },
       },
       userType: organisationUser.user.type
     };

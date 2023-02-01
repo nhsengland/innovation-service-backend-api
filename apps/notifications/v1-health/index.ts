@@ -107,6 +107,8 @@ class V1Health {
               'action': { 'id': 'FAD3433E-F36B-1410-8AA9-00C89B874089', 'section':  InnovationSectionEnum.INNOVATION_DESCRIPTION}
             },
             {
+              'id': 'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
+              'identityId': 'b7e3de07-a826-4e15-adcc-e8cca874d65e',
               'organisation':{
               'id':'7BD3B905-7CB6-EC11-997E-0050F25A43BD',
               'name':'AHSN Network ',
@@ -114,9 +116,6 @@ class V1Health {
               'isShadow':false,
               'role':AccessorOrganisationRoleEnum.ACCESSOR,
               'size':null,
-              'organisationUser':{
-                'id':'FDB4CF83-89B6-EC11-997E-0050F25A43BD'
-              },
               'organisationUnit':{
                 'id':'982AB20B-7CB6-EC11-997E-0050F25A43BD',
                 'name':'Eastern AHSN',

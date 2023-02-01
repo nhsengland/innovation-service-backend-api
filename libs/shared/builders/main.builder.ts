@@ -1,6 +1,6 @@
 import { randText } from '@ngneat/falso';
 import type { EntityManager, Repository } from 'typeorm';
-import { type InnovationEntity, OrganisationUnitEntity, type InnovationSectionEntity, type InnovationSupportEntity, UserEntity, OrganisationEntity, OrganisationUserEntity, OrganisationUnitUserEntity, InnovationFileEntity } from '../entities';
+import { InnovationFileEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity, type InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity } from '../entities';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
@@ -49,8 +49,8 @@ export class TestDataBuilder {
     return new InnovationSupportBuilder( innovation, organisationUnit );
   }
 
-  createAction(innovationSection: InnovationSectionEntity, innovationSupport: InnovationSupportEntity): InnovationActionBuilder {
-    return new InnovationActionBuilder( innovationSection, innovationSupport);
+  createAction(createdBy: string, innovationSection: InnovationSectionEntity, innovationSupport: InnovationSupportEntity): InnovationActionBuilder {
+    return new InnovationActionBuilder( createdBy, innovationSection, innovationSupport);
   }
 
   async addUserToOrganisation(a: UserEntity, b: OrganisationEntity, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, entityManager: EntityManager): Promise<OrganisationUserEntity> {

@@ -2,15 +2,15 @@
 import { TestDataType, TestsHelper } from '@users/shared/tests/tests.helper';
 import { container } from '../_config';
 
+import { OrganisationUserEntity } from '@admin/shared/entities';
+import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
+import { RedisCache } from '@admin/shared/services/storage/redis-cache.service';
 import { DomainInnovationsService, NOSQLConnectionService, NotifierService } from '@users/shared/services';
 import { CacheService } from '@users/shared/services/storage/cache.service';
 import type { EntityManager } from 'typeorm';
 import { UsersServiceSymbol, UsersServiceType } from './interfaces';
-import { RedisCache } from '@admin/shared/services/storage/redis-cache.service';
-import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
-import { OrganisationUserEntity } from '@admin/shared/entities';
 
-describe('Innovation Actions Suite', () => {
+describe('Admin UserService', () => {
 
   let sut: UsersServiceType;
 

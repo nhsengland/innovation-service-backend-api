@@ -22,33 +22,84 @@ export type DomainUserInfoType = {
   organisations: {
     id: string,
     name: string,
-    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
-    isShadow: boolean,
-    size: null | string,
-    organisationUnits: { id: string, name: string, acronym: string }[]
-  }[]
-}
-
-export type DomainContextType = {
-  organisation: null | {
-    id: string,
-    organisationUser: { id: string }
-    name: string,
     acronym: null | string,
     role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
     isShadow: boolean,
     size: null | string,
-    organisationUnit: null | { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
-  },
-  userType: UserTypeEnum,
+    organisationUnits: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }[]
+  }[]
+}
+
+
+export type InnovatorDomainContextType = {
+  id: string,
+  identityId: string,
+  userType: UserTypeEnum.INNOVATOR,
+  organisation: {
+    id: string,
+    name: string,
+    acronym: string | null,
+    role: InnovatorOrganisationRoleEnum,
+    isShadow: boolean,
+    size: string | null,
+    // organisationUser: { id: string },
+    organisationUnit?: never
+  }
+}
+
+export type AssessmentDomainContextType = {
+  id: string,
+  identityId: string,
+  userType: UserTypeEnum.ASSESSMENT,
+  organisation?: never
+}
+
+export type AccessorDomainContextType = {
+  id: string,
+  identityId: string,
+  userType: UserTypeEnum.ACCESSOR,
+  organisation: {
+    id: string,
+    name: string,
+    acronym: string | null,
+    role: AccessorOrganisationRoleEnum,
+    size: string | null,
+    isShadow: boolean,
+    // organisationUser: { id: string },
+    organisationUnit: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
+  }
+}
+
+export type AdminDomainContextType = {
+  id: string,
+  identityId: string,
+  userType: UserTypeEnum.ADMIN,
+  organisation?: never
+}
+
+export type DomainContextType = AdminDomainContextType | AccessorDomainContextType | AssessmentDomainContextType | InnovatorDomainContextType;
+
+// helpers for type checking
+export const isInnovatorDomainContextType = (value: DomainContextType): value is InnovatorDomainContextType => {
+  return value.userType === UserTypeEnum.INNOVATOR;
+};
+export const isAAssessmentDomainContextType = (value: DomainContextType): value is AssessmentDomainContextType => {
+  return value.userType === UserTypeEnum.ASSESSMENT;
+};
+export const isAccessorDomainContextType = (value: DomainContextType): value is AccessorDomainContextType => {
+  return value.userType === UserTypeEnum.ACCESSOR;
+};
+export const isAdminDomainContextType = (value: DomainContextType): value is AdminDomainContextType => {
+  return value.userType === UserTypeEnum.ADMIN;
 };
 
+// TODO - improve this type.
 export const DomainContextSchema = Joi.object<DomainContextType>({
+  id: Joi.string().uuid().required(),
+  identityId: Joi.string().uuid().required(),
+  userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(),
   organisation: Joi.object({
     id: Joi.string().uuid().required(),
-    organisationUser: Joi.object({
-      id: Joi.string().uuid().required(),
-    }).required(),
     name: Joi.string().allow('').required(),
     acronym: Joi.string().allow(null).required(),
     role: Joi.string().required(),
@@ -63,7 +114,6 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       }).required(),
     }).allow(null).required(),
   }).allow(null).required(),
-  userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(),
 });
 
 

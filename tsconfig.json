@@ -19,7 +19,7 @@
     "esModuleInterop": true,
     "sourceMap": true,
     // "importHelpers": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": true, // TODO: Review this in the future...
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,

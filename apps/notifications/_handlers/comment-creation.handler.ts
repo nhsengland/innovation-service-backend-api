@@ -149,8 +149,6 @@ export class CommentCreationHandler extends BaseHandler<
       });
     }
 
-    // const domContext = await this.domainService.context.getContextFromUnitInfo(user.organisationUnitId, user.identityId)
-
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       // domainContext: domContext,

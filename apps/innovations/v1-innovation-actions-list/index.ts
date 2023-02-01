@@ -32,20 +32,12 @@ class V1InnovationActionsList {
         .checkInnovatorType()
         .checkAdminType()
         .verify();
-      const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
       const result = await innovationActionsService.getActionsList(
-        {
-          id: requestUser.id,
-          type: requestUser.type,
-          ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {}),
-          ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {})
-        },
+        domainContext,
         filters,
-        { skip, take, order },
-        domainContext
+        { skip, take, order }
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({

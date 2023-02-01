@@ -5,7 +5,7 @@ import { TestDataBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
 import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, UserTypeEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
-import type { DomainContextType } from '../types';
+import type { AccessorDomainContextType, AssessmentDomainContextType, InnovatorDomainContextType } from '../types';
 
 
 export type TestDataType = {
@@ -17,10 +17,10 @@ export type TestDataType = {
     innovator: UserEntity; 
   };
   domainContexts: {
-    accessor: DomainContextType,
-    qualifyingAccessor: DomainContextType,
-    assessmentUser: DomainContextType,
-    innovator: DomainContextType,
+    accessor: AccessorDomainContextType,
+    qualifyingAccessor: AccessorDomainContextType,
+    assessmentUser: AssessmentDomainContextType,
+    innovator: InnovatorDomainContextType
   } 
   organisationUsers: { 
     innovator: OrganisationUserEntity; 
@@ -76,7 +76,7 @@ export class TestsHelper {
   static async createSampleData(): Promise<TestDataType> {
     const helper = new TestDataBuilder();
    
-    const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager) => {
+    const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager): Promise<TestDataType> => {
       const innovator = await helper.createUser().ofType(UserTypeEnum.INNOVATOR).build(entityManager);
       const accessor = await helper.createUser().ofType(UserTypeEnum.ACCESSOR).build(entityManager);
       const qualifyingAccessor = await helper.createUser().ofType(UserTypeEnum.ACCESSOR).build(entityManager);
@@ -96,8 +96,8 @@ export class TestsHelper {
   
       const innovation = await helper.createInnovation()
         .setOwner(innovator)
-        .withActions()
         .withSupportsAndAccessors(organisationUnit, [accessorOrgUnitUser])
+        .withActions(accessor.id)
         .withSections()
         .withAssessments(assessmentUser)
         .build(entityManager);
@@ -115,15 +115,14 @@ export class TestsHelper {
         domainContexts: {
           // We could probably have a createDomainContext method on the test data builder, keeping it simple for now
           accessor: {
+            id: accessor.id,
+            identityId: accessor.identityId,
             userType: UserTypeEnum.ACCESSOR,
             organisation: {
               id: accessorOrganisation.id,
-              organisationUser: {
-                id: accessorOrgU.id,
-              },
               name: accessorOrganisation.name,
               acronym: accessorOrganisation.acronym,
-              role: accessorOrgU.role,
+              role: accessorOrgU.role as AccessorOrganisationRoleEnum,
               isShadow: false,
               size: accessorOrganisation.size,
               organisationUnit: {
@@ -135,17 +134,16 @@ export class TestsHelper {
                 }
               }
             }
-          } as DomainContextType,
+          },
           qualifyingAccessor: {
+            id: qualifyingAccessor.id,
+            identityId: qualifyingAccessor.identityId,
             userType: UserTypeEnum.ACCESSOR,
             organisation: {
               id: accessorOrganisation.id,
-              organisationUser: {
-                id: qualifyingAccessorOrgU.id,
-              },
               name: accessorOrganisation.name,
               acronym: accessorOrganisation.acronym,
-              role: qualifyingAccessorOrgU.role,
+              role: qualifyingAccessorOrgU.role as AccessorOrganisationRoleEnum,
               isShadow: false,
               size: accessorOrganisation.size,
               organisationUnit: {
@@ -157,24 +155,25 @@ export class TestsHelper {
                 }
               }
             }
-          } as DomainContextType,
+          },
           assessmentUser: {
+            id: assessmentUser.id,
+            identityId: assessmentUser.identityId,
             userType: UserTypeEnum.ASSESSMENT,
-          } as DomainContextType,
+          },
           innovator: {
+            id: innovator.id,
+            identityId: innovator.identityId,
             userType: UserTypeEnum.INNOVATOR,
             organisation: {
               id: innovatorOrganisation.id,
-              organisationUser: {
-                id: innovatorOrgUser.id,
-              },
               name: innovatorOrganisation.name,
               acronym: innovatorOrganisation.acronym,
-              role: innovatorOrgUser.role,
+              role: innovatorOrgUser.role as InnovatorOrganisationRoleEnum,
               isShadow: true,
               size: innovatorOrganisation.size,
             }
-          } as DomainContextType
+          },
         },
         //#endregion
         organisationUsers: {

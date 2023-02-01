@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -25,7 +25,7 @@ export class InnovationActionsService extends BaseService {
 
 
   async getActionsList(
-    user: { id: string, type: UserTypeEnum, organisationId?: string, organisationRole?: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, organisationUnitId?: string },
+    domainContext: DomainContextType,
     filters: {
       innovationId?: string,
       innovationName?: string,
@@ -37,7 +37,6 @@ export class InnovationActionsService extends BaseService {
       fields: ('notifications')[]
     },
     pagination: PaginationQueryParamsType<'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'>,
-    domainContext: DomainContextType,
     entityManager?: EntityManager,
   ): Promise<{
     count: number,
@@ -65,25 +64,25 @@ export class InnovationActionsService extends BaseService {
       .leftJoinAndSelect('action.innovationSupport', 'innovationSupport')
       .leftJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit');
 
-    if (user.type === UserTypeEnum.INNOVATOR) {
-      query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: user.id });
+    if (domainContext.userType === UserTypeEnum.INNOVATOR) {
+      query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: domainContext.id });
     }
 
-    if (user.type === UserTypeEnum.ASSESSMENT) {
+    if (domainContext.userType === UserTypeEnum.ASSESSMENT) {
       if(!filters.allActions) {
         query.andWhere('action.innovation_support_id IS NULL');
       }
       query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] });
     }
 
-    if (user.type === UserTypeEnum.ACCESSOR) {
+    if (domainContext.userType === UserTypeEnum.ACCESSOR) {
 
       query.innerJoin('innovation.organisationShares', 'shares');
-      query.leftJoin('innovation.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organisationUnitId });
+      query.leftJoin('innovation.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id });
       query.andWhere('innovation.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
-      query.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
+      query.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: domainContext.organisation.id });
 
-      if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
+      if (domainContext.organisation.role === AccessorOrganisationRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
         // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
@@ -116,8 +115,8 @@ export class InnovationActionsService extends BaseService {
     }
 
     if (filters.createdByMe) {
-      query.andWhere('createdByUser.id = :createdBy', { createdBy: user.id });
-      if (domainContext.organisation &&  domainContext.organisation.organisationUnit) {
+      query.andWhere('createdByUser.id = :createdBy', { createdBy: domainContext.id });
+      if (domainContext.userType === UserTypeEnum.ACCESSOR) {
         query.andWhere('innovationSupport.organisation_unit_id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
       }
     }
@@ -151,7 +150,7 @@ export class InnovationActionsService extends BaseService {
     let notifications: { id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[] = [];
 
     if (filters.fields?.includes('notifications')) {
-      notifications = await this.domainService.innovations.getUnreadNotifications(user.id, dbActions[0].map(action => action.id), em);
+      notifications = await this.domainService.innovations.getUnreadNotifications(domainContext.id, dbActions[0].map(action => action.id), em);
     }
 
     return {
@@ -175,7 +174,7 @@ export class InnovationActionsService extends BaseService {
           },
           createdBy: {
             id: action.createdByUser.id,
-            name: (await this.identityProviderService.getUserInfo(action.createdByUser.identityId)).displayName,
+            name: (await this.domainService.users.getUserInfo({identityId: action.createdByUser.identityId})).displayName,
             role: action.createdByUser.type,
             ...(action.innovationSupport ? {
               organisationUnit: {
@@ -188,7 +187,7 @@ export class InnovationActionsService extends BaseService {
           ...(!filters.fields?.includes('notifications') ? {} : {
             notifications: notifications.filter(item => item.contextId === action.id).length
           })
-        }
+        };
       }))
     };
 
