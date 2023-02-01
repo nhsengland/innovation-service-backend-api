@@ -2,6 +2,7 @@ import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, UserT
 
 export type ResponseDTO = {
   id: string;
+  email?: string;
   name: string;
   type: UserTypeEnum;
   isActive: boolean;

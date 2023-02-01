@@ -3,7 +3,7 @@ import type { Repository } from 'typeorm';
 
 import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
-import { GenericErrorsEnum, InternalServerError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
@@ -251,7 +251,7 @@ export class UsersService extends BaseService {
    * @returns user object with extra selected fields
    */
   async getUserList(
-    filters: { userTypes: UserTypeEnum[], organisationUnitId?: string },
+    filters: { userTypes: UserTypeEnum[], organisationUnitId?: string, onlyActive?: boolean },
     fields: ('organisations' | 'units')[]
   ): Promise<{
     id: string,
@@ -272,7 +272,7 @@ export class UsersService extends BaseService {
     // Relations
     if (fieldSet.has('organisations') || fieldSet.has('units') || filters.organisationUnitId) {
       query.leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
-        .leftJoinAndSelect('userOrganisations.organisation', 'organisation')
+        .leftJoinAndSelect('userOrganisations.organisation', 'organisation');
 
       if (fieldSet.has('units') || filters.organisationUnitId) {
         query.leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
@@ -282,52 +282,52 @@ export class UsersService extends BaseService {
 
     // Filters
     if (filters.userTypes.length > 0) {
-      query.andWhere('user.type IN (:...userTypes)', { userTypes: filters.userTypes })
+      query.andWhere('user.type IN (:...userTypes)', { userTypes: filters.userTypes });
     }
     if (filters.organisationUnitId) {
-      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId })
+      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId });
+    }
+    if (filters.onlyActive) {
+      query.andWhere('user.lockedAt IS NULL');
     }
 
     // Get users from database
-    const usersFromSQL = await query.getMany()
-    const usersMap = new Map((await Promise.all(usersFromSQL.map(async user => {
-      let organisations = undefined;
+    const usersFromSQL = await query.getMany();
+
+    const identityUsers = (await this.identityProviderService.getUsersList(usersFromSQL.map(u => u.identityId)));
+      
+
+    return Promise.all(usersFromSQL.map(async user => {
+      let organisations: {
+        name: string,
+        role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
+        units?: { name: string, organisationUnitUserId: string }[]
+      }[] | undefined = undefined;
+
       if (fieldSet.has('organisations') || fieldSet.has('units')) {
         const userOrganisations = await user.userOrganisations;
         organisations = userOrganisations.map(o => ({
           name: o.organisation.name,
           role: o.role,
           ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
-        }))
+        }));
+      }
+
+      const b2cUser = identityUsers.find(item => item.identityId === user.identityId);
+      if (!b2cUser) {
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
       }
 
       return {
         id: user.id,
-        externalId: user.identityId,
+        email: b2cUser.email,
+        isActive: !user.lockedAt,
+        name: b2cUser.displayName,
         type: user.type,
-        organisations: organisations
+        ...(organisations ? { organisations } : {})
       };
-    })
-    )).map(user => [user.externalId, user]));
 
-    // Get users from identity provider
-    const users = (await this.domainService.users.getUsersList({ identityIds: [...usersMap.keys()] }))
-      .map(user => {
-        const dbUser = usersMap.get(user.identityId);
-        if (!dbUser) {
-          throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, { message: `domainService returned user not found in db ${user.identityId}` });
-        }
-        return {
-          id: dbUser.id,
-          email: user.email,
-          isActive: user.isActive,
-          name: user.displayName,
-          type: dbUser.type,
-          ...(dbUser.organisations ? { organisations: dbUser.organisations } : {})
-        }
-      });
-
-    return users;
+    }));
   }
 
   /**

@@ -46,25 +46,33 @@ class V1UsersList {
         return;
 
       } else if ('userTypes' in queryParams) {
-        
+
         const validation = authorizationService.validate(context)
-          .checkAdminType()
-        
-        // only allow NA users to list other NA users
+          .checkAdminType();
+
+        // all users need to be able to list NA users for message transparency page
         if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === UserTypeEnum.ASSESSMENT) {
-          validation.checkAssessmentType()
+          validation.checkAssessmentType();
+          validation.checkAccessorType();
+          validation.checkInnovatorType();
         }
-          
-        if(queryParams.organisationUnitId) {
+
+        if (queryParams.organisationUnitId) {
           validation.checkAccessorType({
             organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
             organisationUnitId: queryParams.organisationUnitId
           });
         }
-        await validation.verify()
+        await validation.verify();
 
         const users = await usersService.getUserList(queryParams, queryParams.fields);
-        context.res = ResponseHelper.Ok<ResponseDTO>(users);
+        context.res = ResponseHelper.Ok<ResponseDTO>(users.map(u => ({
+          id: u.id,
+          isActive: u.isActive,
+          name: u.name,
+          type: u.type,
+          ...(u.organisations ? { organisations: u.organisations } : {})
+        })));
         return;
 
       } else {
