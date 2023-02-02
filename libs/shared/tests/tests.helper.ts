@@ -5,45 +5,47 @@ import { TestDataBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
 import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, UserTypeEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
-import type { AccessorDomainContextType, AssessmentDomainContextType, InnovatorDomainContextType } from '../types';
+import type { AccessorDomainContextType, AdminDomainContextType, AssessmentDomainContextType, DomainContextType, InnovatorDomainContextType } from '../types';
 
 
 export type TestDataType = {
   innovation: InnovationEntity;
-  baseUsers: { 
-    accessor: UserEntity; 
-    qualifyingAccessor: UserEntity; 
-    assessmentUser: UserEntity; 
-    innovator: UserEntity; 
+  baseUsers: {
+    accessor: UserEntity;
+    qualifyingAccessor: UserEntity;
+    assessmentUser: UserEntity;
+    innovator: UserEntity;
+    admin: UserEntity;
   };
   domainContexts: {
     accessor: AccessorDomainContextType,
     qualifyingAccessor: AccessorDomainContextType,
     assessmentUser: AssessmentDomainContextType,
-    innovator: InnovatorDomainContextType
-  } 
-  organisationUsers: { 
-    innovator: OrganisationUserEntity; 
-    accessor: OrganisationUserEntity; 
-    qualifyingAccessor: OrganisationUserEntity; 
-  }; 
-  organisationUnitUsers: { 
-    accessor: OrganisationUnitUserEntity; 
-    qualifyingAccessor: OrganisationUnitUserEntity; 
-  }; 
-  organisation: { 
-    innovator: OrganisationEntity; 
-    accessor: OrganisationEntity; 
-  }; 
-  organisationUnit: { 
-    accessor: 
-    OrganisationUnitEntity; 
+    innovator: InnovatorDomainContextType,
+    admin: AdminDomainContextType
+  }
+  organisationUsers: {
+    innovator: OrganisationUserEntity;
+    accessor: OrganisationUserEntity;
+    qualifyingAccessor: OrganisationUserEntity;
+  };
+  organisationUnitUsers: {
+    accessor: OrganisationUnitUserEntity;
+    qualifyingAccessor: OrganisationUnitUserEntity;
+  };
+  organisation: {
+    innovator: OrganisationEntity;
+    accessor: OrganisationEntity;
+  };
+  organisationUnit: {
+    accessor:
+    OrganisationUnitEntity;
   };
 }
 
 // In jest the static classes are not shared between test suites so it ended up not making much difference to use static
 export class TestsHelper {
- 
+
   static sqlConnection: DataSource;
   static sampleData: TestDataType;
 
@@ -75,25 +77,26 @@ export class TestsHelper {
 
   static async createSampleData(): Promise<TestDataType> {
     const helper = new TestDataBuilder();
-   
+
     const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager): Promise<TestDataType> => {
       const innovator = await helper.createUser().ofType(UserTypeEnum.INNOVATOR).build(entityManager);
       const accessor = await helper.createUser().ofType(UserTypeEnum.ACCESSOR).build(entityManager);
       const qualifyingAccessor = await helper.createUser().ofType(UserTypeEnum.ACCESSOR).build(entityManager);
       const assessmentUser = await helper.createUser().ofType(UserTypeEnum.ASSESSMENT).build(entityManager);
-  
+      const admin = await helper.createUser().ofType(UserTypeEnum.ADMIN).build(entityManager);
+
       const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
       const accessorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.ACCESSOR).build(entityManager);
-  
+
       const innovatorOrgUser = await helper.addUserToOrganisation(innovator, innovatorOrganisation, InnovatorOrganisationRoleEnum.INNOVATOR_OWNER, entityManager);
       const accessorOrgU = await helper.addUserToOrganisation(accessor, accessorOrganisation, AccessorOrganisationRoleEnum.ACCESSOR, entityManager);
       const qualifyingAccessorOrgU = await helper.addUserToOrganisation(qualifyingAccessor, accessorOrganisation, AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, entityManager);
-  
+
       const organisationUnit = await helper.createOrganisationUnit().addToOrganisation(accessorOrganisation).build(entityManager);
-  
+
       const accessorOrgUnitUser = await helper.addUserToOrganisationUnit(accessorOrgU, organisationUnit, entityManager);
       const qaOrgUnitUser = await helper.addUserToOrganisationUnit(qualifyingAccessorOrgU, organisationUnit, entityManager);
-  
+
       const innovation = await helper.createInnovation()
         .setOwner(innovator)
         .withSupportsAndAccessors(organisationUnit, [accessorOrgUnitUser])
@@ -110,6 +113,7 @@ export class TestsHelper {
           qualifyingAccessor,
           assessmentUser,
           innovator,
+          admin
         },
         //#region DomainContexts
         domainContexts: {
@@ -174,6 +178,10 @@ export class TestsHelper {
               size: innovatorOrganisation.size,
             }
           },
+          admin: {
+            id: admin.id,
+            userType: UserTypeEnum.ADMIN
+          }
         },
         //#endregion
         organisationUsers: {
@@ -200,22 +208,49 @@ export class TestsHelper {
     return retVal;
   }
 
-  
-  public static get TestDataBuilder() : TestDataBuilder {
+  public static getUser(userType: UserTypeEnum): [UserEntity, DomainContextType] {
+    let user: UserEntity;
+    let context: DomainContextType;
+
+    switch (userType) {
+      case UserTypeEnum.ADMIN:
+        user = this.sampleData.baseUsers.admin;
+        context = this.sampleData.domainContexts.admin;
+        break;
+      case UserTypeEnum.ACCESSOR:
+        user = this.sampleData.baseUsers.accessor;
+        context = this.sampleData.domainContexts.accessor;
+        break;
+      case UserTypeEnum.ASSESSMENT:
+        user = this.sampleData.baseUsers.assessmentUser;
+        context = this.sampleData.domainContexts.assessmentUser;
+        break;
+      case UserTypeEnum.INNOVATOR:
+        user = this.sampleData.baseUsers.innovator;
+        context = this.sampleData.domainContexts.innovator;
+        break;
+
+      default: throw Error(); // Never happens
+    }
+
+    return [user, context];
+  }
+
+  public static get TestDataBuilder(): TestDataBuilder {
     return new TestDataBuilder();
   }
 
   /**
    * gets a new entity manager for each test and starts a transaction
-   * 
+   *
    * A new query runner is required for each test suite in order to support concurrent tests since
    * the query runner is a real database connection and doesn't use the connection pooling. This causes
    * concurrency issues when running transactions.
-   * 
+   *
    * More information in: https://typeorm.biunav.com/en/connection.html#what-is-connection
-   * 
+   *
    * Currently there's still issues with query runner and multiple paralel tests, run with --runInBand
-   * 
+   *
    * @returns entity manager to be used in the tests
    */
   public static async getQueryRunnerEntityManager(): Promise<EntityManager> {

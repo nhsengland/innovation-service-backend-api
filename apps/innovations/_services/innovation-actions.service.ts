@@ -4,7 +4,7 @@ import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, Innovation
 import { AccessorOrganisationRoleEnum, ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DateISOType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
@@ -18,7 +18,6 @@ export class InnovationActionsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
     @inject(InnovationThreadsServiceSymbol) private innovationThreadsService: InnovationThreadsServiceType,
   ) { super(); }
@@ -194,7 +193,7 @@ export class InnovationActionsService extends BaseService {
   }
 
 
-  async getActionInfo(actionId: string): Promise<{
+  async getActionInfo(actionId: string, entityManager?: EntityManager): Promise<{
     id: string,
     displayId: string,
     status: InnovationActionStatusEnum,
@@ -207,7 +206,9 @@ export class InnovationActionsService extends BaseService {
     declineReason?: string
   }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
       .innerJoinAndSelect('innovationSection.innovation', 'innovation')
       .innerJoinAndSelect('action.createdByUser', 'createdByUser')
@@ -221,7 +222,7 @@ export class InnovationActionsService extends BaseService {
 
     let declineReason: string | null = null;
     if (dbAction.status === InnovationActionStatusEnum.DECLINED) {
-      const activityLogDeclineReason = await this.sqlConnection
+      const activityLogDeclineReason = await em
         .createQueryBuilder(ActivityLogEntity, 'activityLog')
         .where('activityLog.innovation_id = :innovationId', { innovationId: dbAction.innovationSection.innovation.id })
         .andWhere('activity = :activity', { activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE })
@@ -250,7 +251,7 @@ export class InnovationActionsService extends BaseService {
       },
       createdBy: {
         id: dbAction.createdByUser.id,
-        name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
+        name: (await this.domainService.users.getUserInfo({ identityId: dbAction.createdByUser.identityId })).displayName,
         role: dbAction.createdByUser.type,
         ...(dbAction.innovationSupport ? {
           organisationUnit: {
