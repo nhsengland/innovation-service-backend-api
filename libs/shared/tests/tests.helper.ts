@@ -180,6 +180,7 @@ export class TestsHelper {
           },
           admin: {
             id: admin.id,
+            identityId: admin.identityId,
             userType: UserTypeEnum.ADMIN
           }
         },

@@ -94,6 +94,11 @@ export class InnovationBuilder {
     return this;
   }
 
+  setStatus(status: InnovationStatusEnum): InnovationBuilder {
+    this.innovation.status = status;
+    return this;
+  }
+
   withSections(): InnovationBuilder {
     this._withSections = true;
     return this;
