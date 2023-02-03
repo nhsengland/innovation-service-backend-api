@@ -15,7 +15,7 @@ export class UsersService extends BaseService {
 
   userRepository: Repository<UserEntity>;
   organisationRepository: Repository<OrganisationEntity>;
-  private cache: CacheConfigType['IdentityUserInfo']
+  private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
     @inject(CacheServiceSymbol) cacheService: CacheServiceType,
@@ -77,12 +77,7 @@ export class UsersService extends BaseService {
 
   async createUserInnovator(user: { identityId: string }, data: { surveyId: null | string }): Promise<{ id: string }> {
 
-    const authUser = await this.identityProviderService.getUserInfo(user.identityId);
-    if (!authUser) {
-      throw new UnprocessableEntityError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-    }
-
-    const identityIdExists = !!(await this.sqlConnection.createQueryBuilder(UserEntity, 'users').where('external_id = :userId', { userId: authUser.identityId }).getCount());
+    const identityIdExists = !!(await this.sqlConnection.createQueryBuilder(UserEntity, 'users').where('external_id = :userId', { userId: user.identityId }).getCount());
     if (identityIdExists) {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
     }
@@ -169,7 +164,7 @@ export class UsersService extends BaseService {
       // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
       // Updates the firstTimeSignInAt with the current date.
       if (!user.firstTimeSignInAt) {
-        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() })
+        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() });
       }
 
       if (data.organisation) {
@@ -238,7 +233,7 @@ export class UsersService extends BaseService {
 
       const result = await transactionManager.save(user);
 
-      return { id: result.id }
+      return { id: result.id };
 
     });
 
@@ -368,7 +363,7 @@ export class UsersService extends BaseService {
       preference = {
         id: userPreferences.id,
         ...preference
-      }
+      };
 
     }
 
