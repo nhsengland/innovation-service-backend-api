@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
-import { BadRequestError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
+import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
@@ -131,7 +131,8 @@ export class InnovationAssessmentsService extends BaseService {
       await this.notifierService.send(
         user,
         NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
-        { innovationId, threadId: thread.thread.id }
+        { innovationId, threadId: thread.thread.id },
+        domainContext,
       );
 
       return { id: assessment['id'] };
@@ -141,7 +142,7 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   async updateInnovationAssessment(
-    user: { id: string, identityId: string, type: UserTypeEnum },
+    user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     assessmentId: string,
@@ -270,9 +271,10 @@ export class InnovationAssessmentsService extends BaseService {
 
     if (data.isSubmission) {
       await this.notifierService.send(
-        { id: user.id, identityId: user.identityId, type: user.type },
+        { id: user.id, identityId: user.identityId },
         NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
-        { innovationId: innovationId, assessmentId: assessmentId, organisationUnitIds: data.suggestedOrganisationUnitsIds || [] }
+        { innovationId: innovationId, assessmentId: assessmentId, organisationUnitIds: data.suggestedOrganisationUnitsIds || [] },
+        domainContext,
       );
     }
 
@@ -288,7 +290,7 @@ export class InnovationAssessmentsService extends BaseService {
    * @returns - The assessment request id and the new assessment id.
    */
   async createInnovationReassessment(
-    user: { id: string, identityId: string, type: UserTypeEnum },
+    user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string; },
@@ -364,9 +366,10 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId, type: user.type },
+      { id: user.id, identityId: user.identityId },
       NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
-      { innovationId: innovationId }
+      { innovationId: innovationId },
+      domainContext,
     );
 
     return { assessment: { id: result.assessment.id }, reassessment: { id: result.reassessment.id } };
@@ -374,7 +377,8 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   async updateAssessor(
-    user: { id: string, identityId: string, type: UserTypeEnum },
+    user: { id: string, identityId: string },
+    domainContext: DomainContextType,
     innovationId: string,
     assessmentId: string,
     assessorId: string
@@ -382,15 +386,13 @@ export class InnovationAssessmentsService extends BaseService {
 
     const newAssessor = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
       .where('user.id = :assessorId', { assessorId })
+      .andWhere('serviceRoles.type = :serviceRoleType', { serviceRoleType: ServiceRoleEnum.ASSESSMENT })
       .getOne();
 
     if (!newAssessor) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    }
-
-    if (newAssessor.type !== UserTypeEnum.ASSESSMENT) {
-      throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
     const assessment = await this.sqlConnection
@@ -420,14 +422,15 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId, type: user.type },
+      { id: user.id, identityId: user.identityId },
       NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
       {
         innovationId,
         assessmentId: updatedAssessment.id,
         previousAssessor: { identityId: previousAssessor.identityId },
         newAssessor: { identityId: updatedAssessment.newAssessor.identityId }
-      }
+      },
+      domainContext,
     );
 
     return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id };

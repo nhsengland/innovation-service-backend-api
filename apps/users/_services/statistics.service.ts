@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@users/shared/enums';
+import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
@@ -120,7 +120,7 @@ export class StatisticsService extends BaseService {
       .where('actions.created_by = :userId', { userId: requestUser.id })
       .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] })
 
-    if (domainContext.userType === UserTypeEnum.ACCESSOR) {
+    if (domainContext.currentRole.role === ServiceRoleEnum .ACCESSOR) {
       if (!organisationUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }

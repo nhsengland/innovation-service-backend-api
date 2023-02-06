@@ -1,7 +1,7 @@
-import { UserEntity } from '../entities';
-import { UserTypeEnum } from '../enums';
+import { UserEntity, UserRoleEntity } from '../entities';
 import { randPastDate, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
+import type { ServiceRoleEnum } from '../enums';
 
 export class UserBuilder {
 
@@ -11,14 +11,13 @@ export class UserBuilder {
     this.user = {
       firstTimeSignInAt: randPastDate().toISOString(),
       identityId: randUuid(),
-      type: UserTypeEnum.INNOVATOR,
       surveyId: randUuid(),
     };
 
   }
 
-  ofType(type: UserTypeEnum): UserBuilder {
-    this.user.type = type;
+  ofType(type: ServiceRoleEnum): UserBuilder {
+    this.user.serviceRoles?.push(UserRoleEntity.new({ role: type}));
     return this;
   }
 

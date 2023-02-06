@@ -22,6 +22,7 @@ export class NOSQLConnectionService {
     }
 
   }
+  
 
   async closeConnection(): Promise<void> {
 

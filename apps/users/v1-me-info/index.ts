@@ -9,8 +9,9 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
-import { PhoneUserPreferenceEnum, UserTypeEnum } from '@users/shared/enums';
+import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
+
 
 
 class V1MeInfo {
@@ -27,6 +28,7 @@ class V1MeInfo {
 
       const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext();
 
       let termsOfUseAccepted = false;
       let hasInnovationTransfers = false;
@@ -42,15 +44,15 @@ class V1MeInfo {
         contactDetails: null,
       }
 
-      if (requestUser.type === UserTypeEnum.ADMIN) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
         termsOfUseAccepted = true;
         hasInnovationTransfers = false;
       } else {
-        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id, type: requestUser.type })).isAccepted;
+        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role )).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
       }
 
-      if (requestUser.type === UserTypeEnum.INNOVATOR) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
         userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
       }
 
@@ -58,7 +60,6 @@ class V1MeInfo {
         id: requestUser.id,
         email: requestUser.email,
         displayName: requestUser.displayName,
-        type: requestUser.type,
         roles: requestUser.roles,
         contactByEmail: userPreferences.contactByEmail,
         contactByPhone: userPreferences.contactByPhone,

@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 't
 
 import { BaseEntity } from '../base.entity';
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+import { UserRoleEntity } from '../user/user-role.entity';
 
 import { UserEntity } from '../user/user.entity';
 import { InnovationThreadEntity } from './Innovation-thread.entity';
@@ -31,6 +32,10 @@ export class InnovationThreadMessageEntity extends BaseEntity {
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'author_organisation_unit_id' })
   authorOrganisationUnit: OrganisationUnitEntity | null
+
+  @ManyToOne(() => UserRoleEntity, { nullable: true })
+  @JoinColumn({ name: 'author_user_role_id' })
+  authorUserRole: UserRoleEntity | null;
 
   static new(data: Partial<InnovationThreadMessageEntity>): InnovationThreadMessageEntity {
     const instance = new InnovationThreadMessageEntity();

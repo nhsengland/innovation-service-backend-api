@@ -5,7 +5,7 @@ import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, No
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
-import type { DomainUserInfoType } from '@admin/shared/types';
+import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -21,7 +21,7 @@ export class OrganisationsService extends BaseService {
   }
 
 
-  async inactivateUnit(requestUser: DomainUserInfoType, unitId: string): Promise<{ unitId: string }> {
+  async inactivateUnit(requestUser: DomainUserInfoType, domainContext: DomainContextType, unitId: string): Promise<{ unitId: string }> {
 
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
@@ -170,9 +170,10 @@ export class OrganisationsService extends BaseService {
         );
 
         await this.notifierService.send(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          { id: requestUser.id, identityId: requestUser.identityId },
           NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-          { innovationId: support.innovation.id, unitId }
+          { innovationId: support.innovation.id, unitId },
+          domainContext,
         );
       }
       return { unitId };

@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { UserTypeEnum } from '@users/shared/enums';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
@@ -27,8 +27,9 @@ class V1MeUpdate {
 
       const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext();
 
-      if ([UserTypeEnum.ADMIN, UserTypeEnum.ASSESSMENT, UserTypeEnum.ACCESSOR].includes(requestUser.type)) {
+      if ([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
 
         const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(DefaultUserBodySchema, request.body);
 
@@ -39,14 +40,15 @@ class V1MeUpdate {
           .verify();
 
         const accessorResult = await usersService.updateUserInfo(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          { id: requestUser.id, identityId: requestUser.identityId},
+          domainContext.currentRole.role,
           { displayName: accessorBody.displayName }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
 
-      } else if (requestUser.type === UserTypeEnum.INNOVATOR) {
+      } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
 
         const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(InnovatorBodySchema, request.body);
 
@@ -55,7 +57,8 @@ class V1MeUpdate {
           .verify();
 
         const innovatorResult = await usersService.updateUserInfo(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type, firstTimeSignInAt: requestUser.firstTimeSignInAt },
+          { id: requestUser.id, identityId: requestUser.identityId, firstTimeSignInAt: requestUser.firstTimeSignInAt },
+          domainContext.currentRole.role,
           {
             displayName: innovatorBody.displayName,
             contactByEmail: innovatorBody.contactByEmail,

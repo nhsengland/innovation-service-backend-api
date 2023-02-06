@@ -1,6 +1,6 @@
 import type { Context } from '@azure/functions';
 
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 import { StorageQueueServiceSymbol, StorageQueueServiceType } from '@notifications/shared/services';
 import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
@@ -18,7 +18,7 @@ class V1NotificationsListener {
     context: Context,
     requestMessage: {
       data: {
-        requestUser: { id: string, identityId: string, type: UserTypeEnum },
+        requestUser: { id: string, identityId: string },
         action: NotifierTypeEnum,
         params: { [key: string]: any }
         domainContext?: DomainContextType,
@@ -48,6 +48,7 @@ class V1NotificationsListener {
             to: item.to,
             params: item.params,
             log: item.log,
+            domainContext: message.data.domainContext,
           }
         });
 
@@ -63,7 +64,7 @@ class V1NotificationsListener {
             context: { type: item.context.type, detail: item.context.detail, id: item.context.id },
             users: item.users,
             params: item.params,
-            // domainContext: message.data.domainContext,
+            domainContext: message.data.domainContext,
           }
         });
 

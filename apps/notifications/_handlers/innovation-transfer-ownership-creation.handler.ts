@@ -1,7 +1,7 @@
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -19,10 +19,11 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 

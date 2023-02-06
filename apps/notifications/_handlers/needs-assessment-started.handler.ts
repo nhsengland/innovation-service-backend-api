@@ -1,6 +1,6 @@
-import type { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
@@ -17,14 +17,15 @@ Record<string, never>
     private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
     private data: {
-        innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
+        innovation?: { name: string, owner: { id: string, identityId: string, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
       } = {};
 
     constructor(
-        requestUser: { id: string, identityId: string, type: UserTypeEnum },
-        data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]
+        requestUser: { id: string, identityId: string },
+        data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED],
+        domainContext: DomainContextType,
       ) {
-        super(requestUser, data);
+        super(requestUser, data, domainContext);
       }
     
 

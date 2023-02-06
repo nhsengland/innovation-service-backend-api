@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { In } from 'typeorm';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, InnovationSupportLogEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum, type UserTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
@@ -54,7 +54,7 @@ export class InnovationSupportsService extends BaseService {
     const innovationSupports = innovation.innovationSupports;
 
     // Fetch users names.
-    let usersInfo: { id: string, identityId: string, email: string, displayName: string, type: UserTypeEnum, isActive: boolean }[] = [];
+    let usersInfo: { id: string, identityId: string, email: string, displayName: string, isActive: boolean }[] = [];
 
     if (filters.fields.includes('engagingAccessors')) {
 
@@ -207,7 +207,7 @@ export class InnovationSupportsService extends BaseService {
 
 
   async createInnovationSupport(
-    user: { id: string, identityId: string, type: UserTypeEnum },
+    user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
@@ -246,7 +246,7 @@ export class InnovationSupportsService extends BaseService {
 
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: user.id, identityId: user.identityId, type: user.type },
+        { id: user.id, identityId: user.identityId },
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
@@ -301,7 +301,7 @@ export class InnovationSupportsService extends BaseService {
 
 
   async updateInnovationSupport(
-    user: { id: string, identityId: string, type: UserTypeEnum },
+    user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     supportId: string,
@@ -351,7 +351,7 @@ export class InnovationSupportsService extends BaseService {
 
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: user.id, identityId: user.identityId, type: user.type },
+        { id: user.id, identityId: user.identityId },
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,

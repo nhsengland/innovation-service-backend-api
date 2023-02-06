@@ -29,13 +29,15 @@ class V1AdminDelete {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .checkAdminType()
         .verify();
 
+      const domainContext = auth.getContext()
+
       const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
-      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_DELETE_ADMIN, sls.id, sls.code);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_DELETE_ADMIN, domainContext, sls.id, sls.code);
 
       const result = await usersService.deleteAdmin(params.userId);
 

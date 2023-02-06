@@ -2,13 +2,14 @@ import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
 import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
+import { UserRoleEntity } from '@users/shared/entities';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -30,7 +31,7 @@ export class UsersService extends BaseService {
   }
 
 
-  async getUserByEmail(email: string, filters: { userTypes: UserTypeEnum[] }): Promise<DomainUserInfoType[]> {
+  async getUserByEmail(email: string, filters: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
 
     try {
 
@@ -42,7 +43,7 @@ export class UsersService extends BaseService {
       const dbUser = await this.domainService.users.getUserInfo({ identityId: authUser.identityId });
 
       // Apply filters.
-      if (filters.userTypes.length === 0 || (filters.userTypes.length > 0 && filters.userTypes.includes(dbUser.type))) {
+      if (filters.userRoles.length === 0 || (filters.userRoles.length > 0 && filters.userRoles.some(userRole => dbUser.roles.map(r => r.role).includes(userRole)))) {
         return [dbUser];
       } else {
         throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -88,8 +89,11 @@ export class UsersService extends BaseService {
       const dbUser = await transactionManager.save(UserEntity.new({
         identityId: user.identityId,
         surveyId: data.surveyId,
-        type: UserTypeEnum.INNOVATOR
       }));
+
+      // add innovator role
+
+      const userRole = await transactionManager.save(UserRoleEntity, UserRoleEntity.new({ user: dbUser, role: ServiceRoleEnum.INNOVATOR }));
 
       // Creates default organisation.
       const dbOrganisation = await transactionManager.save(OrganisationEntity.new({
@@ -99,7 +103,7 @@ export class UsersService extends BaseService {
         size: null,
         isShadow: true,
         createdBy: dbUser.id,
-        updatedBy: dbUser.id
+        updatedBy: dbUser.id,
       }));
 
       await transactionManager.save(OrganisationUserEntity.new({
@@ -128,9 +132,23 @@ export class UsersService extends BaseService {
       }
 
       await this.notifierService.send(
-        { id: dbUser.id, identityId: dbUser.identityId, type: dbUser.type },
+        { id: dbUser.id, identityId: dbUser.identityId },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
-        {}
+        {},
+        {
+          id: dbUser.id,
+          identityId: dbUser.identityId,
+          organisation:{
+            id: dbOrganisation.id,
+            isShadow: dbOrganisation.isShadow,
+            name: dbOrganisation.name,
+            size: dbOrganisation.size,
+            acronym: dbOrganisation.acronym,
+            role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+          },
+          currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR},
+
+        },
       );
 
       return { id: dbUser.id };
@@ -141,7 +159,8 @@ export class UsersService extends BaseService {
 
 
   async updateUserInfo(
-    user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
+    user: { id: string, identityId: string, firstTimeSignInAt?: null | DateISOType },
+    currentRole: ServiceRoleEnum | '',
     data: {
       displayName: string,
       contactByEmail?: boolean,
@@ -159,7 +178,7 @@ export class UsersService extends BaseService {
     });
 
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
-    if (user.type === UserTypeEnum.INNOVATOR) {
+    if (currentRole === ServiceRoleEnum.INNOVATOR) {
 
       // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
       // Updates the firstTimeSignInAt with the current date.
@@ -246,14 +265,14 @@ export class UsersService extends BaseService {
    * @returns user object with extra selected fields
    */
   async getUserList(
-    filters: { userTypes: UserTypeEnum[], organisationUnitId?: string, onlyActive?: boolean },
+    filters: { userTypes: ServiceRoleEnum[], organisationUnitId?: string, onlyActive?: boolean },
     fields: ('organisations' | 'units')[]
   ): Promise<{
     id: string,
     email: string,
     isActive: boolean,
     name: string,
-    type: UserTypeEnum,
+    roles: UserRoleEntity[],
     organisations?: {
       name: string,
       role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
@@ -277,15 +296,17 @@ export class UsersService extends BaseService {
 
     // Filters
     if (filters.userTypes.length > 0) {
-      query.andWhere('user.type IN (:...userTypes)', { userTypes: filters.userTypes });
+      query.leftJoinAndSelect('user.serviceRoles', 'serviceRoles');
+      query.andWhere('serviceRoles.role IN (:...userRoles)', { userRoles: filters.userTypes });
     }
     if (filters.organisationUnitId) {
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId });
     }
+
     if (filters.onlyActive) {
       query.andWhere('user.lockedAt IS NULL');
     }
-
+    
     // Get users from database
     const usersFromSQL = await query.getMany();
 
@@ -317,9 +338,9 @@ export class UsersService extends BaseService {
         id: user.id,
         email: b2cUser.email,
         isActive: !user.lockedAt,
+        roles: user.serviceRoles,
         name: b2cUser.displayName,
-        type: user.type,
-        ...(organisations ? { organisations } : {})
+        ...(organisations ? { organisations } : {}),
       };
 
     }));

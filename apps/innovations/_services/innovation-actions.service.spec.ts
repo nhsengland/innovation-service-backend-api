@@ -45,7 +45,7 @@ describe('Innovation Actions Suite', () => {
       jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
   
       const action = await sut.createAction(
-        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        { id: accessor.id, identityId: accessor.identityId },
         testData.domainContexts.accessor,
         testData.innovation.id,
         {
@@ -72,7 +72,7 @@ describe('Innovation Actions Suite', () => {
       let err: UnprocessableEntityError | null = null;
       try {
         await sut.createAction(
-          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          { id: accessor.id, identityId: accessor.identityId },
           context,
           testData.innovation.id,
           {
@@ -105,7 +105,6 @@ describe('Innovation Actions Suite', () => {
       jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(
         {
           displayName: randText(),
-          type: testData.baseUsers.accessor.type,
         } as any
       );
     });

@@ -32,22 +32,20 @@ class V1InnovationsList {
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.userType, userOrganisationRole: domainContext.organisation?.role });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole, userOrganisationRole: domainContext.organisation?.role });
 
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationsList(
         {
           id: requestUser.id,
-          type: requestUser.type,
-          ...('organisation' in domainContext ? { organisationId: domainContext.organisation.id, role: domainContext.organisation.role } : {}),
-          ...('organisation' in domainContext && 'organisationUnit' in domainContext.organisation ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {})
         },
+        domainContext,
         filters,
         { skip, take, order }
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({
+      const response = {
         count: result.count,
         data: result.data.map(item => ({
           id: item.id,
@@ -74,7 +72,8 @@ class V1InnovationsList {
           ...(item.notifications === undefined ? {} : { notifications: item.notifications }),
           ...(item.statistics === undefined ? {} : { statistics: item.statistics }),
         }))
-      });
+      };
+      context.res = ResponseHelper.Ok<ResponseDTO>(response);
       return;
 
     } catch (error) {

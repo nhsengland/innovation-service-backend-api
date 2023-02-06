@@ -40,7 +40,7 @@ class V1InnovationThreadParticipants {
         participants: result.map(participant => ({
           id: participant.id,
           name: participant?.name ?? '',
-          type: participant.type,
+          type: participant.userRole,
           organisationUnit: participant.organisationUnit ? {
             id: participant.organisationUnit.id,
             acronym: participant.organisationUnit.acronym

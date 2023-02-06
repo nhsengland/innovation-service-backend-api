@@ -29,9 +29,10 @@ class V1OrganisationsList {
         .checkAccessorType()
         .checkInnovatorType()
         .verify();
-      const requestUser = auth.getUserInfo();
+        
+      const domainContext = auth.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: requestUser.type });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole });
 
       const result = await organisationsService.getOrganisationsList(queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({

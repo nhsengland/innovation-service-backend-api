@@ -28,17 +28,15 @@ class V1InnovationsExportRequestInfo {
         .checkAccessorType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<PathParamsType>(
         PathParamsSchema,
         request.params,
-        { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role }
+        { userType: domainContext.currentRole, userOrganisationRole: domainContext.organisation?.role }
       );
 
       const result = await innovationsService.getInnovationRecordExportRequestInfo(
-        requestUser,
         domainContext,
         params.requestId
       );

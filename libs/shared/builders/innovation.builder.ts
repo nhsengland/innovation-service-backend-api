@@ -1,7 +1,7 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
-import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, UserTypeEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
+import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
@@ -121,7 +121,7 @@ export class InnovationBuilder {
   }
 
   withAssessments(assignTo: UserEntity): InnovationBuilder {
-    if (assignTo.type !== UserTypeEnum.ASSESSMENT) {
+    if (!assignTo.serviceRoles.map(s => s.role).includes(ServiceRoleEnum.ASSESSMENT)) {
       throw new Error('Cannot assign an assessment to a non-assessment user');
     }
     this._assessmentUser = assignTo;

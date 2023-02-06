@@ -1,7 +1,7 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
-import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, UserTypeEnum } from '../../enums';
+import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
 
@@ -194,7 +194,7 @@ export class DomainInnovationsService {
       updatedBy: configuration.userId,
       param: JSON.stringify({
         actionUserId: configuration.userId,
-        actionUserRole: configuration.domainContext.userType,
+        actionUserRole: configuration.domainContext.currentRole.role,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id, 
         ...params
       })
@@ -314,7 +314,7 @@ export class DomainInnovationsService {
    * @returns object with user info and organisation unit
    */
   async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
-    id: string, identityId: string, name?: string, type: UserTypeEnum,
+    id: string, identityId: string, name?: string, userRole: ServiceRoleEnum | undefined,
     organisationUnit: { id: string, acronym: string } | null,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
@@ -331,6 +331,7 @@ export class DomainInnovationsService {
 
     const messages = await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
       .innerJoinAndSelect('threadMessage.author', 'author')
+      .leftJoinAndSelect('threadMessage.authorUserRole', 'authorRole')
       .leftJoinAndSelect('threadMessage.authorOrganisationUnit', 'organisation_unit')
       .leftJoinAndSelect('author.notificationPreferences', 'notificationPreferences')
       .where('threadMessage.innovation_thread_id = :threadId', { threadId })
@@ -339,7 +340,7 @@ export class DomainInnovationsService {
       .getMany();
 
     const participants: {
-      id: string, identityId: string, name?: string, type: UserTypeEnum,
+      id: string, identityId: string, name?: string, userRole: ServiceRoleEnum | undefined,
       organisationUnit: { id: string, acronym: string } | null,
       emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
     }[] = [];
@@ -356,7 +357,7 @@ export class DomainInnovationsService {
           id: message.author.id,
           identityId: message.author.identityId,
           name: usersInfo.find(u => u.identityId === message.author.identityId)?.displayName ?? '',
-          type: message.author.type,
+          userRole: message.authorUserRole?.role,
           organisationUnit: message.authorOrganisationUnit ? {
             id: message.authorOrganisationUnit.id,
             acronym: message.authorOrganisationUnit.acronym

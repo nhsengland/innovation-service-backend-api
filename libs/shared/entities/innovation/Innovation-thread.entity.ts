@@ -8,6 +8,7 @@ import { InnovationThreadMessageEntity } from './innovation-thread-message.entit
 import { InnovationEntity } from './innovation.entity';
 
 import { ThreadContextTypeEnum } from '../../enums/innovation.enums';
+import { UserRoleEntity } from '..';
 
 
 @Entity('innovation_thread')
@@ -39,6 +40,10 @@ export class InnovationThreadEntity extends BaseEntity {
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'author_id' })
   author: UserEntity;
+
+  @ManyToOne(() => UserRoleEntity, { nullable: true })
+  @JoinColumn({ name: 'author_user_role_id' })
+  authorUserRole: UserRoleEntity | null;
 
 
   static new(data: Partial<InnovationThreadEntity>): InnovationThreadEntity {

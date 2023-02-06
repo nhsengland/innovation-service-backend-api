@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { AccessorOrganisationRoleEnum, UserTypeEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
@@ -35,12 +35,12 @@ class V1UsersList {
 
         // Due to the limitations of our identity service that only allows to search by one email at a time,
         // this functions returns always a list to mimic a future search feature.
-        const result = await usersService.getUserByEmail(queryParams.email, { userTypes: queryParams.userTypes || [] });
+        const result = await usersService.getUserByEmail(queryParams.email, { userRoles: queryParams.userTypes || [] });
         context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
           id: item.id,
           name: item.displayName,
           email: item.email,
-          type: item.type,
+          roles: item.roles,
           isActive: item.isActive,
         })));
         return;
@@ -51,7 +51,7 @@ class V1UsersList {
           .checkAdminType();
 
         // all users need to be able to list NA users for message transparency page
-        if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === UserTypeEnum.ASSESSMENT) {
+        if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT) {
           validation.checkAssessmentType();
           validation.checkAccessorType();
           validation.checkInnovatorType();
@@ -70,8 +70,8 @@ class V1UsersList {
           id: u.id,
           isActive: u.isActive,
           name: u.name,
-          type: u.type,
-          ...(u.organisations ? { organisations: u.organisations } : {})
+          ...(u.organisations ? { organisations: u.organisations } : {}),
+          roles: u.roles,
         })));
         return;
 

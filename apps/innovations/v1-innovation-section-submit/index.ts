@@ -34,7 +34,7 @@ class V1InnovationSectionSubmit {
       const domainContext = authInstance.getContext();
 
       const result = await innovationSectionsService.submitInnovationSection(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         params.sectionKey

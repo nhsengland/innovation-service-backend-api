@@ -1,5 +1,5 @@
-import { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -16,10 +16,11 @@ export class DailyDigestHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string; type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST]
+    requestUser: { id: string; identityId: string; },
+    data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -38,7 +39,7 @@ export class DailyDigestHandler extends BaseHandler<
 
     for (const user of dailyDigestUsers) {
       this.emails.push({
-        templateId: user.type === UserTypeEnum.INNOVATOR ? EmailTypeEnum.INNOVATOR_DAILY_DIGEST : EmailTypeEnum.ACCESSOR_DAILY_DIGEST,
+        templateId: user.userRole === ServiceRoleEnum.INNOVATOR ? EmailTypeEnum.INNOVATOR_DAILY_DIGEST : EmailTypeEnum.ACCESSOR_DAILY_DIGEST,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.

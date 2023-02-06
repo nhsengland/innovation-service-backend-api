@@ -28,8 +28,9 @@ class V1MeTermsOfUseAccept {
         .checkInnovatorType()
         .verify();
       const requestUser = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext();
 
-      const result = await termsOfUseService.acceptActiveTermsOfUse({ id: requestUser.id, type: requestUser.type });
+      const result = await termsOfUseService.acceptActiveTermsOfUse({ id: requestUser.id }, domainContext.currentRole.role);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

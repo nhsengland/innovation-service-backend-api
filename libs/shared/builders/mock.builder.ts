@@ -1,9 +1,10 @@
-import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
+import { randEmail, randPhoneNumber, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { UserEntity } from '../entities';
+import { UserEntity, UserRoleEntity } from '../entities';
 import { DomainUsersService, NOSQLConnectionService } from '../services';
 import { CacheService } from '../services/storage/cache.service';
 import type { DomainUserInfoType } from '../types';
+import { ServiceRoleEnum } from '../enums';
 
 export class MockBuilder {
  
@@ -48,14 +49,13 @@ export class MockBuilder {
     const data =  {
       id: user.id,
       identityId: user.identityId,
-      type: user.type,
       isActive: user.lockedAt === null,
       displayName: randUserName(),
       email: randEmail(),
       firstTimeSignInAt: user.firstTimeSignInAt,
       passwordResetAt: null,
       phone: randPhoneNumber(),
-      roles: [],
+      roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })],
       surveyId: null,
       organisations: [],
     } as DomainUserInfoType;

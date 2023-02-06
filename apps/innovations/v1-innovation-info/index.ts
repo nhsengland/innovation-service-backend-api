@@ -9,7 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
-import { UserTypeEnum } from '@innovations/shared/enums';
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
@@ -33,16 +33,11 @@ class V1InnovationInfo {
         .setInnovation(params.innovationId)
         .checkInnovation()
         .verify();
-
-      const requestUser = auth.getUserInfo();
+        
       const domainContext = auth.getContext();
 
       const result = await innovationsService.getInnovationInfo(
-        {
-          id: requestUser.id,
-          type: requestUser.type,
-          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {}),
-        },
+        domainContext,
         params.innovationId,
         queryParams
       );
@@ -62,15 +57,9 @@ class V1InnovationInfo {
           name: result.owner.name,
           isActive: result.owner.isActive,
           // Contact details only sent to Assessment and Admin users.
-          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { email: result.owner.email } : {}),
-          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactByEmail: result.owner.contactByEmail } : {}),
-          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactByPhone: result.owner.contactByPhone } : {}),
-          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe } : {}),
-          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { contactDetails: result.owner.contactDetails } : {}),
-          ...([UserTypeEnum.ASSESSMENT, UserTypeEnum.ADMIN].includes(requestUser.type) ? { mobilePhone: result.owner.mobilePhone } : {}),
+          ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { email: result.owner.email, mobilePhone: result.owner.mobilePhone , contactByEmail: result.owner.contactByEmail, contactByPhone: result.owner.contactByPhone, contactByPhoneTimeFrame: result.owner.contactByPhoneTimeframe, contactDetails: result.owner.contactDetails}: {}),
+          ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
           organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
-          ...([UserTypeEnum.ADMIN].includes(requestUser.type) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
-
         },
         lastEndSupportAt: result.lastEndSupportAt,
         export: result.export,

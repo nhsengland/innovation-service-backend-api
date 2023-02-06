@@ -30,7 +30,6 @@ describe('Innovation Sections Suite', () => {
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(
       {
         displayName: randText(),
-        type: testData.baseUsers.accessor.type,
       } as any
     );
     em = await TestsHelper.getQueryRunnerEntityManager();
@@ -43,7 +42,6 @@ describe('Innovation Sections Suite', () => {
 
   it('should list all sections as an innovator for his innovation', async () => {
     // arrange
-    const innovator = testData.baseUsers.innovator;
     const innovation = testData.innovation;
 
     await TestsHelper.TestDataBuilder
@@ -52,7 +50,7 @@ describe('Innovation Sections Suite', () => {
       .build(em);
 
     const sectionsList = await sut.getInnovationSectionsList(
-      { type: innovator.type },
+      testData.domainContexts.innovator,
       innovation.id,
       em
     );
@@ -65,7 +63,6 @@ describe('Innovation Sections Suite', () => {
 
   it('should list all sections as an accessor for an innovation', async () => {
     // arrange
-    const accessor = testData.baseUsers.accessor;
     const innovation = testData.innovation;
 
     await TestsHelper.TestDataBuilder
@@ -75,7 +72,7 @@ describe('Innovation Sections Suite', () => {
       .build(em);
 
     const sectionsList = await sut.getInnovationSectionsList(
-      { type: accessor.type },
+      testData.domainContexts.accessor,
       innovation.id,
       em
     );
@@ -89,13 +86,12 @@ describe('Innovation Sections Suite', () => {
   it('should get submitted section info',async () => {
     
     // arrange
-    const assessor = testData.baseUsers.assessmentUser;
     const innovation = testData.innovation;
 
     const sectionKey = rand(Object.values(InnovationSectionEnum));
 
     const sectionsList = await sut.getInnovationSectionInfo(
-      { type: assessor.type },
+      testData.domainContexts.assessmentUser,
       innovation.id,
       sectionKey,
       {}
@@ -107,7 +103,6 @@ describe('Innovation Sections Suite', () => {
   it('should not get draft section info as accessor',async () => {
     
     // arrange
-    const accessor = testData.baseUsers.accessor;
 
     const innovation = await new InnovationBuilder()
       .setOwner(testData.baseUsers.innovator)
@@ -120,7 +115,7 @@ describe('Innovation Sections Suite', () => {
       .build(em);
 
     const section = await sut.getInnovationSectionInfo(
-      { type: accessor.type },
+      testData.domainContexts.assessmentUser,
       innovation.id,
       sectionKey,
       {},

@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
+import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
@@ -20,7 +20,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThreadOrMessage(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     subject: string,
@@ -102,7 +102,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThread(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     subject: string,
@@ -178,7 +178,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThreadMessage(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     threadId: string,
     message: string,
@@ -221,6 +221,7 @@ export class InnovationThreadsService extends BaseService {
       thread: InnovationThreadEntity.new({ id: threadId }),
       createdBy: author.id,
       isEditable,
+      authorUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
     });
 
     const threadMessage: InnovationThreadMessageEntity = await this.createThreadMessageTransaction(
@@ -314,7 +315,6 @@ export class InnovationThreadsService extends BaseService {
     createdBy: {
       id: string;
       name: string;
-      type: UserTypeEnum;
     };
   }> {
 
@@ -341,7 +341,6 @@ export class InnovationThreadsService extends BaseService {
       createdBy: {
         id: author.id,
         name: author?.displayName || 'unknown user',
-        type: thread.author.type,
       },
     };
   }
@@ -385,7 +384,6 @@ export class InnovationThreadsService extends BaseService {
       createdBy: {
         id: string;
         name: string;
-        type: UserTypeEnum;
         organisation: { id: string; name: string; acronym: string | null } | undefined;
         organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
       };
@@ -467,7 +465,6 @@ export class InnovationThreadsService extends BaseService {
         createdBy: {
           id: tm.author.id,
           name: author?.displayName || 'unknown user',
-          type: tm.author.type,
           organisation,
           organisationUnit,
         },
@@ -503,7 +500,7 @@ export class InnovationThreadsService extends BaseService {
         id: string,
         createdAt: DateISOType,
         createdBy: {
-          id: string, name: string, type: UserTypeEnum
+          id: string, name: string,
           organisationUnit: null | { id: string; name: string; acronym: string }
         }
       }
@@ -620,7 +617,6 @@ export class InnovationThreadsService extends BaseService {
             createdBy: {
               id: authorDB!.id,
               name: authorIdP?.displayName || 'unknown user',
-              type: authorDB!.type,
               organisationUnit: organisationUnit
                 ? {
                   id: organisationUnit.id,
@@ -656,7 +652,12 @@ export class InnovationThreadsService extends BaseService {
     try {
 
       const messages = await result.messages;
-      const messageId = messages.find((_: any) => true)!.id; // all threads have at least one message
+      const message = messages.find((_: any) => true);
+      if (!message) {
+        throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+      }
+
+      const messageId = message.id; // all threads have at least one message
 
       await this.domainService.innovations.addActivityLog(
         transaction,
@@ -679,7 +680,7 @@ export class InnovationThreadsService extends BaseService {
 
   private async createThreadMessageTransaction(
     threadMessageObj: InnovationThreadMessageEntity,
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
     transaction: EntityManager
@@ -710,7 +711,7 @@ export class InnovationThreadsService extends BaseService {
 
 
   private async createThreadWithTransaction(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     subject: string,
@@ -747,8 +748,10 @@ export class InnovationThreadsService extends BaseService {
         authorOrganisationUnit: domainContext.organisation?.organisationUnit?.id ? OrganisationUnitEntity.new({id: domainContext.organisation.organisationUnit.id}) : null,
         message,
         isEditable: editableMessage,
+        authorUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
       })] as any,
       createdBy: author.id,
+      authorUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
     });
 
     const thread = await this.threadCreateTransaction(transaction, threadObj, requestUser, domainContext, innovation);
@@ -761,13 +764,13 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async sendThreadCreateNotification(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     messageId: string,
     thread: InnovationThreadEntity
   ): Promise<void> {
     await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      { id: requestUser.id, identityId: requestUser.identityId },
       NotifierTypeEnum.THREAD_CREATION,
       {
         threadId: thread.id,
@@ -779,14 +782,14 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async sendThreadMessageCreateNotification(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
   ): Promise<void> {
 
     await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+      { id: requestUser.id, identityId: requestUser.identityId },
       NotifierTypeEnum.THREAD_MESSAGE_CREATION,
       {
         threadId: thread.id,

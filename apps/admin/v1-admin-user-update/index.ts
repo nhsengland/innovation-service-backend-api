@@ -33,12 +33,14 @@ class V1AdminUserUpdate {
         .validate(context)
         .checkAdminType()
         .verify();
-      const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
-      
+
+      const domainContext = auth.getContext();
       const requestUser = auth.getUserInfo();
-      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_UPDATE_USER, sls.id, sls.code);
+
+      const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_UPDATE_USER, domainContext, sls.id, sls.code);
       
-      await usersService.updateUser(requestUser, params.userId, body);
+      await usersService.updateUser(requestUser, domainContext ,params.userId, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ userId: params.userId});
       return;

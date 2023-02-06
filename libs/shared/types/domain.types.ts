@@ -1,8 +1,9 @@
 import Joi from 'joi';
+import type { UserRoleEntity } from '../entities';
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
-import { ServiceRoleEnum, UserTypeEnum } from '../enums/user.enums';
+import { ServiceRoleEnum } from '../enums/user.enums';
 import type { DateISOType } from './date.types';
 
 
@@ -12,8 +13,7 @@ export type DomainUserInfoType = {
   identityId: string,
   email: string,
   displayName: string,
-  type: UserTypeEnum,
-  roles: ServiceRoleEnum[],
+  roles: UserRoleEntity[],
   phone: null | string,
   isActive: boolean,
   passwordResetAt: null | DateISOType,
@@ -27,14 +27,13 @@ export type DomainUserInfoType = {
     isShadow: boolean,
     size: null | string,
     organisationUnits: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }[]
-  }[]
+  }[],
 }
 
 
 export type InnovatorDomainContextType = {
   id: string,
   identityId: string,
-  userType: UserTypeEnum.INNOVATOR,
   organisation: {
     id: string,
     name: string,
@@ -44,20 +43,26 @@ export type InnovatorDomainContextType = {
     size: string | null,
     // organisationUser: { id: string },
     organisationUnit?: never
-  }
+  },
+  currentRole: {
+    id: string,
+    role: ServiceRoleEnum.INNOVATOR,
+  },
 }
 
 export type AssessmentDomainContextType = {
   id: string,
   identityId: string,
-  userType: UserTypeEnum.ASSESSMENT,
-  organisation?: never
+  organisation?: never,
+  currentRole: {
+    id: string,
+    role: ServiceRoleEnum.ASSESSMENT,
+  },
 }
 
 export type AccessorDomainContextType = {
   id: string,
   identityId: string,
-  userType: UserTypeEnum.ACCESSOR,
   organisation: {
     id: string,
     name: string,
@@ -67,37 +72,43 @@ export type AccessorDomainContextType = {
     isShadow: boolean,
     // organisationUser: { id: string },
     organisationUnit: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
-  }
+  },
+  currentRole: {
+    id: string,
+    role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR,
+  },
 }
 
 export type AdminDomainContextType = {
   id: string,
   identityId: string,
-  userType: UserTypeEnum.ADMIN,
-  organisation?: never
+  organisation?: never,
+  currentRole: {
+    id: string,
+    role: ServiceRoleEnum.ADMIN,
+  },
 }
 
 export type DomainContextType = AdminDomainContextType | AccessorDomainContextType | AssessmentDomainContextType | InnovatorDomainContextType;
 
 // helpers for type checking
 export const isInnovatorDomainContextType = (value: DomainContextType): value is InnovatorDomainContextType => {
-  return value.userType === UserTypeEnum.INNOVATOR;
+  return value.currentRole.role === ServiceRoleEnum.INNOVATOR;
 };
 export const isAAssessmentDomainContextType = (value: DomainContextType): value is AssessmentDomainContextType => {
-  return value.userType === UserTypeEnum.ASSESSMENT;
+  return value.currentRole.role === ServiceRoleEnum.ASSESSMENT;
 };
 export const isAccessorDomainContextType = (value: DomainContextType): value is AccessorDomainContextType => {
-  return value.userType === UserTypeEnum.ACCESSOR;
+  return value.currentRole.role === ServiceRoleEnum.ACCESSOR || value.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR;
 };
 export const isAdminDomainContextType = (value: DomainContextType): value is AdminDomainContextType => {
-  return value.userType === UserTypeEnum.ADMIN;
+  return value.currentRole.role === ServiceRoleEnum.ADMIN;
 };
 
 // TODO - improve this type.
 export const DomainContextSchema = Joi.object<DomainContextType>({
   id: Joi.string().uuid().required(),
   identityId: Joi.string().uuid().required(),
-  userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(),
   organisation: Joi.object({
     id: Joi.string().uuid().required(),
     name: Joi.string().allow('').required(),
@@ -114,6 +125,10 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       }).required(),
     }).allow(null).required(),
   }).allow(null).required(),
+  currentRole: Joi.object({
+    id: Joi.string().uuid().optional(),
+    role: Joi.string().valid(...Object.values(ServiceRoleEnum), '').optional(),
+  }).required(),
 });
 
 
@@ -129,7 +144,7 @@ export type OrganisationWithUnitsType = {
 export type ActivityLogDBParamsType = {
 
   actionUserId: string;
-  actionUserRole: UserTypeEnum;
+  actionUserRole: ServiceRoleEnum;
   actionUserOrganisationUnit: string;
   interveningUserId?: string;
 
@@ -202,7 +217,7 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   [ActivityEnum.ACTION_CREATION]: {
-    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string }, role: UserTypeEnum }
+    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string }, role: ServiceRoleEnum }
   },
   [ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE]: {
     params: { sectionId: InnovationSectionEnum, totalActions: number }
