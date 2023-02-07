@@ -4,7 +4,7 @@ import { container } from '../_config';
 
 import { InnovationSectionEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import type { UnprocessableEntityError } from '@innovations/shared/errors';
-import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
+import { DomainInnovationsService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { cloneDeep } from 'lodash';
@@ -102,7 +102,7 @@ describe('Innovation Actions Suite', () => {
         })));
       });
 
-      jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(
+      jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue(
         {
           displayName: randText(),
         } as any

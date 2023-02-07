@@ -211,7 +211,7 @@ export class InnovationThreadsService extends BaseService {
       .getOne();
 
     if (!thread) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
     const threadMessageObj = InnovationThreadMessageEntity.new({
@@ -647,6 +647,7 @@ export class InnovationThreadsService extends BaseService {
     domainContext: DomainContextType,
     innovation: InnovationEntity
   ): Promise<InnovationThreadEntity> {
+
     const result = await transaction.save<InnovationThreadEntity>(threadObj);
 
     try {
@@ -739,8 +740,8 @@ export class InnovationThreadsService extends BaseService {
 
     const threadObj = InnovationThreadEntity.new({
       subject,
-      author,
-      innovation,
+      author: UserEntity.new({ id: author.id }),
+      innovation: InnovationEntity.new({ id: innovation.id }),
       contextId,
       contextType,
       messages: [InnovationThreadMessageEntity.new({

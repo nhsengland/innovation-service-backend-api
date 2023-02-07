@@ -6,7 +6,6 @@ import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, Orga
 import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
 import type { AccessorDomainContextType, AssessmentDomainContextType, InnovatorDomainContextType } from '../types';
-import { randUuid } from '@ngneat/falso';
 
 
 export type TestDataType = {
@@ -82,7 +81,7 @@ export class TestsHelper {
       const accessor = await helper.createUser().ofType(ServiceRoleEnum.ACCESSOR).build(entityManager);
       const qualifyingAccessor = await helper.createUser().ofType(ServiceRoleEnum.QUALIFYING_ACCESSOR).build(entityManager);
       const assessmentUser = await helper.createUser().ofType(ServiceRoleEnum.ASSESSMENT).build(entityManager);
-  
+
       const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
       const accessorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.ACCESSOR).build(entityManager);
   
@@ -102,8 +101,7 @@ export class TestsHelper {
         .withSections()
         .withAssessments(assessmentUser)
         .build(entityManager);
-
-
+      
       return {
         innovation,
         baseUsers: {
@@ -134,7 +132,10 @@ export class TestsHelper {
                 }
               }
             },
-            currentRole: {id: randUuid(), role: ServiceRoleEnum.ACCESSOR},
+            currentRole: { 
+              id: accessor.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.ACCESSOR
+            },
           },
           qualifyingAccessor: {
             id: qualifyingAccessor.id,
@@ -155,12 +156,18 @@ export class TestsHelper {
                 }
               }
             },
-            currentRole: {id: randUuid(), role: ServiceRoleEnum.QUALIFYING_ACCESSOR},
+            currentRole: { 
+              id: accessor.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.QUALIFYING_ACCESSOR
+            },
           },
           assessmentUser: {
             id: assessmentUser.id,
             identityId: assessmentUser.identityId,
-            currentRole: {id: randUuid(), role: ServiceRoleEnum.ASSESSMENT},
+            currentRole: { 
+              id: accessor.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.ASSESSMENT
+            },
           },
           innovator: {
             id: innovator.id,
@@ -173,7 +180,10 @@ export class TestsHelper {
               isShadow: true,
               size: innovatorOrganisation.size,
             },
-            currentRole: {id: randUuid(), role: ServiceRoleEnum.INNOVATOR},
+            currentRole: { 
+              id: accessor.serviceRoles.find(r => r.id)?.id,
+              role: ServiceRoleEnum.INNOVATOR
+            },
           },
         },
         //#endregion

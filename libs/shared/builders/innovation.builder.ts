@@ -6,6 +6,7 @@ import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
+import { InnovationReassessmentBuilder } from './innovation-reassessment.builder';
 
 
 export class InnovationBuilder {
@@ -18,10 +19,12 @@ export class InnovationBuilder {
   private _withActions = false;
   private _withActionCreatedBy = '';
   private _withAssessments = false;
+  private _withReassessment: boolean;
 
   private _organisationUnit: OrganisationUnitEntity;
   private _organisationUnitUsers: OrganisationUnitUserEntity[];
   private _assessmentUser: UserEntity;
+  
 
   constructor() {
     this.innovation = {
@@ -84,13 +87,19 @@ export class InnovationBuilder {
       problemsTackled: randText(),
       sellExpectations: randText(),
       surveyId: randUuid(),
-      status: InnovationStatusEnum.IN_PROGRESS
+      status: InnovationStatusEnum.IN_PROGRESS,
+      assessments: [],
     };
 
   }
 
   setOwner(owner: UserEntity): InnovationBuilder {
     this.innovation.owner = owner;
+    return this;
+  }
+
+  setStatus(status: InnovationStatusEnum): InnovationBuilder {
+    this.innovation.status = status;
     return this;
   }
 
@@ -129,6 +138,14 @@ export class InnovationBuilder {
     return this;
   }
 
+  withReassessment(): InnovationBuilder {
+    if (!this._withAssessments) {
+      throw new Error('Cannot create a reassessment without an assessment');
+    }
+
+    this._withReassessment = true;
+    return this;
+  }
 
   async build(entityManager: EntityManager): Promise<InnovationEntity> {
 
@@ -185,13 +202,27 @@ export class InnovationBuilder {
     }
 
     if (this._withAssessments) {
-      await new InnovationAssessmentBuilder(innovation)
-        .setAssignTo(this._assessmentUser).build(entityManager);
+      const assessment = await new InnovationAssessmentBuilder(innovation)
+        .setAssignTo(this._assessmentUser)
+        .build(entityManager);
+
+      this.innovation.assessments?.push(assessment);
+    }
+
+    if (this._withReassessment) {
+      if (!innovation.assessments[0]) {
+        throw new Error('Cannot create reassessment without assesment')
+      }
+      await new InnovationReassessmentBuilder(innovation, innovation.assessments[0])
+        .build(entityManager);
     }
 
     const ret = await entityManager.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignedAssessors')
+      .leftJoinAndSelect('assessments.organisationUnits', 'suggestedOrganisationUnits')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('supports.organisationUnitUsers', 'accessors')

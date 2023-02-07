@@ -115,7 +115,7 @@ describe('Innovation Sections Suite', () => {
       .build(em);
 
     const section = await sut.getInnovationSectionInfo(
-      testData.domainContexts.assessmentUser,
+      testData.domainContexts.accessor,
       innovation.id,
       sectionKey,
       {},

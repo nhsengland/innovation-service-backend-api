@@ -78,6 +78,7 @@ class DomainUserInfoBuilder {
   async build(entityManager: EntityManager): Promise<MockBuilder> {
 
     const accessor = await entityManager.createQueryBuilder(UserEntity, 'user')
+      .leftJoinAndSelect('user.serviceRoles', 'roles')
       .leftJoinAndSelect('user.userOrganisations', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.organisation', 'organisation')
       .leftJoinAndSelect('organisationUsers.userOrganisationUnits', 'organisationUnitUsers')
@@ -95,6 +96,7 @@ class DomainUserInfoBuilder {
 
       this.user = {
         ...this.user,
+        roles: accessor?.serviceRoles ?? [],
         organisations: [
           {
             id: organisation.id,
