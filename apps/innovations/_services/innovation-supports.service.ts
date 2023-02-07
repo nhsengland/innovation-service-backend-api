@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { In } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, InnovationSupportLogEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
@@ -24,7 +24,11 @@ export class InnovationSupportsService extends BaseService {
   ) { super(); }
 
 
-  async getInnovationSupportsList(innovationId: string, filters: { fields: ('engagingAccessors')[] }): Promise<{
+  async getInnovationSupportsList(
+    innovationId: string,
+    filters: { fields: ('engagingAccessors')[] },
+    entityManager?: EntityManager
+  ): Promise<{
     id: string,
     status: InnovationSupportStatusEnum,
     organisation: {
@@ -34,7 +38,9 @@ export class InnovationSupportsService extends BaseService {
     engagingAccessors?: { id: string, organisationUnitUserId: string, name: string }[]
   }[]> {
 
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const connection = entityManager ?? this.sqlConnection;
+
+    const query = connection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
