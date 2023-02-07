@@ -74,33 +74,40 @@ steps:
   displayName: 'Run Migrations against the Container'
 
 - script: |
-    npm run seeds
+    npm run seeds && echo "##vso[task.setvariable variable=testsReady;]true"
   displayName: 'Run Seeds against the Container'
 
 - script: |
     npm run app:test --app=innovations
   displayName: 'Run innovations tests'
-  continueOnError: true
+  condition: eq(variables.testsReady, 'true')
 
 - script: |
     npm run app:test --app=users
   displayName: 'Run users tests'
-  continueOnError: true
+  condition: eq(variables.testsReady, 'true')
 
 - script: |
     npm run app:test --app=admin
   displayName: 'Run admin tests'
-  continueOnError: true
+  condition: eq(variables.testsReady, 'true')
 
 - script: |
     npm run app:test --app=notifications
   displayName: 'Run notifications tests'
-  continueOnError: true
+  condition: eq(variables.testsReady, 'true')
 
 - script: |
     npm run libs:test
   displayName: 'Run lib tests'
-  continueOnError: true
+  condition: eq(variables.testsReady, 'true')
+
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish Unit Tests Coverage'
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: coverage/**/cobertura-coverage.xml
+  condition: eq(variables.testsReady, 'true')
 
 - task: PublishTestResults@2
   displayName: 'Publish Unit Tests Results'
@@ -109,11 +116,4 @@ steps:
     mergeTestResults: true
     testRunTitle: 'Backend API Pull Request Unit Test Results'
     failTaskOnFailedTests: true
-  condition: succeededOrFailed()
-
-- task: PublishCodeCoverageResults@1
-  displayName: 'Publish Unit Tests Coverage'
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: coverage/**/cobertura-coverage.xml
-  condition: succeededOrFailed()
+  condition: eq(variables.testsReady, 'true')
