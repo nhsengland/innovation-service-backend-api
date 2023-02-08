@@ -109,22 +109,69 @@ export const isAdminDomainContextType = (value: DomainContextType): value is Adm
 export const DomainContextSchema = Joi.object<DomainContextType>({
   id: Joi.string().uuid().required(),
   identityId: Joi.string().uuid().required(),
-  organisation: Joi.object({
-    id: Joi.string().uuid().required(),
-    name: Joi.string().allow('').required(),
-    acronym: Joi.string().allow(null).required(),
-    role: Joi.string().required(),
-    isShadow: Joi.boolean().required(),
-    size: Joi.string().allow(null).required(),
-    organisationUnit: Joi.object({
+  organisation: Joi.when('$currentRole.role', {
+    is: ServiceRoleEnum.INNOVATOR,
+    then: Joi.object({
       id: Joi.string().uuid().required(),
-      name: Joi.string().required(),
-      acronym: Joi.string().required(),
-      organisationUnitUser: Joi.object({
+      name: Joi.string().allow('').required(),
+      acronym: Joi.string().allow(null).required(),
+      role: Joi.string().required(),
+      isShadow: Joi.boolean().required(),
+      size: Joi.string().allow(null).required(),
+      }).allow(null).required(),
+    })
+  .when('$currentRole.role', {
+      is: ServiceRoleEnum.ADMIN,
+      then: null,
+      })
+  .when('$currentRole.role', {
+      is: ServiceRoleEnum.ASSESSMENT,
+      then: null,
+  })
+  .when('$currentRole.role', {
+    is: ServiceRoleEnum.ACCESSOR,
+    then: Joi.object({
+      id: Joi.string().uuid().required(),
+      name: Joi.string().allow('').required(),
+      acronym: Joi.string().allow(null).required(),
+      role: Joi.string().required(),
+      isShadow: Joi.boolean().required(),
+      size: Joi.string().allow(null).required(),
+      organisationUnit: Joi.object({
         id: Joi.string().uuid().required(),
+<<<<<<< Updated upstream
       }).required(),
     }).allow(null),
   }).allow(null),
+=======
+        name: Joi.string().required(),
+        acronym: Joi.string().required(),
+        organisationUnitUser: Joi.object({
+          id: Joi.string().uuid().required(),
+        }).required(),
+      }).allow(null).required(),
+    })
+  })
+  .when('$currentRole.role', {
+    is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+    then: Joi.object({
+      id: Joi.string().uuid().required(),
+      name: Joi.string().allow('').required(),
+      acronym: Joi.string().allow(null).required(),
+      role: Joi.string().required(),
+      isShadow: Joi.boolean().required(),
+      size: Joi.string().allow(null).required(),
+      organisationUnit: Joi.object({
+        id: Joi.string().uuid().required(),
+        name: Joi.string().required(),
+        acronym: Joi.string().required(),
+        organisationUnitUser: Joi.object({
+          id: Joi.string().uuid().required(),
+        }).required(),
+      }).allow(null).required(),
+    })
+  }),
+>>>>>>> Stashed changes
   currentRole: Joi.object({
     id: Joi.string().uuid().optional(),
     role: Joi.string().valid(...Object.values(ServiceRoleEnum), '').optional(),

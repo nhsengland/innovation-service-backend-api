@@ -416,7 +416,7 @@ export class RecipientsService extends BaseService {
 
     const dbUsers = await this.sqlConnection.createQueryBuilder(UserEntity, 'users')
       .innerJoin('users.serviceRoles', 'serviceRoles')
-      .where('servicesRoles.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
+      .where('serviceRoles.role = :role', { role: ServiceRoleEnum.ASSESSMENT })
       .andWhere('users.locked_at IS NULL')
       .getMany() || [];
 

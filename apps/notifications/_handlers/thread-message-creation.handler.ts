@@ -20,7 +20,7 @@ type EmailNotificationPreferenceTypeAlias = {
 type ThreadIntervenientUserTypeAlias = {
   id: string;
   identityId: string;
-  userRole?: ServiceRoleEnum | undefined;
+  userType?: ServiceRoleEnum | undefined;
   organisationUnitId?: string | null;
   emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
 };
@@ -130,7 +130,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
   private pushInAppNotifications( threadIntervenientUsers: ThreadIntervenientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
     
-    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userRole: item.userRole, organisationUnitId: item.organisationUnitId ?? undefined}));
+    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userType: item.userType, organisationUnitId: item.organisationUnitId ?? undefined}));
 
     // Always include Innovation owner in the notification center recipients
     const owner = innovation.owner;
@@ -141,7 +141,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // In the case the owner is not on the recipients list and the creator of the reply is not the owner her/himself
     // Add her/him to the recipients list of in app notifications
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      inAppRecipients.push({userId: owner.id, userRole: owner.userRole.role, organisationUnitId: undefined});
+      inAppRecipients.push({userId: owner.id, userType: owner.userRole.role, organisationUnitId: undefined});
     }
 
     if (inAppRecipients.length > 0) {
