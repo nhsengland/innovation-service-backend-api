@@ -34,7 +34,7 @@ export const MessageSchema = Joi.object<MessageType>({
 
     users: Joi.array().items(Joi.object({
       userId: Joi.string().guid().required(),
-      organisationUnitId: Joi.string().guid().optional()
+      organisationUnitId: Joi.string().allow(null).guid().optional()
     })).required(),
 
     params: Joi.object().required(),

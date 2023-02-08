@@ -123,8 +123,8 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       organisationUnitUser: Joi.object({
         id: Joi.string().uuid().required(),
       }).required(),
-    }).allow(null).required(),
-  }).allow(null).required(),
+    }).allow(null),
+  }).allow(null),
   currentRole: Joi.object({
     id: Joi.string().uuid().optional(),
     role: Joi.string().valid(...Object.values(ServiceRoleEnum), '').optional(),
