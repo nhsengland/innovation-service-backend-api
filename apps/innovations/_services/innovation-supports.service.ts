@@ -38,7 +38,7 @@ export class InnovationSupportsService extends BaseService {
     engagingAccessors?: { id: string, organisationUnitUserId: string, name: string }[]
   }[]> {
 
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
 
     const query = connection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
@@ -180,7 +180,7 @@ export class InnovationSupportsService extends BaseService {
     engagingAccessors: { id: string, organisationUnitUserId: string, name: string }[]
   }> {
 
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
     
     const innovationSupport = await connection.createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.innovation', 'innovation')
@@ -222,7 +222,7 @@ export class InnovationSupportsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
 
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
 
@@ -324,7 +324,7 @@ export class InnovationSupportsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
 
     const dbSupport = await connection.createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
