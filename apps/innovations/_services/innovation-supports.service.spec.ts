@@ -7,6 +7,7 @@ import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
 import { InnovationSupportEntity } from '@innovations/shared/entities';
+import type { GenericErrorsEnum } from '@innovations/shared/errors';
 
 describe('Innovation supports service test suite', () => {
 
@@ -67,6 +68,11 @@ describe('Innovation supports service test suite', () => {
         }
       })));
     });
+
+    it('should not list the innovation supports if the innovation does not exist', async () => {
+
+      let err: GenericErrorsEnum
+    })
   });
 
 });
