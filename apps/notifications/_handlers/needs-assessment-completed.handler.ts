@@ -81,7 +81,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_COMPLETED, id: this.inputData.assessmentId },
-      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, userType: ServiceRoleEnum.ACCESSOR, organisationUnitId: user.organisationUnitId })),
+      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, userType: ServiceRoleEnum.QUALIFYING_ACCESSOR, organisationUnitId: user.organisationUnitId })),
       params: {}
     });
     
