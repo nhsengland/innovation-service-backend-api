@@ -52,7 +52,24 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
 
-      } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      } 
+
+      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
+
+        const assessmentResult = await innovationActionsService.updateActionAsNeedsAccessor(
+          { id: requestUser.id, identityId: requestUser.identityId },
+          domainContext,
+          params.innovationId,
+          params.actionId,
+          { status: body.status }
+        );
+
+        context.res = ResponseHelper.Ok<ResponseDTO>({ id: assessmentResult.id });
+        return;
+
+      }
+      
+      if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
 
         const innovatorResult = await innovationActionsService.updateActionAsInnovator(
           { id: requestUser.id, identityId: requestUser.identityId },
