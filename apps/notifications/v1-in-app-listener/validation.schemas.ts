@@ -34,12 +34,8 @@ export const MessageSchema = Joi.object<MessageType>({
 
     users: Joi.array().items(Joi.object({
       userId: Joi.string().guid().required(),
-<<<<<<< Updated upstream
-      organisationUnitId: Joi.string().allow(null).guid().optional()
-=======
       organisationUnitId: Joi.string().guid().optional(),
       userType: Joi.string().valid(...Object.values(ServiceRoleEnum)).optional(),
->>>>>>> Stashed changes
     })).required(),
 
     params: Joi.object().required(),

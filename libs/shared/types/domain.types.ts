@@ -139,11 +139,6 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       size: Joi.string().allow(null).required(),
       organisationUnit: Joi.object({
         id: Joi.string().uuid().required(),
-<<<<<<< Updated upstream
-      }).required(),
-    }).allow(null),
-  }).allow(null),
-=======
         name: Joi.string().required(),
         acronym: Joi.string().required(),
         organisationUnitUser: Joi.object({
@@ -171,7 +166,6 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       }).allow(null).required(),
     })
   }),
->>>>>>> Stashed changes
   currentRole: Joi.object({
     id: Joi.string().uuid().optional(),
     role: Joi.string().valid(...Object.values(ServiceRoleEnum), '').optional(),
