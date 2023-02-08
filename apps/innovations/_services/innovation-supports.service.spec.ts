@@ -299,6 +299,16 @@ describe('Innovation supports service test suite', () => {
 
     it('should update the innovation support', async () => {
 
+      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
+      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+
+      const thread = InnovationThreadEntity.new({innovation: testData.innovation, author: testData.baseUsers.accessor });
+      jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
+        thread,
+        message: InnovationThreadMessageEntity.new({ thread, author: thread.author })
+      });
+
       const updatedSupport = await sut.updateInnovationSupport(
         testData.baseUsers.accessor,
         testData.domainContexts.accessor,
@@ -342,7 +352,7 @@ describe('Innovation supports service test suite', () => {
 
       expect(err).toBeDefined();
       expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
-      
+
     });
 
   });
