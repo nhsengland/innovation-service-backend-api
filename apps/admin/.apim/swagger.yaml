@@ -159,6 +159,108 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  "/v1/tou/{touId}":
+    get:
+      description: Get terms of use.
+      operationId: v1-admin-terms-of-use
+      parameters:
+        - name: touId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The terms of use id.
+      responses:
+        "200":
+          description: The terms of use
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  touType:
+                    type: string
+                    enum:
+                      - INNOVATOR
+                      - SUPPORT_ORGANISATION
+                  summary:
+                    type: string
+                  releaseAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get terms of use.
+        "404":
+          description: The terms of use was not found.
+        "500":
+          description: An error occurred while listing the terms of use.
+    put:
+      description: Update terms of use.
+      operationId: v1-admin-terms-of-use-update
+      parameters:
+        - name: touId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The terms of use id.
+      requestBody:
+        description: The terms of use to be updated.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the terms of use.
+                touType:
+                  type: string
+                  enum:
+                    - INNOVATOR
+                    - SUPPORT_ORGANISATION
+                  description: Type of the terms of use.
+                summary:
+                  type: string
+                  description: Brief summary of the terms of use.
+                releasedAt:
+                  type: string
+                  description: Relase date of the terms of use.
+              required:
+                - name
+                - touType
+              additionalProperties: false
+      responses:
+        "200":
+          description: The terms of use have been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: Id of the updated terms of use.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to update terms of use.
+        "500":
+          description: An error occurred while updating the terms of use.
   /v1/tou:
     post:
       description: Create terms of use.
@@ -279,62 +381,6 @@ paths:
           description: The user is not authorized to get terms of use.
         "500":
           description: An error occurred while listing the terms of use.
-  "/v1/tou/{touId}":
-    put:
-      description: Update terms of use.
-      operationId: v1-admin-terms-of-use-update
-      parameters:
-        - name: touId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: The terms of use id.
-      requestBody:
-        description: The terms of use to be updated.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Name of the terms of use.
-                touType:
-                  type: string
-                  enum:
-                    - INNOVATOR
-                    - SUPPORT_ORGANISATION
-                  description: Type of the terms of use.
-                summary:
-                  type: string
-                  description: Brief summary of the terms of use.
-                releasedAt:
-                  type: string
-                  description: Relase date of the terms of use.
-              required:
-                - name
-                - touType
-              additionalProperties: false
-      responses:
-        "200":
-          description: The terms of use have been updated.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  unitId:
-                    type: string
-                    description: Id of the updated terms of use.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to update terms of use.
-        "500":
-          description: An error occurred while updating the terms of use.
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
     patch:
       description: Activate an organisation unit.

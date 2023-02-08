@@ -108,3 +108,7 @@ export enum EmailErrorsEnum {
   EMAIL_TEMPLATE_WITH_INVALID_PROPERTIES = 'EM.0002',
   EMAIL_BAD_API_KEY = 'EM.0003',
 }
+
+export enum AdminErrorsEnum {
+  ADMIN_TERMS_OF_USER_NOT_FOUND = 'AT.0001',
+}

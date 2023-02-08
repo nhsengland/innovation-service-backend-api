@@ -1,5 +1,7 @@
 import { TermsOfUseEntity } from '@admin/shared/entities';
 import type { TermsOfUseTypeEnum } from '@admin/shared/enums';
+import { NotFoundError } from '@admin/shared/errors';
+import { AdminErrorsEnum } from '@admin/shared/errors/errors.enums';
 import type { PaginationQueryParamsType } from '@admin/shared/helpers';
 import type { DateISOType } from '@admin/shared/types';
 import { injectable } from 'inversify';
@@ -115,6 +117,40 @@ export class TermsOfUseService extends BaseService {
         releaseAt: t.releasedAt,
         createdAt: t.createdAt
       }))
+    };
+  }
+
+  /**
+   * gets a list of terms of use according to the pagination and ordering parameters.
+   * @param pagination pagination and ordering parameters.
+   * @param entityManager optional entity manager
+   * @returns list of terms of use and total count.
+   */
+  async getTermsOfUse(id: string, entityManager?: EntityManager): Promise<{
+    id: string;
+    name: string;
+    touType: TermsOfUseTypeEnum;
+    summary: string;
+    releaseAt: DateISOType | null;
+    createdAt: DateISOType;
+  }> {
+    const em = entityManager || this.sqlConnection.manager;
+    
+    const tou = await em.createQueryBuilder(TermsOfUseEntity, 'tou')
+      .where('tou.id = :id', { id })
+      .getOne();
+
+    if(!tou) {
+      throw new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USER_NOT_FOUND);
+    }
+    
+    return {
+      id: tou.id,
+      name: tou.name,
+      touType: tou.touType,
+      summary: tou.summary,
+      releaseAt: tou.releasedAt,
+      createdAt: tou.createdAt
     };
   }
 }
