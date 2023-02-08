@@ -171,31 +171,49 @@ export class InnovationSupportsService extends BaseService {
   }
 
 
-  async getInnovationSupportInfo(innovationSupportId: string): Promise<{
+  async getInnovationSupportInfo(
+    innovationSupportId: string,
+    entityManager?: EntityManager
+  ): Promise<{
     id: string,
     status: InnovationSupportStatusEnum,
     engagingAccessors: { id: string, organisationUnitUserId: string, name: string }[]
   }> {
 
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.innovationSupports', 'support')
-      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
-      .leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
-      .leftJoinAndSelect('organisationUser.user', 'user')
+    const connection = entityManager ?? this.sqlConnection;
+    
+    const innovationSupport = await connection.createQueryBuilder(InnovationSupportEntity, 'support')
+      .innerJoinAndSelect('support.innovation', 'innovation')
+      .innerJoinAndSelect('support.organisationUnit', 'orgUnit')
+      .innerJoinAndSelect('orgUnit.organisation', 'org')
+      .leftJoinAndSelect('support.organisationUnitUsers', 'orgUnitUser')
+      .leftJoinAndSelect('orgUnitUser.organisationUser', 'orgUser')
+      .leftJoinAndSelect('orgUser.user', 'user')
       .where('support.id = :innovationSupportId', { innovationSupportId })
-      .getOne();
-    if (!innovation) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
+      .getOne(); 
 
-    const innovationSupport = innovation.innovationSupports.find(item => item.id === innovationSupportId);
     if (!innovationSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
+    // const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
+    //   .innerJoinAndSelect('innovation.innovationSupports', 'support')
+    //   .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
+    //   .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
+    //   .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUser')
+    //   .leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
+    //   .leftJoinAndSelect('organisationUser.user', 'user')
+    //   .where('support.id = :innovationSupportId', { innovationSupportId })
+    //   .getOne();
+    // if (!innovation) {
+    //   throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    // }
+
+    // const innovationSupport = innovation.innovationSupports.find(item => item.id === innovationSupportId);
+    
+
     // Fetch users names.
+    
     const assignedAccessorsIds = innovationSupport.organisationUnitUsers.map(item => item.organisationUser.user.id);
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds }));
 

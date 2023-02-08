@@ -119,4 +119,49 @@ describe('Innovation supports service test suite', () => {
     });
   });
 
+  describe('getInnovationSupportInfo', () => {
+
+    beforeEach(() => {
+      jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue(
+        [{
+          id: testData.baseUsers.accessor.id,
+          displayName: 'accessor name',
+          isActive: true
+        }] as any
+      );
+    });
+
+    it('should get innovation support info', async () => {
+
+      const support = await sut.getInnovationSupportInfo(testData.innovation.innovationSupports[0]!.id);
+
+      expect(support).toStrictEqual({
+        id: testData.innovation.innovationSupports[0]?.id,
+        status: testData.innovation.innovationSupports[0]?.status,
+        engagingAccessors: [{
+          id: testData.baseUsers.accessor.id,
+          organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
+          name: 'accessor name'
+        }]
+      });
+    });
+
+    it('should not get innovation support info if it does not exist', async () => {
+
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.getInnovationSupportInfo(randUuid());
+      }
+      catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+
+    });
+
+  });
+
 });
