@@ -295,4 +295,56 @@ describe('Innovation supports service test suite', () => {
     });
   });
 
+  describe('updateInnovationSupport', () => {
+
+    it('should update the innovation support', async () => {
+
+      const updatedSupport = await sut.updateInnovationSupport(
+        testData.baseUsers.accessor,
+        testData.domainContexts.accessor,
+        testData.innovation.id,
+        testData.innovation.innovationSupports[0]!.id,
+        { status: InnovationSupportStatusEnum.COMPLETE, message: randText() },
+        em
+      );
+
+      const dbSupport = await em.createQueryBuilder(InnovationSupportEntity, 'support')
+        .where('support.id = :supportId', { supportId: updatedSupport.id })
+        .getOne();
+
+      if (!dbSupport) {
+        throw new Error('Could not find support');
+      }
+
+      expect(updatedSupport.id).toBe(testData.innovation.innovationSupports[0]!.id);
+      expect(dbSupport.status).toBe(InnovationSupportStatusEnum.COMPLETE);
+
+    });
+
+    it('should not update the innovation support if it does not exsit', async () => {
+
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.updateInnovationSupport(
+          testData.baseUsers.accessor,
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          randUuid(),
+          { status: InnovationSupportStatusEnum.COMPLETE, message: randText() },
+          em
+        );
+      }
+      catch (error) {
+        err = error as NotFoundError;
+      }
+
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+      
+    });
+
+  });
+
 });

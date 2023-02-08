@@ -320,10 +320,13 @@ export class InnovationSupportsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     supportId: string,
-    data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] }
+    data: { status: InnovationSupportStatusEnum, message: string, accessors?: { id: string, organisationUnitUserId: string }[] },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const dbSupport = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
+    const connection = entityManager ?? this.sqlConnection;
+
+    const dbSupport = await connection.createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUsers')
       .where('support.id = :supportId ', { supportId })
@@ -336,7 +339,7 @@ export class InnovationSupportsService extends BaseService {
     const previousStatus = dbSupport.status;
 
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await connection.transaction(async transaction => {
 
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
 
