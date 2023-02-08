@@ -1,14 +1,16 @@
 import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
 import { container } from '../_config';
 
-import { DomainUsersService, NOSQLConnectionService } from '@innovations/shared/services';
+import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
-import { InnovationSupportEntity } from '@innovations/shared/entities';
-import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-import { randUuid } from '@ngneat/falso';
+import { InnovationEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { randText, randUuid } from '@ngneat/falso';
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationThreadsService } from './innovation-threads.service';
 
 describe('Innovation supports service test suite', () => {
 
@@ -133,7 +135,7 @@ describe('Innovation supports service test suite', () => {
 
     it('should get innovation support info', async () => {
 
-      const support = await sut.getInnovationSupportInfo(testData.innovation.innovationSupports[0]!.id);
+      const support = await sut.getInnovationSupportInfo(testData.innovation.innovationSupports[0]!.id, em);
 
       expect(support).toStrictEqual({
         id: testData.innovation.innovationSupports[0]?.id,
@@ -151,7 +153,7 @@ describe('Innovation supports service test suite', () => {
       let err: NotFoundError | null = null;
 
       try {
-        await sut.getInnovationSupportInfo(randUuid());
+        await sut.getInnovationSupportInfo(randUuid(), em);
       }
       catch (error) {
         err = error as NotFoundError;
@@ -159,6 +161,80 @@ describe('Innovation supports service test suite', () => {
 
       expect(err).toBeDefined();
       expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+
+    });
+  });
+
+  describe('createInnovationSupport', () => {
+
+    let innovationWithoutSupports: InnovationEntity;
+
+    beforeEach(async () => {
+      innovationWithoutSupports = await TestsHelper.TestDataBuilder
+        .createInnovation()
+        .setOwner(testData.baseUsers.innovator)
+        .withAssessments(testData.baseUsers.assessmentUser)
+        .build(em);
+    })
+
+    it('should create an innovation support',async () => {
+
+      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
+      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    
+      const support = await sut.createInnovationSupport(
+        testData.baseUsers.accessor,
+        testData.domainContexts.accessor,
+        innovationWithoutSupports.id,
+        {
+          status: InnovationSupportStatusEnum.ENGAGING,
+          message: randText(),
+          accessors: [{ id: testData.baseUsers.accessor.id, organisationUnitUserId: testData.organisationUnitUsers.accessor.id }]
+        },
+        em
+      );
+
+      const thread = InnovationThreadEntity.new({innovation: innovationWithoutSupports, author: testData.baseUsers.accessor });
+
+      jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
+        thread,
+        message: InnovationThreadMessageEntity.new({ thread, author: thread.author })
+      });
+
+      const dbSupportIds = (await em.createQueryBuilder(InnovationSupportEntity, 'support')
+        .innerJoin('support.innovation', 'innovation')
+        .where('innovation.id = :innovationId', { innovationId: innovationWithoutSupports.id })
+        .getMany())
+        .map(s => s.id);
+
+      expect(dbSupportIds).toContain(support.id);
+ 
+    });
+
+    it('should not create innovation support if the accessors organisation unit does not exsit',async () => {
+      
+      let err: UnprocessableEntityError | null = null;
+
+      try {
+        await sut.createInnovationSupport(
+          testData.baseUsers.accessor,
+          testData.domainContexts.assessmentUser,
+          innovationWithoutSupports.id,
+          {
+            status: InnovationSupportStatusEnum.ENGAGING,
+            message: randText(),
+            accessors: [{ id: testData.baseUsers.accessor.id, organisationUnitUserId: testData.organisationUnitUsers.accessor.id }]
+          },
+          em
+        );
+      }
+      catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
 
     });
 
