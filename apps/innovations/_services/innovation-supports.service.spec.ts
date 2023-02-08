@@ -7,7 +7,8 @@ import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
 import { InnovationSupportEntity } from '@innovations/shared/entities';
-import type { GenericErrorsEnum } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { randUuid } from '@ngneat/falso';
 
 describe('Innovation supports service test suite', () => {
 
@@ -38,7 +39,8 @@ describe('Innovation supports service test suite', () => {
       jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue(
         [{
           id: testData.baseUsers.accessor.id,
-          displayName: 'accessor name'
+          displayName: 'accessor name',
+          isActive: true
         }] as any
       );
     });
@@ -69,10 +71,52 @@ describe('Innovation supports service test suite', () => {
       })));
     });
 
+    it('should list the innovation supports with engaging accessors', async () => {
+
+      const innovationSupports = await sut.getInnovationSupportsList(testData.innovation.id, { fields: ['engagingAccessors']}, em);
+
+      const dbSupports = await em.createQueryBuilder(InnovationSupportEntity, 'support')
+        .leftJoinAndSelect('support.organisationUnit', 'orgUnit')
+        .leftJoinAndSelect('orgUnit.organisation', 'org')
+        .where('support.id IN (:...supportIds)', { supportIds: innovationSupports.map(iS => iS.id) })
+        .getMany();
+
+      expect(innovationSupports).toStrictEqual(dbSupports.map(support => ({
+        id: support.id,
+        status: support.status,
+        organisation: {
+          id: support.organisationUnit.organisation.id,
+          name: support.organisationUnit.organisation.name,
+          acronym: support.organisationUnit.organisation.acronym,
+          unit: {
+            id: support.organisationUnit.id,
+            name: support.organisationUnit.name,
+            acronym: support.organisationUnit.acronym,
+          }
+        },
+        engagingAccessors: [{
+          id: testData.baseUsers.accessor.id,
+          organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
+          name: 'accessor name'
+        }]
+      })));
+    });
+
+
     it('should not list the innovation supports if the innovation does not exist', async () => {
 
-      let err: GenericErrorsEnum
-    })
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.getInnovationSupportsList(randUuid(), { fields: []}, em);
+      }
+      catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    });
   });
 
 });
