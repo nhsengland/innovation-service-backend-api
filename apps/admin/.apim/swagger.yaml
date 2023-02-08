@@ -207,6 +207,78 @@ paths:
           description: The user is not authorized to create terms of use.
         "500":
           description: An error occurred while creating the terms of use.
+    get:
+      description: List of terms of use.
+      operationId: v1-admin-terms-of-use-list
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+      responses:
+        "200":
+          description: The list of terms of use versions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                    description: The total number of terms of use.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        touType:
+                          type: string
+                          enum:
+                            - INNOVATOR
+                            - SUPPORT_ORGANISATION
+                        summary:
+                          type: string
+                        releaseAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get terms of use.
+        "500":
+          description: An error occurred while listing the terms of use.
   "/v1/tou/{touId}":
     put:
       description: Update terms of use.
@@ -468,6 +540,7 @@ paths:
                     - ADMIN
                     - ACCESSOR
                     - ASSESSMENT
+                    - QUALIFYING_ACCESSOR
                   description: Type of the user.
                 organisationAcronym:
                   type: string
