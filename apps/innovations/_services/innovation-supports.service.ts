@@ -235,7 +235,7 @@ export class InnovationSupportsService extends BaseService {
       .getOne();
 
     if (!organisationUnit) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     const support = await connection.createQueryBuilder(InnovationSupportEntity, 'support')

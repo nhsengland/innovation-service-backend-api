@@ -54,5 +54,5 @@ export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
   migrations: [`${join(__dirname, '..', '..')}/data-access/migrations/*.ts`],
   migrationsTableName: 'Migrations',
   cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },
-  logging: process.env['DB_LOGGING'] === 'true'
+  // logging: process.env['DB_LOGGING'] === 'true'
 });

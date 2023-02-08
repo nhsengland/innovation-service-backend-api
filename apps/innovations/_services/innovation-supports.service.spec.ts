@@ -7,10 +7,11 @@ import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
 import { InnovationEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
-import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { randText, randUuid } from '@ngneat/falso';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { InnovationThreadsService } from './innovation-threads.service';
+import { cloneDeep } from 'lodash';
 
 describe('Innovation supports service test suite', () => {
 
@@ -212,7 +213,7 @@ describe('Innovation supports service test suite', () => {
  
     });
 
-    it('should not create innovation support if the accessors organisation unit does not exsit',async () => {
+    it('should not create innovation support without organisation unit in domain context',async () => {
       
       let err: UnprocessableEntityError | null = null;
 
@@ -238,6 +239,60 @@ describe('Innovation supports service test suite', () => {
 
     });
 
+    it('should not create innovation support with invalid organisation unit in domain context',async () => {
+      
+      let err: NotFoundError | null = null;
+
+      const context = cloneDeep(testData.domainContexts.accessor);
+      context.organisation.organisationUnit.id = randUuid();
+
+      try {
+        await sut.createInnovationSupport(
+          testData.baseUsers.accessor,
+          context,
+          innovationWithoutSupports.id,
+          {
+            status: InnovationSupportStatusEnum.ENGAGING,
+            message: randText(),
+            accessors: [{ id: testData.baseUsers.accessor.id, organisationUnitUserId: testData.organisationUnitUsers.accessor.id }]
+          },
+          em
+        );
+      }
+      catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+
+    });
+
+    it('should not create innovation support if there is already one with the same organisation unit',async () => {
+      
+      let err: UnprocessableEntityError | null = null;
+
+      try {
+        await sut.createInnovationSupport(
+          testData.baseUsers.accessor,
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          {
+            status: InnovationSupportStatusEnum.ENGAGING,
+            message: randText(),
+            accessors: [{ id: testData.baseUsers.accessor.id, organisationUnitUserId: testData.organisationUnitUsers.accessor.id }]
+          },
+          em
+        );
+      }
+      catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
+
+    });
   });
 
 });
