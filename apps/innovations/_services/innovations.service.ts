@@ -238,12 +238,20 @@ export class InnovationsService extends BaseService {
     }
 
     if (filters.assignedToMe) {
-      innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
-      innovationFetchQuery.innerJoin('supports.organisationUnitUsers', 'supportingUnitUsers');
-      innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
-      innovationFetchQuery.innerJoin('supportingOrganisationUser.user', 'supportingUsers');
-      innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', { supportingUserId: user.id });
-      innovationFetchQuery.andWhere('supportingUnitUsers.organisation_unit_id = :orgUnitId', { orgUnitId: domainContext.organisation?.organisationUnit?.id });
+
+      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
+        innovationFetchQuery.andWhere('assessments.assign_to_id = :assignToId', { assignToId: user.id });
+      }
+
+      if([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
+        innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
+        innovationFetchQuery.innerJoin('supports.organisationUnitUsers', 'supportingUnitUsers');
+        innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
+        innovationFetchQuery.innerJoin('supportingOrganisationUser.user', 'supportingUsers');
+        innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', { supportingUserId: user.id });
+        innovationFetchQuery.andWhere('supportingUnitUsers.organisation_unit_id = :orgUnitId', { orgUnitId: domainContext.organisation?.organisationUnit?.id });
+      }
+
     }
 
     if (filters.suggestedOnly) {
@@ -1000,12 +1008,16 @@ export class InnovationsService extends BaseService {
   }
 
 
-  async getNeedsAssessmentOverdueInnovations(innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[], supportFilter?: AssessmentSupportFilterEnum): Promise<number> {
+  async getNeedsAssessmentOverdueInnovations(domainContext: DomainContextType, filters: { innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[], assignedToMe: boolean }, supportFilter?: AssessmentSupportFilterEnum): Promise<number> {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .where('innovation.status IN (:...innovationStatus)', { innovationStatus })
+      .where('innovation.status IN (:...innovationStatus)', { innovationStatus: filters.innovationStatus })
       .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`);
+
+    if(filters.assignedToMe) {
+      query.andWhere('assessments.assign_to_id = :assignToId', { assignToId: domainContext.id });
+    }
 
     if (supportFilter) {
       this.addInnovationSupportFilterSQL(query, supportFilter);
