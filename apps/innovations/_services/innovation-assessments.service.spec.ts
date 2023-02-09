@@ -96,7 +96,7 @@ describe('Innovation Assessments Suite', () => {
 
     it('should not get an innovation assessment if it does not exist', async () => {
 
-      let err: UnprocessableEntityError | null = null;
+      let err: NotFoundError | null = null;
       try {
         await sut.getInnovationAssessmentInfo(randUuid(), em);
 
@@ -185,7 +185,7 @@ describe('Innovation Assessments Suite', () => {
 
     it('should not update assessment if the innovation does not exist', async () => {
 
-      let err: UnprocessableEntityError | null = null;
+      let err: NotFoundError | null = null;
       try {
         await sut.updateInnovationAssessment(
           testData.baseUsers.assessmentUser,
@@ -206,7 +206,7 @@ describe('Innovation Assessments Suite', () => {
 
     it('should not update assessment if the assessment does not exist', async () => {
 
-      let err: UnprocessableEntityError | null = null;
+      let err: NotFoundError | null = null;
       try {
         await sut.updateInnovationAssessment(
           testData.baseUsers.assessmentUser,
@@ -399,7 +399,7 @@ describe('Innovation Assessments Suite', () => {
 
     it('should not update assessor if the new assessor does not exist', async () => {
 
-      let err: UnprocessableEntityError | null = null;
+      let err: NotFoundError | null = null;
 
       try {
         await sut.updateAssessor(
@@ -421,7 +421,7 @@ describe('Innovation Assessments Suite', () => {
 
     it('should not update assessor if the innovation has no assessment', async () => {
 
-      let err: UnprocessableEntityError | null = null;
+      let err: NotFoundError | null = null;
 
       const newAssessor = await TestsHelper.TestDataBuilder.createUser()
         .ofType(ServiceRoleEnum.ASSESSMENT)
