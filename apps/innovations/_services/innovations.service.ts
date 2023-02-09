@@ -240,7 +240,6 @@ export class InnovationsService extends BaseService {
     if (filters.assignedToMe) {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-        console.log(user.id);
         innovationFetchQuery.andWhere('assessments.assign_to_id = :assignToId', { assignToId: user.id });
       }
 
