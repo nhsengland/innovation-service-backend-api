@@ -26,7 +26,7 @@ export class InnovationAssessmentsService extends BaseService {
 
   async getInnovationAssessmentInfo(assessmentId: string, entityManager?: EntityManager): Promise<InnovationAssessmentType> {
     
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
 
     const assessment = await connection.createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.assignTo', 'assignTo')
@@ -307,7 +307,7 @@ export class InnovationAssessmentsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string; }, reassessment: { id: string; }; }> {
 
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
 
     // If it has at least one ongoing support, cannot request reassessment.
     const hasOngoingSupports = await connection.createQueryBuilder(InnovationEntity, 'innovation')
@@ -398,7 +398,7 @@ export class InnovationAssessmentsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{ assessmentId: string, assessorId: string }> {
 
-    const connection = entityManager ?? this.sqlConnection;
+    const connection = entityManager ?? this.sqlConnection.manager;
 
     const newAssessor = await connection
       .createQueryBuilder(UserEntity, 'user')

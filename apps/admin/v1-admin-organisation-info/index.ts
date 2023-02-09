@@ -12,10 +12,10 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType } from './validation.schemas';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
 
-class V1AdminOrganisationCreate {
+class V1AdminOrganisationInfo {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -27,16 +27,16 @@ class V1AdminOrganisationCreate {
 
     try {
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       await authorizationService
         .validate(context)
         .checkAdminType()
         .verify();
 
-      const result = await organisationsService.createOrganisation(body.name, body.acronym, body.units);
+      const result = await organisationsService.getOrganisationInfo(params.organisationId);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, units: result.units });
+      context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -46,42 +46,25 @@ class V1AdminOrganisationCreate {
 }
 
 export default openApi(
-  V1AdminOrganisationCreate.httpTrigger as AzureFunction,
-  '/v1/organisations',
+  V1AdminOrganisationInfo.httpTrigger as AzureFunction,
+  '/v1/organisations/{organisationId}',
   {
     post: {
-      description: 'Create an organisation.',
-      operationId: 'v1-admin-organisation-create',
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The organisation to be created.' }),
+      description: 'Get organisation info.',
+      operationId: 'v1-admin-organisation-info',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
-          description: 'The organisation has been created.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'The organisation id.',
-                  },
-                  units: {
-                    type: 'string',
-                    description: 'Ids of the organisation units belonging to the organisation.'
-                  }
-                },
-              },
-            },
-          },
+          description: 'Success.'
         },
         '400': {
           description: 'Bad request.',
         },
         '401': {
-          description: 'The user is not authorized to create an organisation.',
+          description: 'The user is not authorized to get this information.',
         },
         '500': {
-          description: 'An error occurred while creating the organisation.',
+          description: 'An error occurred while getting this information.',
         },
       },
     },

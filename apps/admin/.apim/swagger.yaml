@@ -119,6 +119,25 @@ paths:
         "500":
           description: An error occurred while creating the organisation.
   "/v1/organisations/{organisationId}":
+    post:
+      description: Get organisation info.
+      operationId: v1-admin-organisation-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
     patch:
       description: Update an organisation.
       operationId: v1-admin-organisation-update

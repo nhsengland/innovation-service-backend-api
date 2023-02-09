@@ -41,11 +41,11 @@ export class OrganisationsService extends BaseService {
         .leftJoinAndSelect('org_user.user', 'user')
         .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
         .getMany()
-    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }))
+    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }));
 
 
     // only want to clear actions with these statuses
-    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
@@ -56,10 +56,10 @@ export class OrganisationsService extends BaseService {
         .where('unit.id = :unitId', { unitId })
         .andWhere('action.status IN (:...actionStatusToClear)', { actionStatusToClear })
         .getMany()
-    ).map(a => a.id)
+    ).map(a => a.id);
 
     //only want to complete the support of innovations with these statuses
-    const supportStatusToComplete = [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
+    const supportStatusToComplete = [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED];
 
     //get supports to complete
     const supportsToComplete = await this.sqlConnection
@@ -69,7 +69,7 @@ export class OrganisationsService extends BaseService {
       .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
       .where('unit.id = :unitId', { unitId })
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
-      .getMany()
+      .getMany();
 
     const contexts = [...actionsToClear, ...(supportsToComplete.map(s => s.id))];
 
@@ -104,7 +104,7 @@ export class OrganisationsService extends BaseService {
       // Complete supports of unit
       if (supportsToComplete.length > 0) {
 
-        const supportIds = supportsToComplete.map(s => s.id)
+        const supportIds = supportsToComplete.map(s => s.id);
 
         await transaction.update(
           InnovationSupportEntity,
@@ -112,12 +112,12 @@ export class OrganisationsService extends BaseService {
           {
             status: InnovationSupportStatusEnum.COMPLETE,
           }
-        )
+        );
 
         await transaction.createQueryBuilder().delete()
           .from('innovation_support_user')
           .where('innovation_support_id IN (:...supports)', { supports: supportIds })
-          .execute()
+          .execute();
       }
 
       // Mark as read notifications in the context of this unit
@@ -186,7 +186,7 @@ export class OrganisationsService extends BaseService {
         await this.identityProviderService.updateUserAsync(
           user.identityId,
           { accountEnabled: false }
-        )
+        );
       }
     }
     return result;
@@ -260,7 +260,7 @@ export class OrganisationsService extends BaseService {
       await this.identityProviderService.updateUserAsync(
         user.identityId,
         { accountEnabled: true }
-      )
+      );
     }
 
     return result;
@@ -456,7 +456,7 @@ export class OrganisationsService extends BaseService {
 
     });
 
-    return { id: unit.id }
+    return { id: unit.id };
   }
 
   private async createOrganisationUnit(
@@ -498,6 +498,50 @@ export class OrganisationsService extends BaseService {
     );
 
     return savedUnit;
+  }
+
+  async getOrganisationInfo(organisationId: string, entityManager?: EntityManager): Promise<{
+    id: string,
+    name: string,
+    acronym: string | null,
+    organisationUnits: {
+        id: string,
+        name: string,
+        acronym: string,
+        isActive: boolean,
+        userCount: number,
+    }[],
+    isActive: boolean
+  }> {
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const organisation = await connection.createQueryBuilder(OrganisationEntity, 'organisation')
+      .leftJoinAndSelect('organisation.organisationUnits', 'unit')
+      .leftJoinAndSelect('unit.organisationUnitUsers', 'unitUsers')
+      .where('organisation.id = :organisationId', { organisationId })
+      .getOne();
+
+    if (!organisation) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    }
+
+    const organisationUnits = await Promise.all((await organisation.organisationUnits).map(async unit => ({
+      id: unit.id,
+      name: unit.name,
+      acronym: unit.acronym,
+      isActive: !unit.inactivatedAt,
+      userCount: (await unit.organisationUnitUsers).length
+    })));
+
+    return {
+      id: organisation.id,
+      name: organisation.name,
+      acronym: organisation.acronym,
+      organisationUnits,
+      isActive: !organisation.inactivatedAt
+    };
+
   }
 
 }
