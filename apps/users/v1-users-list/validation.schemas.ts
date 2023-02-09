@@ -16,7 +16,7 @@ export type QueryParamsType = {
 
 export const QueryParamsSchema = Joi.alternatives().try(
   Joi.object<QueryParamsType>({
-    email: Joi.string().email().lowercase().required().description('Email of a user.'),
+    email: JoiHelper.AppCustomJoi().decodeURIString().email().lowercase().required().description('Email of a user.'),
     userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ServiceRoleEnum))).required().description('Types of user to filter.')
   }),
   Joi.object<QueryParamsType>({

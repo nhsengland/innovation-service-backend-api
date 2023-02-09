@@ -16,6 +16,7 @@ export type DomainUserInfoType = {
   roles: UserRoleEntity[],
   phone: null | string,
   isActive: boolean,
+  lockedAt: null | DateISOType,
   passwordResetAt: null | DateISOType,
   firstTimeSignInAt: null | DateISOType,
   surveyId: null | string,

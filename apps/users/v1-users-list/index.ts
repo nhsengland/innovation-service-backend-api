@@ -42,6 +42,18 @@ class V1UsersList {
           email: item.email,
           roles: item.roles,
           isActive: item.isActive,
+          ...(item.lockedAt && { lockedAt: item.lockedAt }),
+          ...(item.organisations && { organisations: item.organisations.map( o => ({
+            id: o.id,
+            name: o.name,
+            acronym: o.acronym ?? '',
+            role: o.role,
+            ...(o.organisationUnits && { units: o.organisationUnits.map(u => ({
+              id: u.id,
+              name: u.name,
+              acronym: u.acronym ?? '',
+            }))})
+          }))}),
         })));
         return;
 
@@ -70,8 +82,8 @@ class V1UsersList {
           id: u.id,
           isActive: u.isActive,
           name: u.name,
-          ...(u.organisations ? { organisations: u.organisations } : {}),
           roles: u.roles,
+          ...(u.organisations ? { organisations: u.organisations } : {}),
         })));
         return;
 

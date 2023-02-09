@@ -8,8 +8,8 @@ import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServic
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
-import { BaseService } from './base.service';
 import { UserRoleEntity } from '@users/shared/entities';
+import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {

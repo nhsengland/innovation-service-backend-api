@@ -1,10 +1,10 @@
 import { randEmail, randPhoneNumber, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { UserEntity, UserRoleEntity } from '../entities';
+import { ServiceRoleEnum } from '../enums';
 import { DomainUsersService, NOSQLConnectionService } from '../services';
 import { CacheService } from '../services/storage/cache.service';
 import type { DomainUserInfoType } from '../types';
-import { ServiceRoleEnum } from '../enums';
 
 export class MockBuilder {
  
@@ -50,6 +50,7 @@ export class MockBuilder {
       id: user.id,
       identityId: user.identityId,
       isActive: user.lockedAt === null,
+      lockedAt: user.lockedAt,
       displayName: randUserName(),
       email: randEmail(),
       firstTimeSignInAt: user.firstTimeSignInAt,
@@ -115,7 +116,7 @@ class DomainUserInfoBuilder {
             }] : [],
           }
         ]
-      }
+      };
 
       this.builder.addSpy(jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user));
       return this.builder; 

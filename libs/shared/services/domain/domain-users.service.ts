@@ -52,6 +52,7 @@ export class DomainUsersService {
       roles: dbUser.serviceRoles,
       phone: authUser.mobilePhone,
       isActive: !dbUser.lockedAt,
+      lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
       surveyId: dbUser.surveyId,
