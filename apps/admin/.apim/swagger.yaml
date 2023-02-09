@@ -119,7 +119,7 @@ paths:
         "500":
           description: An error occurred while creating the organisation.
   "/v1/organisations/{organisationId}":
-    post:
+    get:
       description: Get organisation info.
       operationId: v1-admin-organisation-info
       parameters:

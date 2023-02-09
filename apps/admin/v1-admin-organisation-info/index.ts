@@ -49,7 +49,7 @@ export default openApi(
   V1AdminOrganisationInfo.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}',
   {
-    post: {
+    get: {
       description: 'Get organisation info.',
       operationId: 'v1-admin-organisation-info',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
