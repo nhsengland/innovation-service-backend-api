@@ -120,13 +120,15 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       size: Joi.string().allow(null).required(),
       }).allow(null).required(),
     })
+
+  // TODO - CHECK IF JOI ALLOWS OVERRIDING THE DEFAULT OBJECT
   .when('$currentRole.role', {
       is: ServiceRoleEnum.ADMIN,
-      then: null,
+      then: Joi.forbidden(),
       })
   .when('$currentRole.role', {
       is: ServiceRoleEnum.ASSESSMENT,
-      then: null,
+      then: Joi.forbidden(),
   })
   .when('$currentRole.role', {
     is: ServiceRoleEnum.ACCESSOR,
@@ -144,7 +146,7 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
         organisationUnitUser: Joi.object({
           id: Joi.string().uuid().required(),
         }).required(),
-      }).allow(null).required(),
+      }).required(),
     })
   })
   .when('$currentRole.role', {
@@ -163,7 +165,7 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
         organisationUnitUser: Joi.object({
           id: Joi.string().uuid().required(),
         }).required(),
-      }).allow(null).required(),
+      }).required(),
     })
   }),
   currentRole: Joi.object({
