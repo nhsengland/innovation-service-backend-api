@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ActivityEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
@@ -502,6 +502,7 @@ export class InnovationThreadsService extends BaseService {
         createdBy: {
           id: string, name: string,
           organisationUnit: null | { id: string; name: string; acronym: string }
+          role: undefined | ServiceRoleEnum,
         }
       }
     }[]
@@ -561,6 +562,7 @@ export class InnovationThreadsService extends BaseService {
       .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
       .innerJoinAndSelect('messages.author', 'author')
       .innerJoinAndSelect('messages.thread', 'thread')
+      .leftJoinAndSelect('messages.authorUserRole', 'userRole')
       .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
       .where('thread.id IN (:...threadIds)', { threadIds })
       .orderBy('messages.created_at', 'DESC');
@@ -617,6 +619,7 @@ export class InnovationThreadsService extends BaseService {
             createdBy: {
               id: authorDB!.id,
               name: authorIdP?.displayName || 'unknown user',
+              role: message?.authorUserRole?.role,
               organisationUnit: organisationUnit
                 ? {
                   id: organisationUnit.id,
