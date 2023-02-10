@@ -357,10 +357,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
-    data: { status: InnovationActionStatusEnum }
+    data: { status: InnovationActionStatusEnum },
+    entityManager?: EntityManager,
   ): Promise<{ id: string }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await connection.createQueryBuilder(InnovationActionEntity, 'ia')
       .innerJoinAndSelect('ia.innovationSection', 'is')
       .innerJoinAndSelect('ia.innovationSupport', 'isup')
       .innerJoinAndSelect('is.innovation', 'i')
@@ -382,12 +385,12 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    //Accessor can only decline actions requested by himself
+    // Accessor can only cancel actions requested by himself
     if (dbAction.status === InnovationActionStatusEnum.REQUESTED && dbAction.createdBy !== user.id) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER);
     }
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -520,10 +523,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     dbAction: InnovationActionEntity,
-    data: { status: InnovationActionStatusEnum, message?: string }
+    data: { status: InnovationActionStatusEnum, message?: string },
+    entityManager?: EntityManager
   ): Promise<InnovationActionEntity> {
 
-    return this.sqlConnection.transaction(async transaction => {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    return connection.transaction(async transaction => {
 
       let thread;
 
@@ -545,7 +551,7 @@ export class InnovationActionsService extends BaseService {
 
       if (data.status === InnovationActionStatusEnum.DECLINED) {
 
-        const actionCreatedBy = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+        const actionCreatedBy = await connection.createQueryBuilder(UserEntity, 'user')
           .where('user.id = :id', { id: dbAction.createdBy })
           .getOne();
 

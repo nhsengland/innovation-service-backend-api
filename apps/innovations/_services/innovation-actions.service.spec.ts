@@ -4,7 +4,7 @@ import { container } from '../_config';
 
 import { InnovationActionEntity } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationStatusEnum, NotificationContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
-import type { NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import type { ForbiddenError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
@@ -90,6 +90,62 @@ describe('Innovation Actions Suite', () => {
       // assert
       expect(err).toBeDefined();
       expect(err?.name).toBe('I.0040');
+    });
+
+    it('should not create an action for an innovation that doesn\t exist', async () => {
+      // arrange
+      const accessor = testData.baseUsers.accessor;
+      const context = cloneDeep(testData.domainContexts.accessor);
+      context.organisation!.organisationUnit!.id = randUuid();
+
+      // act
+      let err: NotFoundError | null = null;
+      try {
+        await sut.createAction(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          context,
+          randUuid(),
+          {
+            description: randText(),
+            section: Object.values(InnovationSectionEnum)[randNumber({ min: 0, max: Object.values(InnovationSectionEnum).length - 1 })]!,
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      // assert
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('I.0002');
+    });
+
+    it('should not create an action for a section that doesn\t exist', async () => {
+      // arrange
+      const accessor = testData.baseUsers.accessor;
+      const context = cloneDeep(testData.domainContexts.accessor);
+      context.organisation!.organisationUnit!.id = randUuid();
+
+      // act
+      let err: NotFoundError | null = null;
+      try {
+        await sut.createAction(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          context,
+          testData.innovation.id,
+          {
+            description: randText(),
+            section: randText() as InnovationSectionEnum,
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      // assert
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('I.0031');
     });
   });
 
@@ -588,4 +644,214 @@ describe('Innovation Actions Suite', () => {
     })
   });
 
+  describe('updateActionAsAccessor', () => {
+
+    let actitivityLogSpy: jest.SpyInstance<unknown>;
+    let notifierSend: jest.SpyInstance<unknown>;
+
+    beforeEach(async () => {
+      actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      notifierSend = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    });
+
+    it('should update action from status REQUESTED to CANCELLED', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsAccessor(
+        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        testData.domainContexts.accessor,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.CANCELLED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.CANCELLED);
+    });
+
+    it('should update action from status SUBMITTED to COMPLETED', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsAccessor(
+        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        testData.domainContexts.accessor,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.COMPLETED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.COMPLETED);
+    });
+
+    it('should update action from status SUBMITTED to REQUESTED', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsAccessor(
+        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        testData.domainContexts.accessor,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.REQUESTED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.REQUESTED);
+    });
+
+    it('should not update if action doesn\'t exist', async () => {
+      const accessor = testData.baseUsers.accessor;
+
+      let err: NotFoundError | null = null;
+      try {
+        await sut.updateActionAsAccessor(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          randUuid(),
+          {
+            status: InnovationActionStatusEnum.REQUESTED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0090');
+    });
+
+    it('should not be updated if the action is not in the SUBMITTED AND REQUESTED status', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.DECLINED)
+        .build(em);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.updateActionAsAccessor(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          action.id,
+          {
+            status: InnovationActionStatusEnum.REQUESTED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0091');
+    });
+
+    it('should not be updated if the action is in SUBMITTED status and the status that is being updated is not REQUESTED/COMPLETED', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.updateActionAsAccessor(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          action.id,
+          {
+            status: InnovationActionStatusEnum.CANCELLED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0091');
+    });
+
+    it('should not be updated to CANCELLED if the action is not created by him', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(randUuid(), (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      let err: ForbiddenError | null = null;
+      try {
+        await sut.updateActionAsAccessor(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          action.id,
+          {
+            status: InnovationActionStatusEnum.CANCELLED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as ForbiddenError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0092');
+    });
+  });
 });
