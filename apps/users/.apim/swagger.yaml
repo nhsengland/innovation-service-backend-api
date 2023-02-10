@@ -537,15 +537,9 @@ paths:
             description: Email of a user.
       responses:
         "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier for user object
+          description: Email is already in use.
+        "404":
+          description: Email is available.
     get:
       operationId: v1-users-list
       description: Get users list

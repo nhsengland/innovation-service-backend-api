@@ -32,7 +32,7 @@ class V1OrganisationsList {
         
       const domainContext = auth.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole.role });
 
       const result = await organisationsService.getOrganisationsList(queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
