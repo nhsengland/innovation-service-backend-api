@@ -1,14 +1,14 @@
 import { inject, injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity, InnovationSupportLogEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationAssessmentEntity, InnovationEntity, InnovationSupportEntity, InnovationSupportLogEntity, OrganisationUnitEntity, OrganisationUnitUserEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, NotifierServiceSymbol, NotifierServiceType, type DomainServiceType } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
-import type { InnovationSupportsLogType } from '../_types/innovation.types';
+import type { InnovationSuggestionAccessor, InnovationSuggestionsType, InnovationSupportsLogType } from '../_types/innovation.types';
 
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
@@ -107,18 +107,7 @@ export class InnovationSupportsService extends BaseService {
     innovationId: string,
   ): Promise<InnovationSupportsLogType[]> {
 
-    const query = this.sqlConnection
-      .createQueryBuilder(InnovationSupportLogEntity, 'supports')
-      .leftJoinAndSelect('supports.innovation', 'innovation')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
-      .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
-      .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('suggestedOrganisation.inactivated_at IS NULL')
-      .orderBy('supports.createdAt', 'ASC');
-
-    const supportLogs = await query.getMany();
+    const supportLogs = await this.fetchSupportLogs(innovationId);
 
     const usersIds = supportLogs.map(item => item.createdBy);
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...usersIds] }));
@@ -170,6 +159,83 @@ export class InnovationSupportsService extends BaseService {
     return response;
   }
 
+  async getInnovationSuggestions(
+    innovationId: string,
+  ): Promise<InnovationSuggestionsType> {
+    const supportLogs = await this.fetchSupportLogs(innovationId, InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION);
+
+    const assessmentQuery = this.sqlConnection
+    .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
+    .leftJoinAndSelect('assessments.organisationUnits', 'organisationUnit')
+    .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
+    .where('assessments.innovation_id = :innovationId', { innovationId })
+    .andWhere('organisationUnit.inactivated_at IS NULL');
+
+    const innovationAssessment = await assessmentQuery.getOne();
+
+    const result: InnovationSuggestionsType = {
+      assessment: {},
+      accessors: [],
+    };
+
+    if (innovationAssessment) {
+      const assessmentOrganisationUnits =  [...new Set(innovationAssessment.organisationUnits)];
+
+      result.assessment = {
+        id: innovationAssessment.id,
+        suggestedOrganisationUnits:
+          assessmentOrganisationUnits.length > 0
+            ? assessmentOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
+              id: orgUnit.id,
+              name: orgUnit.name,
+              acronym: orgUnit.acronym,
+              organisation: {
+                id: orgUnit.organisation.id,
+                name: orgUnit.organisation.name,
+                acronym: orgUnit.organisation.acronym,
+              }
+            })
+          ) : [],
+      };
+    }
+
+    if (supportLogs && supportLogs.length > 0) {
+      result.accessors = supportLogs.map((log) => {
+        const rec: InnovationSuggestionAccessor = {
+          organisationUnit: log.organisationUnit ? {
+            id: log.organisationUnit.id,
+            name: log.organisationUnit.name,
+            acronym: log.organisationUnit.acronym,
+            organisation: {
+              id: log.organisationUnit.organisation.id,
+              name: log.organisationUnit.organisation.name,
+              acronym: log.organisationUnit.organisation.acronym,
+            },
+          } : null,
+        };
+
+        if (
+          log.suggestedOrganisationUnits &&
+          log.suggestedOrganisationUnits.length > 0
+        ) {
+          rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
+            id: orgUnit.id,
+            name: orgUnit.name,
+            acronym: orgUnit.acronym,
+            organisation: {
+              id: orgUnit.organisation.id,
+              name: orgUnit.organisation.name,
+              acronym: orgUnit.organisation.acronym,
+            },
+          }));
+        }
+
+        return rec;
+      });
+    }
+
+    return result;
+  }
 
   async getInnovationSupportInfo(
     innovationSupportId: string,
@@ -439,5 +505,25 @@ export class InnovationSupportsService extends BaseService {
     );
 
     return true;
+  }
+
+  private async fetchSupportLogs(innovationId: string, type?: InnovationSupportLogTypeEnum): Promise<InnovationSupportLogEntity[]> {
+    let supportQuery = this.sqlConnection
+    .createQueryBuilder(InnovationSupportLogEntity, 'supports')
+    .leftJoinAndSelect('supports.innovation', 'innovation')
+    .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
+    .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
+    .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
+    .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
+    .where('innovation.id = :innovationId', { innovationId })
+    .andWhere('suggestedOrganisation.inactivated_at IS NULL');
+
+    if(type) {
+      supportQuery.andWhere('supports.type = :type', { type })
+    }
+
+    supportQuery.orderBy('supports.createdAt', 'ASC');
+    
+    return await supportQuery.getMany();
   }
 }
