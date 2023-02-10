@@ -475,6 +475,48 @@ paths:
                     description: Unique identifier for survey object
         "400":
           description: Invalid survey payload
+  /v1:
+    head:
+      operationId: v1-users-email-available
+      description: Check if email is available for a new user.
+      tags:
+        - "[v1] Users"
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+            description: Email of a user.
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for user object
+    get:
+      operationId: v1-users-list
+      description: Get users list
+      tags:
+        - "[v1] Users"
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for user object
   "/v1/{userId}":
     get:
       operationId: v1-users-info
@@ -512,24 +554,6 @@ paths:
                     description: Unique identifier for user object
         "403":
           description: Forbidden
-  /v1:
-    get:
-      operationId: v1-users-list
-      description: Get users list
-      tags:
-        - "[v1] Users"
-      parameters: []
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier for user object
   /v1/statistics:
     get:
       description: Get an user statistics

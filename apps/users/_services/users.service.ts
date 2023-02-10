@@ -32,6 +32,13 @@ export class UsersService extends BaseService {
   }
 
 
+  /**
+   * returns a user based on email
+   * @param email the email to search
+   * @param filters 
+   *  - userRoles: the user roles to filter by.
+   * @returns the user as an array.
+   */
   async getUserByEmail(email: string, filters: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
 
     try {
@@ -55,6 +62,16 @@ export class UsersService extends BaseService {
       return [];
     }
 
+  }
+
+  /**
+   * checks if a user exists based on email
+   * @param email the email to search
+   * @returns true if the user exists.
+   */
+  async existsUserByEmail(email: string): Promise<boolean> {
+    const authUser = await this.identityProviderService.getUserInfoByEmail(email);
+    return !!authUser;
   }
 
   /**
