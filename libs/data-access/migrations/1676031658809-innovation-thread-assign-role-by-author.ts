@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm"
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class innovationThreadAssignRoleByAuthor1676031658809 implements MigrationInterface {
 
