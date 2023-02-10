@@ -854,4 +854,278 @@ describe('Innovation Actions Suite', () => {
       expect(err?.name).toBe('IA.0092');
     });
   });
+
+  describe('updateActionAsNeedsAccessor', () => {
+
+    let actitivityLogSpy: jest.SpyInstance<unknown>;
+    let notifierSend: jest.SpyInstance<unknown>;
+
+    beforeEach(async () => {
+      actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      notifierSend = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    });
+
+    it('should update action from status REQUESTED to CANCELLED', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsNeedsAccessor(
+        { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+        testData.domainContexts.assessmentUser,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.CANCELLED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.CANCELLED);
+    });
+
+    it('should update action from status SUBMITTED to COMPLETED', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsNeedsAccessor(
+        { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+        testData.domainContexts.assessmentUser,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.COMPLETED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.COMPLETED);
+    });
+
+    it('should update action from status SUBMITTED to REQUESTED', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsNeedsAccessor(
+        { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+        testData.domainContexts.assessmentUser,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.REQUESTED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.REQUESTED);
+    });
+
+    it('should update action from status REQUESTED to CANCELLED requested by other NA', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const otherAssessmentUser = await TestsHelper.TestDataBuilder
+      .createUser()
+      .ofType(UserTypeEnum.ASSESSMENT)
+      .build(em);
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(otherAssessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsNeedsAccessor(
+        { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+        testData.domainContexts.assessmentUser,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.REQUESTED
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSend).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.REQUESTED);
+    });
+
+    it('should not update if action doesn\'t exist', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+
+      let err: NotFoundError | null = null;
+      try {
+        await sut.updateActionAsNeedsAccessor(
+          { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+          testData.domainContexts.assessmentUser,
+          testData.innovation.id,
+          randUuid(),
+          {
+            status: InnovationActionStatusEnum.REQUESTED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0090');
+    });
+
+    it('should not be updated if the action is not in the SUBMITTED AND REQUESTED status', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.DECLINED)
+        .build(em);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.updateActionAsNeedsAccessor(
+          { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+          testData.domainContexts.assessmentUser,
+          testData.innovation.id,
+          action.id,
+          {
+            status: InnovationActionStatusEnum.REQUESTED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0091');
+    });
+
+    it('should not be updated if the action is in SUBMITTED status and the status that is being updated is not REQUESTED/COMPLETED', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.updateActionAsNeedsAccessor(
+          { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+          testData.domainContexts.assessmentUser,
+          testData.innovation.id,
+          action.id,
+          {
+            status: InnovationActionStatusEnum.CANCELLED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0091');
+    });
+
+    it('should not update if action is from an QA/A', async () => {
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const actionByAccessor = await TestsHelper.TestDataBuilder
+        .createAction(testData.baseUsers.accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      let err: NotFoundError | null = null;
+      try {
+        await sut.updateActionAsNeedsAccessor(
+          { id: assessmentUser.id, identityId: assessmentUser.identityId, type: assessmentUser.type },
+          testData.domainContexts.assessmentUser,
+          testData.innovation.id,
+          actionByAccessor.id,
+          {
+            status: InnovationActionStatusEnum.REQUESTED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0090');
+    });
+
+    it('should not update if action is from an NA', async () => {
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const actionByAccessor = await TestsHelper.TestDataBuilder
+        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      let err: NotFoundError | null = null;
+      try {
+        await sut.updateActionAsAccessor(
+          { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          actionByAccessor.id,
+          {
+            status: InnovationActionStatusEnum.REQUESTED
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0090');
+    });
+  });
 });

@@ -416,10 +416,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
-    data: { status: InnovationActionStatusEnum }
+    data: { status: InnovationActionStatusEnum },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await connection.createQueryBuilder(InnovationActionEntity, 'ia')
       .innerJoinAndSelect('ia.innovationSection', 'is')
       .innerJoinAndSelect('is.innovation', 'i')
       .leftJoinAndSelect('ia.innovationSupport', 'isup')
@@ -440,7 +443,7 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
