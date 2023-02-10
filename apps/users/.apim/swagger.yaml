@@ -439,6 +439,52 @@ paths:
                         params:
                           type: object
                           description: The notification params
+  "/v1/organisations/{organisationId}":
+    get:
+      description: Get organisation info.
+      operationId: v1-organisation-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+    get:
+      description: Get organisation unitinfo.
+      operationId: v1-organisation-unit-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
   /v1/organisations:
     get:
       description: Retrieves organisations list

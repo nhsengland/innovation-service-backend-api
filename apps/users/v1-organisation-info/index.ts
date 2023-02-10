@@ -1,21 +1,19 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { JwtDecoder } from '@admin/shared/decorators';
-import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType,
-} from '@admin/shared/services';
-import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
-import type { CustomContextType } from '@admin/shared/types';
+import { JwtDecoder } from '@users/shared/decorators';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
+import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 
-import { ParamsSchema, ParamsType } from './validation.schemas';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
-class V1AdminOrganisationInfo {
+
+class V1OrganisationInfo {
   @JwtDecoder()
   static async httpTrigger(
     context: CustomContextType,
@@ -46,12 +44,12 @@ class V1AdminOrganisationInfo {
 }
 
 export default openApi(
-  V1AdminOrganisationInfo.httpTrigger as AzureFunction,
+  V1OrganisationInfo.httpTrigger as AzureFunction,
   '/v1/organisations/{organisationId}',
   {
     get: {
       description: 'Get organisation info.',
-      operationId: 'v1-admin-organisation-info',
+      operationId: 'v1-organisation-info',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {

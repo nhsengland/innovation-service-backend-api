@@ -178,6 +178,78 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+    get:
+      description: Get organisation unitinfo.
+      operationId: v1-admin-organisation-unit-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
+    patch:
+      description: Update an organisation unit.
+      operationId: v1-admin-unit-update
+      parameters:
+        - name: organisationId
+          in: path
+          description: The organisation id.
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          description: The organisation unit id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: New name and acronym for the unit.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: string
+                  description: Name and acronym for the unit.
+      responses:
+        "200":
+          description: The organisation unit has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: The organisation unit id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to update an organisation unit.
+        "404":
+          description: The organisation unit does not exist.
+        "500":
+          description: An error occurred while updating the organisation unit.
   "/v1/tou/{touId}":
     get:
       description: Get terms of use.
@@ -532,53 +604,6 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while inactivating the organisation unit.
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
-    patch:
-      description: Update an organisation unit.
-      operationId: v1-admin-unit-update
-      parameters:
-        - name: organisationId
-          in: path
-          description: The organisation id.
-          required: true
-          schema:
-            type: string
-        - name: organisationUnitId
-          in: path
-          description: The organisation unit id.
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: New name and acronym for the unit.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: string
-                  description: Name and acronym for the unit.
-      responses:
-        "200":
-          description: The organisation unit has been updated.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  unitId:
-                    type: string
-                    description: The organisation unit id.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to update an organisation unit.
-        "404":
-          description: The organisation unit does not exist.
-        "500":
-          description: An error occurred while updating the organisation unit.
   /v1/users:
     post:
       description: Create a user.

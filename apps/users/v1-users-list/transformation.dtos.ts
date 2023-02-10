@@ -25,12 +25,15 @@ type AdminPortalResponseDTO = {
 type UserListResponseDTO = {
   id: string;
   name: string;
+  email?: string;
   roles: UserRoleEntity[]; // This needs to be reviewed as it's not a DTO
   isActive: boolean;
   organisations?: {
+    id: string;
     name: string;
     role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
     units?: {
+      id: string;
       name: string;
       organisationUnitUserId: string // It's strange that we require this and use this id instead of the user id (or now the role id) to identify the user. Complicates things in the frontend
     }[]

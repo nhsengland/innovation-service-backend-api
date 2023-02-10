@@ -62,19 +62,23 @@ class V1UsersList {
         const validation = authorizationService.validate(context)
           .checkAdminType();
 
-        // all users need to be able to list NA users for message transparency page
-        if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT) {
-          validation.checkAssessmentType();
-          validation.checkAccessorType();
-          validation.checkInnovatorType();
-        }
+        //only admins can get user emails
+        if (!('email' in queryParams.fields)) {
+          // all users need to be able to list NA users for message transparency page
+          if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT) {
+            validation.checkAssessmentType();
+            validation.checkAccessorType();
+            validation.checkInnovatorType();
+          }
 
-        if (queryParams.organisationUnitId) {
-          validation.checkAccessorType({
-            organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
-            organisationUnitId: queryParams.organisationUnitId
-          });
+          if (queryParams.organisationUnitId) {
+            validation.checkAccessorType({
+              organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
+              organisationUnitId: queryParams.organisationUnitId
+            });
+          }
         }
+        
         await validation.verify();
 
         const users = await usersService.getUserList(queryParams, queryParams.fields);
@@ -83,7 +87,9 @@ class V1UsersList {
           isActive: u.isActive,
           name: u.name,
           roles: u.roles,
+          ...(u.email ? { email: u.email } : {}),
           ...(u.organisations ? { organisations: u.organisations } : {}),
+          
         })));
         return;
 

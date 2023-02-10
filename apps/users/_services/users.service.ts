@@ -357,17 +357,18 @@ export class UsersService extends BaseService {
    */
   async getUserList(
     filters: { userTypes: ServiceRoleEnum[], organisationUnitId?: string, onlyActive?: boolean },
-    fields: ('organisations' | 'units')[]
+    fields: ('email' | 'organisations' | 'units')[]
   ): Promise<{
     id: string,
-    email: string,
+    email?: string,
     isActive: boolean,
     name: string,
     roles: UserRoleEntity[],
     organisations?: {
+      id: string,
       name: string,
       role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-      units?: { name: string, organisationUnitUserId: string }[]
+      units?: { id: string, name: string, organisationUnitUserId: string }[]
     }[]
   }[]> {
     // [TechDebt]: add pagination if this gets used outside of admin bulk export, other cases always have narrower conditions
@@ -406,17 +407,19 @@ export class UsersService extends BaseService {
 
     return Promise.all(usersFromSQL.map(async user => {
       let organisations: {
+        id: string,
         name: string,
         role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-        units?: { name: string, organisationUnitUserId: string }[]
+        units?: { id: string, name: string, organisationUnitUserId: string }[]
       }[] | undefined = undefined;
 
       if (fieldSet.has('organisations') || fieldSet.has('units')) {
         const userOrganisations = await user.userOrganisations;
         organisations = userOrganisations.map(o => ({
+          id: o.organisation.id,
           name: o.organisation.name,
           role: o.role,
-          ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
+          ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ id: u.organisationUnit.id, name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
         }));
       }
 
@@ -427,10 +430,10 @@ export class UsersService extends BaseService {
 
       return {
         id: user.id,
-        email: b2cUser.email,
         isActive: !user.lockedAt,
         roles: user.serviceRoles,
         name: b2cUser.displayName,
+        ...(fieldSet.has('email') ? { email: b2cUser.email } : {}),
         ...(organisations ? { organisations } : {}),
       };
 

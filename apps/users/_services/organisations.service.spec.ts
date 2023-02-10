@@ -1,10 +1,12 @@
-import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
-import { NOSQLConnectionService } from '@admin/shared/services';
-import { CacheService } from '@admin/shared/services/storage/cache.service';
-import { TestDataType, TestsHelper } from '@admin/shared/tests/tests.helper';
+import { TestDataType, TestsHelper } from '@users/shared/tests/tests.helper';
+import { container } from '../_config';
+
+import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+import { NOSQLConnectionService } from '@users/shared/services';
+import { CacheService } from '@users/shared/services/storage/cache.service';
 import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { container } from '../_config';
+
 import { OrganisationsServiceSymbol, OrganisationsServiceType } from './interfaces';
 
 

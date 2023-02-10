@@ -499,49 +499,5 @@ export class OrganisationsService extends BaseService {
 
     return savedUnit;
   }
-
-  async getOrganisationInfo(organisationId: string, entityManager?: EntityManager): Promise<{
-    id: string,
-    name: string,
-    acronym: string | null,
-    organisationUnits: {
-        id: string,
-        name: string,
-        acronym: string,
-        isActive: boolean,
-        userCount: number,
-    }[],
-    isActive: boolean
-  }> {
-
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const organisation = await connection.createQueryBuilder(OrganisationEntity, 'organisation')
-      .leftJoinAndSelect('organisation.organisationUnits', 'unit')
-      .leftJoinAndSelect('unit.organisationUnitUsers', 'unitUsers')
-      .where('organisation.id = :organisationId', { organisationId })
-      .getOne();
-
-    if (!organisation) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
-    }
-
-    const organisationUnits = await Promise.all((await organisation.organisationUnits).map(async unit => ({
-      id: unit.id,
-      name: unit.name,
-      acronym: unit.acronym,
-      isActive: !unit.inactivatedAt,
-      userCount: (await unit.organisationUnitUsers).length
-    })));
-
-    return {
-      id: organisation.id,
-      name: organisation.name,
-      acronym: organisation.acronym,
-      organisationUnits,
-      isActive: !organisation.inactivatedAt
-    };
-
-  }
-
+  
 }
