@@ -162,7 +162,7 @@ export class InnovationSupportsService extends BaseService {
   async getInnovationSuggestions(
     innovationId: string,
   ): Promise<InnovationSuggestionsType> {
-    const supportLogs = await this.fetchSupportLogs(innovationId, true);
+    const supportLogs = await this.fetchSupportLogs(innovationId, InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION);
 
     const assessmentQuery = this.sqlConnection
     .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
@@ -507,7 +507,7 @@ export class InnovationSupportsService extends BaseService {
     return true;
   }
 
-  private async fetchSupportLogs(innovationId: string, filterBySupportType: boolean = false): Promise<InnovationSupportLogEntity[]> {
+  private async fetchSupportLogs(innovationId: string, type?: InnovationSupportLogTypeEnum): Promise<InnovationSupportLogEntity[]> {
     let supportQuery = this.sqlConnection
     .createQueryBuilder(InnovationSupportLogEntity, 'supports')
     .leftJoinAndSelect('supports.innovation', 'innovation')
@@ -516,13 +516,13 @@ export class InnovationSupportsService extends BaseService {
     .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
     .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
     .where('innovation.id = :innovationId', { innovationId })
+    .andWhere('suggestedOrganisation.inactivated_at IS NULL');
 
-    if(filterBySupportType) {
-      supportQuery.andWhere('supports.type = :type', { type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
-
+    if(type) {
+      supportQuery.andWhere('supports.type = :type', { type })
     }
-    supportQuery.andWhere('suggestedOrganisation.inactivated_at IS NULL')
-    .orderBy('supports.createdAt', 'ASC');
+
+    supportQuery.orderBy('supports.createdAt', 'ASC');
     
     return await supportQuery.getMany();
   }
