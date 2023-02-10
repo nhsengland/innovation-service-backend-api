@@ -182,10 +182,6 @@ export class UsersService extends BaseService {
         surveyId: data.surveyId,
       }));
 
-      // add innovator role
-
-      const userRole = await transactionManager.save(UserRoleEntity, UserRoleEntity.new({ user: dbUser, role: ServiceRoleEnum.INNOVATOR }));
-
       // Creates default organisation.
       const dbOrganisation = await transactionManager.save(OrganisationEntity.new({
         name: user.identityId,
@@ -205,6 +201,8 @@ export class UsersService extends BaseService {
         updatedBy: dbUser.id
       }));
 
+      // add innovator role
+      const userRole = await transactionManager.save(UserRoleEntity, UserRoleEntity.new({ user: dbUser, role: ServiceRoleEnum.INNOVATOR, organisation: dbOrganisation }));
 
       // Accept last terms of use released.
       const lastTermsOfUse = await this.sqlConnection.createQueryBuilder(TermsOfUseEntity, 'termsOfUse')
