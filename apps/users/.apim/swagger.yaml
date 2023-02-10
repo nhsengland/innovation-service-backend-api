@@ -475,6 +475,43 @@ paths:
                     description: Unique identifier for survey object
         "400":
           description: Invalid survey payload
+  "/v1/{userId}":
+    get:
+      operationId: v1-users-info
+      description: Get user info
+      tags:
+        - "[v1] Users"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The user ID
+        - name: model
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - minimal
+              - full
+            description: The model to use for the response
+            default: minimal
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for user object
+        "403":
+          description: Forbidden
   /v1:
     get:
       operationId: v1-users-list
