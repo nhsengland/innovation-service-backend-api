@@ -134,3 +134,43 @@ export type InnovationSupportsLogType = {
     };
   }[];
 }
+
+export type InnovationSuggestionsType = {
+  accessors?: InnovationSuggestionAccessor[];
+  assessment?: {
+    id?: string,
+    suggestedOrganisationUnits?: {
+      id: string;
+      name: string;
+      acronym: string | null;
+      organisation: {
+        id: string;
+        name: string;
+        acronym: string | null;
+      };
+    }[];
+  };
+}
+
+export type InnovationSuggestionAccessor = {
+  organisationUnit: null | {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  };
+  suggestedOrganisationUnits?: {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  }[];
+}
