@@ -187,7 +187,7 @@ export class UsersService extends BaseService {
             updatedBy: requestUser.id
           }));
 
-        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: data.type, organisation: organisation, organisationUnit: unit }));
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum[data.role], organisation: organisation, organisationUnit: unit }));
       }
 
       // needs assessor type
