@@ -2088,6 +2088,24 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+    post:
+      description: Create support logs for an Innovation
+      operationId: v1-innovation-support-logs-create
+      tags:
+        - Create Innovation Support Logs
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.
+        "401":
+          description: Unauthorised
+        "404":
+          description: Not Found
   "/v1/{innovationId}/threads":
     post:
       summary: Create a new editable thread

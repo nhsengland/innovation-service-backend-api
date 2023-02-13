@@ -380,6 +380,93 @@ export class InnovationSupportsService extends BaseService {
 
   }
 
+  async createInnovationSupportLogs(
+    user: { id: string, identityId: string },
+    domainContext: DomainContextType,
+    innovationId: string,
+    data: { type: InnovationSupportLogTypeEnum, description: string, organisationUnits?: string[] },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
+
+    if (!organisationUnitId) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
+    }
+
+    const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
+    .innerJoinAndSelect('innovation.owner', 'owner')
+    .leftJoinAndSelect('innovation.sections', 'sections')
+    .leftJoinAndSelect('innovation.innovationSupports', 'supports')
+    .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
+    .where('innovation.id = :innovationId', { innovationId })
+    .getOne();
+
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const innovationSupport = innovation.innovationSupports.find(
+      (sup) => sup.organisationUnit.id === organisationUnitId
+    );
+
+    const result = await connection.transaction(async transaction => {
+      const supportLogObj = InnovationSupportLogEntity.new({
+        createdBy: user.id,
+        updatedBy: user.id,
+        innovation,
+        innovationSupportStatus: innovationSupport && innovationSupport.status? innovationSupport.status : InnovationSupportStatusEnum.UNASSIGNED,
+        type: data.type,
+        description: data.description,
+        suggestedOrganisationUnits: (data.organisationUnits || []).map((id: string) => OrganisationUnitEntity.new({ id }))
+      });
+
+      const savedSupportLog = await transaction.save(InnovationSupportLogEntity, supportLogObj);
+
+      if (data.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION && 
+        data?.organisationUnits &&
+        data?.organisationUnits.length > 0
+      ) {
+        const units = await connection.createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .where('unit.id IN (:...organisationUnits)', { organisationUnits: data?.organisationUnits })
+          .getRawMany();
+
+        await this.domainService.innovations.addActivityLog(
+          transaction,
+          { 
+            userId: user.id, 
+            innovationId, 
+            activity: ActivityEnum.ORGANISATION_SUGGESTION, 
+            domainContext 
+          },
+          {
+            organisations: units.map((unit) => unit.unit_name),
+          }
+        );
+
+      }
+
+      return savedSupportLog;
+    });
+
+    if (data.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION && 
+      data?.organisationUnits &&
+      data?.organisationUnits.length > 0
+    ) {
+      await this.notifierService.send(
+        user,
+        NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
+        {
+          innovationId,
+          organisationUnitIds: data.organisationUnits
+        },
+        domainContext,
+      );
+    }
+
+    return result;
+  }
 
   async updateInnovationSupport(
     user: { id: string, identityId: string },
