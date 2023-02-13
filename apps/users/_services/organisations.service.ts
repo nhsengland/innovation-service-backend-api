@@ -3,9 +3,9 @@ import { injectable } from 'inversify';
 import { OrganisationEntity, OrganisationUnitEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum } from '@users/shared/enums';
 
-import { BaseService } from './base.service';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import type { EntityManager } from 'typeorm';
+import { BaseService } from './base.service';
 
 
 @injectable()
@@ -14,7 +14,7 @@ export class OrganisationsService extends BaseService {
   constructor() { super(); }
 
 
-  async getOrganisationsList(filters: { fields?: ('organisationUnits')[], withInactive?: boolean }): Promise<{ id: string, name: string, acronym: string, organisationUnits?: { id: string; name: string; acronym: string; }[] }[]> {
+  async getOrganisationsList(filters: { fields?: ('organisationUnits')[], withInactive?: boolean }): Promise<{ id: string, name: string, acronym: string, isActive: boolean, organisationUnits?: { id: string; name: string; acronym: string; isActive: boolean;}[] }[]> {
 
     const query = this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
       .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR });
@@ -41,12 +41,14 @@ export class OrganisationsService extends BaseService {
         id: organisation.id,
         name: organisation.name,
         acronym: organisation.acronym ?? '',
+        isActive: !organisation.inactivatedAt,
 
         ...(!filters.fields?.includes('organisationUnits') ? {} : {
           organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
             id: organisationUnit.id,
             name: organisationUnit.name,
-            acronym: organisationUnit.acronym
+            acronym: organisationUnit.acronym,
+            isActive: !organisationUnit.inactivatedAt,
           }))
         })
 

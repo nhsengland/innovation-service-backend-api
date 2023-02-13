@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
-import { JoiHelper } from '@users/shared/helpers';
 import { ServiceRoleEnum } from '@users/shared/enums';
+import { JoiHelper } from '@users/shared/helpers';
 
 
 export type QueryParamsType = {
