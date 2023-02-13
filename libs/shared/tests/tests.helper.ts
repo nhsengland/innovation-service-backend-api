@@ -100,7 +100,7 @@ export class TestsHelper {
       const innovation = await helper.createInnovation()
         .setOwner(innovator)
         .withSupportsAndAccessors(organisationUnit, [accessorOrgUnitUser])
-        .withActions(accessor.id)
+        .withActions(accessor.id, accessor.serviceRoles[0]!)
         .withSections()
         .withAssessments(assessmentUser)
         .build(entityManager);

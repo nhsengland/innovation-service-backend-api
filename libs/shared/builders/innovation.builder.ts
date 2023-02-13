@@ -1,6 +1,6 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
+import { InnovationEntity, UserRoleEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
 import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
@@ -18,6 +18,7 @@ export class InnovationBuilder {
   private _withSupportsAndAccessors = false;
   private _withActions = false;
   private _withActionCreatedBy = '';
+  private _withActionUserRole: UserRoleEntity;
   private _withAssessments = false;
   private _withReassessment: boolean;
 
@@ -123,9 +124,10 @@ export class InnovationBuilder {
     return this;
   }
 
-  withActions(createdBy: string): InnovationBuilder {
+  withActions(createdBy: string, actionUserRole: UserRoleEntity): InnovationBuilder {
     this._withActions = true;
     this._withActionCreatedBy = createdBy;
+    this._withActionUserRole = actionUserRole;
     return this;
   }
 
@@ -198,7 +200,10 @@ export class InnovationBuilder {
           .setStatus(InnovationSupportStatusEnum.WAITING).build(entityManager);
       }
 
-      await new InnovationActionBuilder(this._withActionCreatedBy, section, support).build(entityManager);
+      await new InnovationActionBuilder(this._withActionCreatedBy, section, support)
+        .setCreatedByUserRole(this._withActionUserRole)
+        .setUpdatedByUserRole(this._withActionUserRole)
+        .build(entityManager);
     }
 
     if (this._withAssessments) {
