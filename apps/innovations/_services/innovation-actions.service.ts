@@ -469,10 +469,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
-    data: { status: InnovationActionStatusEnum, message: string }
+    data: { status: InnovationActionStatusEnum, message: string },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await connection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'section')
       .where('action.id = :actionId', { actionId })
       .getOne();
@@ -485,7 +488,7 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     await this.notifierService.send(
       { id: user.id, identityId: user.identityId, type: user.type },

@@ -2,7 +2,7 @@
 import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
 import { container } from '../_config';
 
-import { InnovationActionEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationStatusEnum, NotificationContextTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
 import type { ForbiddenError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
@@ -11,6 +11,7 @@ import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
+import { InnovationThreadsService } from './innovation-threads.service';
 import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from './interfaces';
 
 describe('Innovation Actions Suite', () => {
@@ -647,11 +648,11 @@ describe('Innovation Actions Suite', () => {
   describe('updateActionAsAccessor', () => {
 
     let actitivityLogSpy: jest.SpyInstance<unknown>;
-    let notifierSend: jest.SpyInstance<unknown>;
+    let notifierSendSpy: jest.SpyInstance<unknown>;
 
     beforeEach(async () => {
       actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      notifierSend = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+      notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
     });
 
     it('should update action from status REQUESTED to CANCELLED', async () => {
@@ -679,7 +680,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.CANCELLED);
     });
@@ -709,7 +710,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.COMPLETED);
     });
@@ -739,7 +740,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.REQUESTED);
     });
@@ -858,11 +859,11 @@ describe('Innovation Actions Suite', () => {
   describe('updateActionAsNeedsAccessor', () => {
 
     let actitivityLogSpy: jest.SpyInstance<unknown>;
-    let notifierSend: jest.SpyInstance<unknown>;
+    let notifierSendSpy: jest.SpyInstance<unknown>;
 
     beforeEach(async () => {
       actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      notifierSend = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+      notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
     });
 
     it('should update action from status REQUESTED to CANCELLED', async () => {
@@ -890,7 +891,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.CANCELLED);
     });
@@ -920,7 +921,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.COMPLETED);
     });
@@ -950,7 +951,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.REQUESTED);
     });
@@ -958,9 +959,9 @@ describe('Innovation Actions Suite', () => {
     it('should update action from status REQUESTED to CANCELLED requested by other NA', async () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const otherAssessmentUser = await TestsHelper.TestDataBuilder
-      .createUser()
-      .ofType(UserTypeEnum.ASSESSMENT)
-      .build(em);
+        .createUser()
+        .ofType(UserTypeEnum.ASSESSMENT)
+        .build(em);
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
@@ -984,7 +985,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       expect(actitivityLogSpy).toHaveBeenCalled();
-      expect(notifierSend).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateAction.id).toBe(action.id);
       expect(dbAction!.status).toBe(InnovationActionStatusEnum.REQUESTED);
     });
@@ -1127,5 +1128,142 @@ describe('Innovation Actions Suite', () => {
       expect(err).toBeDefined();
       expect(err?.name).toBe('IA.0090');
     });
+  });
+
+  describe('updateActionAsInnovator', () => {
+
+    let actitivityLogSpy: jest.SpyInstance<unknown>;
+    let notifierSendSpy: jest.SpyInstance<unknown>;
+    let createThreadOrMessageSpy: jest.SpyInstance<unknown>;
+
+    beforeEach(async () => {
+      actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+      createThreadOrMessageSpy = jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
+        thread: new InnovationThreadEntity(),
+        message: new InnovationThreadMessageEntity()
+      });
+    });
+
+    it('should update action from status REQUESTED to DECLINED from a NA action', async () => {
+      const innovator = testData.baseUsers.innovator;
+      const assessmentUser = testData.baseUsers.assessmentUser;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsInnovator(
+        { id: innovator.id, identityId: innovator.identityId, type: innovator.type },
+        testData.domainContexts.innovator,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.DECLINED,
+          message: randText()
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(createThreadOrMessageSpy).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.DECLINED);
+    });
+
+    it('should update action from status REQUESTED to DECLINED from a QA action', async () => {
+      const innovator = testData.baseUsers.innovator;
+      const accessor = testData.baseUsers.accessor;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .setStatus(InnovationActionStatusEnum.REQUESTED)
+        .build(em);
+
+      const updateAction = await sut.updateActionAsInnovator(
+        { id: innovator.id, identityId: innovator.identityId, type: innovator.type },
+        testData.domainContexts.innovator,
+        innovation.id,
+        action.id,
+        {
+          status: InnovationActionStatusEnum.DECLINED,
+          message: randText()
+        },
+        em
+      );
+
+      const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'actions')
+        .where('actions.id = :actionId', { actionId: updateAction.id })
+        .getOne();
+
+      expect(actitivityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(createThreadOrMessageSpy).toHaveBeenCalled();
+      expect(updateAction.id).toBe(action.id);
+      expect(dbAction!.status).toBe(InnovationActionStatusEnum.DECLINED);
+    });
+
+    it('should not update if action doesn\'t exist', async () => {
+      const innovator = testData.baseUsers.innovator;
+
+      let err: NotFoundError | null = null;
+      try {
+        await sut.updateActionAsInnovator(
+          { id: innovator.id, identityId: innovator.identityId, type: innovator.type },
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          randUuid(),
+          {
+            status: InnovationActionStatusEnum.DECLINED,
+            message: randText()
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0090');
+    });
+
+    it('should not be updated if the action is not in the REQUESTED status', async () => {
+      const innovator = testData.baseUsers.innovator;
+      const innovation = testData.innovation;
+
+      const action = await TestsHelper.TestDataBuilder
+        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .build(em);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.updateActionAsInnovator(
+          { id: innovator.id, identityId: innovator.identityId, type: innovator.type },
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          action.id,
+          {
+            status: InnovationActionStatusEnum.DECLINED,
+            message: randText()
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('IA.0091');
+    });
+
   });
 });
