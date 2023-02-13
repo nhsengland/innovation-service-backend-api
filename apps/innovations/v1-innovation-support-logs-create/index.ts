@@ -41,8 +41,7 @@ class V1InnovationsSupportLogCreate {
         body
       );
 
-
-      context.res = ResponseHelper.Ok<ResponseDTO[]>(result);
+      context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
 
     } catch (error) {
