@@ -1,6 +1,7 @@
-import type{
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import type {
   ClinicalEvidenceTypeCatalogueEnum,
-  EvidenceTypeCatalogueEnum,
+  EvidenceTypeCatalogueEnum
 } from '@innovations/shared/enums';
 import Joi from 'joi';
 
@@ -21,7 +22,7 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   evidenceType: Joi.string().allow(null).allow('').required().description('The evidence type.'),
   clinicalEvidenceType: Joi.string().allow(null).allow('').optional().description('The clinical evidence type.'),
-  description: Joi.string().allow(null).allow('').required().description('The evidence description.'),
-  summary: Joi.string().max(50).allow(null).allow('').required().description('Small summary of the evidence.'),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).allow('').required().description('The evidence description.'),
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null).allow('').required().description('Small summary of the evidence.'),
   files: Joi.array().items(Joi.string()).required().description('Files to support the evidence.'),
-}).required()
+}).required();
