@@ -1,6 +1,6 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,10 +17,11 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -51,7 +52,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION, id: this.inputData.assessmentId },
-        users: [{ userId: innovation.owner.id, userType: UserTypeEnum.INNOVATOR }],
+        users: [{ userId: innovation.owner.id }],
         params: {}
       });
     }
@@ -80,7 +81,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_COMPLETED, id: this.inputData.assessmentId },
-      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, userType: UserTypeEnum.ACCESSOR, organisationUnitId: user.organisationUnitId })),
+      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, userType: ServiceRoleEnum.QUALIFYING_ACCESSOR, organisationUnitId: user.organisationUnitId })),
       params: {}
     });
     

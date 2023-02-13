@@ -1,11 +1,12 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
-import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, UserTypeEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
+import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
+import { InnovationReassessmentBuilder } from './innovation-reassessment.builder';
 
 
 export class InnovationBuilder {
@@ -18,10 +19,12 @@ export class InnovationBuilder {
   private _withActions = false;
   private _withActionCreatedBy = '';
   private _withAssessments = false;
+  private _withReassessment: boolean;
 
   private _organisationUnit: OrganisationUnitEntity;
   private _organisationUnitUsers: OrganisationUnitUserEntity[];
   private _assessmentUser: UserEntity;
+  
 
   constructor() {
     this.innovation = {
@@ -84,7 +87,8 @@ export class InnovationBuilder {
       problemsTackled: randText(),
       sellExpectations: randText(),
       surveyId: randUuid(),
-      status: InnovationStatusEnum.IN_PROGRESS
+      status: InnovationStatusEnum.IN_PROGRESS,
+      assessments: [],
     };
 
   }
@@ -126,7 +130,7 @@ export class InnovationBuilder {
   }
 
   withAssessments(assignTo: UserEntity): InnovationBuilder {
-    if (assignTo.type !== UserTypeEnum.ASSESSMENT) {
+    if (!assignTo.serviceRoles.map(s => s.role).includes(ServiceRoleEnum.ASSESSMENT)) {
       throw new Error('Cannot assign an assessment to a non-assessment user');
     }
     this._assessmentUser = assignTo;
@@ -134,6 +138,14 @@ export class InnovationBuilder {
     return this;
   }
 
+  withReassessment(): InnovationBuilder {
+    if (!this._withAssessments) {
+      throw new Error('Cannot create a reassessment without an assessment');
+    }
+
+    this._withReassessment = true;
+    return this;
+  }
 
   async build(entityManager: EntityManager): Promise<InnovationEntity> {
 
@@ -190,13 +202,27 @@ export class InnovationBuilder {
     }
 
     if (this._withAssessments) {
-      await new InnovationAssessmentBuilder(innovation)
-        .setAssignTo(this._assessmentUser).build(entityManager);
+      const assessment = await new InnovationAssessmentBuilder(innovation)
+        .setAssignTo(this._assessmentUser)
+        .build(entityManager);
+
+      this.innovation.assessments?.push(assessment);
+    }
+
+    if (this._withReassessment) {
+      if (!innovation.assessments[0]) {
+        throw new Error('Cannot create reassessment without assesment')
+      }
+      await new InnovationReassessmentBuilder(innovation, innovation.assessments[0])
+        .build(entityManager);
     }
 
     const ret = await entityManager.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
+      .leftJoinAndSelect('innovation.assessments', 'assessments')
+      .leftJoinAndSelect('assessments.assignTo', 'assignedAssessors')
+      .leftJoinAndSelect('assessments.organisationUnits', 'suggestedOrganisationUnits')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('supports.organisationUnitUsers', 'accessors')

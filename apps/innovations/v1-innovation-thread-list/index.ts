@@ -61,7 +61,7 @@ class V1InnovationThreadCreate {
             createdBy: {
               id: thread.lastMessage.createdBy.id,
               name: thread.lastMessage.createdBy.name,
-              type: thread.lastMessage.createdBy.type,
+              type: thread.lastMessage.createdBy.role,
               organisationUnit: {
                 id: thread.lastMessage.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
                 name: thread.lastMessage.createdBy.organisationUnit?.name ?? '', // if the organisationUnit exists, then all props are ensured to exist

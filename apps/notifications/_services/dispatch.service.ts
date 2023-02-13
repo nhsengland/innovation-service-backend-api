@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { InnovationEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity, UserEntity } from '@notifications/shared/entities';
-import type { NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
@@ -56,7 +56,7 @@ export class DispatchService extends BaseService {
     requestUser: { id: string },
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-    users: { userId: string, userType: UserTypeEnum, organisationUnitId?: string | undefined}[],
+    users: { userId: string, organisationUnitId?: string | undefined}[],
     params: { [key: string]: string | number | string[] },
   ): Promise<{ id: string }> {
 

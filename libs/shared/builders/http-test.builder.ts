@@ -1,7 +1,7 @@
 
 import type { Context, HttpMethod, HttpRequest, Logger } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
-import { UserTypeEnum } from '../enums';
+
 import type { CustomContextType } from '../types';
 
 
@@ -36,7 +36,7 @@ export class HttpTestBuilder {
           name: randUserName(),
         },
         context: {
-          userType: UserTypeEnum.INNOVATOR
+          
         }
       },
       log: this.logger,

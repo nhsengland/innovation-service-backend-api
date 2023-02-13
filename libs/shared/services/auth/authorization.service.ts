@@ -4,7 +4,7 @@ import { inject, injectable } from 'inversify';
 import { NotifierTypeEnum } from '../../enums';
 import { ForbiddenError, GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 import { SLSEventTypeEnum, SLSModel } from '../../schemas/sls.schema';
-import type { CustomContextType } from '../../types';
+import type { CustomContextType, DomainContextType } from '../../types';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '../interfaces';
 import { AuthorizationValidationModel } from './authorization-validation.model';
 
@@ -23,8 +23,8 @@ export class AuthorizationService {
   */
   validate(ctx: CustomContextType): AuthorizationValidationModel {
     const authInstance = new AuthorizationValidationModel(this.domainService);
-    if (ctx.auth.user.identityId) { authInstance.setUser(ctx.auth.user.identityId); }
-    if (ctx.auth.context) { authInstance.setContext(ctx.auth.context); }
+    if (ctx.auth?.user.identityId) { authInstance.setUser(ctx.auth.user.identityId); }
+    if (ctx.auth?.context) { authInstance.setContext(ctx.auth.context); }
     return authInstance;
   }
 
@@ -33,14 +33,14 @@ export class AuthorizationService {
   * SLS (Second level security) methods.
   */
 
-  async validateSLS(identityId: string, eventType: SLSEventTypeEnum, id?: string, code?: string): Promise<{ isValid: boolean, id?: string }> {
+  async validateSLS(identityId: string, eventType: SLSEventTypeEnum, domainContext: DomainContextType, id?: string, code?: string): Promise<{ isValid: boolean, id?: string }> {
 
     const isValid = await this.verifySLS(identityId, eventType, id, code);
     if (isValid) {
       return { isValid: true };
     }
 
-    const slsId = await this.generateSLS(identityId, eventType);
+    const slsId = await this.generateSLS(identityId, eventType, domainContext);
 
     throw new ForbiddenError(GenericErrorsEnum.SLS_AUTHORIZATION, {
       message: 'SLS verification needed! Repeat the operation resending the SLS id with the user supplied code',
@@ -76,7 +76,7 @@ export class AuthorizationService {
 
   }
 
-  private async generateSLS(identityId: string, eventType: SLSEventTypeEnum): Promise<string> {
+  private async generateSLS(identityId: string, eventType: SLSEventTypeEnum, domainContext: DomainContextType): Promise<string> {
 
     const user = await this.domainService.users.getUserInfo({ identityId });
 
@@ -95,9 +95,10 @@ export class AuthorizationService {
 
     // Send notification to user with code.
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId, type: user.type },
+      { id: user.id, identityId: user.identityId },
       NotifierTypeEnum.SLS_VALIDATION,
-      { code }
+      { code },
+      domainContext,
     );
 
     return dbCode.get('_id').toString();

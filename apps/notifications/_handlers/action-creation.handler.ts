@@ -1,4 +1,4 @@
-import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
@@ -21,9 +21,9 @@ export class ActionCreationHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION],
-    domainContext?: DomainContextType
+    domainContext: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
@@ -31,7 +31,7 @@ export class ActionCreationHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    if (this.requestUser.type !== UserTypeEnum.ACCESSOR) {
+    if (![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(this.domainContext.currentRole.role as ServiceRoleEnum)) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
@@ -61,7 +61,7 @@ export class ActionCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_CREATION, id: this.inputData.action.id },
-      users: [{ userId: innovation.owner.id, userType: UserTypeEnum.INNOVATOR }],
+      users: [{ userId: innovation.owner.id, organisationUnitId: this.domainContext.organisation?.organisationUnit?.id }],
       params: {
         section: this.inputData.action.section
       },

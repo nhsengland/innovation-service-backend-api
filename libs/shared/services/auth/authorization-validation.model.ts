@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 
 import {
-  AccessorOrganisationRoleEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum, UserTypeEnum
+  AccessorOrganisationRoleEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum
 } from '../../enums';
 import { ForbiddenError, UnprocessableEntityError } from '../../errors';
 import type { AccessorDomainContextType, AuthContextType, DomainContextType, DomainUserInfoType, InnovatorDomainContextType } from '../../types';
@@ -26,6 +26,8 @@ export enum AuthErrorsEnum {
   AUTH_INNOVATION_STATUS_NOT_ALLOWED = 'AUTH.0103',
   AUTH_MISSING_ORGANISATION_UNIT_CONTEXT = 'AUTH.0201',
   AUTH_MISSING_ORGANISATION_CONTEXT = 'AUTH.0202',
+  AUTH_MISSING_CURRENT_ROLE = 'AUTH.0203',
+  AUTH_MISSING_DOMAIN_CONTEXT = 'AUTH.0204',
   AUTH_INCONSISTENT_DATABASE_STATE = 'AUTH.0203',
 }
 
@@ -44,7 +46,7 @@ export class AuthorizationValidationModel {
 
   private user: { identityId?: string, data?: DomainUserInfoType } = {};
   private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum } } = {};
-  private domainContext: { userType?: UserTypeEnum, organisationUnitId?: string, organisationId?: string, data?: DomainContextType } = {};
+  private domainContext: { role?: ServiceRoleEnum, organisationUnitId?: string, organisationId?: string, data?: DomainContextType } = {};
 
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
@@ -103,10 +105,10 @@ export class AuthorizationValidationModel {
 
     let error: null | AuthErrorsEnum = null;
 
-    if (this.user.data?.type !== 'ADMIN') {
+    if (this.domainContext.data?.currentRole.role !== ServiceRoleEnum.ADMIN) {
       error = AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
     }
-    if (!error && data?.role && !data.role.some(role => this.user.data?.roles.includes(role))) {
+    if (!error && data?.role && !data.role.some(role => this.user.data?.roles.map(r => r.role).includes(role))) {
       error = AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED;
     }
 
@@ -119,7 +121,7 @@ export class AuthorizationValidationModel {
     return this;
   }
   private assessmentTypeValidation(): null | AuthErrorsEnum {
-    return this.user.data?.type === 'ASSESSMENT' ? null : AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
+    return this.domainContext.data?.currentRole.role === ServiceRoleEnum.ASSESSMENT ? null : AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
   }
 
   checkAccessorType(data?: { organisationRole?: AccessorOrganisationRoleEnum[], organisationId?: string, organisationUnitId?: string }): this {
@@ -130,7 +132,7 @@ export class AuthorizationValidationModel {
 
     let error: null | AuthErrorsEnum = null;
 
-    if (this.user.data?.type !== 'ACCESSOR') {
+    if (![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(this.domainContext.data?.currentRole.role as ServiceRoleEnum)) {
       error = AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
     }
 
@@ -167,7 +169,7 @@ export class AuthorizationValidationModel {
 
     let error: null | AuthErrorsEnum = null;
 
-    if (this.user.data?.type !== 'INNOVATOR') {
+    if (this.domainContext.data?.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       error = AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
     }
 
@@ -220,26 +222,62 @@ export class AuthorizationValidationModel {
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     if (!this.user.data) { this.user.data = await this.fetchUserData(this.user.identityId); }
 
-    // TODO: This will change with the roles and the selection will be by role in the near future but should be basically the same
-    // Assigns the correct domainContext based on the user type
-    switch(this.user.data.type) {
-      case 'INNOVATOR':
-        this.domainContext.data = this.getInnovatorDomainContextType(this.user.data, this.domainContext.organisationId);
-        break;
-      case UserTypeEnum.ACCESSOR:
-        this.domainContext.data = this.getAccessorDomainContextType(this.user.data, this.domainContext.organisationUnitId);
-        break;
-      case 'ASSESSMENT':
-      case 'ADMIN':
-        this.domainContext.data = {
-          id: this.user.data.id,
-          identityId: this.user.data.identityId,
-          userType: this.user.data.type
-        };
-        break;
-      default:
-        throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN);
+    if (!this.domainContext.data?.currentRole) {
+
+      // get user role from db
+
+      const userRole = await this.domainService.context.getUserContextRole(this.user.identityId, this.domainContext.role);
+
+      if (!userRole) {
+        throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_CURRENT_ROLE);
+      }
+      
+      // Assigns the correct domainContext based on the user type
+      const currentRole = { id: userRole.id, role: userRole.role };
+
+      switch(currentRole.role) {
+        case ServiceRoleEnum.INNOVATOR:
+          this.domainContext.data = {
+            ...this.getInnovatorDomainContextType(this.user.data, currentRole ,this.domainContext.organisationId),
+            currentRole: {
+              id: currentRole.id,
+              role: currentRole.role,
+            },
+          };
+          break;
+        case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        case ServiceRoleEnum.ACCESSOR:
+          this.domainContext.data = this.getAccessorDomainContextType(this.user.data, currentRole, this.domainContext.organisationUnitId);
+          break;
+        case ServiceRoleEnum.ASSESSMENT:
+          this.domainContext.data = {
+            id: this.user.data.id,
+            identityId: this.user.data.identityId,
+            currentRole: {
+              id: currentRole.id,
+              role: currentRole.role,
+            },
+          };
+          break;
+        case ServiceRoleEnum.ADMIN:
+          this.domainContext.data = {
+            id: this.user.data.id,
+            identityId: this.user.data.identityId,
+            currentRole: {
+              id: currentRole.id,
+              role: currentRole.role,
+            },
+          };
+          break;
+        default:
+          throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN);
+      }
     }
+
+    if (!this.user.data.roles.map(r => r.role).includes(this.domainContext.data?.currentRole.role as ServiceRoleEnum)) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED);
+    }
+
 
     if (!this.user.data.isActive) {
       throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_ACTIVE);
@@ -261,7 +299,7 @@ export class AuthorizationValidationModel {
 
       validations = [];
       if (!this.innovation.id) { throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED); }
-
+      if (!this.domainContext.data) { throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_DOMAIN_CONTEXT); }
       if (!this.innovation.data) { this.innovation.data = await this.fetchInnovationData(this.user.data, this.innovation.id, this.domainContext.data); }
 
       this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
@@ -277,10 +315,13 @@ export class AuthorizationValidationModel {
   }
 
 
-  private getAccessorDomainContextType(userData: DomainUserInfoType, organisationUnitId?: string): AccessorDomainContextType {
+  private getAccessorDomainContextType(userData: DomainUserInfoType, currentRole: {id: string; role: ServiceRoleEnum}, organisationUnitId?: string): AccessorDomainContextType {
 
-    // This should never happen, but just in case. If the method wasn't private I'd force it in the signature but this is all changing soon.
-    if(userData.type !== 'ACCESSOR') { throw new ForbiddenError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE); }
+    const role = currentRole;
+
+    if (role.role !== ServiceRoleEnum.QUALIFYING_ACCESSOR && role.role !== ServiceRoleEnum.ACCESSOR) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED);
+    }
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     // if an organisation unit was not issued, use the first organisation unit of 
@@ -309,7 +350,6 @@ export class AuthorizationValidationModel {
     return {
       id: userData.id,
       identityId: userData.identityId,
-      userType: userData.type,
       organisation: {
         id: organisation.id,
         name: organisation.name,
@@ -326,13 +366,17 @@ export class AuthorizationValidationModel {
           }
         },
       },
+      currentRole: { id: role.id, role: role.role },
     };
   }
 
-  private getInnovatorDomainContextType(userData: DomainUserInfoType, organisationId?: string): InnovatorDomainContextType {
+  private getInnovatorDomainContextType(userData: DomainUserInfoType, currentRole: {id: string; role: ServiceRoleEnum },organisationId?: string): InnovatorDomainContextType {
 
-    // This should never happen, but just in case. If the method wasn't private I'd force it in the signature but this is all changing soon.
-    if(userData.type !== 'INNOVATOR') { throw new ForbiddenError(AuthErrorsEnum.AUTH_INCONSISTENT_DATABASE_STATE); }
+    const role = currentRole;
+
+    if (role.role !== ServiceRoleEnum.INNOVATOR) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED);
+    }
 
     if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
     // if an organisation unit was not issued, use the first organisation unit of 
@@ -351,7 +395,6 @@ export class AuthorizationValidationModel {
     return {
       id: userData.id,
       identityId: userData.identityId,
-      userType: userData.type,
       organisation: {
         id: organisation.id,
         name: organisation.name,
@@ -360,6 +403,7 @@ export class AuthorizationValidationModel {
         size: organisation.size,
         isShadow: organisation.isShadow,
       },
+      currentRole: { id: role.id, role: role.role },
     };
   }
 
@@ -388,20 +432,20 @@ export class AuthorizationValidationModel {
   }
   */
 
-  private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context?: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
+  private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
 
     const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation');
     query.where('innovation.id = :innovationId', { innovationId });
 
-    if (user.type === UserTypeEnum.INNOVATOR) {
+    if (context.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       query.andWhere('innovation.owner_id = :ownerId', { ownerId: user.id });
     }
 
-    if (user.type === UserTypeEnum.ASSESSMENT) {
+    if (context.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
       query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] });
     }
 
-    if (user.type === UserTypeEnum.ACCESSOR) {
+    if (context.currentRole.role === ServiceRoleEnum.ACCESSOR || context.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
 
       // Sanity checks!
       if (!context ||

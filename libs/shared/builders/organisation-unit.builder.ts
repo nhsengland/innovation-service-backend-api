@@ -10,7 +10,7 @@ export class OrganisationUnitBuilder {
     this.organisationUnit = {
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
-      isShadow: randBoolean(),
+      isShadow: randBoolean()
     };
 
   }

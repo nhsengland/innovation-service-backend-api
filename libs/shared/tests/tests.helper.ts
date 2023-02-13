@@ -3,7 +3,7 @@ import { container } from '../config/inversify.config';
 import type { DataSource, EntityManager } from 'typeorm';
 import { TestDataBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
-import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, UserTypeEnum } from '../enums';
+import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
 import type { AccessorDomainContextType, AdminDomainContextType, AssessmentDomainContextType, DomainContextType, InnovatorDomainContextType } from '../types';
 
@@ -78,12 +78,12 @@ export class TestsHelper {
   static async createSampleData(): Promise<TestDataType> {
     const helper = new TestDataBuilder();
 
-    const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager): Promise<TestDataType> => {
-      const innovator = await helper.createUser().ofType(UserTypeEnum.INNOVATOR).build(entityManager);
-      const accessor = await helper.createUser().ofType(UserTypeEnum.ACCESSOR).build(entityManager);
-      const qualifyingAccessor = await helper.createUser().ofType(UserTypeEnum.ACCESSOR).build(entityManager);
-      const assessmentUser = await helper.createUser().ofType(UserTypeEnum.ASSESSMENT).build(entityManager);
-      const admin = await helper.createUser().ofType(UserTypeEnum.ADMIN).build(entityManager);
+    const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager) => {
+      const innovator = await helper.createUser().ofType(ServiceRoleEnum.INNOVATOR).build(entityManager);
+      const accessor = await helper.createUser().ofType(ServiceRoleEnum.ACCESSOR).build(entityManager);
+      const qualifyingAccessor = await helper.createUser().ofType(ServiceRoleEnum.QUALIFYING_ACCESSOR).build(entityManager);
+      const assessmentUser = await helper.createUser().ofType(ServiceRoleEnum.ASSESSMENT).build(entityManager);
+      const admin = await helper.createUser().ofType(ServiceRoleEnum.ADMIN).build(entityManager);
 
       const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
       const accessorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.ACCESSOR).build(entityManager);
@@ -105,7 +105,6 @@ export class TestsHelper {
         .withAssessments(assessmentUser)
         .build(entityManager);
 
-
       return {
         innovation,
         baseUsers: {
@@ -121,7 +120,6 @@ export class TestsHelper {
           accessor: {
             id: accessor.id,
             identityId: accessor.identityId,
-            userType: UserTypeEnum.ACCESSOR,
             organisation: {
               id: accessorOrganisation.id,
               name: accessorOrganisation.name,
@@ -137,12 +135,15 @@ export class TestsHelper {
                   id: accessorOrgUnitUser.id,
                 }
               }
-            }
+            },
+            currentRole: {
+              id: accessor.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.ACCESSOR
+            },
           },
           qualifyingAccessor: {
             id: qualifyingAccessor.id,
             identityId: qualifyingAccessor.identityId,
-            userType: UserTypeEnum.ACCESSOR,
             organisation: {
               id: accessorOrganisation.id,
               name: accessorOrganisation.name,
@@ -158,17 +159,23 @@ export class TestsHelper {
                   id: qaOrgUnitUser.id,
                 }
               }
-            }
+            },
+            currentRole: {
+              id: accessor.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.QUALIFYING_ACCESSOR
+            },
           },
           assessmentUser: {
             id: assessmentUser.id,
             identityId: assessmentUser.identityId,
-            userType: UserTypeEnum.ASSESSMENT,
+            currentRole: {
+              id: accessor.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.ASSESSMENT
+            },
           },
           innovator: {
             id: innovator.id,
             identityId: innovator.identityId,
-            userType: UserTypeEnum.INNOVATOR,
             organisation: {
               id: innovatorOrganisation.id,
               name: innovatorOrganisation.name,
@@ -176,12 +183,19 @@ export class TestsHelper {
               role: innovatorOrgUser.role as InnovatorOrganisationRoleEnum,
               isShadow: true,
               size: innovatorOrganisation.size,
-            }
+            },
+            currentRole: {
+              id: accessor.serviceRoles.find(r => r.id)?.id,
+              role: ServiceRoleEnum.INNOVATOR
+            },
           },
           admin: {
             id: admin.id,
             identityId: admin.identityId,
-            userType: UserTypeEnum.ADMIN
+            currentRole: {
+              id: admin.serviceRoles[0]?.id,
+              role: ServiceRoleEnum.ADMIN
+            }
           }
         },
         //#endregion
@@ -205,28 +219,28 @@ export class TestsHelper {
     });
 
 
-    this.sampleData = retVal;
-    return retVal;
+    this.sampleData = retVal as any;
+    return retVal as any;
   }
 
-  public static getUser(userType: UserTypeEnum): [UserEntity, DomainContextType] {
+  public static getUser(userType: ServiceRoleEnum): [UserEntity, DomainContextType] {
     let user: UserEntity;
     let context: DomainContextType;
 
     switch (userType) {
-      case UserTypeEnum.ADMIN:
+      case ServiceRoleEnum.ADMIN:
         user = this.sampleData.baseUsers.admin;
         context = this.sampleData.domainContexts.admin;
         break;
-      case UserTypeEnum.ACCESSOR:
+      case ServiceRoleEnum.ACCESSOR:
         user = this.sampleData.baseUsers.accessor;
         context = this.sampleData.domainContexts.accessor;
         break;
-      case UserTypeEnum.ASSESSMENT:
+      case ServiceRoleEnum.ASSESSMENT:
         user = this.sampleData.baseUsers.assessmentUser;
         context = this.sampleData.domainContexts.assessmentUser;
         break;
-      case UserTypeEnum.INNOVATOR:
+      case ServiceRoleEnum.INNOVATOR:
         user = this.sampleData.baseUsers.innovator;
         context = this.sampleData.domainContexts.innovator;
         break;

@@ -2,6 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
@@ -29,16 +30,24 @@ class V1OrganisationsList {
         .checkAccessorType()
         .checkInnovatorType()
         .verify();
-      const requestUser = auth.getUserInfo();
+        
+      const domainContext = auth.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: requestUser.type });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole.role });
 
       const result = await organisationsService.getOrganisationsList(queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
         id: item.id,
         name: item.name,
         acronym: item.acronym,
-        ...(item.organisationUnits === undefined ? {} : { organisationUnits: item.organisationUnits }),
+        ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN && { isActive: item.isActive }), // admin only
+        ...(item.organisationUnits && { organisationUnits: item.organisationUnits.map(ou => ({
+            id: ou.id,
+            name: ou.name,
+            acronym: ou.acronym,
+            ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN && { isActive: ou.isActive }), // admin only
+          }))
+        })
       })));
       return;
 

@@ -1,7 +1,7 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { UserEntity, UserPreferenceEntity } from '../../entities';
-import type { PhoneUserPreferenceEnum, UserTypeEnum } from '../../enums';
+import { UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
+import type { PhoneUserPreferenceEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DateISOType, DomainUserInfoType } from '../../types';
 
@@ -31,8 +31,7 @@ export class DomainUsersService {
       .leftJoinAndSelect('userOrganisations.organisation', 'organisation')
       .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
       .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('user.serviceRoles', 'serviceRoles')
-      .leftJoinAndSelect('serviceRoles.role', 'role');
+      .leftJoinAndSelect('user.serviceRoles', 'serviceRoles');
 
     if (data.userId) { query.where('user.id = :userId', { userId: data.userId }); }
     else if (data.identityId) { query.where('user.external_id = :identityId', { identityId: data.identityId }); }
@@ -50,10 +49,10 @@ export class DomainUsersService {
       identityId: authUser.identityId,
       email: authUser.email,
       displayName: authUser.displayName,
-      type: dbUser.type,
-      roles: dbUser.serviceRoles.map(item => item.role.name),
+      roles: dbUser.serviceRoles,
       phone: authUser.mobilePhone,
       isActive: !dbUser.lockedAt,
+      lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
       surveyId: dbUser.surveyId,
@@ -88,9 +87,9 @@ export class DomainUsersService {
     id: string,
     identityId: string,
     displayName: string,
+    roles: UserRoleEntity[];
     email: string,
     mobilePhone: null | string,
-    type: UserTypeEnum
     isActive: boolean,
     lastLoginAt: null | DateISOType
   }[]> {
@@ -109,9 +108,10 @@ export class DomainUsersService {
       return [];
     }
 
-    const query = this.userRepository.createQueryBuilder('users');
-    if (data.userIds) { query.where('id IN (:...userIds)', { userIds: data.userIds }); }
-    else if (data.identityIds) { query.where('external_id IN (:...identityIds)', { identityIds: data.identityIds }); }
+    const query = this.userRepository.createQueryBuilder('users')
+      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles');
+    if (data.userIds) { query.where('users.id IN (:...userIds)', { userIds: data.userIds }); }
+    else if (data.identityIds) { query.where('users.external_id IN (:...identityIds)', { identityIds: data.identityIds }); }
 
     const dbUsers = await query.getMany();
     const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
@@ -128,11 +128,11 @@ export class DomainUsersService {
         id: dbUser.id,
         identityId: dbUser.identityId,
         displayName: identityUser.displayName,
+        roles: dbUser.serviceRoles,
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
-        type: dbUser.type,
         isActive: !dbUser.lockedAt,
-        lastLoginAt: identityUser.lastLoginAt, 
+        lastLoginAt: identityUser.lastLoginAt,
       };
 
     });

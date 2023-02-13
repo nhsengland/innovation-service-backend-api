@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { JoiHelper } from '@users/shared/helpers';
-import { UserTypeEnum } from '@users/shared/enums';
 
 
 export type QueryParamsType = {
@@ -13,7 +13,7 @@ export const QueryParamsSchema = Joi.object({
   fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('organisationUnits')),
   withInactive:
     Joi.when('$userType', {
-      is: UserTypeEnum.ADMIN,
+      is: ServiceRoleEnum.ADMIN,
       then: Joi.boolean().optional(),
       otherwise: Joi.forbidden()
     })

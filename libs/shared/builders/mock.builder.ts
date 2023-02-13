@@ -1,6 +1,7 @@
-import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
+import { randEmail, randPhoneNumber, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { UserEntity } from '../entities';
+import { UserEntity, UserRoleEntity } from '../entities';
+import { ServiceRoleEnum } from '../enums';
 import { DomainUsersService, NOSQLConnectionService } from '../services';
 import { CacheService } from '../services/storage/cache.service';
 import type { DomainUserInfoType } from '../types';
@@ -48,14 +49,14 @@ export class MockBuilder {
     const data =  {
       id: user.id,
       identityId: user.identityId,
-      type: user.type,
       isActive: user.lockedAt === null,
+      lockedAt: user.lockedAt,
       displayName: randUserName(),
       email: randEmail(),
       firstTimeSignInAt: user.firstTimeSignInAt,
       passwordResetAt: null,
       phone: randPhoneNumber(),
-      roles: [],
+      roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })],
       surveyId: null,
       organisations: [],
     } as DomainUserInfoType;
@@ -78,6 +79,7 @@ class DomainUserInfoBuilder {
   async build(entityManager: EntityManager): Promise<MockBuilder> {
 
     const accessor = await entityManager.createQueryBuilder(UserEntity, 'user')
+      .leftJoinAndSelect('user.serviceRoles', 'roles')
       .leftJoinAndSelect('user.userOrganisations', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.organisation', 'organisation')
       .leftJoinAndSelect('organisationUsers.userOrganisationUnits', 'organisationUnitUsers')
@@ -95,6 +97,7 @@ class DomainUserInfoBuilder {
 
       this.user = {
         ...this.user,
+        roles: accessor?.serviceRoles ?? [],
         organisations: [
           {
             id: organisation.id,
@@ -113,7 +116,7 @@ class DomainUserInfoBuilder {
             }] : [],
           }
         ]
-      }
+      };
 
       this.builder.addSpy(jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user));
       return this.builder; 

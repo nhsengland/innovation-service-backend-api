@@ -1,4 +1,4 @@
-import type { UserTypeEnum } from '../enums';
+
 import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 
@@ -53,12 +53,6 @@ export type NotifierTemplatesType = {
     comment?: string
   },
 
-  [NotifierTypeEnum.COMMENT_CREATION]: {
-    innovationId: string,
-    commentId: string,
-    replyToId?: string
-  },
-
   [NotifierTypeEnum.THREAD_CREATION]: {
     innovationId: string,
     threadId: string,
@@ -104,7 +98,7 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.INNOVATION_STOP_SHARING]: {
     innovationId: string,
-    previousAssignedAccessors: { id: string, userType: UserTypeEnum.ACCESSOR, organisationUnitId: string }[],
+    previousAssignedAccessors: { id: string, organisationUnitId: string }[],
     message: string
   },
 

@@ -97,7 +97,7 @@ export class TestDataBuilder {
       updatedBy: configuration.userId,
       param: JSON.stringify({
         actionUserId: configuration.userId,
-        actionUserRole: configuration.domainContext.userType,
+        actionUserRole: configuration.domainContext.currentRole,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
         ...params
       })

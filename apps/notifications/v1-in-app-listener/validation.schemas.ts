@@ -1,14 +1,16 @@
 import Joi from 'joi';
 
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { DomainContextSchema, DomainContextType } from '@notifications/shared/types';
 
 export type MessageType = {
   data: {
     requestUser: { id: string },
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-    users: { userId: string, userType: UserTypeEnum, organisationUnitId?: string | undefined}[];
-    params: { [key: string]: string | number | string[] }
+    users: { userId: string, organisationUnitId?: string | undefined}[];
+    params: { [key: string]: string | number | string[] },
+    domainContext: DomainContextType,
   }
 }
 
@@ -32,12 +34,13 @@ export const MessageSchema = Joi.object<MessageType>({
 
     users: Joi.array().items(Joi.object({
       userId: Joi.string().guid().required(),
-      userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(),
-      organisationUnitId: Joi.string().guid().optional()
+      organisationUnitId: Joi.string().allow(null).guid().optional(),
+      userType: Joi.string().valid(...Object.values(ServiceRoleEnum)).optional(),
     })).required(),
 
-    params: Joi.object().required()
+    params: Joi.object().required(),
 
+    domainContext: DomainContextSchema.required(),
   }).required()
 
 }).required();

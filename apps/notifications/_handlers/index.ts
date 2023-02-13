@@ -3,7 +3,6 @@ export { BaseHandler } from './base.handler';
 export { AccessorUnitChangeHandler } from './accessor-unit-change.handler';
 export { ActionCreationHandler } from './action-creation.handler';
 export { ActionUpdateHandler } from './action-update.handler';
-export { CommentCreationHandler } from './comment-creation.handler';
 export { DailyDigestHandler } from './daily-digest.handler';
 export { IdleInnovatorsHandler } from './idle-innovators.handler';
 export { IdleSupportHandler } from './idle-support.handler';

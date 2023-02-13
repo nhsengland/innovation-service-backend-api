@@ -36,7 +36,7 @@ class V1InnovationSupportCreate {
       const domainContext = auth.getContext();
 
       const result = await innovationSupportsService.createInnovationSupport(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         body

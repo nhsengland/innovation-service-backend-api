@@ -53,5 +53,6 @@ export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
   extra: { options: { enableArithAbort: true, trustServerCertificate: true } },
   migrations: [`${join(__dirname, '..', '..')}/data-access/migrations/*.ts`],
   migrationsTableName: 'Migrations',
-  cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` }
+  cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },
+  // logging: process.env['DB_LOGGING'] === 'true'
 });

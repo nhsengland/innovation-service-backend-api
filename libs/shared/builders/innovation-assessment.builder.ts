@@ -11,7 +11,6 @@ export class InnovationAssessmentBuilder {
   constructor(innovation: InnovationEntity) {
     this.innovationAssessment = InnovationAssessmentEntity.new({
       innovation,
-      finishedAt: randPastDate().toISOString(),
       description: randText(),
       hasCompetitionKnowledge: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
       hasCompetitionKnowledgeComment: randText(),
@@ -30,13 +29,21 @@ export class InnovationAssessmentBuilder {
       maturityLevel: MaturityLevelCatalogueEnum.READY,
       maturityLevelComment: randText(),
       summary: randText(),
-      });
+      updatedAt: randPastDate().toISOString()
+    });
 
     this.innovation = innovation;
   }
 
   setAssignTo(user: UserEntity): InnovationAssessmentBuilder {
     this.innovationAssessment.assignTo = user;
+    this.innovationAssessment.createdBy = user.id;
+    this.innovationAssessment.updatedBy = user.id;
+    return this;
+  }
+
+  isFinished(): InnovationAssessmentBuilder {
+    this.innovationAssessment.finishedAt = randPastDate().toISOString();
     return this;
   }
 
@@ -47,6 +54,7 @@ export class InnovationAssessmentBuilder {
     }
 
     const innovationAssessment = await entityManager.getRepository(InnovationAssessmentEntity).save(this.innovationAssessment);
+
     return innovationAssessment;
   }
 

@@ -1,4 +1,3 @@
-import type { UserTypeEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
@@ -12,7 +11,6 @@ export type ResponseDTO = {
     createdBy: {
       id: string;
       name: string;
-      type: UserTypeEnum;
       organisation: { id: string; name: string; acronym: string | null } | undefined;
       organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
     };

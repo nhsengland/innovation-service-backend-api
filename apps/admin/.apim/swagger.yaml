@@ -119,6 +119,25 @@ paths:
         "500":
           description: An error occurred while creating the organisation.
   "/v1/organisations/{organisationId}":
+    get:
+      description: Get organisation info.
+      operationId: v1-admin-organisation-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
     patch:
       description: Update an organisation.
       operationId: v1-admin-organisation-update
@@ -159,40 +178,62 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
-  /v1/tou:
-    post:
-      description: Create terms of use.
-      operationId: v1-admin-terms-of-use-create
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+    get:
+      description: Get organisation unitinfo.
+      operationId: v1-admin-organisation-unit-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
+    patch:
+      description: Update an organisation unit.
+      operationId: v1-admin-unit-update
+      parameters:
+        - name: organisationId
+          in: path
+          description: The organisation id.
+          required: true
+          schema:
+            type: string
+        - name: organisationUnitId
+          in: path
+          description: The organisation unit id.
+          required: true
+          schema:
+            type: string
       requestBody:
-        description: The terms of use to create.
+        description: New name and acronym for the unit.
         required: true
         content:
           application/json:
             schema:
               type: object
               properties:
-                name:
+                userIds:
                   type: string
-                  description: Name of the terms of use.
-                touType:
-                  type: string
-                  enum:
-                    - INNOVATOR
-                    - SUPPORT_ORGANISATION
-                  description: Type of the terms of use.
-                summary:
-                  type: string
-                  description: Brief summary of the terms of use.
-                releasedAt:
-                  type: string
-                  description: Relase date of the terms of use.
-              required:
-                - name
-                - touType
-              additionalProperties: false
+                  description: Name and acronym for the unit.
       responses:
         "200":
-          description: The terms of use have been created.
+          description: The organisation unit has been updated.
           content:
             application/json:
               schema:
@@ -200,14 +241,62 @@ paths:
                 properties:
                   unitId:
                     type: string
-                    description: Id of the created terms of use.
+                    description: The organisation unit id.
         "400":
           description: Bad request.
         "401":
-          description: The user is not authorized to create terms of use.
+          description: The user is not authorized to update an organisation unit.
+        "404":
+          description: The organisation unit does not exist.
         "500":
-          description: An error occurred while creating the terms of use.
+          description: An error occurred while updating the organisation unit.
   "/v1/tou/{touId}":
+    get:
+      description: Get terms of use.
+      operationId: v1-admin-terms-of-use
+      parameters:
+        - name: touId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The terms of use id.
+      responses:
+        "200":
+          description: The terms of use
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  touType:
+                    type: string
+                    enum:
+                      - INNOVATOR
+                      - SUPPORT_ORGANISATION
+                  summary:
+                    type: string
+                  releaseAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get terms of use.
+        "404":
+          description: The terms of use was not found.
+        "500":
+          description: An error occurred while listing the terms of use.
     put:
       description: Update terms of use.
       operationId: v1-admin-terms-of-use-update
@@ -263,6 +352,126 @@ paths:
           description: The user is not authorized to update terms of use.
         "500":
           description: An error occurred while updating the terms of use.
+  /v1/tou:
+    post:
+      description: Create terms of use.
+      operationId: v1-admin-terms-of-use-create
+      requestBody:
+        description: The terms of use to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the terms of use.
+                touType:
+                  type: string
+                  enum:
+                    - INNOVATOR
+                    - SUPPORT_ORGANISATION
+                  description: Type of the terms of use.
+                summary:
+                  type: string
+                  description: Brief summary of the terms of use.
+                releasedAt:
+                  type: string
+                  description: Relase date of the terms of use.
+              required:
+                - name
+                - touType
+              additionalProperties: false
+      responses:
+        "200":
+          description: The terms of use have been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: Id of the created terms of use.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create terms of use.
+        "500":
+          description: An error occurred while creating the terms of use.
+    get:
+      description: List of terms of use.
+      operationId: v1-admin-terms-of-use-list
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+      responses:
+        "200":
+          description: The list of terms of use versions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                    description: The total number of terms of use.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        touType:
+                          type: string
+                          enum:
+                            - INNOVATOR
+                            - SUPPORT_ORGANISATION
+                        summary:
+                          type: string
+                        releaseAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get terms of use.
+        "500":
+          description: An error occurred while listing the terms of use.
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
     patch:
       description: Activate an organisation unit.
@@ -395,53 +604,6 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while inactivating the organisation unit.
-  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
-    patch:
-      description: Update an organisation unit.
-      operationId: v1-admin-unit-update
-      parameters:
-        - name: organisationId
-          in: path
-          description: The organisation id.
-          required: true
-          schema:
-            type: string
-        - name: organisationUnitId
-          in: path
-          description: The organisation unit id.
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: New name and acronym for the unit.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: string
-                  description: Name and acronym for the unit.
-      responses:
-        "200":
-          description: The organisation unit has been updated.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  unitId:
-                    type: string
-                    description: The organisation unit id.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to update an organisation unit.
-        "404":
-          description: The organisation unit does not exist.
-        "500":
-          description: An error occurred while updating the organisation unit.
   /v1/users:
     post:
       description: Create a user.
@@ -468,6 +630,7 @@ paths:
                     - ADMIN
                     - ACCESSOR
                     - ASSESSMENT
+                    - QUALIFYING_ACCESSOR
                   description: Type of the user.
                 organisationAcronym:
                   type: string

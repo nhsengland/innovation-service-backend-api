@@ -49,7 +49,8 @@ describe('Admin UserService', () => {
 
     try {
       await sut.updateUser(
-        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        { id: accessor.id, identityId: accessor.identityId },
+        testData.domainContexts.accessor,
         testData.baseUsers.innovator.id,
         { accountEnabled: false },
         em,
@@ -73,7 +74,8 @@ describe('Admin UserService', () => {
 
     try {
       await sut.updateUser(
-        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+        { id: accessor.id, identityId: accessor.identityId },
+        testData.domainContexts.accessor,
         testData.baseUsers.innovator.id,
         { accountEnabled: true },
         em,
@@ -95,7 +97,8 @@ describe('Admin UserService', () => {
     jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
     await sut.updateUser(
-      { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
+      { id: accessor.id, identityId: accessor.identityId },
+      testData.domainContexts.accessor,
       testData.baseUsers.accessor.id,
       { role: { name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, organisationId: testData.domainContexts.accessor.organisation!.id } },
       em,

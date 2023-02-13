@@ -1064,11 +1064,12 @@ paths:
                   description: The clinical evidence type.
                 description:
                   type: string
+                  maxLength: 200
                   nullable: true
                   description: The evidence description.
                 summary:
                   type: string
-                  maxLength: 50
+                  maxLength: 500
                   nullable: true
                   description: Small summary of the evidence.
                 files:
@@ -1183,11 +1184,12 @@ paths:
                   description: The clinical evidence type.
                 description:
                   type: string
+                  maxLength: 200
                   nullable: true
                   description: The evidence description.
                 summary:
                   type: string
-                  maxLength: 50
+                  maxLength: 500
                   nullable: true
                   description: Small summary of the evidence.
                 files:
@@ -2914,3 +2916,22 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
+  "/v1/{innovationId}/suggestions":
+    get:
+      description: Get suggestions list of an Innovation
+      operationId: v1-innovation-suggestions
+      tags:
+        - Innovation Suggestions
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found

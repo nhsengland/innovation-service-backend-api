@@ -1,13 +1,15 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { InnovationEntity, InnovationSupportEntity, InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
+import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
 
+import { UserRoleEntity } from '@users/shared/entities';
+import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -15,7 +17,7 @@ export class UsersService extends BaseService {
 
   userRepository: Repository<UserEntity>;
   organisationRepository: Repository<OrganisationEntity>;
-  private cache: CacheConfigType['IdentityUserInfo']
+  private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
     @inject(CacheServiceSymbol) cacheService: CacheServiceType,
@@ -30,7 +32,14 @@ export class UsersService extends BaseService {
   }
 
 
-  async getUserByEmail(email: string, filters: { userTypes: UserTypeEnum[] }): Promise<DomainUserInfoType[]> {
+  /**
+   * returns a user based on email
+   * @param email the email to search
+   * @param filters 
+   *  - userRoles: the user roles to filter by.
+   * @returns the user as an array.
+   */
+  async getUserByEmail(email: string, filters: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
 
     try {
 
@@ -42,7 +51,7 @@ export class UsersService extends BaseService {
       const dbUser = await this.domainService.users.getUserInfo({ identityId: authUser.identityId });
 
       // Apply filters.
-      if (filters.userTypes.length === 0 || (filters.userTypes.length > 0 && filters.userTypes.includes(dbUser.type))) {
+      if (filters.userRoles.length === 0 || (filters.userRoles.length > 0 && filters.userRoles.some(userRole => dbUser.roles.map(r => r.role).includes(userRole)))) {
         return [dbUser];
       } else {
         throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -53,6 +62,89 @@ export class UsersService extends BaseService {
       return [];
     }
 
+  }
+
+  /**
+   * checks if a user exists based on email
+   * @param email the email to search
+   * @returns true if the user exists.
+   */
+  async existsUserByEmail(email: string): Promise<boolean> {
+    const authUser = await this.identityProviderService.getUserInfoByEmail(email);
+    return !!authUser;
+  }
+
+  /**
+   * Returns the user information from the identity provider.
+   * @param userId the user identifier.
+   * @returns the user information.
+   */
+  async getUserById(
+    userId: string,
+    params: {
+      model: 'minimal' | 'full'
+    }
+  ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
+    const user = await this.domainService.users.getUserInfo({ userId });
+    const model = params.model;
+    switch(model) {
+      case 'minimal':
+        return {
+          id: user.id,
+          displayName: user.displayName
+        };
+      case 'full':
+        const innovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+          .select('innovation.id', 'innovation_id')
+          .addSelect('innovation.name', 'innovation_name')
+          .where('innovation.owner_id = :userId', { userId: user.id })
+          .getMany();
+
+        // TODO this is picking only the first for now and will be changed when admin supports more than one role
+        const role = user.roles[0];
+        if(!role) {
+          throw new UnprocessableEntityError(UserErrorsEnum.USER_TYPE_INVALID);
+        }
+
+        const supportMap = new Map();
+        const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
+        if(supportUserId.length > 0) {
+          const supports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
+            .select('organisationUnitUsers.id', 'organisationUnitUsers_id')
+            .addSelect('COUNT(support.id)', 'support_count')
+            .innerJoin('support.organisationUnitUsers', 'organisationUnitUsers')
+            .where('organisationUnitUsers.id IN (:...supportUserId)', { supportUserId })
+            .groupBy('organisationUnitUsers.id')
+            .getRawMany();
+          supports.forEach(s => supportMap.set(s.organisationUnitUsers_id, s.support_count));
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          phone: user.phone,
+          displayName: user.displayName,
+          type: role.role,  // see previous TODO
+          lockedAt: user.lockedAt,
+          innovations: innovations,
+          userOrganisations: user.organisations.map(o => ({
+            id: o.id,
+            name: o.name,
+            size: o.size,
+            role: o.role,
+            isShadow: o.isShadow,
+            units: o.organisationUnits.map(u => ({
+              id: u.id,
+              name: u.name,
+              acronym: u.acronym,
+              supportCount: supportMap.get(u.organisationUnitUser.id)
+            }))
+          }))
+        };
+      default:
+        const unknownModel: never = model;
+        throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID, { details: {model: unknownModel} });
+    }
   }
 
 
@@ -77,12 +169,7 @@ export class UsersService extends BaseService {
 
   async createUserInnovator(user: { identityId: string }, data: { surveyId: null | string }): Promise<{ id: string }> {
 
-    const authUser = await this.identityProviderService.getUserInfo(user.identityId);
-    if (!authUser) {
-      throw new UnprocessableEntityError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-    }
-
-    const identityIdExists = !!(await this.sqlConnection.createQueryBuilder(UserEntity, 'users').where('external_id = :userId', { userId: authUser.identityId }).getCount());
+    const identityIdExists = !!(await this.sqlConnection.createQueryBuilder(UserEntity, 'users').where('external_id = :userId', { userId: user.identityId }).getCount());
     if (identityIdExists) {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
     }
@@ -93,7 +180,6 @@ export class UsersService extends BaseService {
       const dbUser = await transactionManager.save(UserEntity.new({
         identityId: user.identityId,
         surveyId: data.surveyId,
-        type: UserTypeEnum.INNOVATOR
       }));
 
       // Creates default organisation.
@@ -104,7 +190,7 @@ export class UsersService extends BaseService {
         size: null,
         isShadow: true,
         createdBy: dbUser.id,
-        updatedBy: dbUser.id
+        updatedBy: dbUser.id,
       }));
 
       await transactionManager.save(OrganisationUserEntity.new({
@@ -115,6 +201,8 @@ export class UsersService extends BaseService {
         updatedBy: dbUser.id
       }));
 
+      // add innovator role
+      const userRole = await transactionManager.save(UserRoleEntity, UserRoleEntity.new({ user: dbUser, role: ServiceRoleEnum.INNOVATOR, organisation: dbOrganisation }));
 
       // Accept last terms of use released.
       const lastTermsOfUse = await this.sqlConnection.createQueryBuilder(TermsOfUseEntity, 'termsOfUse')
@@ -133,9 +221,23 @@ export class UsersService extends BaseService {
       }
 
       await this.notifierService.send(
-        { id: dbUser.id, identityId: dbUser.identityId, type: dbUser.type },
+        { id: dbUser.id, identityId: dbUser.identityId },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
-        {}
+        {},
+        {
+          id: dbUser.id,
+          identityId: dbUser.identityId,
+          organisation:{
+            id: dbOrganisation.id,
+            isShadow: dbOrganisation.isShadow,
+            name: dbOrganisation.name,
+            size: dbOrganisation.size,
+            acronym: dbOrganisation.acronym,
+            role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+          },
+          currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR},
+
+        },
       );
 
       return { id: dbUser.id };
@@ -146,7 +248,8 @@ export class UsersService extends BaseService {
 
 
   async updateUserInfo(
-    user: { id: string, identityId: string, type: UserTypeEnum, firstTimeSignInAt?: null | DateISOType },
+    user: { id: string, identityId: string, firstTimeSignInAt?: null | DateISOType },
+    currentRole: ServiceRoleEnum | '',
     data: {
       displayName: string,
       contactByEmail?: boolean,
@@ -164,12 +267,12 @@ export class UsersService extends BaseService {
     });
 
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
-    if (user.type === UserTypeEnum.INNOVATOR) {
+    if (currentRole === ServiceRoleEnum.INNOVATOR) {
 
       // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
       // Updates the firstTimeSignInAt with the current date.
       if (!user.firstTimeSignInAt) {
-        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() })
+        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() });
       }
 
       if (data.organisation) {
@@ -238,7 +341,7 @@ export class UsersService extends BaseService {
 
       const result = await transactionManager.save(user);
 
-      return { id: result.id }
+      return { id: result.id };
 
     });
 
@@ -251,18 +354,19 @@ export class UsersService extends BaseService {
    * @returns user object with extra selected fields
    */
   async getUserList(
-    filters: { userTypes: UserTypeEnum[], organisationUnitId?: string, onlyActive?: boolean },
-    fields: ('organisations' | 'units')[]
+    filters: { userTypes: ServiceRoleEnum[], organisationUnitId?: string, onlyActive?: boolean },
+    fields: ('email' | 'organisations' | 'units')[]
   ): Promise<{
     id: string,
-    email: string,
+    email?: string,
     isActive: boolean,
     name: string,
-    type: UserTypeEnum,
+    roles: UserRoleEntity[],
     organisations?: {
+      id: string,
       name: string,
       role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-      units?: { name: string, organisationUnitUserId: string }[]
+      units?: { id: string, name: string, organisationUnitUserId: string }[]
     }[]
   }[]> {
     // [TechDebt]: add pagination if this gets used outside of admin bulk export, other cases always have narrower conditions
@@ -282,15 +386,17 @@ export class UsersService extends BaseService {
 
     // Filters
     if (filters.userTypes.length > 0) {
-      query.andWhere('user.type IN (:...userTypes)', { userTypes: filters.userTypes });
+      query.leftJoinAndSelect('user.serviceRoles', 'serviceRoles');
+      query.andWhere('serviceRoles.role IN (:...userRoles)', { userRoles: filters.userTypes });
     }
     if (filters.organisationUnitId) {
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId });
     }
+
     if (filters.onlyActive) {
       query.andWhere('user.lockedAt IS NULL');
     }
-
+    
     // Get users from database
     const usersFromSQL = await query.getMany();
 
@@ -299,17 +405,19 @@ export class UsersService extends BaseService {
 
     return Promise.all(usersFromSQL.map(async user => {
       let organisations: {
+        id: string,
         name: string,
         role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-        units?: { name: string, organisationUnitUserId: string }[]
+        units?: { id: string, name: string, organisationUnitUserId: string }[]
       }[] | undefined = undefined;
 
       if (fieldSet.has('organisations') || fieldSet.has('units')) {
         const userOrganisations = await user.userOrganisations;
         organisations = userOrganisations.map(o => ({
+          id: o.organisation.id,
           name: o.organisation.name,
           role: o.role,
-          ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
+          ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ id: u.organisationUnit.id, name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
         }));
       }
 
@@ -320,11 +428,11 @@ export class UsersService extends BaseService {
 
       return {
         id: user.id,
-        email: b2cUser.email,
         isActive: !user.lockedAt,
+        roles: user.serviceRoles,
         name: b2cUser.displayName,
-        type: user.type,
-        ...(organisations ? { organisations } : {})
+        ...(fieldSet.has('email') ? { email: b2cUser.email } : {}),
+        ...(organisations ? { organisations } : {}),
       };
 
     }));
@@ -368,7 +476,7 @@ export class UsersService extends BaseService {
       preference = {
         id: userPreferences.id,
         ...preference
-      }
+      };
 
     }
 

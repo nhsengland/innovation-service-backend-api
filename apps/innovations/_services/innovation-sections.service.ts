@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
@@ -24,7 +24,7 @@ export class InnovationSectionsService extends BaseService {
 
 
   async getInnovationSectionsList(
-    user: { type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
   ): Promise<{
@@ -50,7 +50,7 @@ export class InnovationSectionsService extends BaseService {
     let openActions: { section: string, actionsCount: number }[] = [];
 
     if (sections.length > 0) {
-      const actionStatus = [UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(user.type)
+      const actionStatus = [ServiceRoleEnum.ACCESSOR,ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
@@ -63,10 +63,10 @@ export class InnovationSectionsService extends BaseService {
         .andWhere('actions.status = :actionStatus', { actionStatus })
         .groupBy('sections.section');
 
-      if (user.type === UserTypeEnum.ASSESSMENT) {
-        query.andWhere('actions.innovation_support_id IS NULL');
-      } else if(user.type === UserTypeEnum.ACCESSOR) {
-        query.andWhere('actions.innovation_support_id IS NOT NULL');
+      if ((domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.SUBMITTED });
+      } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
       }
 
       openActions = await query.getRawMany();
@@ -93,7 +93,7 @@ export class InnovationSectionsService extends BaseService {
 
 
   async getInnovationSectionInfo(
-    user: { type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     sectionKey: InnovationSectionEnum,
     filters: { fields?: ('actions'[]) },
@@ -131,7 +131,7 @@ export class InnovationSectionsService extends BaseService {
     let sectionData: null | { [key: string]: any } = null;
 
     // BUSINESS RULE: Accessor's (type) cannot view sections in draft.
-    if (user.type !== UserTypeEnum.ACCESSOR || dbSection?.status === InnovationSectionStatusEnum.SUBMITTED) {
+    if (![ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes( domainContext.currentRole.role) || dbSection?.status === InnovationSectionStatusEnum.SUBMITTED) {
       sectionData = await this.parseSectionInformation(
         innovation,
         dbSection?.files,
@@ -146,7 +146,7 @@ export class InnovationSectionsService extends BaseService {
 
     let actions: null | InnovationActionEntity[] = null;
     if (filters.fields?.includes('actions')) {
-      const requestedStatus = [UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(user.type)
+      const requestedStatus = [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
@@ -154,9 +154,9 @@ export class InnovationSectionsService extends BaseService {
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
         .andWhere('actions.status = :requestedStatus', { requestedStatus });
 
-      if (user.type === UserTypeEnum.ASSESSMENT) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
         actionsQuery.andWhere('actions.innovation_support_id IS NULL');
-      } else if(user.type === UserTypeEnum.ACCESSOR) {
+      } else if(domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
         actionsQuery.andWhere('actions.innovation_support_id IS NOT NULL');
       }
 
@@ -271,7 +271,7 @@ export class InnovationSectionsService extends BaseService {
 
 
   async submitInnovationSection(
-    user: { id: string, identityId: string; type: UserTypeEnum },
+    user: { id: string, identityId: string; },
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: InnovationSectionEnum,
@@ -334,7 +334,7 @@ export class InnovationSectionsService extends BaseService {
         );
 
         await this.notifierService.send(
-          { id: user.id, identityId: user.identityId, type: user.type },
+          { id: user.id, identityId: user.identityId },
           NotifierTypeEnum.ACTION_UPDATE,
           {
             innovationId: dbInnovation.id,
@@ -343,7 +343,9 @@ export class InnovationSectionsService extends BaseService {
               section: savedSection.section,
               status: InnovationActionStatusEnum.SUBMITTED
             }
-          });
+          },
+          domainContext,
+        );
       }
 
       return { id: savedSection.id };

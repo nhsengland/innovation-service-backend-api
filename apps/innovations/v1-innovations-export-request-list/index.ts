@@ -28,7 +28,6 @@ class V1InnovationsExportRequestList {
         .checkAccessorType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -37,7 +36,6 @@ class V1InnovationsExportRequestList {
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationRecordExportRequests(
-        { id: requestUser.id, type: requestUser.type, organisations: requestUser.organisations },
         domainContext,
         params.innovationId,
         filters,

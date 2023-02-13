@@ -1,8 +1,9 @@
-import { OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, RoleEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserTypeEnum } from '@admin/shared/enums';
+import { OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { BadRequestError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@admin/shared/errors';
 import { CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import { CacheConfigType, CacheService } from '@admin/shared/services/storage/cache.service';
+import type { DomainContextType } from '@admin/shared/types';
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
@@ -27,7 +28,7 @@ export class UsersService extends BaseService {
    *   - accountEnabled: enable or disable the user
    *   - role: change the user role
    */
-  async updateUser(requestUser: {id: string, identityId: string, type: UserTypeEnum}, userId: string, data: { accountEnabled?: boolean | null, role?: null | { name: AccessorOrganisationRoleEnum, organisationId: string } }, entityManager?: EntityManager): Promise<void> {
+  async updateUser(requestUser: {id: string, identityId: string}, domainContext: DomainContextType, userId: string, data: { accountEnabled?: boolean | null, role?: null | { name: AccessorOrganisationRoleEnum, organisationId: string } }, entityManager?: EntityManager): Promise<void> {
     const manager = entityManager || this.sqlConnection.manager;
 
     await manager.transaction(async transaction => {
@@ -56,6 +57,10 @@ export class UsersService extends BaseService {
         }
 
         await transaction.update(OrganisationUserEntity, { id: organisationUser.id }, { role: data.role.name });
+
+        // TODO: IMPROVE THE SERVICE ROLE INFERENCE
+        await transaction.update(UserRoleEntity, {user: {id: userId} , organisation: {id: data.role.organisationId }}, { role: ServiceRoleEnum[data.role.name] });
+        
       }
 
       // Update identity provider if needed
@@ -65,9 +70,10 @@ export class UsersService extends BaseService {
         // Send notification to user when locked
         if(!data.accountEnabled) {
           await this.notifierService.send(
-            { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+            { id: requestUser.id, identityId: requestUser.identityId },
             NotifierTypeEnum.LOCK_USER,
-            { user: { id: user.id, identityId: user.identityId } }
+            { user: { id: user.id, identityId: user.identityId } },
+            domainContext,
           );
         }
       }
@@ -84,14 +90,14 @@ export class UsersService extends BaseService {
     data: {
       name: string,
       email: string,
-      type: UserTypeEnum,
+      type: ServiceRoleEnum,
       organisationAcronym?: string | null,
       organisationUnitAcronym?: string | null,
       role?: AccessorOrganisationRoleEnum | null      
     }
   ): Promise<{ id: string }> {
 
-    if (data.type === UserTypeEnum.ACCESSOR && (!data.organisationAcronym || !data.organisationUnitAcronym || !data.role)) {
+    if ((data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) && (!data.organisationAcronym || !data.organisationUnitAcronym || !data.role)) {
       throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
     }
 
@@ -152,22 +158,17 @@ export class UsersService extends BaseService {
 
       const user = await transaction.save(UserEntity, UserEntity.new({
         identityId: identityId,
-        type: data.type,
         createdBy: requestUser.id,
         updatedBy: requestUser.id
       }));
 
       // admin type
-      if (user.type === UserTypeEnum.ADMIN) {
-        const role = await transaction.createQueryBuilder(RoleEntity, 'role')
-          .where('role.name = :adminRole', { adminRole: ServiceRoleEnum.ADMIN })
-          .getOneOrFail();
-
-        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role }));
+      if (data.type === ServiceRoleEnum.ADMIN) {
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum.ADMIN }));
       }
 
       // accessor type
-      if (user.type === UserTypeEnum.ACCESSOR && organisation && unit && data.role) {
+      if ((data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) && organisation && unit && data.role) {
         const orgUser = await transaction.save(OrganisationUserEntity,
           OrganisationUserEntity.new({
             organisation,
@@ -186,6 +187,12 @@ export class UsersService extends BaseService {
             updatedBy: requestUser.id
           }));
 
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum[data.role], organisation: organisation, organisationUnit: unit }));
+      }
+
+      // needs assessor type
+      if (data.type === ServiceRoleEnum.ASSESSMENT) {
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum.ASSESSMENT }));
       }
 
       return { id: user.id };
@@ -196,6 +203,7 @@ export class UsersService extends BaseService {
 
     const user = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'roles')
       .where('user.id = :id', { id })
       .getOne();
 
@@ -203,7 +211,7 @@ export class UsersService extends BaseService {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
-    if (user.type !== UserTypeEnum.ADMIN) {
+    if (!user.serviceRoles.map( r=> r.role ).includes(ServiceRoleEnum.ADMIN) || user.serviceRoles.length > 1) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
@@ -221,4 +229,5 @@ export class UsersService extends BaseService {
       return { id: user.id };
     });
   }
+
 }

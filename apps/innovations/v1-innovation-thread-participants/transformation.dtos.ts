@@ -1,10 +1,10 @@
-import type { UserTypeEnum } from '@innovations/shared/enums';
+import type { ServiceRoleEnum } from '@innovations/shared/enums';
 
 export type ResponseDTO = {
   participants: {
     id: string;
     name: string;
-    type: UserTypeEnum
+    type: ServiceRoleEnum | undefined;
     organisationUnit: { id: string; acronym: string } | null;
   }[];
 }
