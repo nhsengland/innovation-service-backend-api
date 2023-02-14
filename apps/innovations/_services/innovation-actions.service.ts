@@ -158,6 +158,7 @@ export class InnovationActionsService extends BaseService {
     return {
       count: dbActions[1],
       data: await Promise.all(dbActions[0].map(async (action) => {
+        // TODO(performance): this method should be reviewed since we are making two userInfo calls per row
 
         const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: action.updatedBy });
         const roleInContext = lastUpdatedByUser.roles.find(role => role.id === action.updatedByUserRole?.id);
