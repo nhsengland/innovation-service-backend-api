@@ -18,9 +18,9 @@ export class InnovationActionsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
     @inject(InnovationThreadsServiceSymbol) private innovationThreadsService: InnovationThreadsServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
   ) { super(); }
 
 
@@ -158,6 +158,7 @@ export class InnovationActionsService extends BaseService {
     return {
       count: dbActions[1],
       data: await Promise.all(dbActions[0].map(async (action) => {
+        // TODO(performance): this method should be reviewed since we are making two userInfo calls per row
 
         const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: action.updatedBy });
         const roleInContext = lastUpdatedByUser.roles.find(role => role.id === action.updatedByUserRole?.id);
@@ -197,7 +198,7 @@ export class InnovationActionsService extends BaseService {
   }
 
 
-  async getActionInfo(actionId: string): Promise<{
+  async getActionInfo(actionId: string, entityManager?: EntityManager): Promise<{
     id: string,
     displayId: string,
     status: InnovationActionStatusEnum,
@@ -210,7 +211,9 @@ export class InnovationActionsService extends BaseService {
     declineReason?: string
   }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'innovationSection')
       .innerJoinAndSelect('innovationSection.innovation', 'innovation')
       .innerJoinAndSelect('action.createdByUser', 'createdByUser')
@@ -226,7 +229,7 @@ export class InnovationActionsService extends BaseService {
 
     let declineReason: string | null = null;
     if (dbAction.status === InnovationActionStatusEnum.DECLINED) {
-      const activityLogDeclineReason = await this.sqlConnection
+      const activityLogDeclineReason = await em
         .createQueryBuilder(ActivityLogEntity, 'activityLog')
         .where('activityLog.innovation_id = :innovationId', { innovationId: dbAction.innovationSection.innovation.id })
         .andWhere('activity = :activity', { activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE })
@@ -363,10 +366,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
-    data: { status: InnovationActionStatusEnum }
+    data: { status: InnovationActionStatusEnum },
+    entityManager?: EntityManager,
   ): Promise<{ id: string }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await connection.createQueryBuilder(InnovationActionEntity, 'ia')
       .innerJoinAndSelect('ia.innovationSection', 'is')
       .innerJoinAndSelect('ia.innovationSupport', 'isup')
       .innerJoinAndSelect('is.innovation', 'i')
@@ -388,14 +394,14 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
-    //Accessor can only decline actions requested by himself
+    // Accessor can only cancel actions requested by himself
     if (dbAction.status === InnovationActionStatusEnum.REQUESTED && dbAction.createdBy !== user.id) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_CREATED_BY_USER);
     }
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -421,10 +427,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
-    data: { status: InnovationActionStatusEnum }
+    data: { status: InnovationActionStatusEnum },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'ia')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await connection.createQueryBuilder(InnovationActionEntity, 'ia')
       .innerJoinAndSelect('ia.innovationSection', 'is')
       .innerJoinAndSelect('is.innovation', 'i')
       .leftJoinAndSelect('ia.innovationSupport', 'isup')
@@ -447,7 +456,7 @@ export class InnovationActionsService extends BaseService {
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -473,10 +482,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
-    data: { status: InnovationActionStatusEnum, message: string }
+    data: { status: InnovationActionStatusEnum, message: string },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
 
-    const dbAction = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbAction = await connection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoinAndSelect('action.innovationSection', 'section')
       .where('action.id = :actionId', { actionId })
       .getOne();
@@ -491,7 +503,7 @@ export class InnovationActionsService extends BaseService {
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data);
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     await this.notifierService.send(
       { id: user.id, identityId: user.identityId },
@@ -533,10 +545,13 @@ export class InnovationActionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     dbAction: InnovationActionEntity,
-    data: { status: InnovationActionStatusEnum, message?: string }
+    data: { status: InnovationActionStatusEnum, message?: string },
+    entityManager?: EntityManager
   ): Promise<InnovationActionEntity> {
 
-    return this.sqlConnection.transaction(async transaction => {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    return connection.transaction(async transaction => {
 
       let thread;
 
@@ -558,7 +573,7 @@ export class InnovationActionsService extends BaseService {
 
       if (data.status === InnovationActionStatusEnum.DECLINED) {
 
-        const actionCreatedBy = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+        const actionCreatedBy = await connection.createQueryBuilder(UserEntity, 'user')
           .where('user.id = :id', { id: dbAction.createdBy })
           .getOne();
 

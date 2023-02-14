@@ -1,13 +1,13 @@
 import { randAlpha, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationActionEntity, InnovationSectionEntity, InnovationSupportEntity } from '../entities';
+import { InnovationActionEntity, InnovationSectionEntity, InnovationSupportEntity, UserRoleEntity } from '../entities';
 import { InnovationActionStatusEnum } from '../enums';
 
 export class InnovationActionBuilder {
 
-  innovationAction: Partial<InnovationActionEntity> = { };
+  innovationAction: Partial<InnovationActionEntity> = {};
 
-  constructor(createdBy: string, innovationSection: InnovationSectionEntity, innovationSupport: InnovationSupportEntity) {
+  constructor(createdBy: string, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity) {
     this.innovationAction = {
       createdBy: createdBy,
       updatedBy: createdBy,
@@ -15,7 +15,7 @@ export class InnovationActionBuilder {
       description: randText(),
       status: InnovationActionStatusEnum.REQUESTED,
       innovationSection: InnovationSectionEntity.new(innovationSection),
-      innovationSupport: InnovationSupportEntity.new(innovationSupport),
+      ...(innovationSupport ? { innovationSupport: InnovationSupportEntity.new(innovationSupport) } : {}),
     };
   }
 
@@ -36,6 +36,16 @@ export class InnovationActionBuilder {
 
   setUpdatedBy(id: string): InnovationActionBuilder {
     this.innovationAction.updatedBy = id;
+    return this;
+  }
+
+  setUpdatedByUserRole(role: UserRoleEntity): InnovationActionBuilder {
+    this.innovationAction.updatedByUserRole = role;
+    return this;
+  }
+
+  setCreatedByUserRole(role: UserRoleEntity): InnovationActionBuilder {
+    this.innovationAction.createdByUserRole = role;
     return this;
   }
 
