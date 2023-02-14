@@ -3,10 +3,9 @@ import TestsHelper from '@innovations/shared/tests/tests.helper';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
-import { InnovationActionStatusEnum, InnovationSectionEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum } from '@innovations/shared/errors';
 import type { ErrorDetailsType } from '@innovations/shared/types';
-import { randText } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import v1InnovationActionInfo from '.';
@@ -31,8 +30,8 @@ describe('v1-innovation-action-info Suite', () => {
     description: "description 1",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    updatedBy: { name: "name 1", role: UserTypeEnum.ACCESSOR },
-    createdBy: { id: randomUUID(), name: "name 1", role: UserTypeEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: "NHS Innovation Service", acronym: "NHS-IS" } },
+    updatedBy: { name: "name 1", role: ServiceRoleEnum.ACCESSOR },
+    createdBy: { id: randomUUID(), name: "name 1", role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: "NHS Innovation Service", acronym: "NHS-IS" } },
   }
 
   beforeAll(async () => {
@@ -71,7 +70,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setContext()
         .setParams({ innovationId: testData.innovation.id, actionId: exampleAction.id })
         .setMethod('GET')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
+        .setAuth(testData.domainContexts.accessor)
         .invoke<{ status: number, body: ResponseDTO }>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(exampleAction);
@@ -96,8 +95,8 @@ describe('v1-innovation-action-info Suite', () => {
         description: "description 1",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        updatedBy: { name: "name 1", role: UserTypeEnum.ACCESSOR },
-        createdBy: { id: randomUUID(), name: "name 1", role: UserTypeEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: "NHS Innovation Service", acronym: "NHS-IS" } },
+        updatedBy: { name: "name 1", role: ServiceRoleEnum.ACCESSOR },
+        createdBy: { id: randomUUID(), name: "name 1", role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: "NHS Innovation Service", acronym: "NHS-IS" } },
         declineReason: "this was rejected"
       }
 
@@ -108,7 +107,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setContext()
         .setParams({ innovationId: testData.innovation.id, actionId: expected.id })
         .setMethod('GET')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
+        .setAuth(testData.domainContexts.accessor)
         .invoke<{ status: number, body: ResponseDTO }>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(expected);
@@ -127,7 +126,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setUrl('/v1/:innovationId/actions/:actionId')
         .setContext()
         .setMethod('GET')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
+        .setAuth(testData.domainContexts.accessor)
         .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string, details: ErrorDetailsType[] } }>(v1InnovationActionInfo);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -144,7 +143,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setContext()
         .setParams({ actionId: randomUUID() })
         .setMethod('GET')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
+        .setAuth(testData.domainContexts.accessor)
         .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string, details: ErrorDetailsType[] } }>(v1InnovationActionInfo);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -168,7 +167,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setContext()
         .setParams({ innovationId: testData.innovation.id })
         .setMethod('GET')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
+        .setAuth(testData.domainContexts.accessor)
         .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string, details: ErrorDetailsType[] } }>(v1InnovationActionInfo);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -189,11 +188,11 @@ describe('v1-innovation-action-info Suite', () => {
   describe('Access', () => {
 
     it.each([
-      [UserTypeEnum.ADMIN, 200],
-      [UserTypeEnum.ACCESSOR, 200],
-      [UserTypeEnum.ASSESSMENT, 200],
-      [UserTypeEnum.INNOVATOR, 200],
-    ])(('access with user %s should give %i'), async (userType: UserTypeEnum, status: number) => {
+      [ServiceRoleEnum.ADMIN, 200],
+      [ServiceRoleEnum.ACCESSOR, 200],
+      [ServiceRoleEnum.ASSESSMENT, 200],
+      [ServiceRoleEnum.INNOVATOR, 200],
+    ])(('access with user %s should give %i'), async (userType: ServiceRoleEnum, status: number) => {
 
       const [user, context] = TestsHelper.getUser(userType);
 
@@ -210,7 +209,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setContext()
         .setParams({ innovationId: testData.innovation.id, actionId: exampleAction.id })
         .setMethod('GET')
-        .setAuth({ identityId: user!.identityId, name: randText() }, context!)
+        .setAuth(context!)
         .invoke<{ status: number }>(v1InnovationActionInfo);
 
       expect(result.status).toBe(status);
