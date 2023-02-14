@@ -32,17 +32,10 @@ class V1InnovationActionsList {
         .checkInnovatorType()
         .checkAdminType()
         .verify();
-      const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
       const result = await innovationActionsService.getActionsList(
-        {
-          id: requestUser.id,
-          type: requestUser.type,
-          ...(requestUser.organisations[0]?.id ? { organisationId: requestUser.organisations[0].id } : {}),
-          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {}),
-          ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {})
-        },
+        domainContext,
         filters,
         { skip, take, order }
       );
@@ -58,6 +51,11 @@ class V1InnovationActionsList {
           section: item.section,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
+          updatedBy: {
+            name: item.updatedBy.name,
+            role: item.updatedBy.role
+          },
+          createdBy: { ...item.createdBy },
           ...(item.notifications === undefined ? {} : { notifications: item.notifications })
         }))
       });

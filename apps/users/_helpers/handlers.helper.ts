@@ -1,4 +1,3 @@
-import type { UserTypeEnum } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 import { type UserStatisticsTemplateType, USER_STATISTICS_CONFIG } from '../_config/statistics.config';
 import type { UserStatisticsEnum } from '../_enums/user.enums';
@@ -6,7 +5,7 @@ import type { UserStatisticsEnum } from '../_enums/user.enums';
 export class StatisticsHandlersHelper {
 
   static async runHandler(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     actions: UserStatisticsEnum[]
   ): Promise<Record<string, UserStatisticsTemplateType[UserStatisticsEnum]>> {

@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@users/shared/enums';
+import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
@@ -80,25 +80,26 @@ export class StatisticsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const baseQuery = this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
-      .innerJoinAndSelect('innovationSupports.organisationUnitUsers', 'organisationUnitUsers')
-      .innerJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUser')
-      .innerJoinAndSelect('organisationUser.user', 'user')
+    const {myUnitInnovationsCount, lastSubmittedAt} = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
+      .select('count(*)', 'myUnitInnovationsCount')
+      .addSelect('MAX(innovationSupports.updated_at)', 'lastSubmittedAt')
       .where('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('organisationUnitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit });
-
-    const [myUnitEngagingInnovations, myUnitInnovationsCount] = await baseQuery
-      .orderBy('innovationSupports.updated_at', 'DESC')
-      .getManyAndCount();
-
-    const myAssignedInnovationsCount = await baseQuery
+      .andWhere('innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
+      .getRawOne();
+      
+    const myAssignedInnovationsCount = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
+      .innerJoin('innovationSupports.organisationUnitUsers', 'unitUsers')
+      .innerJoin('unitUsers.organisationUser', 'orgUsers')
+      .innerJoin('orgUsers.user', 'user')
+      .where('unitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
       .andWhere('user.id = :userId', { userId: requestUser.id })
+      .andWhere('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
       .getCount();
 
     return {
       count: myAssignedInnovationsCount,
       total: myUnitInnovationsCount,
-      lastSubmittedAt: myUnitEngagingInnovations.find(_ => true)?.updatedAt || null,
+      lastSubmittedAt: lastSubmittedAt,
     };
 
   }
@@ -117,13 +118,13 @@ export class StatisticsService extends BaseService {
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
       .where('actions.created_by = :userId', { userId: requestUser.id })
-      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] })
+      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] });
 
-    if (domainContext.userType === UserTypeEnum.ACCESSOR) {
+    if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
       if (!organisationUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
-      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit })
+      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit });
     }
 
     const myActionsCount = await myActionsQuery
@@ -133,9 +134,9 @@ export class StatisticsService extends BaseService {
     const actions: Record<string, any> = {
       SUBMITTED: { count: 0, lastSubmittedAt: null },
       REQUESTED: { count: 0, lastSubmittedAt: null },
-    }
+    };
     for (const action of myActionsCount) {
-      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt }
+      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt };
     }
 
     return {
@@ -147,7 +148,7 @@ export class StatisticsService extends BaseService {
   }
 
   async innovationsToReview(
-    requestUser: DomainUserInfoType,
+    _requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
   ): Promise<{ count: number, lastSubmittedAt: null | DateISOType }> {
 
@@ -157,21 +158,29 @@ export class StatisticsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const baseQuery = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .select('count(*)', 'count')
-      .addSelect('MAX(innovation.submitted_at)', 'lastSubmittedAt')
-      .innerJoin('innovation.assessments', 'assessments')
-      .innerJoin('assessments.organisationUnits', 'organisationUnits', 'organisationUnits.id = :organisationUnit', { organisationUnit })
-      .innerJoin('organisationUnits.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser', 'organisationUser.role = :role', { role: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR })
-      .innerJoin('organisationUser.user', 'user')
-      .innerJoin('innovation.organisationShares', 'organisationShares', 'organisationShares.id = organisationUser.organisation_id')
-      .leftJoin('innovation.innovationSupports', 'innovationSupports', 'innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
-      .where('user.id = :userId', { userId: requestUser.id })
-      .andWhere('innovationSupports.id IS NULL')
-      .andWhere('innovation.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-
-    const { count, lastSubmittedAt } = await baseQuery.getRawOne();
+    const {count, lastSubmittedAt} = await this.sqlConnection.createQueryBuilder()
+        .select('count(*)', 'count')
+        .addSelect('MAX(lastSubmittedAt)', 'lastSubmittedAt')
+        .from(qb => (qb.from(InnovationEntity, 'innovations')
+          .select('innovations.id')
+          .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
+          .innerJoin('innovations.organisationShares', 'organisationShares')
+          .innerJoin('organisationShares.organisationUnits', 'organisationUnits')
+          .leftJoin('innovations.innovationSupports', 'innovationSupports', 'innovationSupports.innovation_id = innovations.id AND innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
+          .leftJoin('innovations.assessments', 'assessments')
+          .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
+          .leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
+          .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
+          .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', { supportStatus: InnovationSupportStatusEnum.UNASSIGNED })
+          .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
+          .andWhere(
+            `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
+            { suggestedOrganisationUnitId: organisationUnit}
+          )
+          .andWhere('organisationUnits.id = :organisationUnit', { organisationUnit })
+          .groupBy('innovations.id')), 'innovations'
+        )
+        .getRawOne();
 
     return {
       count: count,

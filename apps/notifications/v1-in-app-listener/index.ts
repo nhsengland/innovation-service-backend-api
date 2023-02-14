@@ -2,7 +2,6 @@ import type { Context } from '@azure/functions';
 
 import type { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
-import type { DomainContextType } from '@notifications/shared/types';
 
 import { container } from '../_config';
 import { DispatchServiceSymbol, DispatchServiceType } from '../_services/interfaces';
@@ -17,10 +16,9 @@ class V1SendInAppListener {
     requestMessage: {
       data: {
         requestUser: { id: string },
-        domainContext: DomainContextType,
         innovationId: string,
         context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-        userIds: string[];
+        users: { userId: string, organisationUnitId?: string | undefined}[];
         params: { [key: string]: string | number | string[] }
       }
     }
@@ -38,9 +36,8 @@ class V1SendInAppListener {
         message.data.requestUser,
         message.data.innovationId,
         message.data.context,
-        message.data.userIds,
-        message.data.params,
-        message.data.domainContext,
+        message.data.users,
+        message.data.params
       );
 
       context.res = { done: true };

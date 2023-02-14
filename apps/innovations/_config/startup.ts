@@ -1,5 +1,3 @@
-import { container } from '@innovations/shared/config/inversify.config';
-
 import fs from 'fs';
 import { join } from 'path';
 import YAML from 'yaml';
@@ -12,38 +10,9 @@ import {
   NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@innovations/shared/services';
+import type { Container } from 'inversify';
 
-import {
-  InnovationActionsServiceSymbol, InnovationActionsServiceType, InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType, InnovationFileServiceSymbol, InnovationFileServiceType,
-  InnovationSectionsServiceSymbol, InnovationSectionsServiceType, InnovationsServiceSymbol, InnovationsServiceType, InnovationSupportsServiceSymbol, InnovationSupportsServiceType, InnovationThreadsServiceSymbol,
-  InnovationThreadsServiceType, InnovationTransferServiceSymbol, InnovationTransferServiceType, PDFServiceSymbol, PDFServiceType, StatisticsServiceSymbol, StatisticsServiceType
-} from '../_services/interfaces';
-
-import { InnovationActionsService } from '../_services/innovation-actions.service';
-import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
-import { InnovationFileService } from '../_services/innovation-file.service';
-import { InnovationSectionsService } from '../_services/innovation-sections.service';
-import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import { InnovationThreadsService } from '../_services/innovation-threads.service';
-import { InnovationTransferService } from '../_services/innovation-transfer.service';
-import { InnovationsService } from '../_services/innovations.service';
-import { PDFService } from '../_services/pdf.service';
-import { StatisticsService } from '../_services/statistics.service';
-
-// Specific inversify container configuration
-container.bind<InnovationActionsServiceType>(InnovationActionsServiceSymbol).to(InnovationActionsService).inSingletonScope();
-container.bind<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol).to(InnovationAssessmentsService).inSingletonScope();
-container.bind<InnovationFileServiceType>(InnovationFileServiceSymbol).to(InnovationFileService).inSingletonScope();
-container.bind<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol).to(InnovationSectionsService).inSingletonScope();
-container.bind<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol).to(InnovationSupportsService).inSingletonScope();
-container.bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol).to(InnovationThreadsService).inSingletonScope();
-container.bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol).to(InnovationTransferService).inSingletonScope();
-container.bind<InnovationsServiceType>(InnovationsServiceSymbol).to(InnovationsService).inSingletonScope();
-container.bind<PDFServiceType>(PDFServiceSymbol).to(PDFService).inSingletonScope();
-container.bind<StatisticsServiceType>(StatisticsServiceSymbol).to(StatisticsService).inSingletonScope();
-
-export { container };
-export const startup = async (): Promise<void> => {
+export const startup = async (container: Container): Promise<void> => {
 
   console.log('Initializing Innovations app function');
 
@@ -66,7 +35,7 @@ export const startup = async (): Promise<void> => {
 
       const response = await httpService.getHttpInstance().get(`http://localhost:7072/api/swagger.json`);
       console.log('Saving swagger file');
-      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/innovations/.apim/swagger.yaml`, YAML.stringify(response.data))
+      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/innovations/.apim/swagger.yaml`, YAML.stringify(response.data));
       console.log('Documentation generated successfully');
       console.groupEnd();
 
@@ -80,6 +49,4 @@ export const startup = async (): Promise<void> => {
 
   }
 
-}
-
-void startup();
+};

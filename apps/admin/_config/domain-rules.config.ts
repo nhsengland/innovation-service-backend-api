@@ -1,4 +1,4 @@
-import { UserTypeEnum } from '@admin/shared/enums';
+import { ServiceRoleEnum } from '@admin/shared/enums';
 
 export enum DomainOperationEnum {
   LOCK_USER = 'LOCK_USER',
@@ -23,22 +23,26 @@ export type ValidationResult = {
 };
 
 
-export const RuleMapper: { [operationKey in DomainOperationEnum]: { [userTypeKey in UserTypeEnum]?: DomainOperationRulesEnum[] } } = {
+export const RuleMapper: { [operationKey in DomainOperationEnum]: { [userTypeKey in ServiceRoleEnum]?: DomainOperationRulesEnum[] } } = {
 
   'LOCK_USER': {
-    [UserTypeEnum.ASSESSMENT]: [DomainOperationRulesEnum.AssessmentUserIsNotTheOnlyOne],
-    [UserTypeEnum.ACCESSOR]: [
+    [ServiceRoleEnum.ASSESSMENT]: [DomainOperationRulesEnum.AssessmentUserIsNotTheOnlyOne],
+    [ServiceRoleEnum.ACCESSOR]: [
       DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit,
       DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport
-    ]
+    ],
+    [ServiceRoleEnum.QUALIFYING_ACCESSOR]: [
+      DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit,
+      DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport
+    ],
   },
 
   'UPDATE_USER_ROLE': {
-    [UserTypeEnum.ACCESSOR]: [DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit]
+    [ServiceRoleEnum.ACCESSOR]: [DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit]
   },
 
   'CHANGE_UNIT': {
-    [UserTypeEnum.ACCESSOR]: [
+    [ServiceRoleEnum.ACCESSOR]: [
       DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport,
       DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit
     ]

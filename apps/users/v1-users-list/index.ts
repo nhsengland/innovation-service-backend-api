@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { AccessorOrganisationRoleEnum, UserTypeEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
@@ -35,36 +35,62 @@ class V1UsersList {
 
         // Due to the limitations of our identity service that only allows to search by one email at a time,
         // this functions returns always a list to mimic a future search feature.
-        const result = await usersService.getUserByEmail(queryParams.email, { userTypes: queryParams.userTypes || [] });
+        const result = await usersService.getUserByEmail(queryParams.email, { userRoles: queryParams.userTypes || [] });
         context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
           id: item.id,
           name: item.displayName,
           email: item.email,
-          type: item.type,
+          roles: item.roles,
           isActive: item.isActive,
+          ...(item.lockedAt && { lockedAt: item.lockedAt }),
+          ...(item.organisations && { organisations: item.organisations.map( o => ({
+            id: o.id,
+            name: o.name,
+            acronym: o.acronym ?? '',
+            role: o.role,
+            ...(o.organisationUnits && { units: o.organisationUnits.map(u => ({
+              id: u.id,
+              name: u.name,
+              acronym: u.acronym ?? '',
+            }))})
+          }))}),
         })));
         return;
 
       } else if ('userTypes' in queryParams) {
-        
+
         const validation = authorizationService.validate(context)
-          .checkAdminType()
+          .checkAdminType();
+
+        //only admins can get user emails
+        if (!('email' in queryParams.fields)) {
+          // all users need to be able to list NA users for message transparency page
+          if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT) {
+            validation.checkAssessmentType();
+            validation.checkAccessorType();
+            validation.checkInnovatorType();
+          }
+
+          if (queryParams.organisationUnitId) {
+            validation.checkAccessorType({
+              organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
+              organisationUnitId: queryParams.organisationUnitId
+            });
+          }
+        }
         
-        // only allow NA users to list other NA users
-        if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === UserTypeEnum.ASSESSMENT) {
-          validation.checkAssessmentType()
-        }
-          
-        if(queryParams.organisationUnitId) {
-          validation.checkAccessorType({
-            organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
-            organisationUnitId: queryParams.organisationUnitId
-          });
-        }
-        await validation.verify()
+        await validation.verify();
 
         const users = await usersService.getUserList(queryParams, queryParams.fields);
-        context.res = ResponseHelper.Ok<ResponseDTO>(users);
+        context.res = ResponseHelper.Ok<ResponseDTO>(users.map(u => ({
+          id: u.id,
+          isActive: u.isActive,
+          name: u.name,
+          roles: u.roles,
+          ...(u.email ? { email: u.email } : {}),
+          ...(u.organisations ? { organisations: u.organisations } : {}),
+          
+        })));
         return;
 
       } else {

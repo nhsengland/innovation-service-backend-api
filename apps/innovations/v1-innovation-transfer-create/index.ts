@@ -35,11 +35,13 @@ class CreateInnovationTransfer {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       const result = await innovationTransferService.createInnovationTransfer(
         {
-          id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
+          id: requestUser.id, identityId: requestUser.identityId
         },
+        domainContext,
         body.innovationId,
         body.email
       );

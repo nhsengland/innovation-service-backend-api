@@ -33,9 +33,11 @@ class V1InnovationSubmit {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const result = await innovationsService.submitInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
+        domainContext,
         params.innovationId
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({

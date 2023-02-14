@@ -1,6 +1,6 @@
-import { NotifierTypeEnum, UserTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,16 +17,17 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
   async run(): Promise<this> {
 
-    if (this.requestUser.type !== UserTypeEnum.INNOVATOR) {
+    if (this.domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       return this;
     }
 
@@ -48,7 +49,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(UserTypeEnum.ASSESSMENT), innovationId: this.inputData.innovationId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(ServiceRoleEnum.ASSESSMENT), innovationId: this.inputData.innovationId })
             .buildUrl()
         }
       });
@@ -57,9 +58,8 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
-      userIds: needAssessmentUsers.map(item => item.id),
+      users: needAssessmentUsers.map(item => ({ userId: item.id, userType: ServiceRoleEnum.ASSESSMENT })),
       params: {}
     });
 

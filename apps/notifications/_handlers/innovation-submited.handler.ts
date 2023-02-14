@@ -1,6 +1,6 @@
-import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,10 +17,11 @@ export class InnovationSubmitedHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED],
+    domainContext: DomainContextType
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -55,9 +56,8 @@ export class InnovationSubmitedHandler extends BaseHandler<
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION, id: this.inputData.innovationId },
-      userIds: assessmentUsers.map(user => user.id),
+      users: assessmentUsers.map(user => ({ userId: user.id, userType: ServiceRoleEnum.ASSESSMENT })),
       params: {}
     });
 

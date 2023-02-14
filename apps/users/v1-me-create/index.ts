@@ -1,5 +1,5 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import jwtDecode, { JwtPayload } from 'jwt-decode';
 
 import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
@@ -10,11 +10,12 @@ import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
+import type { CustomContextType } from '@users/shared/types';
 
 
 class V1MeCreate {
 
-  static async httpTrigger(context: Context, request: HttpRequest): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
 

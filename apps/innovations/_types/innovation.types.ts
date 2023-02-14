@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, UserTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
 import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
@@ -52,7 +52,6 @@ export type ThreadListModel = {
       createdBy: {
         id: string,
         name: string,
-        type: UserTypeEnum,
         organisationUnit: null | { id: string, name: string, acronym: string }
       }
     }
@@ -114,6 +113,46 @@ export type InnovationSupportsLogType = {
   innovationSupportStatus: string;
   createdBy: string;
   createdAt: DateISOType;
+  organisationUnit: null | {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  };
+  suggestedOrganisationUnits?: {
+    id: string;
+    name: string;
+    acronym: string | null;
+    organisation: {
+      id: string;
+      name: string;
+      acronym: string | null;
+    };
+  }[];
+}
+
+export type InnovationSuggestionsType = {
+  accessors?: InnovationSuggestionAccessor[];
+  assessment?: {
+    id?: string,
+    suggestedOrganisationUnits?: {
+      id: string;
+      name: string;
+      acronym: string | null;
+      organisation: {
+        id: string;
+        name: string;
+        acronym: string | null;
+      };
+    }[];
+  };
+}
+
+export type InnovationSuggestionAccessor = {
   organisationUnit: null | {
     id: string;
     name: string;

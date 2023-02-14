@@ -1,14 +1,13 @@
 import { inject, injectable } from 'inversify';
 
-import type { NotificationContextTypeEnum, NotificationContextDetailEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { InnovationEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity, UserEntity } from '@notifications/shared/entities';
+import type { NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
 import { BaseService } from './base.service';
 import { EmailServiceSymbol, EmailServiceType } from './interfaces';
-import type { DomainContextType } from '@notifications/shared/types';
 
 
 @injectable()
@@ -57,9 +56,8 @@ export class DispatchService extends BaseService {
     requestUser: { id: string },
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-    userIds: string[],
+    users: { userId: string, organisationUnitId?: string | undefined}[],
     params: { [key: string]: string | number | string[] },
-    domainContext?: DomainContextType,
   ): Promise<{ id: string }> {
 
     return this.sqlConnection.transaction(async transactionManager => {
@@ -73,14 +71,11 @@ export class DispatchService extends BaseService {
         createdBy: requestUser.id
       }));
 
-      const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
-
-
-      await transactionManager.save(NotificationUserEntity, userIds.map(userId => NotificationUserEntity.new({
-        user: UserEntity.new({ id: userId }),
+      await transactionManager.save(NotificationUserEntity, users.map(user => NotificationUserEntity.new({
+        user: UserEntity.new({ id: user.userId }),
         notification: dbNotification,
         createdBy: requestUser.id,
-        organisationUnit: organisationUnit ? OrganisationUnitEntity.new({ id: organisationUnit }) : undefined,
+        organisationUnit: user.organisationUnitId ? OrganisationUnitEntity.new({ id: user.organisationUnitId }) : null,
       })));
 
       return { id: dbNotification.id };

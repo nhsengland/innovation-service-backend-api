@@ -34,9 +34,10 @@ class V1InnovationWithdraw {
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
-
+      const domainContext = auth.getContext();
       const result = await innovationsService.withdrawInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
+        domainContext,
         params.innovationId,
         body.message
       );

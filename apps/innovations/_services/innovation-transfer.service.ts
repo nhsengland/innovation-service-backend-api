@@ -2,11 +2,12 @@ import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
 import { InnovationEntity, InnovationTransferEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationTransferStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationTransferStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, IdentityProviderServiceSymbol, NotifierServiceSymbol, type DomainServiceType, type IdentityProviderServiceType, type NotifierServiceType } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
+import type { DomainContextType } from '@innovations/shared/types';
 
 
 type TransferQueryFilterType = {
@@ -127,7 +128,8 @@ export class InnovationTransferService extends BaseService {
   }
 
   async createInnovationTransfer(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
+    domainContext: DomainContextType,
     innovationId: string,
     targetUserEmail: string
   ): Promise<{ id: string }> {
@@ -165,11 +167,14 @@ export class InnovationTransferService extends BaseService {
 
 
       await this.notifierService.send(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
-        NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, {
-        innovationId: innovation.id,
-        transferId: transfer.id
-      });
+        { id: requestUser.id, identityId: requestUser.identityId },
+        NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, 
+        {
+          innovationId: innovation.id,
+          transferId: transfer.id,
+        }, 
+        domainContext,
+      );
 
       return { id: transfer.id };
     });
@@ -179,7 +184,8 @@ export class InnovationTransferService extends BaseService {
   }
 
   async updateInnovationTransferStatus(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
+    domainContext: DomainContextType,
     transferId: string,
     status: InnovationTransferStatusEnum.CANCELED | InnovationTransferStatusEnum.DECLINED | InnovationTransferStatusEnum.COMPLETED
   ): Promise<{ id: string }> {
@@ -224,7 +230,7 @@ export class InnovationTransferService extends BaseService {
 
         await this.domainService.innovations.addActivityLog(
           transactionManager,
-          { userId: requestUser.id, innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER },
+          { userId: requestUser.id, innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER, domainContext },
           {
             interveningUserId: requestUser.identityId
           }
@@ -234,9 +240,11 @@ export class InnovationTransferService extends BaseService {
 
       // It should send a notification for all cases
       await this.notifierService.send(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
-        { innovationId: transfer.innovation.id, transferId: transfer.id });
+        { innovationId: transfer.innovation.id, transferId: transfer.id },
+        domainContext,
+      );
 
       return { id: savedTransfer.id };
 

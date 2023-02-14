@@ -7,7 +7,6 @@ import { OrganisationUserEntity } from '../organisation/organisation-user.entity
 import { NotificationPreferenceEntity } from './notification-preference.entity';
 import { UserRoleEntity } from './user-role.entity';
 
-import { UserTypeEnum } from '../../enums/user.enums';
 import type { DateISOType } from '../../types/date.types';
 
 
@@ -20,8 +19,9 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'external_id', type: 'nvarchar', nullable: false })
   identityId: string;
 
-  @Column({ type: 'simple-enum', enum: UserTypeEnum, nullable: false })
-  type: UserTypeEnum;
+  // DEPRECATED: This field is no longer used.
+  // @Column({ type: 'simple-enum', enum: UserTypeEnum, nullable: false })
+  // type: UserTypeEnum;
 
   @Column({ name: 'survey_id', type: 'nvarchar', nullable: true })
   surveyId: null | string;
@@ -34,7 +34,6 @@ export class UserEntity extends BaseEntity {
 
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;
-
 
   @OneToMany(() => OrganisationUserEntity, record => record.user, { lazy: true })
   userOrganisations: Promise<OrganisationUserEntity[]>;

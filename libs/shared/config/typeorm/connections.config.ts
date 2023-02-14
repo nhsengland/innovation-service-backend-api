@@ -41,7 +41,7 @@ export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
 });
 
 export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
-  name: 'tests',
+  name: 'default',
   type: 'mssql',
   host: process.env['DB_TESTS_HOST'] || '',
   username: process.env['DB_TESTS_USER'] || '',
@@ -53,5 +53,6 @@ export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
   extra: { options: { enableArithAbort: true, trustServerCertificate: true } },
   migrations: [`${join(__dirname, '..', '..')}/data-access/migrations/*.ts`],
   migrationsTableName: 'Migrations',
-  cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` }
+  cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },
+  // logging: process.env['DB_LOGGING'] === 'true'
 });

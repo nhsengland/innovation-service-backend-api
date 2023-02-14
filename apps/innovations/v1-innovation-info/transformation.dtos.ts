@@ -1,4 +1,4 @@
-import type { InnovationCategoryCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import type { InnovationCategoryCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
@@ -17,6 +17,9 @@ export type ResponseDTO = {
     name: string,
     isActive: boolean,
     email?: string,
+    contactByEmail?: boolean,
+    contactByPhone?: boolean,
+    contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null,
     mobilePhone?: null | string,
     organisations: null | { name: string, size: null | string }[],
     lastLoginAt?: null | DateISOType

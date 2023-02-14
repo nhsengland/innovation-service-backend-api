@@ -1,6 +1,6 @@
-import { InnovationTransferStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { InnovationTransferStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
@@ -19,10 +19,11 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 

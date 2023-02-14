@@ -1,11 +1,11 @@
-import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler, } from './base.handler';
+import { BaseHandler } from './base.handler';
 
 
 export class NeedsAssessmentCompletedHandler extends BaseHandler<
@@ -17,10 +17,11 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -50,9 +51,8 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     if (organisationUnitsSuggestedNotSharedIds.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
         context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION, id: this.inputData.assessmentId },
-        userIds: [innovation.owner.id || ''],
+        users: [{ userId: innovation.owner.id }],
         params: {}
       });
     }
@@ -61,10 +61,13 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     // Prepare emails and InApp for Qualifying accessors.
     const organisationUnitsSuggestedAndSharedIds = this.inputData.organisationUnitIds.filter(item => sharedOrganisationUnitsIds.includes(item));
     const organisationUnitsSuggestedAndSharedQAs = await this.recipientsService.organisationUnitsQualifyingAccessors(organisationUnitsSuggestedAndSharedIds);
-    for (const user of organisationUnitsSuggestedAndSharedQAs) {
+    
+    // TODO: Duplicated emails without reference to unit Id. Filtering unique for now, maybe use unit in the future
+    const emailUsersIdentityIds = [...new Set(organisationUnitsSuggestedAndSharedQAs.map(item => item.identityId))];
+    for (const identityId of emailUsersIdentityIds) {
       this.emails.push({
         templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        to: { type: 'identityId', value: identityId, displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -75,16 +78,13 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
       });
     }
 
-    if (organisationUnitsSuggestedAndSharedQAs.length > 0) {
-      this.inApp.push({
-        innovationId: this.inputData.innovationId,
-        domainContext: this.domainContext,
-        context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_COMPLETED, id: this.inputData.assessmentId },
-        userIds: organisationUnitsSuggestedAndSharedQAs.map(item => item.id),
-        params: {}
-      });
-    }
-
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_COMPLETED, id: this.inputData.assessmentId },
+      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, userType: ServiceRoleEnum.QUALIFYING_ACCESSOR, organisationUnitId: user.organisationUnitId })),
+      params: {}
+    });
+    
     return this;
 
   }

@@ -1064,11 +1064,12 @@ paths:
                   description: The clinical evidence type.
                 description:
                   type: string
+                  maxLength: 200
                   nullable: true
                   description: The evidence description.
                 summary:
                   type: string
-                  maxLength: 50
+                  maxLength: 500
                   nullable: true
                   description: Small summary of the evidence.
                 files:
@@ -1183,11 +1184,12 @@ paths:
                   description: The clinical evidence type.
                 description:
                   type: string
+                  maxLength: 200
                   nullable: true
                   description: The evidence description.
                 summary:
                   type: string
-                  maxLength: 50
+                  maxLength: 500
                   nullable: true
                   description: Small summary of the evidence.
                 files:
@@ -2086,6 +2088,24 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+    post:
+      description: Create support logs for an Innovation
+      operationId: v1-innovation-support-logs-create
+      tags:
+        - Create Innovation Support Logs
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.
+        "401":
+          description: Unauthorised
+        "404":
+          description: Not Found
   "/v1/{innovationId}/threads":
     post:
       summary: Create a new editable thread
@@ -2586,6 +2606,60 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+  "/v1/{innovationId}/threads/{threadId}/participants":
+    get:
+      summary: Get Innovation Thread Participants
+      description: Get Innovation Thread Participants
+      tags:
+        - Innovation Thread
+      operationId: v1-innovation-thread-participants
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: threadId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        organisationUnit:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            acronym:
+                              type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/v1/transfers/{transferId}/check":
     get:
       description: Get details of pending innovations transfers
@@ -2860,3 +2934,22 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
+  "/v1/{innovationId}/suggestions":
+    get:
+      description: Get suggestions list of an Innovation
+      operationId: v1-innovation-suggestions
+      tags:
+        - Innovation Suggestions
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found

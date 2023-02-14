@@ -1,5 +1,5 @@
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -16,10 +16,11 @@ export class AccessorUnitChangeHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
+    domainContext: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 

@@ -1,5 +1,5 @@
 import { InnovationEntity, OrganisationUserEntity, UserEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@admin/shared/enums';
+import { AccessorOrganisationRoleEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { InternalServerError, NotFoundError, OrganisationErrorsEnum, UserErrorsEnum } from '@admin/shared/errors';
 import { injectable } from 'inversify';
 import { DomainOperationEnum, ValidationResult, RuleMapper, DomainOperationRulesEnum } from '../_config/domain-rules.config';
@@ -32,8 +32,7 @@ export class ValidationService extends BaseService {
     const userInfo = {
       id: dbUser.id,
       identityId: dbUser.identityId,
-      type: dbUser.type,
-      roles: dbUser.serviceRoles.map(item => item.role.name),
+      roles: dbUser.serviceRoles.map(item => item.role),
       isActive: !dbUser.lockedAt,
       organisations: userOrganisations.map(userOrganisation => ({
         id: userOrganisation.organisation.id,
@@ -44,33 +43,37 @@ export class ValidationService extends BaseService {
       }))
     };
 
-    const rules = RuleMapper[operation][userInfo.type] || [];
     const result: ValidationResult[] = [];
 
-    for (const rule of rules) {
-
-      switch (rule) {
-        case DomainOperationRulesEnum.AssessmentUserIsNotTheOnlyOne:
-          result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(userInfo.id));
-          break;
-
-        case DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit:
-          const organisationUnit = userInfo.organisations[0]?.organisationUnits[0];
-          if (!organisationUnit) {
-            throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
-          }
-          result.push(await this.checkIfQualifyingAccessorIsNotTheLastOneOfUnit({ id: userInfo.id, organisationUnit: organisationUnit }));
-          break;
-
-        case DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport:
-          result.push(await this.checkIfNoInnovationIsBeingSupportedByAUnitWithOnlyThisAccessor({ id: userInfo.id }));
-          break;
-
+    for (const role of userInfo.roles) {
+      
+      const rules = RuleMapper[operation][role] || [];
+  
+      for (const rule of rules) {
+  
+        switch (rule) {
+          case DomainOperationRulesEnum.AssessmentUserIsNotTheOnlyOne:
+            result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(userInfo.id));
+            break;
+  
+          case DomainOperationRulesEnum.LastAccessorUserOnOrganisationUnit:
+            const organisationUnit = userInfo.organisations[0]?.organisationUnits[0];
+            if (!organisationUnit) {
+              throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+            }
+            result.push(await this.checkIfQualifyingAccessorIsNotTheLastOneOfUnit({ id: userInfo.id, organisationUnit: organisationUnit }));
+            break;
+  
+          case DomainOperationRulesEnum.LastAccessorFromUnitProvidingSupport:
+            result.push(await this.checkIfNoInnovationIsBeingSupportedByAUnitWithOnlyThisAccessor({ id: userInfo.id }));
+            break;
+  
+        }
       }
+
     }
 
     return result;
-
   }
 
 
@@ -81,7 +84,8 @@ export class ValidationService extends BaseService {
   private async checkIfAssessmentUserIsNotTheOnlyOne(userId: string): Promise<ValidationResult> {
 
     const otherAssessmentUsersCount = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .where('user.type = :userType', { userType: UserTypeEnum.ASSESSMENT })
+      .innerJoin('user.serviceRoles', 'userRoles')
+      .where('userRoles.role = :userRole', { userRole: ServiceRoleEnum.ASSESSMENT })
       .andWhere('user.id != :userId', { userId })
       .andWhere('user.locked_at IS NULL')
       .getCount();

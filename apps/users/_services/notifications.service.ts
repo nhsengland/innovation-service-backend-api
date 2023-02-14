@@ -23,15 +23,16 @@ export class NotificationsService extends BaseService {
     const query = em.createQueryBuilder(NotificationUserEntity, 'notificationUser')
       .innerJoin('notificationUser.notification', 'notification')
       .innerJoin('notification.innovation', 'innovation')             // fixes #104377
-      .innerJoin('notificationUser.organisationUnit', 'orgUnit')
       .where('notificationUser.user = :id', { id: userId })
-      .andWhere('notificationUser.readAt IS NULL')
+      .andWhere('notificationUser.readAt IS NULL');
 
     if (organisationUnitId) {
-      query.andWhere('orgUnit.id = :organisationUnitId', { organisationUnitId })
+      query.innerJoin('notificationUser.organisationUnit', 'orgUnit')
+      .andWhere('orgUnit.id = :organisationUnitId', { organisationUnitId });
+      
     }
 
-    const total = await query.getCount()
+    const total = await query.getCount();
 
     return total;
   }
@@ -69,15 +70,14 @@ export class NotificationsService extends BaseService {
 
     const query = em.createQueryBuilder(NotificationUserEntity, 'user')
       .innerJoinAndSelect('user.notification', 'notification')
-      .innerJoinAndSelect('user.organisationUnit', 'unit')
       .innerJoin('notification.innovation', 'innovation')
       .addSelect('innovation.id', 'innovation_id')
       .addSelect('innovation.status', 'innovation_status')
       .addSelect('innovation.name', 'innovation_name')
-      .where('user.user = :userId', { userId: user.id })
+      .where('user.user = :userId', { userId: user.id });
     
     if (user.organisationUnitId) {
-      query.andWhere('unit.id = :orgUnitId', { orgUnitId: user.organisationUnitId })
+      query.innerJoinAndSelect('user.organisationUnit', 'unit').andWhere('unit.id = :orgUnitId', { orgUnitId: user.organisationUnitId });
     }
 
     // optional filters
@@ -147,7 +147,7 @@ export class NotificationsService extends BaseService {
    * @returns the number of affected rows
    */
   async dismissUserNotifications(
-    userId: string,
+    user: { id: string, organisationUnitId?: string | undefined },
     conditions: {
       notificationIds: string[];
       contextIds: string[];
@@ -159,21 +159,27 @@ export class NotificationsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     if ( !conditions.dismissAll && conditions.notificationIds.length === 0 && conditions.contextTypes.length === 0 && conditions.contextIds.length === 0) {
-      throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'})
+      throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'});
     }
 
-    const params: { userId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: userId };
+    const params: { userId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: user.id };
     const query = em.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: new Date().toISOString() })
       .where('user_id = :userId')
       .andWhere('deleted_at IS NULL')
       .andWhere('read_at IS NULL');
+
+    if (user.organisationUnitId) {
+      query.andWhere('organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
+    } else {
+      query.andWhere('organisation_unit_id IS NULL');
+    }
       
     if(!conditions.dismissAll) {
       const notificationQuery = em.createQueryBuilder(NotificationEntity, 'notification')
         .innerJoin('notification.notificationUsers', 'user')
         .select('notification.id')
-        .andWhere('user.id = :userId')
+        .andWhere('user.id = :userId', { userId: user.id })
         .andWhere('user.read_at IS NULL');
   
       if (conditions.notificationIds.length > 0) {
@@ -189,7 +195,7 @@ export class NotificationsService extends BaseService {
         params.contextTypes = conditions.contextTypes;
       }
 
-      query.andWhere('notification_id IN ( ' + notificationQuery.getQuery() + ' )')
+      query.andWhere('notification_id IN ( ' + notificationQuery.getQuery() + ' )');
     }
 
     const res = await query.setParameters(params).execute();
@@ -237,7 +243,8 @@ export class NotificationsService extends BaseService {
       notification_id: p.notificationType,
       preference: p.preference,
       createdBy: userId,  // this is only for the first time as BaseEntity defines it as update: false
-      updatedBy: userId
+      updatedBy: userId,
+      updatedAt: new Date().toISOString(),
     }));
     await em.save(NotificationPreferenceEntity, saveData);
   }

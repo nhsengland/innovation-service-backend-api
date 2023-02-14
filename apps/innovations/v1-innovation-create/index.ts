@@ -32,10 +32,11 @@ class V1InnovationCreate {
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const surveyId = queryParams.useSurvey ? requestUser.surveyId : null;
 
-      const result = await innovationService.createInnovation({ id: requestUser.id }, body, surveyId);
+      const result = await innovationService.createInnovation({ id: requestUser.id }, domainContext, body, surveyId);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 

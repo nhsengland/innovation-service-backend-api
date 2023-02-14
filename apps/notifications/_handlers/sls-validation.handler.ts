@@ -1,6 +1,6 @@
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
 
@@ -16,10 +16,11 @@ export class SLSValidationHandler extends BaseHandler<
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.SLS_VALIDATION]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.SLS_VALIDATION],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 

@@ -1,11 +1,11 @@
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler, } from './base.handler';
+import { BaseHandler } from './base.handler';
 
 
 export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
@@ -17,16 +17,16 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
   async run(): Promise<this> {
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    this.recipientsService.innovationAssignedUsers
 
     // Prepare email for previous NA.
     this.emails.push({

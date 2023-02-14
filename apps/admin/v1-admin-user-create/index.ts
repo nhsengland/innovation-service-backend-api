@@ -35,9 +35,10 @@ class V1AdminUserCreate {
         .verify();
 
       const requestUser = auth.getUserInfo()
+      const domainContext = auth.getContext();
 
       const sls = JoiHelper.Validate<SLSQueryParam>(SLSQuerySchema, request.query);
-      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_CREATE_USER, sls.id, sls.code);
+      await authorizationService.validateSLS(context.auth.user.identityId, SLSEventTypeEnum.ADMIN_CREATE_USER, domainContext, sls.id, sls.code);
 
       const result = await usersService.createUser(requestUser, body);
 

@@ -1,5 +1,5 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -16,16 +16,17 @@ export class LockUserHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
   async run(): Promise<this> {
 
-    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id);
+    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id, {withDeleted: true});
 
     // E-mail to the user who is being locked.
     this.emails.push({
@@ -36,7 +37,7 @@ export class LockUserHandler extends BaseHandler<
       }
     });
 
-    if (userInfo.type === UserTypeEnum.INNOVATOR) {
+    if (userInfo.userRoles.includes(ServiceRoleEnum.INNOVATOR)) {
 
       // InApp to all assigned users of locked user innovations.
       const userInnovations = (await this.recipientsService.userInnovationsWithAssignedUsers(this.inputData.user.id));
@@ -44,13 +45,12 @@ export class LockUserHandler extends BaseHandler<
       for (const innovation of userInnovations) {
 
         // Filter duplicated ids..
-        const uniqueUserIds = [...new Set(innovation.assignedUsers.map(item => item.id))];
+        const uniqueUsers = [...new Map(innovation.assignedUsers.map(item => [`${item.id}_${item.organisationUnitId}`, item])).values()];
 
         this.inApp.push({
           innovationId: innovation.id,
-          domainContext: this.domainContext,
           context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.LOCK_USER, id: innovation.id },
-          userIds: uniqueUserIds,
+          users: uniqueUsers.map(user => ({ userId: user.id, organisationUnitId: user.organisationUnitId })),
           params: {}
         });
       }

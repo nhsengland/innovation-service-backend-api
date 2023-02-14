@@ -1,5 +1,5 @@
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { EmailTypeEnum, ENV } from '../_config';
 
@@ -13,10 +13,11 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
 > {
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 

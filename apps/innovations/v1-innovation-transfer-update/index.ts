@@ -30,10 +30,11 @@ class V1InnovationTransferUpdate {
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const result = await transferService.updateInnovationTransferStatus({
-        id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type
-      }, params.transferId, body.status);
+        id: requestUser.id, identityId: requestUser.identityId
+      }, domainContext, params.transferId, body.status);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

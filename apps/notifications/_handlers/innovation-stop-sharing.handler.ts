@@ -1,6 +1,6 @@
-import { NotifierTypeEnum, UserTypeEnum, EmailNotificationTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,21 +17,22 @@ export class InnovationStopSharingHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
   async run(): Promise<this> {
 
-    if (this.requestUser.type !== UserTypeEnum.INNOVATOR) {
+    if (this.domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       return this;
     }
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const previousAssignedUsers = await this.recipientsService.usersInfo(this.inputData.previousAssignedAssessors.map(item => item.id));
+    const previousAssignedUsers = await this.recipientsService.usersInfo(this.inputData.previousAssignedAccessors.map(item => item.id));
     const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
     this.emails.push({
@@ -41,7 +42,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
         innovation_name: innovation.name,
         innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath(':userBasePath/innovations/:innovationId')
-          .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId })
+          .setPathParams({ userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR), innovationId: this.inputData.innovationId })
           .buildUrl()
       }
     });
@@ -59,13 +60,16 @@ export class InnovationStopSharingHandler extends BaseHandler<
       });
     }
 
+    /*
+     * Disable the inApp notifications for now in accordance with the XLS
+     *
     this.inApp.push({
       innovationId: this.inputData.innovationId,
-      domainContext: this.domainContext,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_STOP_SHARING, id: this.inputData.innovationId },
-      userIds: previousAssignedUsers.map(item => item.id),
+      users: this.inputData.previousAssignedAccessors.map(item => ({ userId: item.id, userType: item.userType, organisationUnitId: item.organisationUnitId })),
       params: {}
     });
+    */
 
     return this;
 

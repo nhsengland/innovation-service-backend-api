@@ -35,11 +35,14 @@ class V1InnovationPause {
         .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext()
 
       const result = await innovationsService.pauseInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
+        domainContext,
         params.innovationId,
-        { message: body.message }
+        { message: body.message },
+
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

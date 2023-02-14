@@ -32,9 +32,10 @@ class GetInnovationSectionInfo {
         .checkAdminType()
         .checkInnovation()
         .verify();
-      const requestUser = authInstance.getUserInfo();
 
-      const result = await innovationSectionsService.getInnovationSectionInfo({ type: requestUser.type }, params.innovationId, params.sectionKey, queryParams);
+      const domainContext = authInstance.getContext();
+
+      const result = await innovationSectionsService.getInnovationSectionInfo(domainContext, params.innovationId, params.sectionKey, queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         section: result.section,
