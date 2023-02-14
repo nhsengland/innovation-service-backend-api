@@ -59,8 +59,15 @@ export class InnovationActionsService extends BaseService {
 
 
     const query = em.createQueryBuilder(InnovationActionEntity, 'action')
-      .select(['action.id', 'action.displayId', 'action.description', 'innovation.name', 'innovation.id', 'action.status', 'innovationSection.section', 'action.createdAt', 'action.updatedAt',
-        'updatedByUser.identityId', 'updatedByUserRole.role', 'createdByUser.id', 'createdByUser.identityId', 'createdByUserRole.role', 'innovationSupport.id', 'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name'])
+      .select([
+        'action.id', 'action.displayId', 'action.description', 'action.status', 'action.createdAt', 'action.updatedAt',
+        'innovation.name', 'innovation.id',
+        'innovationSection.section',
+        'innovationSupport.id',
+        'updatedByUser.identityId', 'updatedByUserRole.role',
+        'createdByUser.id', 'createdByUser.identityId', 'createdByUserRole.role',
+        'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name'
+      ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
       .innerJoin('action.createdByUser', 'createdByUser')
@@ -160,7 +167,6 @@ export class InnovationActionsService extends BaseService {
     }
 
     const usersIds = actions.flatMap(action => [action.createdByUser.identityId, action.updatedByUserRole?.user.identityId]).filter(((u): u is string => u !== undefined));
-
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
     const data = actions.map((action) => ({
