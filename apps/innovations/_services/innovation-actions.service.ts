@@ -240,7 +240,6 @@ export class InnovationActionsService extends BaseService {
     }
 
     const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: dbAction.updatedBy });
-    const roleInContext = lastUpdatedByUser.roles.find(role => role.id === dbAction.createdByUserRole?.id);
 
     return {
       id: dbAction.id,
@@ -252,7 +251,7 @@ export class InnovationActionsService extends BaseService {
       updatedAt: dbAction.updatedAt,
       updatedBy: {
         name: lastUpdatedByUser.displayName,
-        role: roleInContext?.role as ServiceRoleEnum,
+        role: dbAction.updatedByUserRole?.role as ServiceRoleEnum
       },
       createdBy: {
         id: dbAction.createdByUser.id,

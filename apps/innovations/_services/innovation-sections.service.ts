@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
+import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -305,6 +305,8 @@ export class InnovationSectionsService extends BaseService {
       // Update section.
       dbSection.status = InnovationSectionStatusEnum.SUBMITTED;
       dbSection.updatedBy = user.id;
+
+      
       dbSection.submittedAt = new Date().toISOString();
 
       // Update section actions.
@@ -312,6 +314,7 @@ export class InnovationSectionsService extends BaseService {
       for (const action of requestedStatusActions) {
         action.status = InnovationActionStatusEnum.SUBMITTED;
         action.updatedBy = user.id;
+        action.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
       }
 
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
