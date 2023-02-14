@@ -56,7 +56,7 @@ export class OrganisationsService extends BaseService {
     );
   }
 
-  async getOrganisationInfo(organisationId: string, entityManager?: EntityManager): Promise<{
+  async getOrganisationInfo(organisationId: string, onlyActiveUsers?: boolean, entityManager?: EntityManager): Promise<{
     id: string,
     name: string,
     acronym: string | null,
@@ -72,11 +72,18 @@ export class OrganisationsService extends BaseService {
 
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisation = await connection.createQueryBuilder(OrganisationEntity, 'organisation')
+    const organisationQuery = connection.createQueryBuilder(OrganisationEntity, 'organisation')
       .leftJoinAndSelect('organisation.organisationUnits', 'unit')
       .leftJoinAndSelect('unit.organisationUnitUsers', 'unitUsers')
-      .where('organisation.id = :organisationId', { organisationId })
-      .getOne();
+      .where('organisation.id = :organisationId', { organisationId });
+
+
+    if (onlyActiveUsers) {
+      organisationQuery.leftJoinAndSelect('unitUsers.organisationUser', 'orgUser')
+      .leftJoinAndSelect('orgUser.user', 'user');
+    }
+
+    const organisation = await organisationQuery.getOne();
 
     if (!organisation) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
@@ -87,7 +94,7 @@ export class OrganisationsService extends BaseService {
       name: unit.name,
       acronym: unit.acronym,
       isActive: !unit.inactivatedAt,
-      userCount: (await unit.organisationUnitUsers).length
+      userCount: onlyActiveUsers ? (await unit.organisationUnitUsers).filter(unitUser => !unitUser.organisationUser.user.lockedAt).length : (await unit.organisationUnitUsers).length
     })));
 
     return {

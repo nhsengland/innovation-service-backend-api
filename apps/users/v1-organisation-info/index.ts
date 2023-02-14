@@ -10,7 +10,7 @@ import { container } from '../_config';
 import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1OrganisationInfo {
@@ -26,13 +26,14 @@ class V1OrganisationInfo {
     try {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       await authorizationService
         .validate(context)
         .checkAdminType()
         .verify();
 
-      const result = await organisationsService.getOrganisationInfo(params.organisationId);
+      const result = await organisationsService.getOrganisationInfo(params.organisationId, queryParams.onlyActiveUsers);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
