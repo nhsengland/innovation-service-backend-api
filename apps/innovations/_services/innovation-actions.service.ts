@@ -317,6 +317,7 @@ export class InnovationActionsService extends BaseService {
       createdBy: user.id,
       updatedBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
+      updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
     });
 
     if (innovationSupport) {
