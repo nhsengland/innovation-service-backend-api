@@ -251,7 +251,7 @@ export class InnovationActionsService extends BaseService {
       updatedAt: dbAction.updatedAt,
       updatedBy: {
         name: lastUpdatedByUser.displayName,
-        role: dbAction.updatedByUserRole?.role as ServiceRoleEnum
+        ...(dbAction.updatedByUserRole && {role: dbAction.updatedByUserRole.role})
       },
       createdBy: {
         id: dbAction.createdByUser.id,
