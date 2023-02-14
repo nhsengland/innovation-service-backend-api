@@ -4,7 +4,7 @@ import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, Innovation
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import { ActivityLogListParamsType, DateISOType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
@@ -20,6 +20,7 @@ export class InnovationActionsService extends BaseService {
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
     @inject(InnovationThreadsServiceSymbol) private innovationThreadsService: InnovationThreadsServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
   ) { super(); }
 
 
@@ -176,7 +177,7 @@ export class InnovationActionsService extends BaseService {
           },
           createdBy: {
             id: action.createdByUser.id,
-            name: (await this.domainService.users.getUserInfo({ identityId: action.createdByUser.identityId })).displayName,
+            name: (await this.identityProviderService.getUserInfo(action.createdByUser.identityId)).displayName,
             role: action.createdByUserRole?.role,
             ...(action.innovationSupport ? {
               organisationUnit: {
@@ -257,7 +258,7 @@ export class InnovationActionsService extends BaseService {
       },
       createdBy: {
         id: dbAction.createdByUser.id,
-        name: (await this.domainService.users.getUserInfo({ identityId: dbAction.createdByUser.identityId })).displayName,
+        name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
         role: dbAction.createdByUserRole?.role as ServiceRoleEnum,
         ...(dbAction.innovationSupport ? {
           organisationUnit: {

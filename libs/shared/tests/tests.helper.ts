@@ -244,8 +244,13 @@ export class TestsHelper {
         user = this.sampleData.baseUsers.innovator;
         context = this.sampleData.domainContexts.innovator;
         break;
-
-      default: throw Error(); // Never happens
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        user = this.sampleData.baseUsers.qualifyingAccessor;
+        context = this.sampleData.domainContexts.qualifyingAccessor;
+        break;
+      default:
+        const unknownType: never = userType;
+        throw Error(`${unknownType} is not supported.`);
     }
 
     return [user, context];

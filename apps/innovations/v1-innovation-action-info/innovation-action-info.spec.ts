@@ -175,7 +175,7 @@ describe('v1-innovation-action-info Suite', () => {
       expect(result.body.details[0]).toMatchObject({
         context: {},
         key: 'actionId',
-        message: '\"actionId\" is required',
+        message: '"actionId" is required',
         type: 'any.required',
       });
       expect(result.status).toBe(400);
