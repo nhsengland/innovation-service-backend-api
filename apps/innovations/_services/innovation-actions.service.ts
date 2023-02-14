@@ -57,15 +57,18 @@ export class InnovationActionsService extends BaseService {
 
     const em = entityManager ?? this.sqlConnection.manager;
 
+
     const query = em.createQueryBuilder(InnovationActionEntity, 'action')
-      .innerJoinAndSelect('action.innovationSection', 'innovationSection')
-      .innerJoinAndSelect('innovationSection.innovation', 'innovation')
-      .innerJoinAndSelect('action.createdByUser', 'createdByUser')
-      .leftJoinAndSelect('action.innovationSupport', 'innovationSupport')
-      .leftJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('action.createdByUserRole', 'createdByUserRole')
-      .leftJoinAndSelect('action.updatedByUserRole', 'updatedByUserRole')
-      .leftJoinAndSelect('updatedByUserRole.user', 'updatedByUser')
+      .select(['action.id', 'action.displayId', 'action.description', 'innovation.name', 'innovation.id', 'action.status', 'innovationSection.section', 'action.createdAt', 'action.updatedAt',
+        'updatedByUser.identityId', 'updatedByUserRole.role', 'createdByUser.id', 'createdByUser.identityId', 'createdByUserRole.role', 'innovationSupport.id', 'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name'])
+      .innerJoin('action.innovationSection', 'innovationSection')
+      .innerJoin('innovationSection.innovation', 'innovation')
+      .innerJoin('action.createdByUser', 'createdByUser')
+      .leftJoin('action.innovationSupport', 'innovationSupport')
+      .leftJoin('innovationSupport.organisationUnit', 'organisationUnit')
+      .leftJoin('action.createdByUserRole', 'createdByUserRole')
+      .leftJoin('action.updatedByUserRole', 'updatedByUserRole')
+      .leftJoin('updatedByUserRole.user', 'updatedByUser')
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: domainContext.id });
