@@ -45,7 +45,7 @@ describe('Innovation Sections Suite', () => {
     const innovation = testData.innovation;
 
     await TestsHelper.TestDataBuilder
-      .createAction(testData.baseUsers.accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+      .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
       .setStatus(InnovationActionStatusEnum.REQUESTED)
       .build(em);
 
@@ -66,7 +66,7 @@ describe('Innovation Sections Suite', () => {
     const innovation = testData.innovation;
 
     await TestsHelper.TestDataBuilder
-      .createAction(testData.baseUsers.accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+      .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
       .setUpdatedBy(testData.baseUsers.innovator.id)
       .setStatus(InnovationActionStatusEnum.SUBMITTED)
       .build(em);

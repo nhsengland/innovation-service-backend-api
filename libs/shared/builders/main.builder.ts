@@ -50,7 +50,7 @@ export class TestDataBuilder {
     return new InnovationSupportBuilder(innovation, organisationUnit);
   }
 
-  createAction(createdBy: string, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity): InnovationActionBuilder {
+  createAction(createdBy: DomainContextType, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity): InnovationActionBuilder {
     return new InnovationActionBuilder(createdBy, innovationSection, innovationSupport);
   }
 

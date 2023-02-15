@@ -2,15 +2,18 @@ import { randAlpha, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationActionEntity, InnovationSectionEntity, InnovationSupportEntity, UserRoleEntity } from '../entities';
 import { InnovationActionStatusEnum } from '../enums';
+import type { DomainContextType } from '../types';
 
 export class InnovationActionBuilder {
 
   innovationAction: Partial<InnovationActionEntity> = {};
 
-  constructor(createdBy: string, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity) {
+  constructor(createdBy: DomainContextType, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity) {
     this.innovationAction = {
-      createdBy: createdBy,
-      updatedBy: createdBy,
+      createdBy: createdBy.id,
+      createdByUserRole: UserRoleEntity.new({ id: createdBy.currentRole.id }),
+      updatedBy: createdBy.id,
+      updatedByUserRole: UserRoleEntity.new({ id: createdBy.currentRole.id }),
       displayId: randAlpha({ length: 3 }).join('.'),
       description: randText(),
       status: InnovationActionStatusEnum.REQUESTED,

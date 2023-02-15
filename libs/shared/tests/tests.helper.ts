@@ -14,6 +14,7 @@ export type TestDataType = {
     accessor: UserEntity;
     qualifyingAccessor: UserEntity;
     assessmentUser: UserEntity;
+    assessmentUser2: UserEntity;
     innovator: UserEntity;
     admin: UserEntity;
   };
@@ -21,6 +22,7 @@ export type TestDataType = {
     accessor: AccessorDomainContextType,
     qualifyingAccessor: AccessorDomainContextType,
     assessmentUser: AssessmentDomainContextType,
+    assessmentUser2: AssessmentDomainContextType,
     innovator: InnovatorDomainContextType,
     admin: AdminDomainContextType
   }
@@ -83,6 +85,7 @@ export class TestsHelper {
       const accessor = await helper.createUser().ofType(ServiceRoleEnum.ACCESSOR).build(entityManager);
       const qualifyingAccessor = await helper.createUser().ofType(ServiceRoleEnum.QUALIFYING_ACCESSOR).build(entityManager);
       const assessmentUser = await helper.createUser().ofType(ServiceRoleEnum.ASSESSMENT).build(entityManager);
+      const assessmentUser2 = await helper.createUser().ofType(ServiceRoleEnum.ASSESSMENT).build(entityManager);
       const admin = await helper.createUser().ofType(ServiceRoleEnum.ADMIN).build(entityManager);
 
       const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
@@ -97,108 +100,120 @@ export class TestsHelper {
       const accessorOrgUnitUser = await helper.addUserToOrganisationUnit(accessorOrgU, organisationUnit, entityManager);
       const qaOrgUnitUser = await helper.addUserToOrganisationUnit(qualifyingAccessorOrgU, organisationUnit, entityManager);
 
+      //#region DomainContexts
+      const domainContexts: TestDataType['domainContexts'] = {
+        // We could probably have a createDomainContext method on the test data builder, keeping it simple for now
+        accessor: {
+          id: accessor.id,
+          identityId: accessor.identityId,
+          organisation: {
+            id: accessorOrganisation.id,
+            name: accessorOrganisation.name,
+            acronym: accessorOrganisation.acronym,
+            role: accessorOrgU.role as AccessorOrganisationRoleEnum,
+            isShadow: false,
+            size: accessorOrganisation.size,
+            organisationUnit: {
+              id: organisationUnit.id,
+              name: organisationUnit.name,
+              acronym: organisationUnit.acronym,
+              organisationUnitUser: {
+                id: accessorOrgUnitUser.id,
+              }
+            }
+          },
+          currentRole: {
+            id: accessor.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.ACCESSOR
+          },
+        },
+        qualifyingAccessor: {
+          id: qualifyingAccessor.id,
+          identityId: qualifyingAccessor.identityId,
+          organisation: {
+            id: accessorOrganisation.id,
+            name: accessorOrganisation.name,
+            acronym: accessorOrganisation.acronym,
+            role: qualifyingAccessorOrgU.role as AccessorOrganisationRoleEnum,
+            isShadow: false,
+            size: accessorOrganisation.size,
+            organisationUnit: {
+              id: organisationUnit.id,
+              name: organisationUnit.name,
+              acronym: organisationUnit.acronym,
+              organisationUnitUser: {
+                id: qaOrgUnitUser.id,
+              }
+            }
+          },
+          currentRole: {
+            id: qualifyingAccessor.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR
+          },
+        },
+        assessmentUser: {
+          id: assessmentUser.id,
+          identityId: assessmentUser.identityId,
+          currentRole: {
+            id: assessmentUser.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.ASSESSMENT
+          },
+        },
+        assessmentUser2: {
+          id: assessmentUser2.id,
+          identityId: assessmentUser2.identityId,
+          currentRole: {
+            id: assessmentUser2.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.ASSESSMENT
+          },
+        },
+        innovator: {
+          id: innovator.id,
+          identityId: innovator.identityId,
+          organisation: {
+            id: innovatorOrganisation.id,
+            name: innovatorOrganisation.name,
+            acronym: innovatorOrganisation.acronym,
+            role: innovatorOrgUser.role as InnovatorOrganisationRoleEnum,
+            isShadow: true,
+            size: innovatorOrganisation.size,
+          },
+          currentRole: {
+            id: innovator.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.INNOVATOR
+          },
+        },
+        admin: {
+          id: admin.id,
+          identityId: admin.identityId,
+          currentRole: {
+            id: admin.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.ADMIN
+          }
+        }
+      };
+      //#endregion
+
       const innovation = await helper.createInnovation()
         .setOwner(innovator)
         .withSupportsAndAccessors(organisationUnit, [accessorOrgUnitUser])
-        .withActions(accessor.id, accessor.serviceRoles[0]!)
+        .withActions(domainContexts.accessor)
         .withSections()
         .withAssessments(assessmentUser)
         .build(entityManager);
 
+      
       return {
         innovation,
         baseUsers: {
           accessor,
           qualifyingAccessor,
           assessmentUser,
+          assessmentUser2,
           innovator,
           admin
         },
-        //#region DomainContexts
-        domainContexts: {
-          // We could probably have a createDomainContext method on the test data builder, keeping it simple for now
-          accessor: {
-            id: accessor.id,
-            identityId: accessor.identityId,
-            organisation: {
-              id: accessorOrganisation.id,
-              name: accessorOrganisation.name,
-              acronym: accessorOrganisation.acronym,
-              role: accessorOrgU.role as AccessorOrganisationRoleEnum,
-              isShadow: false,
-              size: accessorOrganisation.size,
-              organisationUnit: {
-                id: organisationUnit.id,
-                name: organisationUnit.name,
-                acronym: organisationUnit.acronym,
-                organisationUnitUser: {
-                  id: accessorOrgUnitUser.id,
-                }
-              }
-            },
-            currentRole: {
-              id: accessor.serviceRoles[0]?.id,
-              role: ServiceRoleEnum.ACCESSOR
-            },
-          },
-          qualifyingAccessor: {
-            id: qualifyingAccessor.id,
-            identityId: qualifyingAccessor.identityId,
-            organisation: {
-              id: accessorOrganisation.id,
-              name: accessorOrganisation.name,
-              acronym: accessorOrganisation.acronym,
-              role: qualifyingAccessorOrgU.role as AccessorOrganisationRoleEnum,
-              isShadow: false,
-              size: accessorOrganisation.size,
-              organisationUnit: {
-                id: organisationUnit.id,
-                name: organisationUnit.name,
-                acronym: organisationUnit.acronym,
-                organisationUnitUser: {
-                  id: qaOrgUnitUser.id,
-                }
-              }
-            },
-            currentRole: {
-              id: accessor.serviceRoles[0]?.id,
-              role: ServiceRoleEnum.QUALIFYING_ACCESSOR
-            },
-          },
-          assessmentUser: {
-            id: assessmentUser.id,
-            identityId: assessmentUser.identityId,
-            currentRole: {
-              id: accessor.serviceRoles[0]?.id,
-              role: ServiceRoleEnum.ASSESSMENT
-            },
-          },
-          innovator: {
-            id: innovator.id,
-            identityId: innovator.identityId,
-            organisation: {
-              id: innovatorOrganisation.id,
-              name: innovatorOrganisation.name,
-              acronym: innovatorOrganisation.acronym,
-              role: innovatorOrgUser.role as InnovatorOrganisationRoleEnum,
-              isShadow: true,
-              size: innovatorOrganisation.size,
-            },
-            currentRole: {
-              id: accessor.serviceRoles.find(r => r.id)?.id,
-              role: ServiceRoleEnum.INNOVATOR
-            },
-          },
-          admin: {
-            id: admin.id,
-            identityId: admin.identityId,
-            currentRole: {
-              id: admin.serviceRoles[0]?.id,
-              role: ServiceRoleEnum.ADMIN
-            }
-          }
-        },
-        //#endregion
+        domainContexts: domainContexts,
         organisationUsers: {
           innovator: innovatorOrgUser,
           accessor: accessorOrgU,

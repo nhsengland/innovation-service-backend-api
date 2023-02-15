@@ -183,7 +183,7 @@ describe('Innovation Actions Suite', () => {
 
       // Create other as QA/A
       await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -194,7 +194,7 @@ describe('Innovation Actions Suite', () => {
 
       // Create one as NA
       const naAction = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setUpdatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setCreatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
@@ -209,10 +209,10 @@ describe('Innovation Actions Suite', () => {
         section: naAction.innovationSection.section,
         createdAt: naAction.createdAt,
         updatedAt: naAction.updatedAt,
-        updatedBy: { name: "na name", role: ServiceRoleEnum.ASSESSMENT },
+        updatedBy: { name: 'na name', role: ServiceRoleEnum.ASSESSMENT },
         createdBy: {
           id: testData.baseUsers.assessmentUser.id,
-          name: "na name",
+          name: 'na name',
           role: ServiceRoleEnum.ASSESSMENT,
         }
       };
@@ -232,7 +232,7 @@ describe('Innovation Actions Suite', () => {
 
       // Create one as NA
       await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -259,7 +259,7 @@ describe('Innovation Actions Suite', () => {
 
       // Create one as NA
       await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setUpdatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setCreatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
@@ -274,10 +274,10 @@ describe('Innovation Actions Suite', () => {
         section: action!.innovationSection.section,
         createdAt: action!.createdAt,
         updatedAt: action!.updatedAt,
-        updatedBy: { name: "a name", role: ServiceRoleEnum.ACCESSOR },
+        updatedBy: { name: 'a name', role: ServiceRoleEnum.ACCESSOR },
         createdBy: {
           id: testData.baseUsers.accessor.id,
-          name: "a name",
+          name: 'a name',
           role: ServiceRoleEnum.ACCESSOR,
           organisationUnit: {
             id: innovation.innovationSupports[0]?.organisationUnit.id,
@@ -303,7 +303,7 @@ describe('Innovation Actions Suite', () => {
 
       // Create one as NA
       await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -336,7 +336,7 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.count).toBe(1);
-      expect(actions.data[0]).toHaveProperty('id', action!.id)
+      expect(actions.data[0]).toHaveProperty('id', action!.id);
     });
 
     it('should list all actions from an innovation in status NEEDS_ASSESSMENT', async () => {
@@ -349,7 +349,7 @@ describe('Innovation Actions Suite', () => {
         .build(em);
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -361,7 +361,7 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.count).toBe(1);
-      expect(actions.data[0]).toHaveProperty('id', action!.id)
+      expect(actions.data[0]).toHaveProperty('id', action!.id);
     });
 
     it('should list all actions that are for section CURRENT_CARE_PATHWAY', async () => {
@@ -377,7 +377,7 @@ describe('Innovation Actions Suite', () => {
         .find(section => section.section === InnovationSectionEnum.CURRENT_CARE_PATHWAY);
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, section!)
+        .createAction(testData.domainContexts.assessmentUser, section!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -389,15 +389,15 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.count).toBe(1);
-      expect(actions.data[0]).toHaveProperty('id', action!.id)
-      expect(actions.data[0]).toHaveProperty('section', InnovationSectionEnum.CURRENT_CARE_PATHWAY)
+      expect(actions.data[0]).toHaveProperty('id', action!.id);
+      expect(actions.data[0]).toHaveProperty('section', InnovationSectionEnum.CURRENT_CARE_PATHWAY);
     });
 
     it('should list all actions that are in COMPLETED status', async () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.COMPLETED)
         .build(em);
 
@@ -409,7 +409,7 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.count).toBe(1);
-      expect(actions.data[0]).toHaveProperty('id', action!.id)
+      expect(actions.data[0]).toHaveProperty('id', action!.id);
       expect(actions.data[0]).toHaveProperty('status', InnovationActionStatusEnum.COMPLETED);
     });
 
@@ -417,7 +417,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .setCreatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .build(em);
@@ -430,7 +430,7 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.count).toBe(1);
-      expect(actions.data[0]).toHaveProperty('id', action!.id)
+      expect(actions.data[0]).toHaveProperty('id', action!.id);
       expect(actions.data[0]).toHaveProperty(['createdBy', 'id'], testData.baseUsers.assessmentUser.id);
       expect(actions.data[0]).toHaveProperty(['createdBy', 'role'], testData.baseUsers.assessmentUser.serviceRoles[0]!.role);
     });
@@ -440,7 +440,7 @@ describe('Innovation Actions Suite', () => {
 
       // Create one with NA to see if filter is really just getting the ones created by him
       await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -456,7 +456,7 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.count).toBe(1);
-      expect(actions.data[0]).toHaveProperty('id', action!.id)
+      expect(actions.data[0]).toHaveProperty('id', action!.id);
       expect(actions.data[0]).toHaveProperty(['createdBy', 'id'], testData.baseUsers.accessor.id);
       expect(actions.data[0]).toHaveProperty(['createdBy', 'organisationUnit', 'id'], testData.domainContexts.accessor.organisation.organisationUnit.id);
     });
@@ -479,7 +479,7 @@ describe('Innovation Actions Suite', () => {
       const randomSection = await testData.innovation.sections;
       const randomSupport = testData.innovation.innovationSupports;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(testData.baseUsers.accessor.id, randomSection[0]!, randomSupport[0]!)
+      const action = await TestsHelper.TestDataBuilder.createAction(testData.domainContexts.accessor, randomSection[0]!, randomSupport[0]!)
         .build(em);
 
       const actions = await sut.getActionsList(
@@ -502,7 +502,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const newAction = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setUpdatedByUserRole(testData.baseUsers.accessor.serviceRoles[0]!)
         .setCreatedByUserRole(testData.baseUsers.accessor.serviceRoles[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
@@ -525,10 +525,10 @@ describe('Innovation Actions Suite', () => {
         description: newAction.description,
         createdAt: newAction.createdAt,
         updatedAt: newAction.updatedAt,
-        updatedBy: { name: "first name", role: ServiceRoleEnum.ACCESSOR },
+        updatedBy: { name: 'first name', role: ServiceRoleEnum.ACCESSOR },
         createdBy: {
           id: testData.baseUsers.accessor.id,
-          name: "first name",
+          name: 'first name',
           role: ServiceRoleEnum.ACCESSOR,
           organisationUnit: {
             id: newAction.innovationSupport.organisationUnit.id,
@@ -543,7 +543,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const newAction = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setUpdatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setCreatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
@@ -566,10 +566,10 @@ describe('Innovation Actions Suite', () => {
         description: newAction.description,
         createdAt: newAction.createdAt,
         updatedAt: newAction.updatedAt,
-        updatedBy: { name: "first name", role: ServiceRoleEnum.ASSESSMENT },
+        updatedBy: { name: 'first name', role: ServiceRoleEnum.ASSESSMENT },
         createdBy: {
           id: testData.baseUsers.assessmentUser.id,
-          name: "first name",
+          name: 'first name',
           role: ServiceRoleEnum.ASSESSMENT
         },
       });
@@ -579,7 +579,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const newAction = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setUpdatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setCreatedByUserRole(testData.baseUsers.assessmentUser.serviceRoles[0]!)
         .setStatus(InnovationActionStatusEnum.DECLINED)
@@ -614,10 +614,10 @@ describe('Innovation Actions Suite', () => {
         description: newAction.description,
         createdAt: newAction.createdAt,
         updatedAt: newAction.updatedAt,
-        updatedBy: { name: "first name", role: ServiceRoleEnum.ASSESSMENT },
+        updatedBy: { name: 'first name', role: ServiceRoleEnum.ASSESSMENT },
         createdBy: {
           id: testData.baseUsers.assessmentUser.id,
-          name: "first name",
+          name: 'first name',
           role: ServiceRoleEnum.ASSESSMENT
         },
         declineReason
@@ -638,7 +638,7 @@ describe('Innovation Actions Suite', () => {
 
       expect(err).toBeDefined();
       expect(err?.name).toBe('IA.0090');
-    })
+    });
   });
 
   describe('updateActionAsAccessor', () => {
@@ -656,7 +656,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -686,7 +686,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -716,7 +716,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -769,7 +769,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.DECLINED)
         .build(em);
 
@@ -798,7 +798,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -827,7 +827,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(randUuid(), (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.qualifyingAccessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -867,7 +867,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -897,7 +897,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -927,7 +927,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -954,14 +954,10 @@ describe('Innovation Actions Suite', () => {
 
     it('should update action from status REQUESTED to CANCELLED requested by other NA', async () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
-      const otherAssessmentUser = await TestsHelper.TestDataBuilder
-        .createUser()
-        .ofType(ServiceRoleEnum.ASSESSMENT)
-        .build(em);
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(otherAssessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser2, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -1014,7 +1010,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.DECLINED)
         .build(em);
 
@@ -1043,7 +1039,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 
@@ -1072,7 +1068,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const actionByAccessor = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -1101,7 +1097,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const actionByAccessor = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -1143,11 +1139,10 @@ describe('Innovation Actions Suite', () => {
 
     it('should update action from status REQUESTED to DECLINED from a NA action', async () => {
       const innovator = testData.baseUsers.innovator;
-      const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -1176,11 +1171,10 @@ describe('Innovation Actions Suite', () => {
 
     it('should update action from status REQUESTED to DECLINED from a QA action', async () => {
       const innovator = testData.baseUsers.innovator;
-      const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(accessor.id, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -1236,7 +1230,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(testData.baseUsers.assessmentUser.id, (await innovation.sections)[0]!)
+        .createAction(testData.domainContexts.assessmentUser, (await innovation.sections)[0]!)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .build(em);
 

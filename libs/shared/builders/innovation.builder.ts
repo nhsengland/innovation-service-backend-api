@@ -1,12 +1,13 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationEntity, UserRoleEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
+import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
 import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
+import type { DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
+import { InnovationReassessmentBuilder } from './innovation-reassessment.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
-import { InnovationReassessmentBuilder } from './innovation-reassessment.builder';
 
 
 export class InnovationBuilder {
@@ -17,8 +18,7 @@ export class InnovationBuilder {
   private _withSupports = false;
   private _withSupportsAndAccessors = false;
   private _withActions = false;
-  private _withActionCreatedBy = '';
-  private _withActionUserRole: UserRoleEntity;
+  private _withActionCreatedBy: DomainContextType;
   private _withAssessments = false;
   private _withReassessment: boolean;
 
@@ -124,10 +124,9 @@ export class InnovationBuilder {
     return this;
   }
 
-  withActions(createdBy: string, actionUserRole: UserRoleEntity): InnovationBuilder {
+  withActions(createdBy: DomainContextType): InnovationBuilder {
     this._withActions = true;
     this._withActionCreatedBy = createdBy;
-    this._withActionUserRole = actionUserRole;
     return this;
   }
 
@@ -184,7 +183,7 @@ export class InnovationBuilder {
         .build(entityManager);
     }
 
-    if (this._withActions) {
+    if (this._withActions && this._withActionCreatedBy) {
 
       if (!sections) {
         sections = await new InnovationSectionBuilder(innovation).createAll().build(entityManager);
@@ -201,8 +200,6 @@ export class InnovationBuilder {
       }
 
       await new InnovationActionBuilder(this._withActionCreatedBy, section, support)
-        .setCreatedByUserRole(this._withActionUserRole)
-        .setUpdatedByUserRole(this._withActionUserRole)
         .build(entityManager);
     }
 
@@ -216,7 +213,7 @@ export class InnovationBuilder {
 
     if (this._withReassessment) {
       if (!innovation.assessments[0]) {
-        throw new Error('Cannot create reassessment without assesment')
+        throw new Error('Cannot create reassessment without assesment');
       }
       await new InnovationReassessmentBuilder(innovation, innovation.assessments[0])
         .build(entityManager);
