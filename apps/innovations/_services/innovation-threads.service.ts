@@ -372,7 +372,8 @@ export class InnovationThreadsService extends BaseService {
     take = 10,
     order?: {
       createdAt?: 'ASC' | 'DESC';
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
     messages: {
@@ -384,53 +385,46 @@ export class InnovationThreadsService extends BaseService {
       createdBy: {
         id: string;
         name: string;
+        role: string;
         organisation: { id: string; name: string; acronym: string | null } | undefined;
         organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
       };
       updatedAt: DateISOType;
     }[];
   }> {
-    const threadMessageQuery = this.sqlConnection
-      .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
-      .addSelect('messages.created_at', 'createdAt')
-      .leftJoinAndSelect('messages.author', 'messageAuthor')
-      .leftJoinAndSelect('messages.thread', 'thread')
-      .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
-      .leftJoinAndSelect('orgUnit.organisation', 'org')
-      .leftJoinAndSelect('thread.innovation', 'innovation')
-      .leftJoinAndSelect('thread.author', 'users')
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    threadMessageQuery.where('thread.id = :threadId', { threadId });
 
-    const direction = order?.createdAt || 'DESC';
-
-    threadMessageQuery.addOrderBy('createdAt', direction);
-
-    threadMessageQuery.skip(skip);
-    threadMessageQuery.take(take);
+    const threadMessageQuery = em.createQueryBuilder(InnovationThreadMessageEntity, 'messages')
+      .select([
+        'messages.id', 'messages.message', 'messages.isEditable', 'messages.createdAt', 'messages.updatedAt',
+        'messageAuthor.id', 'messageAuthor.identityId',
+        'authorUserRole.role',
+        'organisation.id', 'organisation.acronym', 'organisation.name',
+        'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name',
+        'thread.id', 'thread.subject', 'thread.author',
+        'users.identityId',
+      ])
+      .leftJoin('messages.author', 'messageAuthor')
+      .leftJoin('messages.authorUserRole', 'authorUserRole')
+      .leftJoin('messages.authorOrganisationUnit', 'organisationUnit')
+      .leftJoin('messages.thread', 'thread')
+      .leftJoin('organisationUnit.organisation', 'organisation')
+      .leftJoin('thread.innovation', 'innovation')
+      .leftJoin('thread.author', 'users')
+      .where('thread.id = :threadId', { threadId })
+      .orderBy('messages.createdAt', order?.createdAt || 'DESC')
+      .skip(skip)
+      .take(take);
 
     const [messages, count] = await threadMessageQuery.getManyAndCount();
 
     const firstMessage = messages.find((_) => true);
 
-    //const innovationId = firstMessage?.thread.innovation.id;
-
-    // await this.validationService
-    //   .checkInnovation(requestUser, innovationId)
-    //   .checkQualifyingAccessor()
-    //   .checkAccessor()
-    //   .checkInnovationOwner()
-    //   .validate();
-
     const threadAuthor = firstMessage!.thread.author.identityId; // a thread always has at least 1 message
     const threadMessagesAuthors = messages.map((tm) => tm.author.identityId);
 
     const authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
-    // const authorsMap = await this.userService.getListOfUsers(
-    //   authors,
-    //   false,
-    //   true
-    // );
 
     const authorsMap = await this.domainService.users.getUsersList({
       identityIds: authors,
@@ -465,6 +459,7 @@ export class InnovationThreadsService extends BaseService {
         createdBy: {
           id: tm.author.id,
           name: author?.displayName || 'unknown user',
+          role: tm.authorUserRole?.role || '',
           organisation,
           organisationUnit,
         },
