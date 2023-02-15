@@ -57,21 +57,32 @@ export class InnovationActionsService extends BaseService {
 
     const em = entityManager ?? this.sqlConnection.manager;
 
+
     const query = em.createQueryBuilder(InnovationActionEntity, 'action')
-      .innerJoinAndSelect('action.innovationSection', 'innovationSection')
-      .innerJoinAndSelect('innovationSection.innovation', 'innovation')
-      .innerJoinAndSelect('action.createdByUser', 'createdByUser')
-      .leftJoinAndSelect('action.innovationSupport', 'innovationSupport')
-      .leftJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('action.createdByUserRole', 'createdByUserRole')
-      .leftJoinAndSelect('action.updatedByUserRole', 'updatedByUserRole');
+      .select([
+        'action.id', 'action.displayId', 'action.description', 'action.status', 'action.createdAt', 'action.updatedAt',
+        'innovation.name', 'innovation.id',
+        'innovationSection.section',
+        'innovationSupport.id',
+        'updatedByUser.identityId', 'updatedByUserRole.role',
+        'createdByUser.id', 'createdByUser.identityId', 'createdByUserRole.role',
+        'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name'
+      ])
+      .innerJoin('action.innovationSection', 'innovationSection')
+      .innerJoin('innovationSection.innovation', 'innovation')
+      .innerJoin('action.createdByUser', 'createdByUser')
+      .leftJoin('action.innovationSupport', 'innovationSupport')
+      .leftJoin('innovationSupport.organisationUnit', 'organisationUnit')
+      .leftJoin('action.createdByUserRole', 'createdByUserRole')
+      .leftJoin('action.updatedByUserRole', 'updatedByUserRole')
+      .leftJoin('updatedByUserRole.user', 'updatedByUser')
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: domainContext.id });
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      if(!filters.allActions) {
+      if (!filters.allActions) {
         query.andWhere('action.innovation_support_id IS NULL');
       }
       query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] });
@@ -89,7 +100,7 @@ export class InnovationActionsService extends BaseService {
         // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
 
-      if(!filters.allActions) {
+      if (!filters.allActions) {
         query.andWhere('action.innovation_support_id IS NOT NULL');
       }
 
@@ -142,9 +153,9 @@ export class InnovationActionsService extends BaseService {
       query.addOrderBy(field, order);
     }
 
-    const dbActions = await query.getManyAndCount();
+    const [actions, count] = await query.getManyAndCount();
 
-    if (dbActions[1] === 0) {
+    if (count === 0) {
       return { count: 0, data: [] };
     }
 
@@ -152,48 +163,43 @@ export class InnovationActionsService extends BaseService {
     let notifications: { id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[] = [];
 
     if (filters.fields?.includes('notifications')) {
-      notifications = await this.domainService.innovations.getUnreadNotifications(domainContext.id, dbActions[0].map(action => action.id), em);
+      notifications = await this.domainService.innovations.getUnreadNotifications(domainContext.id, actions.map(action => action.id), em);
     }
 
-    return {
-      count: dbActions[1],
-      data: await Promise.all(dbActions[0].map(async (action) => {
-        // TODO(performance): this method should be reviewed since we are making two userInfo calls per row
+    const usersIds = actions.flatMap(action => [action.createdByUser.identityId, action.updatedByUserRole?.user.identityId]).filter(((u): u is string => u !== undefined));
+    const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
-        const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: action.updatedBy });
-        const roleInContext = lastUpdatedByUser.roles.find(role => role.id === action.updatedByUserRole?.id);
-        
-        return {
-          id: action.id,
-          displayId: action.displayId,
-          description: action.description,
-          innovation: { id: action.innovationSection.innovation.id, name: action.innovationSection.innovation.name },
-          status: action.status,
-          section: action.innovationSection.section,
-          createdAt: action.createdAt,
-          updatedAt: action.updatedAt,
-          updatedBy: {
-            name: lastUpdatedByUser.displayName,
-            role: roleInContext?.role,
-          },
-          createdBy: {
-            id: action.createdByUser.id,
-            name: (await this.identityProviderService.getUserInfo(action.createdByUser.identityId)).displayName,
-            role: action.createdByUserRole?.role,
-            ...(action.innovationSupport ? {
-              organisationUnit: {
-                id: action.innovationSupport?.organisationUnit?.id,
-                name: action.innovationSupport?.organisationUnit?.name,
-                acronym: action.innovationSupport?.organisationUnit?.acronym
-              }
-            } : {})
-          },
-          ...(!filters.fields?.includes('notifications') ? {} : {
-            notifications: notifications.filter(item => item.contextId === action.id).length
-          })
-        };
-      }))
-    };
+    const data = actions.map((action) => ({
+      id: action.id,
+      displayId: action.displayId,
+      description: action.description,
+      innovation: { id: action.innovationSection.innovation.id, name: action.innovationSection.innovation.name },
+      status: action.status,
+      section: action.innovationSection.section,
+      createdAt: action.createdAt,
+      updatedAt: action.updatedAt,
+      updatedBy: {
+        name: (action.updatedByUserRole && usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ?? '',
+        role: action.updatedByUserRole?.role,
+      },
+      createdBy: {
+        id: action.createdByUser.id,
+        name: usersInfo.get(action.createdByUser.identityId)?.displayName ?? '',
+        role: action.createdByUserRole?.role,
+        ...(action.innovationSupport ? {
+          organisationUnit: {
+            id: action.innovationSupport?.organisationUnit?.id,
+            name: action.innovationSupport?.organisationUnit?.name,
+            acronym: action.innovationSupport?.organisationUnit?.acronym
+          }
+        } : {})
+      },
+      ...(!filters.fields?.includes('notifications') ? {} : {
+        notifications: notifications.filter(item => item.contextId === action.id).length
+      })
+    }));
+
+    return { count, data };
 
   }
 
@@ -322,7 +328,7 @@ export class InnovationActionsService extends BaseService {
 
     if (innovationSupport) {
       actionObj.innovationSupport = InnovationSupportEntity.new({ id: innovationSupport.id });
-    } else if(!innovationSupport && (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)) {
+    } else if (!innovationSupport && (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 

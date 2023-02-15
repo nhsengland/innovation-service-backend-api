@@ -1891,6 +1891,25 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
+  "/v1/{innovationId}/suggestions":
+    get:
+      description: Get suggestions list of an Innovation
+      operationId: v1-innovation-suggestions
+      tags:
+        - Innovation Suggestions
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
   "/v1/{innovationId}/supports/{supportId}/change-request":
     post:
       description: Request Change Support for a given innovation.
@@ -2101,7 +2120,8 @@ paths:
             type: string
       responses:
         "201":
-          description: Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.
+          description: Creates a new innovation support logs for the innovation identified
+            by the supplied Innovation ID.
         "401":
           description: Unauthorised
         "404":
@@ -2934,22 +2954,3 @@ paths:
                     description: Unique identifier for innovation object
         "400":
           description: Invalid innovation payload
-  "/v1/{innovationId}/suggestions":
-    get:
-      description: Get suggestions list of an Innovation
-      operationId: v1-innovation-suggestions
-      tags:
-        - Innovation Suggestions
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-        "404":
-          description: Not Found

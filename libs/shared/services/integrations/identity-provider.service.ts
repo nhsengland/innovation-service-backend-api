@@ -120,14 +120,14 @@ export class IdentityProviderService {
 
   /**
    * get a user from the identity provider
-   * 
+   *
    * this function is an envelope for the getUsersList function
    * @param identityId the user identity id
    * @returns the user
    */
   async getUserInfo(identityId: string): Promise<IdentityUserInfo> {
     const users = await this.getUsersList([identityId]);
-    if(!users[0]) throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    if (!users[0]) throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
 
     return users[0];
   }
@@ -166,15 +166,15 @@ export class IdentityProviderService {
 
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
-   * 
+   *
    * @param entityIds the user identities
    * @returns list of users
    */
   async getUsersList(entityIds: string[]): Promise<IdentityUserInfo[]> {
     const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
-    
+
     const res = await this.cache.getMany(uniqueUserIds);
-    if(res.length !== uniqueUserIds.length) {
+    if (res.length !== uniqueUserIds.length) {
       const cachedUserIds = new Set(res.map(user => user.identityId));
       const nonCachedUsers = await this.getUsersListFromB2C(uniqueUserIds.filter(id => !cachedUserIds.has(id)));
       // Add new users to cache.
@@ -186,8 +186,19 @@ export class IdentityProviderService {
   }
 
   /**
+   * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
+   *
+   * @param entityIds the user identities
+   * @returns list of users as a map
+   */
+  async getUsersMap(entityIds: string[]): Promise<Map<string, IdentityUserInfo>> {
+    const users = await this.getUsersList(entityIds);
+    return new Map(users.map(u => [u.identityId, u]));
+  }
+
+  /**
    * returns the list of users from the identity provider
-   * 
+   *
    * this function splits the number of users to be fetched into chunks of 10 users
    * @param entityIds user identities to be fetched
    * @returns list of users
