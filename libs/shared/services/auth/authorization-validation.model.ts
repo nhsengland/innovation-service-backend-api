@@ -196,11 +196,11 @@ export class AuthorizationValidationModel {
   }
 
   // Innovation validations.
-  checkInnovation(data?: { status?: InnovationStatusEnum[] | { [key in UserTypeEnum]?: InnovationStatusEnum[] } }): this {
+  checkInnovation(data?: { status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] } }): this {
     this.innovationValidations.set(InnovationValidationKeys.checkInnovation, () => this.innovationValidation(data));
     return this;
   }
-  private innovationValidation(data?: { status?: InnovationStatusEnum[] | { [key in UserTypeEnum]?: InnovationStatusEnum[] } }): null | AuthErrorsEnum {
+  private innovationValidation(data?: { status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] } }): null | AuthErrorsEnum {
 
     let error: null | AuthErrorsEnum = null;
 
@@ -209,9 +209,9 @@ export class AuthorizationValidationModel {
     }
 
     const domainContext = this.getContext();
-    if (!error && data?.status && domainContext.userType) {
+    if (!error && data?.status && domainContext.currentRole) {
 
-      const status = Array.isArray(data.status) ? data.status : data.status[domainContext.userType];
+      const status = Array.isArray(data.status) ? data.status : data.status[domainContext.currentRole.role];
 
       if (!(status ?? []).some(status => status === this.innovation.data?.status)) {
         error = AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
