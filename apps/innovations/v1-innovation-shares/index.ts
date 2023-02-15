@@ -30,6 +30,7 @@ class V1InnovationShares {
         .checkInnovatorType()
         .checkAssessmentType()
         .checkAdminType()
+        .checkAccessorType()
         .checkInnovation()
         .verify();
 
