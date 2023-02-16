@@ -394,7 +394,7 @@ export class InnovationSupportsService extends BaseService {
     if (!organisationUnitId) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
     }
-
+    
     const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
     .innerJoinAndSelect('innovation.owner', 'owner')
     .leftJoinAndSelect('innovation.sections', 'sections')
@@ -419,6 +419,7 @@ export class InnovationSupportsService extends BaseService {
         innovationSupportStatus: innovationSupport && innovationSupport.status? innovationSupport.status : InnovationSupportStatusEnum.UNASSIGNED,
         type: data.type,
         description: data.description,
+        ...(domainContext.organisation?.organisationUnit?.id && { organisationUnit: OrganisationUnitEntity.new({ id: domainContext.organisation.organisationUnit.id})}),
         suggestedOrganisationUnits: (data.organisationUnits || []).map((id: string) => OrganisationUnitEntity.new({ id }))
       });
 
