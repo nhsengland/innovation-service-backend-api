@@ -9,9 +9,9 @@ import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType, type DomainUsersService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
+import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
-import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import { BaseService } from './base.service';
@@ -27,7 +27,7 @@ export class InnovationsService extends BaseService {
 
 
   async getInnovationsList(
-    user: { id: string},
+    user: { id: string },
     domainContext: DomainContextType,
     filters: {
       status: InnovationStatusEnum[],
@@ -41,7 +41,7 @@ export class InnovationsService extends BaseService {
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
       latestWorkedByMe?: boolean,
-      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
+      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
   ): Promise<{
@@ -59,6 +59,7 @@ export class InnovationsService extends BaseService {
       mainCategory: null | InnovationCategoryCatalogueEnum,
       otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
+      groupedStatus?: InnovationGroupedStatusEnum,
       assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
       supports?: {
         id: string,
@@ -92,7 +93,7 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.status', 'innovations_status')
       .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
       .addSelect('innovations.postcode', 'innovations_postcode')
-      .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description');
+      .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description')
 
     // Assessment relations.
     if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
@@ -103,6 +104,11 @@ export class InnovationsService extends BaseService {
         innovationFetchQuery.addSelect('assessments.createdAt', 'assessments_created_at');
         innovationFetchQuery.addSelect('assessments.finishedAt', 'assessments_finished_at');
       }
+    }
+
+    if (filters.fields?.includes('groupedStatus')) {
+      innovationFetchQuery.innerJoin('innovations.innovationGroupedStatus', 'innovationGroupedStatus');
+      innovationFetchQuery.addSelect('innovationGroupedStatus.groupedStatus', 'innovationGroupedStatus_grouped_status');
     }
 
     // Last worked on.
@@ -243,7 +249,7 @@ export class InnovationsService extends BaseService {
         innovationFetchQuery.andWhere('assessments.assign_to_id = :assignToId', { assignToId: user.id });
       }
 
-      if([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
+      if ([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
         innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
         innovationFetchQuery.innerJoin('supports.organisationUnitUsers', 'supportingUnitUsers');
         innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
@@ -258,7 +264,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
       innovationFetchQuery.leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION });
       innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
-      
+
       innovationFetchQuery.andWhere(
         `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
         { suggestedOrganisationUnitId: domainContext.organisation?.organisationUnit?.id }
@@ -384,10 +390,10 @@ export class InnovationsService extends BaseService {
         .addSelect('innovation.id', 'innovation_id')
         .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
-      
+
       if (domainContext.organisation?.organisationUnit?.id) {
         notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
-        .where('organisationUnit.id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
+          .where('organisationUnit.id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
       }
 
       if (filters.fields?.includes('statistics')) {
@@ -457,6 +463,7 @@ export class InnovationsService extends BaseService {
           mainCategory: innovation.mainCategory,
           otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
+          ...(filters.fields?.includes('groupedStatus') && { groupedStatus: innovation.innovationGroupedStatus.groupedStatus }),
           ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
           ...(assessment && { assessment }),
           ...(supports && {
@@ -1015,7 +1022,7 @@ export class InnovationsService extends BaseService {
       .where('innovation.status IN (:...innovationStatus)', { innovationStatus: filters.innovationStatus })
       .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`);
 
-    if(filters.assignedToMe) {
+    if (filters.assignedToMe) {
       query.andWhere('assessments.assign_to_id = :assignToId', { assignToId: domainContext.id });
     }
 
@@ -1740,7 +1747,7 @@ export class InnovationsService extends BaseService {
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
       .where('notification_id IN ( ' + query.getQuery() + ' )')
       .andWhere('user_id = :userId AND read_at IS NULL');
-      
+
     if (domainContext.organisation?.organisationUnit?.id) {
       params.organisationUnitId = domainContext.organisation.organisationUnit.id;
       updateQuery.andWhere('organisation_unit_id = :organisationUnitId');
@@ -1901,6 +1908,7 @@ export class InnovationsService extends BaseService {
       [InnovationGroupedStatusEnum.NEEDS_ASSESSMENT]: InnovationStatusEnum.NEEDS_ASSESSMENT,
       [InnovationGroupedStatusEnum.AWAITING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
       [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
+      [InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
       [InnovationGroupedStatusEnum.WITHDRAWN]: InnovationStatusEnum.WITHDRAWN,
     };
 

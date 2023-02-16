@@ -971,6 +971,7 @@ paths:
                 - NEEDS_ASSESSMENT
                 - AWAITING_SUPPORT
                 - RECEIVING_SUPPORT
+                - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - WITHDRAWN
         - name: assignedToMe
@@ -1018,6 +1019,7 @@ paths:
                 - supports
                 - notifications
                 - statistics
+                - groupedStatus
       responses:
         "200":
           description: Success
