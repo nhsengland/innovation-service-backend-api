@@ -381,11 +381,11 @@ export class InnovationsService extends BaseService {
 
     let innovationsGroupedStatus: undefined | Map<string, InnovationGroupedStatusEnum>;
     if (filters.fields?.includes('groupedStatus')) {
-      if(filters.groupedStatuses && filters.groupedStatuses.length === 0) {
+      if(filters.groupedStatuses && filters.groupedStatuses.length > 0) { // means that inner join was made
+        innovationsGroupedStatus = new Map(innovations.map(cur => [cur.id, cur.innovationGroupedStatus.groupedStatus]));
+      } else {
         const innovationIds = innovations.map(i => i.id);
         innovationsGroupedStatus = await this.domainService.innovations.getInnovationsGroupedStatus({ innovationIds });
-      } else {
-        innovationsGroupedStatus = new Map(innovations.map(cur => [cur.id, cur.innovationGroupedStatus.groupedStatus]));
       }
     }
 
@@ -834,6 +834,7 @@ export class InnovationsService extends BaseService {
     name: string,
     description: null | string,
     status: InnovationStatusEnum,
+    groupedStatus: InnovationGroupedStatusEnum,
     statusUpdatedAt: DateISOType,
     submittedAt: null | DateISOType,
     countryName: null | string,
@@ -852,6 +853,7 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('innovationOwner.userOrganisations', 'userOrganisations')
       .innerJoinAndSelect('userOrganisations.organisation', 'organisation')
       .leftJoinAndSelect('innovation.categories', 'innovationCategories')
+      .innerJoinAndSelect('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
       .where('innovation.id = :innovationId', { innovationId: id });
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
@@ -937,6 +939,7 @@ export class InnovationsService extends BaseService {
       name: result.name,
       description: result.description,
       status: result.status,
+      groupedStatus: result.innovationGroupedStatus.groupedStatus,
       statusUpdatedAt: result.statusUpdatedAt,
       submittedAt: result.submittedAt,
       countryName: result.countryName,
