@@ -106,11 +106,6 @@ export class InnovationsService extends BaseService {
       }
     }
 
-    if (filters.fields?.includes('groupedStatus')) {
-      innovationFetchQuery.innerJoin('innovations.innovationGroupedStatus', 'innovationGroupedStatus');
-      innovationFetchQuery.addSelect('innovationGroupedStatus.groupedStatus', 'innovationGroupedStatus_grouped_status');
-    }
-
     // Last worked on.
     if (filters.latestWorkedByMe) {
       innovationFetchQuery.andWhere('innovations.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)',
@@ -147,53 +142,10 @@ export class InnovationsService extends BaseService {
     }
 
     if (filters.groupedStatuses && filters.groupedStatuses.length > 0) {
-      const status = this.getGroupedToInnovationStatusMap(filters.groupedStatuses);
+      innovationFetchQuery.innerJoin('innovations.innovationGroupedStatus', 'innovationGroupedStatus');
+      innovationFetchQuery.addSelect('innovationGroupedStatus.groupedStatus', 'innovationGroupedStatus_grouped_status');
 
-      if (
-        (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === false)
-        || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === true)
-      ) {
-
-        status.splice(status.indexOf(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT), 1);
-
-        const isReassessment = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT);
-
-        innovationFetchQuery.orWhere(
-          `innovations.id IN (
-            SELECT innovations.id
-            FROM innovation innovations
-            FULL JOIN innovation_reassessment_request reassessmentRequests
-            ON reassessmentRequests.innovation_id = innovations.id
-            WHERE (innovations.status = :waitingNeedsAssessmentStatus AND reassessmentRequests.innovation_id ${isReassessment ? 'IS NOT' : 'IS'} NULL))`,
-          { waitingNeedsAssessmentStatus: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT }
-        );
-
-      }
-
-      if (
-        (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === false)
-        || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === true)
-      ) {
-
-        status.splice(status.indexOf(InnovationStatusEnum.IN_PROGRESS), 1);
-
-        const isAwaitingSupport = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT);
-        const receivingSupportQuery = '(SELECT supports.innovation_id FROM innovation_support supports WHERE supports.status IN (:...receivingSupportStatus))';
-
-        innovationFetchQuery.orWhere(
-          `innovations.id IN (
-            SELECT innovations.id
-            FROM innovation innovations
-            WHERE (innovations.status = :inProgressStatus AND innovations.id ${isAwaitingSupport ? 'NOT IN' : 'IN'} ${receivingSupportQuery}))`,
-          { inProgressStatus: InnovationStatusEnum.IN_PROGRESS, receivingSupportStatus: [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.ENGAGING] }
-        );
-
-      }
-
-      if (status.length > 0) {
-        innovationFetchQuery.andWhere('innovations.status IN (:...status) ', { status });
-      }
-
+      innovationFetchQuery.andWhere('innovationGroupedStatus.groupedStatus IN (:...groupedStatuses)', { groupedStatuses: filters.groupedStatuses });
     }
 
     // Filters.
@@ -427,6 +379,16 @@ export class InnovationsService extends BaseService {
       });
     }
 
+    let innovationsGroupedStatus: undefined | Map<string, InnovationGroupedStatusEnum>;
+    if (filters.fields?.includes('groupedStatus')) {
+      if(filters.groupedStatuses && filters.groupedStatuses.length === 0) {
+        const innovationIds = innovations.map(i => i.id);
+        innovationsGroupedStatus = await this.domainService.innovations.getInnovationsGroupedStatus({ innovationIds });
+      } else {
+        innovationsGroupedStatus = new Map(innovations.map(cur => [cur.id, cur.innovationGroupedStatus.groupedStatus]));
+      }
+    }
+
     return {
       count: innovationsCount,
       data: await Promise.all(innovations.map(async innovation => {
@@ -463,7 +425,7 @@ export class InnovationsService extends BaseService {
           mainCategory: innovation.mainCategory,
           otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
-          ...(filters.fields?.includes('groupedStatus') && { groupedStatus: innovation.innovationGroupedStatus.groupedStatus }),
+          ...((filters.fields?.includes('groupedStatus') && innovationsGroupedStatus) && { groupedStatus: innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED }),
           ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
           ...(assessment && { assessment }),
           ...(supports && {
@@ -1899,28 +1861,5 @@ export class InnovationsService extends BaseService {
 
   }
   */
-
-  private getGroupedToInnovationStatusMap(groupedStatuses: InnovationGroupedStatusEnum[]): InnovationStatusEnum[] {
-    const groupedToInnovationStatusMap = {
-      [InnovationGroupedStatusEnum.RECORD_NOT_SHARED]: InnovationStatusEnum.CREATED,
-      [InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-      [InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-      [InnovationGroupedStatusEnum.NEEDS_ASSESSMENT]: InnovationStatusEnum.NEEDS_ASSESSMENT,
-      [InnovationGroupedStatusEnum.AWAITING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.NO_ACTIVE_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.WITHDRAWN]: InnovationStatusEnum.WITHDRAWN,
-    };
-
-    const status = [];
-    for (const groupedStatus of groupedStatuses) {
-      const innovationStatus = groupedToInnovationStatusMap[groupedStatus];
-      if (status.includes(innovationStatus) === false) {
-        status.push(innovationStatus);
-      }
-    }
-
-    return status;
-  }
 
 }

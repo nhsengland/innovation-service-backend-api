@@ -5,6 +5,9 @@ import { InnovationEntity } from '../innovation/innovation.entity';
 @ViewEntity()
 export class InnovationGroupedStatusViewEntity {
 
+  @ViewColumn({ name: 'id' })
+  innovationId: string;
+
   @ViewColumn({ name: 'grouped_status' })
   groupedStatus: InnovationGroupedStatusEnum;
 
