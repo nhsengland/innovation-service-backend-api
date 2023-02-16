@@ -49,7 +49,7 @@ export default openApi(
   V1AdminValidate.httpTrigger as AzureFunction,
   '/v1/users/{userId}/validate',
   {
-    post: {
+    get: {
       description: 'Get validation information.',
       operationId: 'v1-admin-validate',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
