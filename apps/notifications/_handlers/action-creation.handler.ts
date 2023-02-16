@@ -61,7 +61,7 @@ export class ActionCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_CREATION, id: this.inputData.action.id },
-      users: [{ userId: innovation.owner.id, organisationUnitId: this.domainContext.organisation?.organisationUnit?.id }],
+      users: [{ userId: innovation.owner.id }],
       params: {
         section: this.inputData.action.section
       },
