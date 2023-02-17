@@ -11,7 +11,8 @@ export class InnovationGroupedStatusViewEntity {
   @ViewColumn({ name: 'grouped_status' })
   groupedStatus: InnovationGroupedStatusEnum;
 
-  @OneToOne(() => InnovationEntity, record => record.id, { lazy: true })
+  @OneToOne(() => InnovationEntity, record => record.id)
   @JoinColumn({ name: 'id' })
-  innovation: Promise<InnovationEntity>;
+  innovation: InnovationEntity;
+
 }

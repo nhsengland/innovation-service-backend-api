@@ -379,9 +379,9 @@ export class InnovationsService extends BaseService {
       });
     }
 
-    let innovationsGroupedStatus: undefined | Map<string, InnovationGroupedStatusEnum>;
+    let innovationsGroupedStatus = new Map<string, InnovationGroupedStatusEnum>();
     if (filters.fields?.includes('groupedStatus')) {
-      if(filters.groupedStatuses && filters.groupedStatuses.length > 0) { // means that inner join was made
+      if (filters.groupedStatuses && filters.groupedStatuses.length > 0) { // means that inner join was made
         innovationsGroupedStatus = new Map(innovations.map(cur => [cur.id, cur.innovationGroupedStatus.groupedStatus]));
       } else {
         const innovationIds = innovations.map(i => i.id);
@@ -425,7 +425,7 @@ export class InnovationsService extends BaseService {
           mainCategory: innovation.mainCategory,
           otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
-          ...((filters.fields?.includes('groupedStatus') && innovationsGroupedStatus) && { groupedStatus: innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED }),
+          ...(filters.fields?.includes('groupedStatus') && { groupedStatus: innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED }),
           ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
           ...(assessment && { assessment }),
           ...(supports && {
