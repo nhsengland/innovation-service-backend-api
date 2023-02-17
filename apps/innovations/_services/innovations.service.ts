@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
-import { In, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, In, SelectQueryBuilder } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
@@ -9,9 +9,9 @@ import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType, type DomainUsersService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
+import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
-import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import { BaseService } from './base.service';
@@ -1116,7 +1116,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.INNOVATION_CREATION, domainContext },
+        { innovationId: savedInnovation.id, activity: ActivityEnum.INNOVATION_CREATION, domainContext },
         {}
       );
 
@@ -1144,6 +1144,80 @@ export class InnovationsService extends BaseService {
       }
     }));
 
+  }
+
+  async updateInnovationShares(domainContext: DomainContextType, innovationId: string, organisationShares: string[], entityManager?: EntityManager): Promise<void> {
+    const em = entityManager || this.sqlConnection.manager;
+
+    // Sanity check if all organisation exists.
+    const organisations = await em.createQueryBuilder(OrganisationEntity, 'organisation')
+      .select('organisation.name')
+      .where('organisation.id IN (:...organisationIds)', { organisationIds: organisationShares })
+      .getMany();
+    if (organisations.length != organisationShares.length) {
+      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATIONS_NOT_FOUND, { details: { error: 'Unknown organisations' } });
+    }
+
+    const innovation = await em.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.organisationShares', 'organisationShares')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if(!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const newShares = new Set(organisationShares);
+    const deletedShares = innovation.organisationShares
+      .filter(organisation => !newShares.has(organisation.id))
+      .map(organisation => organisation.id);
+
+    await em.transaction(async transaction => {
+      // Delete shares
+      if(deletedShares.length > 0) {
+        // Check for active supports
+        const supports = await transaction.createQueryBuilder(InnovationSupportEntity, 'innovationSupport')
+          .innerJoin('innovationSupport.innovation', 'innovation')
+          .innerJoin('innovationSupport.organisationUnit', 'organisationUnit')
+          .where('innovation.id = :innovationId', { innovationId })
+          .andWhere('organisationUnit.organisation IN (:...ids)', { ids: deletedShares })
+          .getMany();
+
+        const supportIds = supports.map(support => support.id);
+        if (supportIds.length > 0) {
+          // Decline all actions for the deleted shares supports
+          await transaction.getRepository(InnovationActionEntity).createQueryBuilder()
+            .update()
+            .where('innovation_support_id IN (:...ids)', { ids: supportIds })
+            .andWhere('status IN (:...status)', { status: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED] })
+            .set({
+              status: InnovationActionStatusEnum.DECLINED,
+              updatedBy: domainContext.id,
+              updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
+            })
+            .execute();
+
+          await transaction.getRepository(InnovationSupportEntity).createQueryBuilder()
+            .update()
+            .where('id IN (:...ids)', { ids: supportIds })
+            .set({
+              status: InnovationSupportStatusEnum.UNASSIGNED,
+              updatedBy: domainContext.id,
+              deletedAt: new Date().toISOString(),
+            })
+            .execute();
+        }
+      }
+
+      innovation.organisationShares = organisationShares.map(id => OrganisationEntity.new({ id }));
+      await this.domainService.innovations.addActivityLog(
+        transaction,
+        { innovationId, activity: ActivityEnum.SHARING_PREFERENCES_UPDATE, domainContext },
+        { organisations: organisations.map(o => o.name) }
+      );
+      await transaction.save(InnovationEntity, innovation);
+      
+    });
   }
 
   async submitInnovation(user: { id: string, identityId: string }, domainContext: DomainContextType, innovationId: string): Promise<{ id: string; status: InnovationStatusEnum; }> {
@@ -1182,7 +1256,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION, domainContext },
+        { innovationId: innovationId, activity: ActivityEnum.INNOVATION_SUBMISSION, domainContext },
         {}
       );
 
@@ -1285,7 +1359,7 @@ export class InnovationsService extends BaseService {
       // Decline all actions for all innovation supports.
       await transaction.getRepository(InnovationActionEntity).update(
         { innovationSection: In(sections.map(section => section.id)), status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]) },
-        { status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id }
+        { status: InnovationActionStatusEnum.DECLINED, updatedBy: user.id, updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }) }
       );
 
       // Update all support to UNASSIGNED.
@@ -1325,7 +1399,7 @@ export class InnovationsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId, activity: ActivityEnum.INNOVATION_PAUSE, domainContext },
+        { innovationId, activity: ActivityEnum.INNOVATION_PAUSE, domainContext },
         { message: data.message }
       );
 

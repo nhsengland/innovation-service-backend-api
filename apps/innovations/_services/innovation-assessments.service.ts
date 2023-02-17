@@ -9,9 +9,9 @@ import type { DomainContextType } from '@innovations/shared/types';
 import { InnovationHelper } from '../_helpers/innovation.helper';
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 
+import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
-import type { EntityManager } from 'typeorm';
 
 
 @injectable()
@@ -129,7 +129,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START, domainContext },
+        { innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_START, domainContext },
         { comment: { id: thread.thread.id, value: data.message } }
       );
 
@@ -225,7 +225,7 @@ export class InnovationAssessmentsService extends BaseService {
 
           await this.domainService.innovations.addActivityLog(
             transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED, domainContext },
+            { innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED, domainContext },
             { assessmentId: assessment.id }
           );
 
@@ -233,7 +233,7 @@ export class InnovationAssessmentsService extends BaseService {
         } else {
           await this.domainService.innovations.addActivityLog(
             transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED, domainContext },
+            { innovationId: innovationId, activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED, domainContext },
             { assessmentId: assessment.id }
           );
         }
@@ -251,7 +251,7 @@ export class InnovationAssessmentsService extends BaseService {
 
           await this.domainService.innovations.addActivityLog(
             transaction,
-            { userId: user.id, innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION, domainContext },
+            { innovationId: innovationId, activity: ActivityEnum.ORGANISATION_SUGGESTION, domainContext },
             { organisations: organisations.map(item => item.name) }
           );
 
@@ -370,7 +370,7 @@ export class InnovationAssessmentsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED, domainContext },
+        { innovationId: assessment.innovation.id, activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED, domainContext },
         { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }
       );
 

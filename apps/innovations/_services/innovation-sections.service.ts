@@ -256,7 +256,7 @@ export class InnovationSectionsService extends BaseService {
       if (shouldAddActivityLog) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE, domainContext },
+          { innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE, domainContext },
           { sectionId: sectionKey }
         );
       }
@@ -324,7 +324,7 @@ export class InnovationSectionsService extends BaseService {
         // BUSINESS RULE: Don't log section updates before innovation submission, only after.
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION, domainContext },
+          { innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION, domainContext },
           { sectionId: savedSection.section }
         );
       }
@@ -332,7 +332,7 @@ export class InnovationSectionsService extends BaseService {
       if (requestedStatusActions.length > 0) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE, domainContext },
+          { innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE, domainContext },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 

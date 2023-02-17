@@ -340,7 +340,7 @@ export class InnovationSupportsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE, domainContext },
+        { innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE, domainContext },
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: organisationUnit.name,
@@ -436,7 +436,6 @@ export class InnovationSupportsService extends BaseService {
         await this.domainService.innovations.addActivityLog(
           transaction,
           { 
-            userId: user.id, 
             innovationId, 
             activity: ActivityEnum.ORGANISATION_SUGGESTION, 
             domainContext 
@@ -540,7 +539,7 @@ export class InnovationSupportsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE, domainContext },
+        { innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE, domainContext },
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: savedSupport.organisationUnit.name,
@@ -596,7 +595,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   private async fetchSupportLogs(innovationId: string, type?: InnovationSupportLogTypeEnum): Promise<InnovationSupportLogEntity[]> {
-    let supportQuery = this.sqlConnection
+    const supportQuery = this.sqlConnection
     .createQueryBuilder(InnovationSupportLogEntity, 'supports')
     .leftJoinAndSelect('supports.innovation', 'innovation')
     .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
@@ -607,7 +606,7 @@ export class InnovationSupportsService extends BaseService {
     .andWhere('suggestedOrganisation.inactivated_at IS NULL');
 
     if(type) {
-      supportQuery.andWhere('supports.type = :type', { type })
+      supportQuery.andWhere('supports.type = :type', { type });
     }
 
     supportQuery.orderBy('supports.createdAt', 'ASC');

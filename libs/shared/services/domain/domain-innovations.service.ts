@@ -182,7 +182,7 @@ export class DomainInnovationsService {
 
   async addActivityLog<T extends ActivityEnum>(
     transactionManager: EntityManager,
-    configuration: { userId: string, innovationId: string, activity: T, domainContext: DomainContextType },
+    configuration: { innovationId: string, activity: T, domainContext: DomainContextType },
     params: ActivitiesParamsType<T>
   ): Promise<void> {
 
@@ -190,10 +190,10 @@ export class DomainInnovationsService {
       innovation: InnovationEntity.new({ id: configuration.innovationId }),
       activity: configuration.activity,
       type: this.getActivityLogType(configuration.activity),
-      createdBy: configuration.userId,
-      updatedBy: configuration.userId,
+      createdBy: configuration.domainContext.id,
+      updatedBy: configuration.domainContext.id,
       param: JSON.stringify({
-        actionUserId: configuration.userId,
+        actionUserId: configuration.domainContext.id,
         actionUserRole: configuration.domainContext.currentRole.role,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id, 
         ...params

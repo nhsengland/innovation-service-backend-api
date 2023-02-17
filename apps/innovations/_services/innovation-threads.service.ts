@@ -447,8 +447,8 @@ export class InnovationThreadsService extends BaseService {
         (author) => author.identityId === tm.author.identityId
       );
       
-      const organisationUnit = tm.authorOrganisationUnit ?? undefined
-      const organisation = tm.authorOrganisationUnit?.organisation
+      const organisationUnit = tm.authorOrganisationUnit ?? undefined;
+      const organisation = tm.authorOrganisationUnit?.organisation;
 
       return {
         id: tm.id,
@@ -596,7 +596,7 @@ export class InnovationThreadsService extends BaseService {
           (ma) => ma.id === message?.author.id
         );
 
-        const organisationUnit = message?.authorOrganisationUnit ?? undefined
+        const organisationUnit = message?.authorOrganisationUnit ?? undefined;
 
         const hasUnreadNotification = notifications.find(
           (n) => n.contextId === t.thread_id
@@ -660,7 +660,7 @@ export class InnovationThreadsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: requestUser.id, innovationId: innovation.id, activity: ActivityEnum.THREAD_CREATION, domainContext },
+        { innovationId: innovation.id, activity: ActivityEnum.THREAD_CREATION, domainContext },
         {
           thread: { id: result.id, subject: result.subject },
           message: { id: messageId }
@@ -691,7 +691,7 @@ export class InnovationThreadsService extends BaseService {
     try {
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: requestUser.id, innovationId: thread.innovation.id, activity: ActivityEnum.THREAD_MESSAGE_CREATION, domainContext },
+        { innovationId: thread.innovation.id, activity: ActivityEnum.THREAD_MESSAGE_CREATION, domainContext },
         {
           thread: { id: thread.id, subject: thread.subject },
           message: { id: result.id },
