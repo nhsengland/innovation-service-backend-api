@@ -1,4 +1,4 @@
-import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -52,7 +52,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION, id: this.inputData.assessmentId },
-        users: [{ userId: innovation.owner.id }],
+        users: [{ userId: innovation.owner.id, roleId: innovation.owner.userRole.id }],
         params: {}
       });
     }
@@ -81,7 +81,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.NEEDS_ASSESSMENT, detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_COMPLETED, id: this.inputData.assessmentId },
-      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, userType: ServiceRoleEnum.QUALIFYING_ACCESSOR, organisationUnitId: user.organisationUnitId })),
+      users: organisationUnitsSuggestedAndSharedQAs.map(user => ({ userId: user.id, roleId: user.roleId, userType: ServiceRoleEnum.QUALIFYING_ACCESSOR, organisationUnitId: user.organisationUnitId })),
       params: {}
     });
     

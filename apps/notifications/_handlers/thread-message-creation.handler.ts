@@ -20,6 +20,8 @@ type EmailNotificationPreferenceTypeAlias = {
 type ThreadIntervenientUserTypeAlias = {
   id: string;
   identityId: string;
+  locked: boolean;
+  userRole: {id: string, role: ServiceRoleEnum};
   userType?: ServiceRoleEnum | undefined;
   organisationUnitId?: string | null;
   emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
@@ -71,37 +73,39 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     const owner = {
       id: innovation.owner.id,
       identityId: innovation.owner.identityId,
-      userRole: innovation.owner.userRole.role,
-      organisationUnitId: innovation.owner?.userRole?.organisationUnit?.id,
+      userRole: {id: innovation.owner.userRole.id, role: innovation.owner.userRole.role},
+      locked: false,
+      organisationUnit: null,
       emailNotificationPreferences: innovation.owner.emailNotificationPreferences
     };
 
     // Fetch all thread intervenients, excluding the request user.
     const threadIntervenientUsers = (await this.domainService.innovations.threadIntervenients(this.inputData.threadId)).filter(item => item.id !== this.requestUser.id);
     
-    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id)
+    const ownerIncluded = threadIntervenientUsers.find( u => u.id === owner.id);
     
     // ensure innovation owner is included when he's not the request user
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      threadIntervenientUsers.push({...owner, organisationUnit: null});
+      threadIntervenientUsers.push(owner);
     }
 
     // exclude all assessment users
-    const recipients = threadIntervenientUsers.filter(i => i.userRole !== ServiceRoleEnum.ASSESSMENT);
+    const recipients = threadIntervenientUsers.filter(i => i.userRole.role !== ServiceRoleEnum.ASSESSMENT);
 
     // if thread author is an assessment user and the request user is an innovator, push the author back into the thread
     if (thread.author.userRole?.role === ServiceRoleEnum.ASSESSMENT && this.domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       recipients.push({
         id: thread.author.id,
         identityId: thread.author.identityId,
-        userRole: thread.author.userRole.role,
+        userRole: {id: thread.author.userRole.id, role: thread.author.userRole.role},
+        locked: thread.author.locked,
         emailNotificationPreferences: thread.author.emailNotificationPreferences,
         organisationUnit: null,
       });
     }
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const user of recipients.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, item.emailNotificationPreferences))) {
+    for (const user of recipients.filter(item => !item.locked && this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, item.emailNotificationPreferences))) {
       
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
@@ -112,7 +116,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
           subject: thread.subject,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(user.userRole as ServiceRoleEnum), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(user.userRole.role), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
             .buildUrl()
         }
       });        
@@ -130,7 +134,9 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
   private pushInAppNotifications( threadIntervenientUsers: ThreadIntervenientUserTypeAlias[], innovation: InnovationTypeAlias, thread: ThreadTypeAlias) : void {
     
-    const inAppRecipients = threadIntervenientUsers.map(item => ({userId: item.id, userType: item.userType, organisationUnitId: item.organisationUnitId ?? undefined}));
+    const inAppRecipients = threadIntervenientUsers
+      .filter(item => !item.locked)
+      .map(item => ({userId: item.id, roleId: item.userRole.id, userType: item.userType, organisationUnitId: item.organisationUnitId ?? undefined}));
 
     // Always include Innovation owner in the notification center recipients
     const owner = innovation.owner;
@@ -141,7 +147,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // In the case the owner is not on the recipients list and the creator of the reply is not the owner her/himself
     // Add her/him to the recipients list of in app notifications
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      inAppRecipients.push({userId: owner.id, userType: owner.userRole.role, organisationUnitId: undefined});
+      inAppRecipients.push({userId: owner.id, roleId: owner.userRole.id, userType: owner.userRole.role, organisationUnitId: undefined});
     }
 
     if (inAppRecipients.length > 0) {

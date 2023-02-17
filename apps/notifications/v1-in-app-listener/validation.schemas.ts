@@ -8,7 +8,7 @@ export type MessageType = {
     requestUser: { id: string },
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-    users: { userId: string, organisationUnitId?: string | undefined}[];
+    users: { userId: string, roleId: string, organisationUnitId?: string | undefined}[];
     params: { [key: string]: string | number | string[] },
     domainContext: DomainContextType,
   }
@@ -33,6 +33,7 @@ export const MessageSchema = Joi.object<MessageType>({
     }).required(),
 
     users: Joi.array().items(Joi.object({
+      roleId: Joi.string().guid().required(),
       userId: Joi.string().guid().required(),
       organisationUnitId: Joi.string().allow(null).guid().optional(),
       userType: Joi.string().valid(...Object.values(ServiceRoleEnum)).optional(),
