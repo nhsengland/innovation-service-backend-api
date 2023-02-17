@@ -1,33 +1,35 @@
+import type { Container } from 'inversify';
 import fs from 'fs';
 import { join } from 'path';
 import YAML from 'yaml';
 
 import {
-  CacheServiceSymbol,
-  CacheServiceType,
-  HttpServiceSymbol,
-  HttpServiceType,
-  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
-  SQLConnectionServiceSymbol, SQLConnectionServiceType
+  CacheServiceSymbol, type CacheServiceType,
+  HttpServiceSymbol, type HttpServiceType,
+  NOSQLConnectionServiceSymbol, type NOSQLConnectionServiceType,
+  SQLConnectionServiceSymbol, type SQLConnectionServiceType
 } from '@innovations/shared/services';
-import type { Container } from 'inversify';
+
 
 export const startup = async (container: Container): Promise<void> => {
 
   console.log('Initializing Innovations app function');
 
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
-    await sqlConnectionService.init();
-    await noSqlConnectionService.init();
+    console.group('Initializing Innovations app function:');
+
     await cacheService.init();
+    await noSqlConnectionService.init();
+    await sqlConnectionService.init();
 
     console.log('Initialization complete');
+    console.groupEnd();
 
     if (process.env['LOCAL_MODE'] ?? false) {
 

@@ -123,13 +123,15 @@ $ ...
 ```
 
 ## Testing an app
+Before being able to run tests, you must run migratins on the "tests" DB. Then you can test each app individually.
 ``` bash
+$ npm run migrations:tests # Only needs to be runned once.
+
 $ npm run app:test --app=innovations
 $ npm run app:test --app=users
 $ ...
 
 ```
-
 
 ## Managing migrations
 ``` bash

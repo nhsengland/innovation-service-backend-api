@@ -1,5 +1,6 @@
 import { randText } from '@ngneat/falso';
-import type { EntityManager, Repository } from 'typeorm';
+import type { EntityManager } from 'typeorm';
+
 import { ActivityLogEntity, InnovationFileEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity, type InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity } from '../entities';
 import type { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovatorOrganisationRoleEnum } from '../enums';
 import type { ActivitiesParamsType, DomainContextType } from '../types';
@@ -10,21 +11,20 @@ import { InnovationSupportBuilder } from './innovation-support.builder';
 import { InnovationBuilder } from './innovation.builder';
 import { OrganisationUnitBuilder } from './organisation-unit.builder';
 import { OrganisationBuilder } from './organisation.builder';
-import { UserBuilder } from './user.builder';
+// import { UserBuilder } from './user.builder';
 
 export class TestDataBuilder {
 
 
-  public repositories: { repo: Repository<any>, data: any }[] = [];
+  // public repositories: {repo: Repository<any>, data: any}[] = [];
 
-  stack: Promise<[]> = Promise.resolve([]);
+  // stack: Promise<[]> = Promise.resolve([]);
 
-  constructor() {
-  }
+  constructor() { }
 
-  createUser(): UserBuilder {
-    return new UserBuilder();
-  }
+  // createUser(): UserBuilder {
+  //   return new UserBuilder();
+  // }
 
   createOrganisation(): OrganisationBuilder {
     return new OrganisationBuilder();

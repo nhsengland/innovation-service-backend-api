@@ -6,32 +6,28 @@ import type { DataSource } from 'typeorm';
 import {
   HttpServiceSymbol, HttpServiceType,
   LoggerServiceSymbol, LoggerServiceType,
-  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType
+  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
+  SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@innovations/shared/services';
 
-
 import container from '../_config/init'
+
 
 @injectable()
 export class BaseService {
 
-  noSqlConnection: Mongoose;
-  logger: LoggerServiceType;
   http: AxiosInstance;
+  logger: LoggerServiceType;
+  noSqlConnection: Mongoose;
   sqlConnection: DataSource;
 
   constructor() {
 
-    const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-    const loggerService = container.get<LoggerServiceType>(LoggerServiceSymbol);
-    const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
-    const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+    this.http = container.get<HttpServiceType>(HttpServiceSymbol).getHttpInstance();
+    this.logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
+    this.noSqlConnection = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).getConnection();
+    this.sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
 
-
-    this.noSqlConnection = noSqlConnectionService.getConnection();
-    this.http = httpService.getHttpInstance();
-    this.logger = loggerService;
-    this.sqlConnection = sqlConnectionService.getConnection();
   }
 
 }

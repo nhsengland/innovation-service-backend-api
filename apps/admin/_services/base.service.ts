@@ -1,9 +1,10 @@
-import { LoggerServiceSymbol, LoggerServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@admin/shared/services';
-
 import { injectable } from 'inversify';
 import type { DataSource } from 'typeorm';
 
-import { container } from '../_config';
+import { LoggerServiceSymbol, LoggerServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@admin/shared/services';
+
+import { container } from '../_config'
+
 
 @injectable()
 export class BaseService {

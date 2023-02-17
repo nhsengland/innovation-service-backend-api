@@ -1,49 +1,54 @@
-import { container } from '@admin/shared/config/inversify.config';
-
 import fs from 'fs';
 import { join } from 'path';
 import YAML from 'yaml';
 
+import { container } from '@admin/shared/config/inversify.config';
+
 import {
-  CacheServiceSymbol,
-  CacheServiceType,
-  HttpServiceSymbol,
-  HttpServiceType,
-  NOSQLConnectionServiceSymbol,
-  NOSQLConnectionServiceType,
+  CacheServiceSymbol, CacheServiceType,
+  HttpServiceSymbol, HttpServiceType,
+  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
-import { 
-  OrganisationsServiceSymbol, OrganisationsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  UsersServiceSymbol, UsersServiceType, ValidationServiceSymbol, ValidationServiceType } from '../_services/interfaces';
+import {
+  OrganisationsServiceSymbol, OrganisationsServiceType,
+  TermsOfUseServiceSymbol, TermsOfUseServiceType,
+  UsersServiceSymbol, UsersServiceType,
+  ValidationServiceSymbol, ValidationServiceType
+} from '../_services/interfaces';
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 import { ValidationService } from '../_services/validation.service';
 
 
-container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
+// Specific inversify container configuration.
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
+container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 container.bind<ValidationServiceType>(ValidationServiceSymbol).to(ValidationService).inSingletonScope();
+
 
 export const startup = async (): Promise<void> => {
 
   console.log('Initializing Admin app function');
 
-  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
+  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
-    await sqlConnectionService.init();
-    await noSqlConnectionService.init();
+    console.group('Initializing Admin app function:');
+
     await cacheService.init();
+    await noSqlConnectionService.init();
+    await sqlConnectionService.init();
 
     console.log('Initialization complete');
+    console.groupEnd();
 
     if (process.env['LOCAL_MODE'] ?? false) {
 
@@ -67,5 +72,6 @@ export const startup = async (): Promise<void> => {
 
 }
 
-export { container };
 void startup();
+
+export { container };

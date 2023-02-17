@@ -1,27 +1,33 @@
-import { type HttpServiceType, HttpServiceSymbol, type SQLConnectionServiceType, SQLConnectionServiceSymbol, type NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, CacheServiceType, CacheServiceSymbol } from '@users/shared/services';
-import { join } from 'path';
-import fs from 'fs';
-import YAML from 'yaml';
 import type { Container } from 'inversify';
+import fs from 'fs';
+import { join } from 'path';
+import YAML from 'yaml';
+
+import {
+  CacheServiceSymbol, type CacheServiceType,
+  HttpServiceSymbol, type HttpServiceType,
+  NOSQLConnectionServiceSymbol, type NOSQLConnectionServiceType,
+  SQLConnectionServiceSymbol, type SQLConnectionServiceType
+} from '@users/shared/services';
+
 
 export const startup = async (container: Container): Promise<void> => {
 
-  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
+  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
     console.group('Initializing Users app function:');
 
-    await sqlConnectionService.init();
-    await noSqlConnectionService.init();
     await cacheService.init();
+    await noSqlConnectionService.init();
+    await sqlConnectionService.init();
 
     console.log('Initialization complete');
     console.groupEnd();
-
 
     if (process.env['LOCAL_MODE'] ?? false) {
 
@@ -43,4 +49,4 @@ export const startup = async (container: Container): Promise<void> => {
 
   }
 
-}
+};
