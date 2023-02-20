@@ -48,7 +48,7 @@ import type {
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { DateISOType } from '../../types/date.types';
-import { InnovationGroupedStatusViewEntity } from '../views/innovation_grouped_status.view.entity';
+import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 
 

@@ -96,7 +96,7 @@ export { UserPreferenceEntity } from './user/user-preference.entity';
 
 // Views
 import { IdleSupportViewEntity } from './views/idle-support.view.entity';
-import { InnovationGroupedStatusViewEntity } from './views/innovation_grouped_status.view.entity';
+import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';

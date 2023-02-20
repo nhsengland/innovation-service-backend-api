@@ -5,7 +5,7 @@ import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailN
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
 
-import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation_grouped_status.view.entity';
+import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
 import { TranslationHelper } from '../../helpers';
 import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
