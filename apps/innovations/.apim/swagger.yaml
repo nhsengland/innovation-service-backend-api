@@ -1058,7 +1058,6 @@ paths:
               properties:
                 evidenceType:
                   type: string
-                  nullable: true
                   description: The evidence type.
                 clinicalEvidenceType:
                   type: string
@@ -1178,7 +1177,6 @@ paths:
               properties:
                 evidenceType:
                   type: string
-                  nullable: true
                   description: The evidence type.
                 clinicalEvidenceType:
                   type: string

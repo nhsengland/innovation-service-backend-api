@@ -50,7 +50,7 @@ export class InnovationSectionsService extends BaseService {
     let openActions: { section: string, actionsCount: number }[] = [];
 
     if (sections.length > 0) {
-      const actionStatus = [ServiceRoleEnum.ACCESSOR,ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(domainContext.currentRole.role as ServiceRoleEnum)
+      const actionStatus = [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
@@ -131,7 +131,7 @@ export class InnovationSectionsService extends BaseService {
     let sectionData: null | { [key: string]: any } = null;
 
     // BUSINESS RULE: Accessor's (type) cannot view sections in draft.
-    if (![ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes( domainContext.currentRole.role) || dbSection?.status === InnovationSectionStatusEnum.SUBMITTED) {
+    if (![ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) || dbSection?.status === InnovationSectionStatusEnum.SUBMITTED) {
       sectionData = await this.parseSectionInformation(
         innovation,
         dbSection?.files,
@@ -156,7 +156,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
         actionsQuery.andWhere('actions.innovation_support_id IS NULL');
-      } else if(domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+      } else if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
         actionsQuery.andWhere('actions.innovation_support_id IS NOT NULL');
       }
 
@@ -305,8 +305,6 @@ export class InnovationSectionsService extends BaseService {
       // Update section.
       dbSection.status = InnovationSectionStatusEnum.SUBMITTED;
       dbSection.updatedBy = user.id;
-
-      
       dbSection.submittedAt = new Date().toISOString();
 
       // Update section actions.
@@ -412,11 +410,11 @@ export class InnovationSectionsService extends BaseService {
     user: { id: string },
     innovationId: string,
     evidenceData: {
-      evidenceType: EvidenceTypeCatalogueEnum;
-      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
-      description: string;
-      summary: string;
-      files: string[];
+      evidenceType: EvidenceTypeCatalogueEnum,
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum,
+      description: string,
+      summary: string,
+      files: string[]
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -472,6 +470,7 @@ export class InnovationSectionsService extends BaseService {
       );
 
       return { id: savedEvidence.id };
+
     });
   }
 
@@ -546,15 +545,12 @@ export class InnovationSectionsService extends BaseService {
       );
 
       return { id: evidence.id };
+
     });
 
   }
 
-  async deleteInnovationEvidence(
-    user: { id: string },
-    innovationId: string,
-    evidenceId: string
-  ): Promise<{ id: string }> {
+  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceId: string): Promise<{ id: string }> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.evidences', 'evidences')
@@ -600,7 +596,9 @@ export class InnovationSectionsService extends BaseService {
       );
 
       return { id: evidence.id };
+
     });
+
   }
 
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{
