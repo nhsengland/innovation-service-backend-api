@@ -1,17 +1,17 @@
 import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
 import { container } from '../_config';
 
+import { InnovationEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
+import { randText, randUuid } from '@ngneat/falso';
+import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
-import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
-import { InnovationEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
-import { randText, randUuid } from '@ngneat/falso';
-import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { InnovationThreadsService } from './innovation-threads.service';
-import { cloneDeep } from 'lodash';
+import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
 
 describe('Innovation supports service test suite', () => {
 
@@ -20,8 +20,8 @@ describe('Innovation supports service test suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-    sut = container.get<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol);
     await TestsHelper.init();
+    sut = container.get<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol);
     testData = TestsHelper.sampleData;
   });
 
@@ -176,7 +176,7 @@ describe('Innovation supports service test suite', () => {
         .setOwner(testData.baseUsers.innovator)
         .withAssessments(testData.baseUsers.assessmentUser)
         .build(em);
-    })
+    });
 
     it('should create an innovation support',async () => {
 

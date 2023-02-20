@@ -26,7 +26,11 @@ export const startup = async (): Promise<void> => {
 
   try {
 
+    // TODO: For some reason the SQL Connection must be initialized before the remaining services. There are errors related to inversify otherwise.
+    //       The inversify and startup must be revised.
+    //       Additionally the init method for these must be somehow a dependency so that other services (ie: baseService) don't startup before these were initialized.
     await sqlConnectionService.init();
+  
     await cacheService.init();
 
     console.log('Initialization complete');
@@ -39,6 +43,6 @@ export const startup = async (): Promise<void> => {
 
   }
 
-}
+};
 
-void startup()
+void startup();

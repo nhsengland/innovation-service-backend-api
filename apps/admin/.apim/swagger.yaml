@@ -639,18 +639,6 @@ paths:
             type: string
             format: uuid
             description: Id of the user to lock.
-        - name: id
-          in: query
-          required: false
-          schema:
-            type: string
-            description: Id of the SLS.
-        - name: code
-          in: query
-          required: false
-          schema:
-            type: string
-            description: Code of the SLS.
       requestBody:
         required: true
         content:
@@ -660,8 +648,7 @@ paths:
               properties:
                 accountEnabled:
                   type: boolean
-                  nullable: true
-                  description: Enable or disable the user.
+                  description: Activate or inactivate the user.
                 role:
                   type: object
                   properties:
@@ -679,7 +666,6 @@ paths:
                     - name
                     - organisationId
                   additionalProperties: false
-                  nullable: true
               additionalProperties: false
       responses:
         "200":

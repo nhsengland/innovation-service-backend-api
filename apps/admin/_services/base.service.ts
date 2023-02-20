@@ -1,21 +1,30 @@
-import { LoggerServiceSymbol, LoggerServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@admin/shared/services';
-
 import { injectable } from 'inversify';
 import type { DataSource } from 'typeorm';
 
+import { LoggerServiceSymbol, LoggerServiceType, SQLConnectionServiceSymbol, SQLConnectionServiceType } from '@admin/shared/services';
+
 import { container } from '../_config';
+
 
 @injectable()
 export class BaseService {
 
-  logger: LoggerServiceType;
-  sqlConnection: DataSource;
-
-  constructor() {
-
-    this.logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
-    this.sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
-
+  private _logger: LoggerServiceType;
+  get logger(): LoggerServiceType {
+    if (!this._logger) {
+      this._logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
+    }
+    return this._logger;
   }
+
+  private _sqlConnection: DataSource;
+  get sqlConnection(): DataSource {
+    if(!this._sqlConnection) {
+      this._sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
+    }
+    return this._sqlConnection;
+  }
+
+  constructor() {}
 
 }

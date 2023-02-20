@@ -1,7 +1,7 @@
 import { container } from '../config/inversify.config';
 
 import type { DataSource, EntityManager } from 'typeorm';
-import { TestDataBuilder } from '../builders';
+import { TestDataBuilder, UserBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
 import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
@@ -11,20 +11,20 @@ import type { AccessorDomainContextType, AdminDomainContextType, AssessmentDomai
 export type TestDataType = {
   innovation: InnovationEntity;
   baseUsers: {
+    admin: UserEntity;
     accessor: UserEntity;
     qualifyingAccessor: UserEntity;
     assessmentUser: UserEntity;
     assessmentUser2: UserEntity;
     innovator: UserEntity;
-    admin: UserEntity;
   };
   domainContexts: {
+    admin: AdminDomainContextType,
     accessor: AccessorDomainContextType,
     qualifyingAccessor: AccessorDomainContextType,
     assessmentUser: AssessmentDomainContextType,
     assessmentUser2: AssessmentDomainContextType,
-    innovator: InnovatorDomainContextType,
-    admin: AdminDomainContextType
+    innovator: InnovatorDomainContextType
   }
   organisationUsers: {
     innovator: OrganisationUserEntity;
@@ -40,8 +40,7 @@ export type TestDataType = {
     accessor: OrganisationEntity;
   };
   organisationUnit: {
-    accessor:
-    OrganisationUnitEntity;
+    accessor: OrganisationUnitEntity;
   };
 }
 
@@ -78,15 +77,17 @@ export class TestsHelper {
   }
 
   static async createSampleData(): Promise<TestDataType> {
-    const helper = new TestDataBuilder();
 
     const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager) => {
-      const innovator = await helper.createUser().ofType(ServiceRoleEnum.INNOVATOR).build(entityManager);
-      const accessor = await helper.createUser().ofType(ServiceRoleEnum.ACCESSOR).build(entityManager);
-      const qualifyingAccessor = await helper.createUser().ofType(ServiceRoleEnum.QUALIFYING_ACCESSOR).build(entityManager);
-      const assessmentUser = await helper.createUser().ofType(ServiceRoleEnum.ASSESSMENT).build(entityManager);
-      const assessmentUser2 = await helper.createUser().ofType(ServiceRoleEnum.ASSESSMENT).build(entityManager);
-      const admin = await helper.createUser().ofType(ServiceRoleEnum.ADMIN).build(entityManager);
+
+      const helper = new TestDataBuilder();
+
+      const admin = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ADMIN).save()).getUser();
+      const innovator = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR).save()).getUser();
+      const accessor = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ACCESSOR).save()).getUser();
+      const qualifyingAccessor = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR).save()).getUser();
+      const assessmentUser = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
+      const assessmentUser2 = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
 
       const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
       const accessorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.ACCESSOR).build(entityManager);
@@ -102,7 +103,14 @@ export class TestsHelper {
 
       //#region DomainContexts
       const domainContexts: TestDataType['domainContexts'] = {
-        // We could probably have a createDomainContext method on the test data builder, keeping it simple for now
+        admin: {
+          id: admin.id,
+          identityId: admin.identityId,
+          currentRole: {
+            id: admin.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.ADMIN
+          }
+        },
         accessor: {
           id: accessor.id,
           identityId: accessor.identityId,
@@ -182,14 +190,6 @@ export class TestsHelper {
             id: innovator.serviceRoles[0]!.id,
             role: ServiceRoleEnum.INNOVATOR
           },
-        },
-        admin: {
-          id: admin.id,
-          identityId: admin.identityId,
-          currentRole: {
-            id: admin.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ADMIN
-          }
         }
       };
       //#endregion
@@ -202,7 +202,6 @@ export class TestsHelper {
         .withAssessments(assessmentUser)
         .build(entityManager);
 
-      
       return {
         innovation,
         baseUsers: {
@@ -234,8 +233,9 @@ export class TestsHelper {
     });
 
 
-    this.sampleData = retVal as any;
-    return retVal as any;
+    this.sampleData = retVal as any; // TODO: Solve these any's!!!
+    return this.sampleData;
+
   }
 
   public static getUser(userType: ServiceRoleEnum): [UserEntity, DomainContextType] {
@@ -305,4 +305,4 @@ export class TestsHelper {
 
 }
 
-export default TestsHelper;
+// export default TestsHelper;
