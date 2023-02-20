@@ -196,7 +196,7 @@ export class RecipientsService extends BaseService {
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
   async innovationAssignedUsers(data: { innovationId: string} | { innovationSupportId : string }): Promise<{
-    id: string, identityId: string, userRole: {id: string, role: string}, organisationUnitId: string,
+    id: string, identityId: string, userRole: {id: string, role: ServiceRoleEnum}, organisationUnitId: string,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
 
@@ -231,7 +231,7 @@ export class RecipientsService extends BaseService {
     return Promise.all(dbInnovationSupports.flatMap(support => support.organisationUnitUsers.map(async item => ({
       id: item.organisationUser.user.id,
       identityId: item.organisationUser.user.identityId,
-      userRole: item.organisationUser.user.serviceRoles.map(r => ({ id: r.id, role: r.role }))[0] ?? { id: '', role: '' }, // this will never happen since it's an inner join
+      userRole: item.organisationUser.user.serviceRoles.map(r => ({ id: r.id, role: r.role }))[0] ?? { id: '', role: '' as ServiceRoleEnum }, // this will never happen since it's an inner join
       organisationUnitId: support.organisationUnit.id,
       emailNotificationPreferences: (await item.organisationUser.user.notificationPreferences).map(emailPreference => ({
         type: emailPreference.notification_id,
