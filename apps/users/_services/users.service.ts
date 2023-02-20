@@ -6,7 +6,7 @@ import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOr
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
-import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
+import type { DateISOType } from '@users/shared/types';
 
 import { UserRoleEntity } from '@users/shared/entities';
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
