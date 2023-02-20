@@ -1,13 +1,10 @@
-import type { Container } from 'inversify';
 import fs from 'fs';
+import type { Container } from 'inversify';
 import { join } from 'path';
 import YAML from 'yaml';
 
 import {
-  CacheServiceSymbol, type CacheServiceType,
-  HttpServiceSymbol, type HttpServiceType,
-  NOSQLConnectionServiceSymbol, type NOSQLConnectionServiceType,
-  SQLConnectionServiceSymbol, type SQLConnectionServiceType
+  CacheServiceSymbol, HttpServiceSymbol, NOSQLConnectionServiceSymbol, SQLConnectionServiceSymbol, type CacheServiceType, type HttpServiceType, type NOSQLConnectionServiceType, type SQLConnectionServiceType
 } from '@users/shared/services';
 
 
@@ -22,9 +19,13 @@ export const startup = async (container: Container): Promise<void> => {
 
     console.group('Initializing Users app function:');
 
+    // TODO: For some reason the SQL Connection must be initialized before the remaining services. There are errors related to inversify otherwise.
+    //       The inversify and startup must be revised.
+    //       Additionally the init method for these must be somehow a dependency so that other services (ie: baseService) don't startup before these were initialized.
+    await sqlConnectionService.init();
+
     await cacheService.init();
     await noSqlConnectionService.init();
-    await sqlConnectionService.init();
 
     console.log('Initialization complete');
     console.groupEnd();
@@ -35,7 +36,7 @@ export const startup = async (container: Container): Promise<void> => {
 
       const response = await httpService.getHttpInstance().get(`http://localhost:7074/api/swagger.json`);
       console.log('Saving swagger file');
-      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/users/.apim/swagger.yaml`, YAML.stringify(response.data))
+      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/users/.apim/swagger.yaml`, YAML.stringify(response.data));
       console.log('Documentation generated successfully');
       console.groupEnd();
 

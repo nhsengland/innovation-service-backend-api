@@ -2,16 +2,15 @@
 import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
 import { container } from '../_config';
 
+import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity } from '@innovations/shared/entities';
+import { InnovationStatusEnum, YesOrNoCatalogueEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
+import { randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from './interfaces';
-import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity } from '@innovations/shared/entities';
-import { randText, randUuid } from '@ngneat/falso';
-import { InnovationStatusEnum, ServiceRoleEnum, YesOrNoCatalogueEnum } from '@innovations/shared/enums';
 // import type { InnovationAssessmentType } from '../_types/innovation.types';
- import { UserBuilder } from '@innovations/shared/builders';
 
 describe('Innovation Assessments Suite', () => {
 
@@ -379,7 +378,7 @@ describe('Innovation Assessments Suite', () => {
   describe('updateAssessor', () => {
     it('should update the assigned assessor', async () => {
 
-      const newAssessor = (await new UserBuilder(em).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
+      const newAssessor = testData.baseUsers.assessmentUser2;
 
       const result = await sut.updateAssessor(
         testData.baseUsers.assessmentUser,
@@ -422,7 +421,7 @@ describe('Innovation Assessments Suite', () => {
 
       let err: NotFoundError | null = null;
 
-      const newAssessor = (await new UserBuilder(em).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
+      const newAssessor = testData.baseUsers.assessmentUser2;
 
       try {
         await sut.updateAssessor(
