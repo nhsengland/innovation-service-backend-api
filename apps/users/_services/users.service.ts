@@ -6,7 +6,7 @@ import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOr
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
-import type { DateISOType, DomainUserInfoType } from '@users/shared/types';
+import type { DateISOType } from '@users/shared/types';
 
 import { UserRoleEntity } from '@users/shared/entities';
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
@@ -29,39 +29,6 @@ export class UsersService extends BaseService {
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
     this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.cache = cacheService.get('IdentityUserInfo');
-  }
-
-
-  /**
-   * returns a user based on email
-   * @param email the email to search
-   * @param filters 
-   *  - userRoles: the user roles to filter by.
-   * @returns the user as an array.
-   */
-  async getUserByEmail(email: string, filters: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
-
-    try {
-
-      const authUser = await this.identityProviderService.getUserInfoByEmail(email);
-      if (!authUser) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-
-      const dbUser = await this.domainService.users.getUserInfo({ identityId: authUser.identityId });
-
-      // Apply filters.
-      if (filters.userRoles.length === 0 || (filters.userRoles.length > 0 && filters.userRoles.some(userRole => dbUser.roles.map(r => r.role).includes(userRole)))) {
-        return [dbUser];
-      } else {
-        throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-      }
-
-    } catch (error) {
-      // As this method mimics a search, on errors, we just return an empty array.
-      return [];
-    }
-
   }
 
   /**

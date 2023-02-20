@@ -22,7 +22,7 @@ export class InnovationsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
   ) { super(); }
 
 
@@ -154,7 +154,18 @@ export class InnovationsService extends BaseService {
     }
 
     if (filters.name) {
-      innovationFetchQuery.andWhere('innovations.name LIKE :name', { name: `%${filters.name}%` });
+      if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN && filters.name.match(/^\S+@\S+$/)) {
+        const targetUser = await this.domainService.users.getUserByEmail(filters.name);
+
+        if (targetUser.length > 0 && targetUser[0]) { 
+          innovationFetchQuery.andWhere('(innovations.owner_id = :userId OR innovations.name LIKE :name)', { userId: targetUser[0].id, name: `%${filters.name}%` });
+        } else {
+          // This means that the user is NOT registered in the service.
+          innovationFetchQuery.andWhere('innovations.name LIKE :name', { name: `%${filters.name}%` });
+        }
+      } else {
+        innovationFetchQuery.andWhere('innovations.name LIKE :name', { name: `%${filters.name}%` });
+      }
     }
 
     if (filters.mainCategories && filters.mainCategories.length > 0) {
