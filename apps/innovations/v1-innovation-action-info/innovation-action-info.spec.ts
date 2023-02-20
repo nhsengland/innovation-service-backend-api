@@ -1,5 +1,5 @@
 import type { TestDataType } from '@innovations/shared/tests/tests.helper';
-import TestsHelper from '@innovations/shared/tests/tests.helper';
+import { TestsHelper } from '@innovations/shared/tests/tests.helper';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -27,12 +27,12 @@ describe('v1-innovation-action-info Suite', () => {
     displayId: 'UC01',
     status: InnovationActionStatusEnum.COMPLETED,
     section: InnovationSectionEnum.IMPLEMENTATION_PLAN,
-    description: "description 1",
+    description: 'description 1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    updatedBy: { name: "name 1", role: ServiceRoleEnum.ACCESSOR },
-    createdBy: { id: randomUUID(), name: "name 1", role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: "NHS Innovation Service", acronym: "NHS-IS" } },
-  }
+    updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
+    createdBy: { id: randomUUID(), name: 'name 1', role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' } },
+  };
 
   beforeAll(async () => {
 
@@ -92,13 +92,13 @@ describe('v1-innovation-action-info Suite', () => {
         displayId: 'UC01',
         status: InnovationActionStatusEnum.DECLINED,
         section: InnovationSectionEnum.IMPLEMENTATION_PLAN,
-        description: "description 1",
+        description: 'description 1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        updatedBy: { name: "name 1", role: ServiceRoleEnum.ACCESSOR },
-        createdBy: { id: randomUUID(), name: "name 1", role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: "NHS Innovation Service", acronym: "NHS-IS" } },
-        declineReason: "this was rejected"
-      }
+        updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
+        createdBy: { id: randomUUID(), name: 'name 1', role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' } },
+        declineReason: 'this was rejected'
+      };
 
       jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(expected as any);
 
@@ -215,7 +215,7 @@ describe('v1-innovation-action-info Suite', () => {
       expect(result.status).toBe(status);
 
       mocks.reset();
-    })
+    });
 
   });
 

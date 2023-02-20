@@ -1,25 +1,23 @@
 import { container } from '@users/shared/config/inversify.config';
 
 import {
-  NotificationsServiceSymbol,
-  NotificationsServiceType,
+  NotificationsServiceSymbol, NotificationsServiceType,
   OrganisationsServiceSymbol, OrganisationsServiceType,
-  StatisticsServiceSymbol,
-  StatisticsServiceType,
+  StatisticsServiceSymbol, StatisticsServiceType,
   SurveyServiceSymbol, SurveyServiceType,
   TermsOfUseServiceSymbol, TermsOfUseServiceType,
   UsersServiceSymbol, UsersServiceType
 } from '../_services/interfaces';
+
+import { NotificationsService } from '../_services/notifications.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { SurveyService } from '../_services/survey.service';
+import { StatisticsService } from '../_services/statistics.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 
-import { NotificationsService } from '../_services/notifications.service';
-import { StatisticsService } from '../_services/statistics.service';
 
-
-// Specific inversify container configuration
+// Specific inversify container configuration.
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
 container.bind<SurveyServiceType>(SurveyServiceSymbol).to(SurveyService).inSingletonScope();
 container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();

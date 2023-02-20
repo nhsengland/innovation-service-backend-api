@@ -1,12 +1,13 @@
 import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { TranslationHelper } from '@notifications/shared/helpers';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import type { UserRoleEntity } from '@notifications/shared/entities';
 import { BaseHandler } from './base.handler';
 
 
@@ -20,7 +21,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   private data: {
-    innovation?: { name: string, owner: { id: string, identityId: string, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
+    innovation?: { name: string, owner: { id: string, identityId: string, userRole: UserRoleEntity, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
     requestUserAdditionalInfo?: {
       displayName?: string,
       organisation: { id: string, name: string },
@@ -67,7 +68,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         InnovationSupportStatusEnum.WITHDRAWN,
         InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
       ].includes(this.inputData.innovationSupport.status)) {
-        await this.prepareInAppForAssessmentWhenWaitingStatus()
+        await this.prepareInAppForAssessmentWhenWaitingStatus();
       }
 
     }
@@ -127,11 +128,15 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareInAppForInnovator(): Promise<void> {
+    // This never happens
+    if(!this.data.innovation) {
+      return;
+    }
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: [{ userId: this.data.innovation?.owner.id || '' }],
+      users: [{ userId: this.data.innovation.owner.id, roleId: this.data.innovation.owner.userRole.id }],
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
@@ -149,7 +154,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: assignedUsers.map(user => ({ userId: user.id, organisationUnitId: user.organisationUnitId })),
+      users: assignedUsers.map(user => ({ userId: user.id, roleId: user.userRole.id, organisationUnitId: user.organisationUnitId })),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
@@ -164,7 +169,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: assessmentUsers.map(item => ({ userId: item.id, userType: ServiceRoleEnum.ASSESSMENT })),
+      users: assessmentUsers.map(item => ({ userId: item.id, roleId: item.roleId, userType: ServiceRoleEnum.ASSESSMENT })),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status

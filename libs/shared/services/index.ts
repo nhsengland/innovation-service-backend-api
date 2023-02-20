@@ -11,6 +11,7 @@ export { LoggerService } from './integrations/logger.service';
 export { NotifierService } from './integrations/notifier.service';
 export { StorageQueueService } from './integrations/storage-queue.service';
 
+export { CacheService, CacheConfigType } from './storage/cache.service';
 export { FileStorageService } from './storage/file-storage.service';
 export { SQLConnectionService } from './storage/sql-connection.service';
 export { SQLConnectionTestService } from './storage/sql-connection-test.service';

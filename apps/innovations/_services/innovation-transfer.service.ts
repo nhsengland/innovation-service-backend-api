@@ -6,8 +6,8 @@ import { ActivityEnum, InnovationTransferStatusEnum, NotifierTypeEnum } from '@i
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, IdentityProviderServiceSymbol, NotifierServiceSymbol, type DomainServiceType, type IdentityProviderServiceType, type NotifierServiceType } from '@innovations/shared/services';
 
-import { BaseService } from './base.service';
 import type { DomainContextType } from '@innovations/shared/types';
+import { BaseService } from './base.service';
 
 
 type TransferQueryFilterType = {
@@ -230,7 +230,7 @@ export class InnovationTransferService extends BaseService {
 
         await this.domainService.innovations.addActivityLog(
           transactionManager,
-          { userId: requestUser.id, innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER, domainContext },
+          { innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER, domainContext },
           {
             interveningUserId: requestUser.identityId
           }

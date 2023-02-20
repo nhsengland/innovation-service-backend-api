@@ -971,6 +971,7 @@ paths:
                 - NEEDS_ASSESSMENT
                 - AWAITING_SUPPORT
                 - RECEIVING_SUPPORT
+                - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - WITHDRAWN
         - name: assignedToMe
@@ -1018,6 +1019,7 @@ paths:
                 - supports
                 - notifications
                 - statistics
+                - groupedStatus
       responses:
         "200":
           description: Success
@@ -1811,6 +1813,53 @@ paths:
                     updatedAt:
                       type: string
                       description: The date and time when the share was last updated.
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
+    put:
+      description: Update the shares for an innovation.
+      tags:
+        - Innovation
+      summary: Update all the shares for an innovation.
+      operationId: v1-innovation-shares-update
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                organisations:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - organisations
+              additionalProperties: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The unique identifier of the innovation.
         "401":
           description: Unauthorized
         "403":

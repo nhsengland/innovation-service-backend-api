@@ -1,7 +1,11 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
+import { OrganisationEntity } from '../organisation/organisation.entity';
+import { CommentEntity } from '../user/comment.entity';
+import { NotificationEntity } from '../user/notification.entity';
+import { UserEntity } from '../user/user.entity';
 import { InnovationAreaEntity } from './innovation-area.entity';
 import { InnovationAssessmentEntity } from './innovation-assessment.entity';
 import { InnovationCareSettingEntity } from './innovation-care-setting.entity';
@@ -19,15 +23,10 @@ import { InnovationRevenueEntity } from './innovation-revenue.entity';
 import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationStandardEntity } from './innovation-standard.entity';
 import { InnovationSubgroupEntity } from './innovation-subgroup.entity';
-import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationSupportTypeEntity } from './innovation-support-type.entity';
+import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationUserTestEntity } from './innovation-user-test.entity';
-import { NotificationEntity } from '../user/notification.entity';
-import { OrganisationEntity } from '../organisation/organisation.entity';
-import { CommentEntity } from '../user/comment.entity';
-import { UserEntity } from '../user/user.entity';
 
-import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import type {
   CostComparisonCatalogueEnum,
   HasBenefitsCatalogueEnum,
@@ -44,10 +43,12 @@ import type {
   InnovationPathwayKnowledgeCatalogueEnum,
   MainPurposeCatalogueEnum,
   YesNoNotRelevantCatalogueEnum,
-  YesOrNoCatalogueEnum,
+  YesOrNoCatalogueEnum
 } from '../../enums/catalog.enums';
+import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { DateISOType } from '../../types/date.types';
+import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 
 
@@ -373,6 +374,8 @@ export class InnovationEntity extends BaseEntity {
   @OneToMany(() => InnovationExportRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
   exportRequests: Promise<InnovationExportRequestEntity[]>;
 
+  @OneToOne(() => InnovationGroupedStatusViewEntity, record => record.innovation)
+  innovationGroupedStatus: InnovationGroupedStatusViewEntity;
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

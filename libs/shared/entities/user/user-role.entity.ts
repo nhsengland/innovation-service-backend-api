@@ -1,10 +1,13 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { BaseEntity } from '../base.entity';
-import { UserEntity } from './user.entity';
 
+import { BaseEntity } from '../base.entity';
+
+import { UserEntity } from './user.entity';
+import { OrganisationEntity } from '../organisation/organisation.entity';
+import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+
+import type { ServiceRoleEnum } from '../../enums/user.enums';
 import type { DateISOType } from '../../types/date.types';
-import { OrganisationEntity, OrganisationUnitEntity } from '..';
-import type { ServiceRoleEnum } from '../../enums';
 
 
 @Entity('user_role')

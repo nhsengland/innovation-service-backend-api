@@ -31,11 +31,11 @@ export class InnovationThreadMessageEntity extends BaseEntity {
 
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'author_organisation_unit_id' })
-  authorOrganisationUnit: OrganisationUnitEntity | null
+  authorOrganisationUnit: OrganisationUnitEntity | null;  // to be deprecated
 
-  @ManyToOne(() => UserRoleEntity, { nullable: true })
+  @ManyToOne(() => UserRoleEntity, { nullable: false })
   @JoinColumn({ name: 'author_user_role_id' })
-  authorUserRole: UserRoleEntity | null;
+  authorUserRole: UserRoleEntity;
 
   static new(data: Partial<InnovationThreadMessageEntity>): InnovationThreadMessageEntity {
     const instance = new InnovationThreadMessageEntity();

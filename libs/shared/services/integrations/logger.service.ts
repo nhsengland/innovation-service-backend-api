@@ -28,7 +28,7 @@ export class LoggerService {
   log(message: string, additionalInformation?: any): void {
 
     if (this.runningLocally) {
-      console.log('[LOG]: ', message, additionalInformation || null);
+      console.log('[LOG]: ', message, additionalInformation);
       return;
     }
 

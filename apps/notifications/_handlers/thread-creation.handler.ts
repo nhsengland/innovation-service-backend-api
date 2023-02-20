@@ -1,4 +1,4 @@
-import { NotifierTypeEnum, NotificationContextTypeEnum, NotificationContextDetailEnum, EmailNotificationTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -79,7 +79,7 @@ export class ThreadCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-      users: [{ userId: innovation.owner.id }],
+      users: [{ userId: innovation.owner.id, roleId: innovation.owner.userRole.id }],
       params: { subject: thread.subject, messageId: this.inputData.messageId }
     });
 
@@ -111,7 +111,7 @@ export class ThreadCreationHandler extends BaseHandler<
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-        users: assignedUsers.map(item => ({ userId: item.id, organisationUnitId: item.organisationUnitId })),
+        users: assignedUsers.map(item => ({ userId: item.id, roleId: item.userRole.id, organisationUnitId: item.organisationUnitId })),
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

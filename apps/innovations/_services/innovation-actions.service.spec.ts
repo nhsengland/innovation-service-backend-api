@@ -531,9 +531,9 @@ describe('Innovation Actions Suite', () => {
           name: 'first name',
           role: ServiceRoleEnum.ACCESSOR,
           organisationUnit: {
-            id: newAction.innovationSupport.organisationUnit.id,
-            name: newAction.innovationSupport.organisationUnit.name,
-            acronym: newAction.innovationSupport.organisationUnit.acronym
+            id: newAction.innovationSupport?.organisationUnit.id,
+            name: newAction.innovationSupport?.organisationUnit.name,
+            acronym: newAction.innovationSupport?.organisationUnit.acronym
           }
         },
       });

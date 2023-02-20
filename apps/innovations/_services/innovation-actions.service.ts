@@ -339,7 +339,7 @@ export class InnovationActionsService extends BaseService {
 
       await this.domainService.innovations.addActivityLog(
         transaction,
-        { userId: user.id, innovationId: innovation.id, activity: ActivityEnum.ACTION_CREATION, domainContext },
+        { innovationId: innovation.id, activity: ActivityEnum.ACTION_CREATION, domainContext },
         {
           sectionId: data.section,
           actionId: actionResult.id,
@@ -585,7 +585,7 @@ export class InnovationActionsService extends BaseService {
 
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE, domainContext },
+          { innovationId, activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE, domainContext },
           {
             actionId: dbAction.id,
             interveningUserId: actionCreatedBy?.id || '',
@@ -598,7 +598,7 @@ export class InnovationActionsService extends BaseService {
 
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE, domainContext },
+          { innovationId, activity: ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE, domainContext },
           { actionId: dbAction.id }
         );
 
@@ -608,7 +608,7 @@ export class InnovationActionsService extends BaseService {
 
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE, domainContext },
+          { innovationId, activity: ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE, domainContext },
           { actionId: dbAction.id }
         );
 
@@ -618,7 +618,7 @@ export class InnovationActionsService extends BaseService {
 
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId, activity: ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE, domainContext },
+          { innovationId, activity: ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE, domainContext },
           { actionId: dbAction.id }
         );
 

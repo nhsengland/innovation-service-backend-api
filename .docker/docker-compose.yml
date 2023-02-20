@@ -35,3 +35,13 @@ services:
     # 1. Open the local.settings.json file and locate the "REDIS_CACHE_CONNECTIONSTRING" setting.
     # 2. Replace the value of the setting with the connection string below.
     # "REDIS_CACHE_CONNECTIONSTRING": "localhost:6379,password=,ssl=False,abortConnect=False",
+
+  mongodb:
+    container_name: mongo
+    image: mongo:latest
+    environment:
+      "MONGO_INITDB_ROOT_USERNAME": root
+      "MONGO_INITDB_ROOT_PASSWORD": Password
+    ports:
+      - 8081:8081
+      - 27017:27017

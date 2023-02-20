@@ -19,10 +19,6 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'external_id', type: 'nvarchar', nullable: false })
   identityId: string;
 
-  // DEPRECATED: This field is no longer used.
-  // @Column({ type: 'simple-enum', enum: UserTypeEnum, nullable: false })
-  // type: UserTypeEnum;
-
   @Column({ name: 'survey_id', type: 'nvarchar', nullable: true })
   surveyId: null | string;
 

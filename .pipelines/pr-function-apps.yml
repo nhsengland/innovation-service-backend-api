@@ -13,6 +13,10 @@ resources:
         - 10000:10000
         - 10001:10001
         - 10002:10002
+    - container: redis
+      image: redis:latest
+      ports:
+        - 6379:6379
 
 name: Backend_API_PR__$(Date:yyyyMMdd)_$(Rev:r)
 
@@ -29,6 +33,7 @@ trigger: none
 services:
   mssql: mssql
   queue: queue
+  redis: redis
 
 variables:
   DB_HOST: localhost

@@ -1,9 +1,16 @@
 import { container } from '@innovations/shared/config/inversify.config';
 
 import {
-  InnovationActionsServiceSymbol, InnovationActionsServiceType, InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType, InnovationFileServiceSymbol, InnovationFileServiceType, InnovationSectionsServiceSymbol, InnovationSectionsServiceType,
-  InnovationsServiceSymbol, InnovationsServiceType, InnovationSupportsServiceSymbol, InnovationSupportsServiceType, InnovationThreadsServiceSymbol, InnovationThreadsServiceType, InnovationTransferServiceSymbol,
-  InnovationTransferServiceType, PDFServiceSymbol, PDFServiceType, StatisticsServiceSymbol, StatisticsServiceType
+  InnovationActionsServiceSymbol, InnovationActionsServiceType,
+  InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType,
+  InnovationFileServiceSymbol, InnovationFileServiceType,
+  InnovationSectionsServiceSymbol, InnovationSectionsServiceType,
+  InnovationSupportsServiceSymbol, InnovationSupportsServiceType,
+  InnovationThreadsServiceSymbol, InnovationThreadsServiceType,
+  InnovationTransferServiceSymbol, InnovationTransferServiceType,
+  InnovationsServiceSymbol, InnovationsServiceType,
+  PDFServiceSymbol, PDFServiceType,
+  StatisticsServiceSymbol, StatisticsServiceType
 } from '../_services/interfaces';
 
 import { InnovationActionsService } from '../_services/innovation-actions.service';
@@ -17,7 +24,8 @@ import { InnovationsService } from '../_services/innovations.service';
 import { PDFService } from '../_services/pdf.service';
 import { StatisticsService } from '../_services/statistics.service';
 
-// Specific inversify container configuration
+
+// Specific inversify container configuration.
 container.bind<InnovationActionsServiceType>(InnovationActionsServiceSymbol).to(InnovationActionsService).inSingletonScope();
 container.bind<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol).to(InnovationAssessmentsService).inSingletonScope();
 container.bind<InnovationFileServiceType>(InnovationFileServiceSymbol).to(InnovationFileService).inSingletonScope();

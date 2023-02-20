@@ -1,7 +1,7 @@
 import {
   EmailNotificationPreferenceEnum, EmailNotificationTypeEnum,
   NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum, NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
@@ -17,11 +17,11 @@ type HandlerEmailResponseType<T> = Array<{
   }
 }>;
 
-// TODO: ADD DOMAIN CONTEXT TO THE USERS OBJECT AND REMOVE THE ORGANISATION UNIT ID FROM THE USERS OBJECT.
+// TODO: REMOVE THE ORGANISATION UNIT ID FROM THE USERS OBJECT.
 type HandlerInAppResponseType<T> = Array<{
   innovationId: string;
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-  users: { userId: string, organisationUnitId?: string | undefined }[];
+  users: { userId: string, roleId: string, organisationUnitId?: string | undefined }[];
   params: T;
 }>;
 
