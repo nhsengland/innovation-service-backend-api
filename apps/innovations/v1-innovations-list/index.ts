@@ -52,6 +52,7 @@ class V1InnovationsList {
           name: item.name,
           description: item.description,
           status: item.status,
+          ...(item.groupedStatus && { groupedStatus: item.groupedStatus }),
           statusUpdatedAt: item.statusUpdatedAt,
           submittedAt: item.submittedAt,
           updatedAt: item.updatedAt,
@@ -90,7 +91,7 @@ export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
   get: {
     operationId: 'v1-innovations-list',
     description: 'Get innovations list',
-    parameters: SwaggerHelper.paramJ2S({query: QueryParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'Success',

@@ -1,10 +1,11 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
-import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
+import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
 
+import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
 import { TranslationHelper } from '../../helpers';
 import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
@@ -195,7 +196,7 @@ export class DomainInnovationsService {
       param: JSON.stringify({
         actionUserId: configuration.domainContext.id,
         actionUserRole: configuration.domainContext.currentRole.role,
-        actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id, 
+        actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
         ...params
       })
     });
@@ -376,4 +377,19 @@ export class DomainInnovationsService {
     return participants;
   }
 
+  async getInnovationsGroupedStatus(filters: { innovationIds?: string[], status?: InnovationGroupedStatusEnum }): Promise<Map<string, InnovationGroupedStatusEnum>> {
+    const query = this.sqlConnection.createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus');
+
+    if (filters.innovationIds && filters.innovationIds.length) {
+      query.andWhere('innovationGroupedStatus.innovationId IN (:...innovationIds)', { innovationIds: filters.innovationIds });
+    }
+
+    if (filters.status && filters.status.length) {
+      query.andWhere('innovationGroupedStatus.groupedStatus IN (:...status)', { status: filters.status });
+    }
+
+    const groupedStatus = await query.getMany();
+
+    return new Map(groupedStatus.map(cur => [cur.innovationId, cur.groupedStatus]));
+  }
 }

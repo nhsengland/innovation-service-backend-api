@@ -27,7 +27,7 @@ export class InnovationsService extends BaseService {
 
 
   async getInnovationsList(
-    user: { id: string},
+    user: { id: string },
     domainContext: DomainContextType,
     filters: {
       status: InnovationStatusEnum[],
@@ -41,7 +41,7 @@ export class InnovationsService extends BaseService {
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
       latestWorkedByMe?: boolean,
-      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
+      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
   ): Promise<{
@@ -59,6 +59,7 @@ export class InnovationsService extends BaseService {
       mainCategory: null | InnovationCategoryCatalogueEnum,
       otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
+      groupedStatus?: InnovationGroupedStatusEnum,
       assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
       supports?: {
         id: string,
@@ -92,7 +93,7 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.status', 'innovations_status')
       .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
       .addSelect('innovations.postcode', 'innovations_postcode')
-      .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description');
+      .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description')
 
     // Assessment relations.
     if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
@@ -141,53 +142,10 @@ export class InnovationsService extends BaseService {
     }
 
     if (filters.groupedStatuses && filters.groupedStatuses.length > 0) {
-      const status = this.getGroupedToInnovationStatusMap(filters.groupedStatuses);
+      innovationFetchQuery.innerJoin('innovations.innovationGroupedStatus', 'innovationGroupedStatus');
+      innovationFetchQuery.addSelect('innovationGroupedStatus.groupedStatus', 'innovationGroupedStatus_grouped_status');
 
-      if (
-        (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === false)
-        || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === true)
-      ) {
-
-        status.splice(status.indexOf(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT), 1);
-
-        const isReassessment = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT);
-
-        innovationFetchQuery.orWhere(
-          `innovations.id IN (
-            SELECT innovations.id
-            FROM innovation innovations
-            FULL JOIN innovation_reassessment_request reassessmentRequests
-            ON reassessmentRequests.innovation_id = innovations.id
-            WHERE (innovations.status = :waitingNeedsAssessmentStatus AND reassessmentRequests.innovation_id ${isReassessment ? 'IS NOT' : 'IS'} NULL))`,
-          { waitingNeedsAssessmentStatus: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT }
-        );
-
-      }
-
-      if (
-        (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === false)
-        || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === true)
-      ) {
-
-        status.splice(status.indexOf(InnovationStatusEnum.IN_PROGRESS), 1);
-
-        const isAwaitingSupport = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT);
-        const receivingSupportQuery = '(SELECT supports.innovation_id FROM innovation_support supports WHERE supports.status IN (:...receivingSupportStatus))';
-
-        innovationFetchQuery.orWhere(
-          `innovations.id IN (
-            SELECT innovations.id
-            FROM innovation innovations
-            WHERE (innovations.status = :inProgressStatus AND innovations.id ${isAwaitingSupport ? 'NOT IN' : 'IN'} ${receivingSupportQuery}))`,
-          { inProgressStatus: InnovationStatusEnum.IN_PROGRESS, receivingSupportStatus: [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.ENGAGING] }
-        );
-
-      }
-
-      if (status.length > 0) {
-        innovationFetchQuery.andWhere('innovations.status IN (:...status) ', { status });
-      }
-
+      innovationFetchQuery.andWhere('innovationGroupedStatus.groupedStatus IN (:...groupedStatuses)', { groupedStatuses: filters.groupedStatuses });
     }
 
     // Filters.
@@ -243,7 +201,7 @@ export class InnovationsService extends BaseService {
         innovationFetchQuery.andWhere('assessments.assign_to_id = :assignToId', { assignToId: user.id });
       }
 
-      if([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
+      if ([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
         innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
         innovationFetchQuery.innerJoin('supports.organisationUnitUsers', 'supportingUnitUsers');
         innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
@@ -258,7 +216,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
       innovationFetchQuery.leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION });
       innovationFetchQuery.leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit');
-      
+
       innovationFetchQuery.andWhere(
         `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
         { suggestedOrganisationUnitId: domainContext.organisation?.organisationUnit?.id }
@@ -384,10 +342,10 @@ export class InnovationsService extends BaseService {
         .addSelect('innovation.id', 'innovation_id')
         .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
-      
+
       if (domainContext.organisation?.organisationUnit?.id) {
         notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
-        .where('organisationUnit.id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
+          .where('organisationUnit.id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
       }
 
       if (filters.fields?.includes('statistics')) {
@@ -419,6 +377,16 @@ export class InnovationsService extends BaseService {
           }
         }
       });
+    }
+
+    let innovationsGroupedStatus = new Map<string, InnovationGroupedStatusEnum>();
+    if (filters.fields?.includes('groupedStatus')) {
+      if (filters.groupedStatuses && filters.groupedStatuses.length > 0) { // means that inner join was made
+        innovationsGroupedStatus = new Map(innovations.map(cur => [cur.id, cur.innovationGroupedStatus.groupedStatus]));
+      } else {
+        const innovationIds = innovations.map(i => i.id);
+        innovationsGroupedStatus = await this.domainService.innovations.getInnovationsGroupedStatus({ innovationIds });
+      }
     }
 
     return {
@@ -457,6 +425,7 @@ export class InnovationsService extends BaseService {
           mainCategory: innovation.mainCategory,
           otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
+          ...(filters.fields?.includes('groupedStatus') && { groupedStatus: innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED }),
           ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
           ...(assessment && { assessment }),
           ...(supports && {
@@ -865,6 +834,7 @@ export class InnovationsService extends BaseService {
     name: string,
     description: null | string,
     status: InnovationStatusEnum,
+    groupedStatus: InnovationGroupedStatusEnum,
     statusUpdatedAt: DateISOType,
     submittedAt: null | DateISOType,
     countryName: null | string,
@@ -883,6 +853,7 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('innovationOwner.userOrganisations', 'userOrganisations')
       .innerJoinAndSelect('userOrganisations.organisation', 'organisation')
       .leftJoinAndSelect('innovation.categories', 'innovationCategories')
+      .innerJoinAndSelect('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
       .where('innovation.id = :innovationId', { innovationId: id });
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
@@ -968,6 +939,7 @@ export class InnovationsService extends BaseService {
       name: result.name,
       description: result.description,
       status: result.status,
+      groupedStatus: result.innovationGroupedStatus.groupedStatus,
       statusUpdatedAt: result.statusUpdatedAt,
       submittedAt: result.submittedAt,
       countryName: result.countryName,
@@ -1015,7 +987,7 @@ export class InnovationsService extends BaseService {
       .where('innovation.status IN (:...innovationStatus)', { innovationStatus: filters.innovationStatus })
       .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`);
 
-    if(filters.assignedToMe) {
+    if (filters.assignedToMe) {
       query.andWhere('assessments.assign_to_id = :assignToId', { assignToId: domainContext.id });
     }
 
@@ -1814,7 +1786,7 @@ export class InnovationsService extends BaseService {
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
       .where('notification_id IN ( ' + query.getQuery() + ' )')
       .andWhere('user_id = :userId AND read_at IS NULL');
-      
+
     if (domainContext.organisation?.organisationUnit?.id) {
       params.organisationUnitId = domainContext.organisation.organisationUnit.id;
       updateQuery.andWhere('organisation_unit_id = :organisationUnitId');
@@ -1966,27 +1938,5 @@ export class InnovationsService extends BaseService {
 
   }
   */
-
-  private getGroupedToInnovationStatusMap(groupedStatuses: InnovationGroupedStatusEnum[]): InnovationStatusEnum[] {
-    const groupedToInnovationStatusMap = {
-      [InnovationGroupedStatusEnum.RECORD_NOT_SHARED]: InnovationStatusEnum.CREATED,
-      [InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-      [InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT]: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-      [InnovationGroupedStatusEnum.NEEDS_ASSESSMENT]: InnovationStatusEnum.NEEDS_ASSESSMENT,
-      [InnovationGroupedStatusEnum.AWAITING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.RECEIVING_SUPPORT]: InnovationStatusEnum.IN_PROGRESS,
-      [InnovationGroupedStatusEnum.WITHDRAWN]: InnovationStatusEnum.WITHDRAWN,
-    };
-
-    const status = [];
-    for (const groupedStatus of groupedStatuses) {
-      const innovationStatus = groupedToInnovationStatusMap[groupedStatus];
-      if (status.includes(innovationStatus) === false) {
-        status.push(innovationStatus);
-      }
-    }
-
-    return status;
-  }
 
 }
