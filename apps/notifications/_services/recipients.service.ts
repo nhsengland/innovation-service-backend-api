@@ -281,6 +281,7 @@ export class RecipientsService extends BaseService {
         'action.id', 'action.displayId', 'action.status',
         'user.id', 'user.identityId',
         'role.id',
+        'support.id',
         'unit.id', 'unit.name', 'unit.acronym'
       ])
       .innerJoin('action.createdByUser', 'user')
