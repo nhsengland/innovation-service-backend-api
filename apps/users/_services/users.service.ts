@@ -31,39 +31,6 @@ export class UsersService extends BaseService {
     this.cache = cacheService.get('IdentityUserInfo');
   }
 
-
-  /**
-   * returns a user based on email
-   * @param email the email to search
-   * @param filters 
-   *  - userRoles: the user roles to filter by.
-   * @returns the user as an array.
-   */
-  async getUserByEmail(email: string, filters: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
-
-    try {
-
-      const authUser = await this.identityProviderService.getUserInfoByEmail(email);
-      if (!authUser) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-
-      const dbUser = await this.domainService.users.getUserInfo({ identityId: authUser.identityId });
-
-      // Apply filters.
-      if (filters.userRoles.length === 0 || (filters.userRoles.length > 0 && filters.userRoles.some(userRole => dbUser.roles.map(r => r.role).includes(userRole)))) {
-        return [dbUser];
-      } else {
-        throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-      }
-
-    } catch (error) {
-      // As this method mimics a search, on errors, we just return an empty array.
-      return [];
-    }
-
-  }
-
   /**
    * checks if a user exists based on email
    * @param email the email to search

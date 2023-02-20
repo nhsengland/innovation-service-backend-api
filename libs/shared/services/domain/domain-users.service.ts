@@ -1,4 +1,3 @@
-import { filter } from 'lodash';
 import type { DataSource, Repository } from 'typeorm';
 
 import { UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';

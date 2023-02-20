@@ -5,7 +5,7 @@ import { JwtDecoder } from '@users/shared/decorators';
 import { AccessorOrganisationRoleEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -22,6 +22,7 @@ class V1UsersList {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
 
@@ -35,7 +36,7 @@ class V1UsersList {
 
         // Due to the limitations of our identity service that only allows to search by one email at a time,
         // this functions returns always a list to mimic a future search feature.
-        const result = await usersService.getUserByEmail(queryParams.email, { userRoles: queryParams.userTypes || [] });
+        const result = await domainService.users.getUserByEmail(queryParams.email, { userRoles: queryParams.userTypes || [] });
         context.res = ResponseHelper.Ok<ResponseDTO>(result.map(item => ({
           id: item.id,
           name: item.displayName,
