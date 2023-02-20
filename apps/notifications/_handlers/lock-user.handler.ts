@@ -31,7 +31,7 @@ export class LockUserHandler extends BaseHandler<
     // E-mail to the user who is being locked.
     this.emails.push({
       templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
-      to: { type: 'identityId', value: this.inputData.user.identityId, displayNameParam: 'display_name' },
+      to: { type: 'identityId', value: userInfo.identityId, displayNameParam: 'display_name' },
       params: {
         // display_name: '', // This will be filled by the email-listener function.
       }

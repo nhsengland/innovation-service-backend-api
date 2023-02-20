@@ -234,8 +234,7 @@ export const NOTIFICATIONS_CONFIG: {
     handler: LockUserHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
       user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]['user']>({
-        id: Joi.string().guid().required(),
-        identityId: Joi.string().guid().required(),
+        id: Joi.string().guid().required()
       }).required()
     }).required()
   },

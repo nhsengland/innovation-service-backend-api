@@ -113,7 +113,7 @@ export type NotifierTemplatesType = {
   },
 
   [NotifierTypeEnum.LOCK_USER]: {
-    user: { id: string, identityId: string }
+    user: { id: string }
   },
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {

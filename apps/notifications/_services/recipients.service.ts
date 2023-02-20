@@ -244,8 +244,13 @@ export class RecipientsService extends BaseService {
 
     const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .select([
-        'innovation.id', 'organisationUnit.id',
-        'user.id', 'user.identityId', 'serviceRoles.id'
+        'innovation.id', 
+        'support.id',
+        'organisationUnit.id',
+        'organisationUnitUser.id',
+        'organisationUser.id',
+        'user.id', 'user.identityId',
+        'serviceRoles.id'
       ])
       .innerJoin('innovation.innovationSupports', 'support')
       .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -254,7 +259,7 @@ export class RecipientsService extends BaseService {
       .innerJoin('organisationUser.user', 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .where('innovation.owner_id = :userId', { userId })
-      .andWhere('serviceRoles.organisation_unit = organisationUnit.id')
+      .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
       .getMany() || [];
 
     return dbInnovations.map(innovation => ({

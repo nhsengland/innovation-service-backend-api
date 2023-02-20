@@ -4,7 +4,7 @@ import type { EntityManager } from 'typeorm';
 import { OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { BadRequestError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError, UserErrorsEnum } from '@admin/shared/errors';
-import { CacheConfigType, CacheServiceSymbol, CacheService, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierService } from '@admin/shared/services';
+import { CacheConfigType, CacheService, CacheServiceSymbol, IdentityProviderService, IdentityProviderServiceSymbol, NotifierService, NotifierServiceSymbol } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
 
 import { BaseService } from './base.service';
@@ -41,7 +41,7 @@ export class UsersService extends BaseService {
     const sqlConnection = entityManager ?? this.sqlConnection.manager;
 
     const dbUser = await sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .select('user.id')
+      .select(['user.id', 'user.identityId'])
       .innerJoin('user.serviceRoles', 'userRoles')
       .leftJoin('userRoles.organisation', 'organisation')
       .where('user.id = :userId', { userId })
@@ -86,7 +86,7 @@ export class UsersService extends BaseService {
         await this.notifierService.send(
           { id: context.id, identityId: context.identityId },
           NotifierTypeEnum.LOCK_USER,
-          { user: { id: dbUser.id, identityId: dbUser.identityId } },
+          { user: { id: dbUser.id } },
           context
         );
 
@@ -95,7 +95,7 @@ export class UsersService extends BaseService {
       // Remove cache entry.
       await this.cache.delete(dbUser.identityId);
 
-      return { id: userId }
+      return { id: userId };
 
     });
 
