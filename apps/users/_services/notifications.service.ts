@@ -27,9 +27,9 @@ export class NotificationsService extends BaseService {
       .andWhere('notificationUser.readAt IS NULL');
 
     if (organisationUnitId) {
-      query.innerJoin('notificationUser.organisationUnit', 'orgUnit')
-      .andWhere('orgUnit.id = :organisationUnitId', { organisationUnitId });
-      
+      query.andWhere('notificationUser.organisationUnit = :orgUnit', { orgUnit: organisationUnitId });
+    } else {
+      query.andWhere('notificationUser.organisationUnit IS NULL');
     }
 
     const total = await query.getCount();
