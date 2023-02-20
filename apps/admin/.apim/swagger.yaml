@@ -648,7 +648,7 @@ paths:
               properties:
                 accountEnabled:
                   type: boolean
-                  description: Activate ot inactivate the user.
+                  description: Activate or inactivate the user.
                 role:
                   type: object
                   properties:

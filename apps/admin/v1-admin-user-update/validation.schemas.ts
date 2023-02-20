@@ -17,7 +17,7 @@ export type BodyType = {
 }
 
 export const BodySchema = Joi.object<BodyType>({
-  accountEnabled: Joi.boolean().description('Activate ot inactivate the user.'),
+  accountEnabled: Joi.boolean().description('Activate or inactivate the user.'),
   role: Joi.object({
     name: Joi.string().valid(...Object.values(AccessorOrganisationRoleEnum)).required().description('Name of the role.'),
     organisationId: Joi.string().guid().required().description('Id of the organisation.'),
