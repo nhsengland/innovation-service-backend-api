@@ -49,16 +49,17 @@ export class ValidationService extends BaseService {
     // };
 
     const result: ValidationResult[] = [];
+    const roles = [...new Set(dbUserRoles.map(item => item.role))]; // Removes duplicated.
 
-    for (const dbUserRole of dbUserRoles) {
+    for (const role of roles) {
 
-      const rules = AdminOperationsRulesMapper[operation][dbUserRole.role] || [];
+      const rules = AdminOperationsRulesMapper[operation][role] || [];
 
       for (const rule of rules) {
 
         switch (rule) {
           case 'AssessmentUserIsNotTheOnlyOne':
-            result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(dbUserRole.user.id));
+            result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(userId));
             break;
 
           // case 'LastAccessorUserOnOrganisationUnit':
@@ -83,6 +84,7 @@ export class ValidationService extends BaseService {
     }
 
     return result;
+
   }
 
 

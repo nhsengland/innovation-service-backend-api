@@ -11,6 +11,7 @@ import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentReq
 import { randText, randUuid } from '@ngneat/falso';
 import { InnovationStatusEnum, ServiceRoleEnum, YesOrNoCatalogueEnum } from '@innovations/shared/enums';
 // import type { InnovationAssessmentType } from '../_types/innovation.types';
+ import { UserBuilder } from '@innovations/shared/builders';
 
 describe('Innovation Assessments Suite', () => {
 
@@ -378,9 +379,7 @@ describe('Innovation Assessments Suite', () => {
   describe('updateAssessor', () => {
     it('should update the assigned assessor', async () => {
 
-      const newAssessor = await TestsHelper.TestDataBuilder.createUser()
-        .ofType(ServiceRoleEnum.ASSESSMENT)
-        .build(em);
+      const newAssessor = (await new UserBuilder(em).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
 
       const result = await sut.updateAssessor(
         testData.baseUsers.assessmentUser,
@@ -423,9 +422,7 @@ describe('Innovation Assessments Suite', () => {
 
       let err: NotFoundError | null = null;
 
-      const newAssessor = await TestsHelper.TestDataBuilder.createUser()
-        .ofType(ServiceRoleEnum.ASSESSMENT)
-        .build(em);
+      const newAssessor = (await new UserBuilder(em).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
 
       try {
         await sut.updateAssessor(
