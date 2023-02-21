@@ -1,16 +1,17 @@
 import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
-import { InnovationEntity, InnovationSupportEntity, InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationSupportEntity, InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '@users/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 import type { DateISOType } from '@users/shared/types';
 
-import { UserRoleEntity } from '@users/shared/entities';
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
+
 import { BaseService } from './base.service';
+
 
 @injectable()
 export class UsersService extends BaseService {
@@ -54,7 +55,7 @@ export class UsersService extends BaseService {
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
     const user = await this.domainService.users.getUserInfo({ userId });
     const model = params.model;
-    switch(model) {
+    switch (model) {
       case 'minimal':
         return {
           id: user.id,
@@ -69,13 +70,13 @@ export class UsersService extends BaseService {
 
         // TODO this is picking only the first for now and will be changed when admin supports more than one role
         const role = user.roles[0];
-        if(!role) {
+        if (!role) {
           throw new UnprocessableEntityError(UserErrorsEnum.USER_TYPE_INVALID);
         }
 
         const supportMap = new Map();
         const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
-        if(supportUserId.length > 0) {
+        if (supportUserId.length > 0) {
           const supports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'support')
             .select('organisationUnitUsers.id', 'organisationUnitUsers_id')
             .addSelect('COUNT(support.id)', 'support_count')
@@ -110,7 +111,7 @@ export class UsersService extends BaseService {
         };
       default:
         const unknownModel: never = model;
-        throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID, { details: {model: unknownModel} });
+        throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID, { details: { model: unknownModel } });
     }
   }
 
@@ -194,7 +195,7 @@ export class UsersService extends BaseService {
         {
           id: dbUser.id,
           identityId: dbUser.identityId,
-          organisation:{
+          organisation: {
             id: dbOrganisation.id,
             isShadow: dbOrganisation.isShadow,
             name: dbOrganisation.name,
@@ -202,7 +203,7 @@ export class UsersService extends BaseService {
             acronym: dbOrganisation.acronym,
             role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
           },
-          currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR},
+          currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR },
 
         },
       );
@@ -263,7 +264,7 @@ export class UsersService extends BaseService {
       const preferences: { contactByPhone: boolean, contactByEmail: boolean, contactByPhoneTimeframe: null | PhoneUserPreferenceEnum, contactDetails: null | string } = {
         contactByPhone: data.contactByPhone as boolean,
         contactByEmail: data.contactByEmail as boolean,
-        contactByPhoneTimeframe: data.contactByPhoneTimeframe  ?? null,
+        contactByPhoneTimeframe: data.contactByPhoneTimeframe ?? null,
         contactDetails: data.contactDetails ?? null
       };
 
@@ -363,12 +364,12 @@ export class UsersService extends BaseService {
     if (filters.onlyActive) {
       query.andWhere('user.lockedAt IS NULL');
     }
-    
+
     // Get users from database
     const usersFromSQL = await query.getMany();
 
     const identityUsers = (await this.identityProviderService.getUsersList(usersFromSQL.map(u => u.identityId)));
-      
+
 
     return Promise.all(usersFromSQL.map(async user => {
       let organisations: {
@@ -414,11 +415,11 @@ export class UsersService extends BaseService {
     userId: string,
     preferences: {
       contactByPhone: boolean,
-      contactByEmail:  boolean,
+      contactByEmail: boolean,
       contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
       contactDetails: string | null,
     }
-  ) : Promise<void> {
+  ): Promise<void> {
 
     const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
     let preference: {
@@ -426,20 +427,20 @@ export class UsersService extends BaseService {
         id: string,
       },
       contactByPhone: boolean,
-      contactByEmail:  boolean,
+      contactByEmail: boolean,
       contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
       contactDetails: string | null,
       createdBy: string,
       updatedBy: string,
       id?: string
     } = {
-      user: {id: userId},
+      user: { id: userId },
       createdBy: userId,  // this is only for the first time as BaseEntity defines it as update: false
       updatedBy: userId,
       ...preferences
     };
 
-    if(userPreferences) {
+    if (userPreferences) {
       preference = {
         id: userPreferences.id,
         ...preference
@@ -449,4 +450,5 @@ export class UsersService extends BaseService {
 
     await this.sqlConnection.manager.save(UserPreferenceEntity, preference);
   }
+
 }

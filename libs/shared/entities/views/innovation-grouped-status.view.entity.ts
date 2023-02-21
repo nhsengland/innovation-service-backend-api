@@ -1,6 +1,9 @@
-import type { InnovationGroupedStatusEnum } from 'libs/shared/enums';
 import { JoinColumn, OneToOne, ViewColumn, ViewEntity } from 'typeorm';
+
 import { InnovationEntity } from '../innovation/innovation.entity';
+
+import type { InnovationGroupedStatusEnum } from '../../enums/innovation.enums';
+
 
 @ViewEntity()
 export class InnovationGroupedStatusViewEntity {

@@ -215,35 +215,5 @@ export class UsersService extends BaseService {
     });
   }
 
-  async deleteAdmin(id: string): Promise<{ id: string }> {
-
-    const user = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'roles')
-      .where('user.id = :id', { id })
-      .getOne();
-
-    if (!user) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    }
-
-    if (!user.serviceRoles.map(r => r.role).includes(ServiceRoleEnum.ADMIN) || user.serviceRoles.length > 1) {
-      throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
-    }
-
-    //delete in b2C
-    await this.identityProviderService.deleteUser(user.identityId);
-
-    //set deleted in BD
-    return this.sqlConnection.transaction(async transaction => {
-      await transaction.update(
-        UserEntity,
-        { id: user.id },
-        { deletedAt: new Date().toISOString() }
-      );
-
-      return { id: user.id };
-    });
-  }
 
 }

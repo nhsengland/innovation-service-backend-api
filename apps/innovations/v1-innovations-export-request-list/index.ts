@@ -1,4 +1,4 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';

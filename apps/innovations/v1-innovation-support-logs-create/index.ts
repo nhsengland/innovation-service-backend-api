@@ -1,4 +1,4 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
@@ -18,14 +18,14 @@ class V1InnovationsSupportLogCreate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    
+
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationSupportsService = container.get<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
-      
+
       const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType({ organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR] })
