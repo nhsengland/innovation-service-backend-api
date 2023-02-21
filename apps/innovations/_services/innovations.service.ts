@@ -41,6 +41,11 @@ export class InnovationsService extends BaseService {
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
       latestWorkedByMe?: boolean,
+      dateFilter?: {
+        field: 'submittedAt',
+        startDate?: DateISOType,
+        endDate?: DateISOType
+      }[],
       fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
@@ -96,7 +101,7 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description');
 
     // Assessment relations.
-    if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
+    if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt || (filters.assignedToMe && domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT)) {
       innovationFetchQuery.leftJoin('innovations.assessments', 'assessments');
 
       // These two are required for the order by
@@ -232,6 +237,31 @@ export class InnovationsService extends BaseService {
         `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
         { suggestedOrganisationUnitId: domainContext.organisation?.organisationUnit?.id }
       );
+    }
+
+    if (filters.dateFilter && filters.dateFilter.length > 0) {
+      const dateFilterKeyMap = new Map([
+        ["submittedAt", "innovations.submittedAt"]
+      ]);
+
+      for (const dateFilter of filters.dateFilter) {
+        const filterKey = dateFilterKeyMap.get(dateFilter.field);
+        if (dateFilter.startDate) {
+          innovationFetchQuery.andWhere(`${filterKey} >= :startDate`, {
+            startDate: dateFilter.startDate
+          });
+        }
+
+        if (dateFilter.endDate) {
+          // This is needed because default TimeStamp for a DD/MM/YYYY date is 00:00:00
+          const beforeDateWithTimestamp = new Date(dateFilter.endDate);
+          beforeDateWithTimestamp.setDate(beforeDateWithTimestamp.getDate() + 1);
+
+          innovationFetchQuery.andWhere(`${filterKey} < :endDate`, {
+            endDate: beforeDateWithTimestamp
+          });
+        }
+      }
     }
 
     // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs

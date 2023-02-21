@@ -1006,6 +1006,27 @@ paths:
                     - DESC
                 default:
                   default: DESC
+        - name: dateFilter
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  enum:
+                    - submittedAt
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+              required:
+                - field
+              additionalProperties: false
         - name: fields
           in: query
           required: false
