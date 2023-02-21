@@ -4,13 +4,14 @@ import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_serv
 import type { UserStatisticsTemplateType } from '../../_config/statistics.config';
 
 export const waitingAssessmentStatisticsHandler = async (): Promise<UserStatisticsTemplateType[UserStatisticsEnum.WAITING_ASSESSMENT_COUNTER]> => {
-  
-    const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
-  
-    const actions = await statisticsService.waitingAssessment();
-  
-    return {
-      count: actions.count,
-      overdue: actions.overdue,
-    }
+
+  const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
+
+  const actions = await statisticsService.waitingAssessment();
+
+  return {
+    count: actions.count,
+    overdue: actions.overdue,
+  };
+
 }

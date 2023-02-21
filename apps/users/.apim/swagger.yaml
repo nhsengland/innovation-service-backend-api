@@ -168,6 +168,39 @@ paths:
                     type: string
                   message:
                     type: string
+  /v1/me/delete:
+    patch:
+      description: User delete
+      operationId: v1-me-delete
+      tags:
+        - "[v1] Users"
+      parameters: []
+      requestBody:
+        description: Reason for deletion
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 2000
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request.
   /v1/me/terms-of-use/accept:
     patch:
       description: Accept user terms of use

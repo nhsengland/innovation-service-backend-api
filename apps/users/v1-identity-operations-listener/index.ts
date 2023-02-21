@@ -1,8 +1,8 @@
-import type { Context } from '@azure/functions'
+import type { Context } from '@azure/functions';
 import { JoiHelper } from '@users/shared/helpers';
 import { container } from '../_config';
 
-import { IdentityOperationType, IdentityOperationSchema } from './validation.schemas'
+import { IdentityOperationType, IdentityOperationSchema } from './validation.schemas';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
 
 class V1IdentityOperationsQueueListener {

@@ -157,7 +157,7 @@ export class InnovationsService extends BaseService {
       if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN && filters.name.match(/^\S+@\S+$/)) {
         const targetUser = await this.domainService.users.getUserByEmail(filters.name);
 
-        if (targetUser.length > 0 && targetUser[0]) { 
+        if (targetUser.length > 0 && targetUser[0]) {
           innovationFetchQuery.andWhere('(innovations.owner_id = :userId OR innovations.name LIKE :name)', { userId: targetUser[0].id, name: `%${filters.name}%` });
         } else {
           // This means that the user is NOT registered in the service.
@@ -1146,7 +1146,7 @@ export class InnovationsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
-    if(!innovation) {
+    if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
@@ -1157,7 +1157,7 @@ export class InnovationsService extends BaseService {
 
     await em.transaction(async transaction => {
       // Delete shares
-      if(deletedShares.length > 0) {
+      if (deletedShares.length > 0) {
         // Check for active supports
         const supports = await transaction.createQueryBuilder(InnovationSupportEntity, 'innovationSupport')
           .innerJoin('innovationSupport.innovation', 'innovation')
@@ -1199,7 +1199,7 @@ export class InnovationsService extends BaseService {
         { organisations: organisations.map(o => o.name) }
       );
       await transaction.save(InnovationEntity, innovation);
-      
+
     });
   }
 
@@ -1262,53 +1262,37 @@ export class InnovationsService extends BaseService {
 
   }
 
-  async withdrawInnovation(
-    user: { id: string, identityId: string },
-    domainContext: DomainContextType,
-    innovationId: string,
-    reason: string,
-  ): Promise<{
-    id: string;
-  }> {
+  async withdrawInnovation(context: DomainContextType, innovationId: string, reason: string): Promise<{ id: string }> {
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .select(['innovations.id'])
+      .where('innovations.id = :innovationId', { innovationId })
+      .getOne();
+    if (!dbInnovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
 
-      const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-        .leftJoinAndSelect('innovations.innovationSupports', 'supports')
-        .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
-        .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
-        .leftJoinAndSelect('organisationUsers.user', 'users')
-        .andWhere('innovations.id = :innovationId', { innovationId })
-        .getOne();
+    const savedInnovations = await this.sqlConnection.transaction(async transaction => {
 
-      if (!dbInnovation) {
-        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-      }
-
-      return this.domainService.innovations.withdrawInnovation(
-        dbInnovation,
+      return this.domainService.innovations.withdrawInnovations(
         transaction,
-        user,
-        reason,
+        { id: context.id, roleId: context.currentRole.id },
+        [{ id: dbInnovation.id, reason }]
       );
+
     });
 
-    await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
-      NotifierTypeEnum.INNOVATION_WITHDRAWN,
-      {
-        innovation: {
-          id: result.id,
-          name: result.name,
-          assignedUserIds: result.supportingUserIds
-        }
-      },
-      domainContext,
-    );
+    for (let savedInnovation of savedInnovations) {
+      await this.notifierService.send(
+        { id: context.id, identityId: context.identityId },
+        NotifierTypeEnum.INNOVATION_WITHDRAWN,
+        { innovation: { id: savedInnovation.id, name: savedInnovation.name, assignedUserIds: savedInnovation.supportingUserIds } },
+        context
+      );
+    }
 
-    return {
-      id: result.id,
-    };
+    return { id: dbInnovation.id };
+
   }
 
   async pauseInnovation(

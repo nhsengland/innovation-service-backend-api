@@ -33,15 +33,8 @@ class V1InnovationWithdraw {
         .checkInnovatorType()
         .checkInnovation()
         .verify();
-      const requestUser = auth.getUserInfo();
-      const domainContext = auth.getContext();
-      const result = await innovationsService.withdrawInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId },
-        domainContext,
-        params.innovationId,
-        body.message
-      );
 
+      const result = await innovationsService.withdrawInnovation(auth.getContext(), params.innovationId, body.message);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

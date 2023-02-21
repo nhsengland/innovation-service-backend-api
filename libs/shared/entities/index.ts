@@ -99,7 +99,9 @@ import { IdleSupportViewEntity } from './views/idle-support.view.entity';
 import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { IdleSupportViewEntity } from './views/idle-support.view.entity';
+export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
+
 
 export const GENERAL_ENTITIES = [
   AuditEntity,
@@ -159,6 +161,6 @@ export const USER_ENTITIES = [
 
 export const VIEW_ENTITIES = [
   IdleSupportViewEntity,
-  LastSupportStatusViewEntity,
-  InnovationGroupedStatusViewEntity
+  InnovationGroupedStatusViewEntity,
+  LastSupportStatusViewEntity
 ];

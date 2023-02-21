@@ -42,7 +42,7 @@ class V1MeInfo {
         contactByPhone: false,
         contactByPhoneTimeframe: null,
         contactDetails: null,
-      }
+      };
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
         termsOfUseAccepted = true;

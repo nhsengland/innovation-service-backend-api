@@ -84,6 +84,6 @@ export default openApi(V1InnovationSupportsList.httpTrigger as AzureFunction, '/
       404: {
         description: 'Not found',
       }
-    },
-  },
-})
+    }
+  }
+});

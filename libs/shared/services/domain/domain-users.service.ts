@@ -1,11 +1,13 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
-import type { PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
+import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
+import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DateISOType, DomainUserInfoType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
+
+import type { DomainInnovationsService } from './domain-innovations.service';
 
 
 export class DomainUsersService {
@@ -14,7 +16,8 @@ export class DomainUsersService {
 
   constructor(
     private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderServiceType
+    private identityProviderService: IdentityProviderServiceType,
+    private domainInnovationsService: DomainInnovationsService
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
@@ -141,13 +144,13 @@ export class DomainUsersService {
 
   async getUserPreferences(userId: string): Promise<{
     contactByPhone: boolean,
-    contactByEmail:  boolean,
+    contactByEmail: boolean,
     contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
     contactDetails: null | string,
   }> {
-    
+
     const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
-    
+
     return {
       contactByPhone: userPreferences?.contactByPhone ?? false,
       contactByEmail: userPreferences?.contactByEmail ?? false,
@@ -188,4 +191,56 @@ export class DomainUsersService {
       return [];
     }
   }
+
+
+  async deleteUser(userId: string, data: { reason: null | string }): Promise<{ id: string }> {
+
+    const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'userRole')
+      .where('user.id = :userId', { userId })
+      .getOne();
+
+    if (!dbUser) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    return this.sqlConnection.transaction(async transaction => {
+
+      // If user has innovator role, deals with it's innovations.
+      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
+
+      if (userInnovatorRole) {
+
+        const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+          .select(['innovations.id'])
+          .where('innovations.owner_id = :userId', { userId: dbUser.id })
+          .getMany();
+
+        await this.domainInnovationsService.withdrawInnovations(
+          transaction,
+          { id: dbUser.id, roleId: userInnovatorRole.id },
+          dbInnovations.map(item => ({ id: item.id, reason: null }))
+        );
+
+      }
+
+      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, {
+        deletedAt: new Date().toISOString()
+      });
+
+      await transaction.update(UserEntity, { id: dbUser.id }, {
+        deleteReason: data.reason,
+        deletedAt: new Date().toISOString()
+      });
+
+
+      // If all went well, deleted from B2C.
+      await this.identityProviderService.deleteUser(dbUser.identityId);
+
+      return { id: dbUser.id };
+
+    });
+
+  }
+
 }

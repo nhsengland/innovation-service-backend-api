@@ -1,6 +1,6 @@
 import { ViewColumn, ViewEntity } from 'typeorm';
 
-import type { DateISOType } from '../../types';
+import type { DateISOType } from '../../types/date.types';
 
 
 @ViewEntity()
