@@ -93,7 +93,7 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.status', 'innovations_status')
       .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
       .addSelect('innovations.postcode', 'innovations_postcode')
-      .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description')
+      .addSelect('innovations.otherMainCategoryDescription', 'innovations_other_main_category_description');
 
     // Assessment relations.
     if (filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
@@ -1318,6 +1318,7 @@ export class InnovationsService extends BaseService {
     data: { message: string }
   ): Promise<{ id: string }> {
 
+    // This query should be reviewed when using the service roles in supports instead of the organisationUnitUser
     const dbSupports = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'supports')
       .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
       .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
@@ -1329,6 +1330,7 @@ export class InnovationsService extends BaseService {
     const previousAssignedAccessors = dbSupports.flatMap(support => support.organisationUnitUsers.map(item => ({
       id: item.organisationUser.user.id,
       organisationUnitId: item.organisationUnit.id,
+      userType: item.organisationUser.role === AccessorOrganisationRoleEnum.ACCESSOR ? ServiceRoleEnum.ACCESSOR : ServiceRoleEnum.QUALIFYING_ACCESSOR,
     })));
 
     const result = await this.sqlConnection.transaction(async transaction => {
