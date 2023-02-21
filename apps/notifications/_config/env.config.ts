@@ -11,4 +11,4 @@ if (!process.env['CLIENT_WEB_BASE_URL']) {
 export const ENV = Object.freeze({
   webBaseUrl: process.env['CLIENT_WEB_BASE_URL'] || '',
   webBaseTransactionalUrl: new URL('transactional', process.env['CLIENT_WEB_BASE_URL'] || '').toString() // TODO: Find best way to join URLs.
-})
+});

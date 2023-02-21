@@ -1,12 +1,12 @@
-import type { EntityManager } from 'typeorm';
 import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
-import { DomainUsersService, NOSQLConnectionService } from '../services';
+import type { EntityManager } from 'typeorm';
 import { UserEntity } from '../entities';
+import { DomainUsersService, NOSQLConnectionService } from '../services';
 import { CacheService } from '../services/storage/cache.service';
 import type { DomainUserInfoType } from '../types';
 
 export class MockBuilder {
- 
+
   private _spies: jest.SpyInstance[] = [];
 
   constructor() { }
@@ -17,18 +17,18 @@ export class MockBuilder {
       spy.mockRestore();
     }
   }
-  
-  public Spies () : jest.SpyInstance[] {
-    return this._spies; 
+
+  public Spies(): jest.SpyInstance[] {
+    return this._spies;
   }
 
-  
+
   public addSpy(spy: jest.SpyInstance): MockBuilder {
     this._spies.push(spy);
     return this;
   }
-  
-  
+
+
   mockCacheServiceThis(): MockBuilder {
     this._spies.push(jest.spyOn(CacheService.prototype, 'init').mockReturnThis());
     return this;
@@ -41,21 +41,21 @@ export class MockBuilder {
 
 
   mockDomainUser(
-    user: UserEntity, 
-    
+    user: UserEntity,
   ): DomainUserInfoBuilder {
 
-    const data =  {
+    const data = {
       id: user.id,
       identityId: user.identityId,
-      type: user.type,
       isActive: user.lockedAt === null,
+      lockedAt: user.lockedAt,
       displayName: randUserName(),
       email: randEmail(),
       firstTimeSignInAt: user.firstTimeSignInAt,
       passwordResetAt: null,
       phone: randPhoneNumber(),
-      roles: [],
+      // roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })], // Was like this before, not needed
+      roles: user.serviceRoles,
       surveyId: null,
       organisations: [],
     } as DomainUserInfoType;
@@ -70,14 +70,15 @@ class DomainUserInfoBuilder {
 
   user: DomainUserInfoType;
   builder: MockBuilder;
-  constructor(user: DomainUserInfoType, builder: MockBuilder) { 
+  constructor(user: DomainUserInfoType, builder: MockBuilder) {
     this.user = user;
     this.builder = builder;
   }
 
   async build(entityManager: EntityManager): Promise<MockBuilder> {
 
-    const accessor = await entityManager.createQueryBuilder(UserEntity, 'user')
+    const user = await entityManager.createQueryBuilder(UserEntity, 'user')
+      .leftJoinAndSelect('user.serviceRoles', 'roles')
       .leftJoinAndSelect('user.userOrganisations', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.organisation', 'organisation')
       .leftJoinAndSelect('organisationUsers.userOrganisationUnits', 'organisationUnitUsers')
@@ -85,38 +86,37 @@ class DomainUserInfoBuilder {
       .where('user.id = :id', { id: this.user.id })
       .getOne();
 
-    const userOrganisations = await  accessor?.userOrganisations;
-    const organisationUser = userOrganisations?.find(_=>true);
+    const userOrganisations = await user?.userOrganisations;
+    const organisationUser = userOrganisations?.find(_ => true);
     const organisation = organisationUser?.organisation;
 
+    // this.user.roles = user?.serviceRoles ?? []; // Was like this before, not needed
+
     if (organisation) {
+      const organisationUnitUser = organisationUser.userOrganisationUnits.find(_ => true);
+      const organisationUnit = organisationUnitUser?.organisationUnit;
 
-      const organisationUnit = organisationUser.userOrganisationUnits.find(_=>true)?.organisationUnit;
-
-      this.user = {
-        ...this.user,
-        organisations: [
-          {
-            id: organisation.id,
-            name: organisation.name,
-            role: organisationUser.role,
-            isShadow: organisation.isShadow,
-            size: organisation.size,
-            organisationUnits: organisationUnit ? [{
-              id: organisationUnit.id,
-              name: organisationUnit.name,
-              acronym: organisationUnit.acronym,
-            }] : [],
-          }
-        ]
-      }
-
-      this.builder.addSpy(jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user));
-      return this.builder; 
+      this.user.organisations = [
+        {
+          id: organisation.id,
+          name: organisation.name,
+          acronym: organisation.acronym,
+          role: organisationUser.role,
+          isShadow: organisation.isShadow,
+          size: organisation.size,
+          organisationUnits: organisationUnit ? [{
+            id: organisationUnit.id,
+            name: organisationUnit.name,
+            acronym: organisationUnit.acronym,
+            organisationUnitUser: {
+              id: organisationUnitUser.id,
+            }
+          }] : [],
+        }
+      ];
     }
 
     this.builder.addSpy(jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user));
-
     return this.builder;
   }
 }

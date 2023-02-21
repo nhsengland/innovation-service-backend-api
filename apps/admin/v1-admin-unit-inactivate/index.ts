@@ -35,10 +35,12 @@ class V1AdminUnitInactivate {
         .verify();
 
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
       
       const result = await organisationsService.inactivateUnit(
         requestUser,
-        params.organisationUnitId
+        domainContext,
+        params.organisationUnitId,
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });

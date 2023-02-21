@@ -1,6 +1,6 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,10 +17,11 @@ export class InnovationSubmitedHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED],
+    domainContext: DomainContextType
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -29,14 +30,16 @@ export class InnovationSubmitedHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
-    this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR,
-      to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        innovation_name: innovation.name
-      }
-    });
+    if (innovation.owner.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR,
+        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: innovation.name
+        }
+      });
+    }
 
     for (const assessmentUser of assessmentUsers) {
       this.emails.push({
@@ -56,7 +59,7 @@ export class InnovationSubmitedHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION, id: this.inputData.innovationId },
-      users: assessmentUsers.map(user => ({ userId: user.id, userType: UserTypeEnum.ASSESSMENT })),
+      users: assessmentUsers.map(user => ({ userId: user.id, roleId: user.roleId, userType: ServiceRoleEnum.ASSESSMENT })),
       params: {}
     });
 

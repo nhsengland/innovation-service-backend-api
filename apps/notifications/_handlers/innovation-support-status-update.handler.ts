@@ -1,12 +1,13 @@
-import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import type { UserRoleEntity } from '@notifications/shared/entities';
 import { BaseHandler } from './base.handler';
 
 
@@ -20,7 +21,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   private data: {
-    innovation?: { name: string, owner: { id: string, identityId: string, type: UserTypeEnum, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
+    innovation?: { name: string, owner: { id: string, identityId: string, userRole: UserRoleEntity, isActive: boolean, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
     requestUserAdditionalInfo?: {
       displayName?: string,
       organisation: { id: string, name: string },
@@ -30,10 +31,11 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -43,7 +45,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
-      organisation: { id: requestUserInfo.organisations[0]?.id ?? '', name: requestUserInfo.organisations[0]?.name ?? '' },
+      organisation: { id: this.domainContext.organisation?.id ?? '', name: this.domainContext.organisation?.name ?? '' },
       organisationUnit: {
         id: this.domainContext?.organisation?.organisationUnit?.id ?? '', name: this.domainContext?.organisation?.organisationUnit?.name ?? ''
       }
@@ -66,7 +68,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         InnovationSupportStatusEnum.WITHDRAWN,
         InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
       ].includes(this.inputData.innovationSupport.status)) {
-        await this.prepareInAppForAssessmentWhenWaitingStatus()
+        await this.prepareInAppForAssessmentWhenWaitingStatus();
       }
 
     }
@@ -86,7 +88,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private async prepareEmailForInnovator(): Promise<void> {
 
     // Send email only to user if email preference INSTANTLY.
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, this.data.innovation?.owner.emailNotificationPreferences || [])) {
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, this.data.innovation?.owner.emailNotificationPreferences || []) && this.data.innovation?.owner.isActive) {
 
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
@@ -126,11 +128,15 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareInAppForInnovator(): Promise<void> {
+    // This never happens
+    if(!this.data.innovation) {
+      return;
+    }
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: [{ userId: this.data.innovation?.owner.id || '', userType: UserTypeEnum.INNOVATOR }],
+      users: [{ userId: this.data.innovation.owner.id, roleId: this.data.innovation.owner.userRole.id }],
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
@@ -148,7 +154,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: assignedUsers.map(user => ({ userId: user.id, userType: user.type, organisationUnitId: user.organisationUnitId })),
+      users: assignedUsers.map(user => ({ userId: user.id, roleId: user.userRole.id, organisationUnitId: user.organisationUnitId })),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
@@ -163,7 +169,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: assessmentUsers.map(item => ({ userId: item.id, userType: UserTypeEnum.ASSESSMENT })),
+      users: assessmentUsers.map(item => ({ userId: item.id, roleId: item.roleId, userType: ServiceRoleEnum.ASSESSMENT })),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status

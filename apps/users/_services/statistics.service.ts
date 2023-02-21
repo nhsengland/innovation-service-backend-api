@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, UserTypeEnum } from '@users/shared/enums';
+import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
@@ -118,13 +118,13 @@ export class StatisticsService extends BaseService {
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
       .where('actions.created_by = :userId', { userId: requestUser.id })
-      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] })
+      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] });
 
-    if (domainContext.userType === UserTypeEnum.ACCESSOR) {
+    if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
       if (!organisationUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
-      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit })
+      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit });
     }
 
     const myActionsCount = await myActionsQuery
@@ -134,9 +134,9 @@ export class StatisticsService extends BaseService {
     const actions: Record<string, any> = {
       SUBMITTED: { count: 0, lastSubmittedAt: null },
       REQUESTED: { count: 0, lastSubmittedAt: null },
-    }
+    };
     for (const action of myActionsCount) {
-      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt }
+      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt };
     }
 
     return {
@@ -174,7 +174,7 @@ export class StatisticsService extends BaseService {
           .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', { supportStatus: InnovationSupportStatusEnum.UNASSIGNED })
           .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
           .andWhere(
-            `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogs.organisation_unit_id =:suggestedOrganisationUnitId)`,
+            `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
             { suggestedOrganisationUnitId: organisationUnit}
           )
           .andWhere('organisationUnits.id = :organisationUnit', { organisationUnit })

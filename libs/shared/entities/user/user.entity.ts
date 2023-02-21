@@ -7,7 +7,6 @@ import { OrganisationUserEntity } from '../organisation/organisation-user.entity
 import { NotificationPreferenceEntity } from './notification-preference.entity';
 import { UserRoleEntity } from './user-role.entity';
 
-import { UserTypeEnum } from '../../enums/user.enums';
 import type { DateISOType } from '../../types/date.types';
 
 
@@ -19,9 +18,6 @@ export class UserEntity extends BaseEntity {
 
   @Column({ name: 'external_id', type: 'nvarchar', nullable: false })
   identityId: string;
-
-  @Column({ type: 'simple-enum', enum: UserTypeEnum, nullable: false })
-  type: UserTypeEnum;
 
   @Column({ name: 'survey_id', type: 'nvarchar', nullable: true })
   surveyId: null | string;

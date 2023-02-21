@@ -1,6 +1,6 @@
 import type { HttpRequest } from '@azure/functions';
 import jwt_decode from 'jwt-decode';
-import type { UserTypeEnum } from '../enums';
+import type { ServiceRoleEnum } from '../enums';
 
 import { UnauthorizedError, UserErrorsEnum } from '../errors';
 import { ResponseHelper } from '../helpers';
@@ -41,7 +41,7 @@ export function JwtDecoder() {
       const domainContextHeader = request.headers['x-is-domain-context'];
 
       let domainContext: {
-        userType?: UserTypeEnum;
+        role?: ServiceRoleEnum;
         organisationId?: string;
         innovationId?: string;
       } = { };

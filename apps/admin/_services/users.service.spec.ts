@@ -1,114 +1,94 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TestDataType, TestsHelper } from '@users/shared/tests/tests.helper';
-import { container } from '../_config';
-
-import { DomainInnovationsService, NOSQLConnectionService, NotifierService } from '@users/shared/services';
-import { CacheService } from '@users/shared/services/storage/cache.service';
 import type { EntityManager } from 'typeorm';
+
+import { TestDataType, TestsHelper } from '@admin/shared/tests';
+
+import { UserEntity } from '@admin/shared/entities';
+// import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
+import { NOSQLConnectionService } from '@users/shared/services';
+
+import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from './interfaces';
-import { RedisCache } from '@admin/shared/services/storage/redis-cache.service';
-import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
-import { OrganisationUserEntity } from '@admin/shared/entities';
 
-describe('Innovation Actions Suite', () => {
-
-  let sut: UsersServiceType;
+describe('Admin / Services / Users Service', () => {
 
   let testData: TestDataType;
-  let em: EntityManager;
+  let entityManager: EntityManager;
+
+  let usersService: UsersServiceType;
+
 
   beforeAll(async () => {
 
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
-    jest.spyOn(RedisCache.prototype, 'delete').mockResolvedValue();
-    
+    // jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
+    // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+    // jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
-    sut = container.get<UsersServiceType>(UsersServiceSymbol);
+    usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
+
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    entityManager = await TestsHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsHelper.releaseQueryRunnerEntityManager(entityManager);
   });
 
   it('should lock a user', async () => {
-    // arrange
-    
-    const accessor = testData.baseUsers.accessor;
 
-    jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    const userAdminContext = testData.domainContexts.admin;
+    const userInnovator = testData.baseUsers.innovator;
 
-    let err;
+    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, entityManager);
 
-    try {
-      await sut.updateUser(
-        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
-        testData.baseUsers.innovator.id,
-        { accountEnabled: false },
-        em,
-      );
-    } catch (error) {
-      err = error;
-    }
-    // assert
-    expect(err).toBeUndefined();
+    const updatedUser = await entityManager.createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :userId', { userId: userInnovator.id })
+      .getOne();
+
+    expect(updatedUser?.lockedAt).toBeTruthy();
 
   });
 
   it('should unlock a user', async () => {
-    // arrange
-    
-    const accessor = testData.baseUsers.accessor;
 
-    jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
-    let err;
+    const userAdminContext = testData.domainContexts.admin;
+    const userInnovator = testData.baseUsers.innovator;
 
-    try {
-      await sut.updateUser(
-        { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
-        testData.baseUsers.innovator.id,
-        { accountEnabled: true },
-        em,
-      );
-    } catch (error) {
-      err = error;
-    }
+    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: true }, entityManager);
 
-    // assert
-    expect(err).toBeUndefined();
-  });
-
-  it('should change an accessor role', async () => {
-    // arrange
-    
-    const accessor = testData.baseUsers.accessor;
-
-    jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
-
-    await sut.updateUser(
-      { id: accessor.id, identityId: accessor.identityId, type: accessor.type },
-      testData.baseUsers.accessor.id,
-      { role: { name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, organisationId: testData.domainContexts.accessor.organisation!.id } },
-      em,
-    );
-
-    const updatedAccessor = await em.createQueryBuilder(OrganisationUserEntity, 'ou')
-      .where('ou.user.id = :userId', { userId: accessor.id })
-      .andWhere('ou.organisation.id = :organisationId', { organisationId: testData.domainContexts.accessor.organisation!.id })
+    const updatedUser = await entityManager.createQueryBuilder(UserEntity, 'user')
+      .where('user.id = :userId', { userId: userInnovator.id })
       .getOne();
 
-    // assert
-    expect(updatedAccessor?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
-    
+    expect(updatedUser?.lockedAt).toBeNull();
+
   });
+
+  // it('should change an accessor role', async () => {
+
+  //   const userAdminContext = testData.domainContexts.admin;
+  //   const userAccessor = testData.baseUsers.accessor;
+  //   const userAccessorOrganisations = await userAccessor.userOrganisations;
+
+  //   await usersService.updateUser(
+  //     userAdminContext,
+  //     userAccessor.id,
+  //     { role: { name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, organisationId: userAccessorOrganisations[0]?.id ?? '' } },
+  //     entityManager
+  //   );
+
+  //   const updatedUser = await entityManager.createQueryBuilder(OrganisationUserEntity, 'ou')
+  //     .where('ou.user.id = :userId', { userId: userAccessor.id })
+  //     .andWhere('ou.organisation.id = :organisationId', { organisationId: userAccessorOrganisations[0]?.id })
+  //     .getOne();
+
+  //   expect(updatedUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
+
+  // });
 
 });

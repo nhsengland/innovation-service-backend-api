@@ -3,7 +3,6 @@ export { BaseHandler } from './base.handler';
 export { AccessorUnitChangeHandler } from './accessor-unit-change.handler';
 export { ActionCreationHandler } from './action-creation.handler';
 export { ActionUpdateHandler } from './action-update.handler';
-export { CommentCreationHandler } from './comment-creation.handler';
 export { DailyDigestHandler } from './daily-digest.handler';
 export { IdleInnovatorsHandler } from './idle-innovators.handler';
 export { IdleSupportHandler } from './idle-support.handler';
@@ -22,7 +21,7 @@ export { InnovationTransferOwnershipCreationHandler } from './innovation-transfe
 export { InnovationWithdrawnHandler } from './innovation-withdrawn.handler';
 export { InnovatorAccountCreationHandler } from './innovator-account-creation.handler';
 export { LockUserHandler } from './lock-user.handler';
-export { NeedsAssessmentAssessorUpdateHandler } from './needs-assessment-assessor-update.handler'
+export { NeedsAssessmentAssessorUpdateHandler } from './needs-assessment-assessor-update.handler';
 export { NeedsAssessmentCompletedHandler } from './needs-assessment-completed.handler';
 export { NeedsAssessmentStartedHandler } from './needs-assessment-started.handler';
 export { SLSValidationHandler } from './sls-validation.handler';

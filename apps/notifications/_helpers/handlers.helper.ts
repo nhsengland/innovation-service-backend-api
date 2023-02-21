@@ -1,6 +1,6 @@
 import type { Schema } from 'joi';
 
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 // import { GenericErrorsEnum, InternalServerError } from '@notifications/shared/errors';
 
 import { EmailTypeEnum, NOTIFICATIONS_CONFIG } from '../_config';
@@ -11,7 +11,7 @@ import type { DomainContextType } from '@notifications/shared/types';
 export class HandlersHelper {
 
   static async runHandler(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     action: NotifierTypeEnum,
     params: { [key: string]: any },
     domainContext?: DomainContextType,

@@ -46,7 +46,6 @@ class V1InnovationThreadInfo {
         createdBy: {
           id: result.createdBy.id,
           name: result.createdBy.name,
-          type: result.createdBy.type,
         }
       });
       return;

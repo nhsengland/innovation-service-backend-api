@@ -1,7 +1,9 @@
 import { randText } from '@ngneat/falso';
-import type { EntityManager, Repository } from 'typeorm';
-import { type InnovationEntity, OrganisationUnitEntity, type InnovationSectionEntity, type InnovationSupportEntity, UserEntity, OrganisationEntity, OrganisationUserEntity, OrganisationUnitUserEntity, InnovationFileEntity } from '../entities';
-import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums';
+import type { EntityManager } from 'typeorm';
+
+import { ActivityLogEntity, InnovationFileEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity, type InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity } from '../entities';
+import type { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovatorOrganisationRoleEnum } from '../enums';
+import type { ActivitiesParamsType, DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
@@ -9,22 +11,21 @@ import { InnovationSupportBuilder } from './innovation-support.builder';
 import { InnovationBuilder } from './innovation.builder';
 import { OrganisationUnitBuilder } from './organisation-unit.builder';
 import { OrganisationBuilder } from './organisation.builder';
-import { UserBuilder } from './user.builder';
+// import { UserBuilder } from './user.builder';
 
 export class TestDataBuilder {
 
 
-  public repositories: {repo: Repository<any>, data: any}[] = [];
+  // public repositories: {repo: Repository<any>, data: any}[] = [];
 
-  stack: Promise<[]> = Promise.resolve([]);
+  // stack: Promise<[]> = Promise.resolve([]);
 
-  constructor() {
-  }
+  constructor() { }
 
-  createUser(): UserBuilder {
-    return new UserBuilder();
-  }
-  
+  // createUser(): UserBuilder {
+  //   return new UserBuilder();
+  // }
+
   createOrganisation(): OrganisationBuilder {
     return new OrganisationBuilder();
   }
@@ -38,19 +39,19 @@ export class TestDataBuilder {
   }
 
   createSections(innovation: InnovationEntity): InnovationSectionBuilder {
-    return new InnovationSectionBuilder( innovation);
+    return new InnovationSectionBuilder(innovation);
   }
 
   createAssessment(innovation: InnovationEntity): InnovationAssessmentBuilder {
-    return new InnovationAssessmentBuilder( innovation);
+    return new InnovationAssessmentBuilder(innovation);
   }
 
   createSupport(innovation: InnovationEntity, organisationUnit: OrganisationUnitEntity): InnovationSupportBuilder {
-    return new InnovationSupportBuilder( innovation, organisationUnit );
+    return new InnovationSupportBuilder(innovation, organisationUnit);
   }
 
-  createAction(innovationSection: InnovationSectionEntity, innovationSupport: InnovationSupportEntity): InnovationActionBuilder {
-    return new InnovationActionBuilder( innovationSection, innovationSupport);
+  createAction(createdBy: DomainContextType, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity): InnovationActionBuilder {
+    return new InnovationActionBuilder(createdBy, innovationSection, innovationSupport);
   }
 
   async addUserToOrganisation(a: UserEntity, b: OrganisationEntity, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, entityManager: EntityManager): Promise<OrganisationUserEntity> {
@@ -79,6 +80,30 @@ export class TestDataBuilder {
     });
 
     return entityManager.getRepository(InnovationFileEntity).save(file)
+  }
+
+  async addActivityLog<T extends ActivityEnum>(
+    i: InnovationEntity,
+    configuration: { userId: string, innovationId: string, activity: T, domainContext: DomainContextType, activityType: ActivityTypeEnum },
+    params: ActivitiesParamsType<T>,
+    entityManager: EntityManager
+  ): Promise<ActivityLogEntity> {
+
+    const activityLog = ActivityLogEntity.new({
+      innovation: i,
+      activity: configuration.activity,
+      type: configuration.activityType,
+      createdBy: configuration.userId,
+      updatedBy: configuration.userId,
+      param: JSON.stringify({
+        actionUserId: configuration.userId,
+        actionUserRole: configuration.domainContext.currentRole,
+        actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
+        ...params
+      })
+    });
+
+    return entityManager.getRepository(ActivityLogEntity).save(activityLog)
   }
 
 }

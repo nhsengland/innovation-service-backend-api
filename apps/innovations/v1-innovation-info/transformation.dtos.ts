@@ -1,4 +1,4 @@
-import type { InnovationCategoryCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
+import type { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
@@ -6,6 +6,7 @@ export type ResponseDTO = {
   name: string,
   description: null | string,
   status: InnovationStatusEnum,
+  groupedStatus: InnovationGroupedStatusEnum,
   statusUpdatedAt: DateISOType,
   submittedAt: null | DateISOType,
   countryName: null | string,

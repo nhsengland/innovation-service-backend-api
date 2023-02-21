@@ -33,9 +33,9 @@ class V1InnovationSectionsList {
         .checkAdminType()
         .checkInnovation()
         .verify();
-      const requestUser = auth.getUserInfo()
+      const domainContext = auth.getContext();
 
-      const result = await innovationSectionsService.getInnovationSectionsList({ type: requestUser.type }, params.innovationId);
+      const result = await innovationSectionsService.getInnovationSectionsList(domainContext, params.innovationId);
       context.res = ResponseHelper.Ok<ResponseDTO>(result.map(section => ({
         id: section.id,
         section: section.section,

@@ -1,27 +1,29 @@
 import Joi from 'joi';
 
-import { UserTypeEnum } from '@users/shared/enums';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { JoiHelper } from '@users/shared/helpers';
 
-
+// TODO: CHANGE FRONTEND CALL 
 export type QueryParamsType = {
   email: string;
-  userTypes: UserTypeEnum[];
+  userTypes: ServiceRoleEnum[];
 } | {
-  userTypes: UserTypeEnum[];
+  userTypes: ServiceRoleEnum[];
   organisationUnitId?: string;
-  fields: ('organisations' |'units')[];
+  onlyActive?: boolean;
+  fields: ('email' | 'organisations' | 'units')[];
 }
 
 export const QueryParamsSchema = Joi.alternatives().try(
   Joi.object<QueryParamsType>({
-    email: Joi.string().email().lowercase().required().description('Email of a user.'),
-    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(UserTypeEnum))).required().description('Types of user to filter.')
+    email: JoiHelper.AppCustomJoi().decodeURIString().email().lowercase().required().description('Email of a user.'),
+    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ServiceRoleEnum))).required().description('Types of user to filter.')
   }),
   Joi.object<QueryParamsType>({
-    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(UserTypeEnum))).min(1).description('Types of user to filter.'),
+    userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ServiceRoleEnum))).min(1).description('Types of user to filter.'),
     organisationUnitId: Joi.string().guid().optional().description('Id of the organisation unit the user belongs to.'),
-    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('organisations', 'units')).default([]).description('Additional fields to display in response.')
+    onlyActive: Joi.boolean().optional().description('List only active users or all users.'),
+    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('email', 'organisations', 'units')).default([]).description('Additional fields to display in response.')
   })
 );
 

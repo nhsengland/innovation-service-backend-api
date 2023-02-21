@@ -25,11 +25,15 @@ class V1InnovationsOverdueAssessments {
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authorizationService.validate(context)
+      const auth = await authorizationService.validate(context)
         .checkAssessmentType()
         .verify();
+      const domainContext = auth.getContext();
 
-      const result = await innovationsService.getNeedsAssessmentOverdueInnovations(queryParams.status);
+      const result = await innovationsService.getNeedsAssessmentOverdueInnovations(
+        domainContext,
+        { innovationStatus: queryParams.status, assignedToMe: queryParams.assignedToMe }
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ overdue: result });
       return;

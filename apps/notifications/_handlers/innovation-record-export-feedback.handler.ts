@@ -1,6 +1,6 @@
-import type { NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
@@ -14,10 +14,11 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
   async run(): Promise<this> {
@@ -32,21 +33,22 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
       EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR : 
       EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR;
 
-    this.emails.push({
-      templateId,
-      to: { type: 'identityId', value: request.createdBy.identityId, displayNameParam: 'display_name' },
-      params: {
-        innovation_name: innovation.name,
-        innovator_name: innovatorName.name,
-        innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
-        .addPath('accessor/innovations/:innovationId')
-        .setPathParams({ innovationId: this.inputData.innovationId })
-        .buildUrl(),
-        pdf_rejection_comment: request.exportRequest.rejectReason,
-      }
-    });
+    if (request.createdBy.isActive) {
+      this.emails.push({
+        templateId,
+        to: { type: 'identityId', value: request.createdBy.identityId, displayNameParam: 'display_name' },
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: innovatorName.name,
+          innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('accessor/innovations/:innovationId')
+          .setPathParams({ innovationId: this.inputData.innovationId })
+          .buildUrl(),
+          pdf_rejection_comment: request.exportRequest.rejectReason,
+        }
+      });
+    }
     
-
     return this;
   }
 }

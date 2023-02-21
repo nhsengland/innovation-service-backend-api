@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { InnovationActionStatusEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 
 
 export type ParamsType = {
@@ -16,25 +16,36 @@ export type BodyType = {
   status: InnovationActionStatusEnum,
   message?: string
 }
-export const BodySchema = Joi.object<BodyType>({
 
+// TODO: CHECK IF JOI ALLOWS ARRAYS IN THE 'IS' CONDITION.
+export const BodySchema = Joi.object<BodyType>({
+  // TODO: UPDATE FE TO SEND userRole parameter instead of userType.
   status:
-    Joi.when('$userType', {
-      is: UserTypeEnum.ACCESSOR,
+    Joi.when('$userRole', {
+      is: ServiceRoleEnum.ACCESSOR,
       then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.CANCELLED).required()
-    }).when('$userType', {
-      is: UserTypeEnum.ASSESSMENT,
+    })
+    .when('$userRole', {
+      is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
       then: Joi.string().valid(InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.CANCELLED).required()
-    }).when('$userType', {
-      is: UserTypeEnum.INNOVATOR,
+    })
+    .when('$userRole', {
+      is: ServiceRoleEnum.INNOVATOR,
       then: Joi.string().valid(InnovationActionStatusEnum.DECLINED).required()
     }),
 
   message:
-    Joi.when('$userType', {
-      is: UserTypeEnum.INNOVATOR,
-      then: Joi.string().max(500).required(),
-      otherwise: Joi.forbidden()
+    Joi.when('$userRole', {
+      is: ServiceRoleEnum.ACCESSOR,
+      then: Joi.forbidden()
+    })
+    .when('$userRole', {
+      is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+      then: Joi.forbidden()
+    })
+    .when('$userRole', {
+      is: ServiceRoleEnum.INNOVATOR,
+      then: Joi.string().max(500).required()
     })
 
 }).required();

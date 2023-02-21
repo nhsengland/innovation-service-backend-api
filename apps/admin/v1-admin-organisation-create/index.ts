@@ -21,17 +21,13 @@ class V1AdminOrganisationCreate {
     context: CustomContextType,
     request: HttpRequest
   ): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const organisationsService = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
 
     try {
 
-      const body = JoiHelper.Validate<BodyType>(
-        BodySchema,
-        request.body
-      );
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       await authorizationService
         .validate(context)

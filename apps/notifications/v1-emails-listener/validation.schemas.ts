@@ -1,4 +1,5 @@
 import { NotificationLogTypeEnum } from '@notifications/shared/enums';
+import { DomainContextSchema, DomainContextType } from '@notifications/shared/types';
 import Joi from 'joi';
 
 import { EmailTypeEnum } from '../_config/emails.config';
@@ -12,7 +13,8 @@ export type MessageType = {
     log?: {
       type: NotificationLogTypeEnum,
       params: Record<string, string | number>,
-    }
+    },
+    domainContext: DomainContextType,
   }
 }
 
@@ -29,5 +31,6 @@ export const MessageSchema = Joi.object<MessageType>({
       type: Joi.string().valid(...Object.values(NotificationLogTypeEnum)).required(),
       params: Joi.object().required()
     }).optional(),
+    domainContext: DomainContextSchema.optional(),
   }).required()
 }).required();

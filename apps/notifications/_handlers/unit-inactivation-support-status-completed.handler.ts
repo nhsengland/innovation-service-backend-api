@@ -1,6 +1,6 @@
-import type { InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import type { InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,10 +17,11 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -30,20 +31,22 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
     const innovatorInfo = await this.recipientsService.userInfo(innovationInfo.owner.id);
     const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
-    this.emails.push({
-      templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-      to: { type: 'email', value: innovatorInfo.email },
-      params: {
-        display_name: innovatorInfo.name,
-        innovation_name: innovationInfo.name,
-        unit_name: unitInfo.organisationUnit.name,
-        support_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/support')
-          .setPathParams({ innovationId: this.inputData.innovationId })
-          .buildUrl()
-      }
-    });
-
+    if (innovatorInfo.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
+        to: { type: 'email', value: innovatorInfo.email },
+        params: {
+          display_name: innovatorInfo.name,
+          innovation_name: innovationInfo.name,
+          unit_name: unitInfo.organisationUnit.name,
+          support_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/support')
+            .setPathParams({ innovationId: this.inputData.innovationId })
+            .buildUrl()
+        }
+      });
+    }
+    
     return this;
 
   }

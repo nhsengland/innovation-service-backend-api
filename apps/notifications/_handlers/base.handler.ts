@@ -1,7 +1,7 @@
 import {
   EmailNotificationPreferenceEnum, EmailNotificationTypeEnum,
   NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum, NotifierTypeEnum,
-  UserTypeEnum
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
@@ -17,10 +17,11 @@ type HandlerEmailResponseType<T> = Array<{
   }
 }>;
 
+// TODO: REMOVE THE ORGANISATION UNIT ID FROM THE USERS OBJECT.
 type HandlerInAppResponseType<T> = Array<{
   innovationId: string;
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-  users: { userId: string, userType: UserTypeEnum, organisationUnitId?: string | undefined }[];
+  users: { userId: string, roleId: string, organisationUnitId?: string | undefined }[];
   params: T;
 }>;
 
@@ -31,17 +32,17 @@ export abstract class BaseHandler<
   InAppResponseType
 > {
 
-  requestUser: { id: string, identityId: string, type: UserTypeEnum };
+  requestUser: { id: string, identityId: string };
   inputData: NotifierTemplatesType[InputDataType];
-  domainContext: DomainContextType | undefined;
+  domainContext: DomainContextType;
 
   emails: HandlerEmailResponseType<EmailTemplatesType[EmailResponseType]> = [];
   inApp: HandlerInAppResponseType<InAppResponseType> = [];
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     data: NotifierTemplatesType[InputDataType],
-    domainContext?: DomainContextType
+    domainContext: DomainContextType
   ) {
 
     this.requestUser = requestUser;
@@ -59,11 +60,12 @@ export abstract class BaseHandler<
     return (data.find(item => item.type === type)?.preference || EmailNotificationPreferenceEnum.INSTANTLY) === EmailNotificationPreferenceEnum.INSTANTLY;
   }
 
-  protected frontendBaseUrl(userType: UserTypeEnum): string {
-    switch (userType) {
-      case UserTypeEnum.ASSESSMENT: return 'assessment';
-      case UserTypeEnum.ACCESSOR: return 'accessor';
-      case UserTypeEnum.INNOVATOR: return 'innovator';
+  protected frontendBaseUrl(userRole: ServiceRoleEnum): string {
+    switch (userRole) {
+      case ServiceRoleEnum.ASSESSMENT: return 'assessment';
+      case ServiceRoleEnum.ACCESSOR: return 'accessor';
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR: return 'accessor';
+      case ServiceRoleEnum.INNOVATOR: return 'innovator';
       default: return '';
     }
   }

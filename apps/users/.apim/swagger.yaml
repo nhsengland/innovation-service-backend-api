@@ -168,6 +168,39 @@ paths:
                     type: string
                   message:
                     type: string
+  /v1/me/delete:
+    patch:
+      description: User delete
+      operationId: v1-me-delete
+      tags:
+        - "[v1] Users"
+      parameters: []
+      requestBody:
+        description: Reason for deletion
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 2000
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "200":
+          description: User deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request.
   /v1/me/terms-of-use/accept:
     patch:
       description: Accept user terms of use
@@ -439,6 +472,52 @@ paths:
                         params:
                           type: object
                           description: The notification params
+  "/v1/organisations/{organisationId}":
+    get:
+      description: Get organisation info.
+      operationId: v1-organisation-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
+    get:
+      description: Get organisation unitinfo.
+      operationId: v1-organisation-unit-info
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
   /v1/organisations:
     get:
       description: Retrieves organisations list
@@ -476,6 +555,24 @@ paths:
         "400":
           description: Invalid survey payload
   /v1:
+    head:
+      operationId: v1-users-email-available
+      description: Check if email is available for a new user.
+      tags:
+        - "[v1] Users"
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+            description: Email of a user.
+      responses:
+        "200":
+          description: Email is already in use.
+        "404":
+          description: Email is available.
     get:
       operationId: v1-users-list
       description: Get users list
@@ -493,6 +590,43 @@ paths:
                   id:
                     type: string
                     description: Unique identifier for user object
+  "/v1/{userId}":
+    get:
+      operationId: v1-users-info
+      description: Get user info
+      tags:
+        - "[v1] Users"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The user ID
+        - name: model
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - minimal
+              - full
+            description: The model to use for the response
+            default: minimal
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for user object
+        "403":
+          description: Forbidden
   /v1/statistics:
     get:
       description: Get an user statistics

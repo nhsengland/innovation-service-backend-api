@@ -5,7 +5,7 @@ import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, No
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
-import type { DomainUserInfoType } from '@admin/shared/types';
+import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -21,7 +21,7 @@ export class OrganisationsService extends BaseService {
   }
 
 
-  async inactivateUnit(requestUser: DomainUserInfoType, unitId: string): Promise<{ unitId: string }> {
+  async inactivateUnit(requestUser: DomainUserInfoType, domainContext: DomainContextType, unitId: string): Promise<{ unitId: string }> {
 
     // get the organisation to whom the unit belongs to
     const unit = await this.sqlConnection
@@ -41,11 +41,11 @@ export class OrganisationsService extends BaseService {
         .leftJoinAndSelect('org_user.user', 'user')
         .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
         .getMany()
-    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }))
+    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }));
 
 
     // only want to clear actions with these statuses
-    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
@@ -56,10 +56,10 @@ export class OrganisationsService extends BaseService {
         .where('unit.id = :unitId', { unitId })
         .andWhere('action.status IN (:...actionStatusToClear)', { actionStatusToClear })
         .getMany()
-    ).map(a => a.id)
+    ).map(a => a.id);
 
     //only want to complete the support of innovations with these statuses
-    const supportStatusToComplete = [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
+    const supportStatusToComplete = [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED];
 
     //get supports to complete
     const supportsToComplete = await this.sqlConnection
@@ -69,7 +69,7 @@ export class OrganisationsService extends BaseService {
       .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
       .where('unit.id = :unitId', { unitId })
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
-      .getMany()
+      .getMany();
 
     const contexts = [...actionsToClear, ...(supportsToComplete.map(s => s.id))];
 
@@ -104,7 +104,7 @@ export class OrganisationsService extends BaseService {
       // Complete supports of unit
       if (supportsToComplete.length > 0) {
 
-        const supportIds = supportsToComplete.map(s => s.id)
+        const supportIds = supportsToComplete.map(s => s.id);
 
         await transaction.update(
           InnovationSupportEntity,
@@ -112,12 +112,12 @@ export class OrganisationsService extends BaseService {
           {
             status: InnovationSupportStatusEnum.COMPLETE,
           }
-        )
+        );
 
         await transaction.createQueryBuilder().delete()
           .from('innovation_support_user')
           .where('innovation_support_id IN (:...supports)', { supports: supportIds })
-          .execute()
+          .execute();
       }
 
       // Mark as read notifications in the context of this unit
@@ -170,9 +170,10 @@ export class OrganisationsService extends BaseService {
         );
 
         await this.notifierService.send(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          { id: requestUser.id, identityId: requestUser.identityId },
           NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-          { innovationId: support.innovation.id, unitId }
+          { innovationId: support.innovation.id, unitId },
+          domainContext,
         );
       }
       return { unitId };
@@ -185,7 +186,7 @@ export class OrganisationsService extends BaseService {
         await this.identityProviderService.updateUserAsync(
           user.identityId,
           { accountEnabled: false }
-        )
+        );
       }
     }
     return result;
@@ -259,7 +260,7 @@ export class OrganisationsService extends BaseService {
       await this.identityProviderService.updateUserAsync(
         user.identityId,
         { accountEnabled: true }
-      )
+      );
     }
 
     return result;
@@ -455,7 +456,7 @@ export class OrganisationsService extends BaseService {
 
     });
 
-    return { id: unit.id }
+    return { id: unit.id };
   }
 
   private async createOrganisationUnit(
@@ -498,5 +499,5 @@ export class OrganisationsService extends BaseService {
 
     return savedUnit;
   }
-
+  
 }

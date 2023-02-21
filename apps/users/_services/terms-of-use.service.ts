@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 
-import { TermsOfUseTypeEnum, UserTypeEnum } from '@users/shared/enums';
+import { ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
 import { BadRequestError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { DateISOType } from '@users/shared/types';
@@ -16,16 +16,17 @@ export class TermsOfUseService extends BaseService {
 	}
 
 
-	async getActiveTermsOfUseInfo(user: { id: string, type: UserTypeEnum }): Promise<{ id: string, name: string, summary: string, releasedAt: null | DateISOType, isAccepted: boolean }> {
+	async getActiveTermsOfUseInfo(user: { id: string }, currentRole: ServiceRoleEnum | ''): Promise<{ id: string, name: string, summary: string, releasedAt: null | DateISOType, isAccepted: boolean }> {
 
 		let termsOfUseType: TermsOfUseTypeEnum;
 
-		switch (user.type) {
-			case UserTypeEnum.ASSESSMENT:
-			case UserTypeEnum.ACCESSOR:
+		switch (currentRole) {
+			case ServiceRoleEnum.ASSESSMENT:
+			case ServiceRoleEnum.ACCESSOR:
+			case ServiceRoleEnum.QUALIFYING_ACCESSOR:
 				termsOfUseType = TermsOfUseTypeEnum.SUPPORT_ORGANISATION;
 				break;
-			case UserTypeEnum.INNOVATOR:
+			case ServiceRoleEnum.INNOVATOR:
 				termsOfUseType = TermsOfUseTypeEnum.INNOVATOR;
 				break;
 			default:
@@ -62,9 +63,9 @@ export class TermsOfUseService extends BaseService {
 	}
 
 
-	async acceptActiveTermsOfUse(requestUser: { id: string, type: UserTypeEnum }): Promise<{ id: string }> {
+	async acceptActiveTermsOfUse(requestUser: { id: string }, currentRole: ServiceRoleEnum | '' ): Promise<{ id: string }> {
 
-		const dbTermsOfUse = await this.getActiveTermsOfUseInfo(requestUser);
+		const dbTermsOfUse = await this.getActiveTermsOfUseInfo(requestUser, currentRole);
 
 		if (!dbTermsOfUse.releasedAt) {
 			throw new UnprocessableEntityError(UserErrorsEnum.USER_TERMS_OF_USE_INVALID, { message: 'Unreleased terms of use' });

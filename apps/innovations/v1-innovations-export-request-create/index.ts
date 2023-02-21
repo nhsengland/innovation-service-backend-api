@@ -33,7 +33,7 @@ class V1InnovationsExportRequestsCreate {
       const params = JoiHelper.Validate<PathParamsType>(
         PathParamsSchema,
         request.params,
-        { userType: requestUser.type, userOrganisationRole: requestUser.organisations[0]?.role }
+        { userType: domainContext.currentRole, userOrganisationRole: domainContext.organisation?.role }
       );
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
@@ -48,7 +48,8 @@ class V1InnovationsExportRequestsCreate {
       const { requestReason } = body;
 
       const result = await innovationsService.createInnovationRecordExportRequest(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
+        domainContext,
         organisationUnitId,
         params.innovationId,
         { requestReason }

@@ -2,13 +2,13 @@ import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
-  ActionUpdateHandler, BaseHandler, CommentCreationHandler,
+  ActionUpdateHandler, BaseHandler,
   DailyDigestHandler,
   IdleInnovatorsHandler,
   IdleSupportHandler,
@@ -134,15 +134,6 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.COMMENT_CREATION]: {
-    handler: CommentCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.COMMENT_CREATION]>({
-      innovationId: Joi.string().guid().required(),
-      commentId: Joi.string().guid().required(),
-      replyToId: Joi.string().guid().optional(),
-    }).required()
-  },
-
   [NotifierTypeEnum.THREAD_CREATION]: {
     handler: ThreadCreationHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION]>({
@@ -218,7 +209,11 @@ export const NOTIFICATIONS_CONFIG: {
     handler: InnovationStopSharingHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING]>({
       innovationId: Joi.string().guid().required(),
-      previousAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required(), userType: Joi.string().valid(...Object.values(UserTypeEnum)).required(), organisationUnitId: Joi.string().guid().required() })).required(),
+      previousAssignedAccessors: Joi.array().items(Joi.object({ 
+        id: Joi.string().guid().required(), 
+        userType: Joi.string().valid(...Object.values(ServiceRoleEnum)).required(),
+        organisationUnitId: Joi.string().guid().required() 
+      })).required(),
       message: Joi.string().required()
     }).required()
   },
@@ -243,8 +238,7 @@ export const NOTIFICATIONS_CONFIG: {
     handler: LockUserHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
       user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]['user']>({
-        id: Joi.string().guid().required(),
-        identityId: Joi.string().guid().required(),
+        id: Joi.string().guid().required()
       }).required()
     }).required()
   },

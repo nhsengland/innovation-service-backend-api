@@ -59,7 +59,7 @@ class V1InnovationThreadMessageList {
           createdBy: {
             id: message.createdBy.id,
             name: message.createdBy.name,
-            type: message.createdBy.type,
+            role: message.createdBy.role,
             organisationUnit: {
               id: message.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
               name: message.createdBy.organisationUnit?.name ?? '',

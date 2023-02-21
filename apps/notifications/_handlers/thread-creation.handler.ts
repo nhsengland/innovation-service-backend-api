@@ -1,4 +1,4 @@
-import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -19,7 +19,7 @@ export class ThreadCreationHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
     domainContext: DomainContextType
   ) {
@@ -29,13 +29,14 @@ export class ThreadCreationHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    switch (this.requestUser.type) {
-      case UserTypeEnum.ASSESSMENT:
-      case UserTypeEnum.ACCESSOR:
+    switch (this.domainContext.currentRole.role) {
+      case ServiceRoleEnum.ASSESSMENT:
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
         await this.prepareNotificationForInnovator();
         break;
 
-      case UserTypeEnum.INNOVATOR:
+      case ServiceRoleEnum.INNOVATOR:
         await this.prepareNotificationForAssignedUsers();
         break;
 
@@ -53,13 +54,13 @@ export class ThreadCreationHandler extends BaseHandler<
   private async prepareNotificationForInnovator(): Promise<void> {
 
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-    const requestUserUnitName = requestUserInfo.type === UserTypeEnum.ASSESSMENT ? 'needs assessment' : this.domainContext?.organisation?.organisationUnit?.name ?? '';
+    const requestUserUnitName = this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT ? 'needs assessment' : this.domainContext?.organisation?.organisationUnit?.name ?? '';
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
 
     // Send email only to user if email preference INSTANTLY.
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, innovation.owner.emailNotificationPreferences)) {
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, innovation.owner.emailNotificationPreferences) && innovation.owner.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR,
         to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
@@ -69,7 +70,7 @@ export class ThreadCreationHandler extends BaseHandler<
           unit_name: requestUserUnitName,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(innovation.owner.type), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
             .buildUrl()
         }
       });
@@ -78,7 +79,7 @@ export class ThreadCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-      users: [{ userId: innovation.owner.id, userType: UserTypeEnum.INNOVATOR }],
+      users: [{ userId: innovation.owner.id, roleId: innovation.owner.userRole.id }],
       params: { subject: thread.subject, messageId: this.inputData.messageId }
     });
 
@@ -100,7 +101,7 @@ export class ThreadCreationHandler extends BaseHandler<
           innovation_name: innovation.name,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(UserTypeEnum.ACCESSOR), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(user.userRole.role), innovationId: this.inputData.innovationId, threadId: this.inputData.threadId })
             .buildUrl()
         }
       });
@@ -110,7 +111,7 @@ export class ThreadCreationHandler extends BaseHandler<
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-        users: assignedUsers.map(item => ({ userId: item.id, userType: UserTypeEnum.ACCESSOR, organisationUnitId: item.organisationUnitId })),
+        users: assignedUsers.map(item => ({ userId: item.id, roleId: item.userRole.id, organisationUnitId: item.organisationUnitId })),
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

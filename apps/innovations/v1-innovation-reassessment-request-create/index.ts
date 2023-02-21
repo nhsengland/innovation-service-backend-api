@@ -36,7 +36,7 @@ class V1InnovationReassessmentRequestCreate {
       const domainContext = auth.getContext();
 
       const result = await innovationAssessmentsService.createInnovationReassessment(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         body

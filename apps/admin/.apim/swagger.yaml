@@ -159,55 +159,53 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
-  /v1/tou:
-    post:
-      description: Create terms of use.
-      operationId: v1-admin-terms-of-use-create
-      requestBody:
-        description: The terms of use to create.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Name of the terms of use.
-                touType:
-                  type: string
-                  enum:
-                    - INNOVATOR
-                    - SUPPORT_ORGANISATION
-                  description: Type of the terms of use.
-                summary:
-                  type: string
-                  description: Brief summary of the terms of use.
-                releasedAt:
-                  type: string
-                  description: Relase date of the terms of use.
-              required:
-                - name
-                - touType
-              additionalProperties: false
+  "/v1/tou/{touId}":
+    get:
+      description: Get terms of use.
+      operationId: v1-admin-terms-of-use
+      parameters:
+        - name: touId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+            description: The terms of use id.
       responses:
         "200":
-          description: The terms of use have been created.
+          description: The terms of use
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  unitId:
+                  id:
                     type: string
-                    description: Id of the created terms of use.
+                    format: uuid
+                  name:
+                    type: string
+                  touType:
+                    type: string
+                    enum:
+                      - INNOVATOR
+                      - SUPPORT_ORGANISATION
+                  summary:
+                    type: string
+                  releaseAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  createdAt:
+                    type: string
+                    format: date-time
         "400":
           description: Bad request.
         "401":
-          description: The user is not authorized to create terms of use.
+          description: The user is not authorized to get terms of use.
+        "404":
+          description: The terms of use was not found.
         "500":
-          description: An error occurred while creating the terms of use.
-  "/v1/tou/{touId}":
+          description: An error occurred while listing the terms of use.
     put:
       description: Update terms of use.
       operationId: v1-admin-terms-of-use-update
@@ -263,6 +261,126 @@ paths:
           description: The user is not authorized to update terms of use.
         "500":
           description: An error occurred while updating the terms of use.
+  /v1/tou:
+    post:
+      description: Create terms of use.
+      operationId: v1-admin-terms-of-use-create
+      requestBody:
+        description: The terms of use to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the terms of use.
+                touType:
+                  type: string
+                  enum:
+                    - INNOVATOR
+                    - SUPPORT_ORGANISATION
+                  description: Type of the terms of use.
+                summary:
+                  type: string
+                  description: Brief summary of the terms of use.
+                releasedAt:
+                  type: string
+                  description: Relase date of the terms of use.
+              required:
+                - name
+                - touType
+              additionalProperties: false
+      responses:
+        "200":
+          description: The terms of use have been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unitId:
+                    type: string
+                    description: Id of the created terms of use.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create terms of use.
+        "500":
+          description: An error occurred while creating the terms of use.
+    get:
+      description: List of terms of use.
+      operationId: v1-admin-terms-of-use-list
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+      responses:
+        "200":
+          description: The list of terms of use versions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                    description: The total number of terms of use.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        name:
+                          type: string
+                        touType:
+                          type: string
+                          enum:
+                            - INNOVATOR
+                            - SUPPORT_ORGANISATION
+                        summary:
+                          type: string
+                        releaseAt:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        createdAt:
+                          type: string
+                          format: date-time
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get terms of use.
+        "500":
+          description: An error occurred while listing the terms of use.
   "/v1/organisations/{organisationId}/units/{organisationUnitId}/activate":
     patch:
       description: Activate an organisation unit.
@@ -468,6 +586,7 @@ paths:
                     - ADMIN
                     - ACCESSOR
                     - ASSESSMENT
+                    - QUALIFYING_ACCESSOR
                   description: Type of the user.
                 organisationAcronym:
                   type: string
@@ -520,18 +639,6 @@ paths:
             type: string
             format: uuid
             description: Id of the user to lock.
-        - name: id
-          in: query
-          required: false
-          schema:
-            type: string
-            description: Id of the SLS.
-        - name: code
-          in: query
-          required: false
-          schema:
-            type: string
-            description: Code of the SLS.
       requestBody:
         required: true
         content:
@@ -541,8 +648,24 @@ paths:
               properties:
                 accountEnabled:
                   type: boolean
-                  nullable: true
-                  description: Enable or disable the user.
+                  description: Activate or inactivate the user.
+                role:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      enum:
+                        - ACCESSOR
+                        - QUALIFYING_ACCESSOR
+                      description: Name of the role.
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                  required:
+                    - name
+                    - organisationId
+                  additionalProperties: false
               additionalProperties: false
       responses:
         "200":
@@ -564,7 +687,7 @@ paths:
         "500":
           description: An error occurred while locking a user.
   "/v1/users/{userId}/validate":
-    post:
+    get:
       description: Get validation information.
       operationId: v1-admin-validate
       parameters:

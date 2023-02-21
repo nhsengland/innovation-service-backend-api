@@ -82,7 +82,6 @@ import { NotificationLogEntity } from './user/notification-log.entity';
 import { NotificationPreferenceEntity } from './user/notification-preference.entity';
 import { NotificationUserEntity } from './user/notification-user.entity';
 import { NotificationEntity } from './user/notification.entity';
-import { RoleEntity } from './user/role.entity';
 import { UserPreferenceEntity } from './user/user-preference.entity';
 import { UserRoleEntity } from './user/user-role.entity';
 import { UserEntity } from './user/user.entity';
@@ -90,16 +89,19 @@ export { CommentEntity } from './user/comment.entity';
 export { NotificationPreferenceEntity } from './user/notification-preference.entity';
 export { NotificationUserEntity } from './user/notification-user.entity';
 export { NotificationEntity } from './user/notification.entity';
-export { RoleEntity } from './user/role.entity';
+
 export { UserRoleEntity } from './user/user-role.entity';
 export { UserEntity } from './user/user.entity';
 export { UserPreferenceEntity } from './user/user-preference.entity';
 
 // Views
 import { IdleSupportViewEntity } from './views/idle-support.view.entity';
+import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 export { IdleSupportViewEntity } from './views/idle-support.view.entity';
+export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
+
 
 export const GENERAL_ENTITIES = [
   AuditEntity,
@@ -152,7 +154,6 @@ export const USER_ENTITIES = [
   NotificationPreferenceEntity,
   NotificationUserEntity,
   NotificationEntity,
-  RoleEntity,
   UserRoleEntity,
   UserEntity,
   UserPreferenceEntity
@@ -160,5 +161,6 @@ export const USER_ENTITIES = [
 
 export const VIEW_ENTITIES = [
   IdleSupportViewEntity,
+  InnovationGroupedStatusViewEntity,
   LastSupportStatusViewEntity
 ];

@@ -36,7 +36,7 @@ class V1InnovationSubmit {
       const domainContext = auth.getContext()
 
       const result = await innovationsService.submitInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId
       );

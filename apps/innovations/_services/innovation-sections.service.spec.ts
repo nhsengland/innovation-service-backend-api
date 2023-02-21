@@ -5,107 +5,93 @@ import { container } from '../_config';
 import { InnovationSectionBuilder } from '@innovations/shared/builders/innovation-section.builder';
 import { InnovationBuilder } from '@innovations/shared/builders/innovation.builder';
 import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import { NOSQLConnectionService } from '@innovations/shared/services';
+import { DomainUsersService, NOSQLConnectionService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import { rand, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationActionsServiceSymbol, InnovationActionsServiceType, InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from './interfaces';
+import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from './interfaces';
 
 describe('Innovation Sections Suite', () => {
 
   let sut: InnovationSectionsServiceType;
-  let actionsService: InnovationActionsServiceType;
 
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
-
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
-
     await TestsHelper.init();
     sut = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
-    actionsService = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
     testData = TestsHelper.sampleData;
   });
 
   beforeEach(async () => {
+    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
+    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
+    jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(
+      {
+        displayName: randText(),
+      } as any
+    );
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
+    jest.restoreAllMocks();
     await TestsHelper.releaseQueryRunnerEntityManager(em);
   });
 
   it('should list all sections as an innovator for his innovation', async () => {
     // arrange
-    const innovator = testData.baseUsers.innovator;
     const innovation = testData.innovation;
 
     await TestsHelper.TestDataBuilder
-      .createAction((await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+      .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
       .setStatus(InnovationActionStatusEnum.REQUESTED)
       .build(em);
 
     const sectionsList = await sut.getInnovationSectionsList(
-      { type: innovator.type },
+      testData.domainContexts.innovator,
       innovation.id,
       em
     );
-    
+
     const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a,b) => a+b, 0);
-    const filteredActions = await actionsService.getActionsList(
-      innovator,
-      { innovationId: innovation.id, status: [InnovationActionStatusEnum.REQUESTED], fields: [] },
-      { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
-      testData.domainContexts.innovator,
-      em
-    );
 
     expect(sectionsList).toBeDefined();
-    expect(actionCount).toEqual(filteredActions.count);
+    expect(actionCount).toEqual(2); // one from the database plus the one we added
   });
 
-  it('should list all sections as an assessor for an innovation', async () => {
+  it('should list all sections as an accessor for an innovation', async () => {
     // arrange
-    const assessor = testData.baseUsers.assessmentUser;
     const innovation = testData.innovation;
 
     await TestsHelper.TestDataBuilder
-      .createAction((await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
-      .setStatus(InnovationActionStatusEnum.REQUESTED)
+      .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+      .setUpdatedBy(testData.baseUsers.innovator.id)
+      .setStatus(InnovationActionStatusEnum.SUBMITTED)
       .build(em);
 
     const sectionsList = await sut.getInnovationSectionsList(
-      { type: assessor.type },
+      testData.domainContexts.accessor,
       innovation.id,
       em
     );
     
     const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a,b) => a+b, 0);
-    const filteredActions = await actionsService.getActionsList(
-      assessor,
-      { innovationId: innovation.id, status: [InnovationActionStatusEnum.REQUESTED], fields: [] },
-      { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
-      testData.domainContexts.accessor,
-      em
-    );
 
     expect(sectionsList).toBeDefined();
-    expect(actionCount).toEqual(filteredActions.count);
+    expect(actionCount).toEqual(1); // The DB has no record in submitted status and we added one
   });
 
   it('should get submitted section info',async () => {
     
     // arrange
-    const assessor = testData.baseUsers.assessmentUser;
     const innovation = testData.innovation;
 
     const sectionKey = rand(Object.values(InnovationSectionEnum));
 
     const sectionsList = await sut.getInnovationSectionInfo(
-      { type: assessor.type },
+      testData.domainContexts.assessmentUser,
       innovation.id,
       sectionKey,
       {}
@@ -117,7 +103,6 @@ describe('Innovation Sections Suite', () => {
   it('should not get draft section info as accessor',async () => {
     
     // arrange
-    const accessor = testData.baseUsers.accessor;
 
     const innovation = await new InnovationBuilder()
       .setOwner(testData.baseUsers.innovator)
@@ -130,7 +115,7 @@ describe('Innovation Sections Suite', () => {
       .build(em);
 
     const section = await sut.getInnovationSectionInfo(
-      { type: accessor.type },
+      testData.domainContexts.accessor,
       innovation.id,
       sectionKey,
       {},

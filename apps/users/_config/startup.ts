@@ -1,27 +1,34 @@
-import { type HttpServiceType, HttpServiceSymbol, type SQLConnectionServiceType, SQLConnectionServiceSymbol, type NOSQLConnectionServiceType, NOSQLConnectionServiceSymbol, CacheServiceType, CacheServiceSymbol } from '@users/shared/services';
-import { join } from 'path';
 import fs from 'fs';
-import YAML from 'yaml';
 import type { Container } from 'inversify';
+import { join } from 'path';
+import YAML from 'yaml';
+
+import {
+  CacheServiceSymbol, HttpServiceSymbol, NOSQLConnectionServiceSymbol, SQLConnectionServiceSymbol, type CacheServiceType, type HttpServiceType, type NOSQLConnectionServiceType, type SQLConnectionServiceType
+} from '@users/shared/services';
+
 
 export const startup = async (container: Container): Promise<void> => {
 
-  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
+  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
     console.group('Initializing Users app function:');
 
+    // TODO: For some reason the SQL Connection must be initialized before the remaining services. There are errors related to inversify otherwise.
+    //       The inversify and startup must be revised.
+    //       Additionally the init method for these must be somehow a dependency so that other services (ie: baseService) don't startup before these were initialized.
     await sqlConnectionService.init();
-    await noSqlConnectionService.init();
+
     await cacheService.init();
+    await noSqlConnectionService.init();
 
     console.log('Initialization complete');
     console.groupEnd();
-
 
     if (process.env['LOCAL_MODE'] ?? false) {
 
@@ -29,7 +36,7 @@ export const startup = async (container: Container): Promise<void> => {
 
       const response = await httpService.getHttpInstance().get(`http://localhost:7074/api/swagger.json`);
       console.log('Saving swagger file');
-      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/users/.apim/swagger.yaml`, YAML.stringify(response.data))
+      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/users/.apim/swagger.yaml`, YAML.stringify(response.data));
       console.log('Documentation generated successfully');
       console.groupEnd();
 
@@ -43,4 +50,4 @@ export const startup = async (container: Container): Promise<void> => {
 
   }
 
-}
+};

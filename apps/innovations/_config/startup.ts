@@ -1,33 +1,36 @@
 import fs from 'fs';
+import type { Container } from 'inversify';
 import { join } from 'path';
 import YAML from 'yaml';
 
 import {
-  CacheServiceSymbol,
-  CacheServiceType,
-  HttpServiceSymbol,
-  HttpServiceType,
-  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
-  SQLConnectionServiceSymbol, SQLConnectionServiceType
+  CacheServiceSymbol, HttpServiceSymbol, NOSQLConnectionServiceSymbol, SQLConnectionServiceSymbol, type CacheServiceType, type HttpServiceType, type NOSQLConnectionServiceType, type SQLConnectionServiceType
 } from '@innovations/shared/services';
-import type { Container } from 'inversify';
+
 
 export const startup = async (container: Container): Promise<void> => {
 
   console.log('Initializing Innovations app function');
 
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
+    console.group('Initializing Innovations app function:');
+
+    // TODO: For some reason the SQL Connection must be initialized before the remaining services. There are errors related to inversify otherwise.
+    //       The inversify and startup must be revised.
+    //       Additionally the init method for these must be somehow a dependency so that other services (ie: baseService) don't startup before these were initialized.
     await sqlConnectionService.init();
-    await noSqlConnectionService.init();
+
     await cacheService.init();
+    await noSqlConnectionService.init();
 
     console.log('Initialization complete');
+    console.groupEnd();
 
     if (process.env['LOCAL_MODE'] ?? false) {
 

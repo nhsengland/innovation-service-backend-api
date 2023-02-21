@@ -1,6 +1,6 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -17,16 +17,17 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
   async run(): Promise<this> {
 
-    if (this.requestUser.type !== UserTypeEnum.INNOVATOR) {
+    if (this.domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       return this;
     }
 
@@ -34,11 +35,13 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const needAssessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
-    this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
-      to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: { innovation_name: innovation.name }
-    });
+    if (innovation.owner.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
+        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        params: { innovation_name: innovation.name }
+      });
+    }
 
     for (const user of needAssessmentUsers) {
       this.emails.push({
@@ -48,7 +51,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId')
-            .setPathParams({ userBasePath: this.frontendBaseUrl(UserTypeEnum.ASSESSMENT), innovationId: this.inputData.innovationId })
+            .setPathParams({ userBasePath: this.frontendBaseUrl(ServiceRoleEnum.ASSESSMENT), innovationId: this.inputData.innovationId })
             .buildUrl()
         }
       });
@@ -58,7 +61,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST, id: this.inputData.innovationId },
-      users: needAssessmentUsers.map(item => ({ userId: item.id, userType: UserTypeEnum.ASSESSMENT })),
+      users: needAssessmentUsers.map(item => ({ userId: item.id, roleId: item.roleId, userType: ServiceRoleEnum.ASSESSMENT })),
       params: {}
     });
 

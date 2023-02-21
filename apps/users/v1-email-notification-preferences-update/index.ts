@@ -30,7 +30,8 @@ class V1UserEmailNotificationsInfo {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       await notificationsService.upsertUserEmailPreferences(userInfo.id, body);
-      context.res = ResponseHelper.NoContent()
+
+      context.res = ResponseHelper.NoContent();
       return;
 
     } catch (error) {

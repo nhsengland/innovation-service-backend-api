@@ -1,4 +1,4 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
@@ -28,7 +28,6 @@ class V1InnovationsExportRequestList {
         .checkAccessorType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -37,7 +36,6 @@ class V1InnovationsExportRequestList {
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationRecordExportRequests(
-        { id: requestUser.id, type: requestUser.type, organisations: requestUser.organisations },
         domainContext,
         params.innovationId,
         filters,

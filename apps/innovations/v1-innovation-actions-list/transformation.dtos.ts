@@ -1,4 +1,4 @@
-import type { InnovationActionStatusEnum, InnovationSectionEnum, UserTypeEnum } from '@innovations/shared/enums'
+import type { InnovationActionStatusEnum, InnovationSectionEnum, ServiceRoleEnum } from '@innovations/shared/enums'
 import type { DateISOType } from '@innovations/shared/types'
 
 export type ResponseDTO = {
@@ -12,8 +12,8 @@ export type ResponseDTO = {
     section: InnovationSectionEnum,
     createdAt: DateISOType,
     updatedAt: DateISOType,
-    updatedBy: { name: string, role: UserTypeEnum }
-    createdBy: { id: string, name: string, role: UserTypeEnum, organisationUnit?: { id: string, name: string, acronym?: string } }
+    updatedBy: { name: string, role?: ServiceRoleEnum | undefined }
+    createdBy: { id: string, name: string, role?: ServiceRoleEnum | undefined, organisationUnit?: { id: string, name: string, acronym?: string } }
     notifications?: number
   }[]
 };

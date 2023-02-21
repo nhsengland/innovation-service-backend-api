@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { UserTypeEnum } from '@innovations/shared/enums';
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@innovations/shared/errors';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
@@ -37,12 +37,12 @@ class V1InnovationActionUpdate {
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: requestUser.type });
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userRole: domainContext.currentRole });
 
-      if (requestUser.type === UserTypeEnum.ACCESSOR) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
 
         const accessorResult = await innovationActionsService.updateActionAsAccessor(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext,
           params.innovationId,
           params.actionId,
@@ -52,12 +52,12 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
 
-      }
+      } 
 
-      if (requestUser.type === UserTypeEnum.ASSESSMENT) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
 
         const assessmentResult = await innovationActionsService.updateActionAsNeedsAccessor(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext,
           params.innovationId,
           params.actionId,
@@ -68,11 +68,11 @@ class V1InnovationActionUpdate {
         return;
 
       }
-
-      if (requestUser.type === UserTypeEnum.INNOVATOR) {
+      
+      if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
 
         const innovatorResult = await innovationActionsService.updateActionAsInnovator(
-          { id: requestUser.id, identityId: requestUser.identityId, type: requestUser.type },
+          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext,
           params.innovationId,
           params.actionId,

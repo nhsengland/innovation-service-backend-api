@@ -1,12 +1,12 @@
 
 import type { Context, HttpMethod, HttpRequest, Logger } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
-import { UserTypeEnum } from '../enums';
-import type { CustomContextType } from '../types';
+
+import type { CustomContextType, DomainContextType } from '../types';
 
 
 export class HttpTestBuilder {
-  
+
   private request: HttpRequest = {
     url: '',
     method: 'GET',
@@ -15,7 +15,7 @@ export class HttpTestBuilder {
     params: {},
     query: {},
     rawBody: '',
-    user: { id: randUuid(), type: 'AppService', username: randUserName(), identityProvider: 'AzureAD', claimsPrincipalData: {}},
+    user: { id: randUuid(), type: 'AppService', username: randUserName(), identityProvider: 'AzureAD', claimsPrincipalData: {} },
   } as HttpRequest;
 
   private context: CustomContextType;
@@ -27,7 +27,7 @@ export class HttpTestBuilder {
     verbose: (...args: any[]) => { console.log(...args); },
   } as unknown as Logger;
 
-  
+
   public setContext(): HttpTestBuilder {
     const context = {
       auth: {
@@ -36,11 +36,11 @@ export class HttpTestBuilder {
           name: randUserName(),
         },
         context: {
-          userType: UserTypeEnum.INNOVATOR
+
         }
       },
       log: this.logger,
-      done: () => {},
+      done: () => { },
       res: {},
       bindings: {},
       bindingData: {
@@ -78,33 +78,42 @@ export class HttpTestBuilder {
     this.request.url = url;
     return this;
   }
-  
+
   public setMethod(method: HttpMethod): HttpTestBuilder {
     this.request.method = method;
     return this;
   }
-  
+
   public setHeaders(headers: { [key: string]: string }): HttpTestBuilder {
     this.request.headers = headers;
     return this;
   }
-  
+
   public setBody(body: { [key: string]: string }): HttpTestBuilder {
     this.request.body = body;
     return this;
   }
-  
+
   public setParams(params: { [key: string]: string }): HttpTestBuilder {
     this.request.params = params;
     return this;
   }
 
-  public setAuth(user: { identityId: string, name: string }, context: CustomContextType['auth']['context']): HttpTestBuilder {
-    this.context.auth = { user, context };
+  public setAuth(domainContext: DomainContextType): HttpTestBuilder {
+    this.context.auth = {
+      user: {
+        identityId: domainContext.identityId,
+        name: randUserName(), // is not used
+      },
+      context: {
+        ...(domainContext.organisation && { organisationId: domainContext.organisation?.id }),
+        ...((domainContext.organisation && domainContext.organisation.organisationUnit) && { organisationUnitId: domainContext.organisation?.organisationUnit?.id })
+      }
+    };
     return this;
   }
 
-  public async invoke<T = any>(func: (context: Context, ...args: any[])=> (void | Promise<any>)): Promise<T> {
+  public async invoke<T = any>(func: (context: Context, ...args: any[]) => (void | Promise<any>)): Promise<T> {
     await func(this.context, this.request);
     return this.context.res as T;
   }

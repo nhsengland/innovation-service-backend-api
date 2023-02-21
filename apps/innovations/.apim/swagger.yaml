@@ -971,6 +971,7 @@ paths:
                 - NEEDS_ASSESSMENT
                 - AWAITING_SUPPORT
                 - RECEIVING_SUPPORT
+                - NO_ACTIVE_SUPPORT
                 - AWAITING_NEEDS_REASSESSMENT
                 - WITHDRAWN
         - name: assignedToMe
@@ -1018,6 +1019,7 @@ paths:
                 - supports
                 - notifications
                 - statistics
+                - groupedStatus
       responses:
         "200":
           description: Success
@@ -1056,7 +1058,6 @@ paths:
               properties:
                 evidenceType:
                   type: string
-                  nullable: true
                   description: The evidence type.
                 clinicalEvidenceType:
                   type: string
@@ -1176,7 +1177,6 @@ paths:
               properties:
                 evidenceType:
                   type: string
-                  nullable: true
                   description: The evidence type.
                 clinicalEvidenceType:
                   type: string
@@ -1819,6 +1819,53 @@ paths:
           description: Not Found
         "500":
           description: Internal Server Error
+    put:
+      description: Update the shares for an innovation.
+      tags:
+        - Innovation
+      summary: Update all the shares for an innovation.
+      operationId: v1-innovation-shares-update
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                organisations:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+              required:
+                - organisations
+              additionalProperties: false
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The unique identifier of the innovation.
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+        "500":
+          description: Internal Server Error
   "/v1/{innovationId}/statistics":
     get:
       description: Get an innovation statistics
@@ -1891,6 +1938,25 @@ paths:
           description: Not found.
         "500":
           description: Internal server error.
+  "/v1/{innovationId}/suggestions":
+    get:
+      description: Get suggestions list of an Innovation
+      operationId: v1-innovation-suggestions
+      tags:
+        - Innovation Suggestions
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+        "404":
+          description: Not Found
   "/v1/{innovationId}/supports/{supportId}/change-request":
     post:
       description: Request Change Support for a given innovation.
@@ -2086,6 +2152,25 @@ paths:
           description: OK
         "400":
           description: Bad Request
+        "404":
+          description: Not Found
+    post:
+      description: Create support logs for an Innovation
+      operationId: v1-innovation-support-logs-create
+      tags:
+        - Create Innovation Support Logs
+      parameters:
+        - in: path
+          name: innovationId
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: Creates a new innovation support logs for the innovation identified
+            by the supplied Innovation ID.
+        "401":
+          description: Unauthorised
         "404":
           description: Not Found
   "/v1/{innovationId}/threads":

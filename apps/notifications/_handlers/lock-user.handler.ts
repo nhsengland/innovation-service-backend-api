@@ -1,5 +1,5 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
-import type { NotifierTemplatesType } from '@notifications/shared/types';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
@@ -16,10 +16,11 @@ export class LockUserHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
-    data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]
+    requestUser: { id: string, identityId: string },
+    data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
+    domainContext: DomainContextType,
   ) {
-    super(requestUser, data);
+    super(requestUser, data, domainContext);
   }
 
 
@@ -30,13 +31,13 @@ export class LockUserHandler extends BaseHandler<
     // E-mail to the user who is being locked.
     this.emails.push({
       templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
-      to: { type: 'identityId', value: this.inputData.user.identityId, displayNameParam: 'display_name' },
+      to: { type: 'identityId', value: userInfo.identityId, displayNameParam: 'display_name' },
       params: {
         // display_name: '', // This will be filled by the email-listener function.
       }
     });
 
-    if (userInfo.type === UserTypeEnum.INNOVATOR) {
+    if (userInfo.userRoles.includes(ServiceRoleEnum.INNOVATOR)) {
 
       // InApp to all assigned users of locked user innovations.
       const userInnovations = (await this.recipientsService.userInnovationsWithAssignedUsers(this.inputData.user.id));
@@ -49,7 +50,7 @@ export class LockUserHandler extends BaseHandler<
         this.inApp.push({
           innovationId: innovation.id,
           context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.LOCK_USER, id: innovation.id },
-          users: uniqueUsers.map(user => ({ userId: user.id, userType: UserTypeEnum.ACCESSOR, organisationUnitId: user.organisationUnitId })),
+          users: uniqueUsers.map(user => ({ userId: user.id, roleId: user.roleId, organisationUnitId: user.organisationUnitId })),
           params: {}
         });
       }

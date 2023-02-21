@@ -1,13 +1,13 @@
-import type { DateISOType } from '@innovations/shared/types'
-import { InnovationStatisticsEnum } from '../_enums/innovation.enums'
-import { ActionsToReviewStatisticsHandler } from '../_handlers/statistics/actions-to-review.handler'
-import { ActionsToSubmitStatisticsHandler } from '../_handlers/statistics/actions-to-submit.handler'
-import { SectionsSubmittedSinceAssessmentStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-assessment-start.handler'
-import { SectionsSubmittedSinceSupportStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-support-start.handler'
-import { SectionsSubmittedStatisticsHandler } from '../_handlers/statistics/sections-submitted.handler'
-import { UnreadMessagesThreadsInitiatedByStatisticsHandler } from '../_handlers/statistics/unread-messages-initiated-by.handler'
-import { UnreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-messages.handler'
-import type { InnovationsStatisticsHandler } from '../_types/statistics-handlers.types'
+import type { DateISOType } from '@innovations/shared/types';
+import { InnovationStatisticsEnum } from '../_enums/innovation.enums';
+import { ActionsToReviewStatisticsHandler } from '../_handlers/statistics/actions-to-review.handler';
+import { ActionsToSubmitStatisticsHandler } from '../_handlers/statistics/actions-to-submit.handler';
+import { SectionsSubmittedSinceAssessmentStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-assessment-start.handler';
+import { SectionsSubmittedSinceSupportStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-support-start.handler';
+import { SectionsSubmittedStatisticsHandler } from '../_handlers/statistics/sections-submitted.handler';
+import { UnreadMessagesThreadsInitiatedByStatisticsHandler } from '../_handlers/statistics/unread-messages-initiated-by.handler';
+import { UnreadMessagesStatisticsHandler } from '../_handlers/statistics/unread-messages.handler';
+import type { InnovationsStatisticsHandler } from '../_types/statistics-handlers.types';
 
 
 export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatisticsEnum, {

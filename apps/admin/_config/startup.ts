@@ -1,49 +1,58 @@
-import { container } from '@admin/shared/config/inversify.config';
-
 import fs from 'fs';
 import { join } from 'path';
 import YAML from 'yaml';
 
+import { container } from '@admin/shared/config/inversify.config';
+
 import {
-  CacheServiceSymbol,
-  CacheServiceType,
-  HttpServiceSymbol,
-  HttpServiceType,
-  NOSQLConnectionServiceSymbol,
-  NOSQLConnectionServiceType,
+  CacheServiceSymbol, CacheServiceType,
+  HttpServiceSymbol, HttpServiceType,
+  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
-import { 
-  OrganisationsServiceSymbol, OrganisationsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  UsersServiceSymbol, UsersServiceType, ValidationServiceSymbol, ValidationServiceType } from '../_services/interfaces';
+import {
+  OrganisationsServiceSymbol, OrganisationsServiceType,
+  TermsOfUseServiceSymbol, TermsOfUseServiceType,
+  UsersServiceSymbol, UsersServiceType,
+  ValidationServiceSymbol, ValidationServiceType
+} from '../_services/interfaces';
 import { OrganisationsService } from '../_services/organisations.service';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 import { ValidationService } from '../_services/validation.service';
 
 
-container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
+// Specific inversify container configuration.
 container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
+container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
 container.bind<ValidationServiceType>(ValidationServiceSymbol).to(ValidationService).inSingletonScope();
+
 
 export const startup = async (): Promise<void> => {
 
   console.log('Initializing Admin app function');
 
-  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
   const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
+  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
+  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
+    console.group('Initializing Admin app function:');
+
+    // TODO: For some reason the SQL Connection must be initialized before the remaining services. There are errors related to inversify otherwise.
+    //       The inversify and startup must be revised.
+    //       Additionally the init method for these must be somehow a dependency so that other services (ie: baseService) don't startup before these were initialized.
     await sqlConnectionService.init();
-    await noSqlConnectionService.init();
+
     await cacheService.init();
+    await noSqlConnectionService.init();
 
     console.log('Initialization complete');
+    console.groupEnd();
 
     if (process.env['LOCAL_MODE'] ?? false) {
 
@@ -51,7 +60,7 @@ export const startup = async (): Promise<void> => {
 
       const response = await httpService.getHttpInstance().get(`http://localhost:7071/api/swagger.json`);
       console.log('Saving swagger file');
-      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/admin/.apim/swagger.yaml`, YAML.stringify(response.data))
+      fs.writeFileSync(`${join(__dirname, '../../../..')}/apps/admin/.apim/swagger.yaml`, YAML.stringify(response.data));
       console.log('Documentation generated successfully');
       console.groupEnd();
 
@@ -65,7 +74,8 @@ export const startup = async (): Promise<void> => {
 
   }
 
-}
+};
+
+void startup();
 
 export { container };
-void startup();

@@ -32,29 +32,27 @@ class V1InnovationsList {
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.userType, userOrganisationRole: domainContext.organisation?.role });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole, userOrganisationRole: domainContext.organisation?.role });
 
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationsList(
         {
           id: requestUser.id,
-          type: requestUser.type,
-          ...(domainContext.organisation?.id ? { organisationId: domainContext.organisation.id } : {}),
-          ...(domainContext.organisation?.role ? { organisationRole: domainContext.organisation.role } : {}),
-          ...(domainContext.organisation?.organisationUnit?.id ? { organisationUnitId: domainContext.organisation.organisationUnit.id } : {})
         },
+        domainContext,
         filters,
         { skip, take, order }
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({
+      const response = {
         count: result.count,
         data: result.data.map(item => ({
           id: item.id,
           name: item.name,
           description: item.description,
           status: item.status,
+          ...(item.groupedStatus && { groupedStatus: item.groupedStatus }),
           statusUpdatedAt: item.statusUpdatedAt,
           submittedAt: item.submittedAt,
           updatedAt: item.updatedAt,
@@ -75,7 +73,8 @@ class V1InnovationsList {
           ...(item.notifications === undefined ? {} : { notifications: item.notifications }),
           ...(item.statistics === undefined ? {} : { statistics: item.statistics }),
         }))
-      });
+      };
+      context.res = ResponseHelper.Ok<ResponseDTO>(response);
       return;
 
     } catch (error) {
@@ -92,7 +91,7 @@ export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
   get: {
     operationId: 'v1-innovations-list',
     description: 'Get innovations list',
-    parameters: SwaggerHelper.paramJ2S({query: QueryParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'Success',

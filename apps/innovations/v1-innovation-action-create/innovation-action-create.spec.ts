@@ -1,5 +1,4 @@
-import type { TestDataType } from '@innovations/shared/tests/tests.helper';
-import TestsHelper from '@innovations/shared/tests/tests.helper';
+import { type TestDataType, TestsHelper } from '@innovations/shared/tests';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -52,7 +51,7 @@ describe('v1-innovation-action-create Suite', () => {
         .setContext()
         .setParams({ innovationId: testData.innovation.id })
         .setMethod('POST')
-        .setAuth({ identityId: testData.baseUsers.accessor.identityId, name: randText() }, testData.domainContexts.accessor)
+        .setAuth(testData.domainContexts.accessor)
         .setBody({
           section: InnovationSectionEnum.COST_OF_INNOVATION,
           description: randText(),

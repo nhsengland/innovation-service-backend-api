@@ -1,16 +1,16 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity } from '@innovations/shared/entities';
-import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, UserTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity, UserRoleEntity } from '@innovations/shared/entities';
+import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { BaseService } from './base.service';
 
+import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
 import { INNOVATION_SECTIONS_CONFIG } from '../_config';
-import type { DomainContextType } from '@innovations/shared/types';
 import type { InnovationSectionModel } from '../_types/innovation.types';
 
 @injectable()
@@ -24,7 +24,7 @@ export class InnovationSectionsService extends BaseService {
 
 
   async getInnovationSectionsList(
-    user: { type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
   ): Promise<{
@@ -50,7 +50,7 @@ export class InnovationSectionsService extends BaseService {
     let openActions: { section: string, actionsCount: number }[] = [];
 
     if (sections.length > 0) {
-      const actionStatus = [UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(user.type)
+      const actionStatus = [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
@@ -63,10 +63,10 @@ export class InnovationSectionsService extends BaseService {
         .andWhere('actions.status = :actionStatus', { actionStatus })
         .groupBy('sections.section');
 
-      if (user.type === UserTypeEnum.ASSESSMENT) {
-        query.andWhere('actions.innovation_support_id IS NULL');
-      } else if(user.type === UserTypeEnum.ACCESSOR) {
-        query.andWhere('actions.innovation_support_id IS NOT NULL');
+      if ((domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.SUBMITTED });
+      } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
       }
 
       openActions = await query.getRawMany();
@@ -93,7 +93,7 @@ export class InnovationSectionsService extends BaseService {
 
 
   async getInnovationSectionInfo(
-    user: { type: UserTypeEnum },
+    domainContext: DomainContextType,
     innovationId: string,
     sectionKey: InnovationSectionEnum,
     filters: { fields?: ('actions'[]) },
@@ -131,7 +131,7 @@ export class InnovationSectionsService extends BaseService {
     let sectionData: null | { [key: string]: any } = null;
 
     // BUSINESS RULE: Accessor's (type) cannot view sections in draft.
-    if (user.type !== UserTypeEnum.ACCESSOR || dbSection?.status === InnovationSectionStatusEnum.SUBMITTED) {
+    if (![ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) || dbSection?.status === InnovationSectionStatusEnum.SUBMITTED) {
       sectionData = await this.parseSectionInformation(
         innovation,
         dbSection?.files,
@@ -146,7 +146,7 @@ export class InnovationSectionsService extends BaseService {
 
     let actions: null | InnovationActionEntity[] = null;
     if (filters.fields?.includes('actions')) {
-      const requestedStatus = [UserTypeEnum.ACCESSOR, UserTypeEnum.ASSESSMENT].includes(user.type)
+      const requestedStatus = [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
@@ -154,9 +154,9 @@ export class InnovationSectionsService extends BaseService {
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
         .andWhere('actions.status = :requestedStatus', { requestedStatus });
 
-      if (user.type === UserTypeEnum.ASSESSMENT) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
         actionsQuery.andWhere('actions.innovation_support_id IS NULL');
-      } else if(user.type === UserTypeEnum.ACCESSOR) {
+      } else if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
         actionsQuery.andWhere('actions.innovation_support_id IS NOT NULL');
       }
 
@@ -256,7 +256,7 @@ export class InnovationSectionsService extends BaseService {
       if (shouldAddActivityLog) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE, domainContext },
+          { innovationId: savedInnovation.id, activity: ActivityEnum.SECTION_DRAFT_UPDATE, domainContext },
           { sectionId: sectionKey }
         );
       }
@@ -271,7 +271,7 @@ export class InnovationSectionsService extends BaseService {
 
 
   async submitInnovationSection(
-    user: { id: string, identityId: string; type: UserTypeEnum },
+    user: { id: string, identityId: string; },
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: InnovationSectionEnum,
@@ -312,6 +312,7 @@ export class InnovationSectionsService extends BaseService {
       for (const action of requestedStatusActions) {
         action.status = InnovationActionStatusEnum.SUBMITTED;
         action.updatedBy = user.id;
+        action.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
       }
 
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
@@ -321,7 +322,7 @@ export class InnovationSectionsService extends BaseService {
         // BUSINESS RULE: Don't log section updates before innovation submission, only after.
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION, domainContext },
+          { innovationId: dbInnovation.id, activity: ActivityEnum.SECTION_SUBMISSION, domainContext },
           { sectionId: savedSection.section }
         );
       }
@@ -329,12 +330,12 @@ export class InnovationSectionsService extends BaseService {
       if (requestedStatusActions.length > 0) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { userId: user.id, innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE, domainContext },
+          { innovationId: dbInnovation.id, activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE, domainContext },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 
         await this.notifierService.send(
-          { id: user.id, identityId: user.identityId, type: user.type },
+          { id: user.id, identityId: user.identityId },
           NotifierTypeEnum.ACTION_UPDATE,
           {
             innovationId: dbInnovation.id,
@@ -343,7 +344,9 @@ export class InnovationSectionsService extends BaseService {
               section: savedSection.section,
               status: InnovationActionStatusEnum.SUBMITTED
             }
-          });
+          },
+          domainContext,
+        );
       }
 
       return { id: savedSection.id };
@@ -407,11 +410,11 @@ export class InnovationSectionsService extends BaseService {
     user: { id: string },
     innovationId: string,
     evidenceData: {
-      evidenceType: EvidenceTypeCatalogueEnum;
-      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
-      description: string;
-      summary: string;
-      files: string[];
+      evidenceType: EvidenceTypeCatalogueEnum,
+      clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum,
+      description: string,
+      summary: string,
+      files: string[]
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -467,6 +470,7 @@ export class InnovationSectionsService extends BaseService {
       );
 
       return { id: savedEvidence.id };
+
     });
   }
 
@@ -541,15 +545,12 @@ export class InnovationSectionsService extends BaseService {
       );
 
       return { id: evidence.id };
+
     });
 
   }
 
-  async deleteInnovationEvidence(
-    user: { id: string },
-    innovationId: string,
-    evidenceId: string
-  ): Promise<{ id: string }> {
+  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceId: string): Promise<{ id: string }> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.evidences', 'evidences')
@@ -595,7 +596,9 @@ export class InnovationSectionsService extends BaseService {
       );
 
       return { id: evidence.id };
+
     });
+
   }
 
   async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<{

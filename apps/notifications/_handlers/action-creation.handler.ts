@@ -1,4 +1,4 @@
-import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, UserTypeEnum } from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
@@ -21,9 +21,9 @@ export class ActionCreationHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string, type: UserTypeEnum },
+    requestUser: { id: string, identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION],
-    domainContext?: DomainContextType
+    domainContext: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
@@ -31,7 +31,7 @@ export class ActionCreationHandler extends BaseHandler<
 
   async run(): Promise<this> {
 
-    if (this.requestUser.type !== UserTypeEnum.ACCESSOR) {
+    if (![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(this.domainContext.currentRole.role as ServiceRoleEnum)) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
@@ -39,7 +39,7 @@ export class ActionCreationHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences)) {
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences) && innovation.owner.isActive) {
 
       this.emails.push({
         templateId: EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
@@ -47,7 +47,7 @@ export class ActionCreationHandler extends BaseHandler<
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           accessor_name: requestInfo.displayName,
-          unit_name: actionInfo.organisationUnit.name || '',
+          unit_name: actionInfo.organisationUnit?.name ?? '',
           action_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
             .setPathParams({ innovationId: this.inputData.innovationId, actionId: this.inputData.action.id })
@@ -61,7 +61,7 @@ export class ActionCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_CREATION, id: this.inputData.action.id },
-      users: [{ userId: innovation.owner.id, userType: UserTypeEnum.INNOVATOR }],
+      users: [{ userId: innovation.owner.id, roleId: innovation.owner.userRole.id }],
       params: {
         section: this.inputData.action.section
       },
