@@ -23,7 +23,7 @@ export class ActionUpdateHandler extends BaseHandler<
   private data: {
     innovation?: { 
       name: string,
-      owner: { id: string, identityId: string, userRole: UserRoleEntity, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]}
+      owner: { id: string, identityId: string, userRole: UserRoleEntity, isActive: boolean, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]}
     },
     actionInfo?: { id: string, displayId: string, status: InnovationActionStatusEnum, organisationUnit?: { id: string, name: string}, owner: { id: string; identityId: string; roleId: string; } },
     comment?: string
@@ -150,8 +150,8 @@ export class ActionUpdateHandler extends BaseHandler<
     if (!this.data.innovation) {
       return;
     }
-
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, this.data.innovation.owner.emailNotificationPreferences)) {
+    
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, this.data.innovation.owner.emailNotificationPreferences) && this.data.innovation.owner.isActive) {
 
       let templateId: EmailTypeEnum;
       switch (this.data.actionInfo?.status) {
@@ -176,7 +176,7 @@ export class ActionUpdateHandler extends BaseHandler<
       }
 
       this.emails.push({
-        templateId: templateId,
+        templateId,
         to: { type: 'identityId', value: this.data.innovation?.owner.identityId || '', displayNameParam: 'display_name' },
         params: {
           // display_name: '', // This will be filled by the email-listener function.

@@ -26,6 +26,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
 
+    if (innovation.owner.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
         to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
@@ -41,7 +42,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
           .buildUrl(), // TODO: Check what exactly is this URL.
         }
       });
-
+    }
 
     return this;
   }

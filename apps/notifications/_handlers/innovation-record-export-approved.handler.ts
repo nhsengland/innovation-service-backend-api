@@ -33,19 +33,21 @@ export class InnovationRecordExportApprovedHandler extends BaseHandler<
 
     const innovatorName = await this.recipientsService.userInfo(innovation.owner.id);
 
-    this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR,
-      to: { type: 'identityId', value: request.createdBy.identityId, displayNameParam: 'display_name' },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        innovation_name: innovation.name,
-        innovator_name: innovatorName.name,
-        innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
-        .addPath('accessor/innovations/:innovationId')
-        .setPathParams({ innovationId: this.inputData.innovationId })
-        .buildUrl(),
-      }
-    });
+    if (request.createdBy.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR,
+        to: { type: 'identityId', value: request.createdBy.identityId, displayNameParam: 'display_name' },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: innovation.name,
+          innovator_name: innovatorName.name,
+          innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('accessor/innovations/:innovationId')
+          .setPathParams({ innovationId: this.inputData.innovationId })
+          .buildUrl(),
+        }
+      });
+    }
     
     return this;
   }

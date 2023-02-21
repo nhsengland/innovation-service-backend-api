@@ -35,11 +35,13 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const needAssessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
-    this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
-      to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: { innovation_name: innovation.name }
-    });
+    if (innovation.owner.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR,
+        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        params: { innovation_name: innovation.name }
+      });
+    }
 
     for (const user of needAssessmentUsers) {
       this.emails.push({

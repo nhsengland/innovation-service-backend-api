@@ -30,14 +30,16 @@ export class InnovationSubmitedHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
-    this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR,
-      to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        innovation_name: innovation.name
-      }
-    });
+    if (innovation.owner.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR,
+        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: innovation.name
+        }
+      });
+    }
 
     for (const assessmentUser of assessmentUsers) {
       this.emails.push({

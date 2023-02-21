@@ -21,7 +21,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   private data: {
-    innovation?: { name: string, owner: { id: string, identityId: string, userRole: UserRoleEntity, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
+    innovation?: { name: string, owner: { id: string, identityId: string, userRole: UserRoleEntity, isActive: boolean, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] } },
     requestUserAdditionalInfo?: {
       displayName?: string,
       organisation: { id: string, name: string },
@@ -88,7 +88,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private async prepareEmailForInnovator(): Promise<void> {
 
     // Send email only to user if email preference INSTANTLY.
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, this.data.innovation?.owner.emailNotificationPreferences || [])) {
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, this.data.innovation?.owner.emailNotificationPreferences || []) && this.data.innovation?.owner.isActive) {
 
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,

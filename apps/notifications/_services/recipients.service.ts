@@ -67,7 +67,7 @@ export class RecipientsService extends BaseService {
   /**
    * Fetch user information with notification preferences.
    */
-  async userInfo(userId: string, options?: {withDeleted?: boolean}): Promise<{
+  async userInfo(userId: string, options?: { withDeleted?: boolean }): Promise<{
     id: string, identityId: string, name: string, email: string, userRoles: ServiceRoleEnum[], isActive: boolean,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }> {
@@ -126,7 +126,7 @@ export class RecipientsService extends BaseService {
 
   async innovationInfoWithOwner(innovationId: string): Promise<{
     name: string,
-    owner: { id: string, identityId: string, userRole: UserRoleEntity, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] }
+    owner: { id: string, identityId: string, userRole: UserRoleEntity, isActive: boolean, emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[] }
   }> {
 
     const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
@@ -140,7 +140,7 @@ export class RecipientsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    // This will not work if a innovator can have two+ INNOVATOR roles
+    // This will not work if a innovator can have two INNOVATOR roles
     const innovationOwnerRole = dbInnovation.owner.serviceRoles.find( r => r.role === ServiceRoleEnum.INNOVATOR);
 
     if (!innovationOwnerRole) {
@@ -153,6 +153,7 @@ export class RecipientsService extends BaseService {
         id: dbInnovation.owner.id,
         identityId: dbInnovation.owner.identityId,
         userRole: innovationOwnerRole,
+        isActive: !dbInnovation.owner.lockedAt,
         emailNotificationPreferences: (await dbInnovation.owner.notificationPreferences).map(item => ({
           type: item.notification_id,
           preference: item.preference
@@ -213,7 +214,8 @@ export class RecipientsService extends BaseService {
       .innerJoin('organisationUser.user', 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .leftJoin('user.notificationPreferences', 'notificationPreferences')
-      .where('serviceRoles.organisation_unit_id = organisationUnit.id'); // Only get the role for the organisation unit
+      .where('serviceRoles.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
+      .andWhere('user.locked_at IS NULL');
 
     if ('innovationId' in data) {
       query.andWhere('support.innovation_id = :innovationId', { innovationId: data.innovationId });
@@ -539,6 +541,7 @@ export class RecipientsService extends BaseService {
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
+      .andWhere('owner.lockedAt IS NULL')
       .getMany();
 
     return dbInnovations.map(innovation => ({
@@ -684,7 +687,7 @@ export class RecipientsService extends BaseService {
 
   }
 
-  async getExportRequestWithRelations(requestId: string): Promise<{ exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; } }> {
+  async getExportRequestWithRelations(requestId: string): Promise<{ exportRequest: InnovationExportRequestEntity, createdBy: { id: string; identityId: string; name: string; isActive: boolean } }> {
 
     const request = await this.sqlConnection.createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
@@ -710,6 +713,7 @@ export class RecipientsService extends BaseService {
         id: createdBy.id,
         identityId: createdBy.identityId,
         name: createdByUser.displayName,
+        isActive: createdByUser.isActive
       }
     };
 

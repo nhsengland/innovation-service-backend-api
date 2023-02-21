@@ -31,20 +31,22 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
     const innovatorInfo = await this.recipientsService.userInfo(innovationInfo.owner.id);
     const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
-    this.emails.push({
-      templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-      to: { type: 'email', value: innovatorInfo.email },
-      params: {
-        display_name: innovatorInfo.name,
-        innovation_name: innovationInfo.name,
-        unit_name: unitInfo.organisationUnit.name,
-        support_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/support')
-          .setPathParams({ innovationId: this.inputData.innovationId })
-          .buildUrl()
-      }
-    });
-
+    if (innovatorInfo.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
+        to: { type: 'email', value: innovatorInfo.email },
+        params: {
+          display_name: innovatorInfo.name,
+          innovation_name: innovationInfo.name,
+          unit_name: unitInfo.organisationUnit.name,
+          support_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/support')
+            .setPathParams({ innovationId: this.inputData.innovationId })
+            .buildUrl()
+        }
+      });
+    }
+    
     return this;
 
   }

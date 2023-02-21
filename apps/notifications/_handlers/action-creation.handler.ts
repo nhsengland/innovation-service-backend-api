@@ -39,7 +39,7 @@ export class ActionCreationHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences)) {
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovation.owner.emailNotificationPreferences) && innovation.owner.isActive) {
 
       this.emails.push({
         templateId: EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,

@@ -60,7 +60,7 @@ export class ThreadCreationHandler extends BaseHandler<
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
 
     // Send email only to user if email preference INSTANTLY.
-    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, innovation.owner.emailNotificationPreferences)) {
+    if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.COMMENT, innovation.owner.emailNotificationPreferences) && innovation.owner.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR,
         to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },

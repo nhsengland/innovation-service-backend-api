@@ -30,20 +30,22 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(this.inputData.innovationId);
 
-    // Prepare email for innovator.
-    this.emails.push({
-      templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
-      to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        innovation_name: innovation.name,
-        needs_assessment_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/assessments/:assessmentId')
-          .setPathParams({ innovationId: this.inputData.innovationId, assessmentId: this.inputData.assessmentId })
-          .buildUrl()
-      }
-    });
-
+    if (innovation.owner.isActive) {
+      // Prepare email for innovator.
+      this.emails.push({
+        templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
+        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: innovation.name,
+          needs_assessment_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/assessments/:assessmentId')
+            .setPathParams({ innovationId: this.inputData.innovationId, assessmentId: this.inputData.assessmentId })
+            .buildUrl()
+        }
+      });
+    }
+    
     // Prepare InApp for innovator.
     // Send only if there's suggested organisation units from organisations NOT shared with the innovation.
     const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation => organisation.organisationUnits.map(unit => unit.id));

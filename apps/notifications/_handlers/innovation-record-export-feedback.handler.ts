@@ -33,21 +33,22 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
       EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR : 
       EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR;
 
-    this.emails.push({
-      templateId,
-      to: { type: 'identityId', value: request.createdBy.identityId, displayNameParam: 'display_name' },
-      params: {
-        innovation_name: innovation.name,
-        innovator_name: innovatorName.name,
-        innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
-        .addPath('accessor/innovations/:innovationId')
-        .setPathParams({ innovationId: this.inputData.innovationId })
-        .buildUrl(),
-        pdf_rejection_comment: request.exportRequest.rejectReason,
-      }
-    });
+    if (request.createdBy.isActive) {
+      this.emails.push({
+        templateId,
+        to: { type: 'identityId', value: request.createdBy.identityId, displayNameParam: 'display_name' },
+        params: {
+          innovation_name: innovation.name,
+          innovator_name: innovatorName.name,
+          innovation_url:  new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('accessor/innovations/:innovationId')
+          .setPathParams({ innovationId: this.inputData.innovationId })
+          .buildUrl(),
+          pdf_rejection_comment: request.exportRequest.rejectReason,
+        }
+      });
+    }
     
-
     return this;
   }
 }

@@ -35,18 +35,20 @@ export class InnovationStopSharingHandler extends BaseHandler<
     const previousAssignedUsers = await this.recipientsService.usersInfo(this.inputData.previousAssignedAccessors.map(item => item.id));
     const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
-    this.emails.push({
-      templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
-      to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
-      params: {
-        innovation_name: innovation.name,
-        innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath(':userBasePath/innovations/:innovationId')
-          .setPathParams({ userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR), innovationId: this.inputData.innovationId })
-          .buildUrl()
-      }
-    });
-
+    if (innovation.owner.isActive) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
+        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        params: {
+          innovation_name: innovation.name,
+          innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath(':userBasePath/innovations/:innovationId')
+            .setPathParams({ userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR), innovationId: this.inputData.innovationId })
+            .buildUrl()
+        }
+      });
+    }
+    
     for (const user of previousAssignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
