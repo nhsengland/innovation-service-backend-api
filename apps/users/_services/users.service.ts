@@ -389,17 +389,15 @@ export class UsersService extends BaseService {
         }));
       }
 
+      // This needs to be improved to be out of the Promise.All
       const b2cUser = identityUsers.find(item => item.identityId === user.identityId);
-      if (!b2cUser) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-
+      
       return {
         id: user.id,
         isActive: !user.lockedAt,
         roles: user.serviceRoles,
-        name: b2cUser.displayName,
-        ...(fieldSet.has('email') ? { email: b2cUser.email } : {}),
+        name: b2cUser?.displayName ?? 'N/A',
+        ...(fieldSet.has('email') ? { email: b2cUser?.email ?? 'N/A' } : {}),
         ...(organisations ? { organisations } : {}),
       };
 
