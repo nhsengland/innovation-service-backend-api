@@ -13,11 +13,14 @@ export type PathParamsType = {
 }
 
 export const BodySchema = Joi.object<BodyType>({
-  status: Joi.when('$userType', {
+  status: Joi.when('$userType', [{
     is: 'ACCESSOR',
+    then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required()
+  },{
+    is: 'QUALIFYING_ACCESSOR',
     then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required(),
     otherwise: Joi.string().valid(InnovationExportRequestStatusEnum.REJECTED, InnovationExportRequestStatusEnum.APPROVED).required(),
-  }),
+  }]),
   rejectReason: Joi.when('status', {
     is: InnovationExportRequestStatusEnum.REJECTED,
     then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
