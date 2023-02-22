@@ -36,7 +36,7 @@ class V1InnovationsExportRequestsUpdate {
         request.params
       );
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: domainContext.currentRole });
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: domainContext.currentRole.role });
 
       const { rejectReason, status } = body;
 
