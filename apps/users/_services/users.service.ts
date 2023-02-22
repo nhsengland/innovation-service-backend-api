@@ -397,7 +397,7 @@ export class UsersService extends BaseService {
         isActive: !user.lockedAt,
         roles: user.serviceRoles,
         name: b2cUser?.displayName ?? 'N/A',
-        ...(fieldSet.has('email') ? { email: b2cUser?.email ? 'N/A' } : {}),
+        ...(fieldSet.has('email') ? { email: b2cUser?.email ?? 'N/A' } : {}),
         ...(organisations ? { organisations } : {}),
       };
 
