@@ -4,7 +4,7 @@ import { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, Innovatio
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
 import type { DateISOType, TypeFromArray } from '@innovations/shared/types';
-import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 const DateFilterKeys = ['submittedAt'] as const;
 const FieldsKeys = ['isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
@@ -25,7 +25,6 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   mainCategories?: InnovationCategoryCatalogueEnum[],
   locations?: InnovationLocationEnum[],
   status: InnovationStatusEnum[],
-  assessmentSupportStatus?: AssessmentSupportFilterEnum,
   supportStatuses?: InnovationSupportStatusEnum[],
   groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
@@ -54,7 +53,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
       then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE)).required(),
       otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationStatusEnum))).optional()
     }),
-  assessmentSupportStatus: Joi.string().valid(...Object.values(AssessmentSupportFilterEnum)).optional(),
   engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
   supportStatuses: Joi.when('$userOrganisationRole', {
     is: 'ACCESSOR',
