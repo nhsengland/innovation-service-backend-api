@@ -33,7 +33,7 @@ export class JoiHelper {
   }
 
 
-  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema, decodeURIString: () => Joi.StringSchema } {
+  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringArrayOfObjects: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema, decodeURIString: () => Joi.StringSchema } {
 
     return Joi.extend(
 
@@ -42,6 +42,15 @@ export class JoiHelper {
         base: Joi.array().meta({ baseType: 'array' }),
         coerce(value) {
           return typeof value !== 'string' ? { value } : { value: value.replace(/(^,+)|(,+$)/mg, '').split(',').filter(item => item) };
+        }
+      },
+
+      {
+        type: 'stringArrayOfObjects',
+        base: Joi.array().meta({ baseType: 'array' }),
+        coerce(value) {
+          const match = value.match(/\{.*?\}/g); // Get all the objects inside the string
+          return match ? { value: match.map((o: string) => JSON.parse(o))} : { value };
         }
       },
 
