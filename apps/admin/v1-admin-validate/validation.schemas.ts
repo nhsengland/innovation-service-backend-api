@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { AdminOperationType, AdminOperationTypeValues } from '../_config/admin-operations.config';
+import { AdminOperationType } from '../_config/admin-operations.config';
 
 
 export type ParamsType = {
@@ -15,5 +15,5 @@ export type QueryParamsType = {
   operation: AdminOperationType
 }
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  operation: Joi.string().valid(...AdminOperationTypeValues).required().description('Type of the operation to validate.'),
+  operation: Joi.string().valid(...Object.values(AdminOperationType)).required().description('Type of the operation to validate.'),
 }).required()
