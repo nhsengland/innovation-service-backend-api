@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In, SelectQueryBuilder } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
@@ -10,7 +10,7 @@ import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, Notifier
 import type { ActivityLogListParamsType, DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
-import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
 
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
@@ -34,7 +34,6 @@ export class InnovationsService extends BaseService {
       name?: string,
       mainCategories?: InnovationCategoryCatalogueEnum[],
       locations?: InnovationLocationEnum[],
-      assessmentSupportStatus?: AssessmentSupportFilterEnum,
       supportStatuses?: InnovationSupportStatusEnum[],
       groupedStatuses?: InnovationGroupedStatusEnum[],
       engagingOrganisations?: string[],
@@ -189,10 +188,6 @@ export class InnovationsService extends BaseService {
         )`, { filterLocationsExceptOutsideUK, knownLocationsNotOnFilter });
 
       }
-    }
-
-    if (filters.assessmentSupportStatus) {
-      this.addInnovationSupportFilterSQL(innovationFetchQuery, filters.assessmentSupportStatus);
     }
 
     if (filters.engagingOrganisations && filters.engagingOrganisations.length > 0) {
@@ -991,7 +986,7 @@ export class InnovationsService extends BaseService {
   }
 
 
-  async getNeedsAssessmentOverdueInnovations(domainContext: DomainContextType, filters: { innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[], assignedToMe: boolean }, supportFilter?: AssessmentSupportFilterEnum): Promise<number> {
+  async getNeedsAssessmentOverdueInnovations(domainContext: DomainContextType, filters: { innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[], assignedToMe: boolean }): Promise<number> {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
@@ -1000,10 +995,6 @@ export class InnovationsService extends BaseService {
 
     if (filters.assignedToMe) {
       query.andWhere('assessments.assign_to_id = :assignToId', { assignToId: domainContext.id });
-    }
-
-    if (supportFilter) {
-      this.addInnovationSupportFilterSQL(query, supportFilter);
     }
 
     return query.getCount();
@@ -1829,27 +1820,6 @@ export class InnovationsService extends BaseService {
     }
 
     return survey.answers;
-
-  }
-
-  private addInnovationSupportFilterSQL(query: SelectQueryBuilder<InnovationEntity>, filter: AssessmentSupportFilterEnum): SelectQueryBuilder<InnovationEntity> {
-
-    switch (filter) {
-      case AssessmentSupportFilterEnum.UNASSIGNED:
-        query.andWhere('NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.deleted_at IS NULL)');
-        break;
-      case AssessmentSupportFilterEnum.ENGAGING:
-        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
-        break;
-      case AssessmentSupportFilterEnum.NOT_ENGAGING:
-        query.andWhere(`EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status NOT IN ('${InnovationSupportStatusEnum.ENGAGING}') AND t_is.deleted_at IS NULL)`);
-        query.andWhere(`NOT EXISTS (SELECT 1 FROM innovation_support t_is WHERE t_is.innovation_id = innovations.id AND t_is.status = '${InnovationSupportStatusEnum.ENGAGING}' AND t_is.deleted_at IS NULL)`);
-        break;
-      default:
-        break;
-    }
-
-    return query;
 
   }
 

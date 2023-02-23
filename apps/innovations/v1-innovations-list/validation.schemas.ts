@@ -3,7 +3,7 @@ import Joi from 'joi';
 import { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
-import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 
 enum orderFields {
@@ -22,7 +22,6 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   mainCategories?: InnovationCategoryCatalogueEnum[],
   locations?: InnovationLocationEnum[],
   status: InnovationStatusEnum[],
-  assessmentSupportStatus?: AssessmentSupportFilterEnum,
   supportStatuses?: InnovationSupportStatusEnum[],
   groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
@@ -46,7 +45,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
       then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE)).required(),
       otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationStatusEnum))).optional()
     }),
-  assessmentSupportStatus: Joi.string().valid(...Object.values(AssessmentSupportFilterEnum)).optional(),
   engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
   supportStatuses: Joi.when('$userOrganisationRole', {
     is: 'ACCESSOR',

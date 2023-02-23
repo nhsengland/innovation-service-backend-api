@@ -1,9 +1,3 @@
-export enum AssessmentSupportFilterEnum {
-  UNASSIGNED = 'UNASSIGNED',
-  ENGAGING = 'ENGAGING',
-  NOT_ENGAGING = 'NOT_ENGAGING'
-}
-
 export enum InnovationLocationEnum {
   'England' = 'England',
   'Scotland' = 'Scotland',

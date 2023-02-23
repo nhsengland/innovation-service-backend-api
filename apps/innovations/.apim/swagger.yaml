@@ -919,15 +919,6 @@ paths:
                     - WITHDRAWN
                     - COMPLETE
                     - PAUSED
-        - name: assessmentSupportStatus
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - UNASSIGNED
-              - ENGAGING
-              - NOT_ENGAGING
         - name: engagingOrganisations
           in: query
           required: false
