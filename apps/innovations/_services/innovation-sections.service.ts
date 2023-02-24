@@ -72,7 +72,7 @@ export class InnovationSectionsService extends BaseService {
         case ServiceRoleEnum.ASSESSMENT:
           query.andWhere('actions.innovationSupport IS NULL');
           break;
-        default:
+        default: // do nothing
       }
 
       openActions = await query.getRawMany();
