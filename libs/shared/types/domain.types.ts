@@ -1,11 +1,24 @@
 import Joi from 'joi';
-import type { UserRoleEntity } from '../entities';
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
 import type { DateISOType } from './date.types';
 
+export type RoleType = {
+  id: string,
+  role: ServiceRoleEnum,
+  organisation?: {
+    id: string,
+    name: string,
+    acronym: string | null
+  },
+  organisationUnit?: {
+    id: string,
+    name: string,
+    acronym: string
+  }
+}
 
 // User domain types.
 export type DomainUserInfoType = {
@@ -13,7 +26,7 @@ export type DomainUserInfoType = {
   identityId: string,
   email: string,
   displayName: string,
-  roles: UserRoleEntity[],
+  roles: RoleType[],
   phone: null | string,
   isActive: boolean,
   lockedAt: null | DateISOType,

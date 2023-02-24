@@ -442,8 +442,9 @@ export class AuthorizationValidationModel {
 
   private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
 
-    const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation');
-    query.where('innovation.id = :innovationId', { innovationId });
+    const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation')
+      .select(['innovation.id', 'innovation.name', 'innovation.status'])
+      .where('innovation.id = :innovationId', { innovationId });
 
     if (context.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       query.andWhere('innovation.owner_id = :ownerId', { ownerId: user.id });

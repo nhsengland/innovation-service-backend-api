@@ -6,7 +6,7 @@ import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOr
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
-import type { DateISOType } from '@users/shared/types';
+import type { DateISOType, RoleType } from '@users/shared/types';
 
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
@@ -329,7 +329,7 @@ export class UsersService extends BaseService {
     email?: string,
     isActive: boolean,
     name: string,
-    roles: UserRoleEntity[],
+    roles: Pick<RoleType, 'role'>[],  // This might change in the future
     organisations?: {
       id: string,
       name: string,
@@ -395,7 +395,7 @@ export class UsersService extends BaseService {
       return {
         id: user.id,
         isActive: !user.lockedAt,
-        roles: user.serviceRoles,
+        roles: user.serviceRoles.map(sr => ({ role: sr.role })),
         name: b2cUser?.displayName ?? 'N/A',
         ...(fieldSet.has('email') ? { email: b2cUser?.email ?? 'N/A' } : {}),
         ...(organisations ? { organisations } : {}),

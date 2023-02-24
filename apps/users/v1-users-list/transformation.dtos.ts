@@ -1,12 +1,11 @@
-import type { UserRoleEntity } from '@users/shared/entities';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '@users/shared/enums';
-import type { DateISOType } from '@users/shared/types';
+import type { DateISOType, RoleType } from '@users/shared/types';
 
 type AdminPortalResponseDTO = {
   id: string;
   email: string;
   name: string;
-  roles: UserRoleEntity[]; // This needs to be reviewed as it's not a DTO
+  roles: Pick<RoleType, 'role'>[];  // this might change in the future keeping this way for compatibility
   isActive: boolean;
   lockedAt?: DateISOType;
   organisations?: {
@@ -26,7 +25,7 @@ type UserListResponseDTO = {
   id: string;
   name: string;
   email?: string;
-  roles: UserRoleEntity[]; // This needs to be reviewed as it's not a DTO
+  roles: Pick<RoleType, 'role'>[];  // this might change in the future keeping this way for compatibility
   isActive: boolean;
   organisations?: {
     id: string;
