@@ -63,10 +63,16 @@ export class InnovationSectionsService extends BaseService {
         .andWhere('actions.status = :actionStatus', { actionStatus })
         .groupBy('sections.section');
 
-      if ((domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)) {
-        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.SUBMITTED });
-      } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-        query.andWhere('actions.status = :actionStatus', { actionStatus: InnovationActionStatusEnum.REQUESTED });
+      switch (domainContext.currentRole.role) {
+        case ServiceRoleEnum.ACCESSOR:
+        case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+          query.innerJoin('actions.innovationSupport', 'supports');
+          query.andWhere('supports.organisationUnit = :orgUnitId', { orgUnitId: domainContext.organisation?.organisationUnit?.id });
+          break;
+        case ServiceRoleEnum.ASSESSMENT:
+          query.andWhere('actions.innovationSupport IS NULL');
+          break;
+        default:
       }
 
       openActions = await query.getRawMany();
