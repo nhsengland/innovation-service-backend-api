@@ -484,7 +484,7 @@ export class RecipientsService extends BaseService {
       .andWhere('organisationUnit.inactivated_at IS NULL')
       .getMany();
 
-    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId, roleId: item.serviceRoles[0]?.id ?? '' ,organisationUnitId: item.serviceRoles[0]?.organisationUnit.id ?? '' }));
+    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId, roleId: item.serviceRoles[0]?.id ?? '' ,organisationUnitId: item.serviceRoles[0]?.organisationUnit?.id ?? '' }));
   }
 
   /**
