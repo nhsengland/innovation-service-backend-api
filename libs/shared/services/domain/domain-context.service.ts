@@ -2,7 +2,7 @@
 import type { DataSource, Repository } from 'typeorm';
 import type { AccessorDomainContextType, InnovatorDomainContextType } from '../../types';
 
-import { ActivityLogEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserRoleEntity } from '../../entities';
+import { ActivityLogEntity, OrganisationUnitUserEntity, OrganisationUserEntity } from '../../entities';
 import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum } from '../../enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '../../errors';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
@@ -20,22 +20,6 @@ export class DomainContextService {
     private sqlConnection: DataSource,
   ) {
     this.activityLogRepository = this.sqlConnection.getRepository(ActivityLogEntity);
-  }
-
-  async getUserContextRole(identityId: string, role?: ServiceRoleEnum): Promise<UserRoleEntity | null> {
-    const entityManager = this.sqlConnection.manager;
-    const userRoles = await entityManager.createQueryBuilder(UserRoleEntity, 'userRole')
-      .innerJoinAndSelect('userRole.user', 'user')
-      .where('user.external_id = :identityId', { identityId })
-      .getMany();
-    
-    if (userRoles.length === 0) return null; // user does not have roles. Error will be thrown later.
-    if (userRoles.length > 0 && !role) return userRoles[0]!; // user has only one role and we are not looking for a specific one. Return it.
-    
-    // user has multiple roles and one of them is the one we are looking for. If not found, return null. Error will be thrown later if null.
-    if (role && userRoles.find(r => r.role === role)) return userRoles.find(r => r.role === role) ?? null;
-   
-    return null;
   }
 
     /**

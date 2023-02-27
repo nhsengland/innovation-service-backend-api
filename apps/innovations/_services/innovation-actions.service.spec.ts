@@ -7,6 +7,7 @@ import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationS
 import type { ForbiddenError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainInnovationsService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
+import type { DomainContextType } from '@innovations/shared/types';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import { cloneDeep } from 'lodash';
@@ -822,12 +823,12 @@ describe('Innovation Actions Suite', () => {
       expect(err?.name).toBe('IA.0091');
     });
 
-    it('should not be updated to CANCELLED if the action is not created by him', async () => {
+    it('should not be update if the action is not created by someone on his organisation', async () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
       const action = await TestsHelper.TestDataBuilder
-        .createAction(testData.domainContexts.qualifyingAccessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+        .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
@@ -835,11 +836,11 @@ describe('Innovation Actions Suite', () => {
       try {
         await sut.updateActionAsAccessor(
           { id: accessor.id, identityId: accessor.identityId },
-          testData.domainContexts.accessor,
+          { organisation: { organisationUnit: { id: randomUUID() } } } as DomainContextType,
           testData.innovation.id,
           action.id,
           {
-            status: InnovationActionStatusEnum.CANCELLED
+            status: InnovationActionStatusEnum.COMPLETED
           },
           em
         );

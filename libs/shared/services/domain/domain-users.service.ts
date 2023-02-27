@@ -1,9 +1,10 @@
 import type { DataSource, Repository } from 'typeorm';
 
 import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
+import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DateISOType, DomainUserInfoType } from '../../types';
+import type { DateISOType, DomainUserInfoType, RoleType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
 
@@ -29,12 +30,28 @@ export class DomainUsersService {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
     }
 
+    // The returning data for organisations/units will be reviewed later, doubling the joins at the moment though to keep current interface
     const query = this.userRepository.createQueryBuilder('user')
-      .leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
-      .leftJoinAndSelect('userOrganisations.organisation', 'organisation')
-      .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-      .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('user.serviceRoles', 'serviceRoles');
+      .select([
+        'user.id', 'user.identityId', 'user.lockedAt','user.firstTimeSignInAt', 'user.surveyId',
+        // These should be removed in the future and use the service roles instead
+        'userOrganisations.id', 'userOrganisations.role',
+        'organisation.id', 'organisation.name', 'organisation.acronym', 'organisation.size', 'organisation.isShadow',
+        'userOrganisationUnits.id',
+        'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym',
+        // Service roles
+        'serviceRoles.id', 'serviceRoles.role',
+        'roleOrganisation.id', 'roleOrganisation.name', 'roleOrganisation.acronym',
+        'roleOrganisationUnit.id', 'roleOrganisationUnit.name', 'roleOrganisationUnit.acronym'
+      ])
+      .leftJoin('user.userOrganisations', 'userOrganisations')
+      .leftJoin('userOrganisations.organisation', 'organisation')
+      .leftJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
+      .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
+      .innerJoin('user.serviceRoles', 'serviceRoles')
+      .leftJoin('serviceRoles.organisation', 'roleOrganisation')
+      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit');
+
 
     if (data.userId) { query.where('user.id = :userId', { userId: data.userId }); }
     else if (data.identityId) { query.where('user.external_id = :identityId', { identityId: data.identityId }); }
@@ -52,7 +69,7 @@ export class DomainUsersService {
       identityId: authUser.identityId,
       email: authUser.email,
       displayName: authUser.displayName,
-      roles: dbUser.serviceRoles,
+      roles: dbUser.serviceRoles.map(roleEntity2RoleType),
       phone: authUser.mobilePhone,
       isActive: !dbUser.lockedAt,
       lockedAt: dbUser.lockedAt,
@@ -243,4 +260,32 @@ export class DomainUsersService {
 
   }
 
+  /**
+   * given a user and role retrieves the full role type
+   * @param userId the user id
+   * @param roleId the role id
+   * @returns the full role type for the user if found, null otherwise
+   */
+  async getUserRole(userId: string, roleId?: string): Promise<RoleType | null> {
+    const query = this.sqlConnection.createQueryBuilder(UserRoleEntity, 'userRole')
+      .select([
+        'userRole.id', 'userRole.role',
+        'organisation.id', 'organisation.name', 'organisation.acronym',
+        'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym'
+      ])
+      .leftJoin('userRole.organisation', 'organisation')
+      .leftJoin('userRole.organisationUnit', 'organisationUnit')
+      .where('userRole.user = :userId', { userId });
+
+    // currently we're returning the first role found when no roleId (related to TechDebt in v1-me-info) and this is to
+    // keep current behavior. We shouldn't be calling this without roleId in the future.
+    if (roleId) {
+      query.andWhere('userRole.id = :roleId', { roleId });
+    }
+
+    const dbUserRole = await query.getOne();
+
+    return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
+  }
+  
 }

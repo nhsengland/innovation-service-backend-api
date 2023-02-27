@@ -3,8 +3,11 @@ import Joi from 'joi';
 import { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
-import { AssessmentSupportFilterEnum, InnovationLocationEnum } from '../_enums/innovation.enums';
+import type { DateISOType, TypeFromArray } from '@innovations/shared/types';
+import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
+const DateFilterKeys = ['submittedAt'] as const;
+const FieldsKeys = ['isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
 
 enum orderFields {
   name = 'name',
@@ -22,14 +25,18 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   mainCategories?: InnovationCategoryCatalogueEnum[],
   locations?: InnovationLocationEnum[],
   status: InnovationStatusEnum[],
-  assessmentSupportStatus?: AssessmentSupportFilterEnum,
   supportStatuses?: InnovationSupportStatusEnum[],
   groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
   latestWorkedByMe?: boolean,
-  fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
+  dateFilter?: {
+    field: TypeFromArray<typeof DateFilterKeys>,
+    startDate?: DateISOType,
+    endDate?: DateISOType
+  }[],
+  fields?: TypeFromArray<typeof FieldsKeys>[]
 }
 
 
@@ -46,7 +53,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
       then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE)).required(),
       otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationStatusEnum))).optional()
     }),
-  assessmentSupportStatus: Joi.string().valid(...Object.values(AssessmentSupportFilterEnum)).optional(),
   engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
   supportStatuses: Joi.when('$userOrganisationRole', {
     is: 'ACCESSOR',
@@ -57,8 +63,15 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
   latestWorkedByMe: Joi.boolean().optional().default(false),
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics', 'groupedStatus')).optional()
+  dateFilter: JoiHelper.AppCustomJoi().stringArrayOfObjects().items(
+    Joi.object({
+      field: Joi.string().valid(...DateFilterKeys).required(),
+      startDate: Joi.date().optional(),
+      endDate: Joi.date().optional()
+    })
+  ).optional(),
+  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...FieldsKeys)).optional(),
 })
-// make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
-.fork('order', (schema) => Joi.when('latestWorkedByMe', {is: true, then: schema.forbidden(), otherwise: schema.optional()})).messages({'any.unknown': 'order field is not allowed when latestWorkedByMe is true'})
-.required()
+  // make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
+  .fork('order', (schema) => Joi.when('latestWorkedByMe', { is: true, then: schema.forbidden(), otherwise: schema.optional() })).messages({ 'any.unknown': 'order field is not allowed when latestWorkedByMe is true' })
+  .required()

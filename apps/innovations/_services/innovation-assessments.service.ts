@@ -279,7 +279,7 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
 
-    if (data.isSubmission) {
+    if (data.isSubmission && !dbAssessment.finishedAt) {
       await this.notifierService.send(
         { id: user.id, identityId: user.identityId },
         NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
