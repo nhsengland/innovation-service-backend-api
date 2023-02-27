@@ -4,7 +4,7 @@ import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } fr
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DateISOType, DomainUserInfoType } from '../../types';
+import type { DateISOType, DomainUserInfoType, RoleType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
 
@@ -260,4 +260,32 @@ export class DomainUsersService {
 
   }
 
+  /**
+   * given a user and role retrieves the full role type
+   * @param userId the user id
+   * @param roleId the role id
+   * @returns the full role type for the user if found, null otherwise
+   */
+  async getUserRole(userId: string, roleId?: string): Promise<RoleType | null> {
+    const query = this.sqlConnection.createQueryBuilder(UserRoleEntity, 'userRole')
+      .select([
+        'userRole.id', 'userRole.role',
+        'organisation.id', 'organisation.name', 'organisation.acronym',
+        'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym'
+      ])
+      .leftJoin('userRole.organisation', 'organisation')
+      .leftJoin('userRole.organisationUnit', 'organisationUnit')
+      .where('userRole.user = :userId', { userId });
+
+    // currently we're returning the first role found when no roleId (related to TechDebt in v1-me-info) and this is to
+    // keep current behavior. We shouldn't be calling this without roleId in the future.
+    if (roleId) {
+      query.andWhere('userRole.id = :roleId', { roleId });
+    }
+
+    const dbUserRole = await query.getOne();
+
+    return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
+  }
+  
 }

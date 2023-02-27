@@ -1,6 +1,5 @@
 import type { HttpRequest } from '@azure/functions';
 import jwt_decode from 'jwt-decode';
-import type { ServiceRoleEnum } from '../enums';
 
 import { UnauthorizedError, UserErrorsEnum } from '../errors';
 import { ResponseHelper } from '../helpers';
@@ -38,17 +37,7 @@ export function JwtDecoder() {
       const context: CustomContextType = args[0];
       const request: HttpRequest = args[1];
       const token = request.headers['authorization'] || '';
-      const domainContextHeader = request.headers['x-is-domain-context'];
-
-      let domainContext: {
-        role?: ServiceRoleEnum;
-        organisationId?: string;
-        innovationId?: string;
-      } = { };
-
-      if (domainContextHeader) {
-        domainContext = JSON.parse(domainContextHeader).user;
-      }
+      const role = request.headers['x-is-role'];
 
       try {
 
@@ -58,8 +47,8 @@ export function JwtDecoder() {
           user: {
             identityId: jwt.oid,
             name: jwt.name,
+            ...role && {roleId: role}
           },
-          context: domainContext,
         };
 
       }

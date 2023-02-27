@@ -24,7 +24,7 @@ export class AuthorizationService {
   validate(ctx: CustomContextType): AuthorizationValidationModel {
     const authInstance = new AuthorizationValidationModel(this.domainService);
     if (ctx.auth?.user.identityId) { authInstance.setUser(ctx.auth.user.identityId); }
-    if (ctx.auth?.context) { authInstance.setContext(ctx.auth.context); }
+    if (ctx.auth?.user.roleId) { authInstance.setRoleId(ctx.auth.user.roleId); }
     return authInstance;
   }
 

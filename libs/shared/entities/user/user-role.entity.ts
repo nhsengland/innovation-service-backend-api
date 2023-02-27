@@ -31,14 +31,14 @@ export class UserRoleEntity extends BaseEntity {
 
   @ManyToOne(() => OrganisationEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_id' })
-  organisation: OrganisationEntity;
+  organisation: OrganisationEntity | null;
 
   @RelationId('organisation')
   organisationId: string;
 
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })
-  organisationUnit: OrganisationUnitEntity;
+  organisationUnit: OrganisationUnitEntity | null;
 
   @RelationId('organisationUnit')
   organisationUnitId: string;

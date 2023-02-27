@@ -28,6 +28,10 @@ class V1MeInfo {
 
       const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
+      // [TechDebt] - TODO the domain context isn't always available and currently it's picking one at random (first)
+      // This needs to be fixed so that the termsOfUse and Innovation Transfers are moved out of this endpoint and
+      // asked for when needed (probably everytime user switches role). As long as there's no overlaps between admin and/or
+      // innovators and/or accessors/qa/na then this is working.
       const domainContext = authInstance.getContext();
 
       let termsOfUseAccepted = false;

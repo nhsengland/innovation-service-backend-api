@@ -104,11 +104,8 @@ export class HttpTestBuilder {
       user: {
         identityId: domainContext.identityId,
         name: randUserName(), // is not used
+        roleId: domainContext.currentRole.id
       },
-      context: {
-        ...(domainContext.organisation && { organisationId: domainContext.organisation?.id }),
-        ...((domainContext.organisation && domainContext.organisation.organisationUnit) && { organisationUnitId: domainContext.organisation?.organisationUnit?.id })
-      }
     };
     return this;
   }
