@@ -14,6 +14,7 @@ import { InnovationAssessmentEntity } from './innovation/innovation-assessment.e
 import { InnovationCareSettingEntity } from './innovation/innovation-care-setting.entity';
 import { InnovationCategoryEntity } from './innovation/innovation-category.entity';
 import { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-area.entity';
+import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 import { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
@@ -112,6 +113,7 @@ export const GENERAL_ENTITIES = [
 export const INNOVATION_ENTITIES = [
   ActivityLogEntity,
   InnovationActionEntity,
+  InnovationCollaboratorEntity,
   InnovationAreaEntity,
   InnovationAssessmentEntity,
   InnovationCareSettingEntity,
