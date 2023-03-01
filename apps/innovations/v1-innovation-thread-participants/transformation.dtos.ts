@@ -5,6 +5,7 @@ export type ResponseDTO = {
     id: string;
     name: string;
     type: ServiceRoleEnum | undefined;
+    isOwner?: boolean;
     organisationUnit: { id: string; acronym: string } | null;
   }[];
 }

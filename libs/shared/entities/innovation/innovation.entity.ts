@@ -100,7 +100,7 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'more_support_description', type: 'nvarchar', nullable: true })
   moreSupportDescription: null | string;
 
-  @Column({ name: "other_care_setting", type: 'nvarchar', length: 100, nullable: true })
+  @Column({ name: 'other_care_setting', type: 'nvarchar', length: 100, nullable: true })
   otherCareSetting: null | string;
 
   @Column({ name: 'has_problem_tackle_knowledge', type: 'nvarchar', nullable: true })
@@ -352,7 +352,7 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationDiseaseConditionEntity, record => record.innovation, {
     lazy: true,
-    cascade: ["insert", "update"],
+    cascade: ['insert', 'update'],
   })
   diseasesConditionsImpact: Promise<InnovationDiseaseConditionEntity[]>;
 

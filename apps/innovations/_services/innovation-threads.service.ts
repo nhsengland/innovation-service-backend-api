@@ -387,6 +387,7 @@ export class InnovationThreadsService extends BaseService {
         id: string;
         name: string;
         role: string;
+        isOwner?: boolean;
         organisation: { id: string; name: string; acronym: string | null } | undefined;
         organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
       };
@@ -405,14 +406,17 @@ export class InnovationThreadsService extends BaseService {
         'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name',
         'thread.id', 'thread.subject', 'thread.author',
         'users.identityId',
+        'innovation.id',
+        'owner.id',
       ])
-      .leftJoin('messages.author', 'messageAuthor')
-      .leftJoin('messages.authorUserRole', 'authorUserRole')
+      .innerJoin('messages.author', 'messageAuthor')
+      .innerJoin('messages.authorUserRole', 'authorUserRole')
       .leftJoin('messages.authorOrganisationUnit', 'organisationUnit')
-      .leftJoin('messages.thread', 'thread')
+      .innerJoin('messages.thread', 'thread')
       .leftJoin('organisationUnit.organisation', 'organisation')
-      .leftJoin('thread.innovation', 'innovation')
-      .leftJoin('thread.author', 'users')
+      .innerJoin('thread.innovation', 'innovation')
+      .innerJoin('innovation.owner', 'owner')
+      .innerJoin('thread.author', 'users')
       .where('thread.id = :threadId', { threadId })
       .orderBy('messages.createdAt', order?.createdAt || 'DESC')
       .skip(skip)
@@ -427,9 +431,7 @@ export class InnovationThreadsService extends BaseService {
 
     const authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
 
-    const authorsMap = await this.domainService.users.getUsersList({
-      identityIds: authors,
-    });
+    const authorsMap = await this.identityProvider.getUsersMap(authors);
 
     const notifications = await this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notification')
@@ -444,9 +446,7 @@ export class InnovationThreadsService extends BaseService {
 
     const messageResult = messages.map((tm) => {
 
-      const author = authorsMap.find(
-        (author) => author.identityId === tm.author.identityId
-      );
+      const author = authorsMap.get(tm.author.identityId);
       
       const organisationUnit = tm.authorOrganisationUnit ?? undefined;
       const organisation = tm.authorOrganisationUnit?.organisation;
@@ -460,7 +460,8 @@ export class InnovationThreadsService extends BaseService {
         createdBy: {
           id: tm.author.id,
           name: author?.displayName || 'unknown user',
-          role: tm.authorUserRole?.role || '',
+          role: tm.authorUserRole.role,
+          ...tm.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner.id},
           organisation,
           organisationUnit,
         },

@@ -48,7 +48,7 @@ class V1InnovationThreadMessageList {
         queryParams.skip,
         queryParams.take,
         orderBy,
-      )
+      );
 
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -60,6 +60,7 @@ class V1InnovationThreadMessageList {
             id: message.createdBy.id,
             name: message.createdBy.name,
             role: message.createdBy.role,
+            ...message.createdBy.isOwner !== undefined && { isOwner: message.createdBy.isOwner },
             organisationUnit: {
               id: message.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
               name: message.createdBy.organisationUnit?.name ?? '',

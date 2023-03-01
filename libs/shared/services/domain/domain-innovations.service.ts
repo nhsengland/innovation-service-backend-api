@@ -4,8 +4,8 @@ import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, Innovation
 import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
+import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
 
 export class DomainInnovationsService {
@@ -292,7 +292,8 @@ export class DomainInnovationsService {
    * @returns object with user info and organisation unit
    */
   async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
-    id: string, identityId: string, name?: string, locked: boolean, userRole: { id: string, role: ServiceRoleEnum },
+    id: string, identityId: string, name?: string, locked: boolean, isOwner?: boolean,
+    userRole: { id: string, role: ServiceRoleEnum },
     organisationUnit: { id: string, acronym: string } | null,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
@@ -300,6 +301,9 @@ export class DomainInnovationsService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'thread')
+      .select(['thread.id', 'innovation.id', 'owner.id'])
+      .innerJoin('thread.innovation', 'innovation')
+      .innerJoin('innovation.owner', 'owner')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -342,6 +346,7 @@ export class DomainInnovationsService {
           name: usersInfo.get(message.author.identityId)?.displayName ?? '',
           locked: !!message.author.lockedAt,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
+          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner.id},
           organisationUnit: message.authorUserRole.organisationUnit ? {
             id: message.authorUserRole.organisationUnit.id,
             acronym: message.authorUserRole.organisationUnit.acronym

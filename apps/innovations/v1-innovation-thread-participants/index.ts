@@ -41,6 +41,7 @@ class V1InnovationThreadParticipants {
           id: participant.id,
           name: participant?.name ?? '',
           type: participant.userRole.role,
+          ...participant.isOwner !== undefined && {isOwner: participant.isOwner},
           organisationUnit: participant.organisationUnit ? {
             id: participant.organisationUnit.id,
             acronym: participant.organisationUnit.acronym
