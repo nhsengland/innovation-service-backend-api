@@ -107,6 +107,10 @@ export type NotifierTemplatesType = {
     innovationId: string
   },
 
+  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
+    innovationId: string,
+    innovationCollaboratorId: string
+  },
 
   // Admin module.
   [NotifierTypeEnum.SLS_VALIDATION]: {

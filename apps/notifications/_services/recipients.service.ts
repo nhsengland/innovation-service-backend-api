@@ -1,5 +1,5 @@
 import { CommentEntity, IdleSupportViewEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, OrganisationEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
-import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UserErrorsEnum } from '@notifications/shared/errors';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
@@ -8,6 +8,7 @@ import { BaseService } from './base.service';
 
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
+import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 
 @injectable()
 export class RecipientsService extends BaseService {
@@ -433,6 +434,24 @@ export class RecipientsService extends BaseService {
       owner: { id: dbTransfer.userId, identityId: dbTransfer.userIdentityId }
     };
 
+  }
+  
+  async innovationCollaboratorInfo(innovationCollaboratorId: string): Promise<{ id: string, email: string, status: InnovationCollaboratorStatusEnum }> {
+    
+    const dbCollaborator = await this.sqlConnection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .select(['collaborator.id', 'collaborator.email', 'collaborator.status'])
+      .where('collaborator.id = :collaboratorId', { collaboratorId: innovationCollaboratorId })
+      .getOne();
+    
+    if (!dbCollaborator) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
+    }
+
+    return {
+      id: dbCollaborator.id,
+      email: dbCollaborator.id,
+      status: dbCollaborator.status
+    }
   }
 
   async needsAssessmentUsers(): Promise<{ id: string, identityId: string, roleId: string }[]> {

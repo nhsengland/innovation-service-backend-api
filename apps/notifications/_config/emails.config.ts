@@ -44,6 +44,8 @@ export enum EmailTypeEnum {
   INNOVATION_STOP_SHARING_TO_INNOVATOR = '61a309c7-dacd-45e0-b7a8-2bc1d01ce1e7',
   INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR = 'e5db6887-d578-4d95-9e75-b0682754d95c',
   INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT = 'cb539125-7753-4cce-884e-d612fab03d7b',
+  INNOVATION_COLLABORATION_INVITE_TO_EXISTING_USER = '1cc8087b-ed20-4b55-bdeb-c5cf3d870203',
+  INNOVATION_COLLABORATION_INVITE_TO_NEW_USER = 'bcaef4c6-dbcd-4ea5-be77-8422b4f37241'
 }
 
 
@@ -96,5 +98,6 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR]: { display_name?: string, innovation_name: string, innovation_url: string },
   [EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR]: { display_name?: string, innovation_name: string },
   [EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT]: { display_name?: string, innovation_name: string, innovation_url: string },
-
+  [EmailTypeEnum.INNOVATION_COLLABORATION_INVITE_TO_EXISTING_USER]: { display_name?: string, innovator_name: string, innovation_name: string, transfer_url: string },
+  [EmailTypeEnum.INNOVATION_COLLABORATION_INVITE_TO_NEW_USER]: { innovator_name: string, innovation_name: string, transfer_url: string },
 }

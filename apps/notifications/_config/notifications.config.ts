@@ -36,6 +36,7 @@ import {
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import type { EmailTypeEnum } from './emails.config';
+import { InnovationCollaboratorInviteHandler } from '../_handlers/innovation-collaborator-invite.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {
@@ -225,6 +226,13 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
+  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
+    handler: InnovationCollaboratorInviteHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]>({
+      innovationId: Joi.string().guid().required(),
+      innovationCollaboratorId: Joi.string().guid().required()
+    }).required()
+  },
 
   // Admin module.
   [NotifierTypeEnum.SLS_VALIDATION]: {
