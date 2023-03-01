@@ -33,10 +33,10 @@ import {
   SLSValidationHandler,
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler
+  UnitInactivationSupportStatusCompletedHandler,
+  InnovationCollaboratorInviteHandler
 } from '../_handlers';
 import type { EmailTypeEnum } from './emails.config';
-import { InnovationCollaboratorInviteHandler } from '../_handlers/innovation-collaborator-invite.handler';
 
 
 export const NOTIFICATIONS_CONFIG: {

@@ -17,14 +17,16 @@ export type TestDataType = {
     assessmentUser: UserEntity;
     assessmentUser2: UserEntity;
     innovator: UserEntity;
+    innovator2: UserEntity;
   };
   domainContexts: {
-    admin: AdminDomainContextType,
-    accessor: AccessorDomainContextType,
-    qualifyingAccessor: AccessorDomainContextType,
-    assessmentUser: AssessmentDomainContextType,
-    assessmentUser2: AssessmentDomainContextType,
-    innovator: InnovatorDomainContextType
+    admin: AdminDomainContextType;
+    accessor: AccessorDomainContextType;
+    qualifyingAccessor: AccessorDomainContextType;
+    assessmentUser: AssessmentDomainContextType;
+    assessmentUser2: AssessmentDomainContextType;
+    innovator: InnovatorDomainContextType;
+    innovator2: InnovatorDomainContextType;
   }
   organisationUsers: {
     innovator: OrganisationUserEntity;
@@ -83,17 +85,20 @@ export class TestsHelper {
       const helper = new TestDataBuilder();
 
       const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
+      const innovator2Organisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
       const accessorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.ACCESSOR).build(entityManager);
       const organisationUnit = await helper.createOrganisationUnit().addToOrganisation(accessorOrganisation).build(entityManager);
 
       const admin = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ADMIN).save()).getUser();
       const innovator = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovatorOrganisation).save()).getUser();
+      const innovator2 = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovator2Organisation).save()).getUser();
       const accessor = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ACCESSOR, accessorOrganisation, organisationUnit).save()).getUser();
       const qualifyingAccessor = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, accessorOrganisation, organisationUnit).save()).getUser();
       const assessmentUser = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
       const assessmentUser2 = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
 
       const innovatorOrgUser = await helper.addUserToOrganisation(innovator, innovatorOrganisation, InnovatorOrganisationRoleEnum.INNOVATOR_OWNER, entityManager);
+      const innovator2OrgUser = await helper.addUserToOrganisation(innovator2, innovator2Organisation, InnovatorOrganisationRoleEnum.INNOVATOR_OWNER, entityManager);
       const accessorOrgU = await helper.addUserToOrganisation(accessor, accessorOrganisation, AccessorOrganisationRoleEnum.ACCESSOR, entityManager);
       const qualifyingAccessorOrgU = await helper.addUserToOrganisation(qualifyingAccessor, accessorOrganisation, AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, entityManager);
 
@@ -189,6 +194,22 @@ export class TestsHelper {
             id: innovator.serviceRoles[0]!.id,
             role: ServiceRoleEnum.INNOVATOR
           },
+        },
+        innovator2: {
+          id: innovator2.id,
+          identityId: innovator2.identityId,
+          organisation: {
+            id: innovator2Organisation.id,
+            name: innovator2Organisation.name,
+            acronym: innovator2Organisation.acronym,
+            role: innovator2OrgUser.role as InnovatorOrganisationRoleEnum,
+            isShadow: true,
+            size: innovator2Organisation.size,
+          },
+          currentRole: {
+            id: innovator2.serviceRoles[0]!.id,
+            role: ServiceRoleEnum.INNOVATOR
+          },
         }
       };
       //#endregion
@@ -209,11 +230,13 @@ export class TestsHelper {
           assessmentUser,
           assessmentUser2,
           innovator,
+          innovator2,
           admin
         },
         domainContexts: domainContexts,
         organisationUsers: {
           innovator: innovatorOrgUser,
+          innovator2: innovator2OrgUser,
           accessor: accessorOrgU,
           qualifyingAccessor: qualifyingAccessorOrgU,
         },
@@ -223,6 +246,7 @@ export class TestsHelper {
         },
         organisation: {
           innovator: innovatorOrganisation,
+          innovator2: innovator2Organisation,
           accessor: accessorOrganisation,
         },
         organisationUnit: {

@@ -11,7 +11,7 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationCollaboratorInviteHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
-  EmailTypeEnum.INNOVATION_COLLABORATION_INVITE_TO_EXISTING_USER | EmailTypeEnum.INNOVATION_COLLABORATION_INVITE_TO_NEW_USER,
+  EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
   Record<string, never>
 > {
 
@@ -26,7 +26,6 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
     super(requestUser, data, domainContext);
   }
 
-
   async run(): Promise<this> {
 
     const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
@@ -38,7 +37,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
     if (!targetUser) { // This means that the user is NOT registered in the service.
 
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_COLLABORATION_INVITE_TO_NEW_USER,
+        templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
         to: { type: 'email', value: collaborator.email },
         params: {
           innovator_name: innovationOwnerInfo.displayName,
@@ -50,8 +49,8 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
     } else {
 
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_COLLABORATION_INVITE_TO_EXISTING_USER,
-        to: { type: 'identityId', value: targetUser.identityId },
+        templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER,
+        to: { type: 'identityId', value: targetUser.identityId, displayNameParam: 'display_name' },
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,

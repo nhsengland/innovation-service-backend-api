@@ -449,7 +449,7 @@ export class RecipientsService extends BaseService {
 
     return {
       id: dbCollaborator.id,
-      email: dbCollaborator.id,
+      email: dbCollaborator.email,
       status: dbCollaborator.status
     }
   }

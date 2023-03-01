@@ -1,11 +1,11 @@
-import { AfterLoad, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { AfterLoad, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
 import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
+import type { DateISOType } from '../../types/date.types';
 import { UserEntity } from '../user/user.entity';
 import { InnovationEntity } from './innovation.entity';
-import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('innovation_collaborator')
@@ -13,10 +13,10 @@ export class InnovationCollaboratorEntity extends BaseEntity {
 
   @PrimaryGeneratedColumn('uuid')
   id: string;
-  
+
   @Column({ type: 'simple-enum', enum: InnovationCollaboratorStatusEnum })
   status: InnovationCollaboratorStatusEnum;
-  
+
   @Column({ name: 'email', type: 'nvarchar' })
   email: string;
 
@@ -26,10 +26,15 @@ export class InnovationCollaboratorEntity extends BaseEntity {
   @Column({ name: 'invited_at', type: 'datetime2' })
   invitedAt: DateISOType;
 
+  @RelationId('innovation')
+  innovationId: string;
 
   @OneToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
+
+  @RelationId('user')
+  userId: string;
 
   @OneToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'user_id' })

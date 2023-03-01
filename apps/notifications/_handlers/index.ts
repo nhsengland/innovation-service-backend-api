@@ -28,3 +28,4 @@ export { SLSValidationHandler } from './sls-validation.handler';
 export { ThreadCreationHandler } from './thread-creation.handler';
 export { ThreadMessageCreationHandler } from './thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './unit-inactivation-support-status-completed.handler';
+export { InnovationCollaboratorInviteHandler } from './innovation-collaborator-invite.handler';
