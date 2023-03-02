@@ -49,6 +49,7 @@ import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { DateISOType } from '../../types/date.types';
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
+import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 
 
@@ -376,6 +377,9 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToOne(() => InnovationGroupedStatusViewEntity, record => record.innovation)
   innovationGroupedStatus: InnovationGroupedStatusViewEntity;
+
+  @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
+  collaborators: InnovationCollaboratorEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

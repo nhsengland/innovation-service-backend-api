@@ -1,4 +1,4 @@
-import { AfterLoad, Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -29,7 +29,7 @@ export class InnovationCollaboratorEntity extends BaseEntity {
   @RelationId('innovation')
   innovationId: string;
 
-  @OneToOne(() => InnovationEntity, { nullable: false })
+  @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 

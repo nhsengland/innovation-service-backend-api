@@ -1,7 +1,8 @@
 import 'reflect-metadata';
+import { Brackets } from 'typeorm';
 
 import {
-  AccessorOrganisationRoleEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum
+  AccessorOrganisationRoleEnum, InnovationCollaboratorStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum
 } from '../../enums';
 import { ForbiddenError, UnprocessableEntityError } from '../../errors';
 import type { AccessorDomainContextType, DomainContextType, DomainUserInfoType, InnovatorDomainContextType } from '../../types';
@@ -23,6 +24,7 @@ export enum AuthErrorsEnum {
   AUTH_INNOVATION_NOT_LOADED = 'AUTH.0101',
   AUTH_INNOVATION_UNAUTHORIZED = 'AUTH.0102',
   AUTH_INNOVATION_STATUS_NOT_ALLOWED = 'AUTH.0103',
+  AUTH_INNOVATION_NOT_OWNER = 'AUTH.0104',
   AUTH_MISSING_ORGANISATION_UNIT_CONTEXT = 'AUTH.0201',
   AUTH_MISSING_ORGANISATION_CONTEXT = 'AUTH.0202',
   AUTH_MISSING_CURRENT_ROLE = 'AUTH.0203',
@@ -45,7 +47,7 @@ enum InnovationValidationKeys {
 export class AuthorizationValidationModel {
 
   private user: { identityId?: string, data?: DomainUserInfoType } = {};
-  private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum } } = {};
+  private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum, owner: string } } = {};
   private roleId?: string;
   // this will change in the future, it has some duplicate information and DomainContextType can probably be reduced without issues
   private domainContext: { data?: DomainContextType } = {};
@@ -198,30 +200,35 @@ export class AuthorizationValidationModel {
   }
 
   // Innovation validations.
-  checkInnovation(data?: { status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] } }): this {
+  checkInnovation(data?: { 
+    status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] },
+    isOwner?: boolean
+  }): this {
     this.innovationValidations.set(InnovationValidationKeys.checkInnovation, () => this.innovationValidation(data));
     return this;
   }
-  private innovationValidation(data?: { status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] } }): null | AuthErrorsEnum {
-
-    let error: null | AuthErrorsEnum = null;
+  private innovationValidation(data?: Parameters<AuthorizationValidationModel['checkInnovation']>[0]): null | AuthErrorsEnum {
 
     if (!this.innovation.data) {
-      error = AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
+      return AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
+    }
+
+    if (data?.isOwner && this.innovation.data.owner !== this.user.data?.id) {
+      return AuthErrorsEnum.AUTH_INNOVATION_NOT_OWNER;
     }
 
     const domainContext = this.getContext();
-    if (!error && data?.status && domainContext.currentRole) {
+    if (data?.status && domainContext.currentRole) {
 
       const status = Array.isArray(data.status) ? data.status : data.status[domainContext.currentRole.role];
 
       if (!(status ?? []).some(status => status === this.innovation.data?.status)) {
-        error = AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
+        return AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
       }
 
     }
 
-    return error;
+    return null;
 
   }
 
@@ -421,34 +428,19 @@ export class AuthorizationValidationModel {
     return this.domainService.users.getUserInfo({ identityId });
   }
 
-  /** @deprecated no need to query the database
-  private async fetchOrganisationUnitContextData(organisationUnitId: string, identityId: string): Promise<DomainContextType> {
-    const unitContext = await this.domainService.context.getContextFromUnitInfo(organisationUnitId, identityId);
-    return this.domainContext.data = {
-      ...this.domainContext.data,
-      ...unitContext
-    };
-  }
-  */
-
-  /** @deprecated no need to query the database
-  private async fetchOrganisationContextData(organisationId: string, identityId: string): Promise<DomainContextType> {
-    const orgContext = await this.domainService.context.getContextFromOrganisationInfo(organisationId, identityId);
-    return this.domainContext.data = {
-      ...this.domainContext.data,
-      ...orgContext
-    };
-  }
-  */
-
-  private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum }> {
+  private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum, owner: string }> {
 
     const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation')
-      .select(['innovation.id', 'innovation.name', 'innovation.status'])
+      .select(['innovation.id', 'innovation.name', 'innovation.status', 'owner.id'])
+      .innerJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId });
 
     if (context.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      query.andWhere('innovation.owner_id = :ownerId', { ownerId: user.id });
+      query.leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE })
+      query.andWhere(new Brackets(qb => {
+        qb.andWhere('innovation.owner_id = :ownerId', { ownerId: user.id })
+        qb.orWhere('collaborator.user_id = :userId', { userId: user.id })
+      }));
     }
 
     if (context.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
@@ -481,7 +473,7 @@ export class AuthorizationValidationModel {
 
     const innovation = await query.getOne();
 
-    return (innovation ? { id: innovation.id, name: innovation.name, status: innovation.status } : undefined);
+    return (innovation ? { id: innovation.id, name: innovation.name, status: innovation.status, owner: innovation.owner.id } : undefined);
 
   }
 
