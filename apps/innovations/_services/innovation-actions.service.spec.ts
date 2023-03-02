@@ -530,7 +530,6 @@ describe('Innovation Actions Suite', () => {
         createdBy: {
           id: testData.baseUsers.accessor.id,
           name: 'first name',
-          role: ServiceRoleEnum.ACCESSOR,
           organisationUnit: {
             id: newAction.innovationSupport?.organisationUnit.id,
             name: newAction.innovationSupport?.organisationUnit.name,

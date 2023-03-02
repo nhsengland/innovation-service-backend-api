@@ -75,7 +75,7 @@ export class InnovationActionsService extends BaseService {
       .leftJoin('innovationSupport.organisationUnit', 'organisationUnit')
       .leftJoin('action.createdByUserRole', 'createdByUserRole')
       .leftJoin('action.updatedByUserRole', 'updatedByUserRole')
-      .leftJoin('updatedByUserRole.user', 'updatedByUser')
+      .leftJoin('updatedByUserRole.user', 'updatedByUser');
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: domainContext.id });
@@ -212,7 +212,7 @@ export class InnovationActionsService extends BaseService {
     description: string,
     createdAt: DateISOType,
     updatedAt: DateISOType,
-    updatedBy: { name: string, role?: ServiceRoleEnum },
+    updatedBy: { name: string, role: ServiceRoleEnum, isOwner?: boolean },
     createdBy: { id: string, name: string, role: ServiceRoleEnum, organisationUnit?: { id: string, name: string, acronym?: string } },
     declineReason?: string
   }> {
@@ -220,13 +220,25 @@ export class InnovationActionsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbAction = await em.createQueryBuilder(InnovationActionEntity, 'action')
-      .innerJoinAndSelect('action.innovationSection', 'innovationSection')
-      .innerJoinAndSelect('innovationSection.innovation', 'innovation')
-      .innerJoinAndSelect('action.createdByUser', 'createdByUser')
-      .leftJoinAndSelect('action.innovationSupport', 'innovationSupport')
-      .leftJoinAndSelect('innovationSupport.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('action.createdByUserRole', 'createdByUserRole')
-      .leftJoinAndSelect('action.updatedByUserRole', 'updatedByUserRole')
+      .select([
+        'action.id', 'action.status', 'action.displayId', 'action.description', 'action.createdAt', 'action.updatedAt', 'action.createdBy', 'action.updatedBy',
+        'innovationSection.id', 'innovationSection.section',
+        'innovation.id',
+        'owner.id',
+        'createdByUserRole.id', 'createdByUserRole.role',
+        'createdByUserOrganisationUnit.id', 'createdByUserOrganisationUnit.name', 'createdByUserOrganisationUnit.acronym',
+        'createdByUser.id', 'createdByUser.identityId',
+        'updatedByUserRole.id', 'updatedByUserRole.role',
+        'updatedByUser.id', 'updatedByUser.identityId',
+      ])
+      .innerJoin('action.innovationSection', 'innovationSection')
+      .innerJoin('innovationSection.innovation', 'innovation')
+      .innerJoin('innovation.owner', 'owner')
+      .innerJoin('action.createdByUserRole', 'createdByUserRole')
+      .innerJoin('createdByUserRole.user', 'createdByUser')
+      .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrganisationUnit')
+      .innerJoin('action.updatedByUserRole', 'updatedByUserRole')
+      .innerJoin('updatedByUserRole.user', 'updatedByUser')
       .where('action.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
@@ -248,7 +260,8 @@ export class InnovationActionsService extends BaseService {
       }
     }
 
-    const lastUpdatedByUser = await this.domainService.users.getUserInfo({ userId: dbAction.updatedBy });
+    const createdByUser = await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId);
+    const lastUpdatedByUser = await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId);
 
     return {
       id: dbAction.id,
@@ -260,19 +273,20 @@ export class InnovationActionsService extends BaseService {
       updatedAt: dbAction.updatedAt,
       updatedBy: {
         name: lastUpdatedByUser.displayName,
-        ...(dbAction.updatedByUserRole && {role: dbAction.updatedByUserRole.role})
+        role: dbAction.updatedByUserRole.role,
+        ...(dbAction.updatedByUserRole.role === ServiceRoleEnum.INNOVATOR && {
+          isOwner: dbAction.innovationSection.innovation.owner.id === dbAction.updatedByUserRole.user.id
+        })
       },
       createdBy: {
-        id: dbAction.createdByUser.id,
-        name: (await this.identityProviderService.getUserInfo(dbAction.createdByUser.identityId)).displayName,
-        role: dbAction.createdByUserRole?.role as ServiceRoleEnum,
-        ...(dbAction.innovationSupport ? {
-          organisationUnit: {
-            id: dbAction.innovationSupport?.organisationUnit?.id,
-            name: dbAction.innovationSupport?.organisationUnit?.name,
-            acronym: dbAction.innovationSupport?.organisationUnit?.acronym
-          }
-        } : {})
+        id: dbAction.createdByUserRole.user.id,
+        name: createdByUser.displayName,
+        role: dbAction.createdByUserRole.role,
+        ...(dbAction.createdByUserRole.organisationUnit && {organisationUnit: {
+          id: dbAction.createdByUserRole.organisationUnit.id,
+          name: dbAction.createdByUserRole.organisationUnit.name,
+          acronym: dbAction.createdByUserRole.organisationUnit.acronym
+        }})
       },
       ...(declineReason ? { declineReason } : {})
     };

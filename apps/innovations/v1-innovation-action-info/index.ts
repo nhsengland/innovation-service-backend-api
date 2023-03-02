@@ -45,7 +45,8 @@ class V1InnovationActionInfo {
         updatedAt: result.updatedAt,
         updatedBy: {
           name: result.updatedBy.name,
-          role: result.updatedBy.role
+          role: result.updatedBy.role,
+          ...result.updatedBy.isOwner !== undefined && { isOwner: result.updatedBy.isOwner }
         },
         createdBy: { ...result.createdBy },
         ...(result.declineReason ? { declineReason: result.declineReason } : {})
