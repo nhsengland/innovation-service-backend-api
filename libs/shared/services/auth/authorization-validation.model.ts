@@ -8,7 +8,6 @@ import type { AccessorDomainContextType, DomainContextType, DomainUserInfoType, 
 
 import type { DomainServiceType } from '../interfaces';
 
-
 export enum AuthErrorsEnum {
   AUTH_USER_NOT_LOADED = 'AUTH.0001',
   AUTH_USER_NOT_ACTIVE = 'AUTH.0002',
@@ -127,11 +126,11 @@ export class AuthorizationValidationModel {
     return this.domainContext.data?.currentRole.role === ServiceRoleEnum.ASSESSMENT ? null : AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
   }
 
-  checkAccessorType(data?: { organisationRole?: AccessorOrganisationRoleEnum[], organisationId?: string, organisationUnitId?: string }): this {
+  checkAccessorType(data?: { organisationRole?: (ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR)[], organisationId?: string, organisationUnitId?: string }): this {
     this.userValidations.set(UserValidationKeys.checkAccessorType, () => this.accessorTypeValidation(data));
     return this;
   }
-  private accessorTypeValidation(data?: { organisationRole?: AccessorOrganisationRoleEnum[], organisationId?: string, organisationUnitId?: string }): null | AuthErrorsEnum {
+  private accessorTypeValidation(data?: { organisationRole?: ServiceRoleEnum[], organisationId?: string, organisationUnitId?: string }): null | AuthErrorsEnum {
 
     let error: null | AuthErrorsEnum = null;
 
@@ -150,7 +149,7 @@ export class AuthorizationValidationModel {
     if (!error && this.user.data?.organisations.length === 0) { // Accessors should ALWAYS have an organisation. This is just a sanity check!
       error = AuthErrorsEnum.AUTH_USER_WITHOUT_ORGANISATION;
     }
-    if (!error && data?.organisationRole && !data.organisationRole.some(role => role === this.domainContext.data?.organisation!.role)) {
+    if (!error && data?.organisationRole && !data.organisationRole.some(role => role === this.domainContext.data?.currentRole.role)) {
       error = AuthErrorsEnum.AUTH_USER_ORGANISATION_ROLE_NOT_ALLOWED;
     }
     if (!error && data?.organisationId && data.organisationId !== this.domainContext.data?.organisation!.id) {
@@ -373,16 +372,10 @@ export class AuthorizationValidationModel {
         id: organisation.id,
         name: organisation.name,
         acronym: organisation.acronym,
-        role: organisation.role,
-        size: organisation.size,
-        isShadow: organisation.isShadow,
         organisationUnit: {
           id: organisationUnit.id,
           name: organisationUnit.name,
-          acronym: organisationUnit.acronym,
-          organisationUnitUser: {
-            id: organisationUnit.organisationUnitUser.id,
-          }
+          acronym: organisationUnit.acronym
         },
       },
       currentRole: { id: role.id, role: role.role },
@@ -417,10 +410,7 @@ export class AuthorizationValidationModel {
       organisation: {
         id: organisation.id,
         name: organisation.name,
-        acronym: organisation.acronym,
-        role: organisation.role,
-        size: organisation.size,
-        isShadow: organisation.isShadow,
+        acronym: organisation.acronym
       },
       currentRole: { id: role.id, role: role.role },
     };
@@ -471,7 +461,7 @@ export class AuthorizationValidationModel {
       if (!context ||
         !context.organisation ||
         !context.organisation.id ||
-        !context.organisation.role ||
+        !context.currentRole.role ||
         !context.organisation.organisationUnit ||
         !context.organisation.organisationUnit.id) {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
@@ -481,7 +471,7 @@ export class AuthorizationValidationModel {
       query.andWhere('innovation.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
       query.andWhere('innovationShares.id = :accessorOrganisationId', { accessorOrganisationId: context.organisation.id });
 
-      if (context.organisation.role === AccessorOrganisationRoleEnum.ACCESSOR) {
+      if (context.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.innerJoin('innovation.innovationSupports', 'innovationSupports');
         query.andWhere('innovationSupports.status IN (:...supportStatuses)', { supportStatuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
         query.andWhere('innovationSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: context.organisation.organisationUnit.id });

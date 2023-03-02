@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -9,9 +9,9 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from '../_services/interfaces';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
-import { AccessorOrganisationRoleEnum } from '@innovations/shared/enums';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 
 class V1InnovationsSupportLogCreate {
@@ -28,7 +28,7 @@ class V1InnovationsSupportLogCreate {
 
       const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
-        .checkAccessorType({ organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR] })
+        .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();

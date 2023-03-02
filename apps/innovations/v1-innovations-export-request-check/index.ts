@@ -29,11 +29,7 @@ class V1InnovationsExportRequestInfo {
 
       const domainContext = auth.getContext();
 
-      const params = JoiHelper.Validate<PathParamsType>(
-        PathParamsSchema,
-        request.params,
-        { userType: domainContext.currentRole, userOrganisationRole: domainContext.organisation?.role }
-      );
+      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
       const result = await innovationsService.checkInnovationRecordExportRequest(
         domainContext,

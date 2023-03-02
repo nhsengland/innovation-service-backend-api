@@ -122,16 +122,10 @@ export class TestsHelper {
             id: accessorOrganisation.id,
             name: accessorOrganisation.name,
             acronym: accessorOrganisation.acronym,
-            role: accessorOrgU.role as AccessorOrganisationRoleEnum,
-            isShadow: false,
-            size: accessorOrganisation.size,
             organisationUnit: {
               id: organisationUnit.id,
               name: organisationUnit.name,
-              acronym: organisationUnit.acronym,
-              organisationUnitUser: {
-                id: accessorOrgUnitUser.id,
-              }
+              acronym: organisationUnit.acronym
             }
           },
           currentRole: {
@@ -146,16 +140,10 @@ export class TestsHelper {
             id: accessorOrganisation.id,
             name: accessorOrganisation.name,
             acronym: accessorOrganisation.acronym,
-            role: qualifyingAccessorOrgU.role as AccessorOrganisationRoleEnum,
-            isShadow: false,
-            size: accessorOrganisation.size,
             organisationUnit: {
               id: organisationUnit.id,
               name: organisationUnit.name,
-              acronym: organisationUnit.acronym,
-              organisationUnitUser: {
-                id: qaOrgUnitUser.id,
-              }
+              acronym: organisationUnit.acronym
             }
           },
           currentRole: {
@@ -186,9 +174,6 @@ export class TestsHelper {
             id: innovatorOrganisation.id,
             name: innovatorOrganisation.name,
             acronym: innovatorOrganisation.acronym,
-            role: innovatorOrgUser.role as InnovatorOrganisationRoleEnum,
-            isShadow: true,
-            size: innovatorOrganisation.size,
           },
           currentRole: {
             id: innovator.serviceRoles[0]!.id,
@@ -201,10 +186,7 @@ export class TestsHelper {
           organisation: {
             id: innovator2Organisation.id,
             name: innovator2Organisation.name,
-            acronym: innovator2Organisation.acronym,
-            role: innovator2OrgUser.role as InnovatorOrganisationRoleEnum,
-            isShadow: true,
-            size: innovator2Organisation.size,
+            acronym: innovator2Organisation.acronym
           },
           currentRole: {
             id: innovator2.serviceRoles[0]!.id,

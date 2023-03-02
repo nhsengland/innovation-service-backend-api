@@ -131,7 +131,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
       innovationFetchQuery.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: domainContext.organisation?.id });
 
-      if (domainContext.organisation?.role === AccessorOrganisationRoleEnum.ACCESSOR) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
       }
 
@@ -236,7 +236,7 @@ export class InnovationsService extends BaseService {
 
     if (filters.dateFilter && filters.dateFilter.length > 0) {
       const dateFilterKeyMap = new Map([
-        ["submittedAt", "innovations.submittedAt"]
+        ['submittedAt', 'innovations.submittedAt']
       ]);
 
       for (const dateFilter of filters.dateFilter) {
@@ -1303,7 +1303,7 @@ export class InnovationsService extends BaseService {
 
     });
 
-    for (let savedInnovation of savedInnovations) {
+    for (const savedInnovation of savedInnovations) {
       await this.notifierService.send(
         { id: context.id, identityId: context.identityId },
         NotifierTypeEnum.INNOVATION_WITHDRAWN,

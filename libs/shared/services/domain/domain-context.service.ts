@@ -3,7 +3,7 @@ import type { DataSource, Repository } from 'typeorm';
 import type { AccessorDomainContextType, InnovatorDomainContextType } from '../../types';
 
 import { ActivityLogEntity, OrganisationUnitUserEntity, OrganisationUserEntity } from '../../entities';
-import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum } from '../../enums';
+import { InnovatorOrganisationRoleEnum, ServiceRoleEnum } from '../../enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '../../errors';
 import { AuthErrorsEnum } from '../auth/authorization-validation.model';
 
@@ -57,14 +57,10 @@ export class DomainContextService {
         id: organisationUnitUser.organisationUnit.organisation.id,
         name: organisationUnitUser.organisationUnit.organisation.name,
         acronym: organisationUnitUser.organisationUnit.organisation.acronym,
-        isShadow: organisationUnitUser.organisationUnit.organisation.isShadow,
-        role: organisationUnitUser.organisationUser.role as AccessorOrganisationRoleEnum,
-        size: organisationUnitUser.organisationUnit.organisation.size,
         organisationUnit: {
           id: organisationUnitUser.organisationUnit.id,
           name: organisationUnitUser.organisationUnit.name,
-          acronym: organisationUnitUser.organisationUnit.acronym,
-          organisationUnitUser:  { id: organisationUnitUser.id },
+          acronym: organisationUnitUser.organisationUnit.acronym
         },
       },
       currentRole: {id: role.id, role: role.role},
@@ -105,10 +101,6 @@ export class DomainContextService {
         id: organisationUser.organisation.id,
         name: organisationUser.organisation.name,
         acronym: organisationUser.organisation.acronym,
-        isShadow: organisationUser.organisation.isShadow,
-        role: organisationUser.role,
-        size: organisationUser.organisation.size,
-        // organisationUser: { id: organisationUser.id },
       },
       currentRole: {id: role.id, role: role.role },
     };

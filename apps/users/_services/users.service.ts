@@ -197,11 +197,8 @@ export class UsersService extends BaseService {
           identityId: dbUser.identityId,
           organisation: {
             id: dbOrganisation.id,
-            isShadow: dbOrganisation.isShadow,
             name: dbOrganisation.name,
-            size: dbOrganisation.size,
-            acronym: dbOrganisation.acronym,
-            role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+            acronym: dbOrganisation.acronym
           },
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR },
 
