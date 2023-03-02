@@ -6,6 +6,7 @@ import type { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, Inno
 import type { ActivitiesParamsType, DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
+import { InnovationCollaboratorBuilder } from './innovation-collaborators.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
 import { InnovationBuilder } from './innovation.builder';
@@ -52,6 +53,10 @@ export class TestDataBuilder {
 
   createAction(createdBy: DomainContextType, innovationSection: InnovationSectionEntity, innovationSupport?: InnovationSupportEntity): InnovationActionBuilder {
     return new InnovationActionBuilder(createdBy, innovationSection, innovationSupport);
+  }
+
+  createCollaborator(domainContext: DomainContextType, innovation: InnovationEntity): InnovationCollaboratorBuilder {
+    return new InnovationCollaboratorBuilder(domainContext, innovation);
   }
 
   async addUserToOrganisation(a: UserEntity, b: OrganisationEntity, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, entityManager: EntityManager): Promise<OrganisationUserEntity> {

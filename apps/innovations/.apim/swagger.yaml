@@ -866,6 +866,52 @@ paths:
           description: The innovation could not be found.
         "500":
           description: An unexpected error occurred while creating the collaborator.
+    get:
+      description: Get a list of innovation collaborators.
+      operationId: v1-innovation-collaborators-list
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The list of innovation collaborators.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: The total number of records.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        role:
+                          type: string
+                        email:
+                          type: string
+                        status:
+                          type: string
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   /v1:
     post:
       description: Create an innovation
