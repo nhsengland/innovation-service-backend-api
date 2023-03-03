@@ -34,7 +34,7 @@ export class InnovationCollaboratorEntity extends BaseEntity {
   innovation: InnovationEntity;
 
   @RelationId('user')
-  userId: string;
+  userId: string | null;
 
   @OneToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'user_id' })

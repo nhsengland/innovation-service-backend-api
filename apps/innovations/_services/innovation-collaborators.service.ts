@@ -105,7 +105,7 @@ export class InnovationCollaboratorsService extends BaseService {
         const parameters = {
           pendingStatus: InnovationCollaboratorStatusEnum.PENDING,
           expiredAtDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString()
-        }
+        };
 
         // Since Expired is an afterLoad status we can not directly search for it in WHERE
         if (filters.status.includes(InnovationCollaboratorStatusEnum.EXPIRED)) {
@@ -154,14 +154,16 @@ export class InnovationCollaboratorsService extends BaseService {
       return { count: 0, data: [] };
     }
 
-    const usersInfo = await this.domainService.users.getUsersList({ userIds: collaborators.map(c => c.userId) });
-    const usersInfoMap = new Map(usersInfo.map(u => [u.id, u]));
+    const userIds = collaborators.map(c => c.userId).filter(((u): u is string => u !== null));
 
+    const usersInfo = await this.domainService.users.getUsersList({ userIds });
+    const usersInfoMap = new Map(usersInfo.map(u => [u.id, u]));
+    
     const data = collaborators.map((collaborator) => ({
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
-      ...(usersInfoMap.has(collaborator.userId) && { name: usersInfoMap.get(collaborator.userId)?.displayName ?? '' }),
+      ...(collaborator.userId && { name: usersInfoMap.get(collaborator.userId)?.displayName ?? '' }),
       ...(collaborator.collaboratorRole && { collaboratorRole: collaborator.collaboratorRole })
     }));
 

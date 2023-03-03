@@ -2,7 +2,7 @@ import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
 import {
@@ -34,7 +34,8 @@ import {
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler,
-  InnovationCollaboratorInviteHandler
+  InnovationCollaboratorInviteHandler,
+  InnovationCollaboratorUpdateHandler
 } from '../_handlers';
 import type { EmailTypeEnum } from './emails.config';
 
@@ -231,6 +232,17 @@ export const NOTIFICATIONS_CONFIG: {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]>({
       innovationId: Joi.string().guid().required(),
       innovationCollaboratorId: Joi.string().guid().required()
+    }).required()
+  },
+  
+  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
+    handler: InnovationCollaboratorUpdateHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]>({
+      innovationId: Joi.string().guid().required(),
+      innovationCollaborator: Joi.object({
+        id: Joi.string().guid().required(),
+        status: Joi.string().valid(...Object.values(InnovationCollaboratorStatusEnum)).required()
+      })
     }).required()
   },
 

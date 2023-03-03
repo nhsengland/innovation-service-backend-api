@@ -9,6 +9,7 @@ import { BaseService } from './base.service';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
+import { string } from 'joi';
 
 @injectable()
 export class RecipientsService extends BaseService {
@@ -45,7 +46,7 @@ export class RecipientsService extends BaseService {
       .andWhere('user.locked_at IS NULL')
       .getMany() || [];
 
-    const users = await  Promise.all(
+    const users = await Promise.all(
       dbUsers.map(async item => ({
         id: item.id,
         identityId: item.identityId,
@@ -57,7 +58,7 @@ export class RecipientsService extends BaseService {
       }))
     );
 
-    return users.flatMap( user => user.roles.map( role => ({
+    return users.flatMap(user => user.roles.map(role => ({
       id: user.id,
       identityId: user.identityId,
       userRole: role,
@@ -89,7 +90,7 @@ export class RecipientsService extends BaseService {
     }
 
     const authUser = await this.identityProviderService.getUserInfo(dbUser.identityId);
-    
+
     return {
       id: dbUser.id,
       identityId: dbUser.identityId,
@@ -142,7 +143,7 @@ export class RecipientsService extends BaseService {
     }
 
     // This will not work if a innovator can have two INNOVATOR roles
-    const innovationOwnerRole = dbInnovation.owner.serviceRoles.find( r => r.role === ServiceRoleEnum.INNOVATOR);
+    const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(r => r.role === ServiceRoleEnum.INNOVATOR);
 
     if (!innovationOwnerRole) {
       throw new NotFoundError(UserErrorsEnum.USER_TYPE_INVALID);
@@ -197,8 +198,8 @@ export class RecipientsService extends BaseService {
    * @returns a list of users with their email notification preferences
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
-  async innovationAssignedUsers(data: { innovationId: string} | { innovationSupportId : string }): Promise<{
-    id: string, identityId: string, userRole: {id: string, role: ServiceRoleEnum}, organisationUnitId: string,
+  async innovationAssignedUsers(data: { innovationId: string } | { innovationSupportId: string }): Promise<{
+    id: string, identityId: string, userRole: { id: string, role: ServiceRoleEnum }, organisationUnitId: string,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
 
@@ -247,7 +248,7 @@ export class RecipientsService extends BaseService {
 
     const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .select([
-        'innovation.id', 
+        'innovation.id',
         'support.id',
         'organisationUnit.id',
         'organisationUnitUser.id',
@@ -308,7 +309,7 @@ export class RecipientsService extends BaseService {
       id: dbAction.id,
       displayId: dbAction.displayId,
       status: dbAction.status,
-      ...(dbAction.innovationSupport && {organisationUnit: { id: dbAction.innovationSupport.organisationUnit.id, name: dbAction.innovationSupport.organisationUnit.name, acronym: dbAction.innovationSupport.organisationUnit.acronym }}),
+      ...(dbAction.innovationSupport && { organisationUnit: { id: dbAction.innovationSupport.organisationUnit.id, name: dbAction.innovationSupport.organisationUnit.name, acronym: dbAction.innovationSupport.organisationUnit.acronym } }),
       owner: { id: dbAction.createdByUser.id, identityId: dbAction.createdByUser.identityId, roleId: dbAction.createdByUserRole.id },
     };
 
@@ -364,9 +365,9 @@ export class RecipientsService extends BaseService {
       .where('threadMessage.deleted_at IS NULL')
       .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
       .distinct()
-      .getRawMany()).map(item => [item.author_id, { context: {organisationUnitId: item.author_organisation_unit_id, role: item.author_role_name }}]));
+      .getRawMany()).map(item => [item.author_id, { context: { organisationUnitId: item.author_organisation_unit_id, role: item.author_role_name } }]));
 
-    if(authors.size === 0) {
+    if (authors.size === 0) {
       return [];
     }
 
@@ -435,23 +436,35 @@ export class RecipientsService extends BaseService {
     };
 
   }
-  
-  async innovationCollaboratorInfo(innovationCollaboratorId: string): Promise<{ id: string, email: string, status: InnovationCollaboratorStatusEnum }> {
-    
+
+  async innovationCollaboratorInfo(innovationCollaboratorId: string): 
+  Promise<{ 
+    id: string, email: string, status: InnovationCollaboratorStatusEnum,
+    user?: { id: string, identityId: string, roleId: string}
+  }> {
+
     const dbCollaborator = await this.sqlConnection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.id', 'collaborator.email', 'collaborator.status'])
+      .select([
+        'collaborator.id', 'collaborator.email', 'collaborator.status',
+        'user.id', 'user.identityId', 'user.serviceRoles'
+      ])
+      .leftJoin('collaborator.user', 'user')
       .where('collaborator.id = :collaboratorId', { collaboratorId: innovationCollaboratorId })
       .getOne();
-    
+
     if (!dbCollaborator) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
+    const role = dbCollaborator.user?.serviceRoles.find(sR => sR.role === ServiceRoleEnum.INNOVATOR);
+
     return {
       id: dbCollaborator.id,
       email: dbCollaborator.email,
-      status: dbCollaborator.status
-    }
+      status: dbCollaborator.status,
+      ...(dbCollaborator.user && role ?
+        { user: { id: dbCollaborator.user.id, identityId: dbCollaborator.user.identityId, roleId: role.id } } : {})
+    };
   }
 
   async needsAssessmentUsers(): Promise<{ id: string, identityId: string, roleId: string }[]> {
@@ -503,7 +516,7 @@ export class RecipientsService extends BaseService {
       .andWhere('organisationUnit.inactivated_at IS NULL')
       .getMany();
 
-    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId, roleId: item.serviceRoles[0]?.id ?? '' ,organisationUnitId: item.serviceRoles[0]?.organisationUnit?.id ?? '' }));
+    return dbUsers.map(item => ({ id: item.id, identityId: item.identityId, roleId: item.serviceRoles[0]?.id ?? '', organisationUnitId: item.serviceRoles[0]?.organisationUnit?.id ?? '' }));
   }
 
   /**
