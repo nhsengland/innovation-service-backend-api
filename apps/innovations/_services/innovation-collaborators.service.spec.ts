@@ -4,10 +4,11 @@ import { container } from '../_config';
 
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
 import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
-import type { UnprocessableEntityError } from '@innovations/shared/errors';
-import { DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
+import type { NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { DomainUsersService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
-import { randEmail, randRole } from '@ngneat/falso';
+import type { DomainContextType } from '@innovations/shared/types';
+import { randEmail, randRole, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
 import { InnovationCollaboratorsServiceSymbol, InnovationCollaboratorsServiceType } from './interfaces';
@@ -41,12 +42,12 @@ describe('Innovation Collaborators Suite', () => {
 
 
     beforeEach(() => {
-      jest.spyOn(DomainUsersService.prototype, "getUserByEmail").mockResolvedValue([]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([]);
     });
 
     it('create a collaborator for an existing user', async () => {
 
-      jest.spyOn(DomainUsersService.prototype, "getUserByEmail").mockResolvedValue([{ id: testData.baseUsers.innovator2.id } as any]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator2.id } as any]);
 
       const expected = {
         email: randEmail(),
@@ -229,5 +230,145 @@ describe('Innovation Collaborators Suite', () => {
 
   });
 
+  describe('getCollaboratorInfo', () => {
+    let collaboratorPendingWithoutUser: InnovationCollaboratorEntity;
+    let collaboratorPendingWithUser: InnovationCollaboratorEntity;
+
+    beforeEach(async () => {
+      collaboratorPendingWithoutUser = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).build(em);
+      collaboratorPendingWithUser = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).setEmail('innovator2@gmail.com').setUser(testData.baseUsers.innovator2).build(em);
+
+      jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+        { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name' } as any,
+        { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name' } as any
+      ]);
+    });
+
+    describe('asOwner', () => {
+      it('for a new user it should return info for a new collaborator without the name', async () => {
+
+        const expected = {
+          id: collaboratorPendingWithoutUser.id,
+          collaboratorRole: collaboratorPendingWithoutUser.collaboratorRole,
+          email: collaboratorPendingWithoutUser.email,
+          status: collaboratorPendingWithoutUser.status,
+          innovation: {
+            id: testData.innovation.id,
+            name: testData.innovation.name,
+            description: testData.innovation.description,
+            owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
+          },
+        }
+
+        const collaborator = await sut.getCollaboratorInfo(
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          collaboratorPendingWithoutUser.id,
+          em
+        );
+
+        expect(collaborator).toMatchObject(expected);
+      });
+
+      it('for a existing user should return info for a new collaborator with the name of the user', async () => {
+        const expected = {
+          id: collaboratorPendingWithUser.id,
+          collaboratorRole: collaboratorPendingWithUser.collaboratorRole,
+          name: 'Innovator 2 name',
+          email: collaboratorPendingWithUser.email,
+          status: collaboratorPendingWithUser.status,
+          innovation: {
+            id: testData.innovation.id,
+            name: testData.innovation.name,
+            description: testData.innovation.description,
+            owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
+          },
+        }
+
+        const collaborator = await sut.getCollaboratorInfo(
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          collaboratorPendingWithUser.id,
+          em
+        );
+
+        expect(collaborator).toMatchObject(expected);
+      });
+
+    });
+
+    describe('asCollaborator', () => {
+      it('should return info (with the name of the user) as collaborator user', async () => {
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue(
+          { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+        );
+
+        const expected = {
+          id: collaboratorPendingWithUser.id,
+          collaboratorRole: collaboratorPendingWithUser.collaboratorRole,
+          name: 'Innovator 2 name',
+          email: collaboratorPendingWithUser.email,
+          status: collaboratorPendingWithUser.status,
+          innovation: {
+            id: testData.innovation.id,
+            name: testData.innovation.name,
+            description: testData.innovation.description,
+            owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
+          },
+        }
+
+        const collaborator = await sut.getCollaboratorInfo(
+          testData.domainContexts.innovator2,
+          testData.innovation.id,
+          collaboratorPendingWithUser.id,
+          em
+        );
+
+        expect(collaborator).toMatchObject(expected);
+      });
+
+      it('should return error if the collaborator invite is not for him', async () => {
+        const randomUserId = randUuid();
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue(
+          { id: randomUserId, identityId: randomUserId, displayName: 'randomUserId', email: 'randomUserId@gmail.com' } as any
+        );
+
+        let err: NotFoundError | null = null;
+        try {
+          await sut.getCollaboratorInfo(
+            { id: randomUserId, identityId: randomUserId } as DomainContextType,
+            testData.innovation.id,
+            collaboratorPendingWithUser.id,
+            em
+          );
+        } catch (error) {
+          err = error as UnauthorizedError;
+        }
+
+        expect(err).toBeDefined();
+        expect(err?.name).toBe('ICB.0003');
+      });
+    });
+
+    it('should return error if collaborator doesn\'t exist', async () => {
+
+      let err: NotFoundError | null = null;
+      try {
+        await sut.getCollaboratorInfo(
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          randUuid(),
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('ICB.0001');
+    });
+  })
+
 });
+
 

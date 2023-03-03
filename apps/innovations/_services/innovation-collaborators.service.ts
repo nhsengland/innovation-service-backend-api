@@ -1,10 +1,10 @@
 import { InnovationEntity, UserEntity } from "@innovations/shared/entities";
 import { InnovationCollaboratorEntity } from "@innovations/shared/entities/innovation/innovation-collaborator.entity";
 import { InnovationCollaboratorStatusEnum, NotifierTypeEnum } from "@innovations/shared/enums";
-import { InnovationErrorsEnum, UnprocessableEntityError } from "@innovations/shared/errors";
+import { InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from "@innovations/shared/errors";
 import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
-import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from "@innovations/shared/services";
-import type { DomainContextType } from "@innovations/shared/types";
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from "@innovations/shared/services";
+import type { DateISOType, DomainContextType } from "@innovations/shared/types";
 import { inject, injectable } from "inversify";
 import { Brackets, EntityManager, ObjectLiteral } from "typeorm";
 import { BaseService } from "./base.service";
@@ -14,7 +14,8 @@ export class InnovationCollaboratorsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
   ) { super(); }
 
   async createCollaborator(
@@ -167,6 +168,75 @@ export class InnovationCollaboratorsService extends BaseService {
     return {
       count,
       data
+    };
+  }
+
+  async getCollaboratorInfo(
+    domainContext: DomainContextType,
+    innovationId: string,
+    collaboratorId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    id: string,
+    name?: string,
+    collaboratorRole?: string,
+    email: string,
+    status: InnovationCollaboratorStatusEnum,
+    innovation: { id: string, name: string, description: null | string, owner: { id: string, name?: string } },
+    invitedAt: DateISOType,
+  }> {
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const collaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .innerJoin('collaborator.innovation', 'innovation')
+      .leftJoin('collaborator.user', 'collaboratorUser')
+      .innerJoin('innovation.owner', 'innovationOwner')
+      .select([
+        'innovation.name', 'innovation.description', 'innovation.id',
+        'innovationOwner.identityId', 'innovationOwner.id',
+        'collaboratorUser.identityId',
+        'collaborator.id', 'collaborator.email', 'collaborator.status', 'collaborator.collaboratorRole', 'collaborator.invitedAt', 'collaborator.createdBy'
+      ])
+      .where('collaborator.innovation = :innovationId AND collaborator.id = :collaboratorId', { innovationId, collaboratorId })
+      .getOne();
+    if (!collaborator) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
+    }
+
+    // Check if user is not the invited collaborator and the he is not the innovation owner
+    if (collaborator.innovation.owner.id !== domainContext.id) {
+      const domainUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
+      if (collaborator.email !== domainUserInfo.email) {
+        throw new UnauthorizedError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
+      }
+    }
+
+    const userIds = [collaborator.innovation.owner.identityId];
+    if (collaborator.user) {
+      userIds.push(collaborator.user.identityId);
+    }
+    const usersInfoMap = await this.identityProviderService.getUsersMap(userIds);
+
+    const collaboratorName = collaborator.user && usersInfoMap.get(collaborator.user.identityId)?.displayName;
+    const ownerName = usersInfoMap.get(collaborator.innovation.owner.identityId)?.displayName;
+
+    return {
+      id: collaborator.id,
+      email: collaborator.email,
+      status: collaborator.status,
+      collaboratorRole: collaborator.collaboratorRole ?? undefined,
+      name: collaboratorName ?? undefined,
+      innovation: {
+        id: collaborator.innovation.id,
+        name: collaborator.innovation.name,
+        description: collaborator.innovation.description,
+        owner: {
+          id: collaborator.innovation.owner.id,
+          name: ownerName
+        },
+      },
+      invitedAt: collaborator.invitedAt
     };
   }
 
