@@ -29,3 +29,4 @@ export { ThreadCreationHandler } from './thread-creation.handler';
 export { ThreadMessageCreationHandler } from './thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './unit-inactivation-support-status-completed.handler';
 export { InnovationCollaboratorInviteHandler } from './innovation-collaborator-invite.handler';
+export { InnovationCollaboratorUpdateHandler } from './innovation-collaborator-update.handler';

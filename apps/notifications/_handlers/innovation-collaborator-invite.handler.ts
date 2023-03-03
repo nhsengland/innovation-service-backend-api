@@ -1,5 +1,5 @@
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -12,7 +12,7 @@ import { BaseHandler } from './base.handler';
 export class InnovationCollaboratorInviteHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
   EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
-  Record<string, never>
+  { collaboratorId: string }
 > {
 
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
@@ -32,9 +32,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
     const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
     const collaborator = await this.recipientsService.innovationCollaboratorInfo(this.inputData.innovationCollaboratorId);
 
-    const targetUser = await this.identityProviderService.getUserInfoByEmail(collaborator.email);
-
-    if (!targetUser) { // This means that the user is NOT registered in the service.
+    if (!collaborator.user) { // This means that the user is NOT registered in the service.
 
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
@@ -50,13 +48,23 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
 
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER,
-        to: { type: 'identityId', value: targetUser.identityId, displayNameParam: 'display_name' },
+        to: { type: 'identityId', value: collaborator.user.identityId, displayNameParam: 'display_name' },
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
           transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
         }
       });
+
+      this.inApp.push({
+        innovationId: this.inputData.innovationId,
+        context: { type: NotificationContextTypeEnum.COLLABOARATOR, detail: NotificationContextDetailEnum.COLLABORATOR_INVITE, id: this.inputData.innovationCollaboratorId },         
+        users: [{ userId: collaborator.user.id, roleId: collaborator.user.roleId }],
+        params: {
+          collaboratorId: collaborator.id
+        }
+      });
+
 
     }
 
