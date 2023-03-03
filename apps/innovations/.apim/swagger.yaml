@@ -985,7 +985,7 @@ paths:
           description: Forbidden
         "404":
           description: Not Found
-  "/v1/{innovationId}/collaborators/respond":
+  "/v1/{innovationId}/collaborators/invites":
     post:
       description: Updates collaboration invite as the invited collaborator.
       operationId: v1-innovation-collaborator-invite-update
@@ -1648,6 +1648,7 @@ paths:
                           - SUPPORT
                           - ACTION
                           - THREAD
+                          - COLLABORATOR
                           - COMMENT
       responses:
         "204":

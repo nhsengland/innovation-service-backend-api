@@ -23,7 +23,6 @@ class V1InnovationCollaboratorInviteUpdate {
 
     try {
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       const auth = await authorizationService.validate(context)
@@ -31,6 +30,7 @@ class V1InnovationCollaboratorInviteUpdate {
         .verify();
 
       const domainContext = auth.getContext();
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userRole: domainContext.currentRole.role });
 
       const result = await innovationCollaboratorsService.updateCollaboratorInviteStatus(
         domainContext,
@@ -50,7 +50,7 @@ class V1InnovationCollaboratorInviteUpdate {
 
 }
 
-export default openApi(V1InnovationCollaboratorInviteUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/collaborators/respond', {
+export default openApi(V1InnovationCollaboratorInviteUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/collaborators/invites', {
   post: {
     description: 'Updates collaboration invite as the invited collaborator.',
     operationId: 'v1-innovation-collaborator-invite-update',

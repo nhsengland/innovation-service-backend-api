@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/{innovationId}/collaborators/respond"
+      "route": "v1/{innovationId}/collaborators/invites"
     },
     {
       "type": "http",

@@ -158,7 +158,7 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const usersInfo = await this.domainService.users.getUsersList({ userIds });
     const usersInfoMap = new Map(usersInfo.map(u => [u.id, u]));
-    
+
     const data = collaborators.map((collaborator) => ({
       id: collaborator.id,
       email: collaborator.email,
@@ -253,7 +253,7 @@ export class InnovationCollaboratorsService extends BaseService {
     const domainContextUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
 
     const invite = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .where('collaborator.innovation = :innovationId && collaborator.email = :userEmail', { innovationId, userEmail: domainContextUserInfo.email })
+      .where('collaborator.innovation = :innovationId AND collaborator.email = :userEmail', { innovationId, userEmail: domainContextUserInfo.email })
       .getOne();
 
     if (!invite) {
@@ -275,6 +275,19 @@ export class InnovationCollaboratorsService extends BaseService {
     invite.updatedBy = domainContext.id;
 
     await connection.save(InnovationCollaboratorEntity, invite);
+
+    await this.notifierService.send(
+      { id: domainContext.id, identityId: domainContext.identityId },
+      NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
+      {
+        innovationId: innovationId,
+        innovationCollaborator: {
+          id: invite.id,
+          status: data.status
+        },
+      },
+      domainContext,
+    );
 
     return { id: invite.id };
   }
