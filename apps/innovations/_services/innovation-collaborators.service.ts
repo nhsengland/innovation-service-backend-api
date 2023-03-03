@@ -1,9 +1,9 @@
 import { InnovationEntity, UserEntity } from "@innovations/shared/entities";
 import { InnovationCollaboratorEntity } from "@innovations/shared/entities/innovation/innovation-collaborator.entity";
 import { InnovationCollaboratorStatusEnum, NotifierTypeEnum } from "@innovations/shared/enums";
-import { InnovationErrorsEnum, UnprocessableEntityError } from "@innovations/shared/errors";
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from "@innovations/shared/errors";
 import type { PaginationQueryParamsType } from "@innovations/shared/helpers";
-import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from "@innovations/shared/services";
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from "@innovations/shared/services";
 import type { DomainContextType } from "@innovations/shared/types";
 import { inject, injectable } from "inversify";
 import { Brackets, EntityManager, ObjectLiteral } from "typeorm";
@@ -14,7 +14,8 @@ export class InnovationCollaboratorsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
   ) { super(); }
 
   async createCollaborator(
@@ -168,6 +169,43 @@ export class InnovationCollaboratorsService extends BaseService {
       count,
       data
     };
+  }
+
+  async updateCollaboratorInviteStatus(
+    domainContext: DomainContextType,
+    innovationId: string,
+    data: { status: InnovationCollaboratorStatusEnum.ACTIVE | InnovationCollaboratorStatusEnum.DECLINED | InnovationCollaboratorStatusEnum.LEFT },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const domainContextUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
+
+    const invite = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .where('collaborator.innovation = :innovationId && collaborator.email = :userEmail', { innovationId, userEmail: domainContextUserInfo.email })
+      .getOne();
+
+    if (!invite) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
+    }
+
+    if (invite.status !== InnovationCollaboratorStatusEnum.PENDING && [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.DECLINED].includes(data.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND); // TODO: change this
+    }
+
+    if (invite.status !== InnovationCollaboratorStatusEnum.ACTIVE && data.status === InnovationCollaboratorStatusEnum.LEFT) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND); // TODO: change this
+    }
+
+    if (!invite.user) {
+      invite.user = UserEntity.new({ id: domainContext.id });
+    }
+    invite.status = data.status;
+    invite.updatedBy = domainContext.id;
+
+    await connection.save(InnovationCollaboratorEntity, invite);
+
+    return { id: invite.id };
   }
 
 }
