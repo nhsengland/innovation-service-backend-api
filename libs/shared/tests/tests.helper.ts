@@ -3,13 +3,15 @@ import { container } from '../config/inversify.config';
 import type { DataSource, EntityManager } from 'typeorm';
 import { TestDataBuilder, UserBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
-import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
+import type { InnovationCollaboratorEntity } from '../entities/innovation/innovation-collaborator.entity';
+import { AccessorOrganisationRoleEnum, InnovationCollaboratorStatusEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
 import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
 import type { AccessorDomainContextType, AdminDomainContextType, AssessmentDomainContextType, DomainContextType, InnovatorDomainContextType } from '../types';
 
 
 export type TestDataType = {
   innovation: InnovationEntity;
+  innovationWithCollaborators: InnovationEntity;
   baseUsers: {
     admin: UserEntity;
     accessor: UserEntity;
@@ -44,6 +46,11 @@ export type TestDataType = {
   organisationUnit: {
     accessor: OrganisationUnitEntity;
   };
+  collaborators: {
+    collaboratorPending: InnovationCollaboratorEntity;
+    collaboratorActive: InnovationCollaboratorEntity;
+    collaboratorExpired: InnovationCollaboratorEntity;
+  }
 }
 
 // In jest the static classes are not shared between test suites so it ended up not making much difference to use static
@@ -204,8 +211,18 @@ export class TestsHelper {
         .withAssessments(assessmentUser)
         .build(entityManager);
 
+      const innovationWithCollaborators = await helper.createInnovation()
+        .setOwner(innovator)
+        .build(entityManager);
+
+      // Pending, Active and Expired collaborator invites
+      const collaboratorPending = await helper.createCollaborator(domainContexts.innovator, innovationWithCollaborators).build(entityManager);
+      const collaboratorActive = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setStatus(InnovationCollaboratorStatusEnum.ACTIVE).build(entityManager);
+      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setUser(innovator2).setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31).toISOString()).build(entityManager);
+
       return {
         innovation,
+        innovationWithCollaborators,
         baseUsers: {
           accessor,
           qualifyingAccessor,
@@ -234,6 +251,11 @@ export class TestsHelper {
         organisationUnit: {
           accessor: organisationUnit,
         },
+        collaborators: {
+          collaboratorPending,
+          collaboratorActive,
+          collaboratorExpired
+        }
       };
     });
 

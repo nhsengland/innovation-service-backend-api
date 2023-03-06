@@ -155,20 +155,17 @@ describe('Innovation Collaborators Suite', () => {
   describe('getCollaboratorsList', () => {
     let collaboratorsMap = new Map<string, InnovationCollaboratorEntity>();
 
-    beforeEach(async () => {
-      const collaboratorPending = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).build(em);
-      const collaboratorActive = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).setStatus(InnovationCollaboratorStatusEnum.ACTIVE).build(em);
-      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).setUser(testData.baseUsers.innovator2).setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31).toISOString()).build(em);
-      collaboratorsMap.set(InnovationCollaboratorStatusEnum.PENDING, collaboratorPending);
-      collaboratorsMap.set(InnovationCollaboratorStatusEnum.ACTIVE, collaboratorActive);
-      collaboratorsMap.set(InnovationCollaboratorStatusEnum.EXPIRED, collaboratorExpired);
+    beforeAll(async () => {
+      collaboratorsMap.set(InnovationCollaboratorStatusEnum.PENDING, testData.collaborators.collaboratorPending);
+      collaboratorsMap.set(InnovationCollaboratorStatusEnum.ACTIVE, testData.collaborators.collaboratorActive);
+      collaboratorsMap.set(InnovationCollaboratorStatusEnum.EXPIRED, testData.collaborators.collaboratorExpired);
 
       jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue([]);
     });
 
     it('should return all collaborators independent of the status', async () => {
       const collaborators = await sut.getCollaboratorsList(
-        testData.innovation.id,
+        testData.innovationWithCollaborators.id,
         {},
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
@@ -195,7 +192,7 @@ describe('Innovation Collaborators Suite', () => {
 
     it('should return all collaborators in status PENDING and ACTIVE', async () => {
       const collaborators = await sut.getCollaboratorsList(
-        testData.innovation.id,
+        testData.innovationWithCollaborators.id,
         { status: [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.PENDING] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
@@ -214,7 +211,7 @@ describe('Innovation Collaborators Suite', () => {
       ]);
 
       const collaborators = await sut.getCollaboratorsList(
-        testData.innovation.id,
+        testData.innovationWithCollaborators.id,
         { status: [InnovationCollaboratorStatusEnum.EXPIRED] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
