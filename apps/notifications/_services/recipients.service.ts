@@ -9,7 +9,6 @@ import { BaseService } from './base.service';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
-import { string } from 'joi';
 
 @injectable()
 export class RecipientsService extends BaseService {
