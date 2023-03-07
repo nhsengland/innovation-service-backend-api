@@ -13,7 +13,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 
-class V1InnovationCollaboratorInviteUpdate {
+class V1InnovationCollaboratorUpdate {
 
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -30,11 +30,19 @@ class V1InnovationCollaboratorInviteUpdate {
         .verify();
 
       const domainContext = auth.getContext();
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userRole: domainContext.currentRole.role });
+      const userInfo = auth.getUserInfo();
 
-      const result = await innovationCollaboratorsService.updateCollaboratorInviteStatus(
+      const { type: collaboratorType } = await innovationCollaboratorsService.getCollaborationInfo(
+        { id: domainContext.id, email: userInfo.email },
+        params.collaboratorId
+      );
+
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { collaboratorType });
+
+      const result = await innovationCollaboratorsService.updateCollaborator(
         domainContext,
-        params.innovationId,
+        params.collaboratorId,
+        collaboratorType === 'OWNER',
         body
       );
 
@@ -50,13 +58,13 @@ class V1InnovationCollaboratorInviteUpdate {
 
 }
 
-export default openApi(V1InnovationCollaboratorInviteUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/collaborators/invites', {
+export default openApi(V1InnovationCollaboratorUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/collaborators/{collaboratorId}', {
   post: {
-    description: 'Updates collaboration invite as the invited collaborator.',
-    operationId: 'v1-innovation-collaborator-invite-update',
+    description: 'Updates information of collaborator.',
+    operationId: 'v1-innovation-collaborator-update',
     tags: ['[v1] Innovation Collaborators'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The status to update collaborator invite.' }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The information to update collaborator invite.' }),
     responses: {
       200: {
         description: 'The collaborator has been updated.',
@@ -77,7 +85,7 @@ export default openApi(V1InnovationCollaboratorInviteUpdate.httpTrigger as Azure
         },
       },
       400: {
-        description: 'The collaborator invite could not be updated.',
+        description: 'The collaborator could not be updated.',
       },
       401: {
         description: 'The user is not authorized to update an collaborator.',

@@ -985,10 +985,9 @@ paths:
           description: Forbidden
         "404":
           description: Not Found
-  "/v1/{innovationId}/collaborators/invites":
     post:
-      description: Updates collaboration invite as the invited collaborator.
-      operationId: v1-innovation-collaborator-invite-update
+      description: Updates information of collaborator.
+      operationId: v1-innovation-collaborator-update
       tags:
         - "[v1] Innovation Collaborators"
       parameters:
@@ -998,8 +997,14 @@ paths:
           schema:
             type: string
             format: uuid
+        - name: collaboratorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
-        description: The status to update collaborator invite.
+        description: The information to update collaborator invite.
         required: true
         content:
           application/json:
@@ -1007,13 +1012,19 @@ paths:
               type: object
               properties:
                 status:
-                  oneOf:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - CANCELLED
+                        - REMOVED
                     - type: string
                       enum:
                         - ACTIVE
                         - DECLINED
                         - LEFT
-                      x-required: true
+                collaboratorRole:
+                  oneOf:
+                    - type: string
               additionalProperties: false
       responses:
         "200":
@@ -1030,7 +1041,7 @@ paths:
                 required:
                   - id
         "400":
-          description: The collaborator invite could not be updated.
+          description: The collaborator could not be updated.
         "401":
           description: The user is not authorized to update an collaborator.
         "403":

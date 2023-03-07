@@ -8,7 +8,7 @@ import type { NotFoundError, UnauthorizedError, UnprocessableEntityError } from 
 import { DomainUsersService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randEmail, randRole, randUuid } from '@ngneat/falso';
+import { randEmail, randRole, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
 import { InnovationCollaboratorsServiceSymbol, InnovationCollaboratorsServiceType } from './interfaces';
@@ -364,7 +364,237 @@ describe('Innovation Collaborators Suite', () => {
       expect(err).toBeDefined();
       expect(err?.name).toBe('ICB.0001');
     });
-  })
+  });
+
+  describe('updateCollaborator', () => {
+
+    describe('asOwner', () => {
+
+      it('should update from ACTIVE to REMOVED', async () => {
+
+        const collaborator = await sut.updateCollaborator(
+          testData.domainContexts.innovator,
+          testData.collaborators.collaboratorActive.id,
+          true,
+          { status: InnovationCollaboratorStatusEnum.REMOVED },
+          em
+        );
+
+        const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .getOne();
+
+        expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.REMOVED);
+        expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator.id);
+      });
+
+      it('should update from PENDING to CANCELLED', async () => {
+
+        const collaborator = await sut.updateCollaborator(
+          testData.domainContexts.innovator,
+          testData.collaborators.collaboratorPending.id,
+          true,
+          { status: InnovationCollaboratorStatusEnum.CANCELLED },
+          em
+        );
+
+        const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .getOne();
+
+        expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.CANCELLED);
+        expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator.id);
+        expect(dbCollaborator).not.toHaveProperty('user');
+      });
+
+      it('should return error while changing status to REMOVED and current status is not ACTIVE', async () => {
+
+        let err: UnprocessableEntityError | null = null;
+        try {
+          await sut.updateCollaborator(
+            testData.domainContexts.innovator,
+            testData.collaborators.collaboratorPending.id,
+            true,
+            { status: InnovationCollaboratorStatusEnum.REMOVED },
+            em
+          );
+        } catch (error) {
+          err = error as UnprocessableEntityError;
+        }
+
+        expect(err).toBeDefined();
+        expect(err?.name).toBe('ICB.0004');
+      });
+
+      it('should return error while changing status to CANCELLED and current status is not PENDING', async () => {
+
+        let err: UnprocessableEntityError | null = null;
+        try {
+          await sut.updateCollaborator(
+            testData.domainContexts.innovator,
+            testData.collaborators.collaboratorActive.id,
+            true,
+            { status: InnovationCollaboratorStatusEnum.CANCELLED },
+            em
+          );
+        } catch (error) {
+          err = error as UnprocessableEntityError;
+        }
+
+        expect(err).toBeDefined();
+        expect(err?.name).toBe('ICB.0004');
+      });
+    });
+
+
+    describe('asInvitedCollaborator', () => {
+
+      beforeEach(() => {
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue(
+          {
+            id: testData.domainContexts.innovator3.id,
+            identityId: testData.domainContexts.innovator3.identityId,
+            displayName: randUserName(),
+            email: testData.collaborators.collaboratorPending.email
+          } as any
+        );
+      });
+
+      it('should update collaboratorRole', async () => {
+
+        const collaborator = await sut.updateCollaborator(
+          testData.domainContexts.innovator,
+          testData.collaborators.collaboratorPending.id,
+          true,
+          { collaboratorRole: 'randomRole' },
+          em
+        );
+
+        const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .getOne();
+
+        expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.PENDING);
+        expect(dbCollaborator).toHaveProperty('collaboratorRole', 'randomRole')
+      });
+
+      it('should update from PENDING to ACTIVE', async () => {
+
+        const collaborator = await sut.updateCollaborator(
+          testData.domainContexts.innovator3,
+          testData.collaborators.collaboratorPending.id,
+          false,
+          { status: InnovationCollaboratorStatusEnum.ACTIVE },
+          em
+        );
+
+        const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .getOne();
+
+        expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.ACTIVE);
+        expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator3.id);
+        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id)
+      });
+
+      it('should update from PENDING to DECLINED', async () => {
+
+        const collaborator = await sut.updateCollaborator(
+          testData.domainContexts.innovator3,
+          testData.collaborators.collaboratorPending.id,
+          false,
+          { status: InnovationCollaboratorStatusEnum.DECLINED },
+          em
+        );
+
+        const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .getOne();
+
+        expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.DECLINED);
+        expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator3.id);
+        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id)
+      });
+
+      it('should update from ACTIVE to LEFT', async () => {
+
+        const collaborator = await sut.updateCollaborator(
+          testData.domainContexts.innovator3,
+          testData.collaborators.collaboratorActive.id,
+          false,
+          { status: InnovationCollaboratorStatusEnum.LEFT },
+          em
+        );
+
+        const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .where('collaborator.id = :collaboratorId', { collaboratorId: collaborator.id })
+          .getOne();
+
+        expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.LEFT);
+        expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator3.id);
+        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id)
+      });
+
+      it('should return error while changing status to ACTIVE and current status is not PENDING', async () => {
+
+        let err: UnprocessableEntityError | null = null;
+        try {
+          await sut.updateCollaborator(
+            testData.domainContexts.innovator3,
+            testData.collaborators.collaboratorExpired.id,
+            false,
+            { status: InnovationCollaboratorStatusEnum.ACTIVE },
+            em
+          );
+        } catch (error) {
+          err = error as UnprocessableEntityError;
+        }
+
+        expect(err).toBeDefined();
+        expect(err?.name).toBe('ICB.0004');
+      });
+
+      it('should return error while changing status to DECLINED and current status is not PENDING', async () => {
+
+        let err: UnprocessableEntityError | null = null;
+        try {
+          await sut.updateCollaborator(
+            testData.domainContexts.innovator3,
+            testData.collaborators.collaboratorExpired.id,
+            false,
+            { status: InnovationCollaboratorStatusEnum.DECLINED },
+            em
+          );
+        } catch (error) {
+          err = error as UnprocessableEntityError;
+        }
+
+        expect(err).toBeDefined();
+        expect(err?.name).toBe('ICB.0004');
+      });
+
+      it('should return error while changing status to LEFT and current status is not ACTIVE', async () => {
+
+        let err: UnprocessableEntityError | null = null;
+        try {
+          await sut.updateCollaborator(
+            testData.domainContexts.innovator3,
+            testData.collaborators.collaboratorExpired.id,
+            false,
+            { status: InnovationCollaboratorStatusEnum.LEFT },
+            em
+          );
+        } catch (error) {
+          err = error as UnprocessableEntityError;
+        }
+
+        expect(err).toBeDefined();
+        expect(err?.name).toBe('ICB.0004');
+      });
+
+    });
+  });
+
 
 });
 
