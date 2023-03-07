@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -238,9 +238,6 @@ export class InnovationEntity extends BaseEntity {
 
   @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
   withdrawReason: null | string;
-
-  @RelationId('owner')
-  ownerId: string;
 
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'owner_id' })
