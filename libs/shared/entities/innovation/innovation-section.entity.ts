@@ -2,12 +2,13 @@ import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, On
 
 import { BaseEntity } from '../base.entity';
 
-import { InnovationEntity } from './innovation.entity';
 import { InnovationActionEntity } from './innovation-action.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
+import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSectionEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
 import type { DateISOType } from '../../types/date.types';
+import { UserEntity } from '../user/user.entity';
 
 
 @Entity('innovation_section')
@@ -24,8 +25,11 @@ export class InnovationSectionEntity extends BaseEntity {
   status: InnovationSectionStatusEnum;
 
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
-  submittedAt: DateISOType;
+  submittedAt: DateISOType | null;
 
+  @ManyToOne(() => UserEntity, { nullable: true })
+  @JoinColumn({ name: 'submitted_by' })
+  submittedBy: UserEntity | null;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

@@ -69,6 +69,20 @@ paths:
       responses:
         "204":
           description: The user email preferences were updated successfully
+  /v1/invites:
+    get:
+      description: Get collaboration invites list
+      operationId: v1-invites-list
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
   /v1/me:
     post:
       summary: Create a new user on DB
@@ -251,7 +265,7 @@ paths:
                   total:
                     type: number
                     description: The total of active notifications
-  /v1/notifications/{notificationId}:
+  "/v1/notifications/{notificationId}":
     delete:
       description: Returns the id of the deleted notification
       operationId: v1-notifications-delete
@@ -313,6 +327,7 @@ paths:
                       - SUPPORT
                       - ACTION
                       - THREAD
+                      - COLLABORATOR
                       - COMMENT
                   description: The context types
                   default: []
@@ -380,6 +395,7 @@ paths:
                 - SUPPORT
                 - ACTION
                 - THREAD
+                - COLLABORATOR
                 - COMMENT
             description: The context types to filter by
             default: []
@@ -439,6 +455,7 @@ paths:
                             - SUPPORT
                             - ACTION
                             - THREAD
+                            - COLLABOARATOR
                             - COMMENT
                           description: The notification context type
                         contextDetail:
@@ -457,6 +474,8 @@ paths:
                             - SUPPORT_STATUS_UPDATE
                             - INNOVATION_REASSESSMENT_REQUEST
                             - INNOVATION_STOP_SHARING
+                            - COLLABORATOR_INVITE
+                            - COLLABORATOR_UPDATE
                           description: The notification context detail
                         contextId:
                           type: string
@@ -472,7 +491,7 @@ paths:
                         params:
                           type: object
                           description: The notification params
-  /v1/organisations/{organisationId}:
+  "/v1/organisations/{organisationId}":
     get:
       description: Get organisation info.
       operationId: v1-organisation-info
@@ -492,7 +511,7 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
-  /v1/organisations/{organisationId}/units/{organisationUnitId}:
+  "/v1/organisations/{organisationId}/units/{organisationUnitId}":
     get:
       description: Get organisation unitinfo.
       operationId: v1-organisation-unit-info
@@ -590,7 +609,7 @@ paths:
                   id:
                     type: string
                     description: Unique identifier for user object
-  /v1/{userId}:
+  "/v1/{userId}":
     get:
       operationId: v1-users-info
       description: Get user info
@@ -652,17 +671,3 @@ paths:
             application/json:
               schema:
                 type: object
-  /v1/invites:
-    get:
-      description: Get collaboration invites list
-      operationId: v1-invites-list
-      tags:
-        - "[v1] User Collaboration Invites"
-      parameters: []
-      responses:
-        "200":
-          description: Ok
-          content:
-            application/json:
-              schema:
-                type: array

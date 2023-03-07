@@ -1,4 +1,4 @@
-import { type TestDataType, TestsHelper } from '@innovations/shared/tests';
+import { TestDataType, TestsHelper } from '@innovations/shared/tests';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';

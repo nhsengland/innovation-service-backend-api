@@ -1594,6 +1594,7 @@ paths:
                           - SUPPORT
                           - ACTION
                           - THREAD
+                          - COLLABORATOR
                           - COMMENT
       responses:
         "204":

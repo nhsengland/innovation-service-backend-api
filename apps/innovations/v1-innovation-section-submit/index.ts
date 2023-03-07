@@ -30,15 +30,9 @@ class V1InnovationSectionSubmit {
         .checkInnovatorType()
         .checkInnovation()
         .verify();
-      const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const result = await innovationSectionsService.submitInnovationSection(
-        { id: requestUser.id, identityId: requestUser.identityId },
-        domainContext,
-        params.innovationId,
-        params.sectionKey
-      );
+      const result = await innovationSectionsService.submitInnovationSection( domainContext, params.innovationId, params.sectionKey );
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
 

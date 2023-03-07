@@ -41,6 +41,10 @@ class V1InnovationSectionsList {
         section: section.section,
         status: section.status,
         submittedAt: section.submittedAt,
+        submittedBy: section.submittedBy ? {
+          name: section.submittedBy.name,
+          isOwner: section.submittedBy.isOwner
+        }: null,
         openActionsCount: section.openActionsCount
       })));
       return;

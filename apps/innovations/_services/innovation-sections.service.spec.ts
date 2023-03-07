@@ -146,7 +146,6 @@ describe('Innovation Sections Suite', () => {
   it('should submit a section', async () => {
     // arrange
 
-    const innovator = testData.baseUsers.innovator;
     const innovation = await new InnovationBuilder()
     .setOwner(testData.baseUsers.innovator)
     .build(em);
@@ -158,7 +157,6 @@ describe('Innovation Sections Suite', () => {
     .build(em);
 
     const section = await sut.submitInnovationSection(
-      innovator,
       testData.domainContexts.innovator,
       innovation.id,
       sectionKey,
