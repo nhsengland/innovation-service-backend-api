@@ -985,7 +985,7 @@ paths:
           description: Forbidden
         "404":
           description: Not Found
-    post:
+    patch:
       description: Updates information of collaborator.
       operationId: v1-innovation-collaborator-update
       tags:

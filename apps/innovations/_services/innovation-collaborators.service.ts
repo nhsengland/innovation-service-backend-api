@@ -250,7 +250,6 @@ export class InnovationCollaboratorsService extends BaseService {
     data: { status?: UpdateCollaboratorStatusType, collaboratorRole?: string },
     entityManager?: EntityManager
   ) {
-
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
@@ -264,16 +263,19 @@ export class InnovationCollaboratorsService extends BaseService {
 
     if (data.status) {
       await this.runUpdateStatusRules({ status: collaborator.status }, isOwner, data.status);
+    }
 
-      await connection.getRepository(InnovationCollaboratorEntity).update(
-        { id: collaborator.id },
-        {
-          status: data.status,
-          updatedBy: domainContext.id,
-          ...((!collaborator.user && !isOwner) && { user: UserEntity.new({ id: domainContext.id }) })
-        }
-      );
+    await connection.getRepository(InnovationCollaboratorEntity).update(
+      { id: collaborator.id },
+      {
+        updatedBy: domainContext.id,
+        ...(data.status && { status: data.status }),
+        ...(data.collaboratorRole && { collaboratorRole: data.collaboratorRole }),
+        ...((!collaborator.user && !isOwner) && { user: UserEntity.new({ id: domainContext.id }) })
+      }
+    );
 
+    if (data.status) {
       await this.notifierService.send(
         { id: domainContext.id, identityId: domainContext.identityId },
         NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
@@ -288,19 +290,7 @@ export class InnovationCollaboratorsService extends BaseService {
       );
     }
 
-    // All properties that are not related to status
-    if (data.collaboratorRole) {
-      await connection.getRepository(InnovationCollaboratorEntity).update(
-        { id: collaborator.id },
-        {
-          collaboratorRole: data.collaboratorRole,
-          updatedBy: domainContext.id
-        }
-      );
-    }
-
     return { id: collaborator.id };
-
   }
 
   async getCollaborationInfo(

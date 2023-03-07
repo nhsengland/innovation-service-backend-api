@@ -59,7 +59,7 @@ class V1InnovationCollaboratorUpdate {
 }
 
 export default openApi(V1InnovationCollaboratorUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/collaborators/{collaboratorId}', {
-  post: {
+  patch: {
     description: 'Updates information of collaborator.',
     operationId: 'v1-innovation-collaborator-update',
     tags: ['[v1] Innovation Collaborators'],
