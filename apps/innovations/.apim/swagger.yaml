@@ -985,6 +985,71 @@ paths:
           description: Forbidden
         "404":
           description: Not Found
+    patch:
+      description: Updates information of collaborator.
+      operationId: v1-innovation-collaborator-update
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: collaboratorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The information to update collaborator invite.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - CANCELLED
+                        - REMOVED
+                    - type: string
+                      enum:
+                        - ACTIVE
+                        - DECLINED
+                        - LEFT
+                collaboratorRole:
+                  oneOf:
+                    - type: string
+              additionalProperties: false
+      responses:
+        "200":
+          description: The collaborator has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The collaborator id.
+                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                required:
+                  - id
+        "400":
+          description: The collaborator could not be updated.
+        "401":
+          description: The user is not authorized to update an collaborator.
+        "403":
+          description: The user is not allowed to update an collaborator.
+        "404":
+          description: The innovation could not be found.
+        "500":
+          description: An unexpected error occurred while updating the collaborator.
   /v1:
     post:
       description: Create an innovation
@@ -1594,6 +1659,7 @@ paths:
                           - SUPPORT
                           - ACTION
                           - THREAD
+                          - COLLABORATOR
                           - COMMENT
       responses:
         "204":

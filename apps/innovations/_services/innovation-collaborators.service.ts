@@ -1,7 +1,7 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
 import { InnovationCollaboratorStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainContextType } from '@innovations/shared/types';
@@ -9,6 +9,7 @@ import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, ObjectLiteral } from 'typeorm';
 import { BaseService } from './base.service';
 
+type UpdateCollaboratorStatusType = InnovationCollaboratorStatusEnum.ACTIVE | InnovationCollaboratorStatusEnum.CANCELLED | InnovationCollaboratorStatusEnum.DECLINED | InnovationCollaboratorStatusEnum.LEFT | InnovationCollaboratorStatusEnum.REMOVED;
 @injectable()
 export class InnovationCollaboratorsService extends BaseService {
 
@@ -158,7 +159,7 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const usersInfo = await this.domainService.users.getUsersList({ userIds });
     const usersInfoMap = new Map(usersInfo.map(u => [u.id, u]));
-    
+
     const data = collaborators.map((collaborator) => ({
       id: collaborator.id,
       email: collaborator.email,
@@ -241,5 +242,115 @@ export class InnovationCollaboratorsService extends BaseService {
       invitedAt: collaborator.invitedAt
     };
   }
+
+  async updateCollaborator(
+    domainContext: DomainContextType,
+    collaboratorId: string,
+    isOwner: boolean, // Is either owner or collaborator at this point
+    data: { status?: UpdateCollaboratorStatusType, collaboratorRole?: string },
+    entityManager?: EntityManager
+  ) {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .select(['collaborator.email', 'collaborator.id', 'collaborator.status', 'collaborator.invitedAt', 'collaborator.innovation_id'])
+      .where('collaborator.id = :collaboratorId', { collaboratorId })
+      .getOne();
+
+    if (!collaborator) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
+    }
+
+    if (data.status) {
+      await this.runUpdateStatusRules({ status: collaborator.status }, isOwner, data.status);
+    }
+
+    await connection.getRepository(InnovationCollaboratorEntity).update(
+      { id: collaborator.id },
+      {
+        updatedBy: domainContext.id,
+        ...(data.status && { status: data.status }),
+        ...(data.collaboratorRole && { collaboratorRole: data.collaboratorRole }),
+        ...((!collaborator.user && !isOwner) && { user: UserEntity.new({ id: domainContext.id }) })
+      }
+    );
+
+    if (data.status) {
+      await this.notifierService.send(
+        { id: domainContext.id, identityId: domainContext.identityId },
+        NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
+        {
+          innovationId: collaborator.innovationId,
+          innovationCollaborator: {
+            id: collaborator.id,
+            status: data.status
+          },
+        },
+        domainContext,
+      );
+    }
+
+    return { id: collaborator.id };
+  }
+
+  async getCollaborationInfo(
+    requestUser: { id: string, email: string },
+    collaboratorId: string,
+    entityManager?: EntityManager
+  ): Promise<{ type: 'OWNER' | 'COLLABORATOR', status?: InnovationCollaboratorStatusEnum }> {
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .innerJoin('collaborator.innovation', 'innovation')
+      .innerJoin('innovation.owner', 'innovationOwner')
+      .select(['innovation.id', 'innovationOwner.id', 'collaborator.email', 'collaborator.status', 'collaborator.invitedAt'])
+      .where('collaborator.id = :collaboratorId', { collaboratorId })
+      .getOne();
+
+    if (!collaborator) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
+    }
+
+    const isOwner = collaborator.innovation.owner.id === requestUser.id;
+    const isCollaborator = collaborator.email === requestUser.email;
+
+    if (!isOwner && !isCollaborator) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
+    }
+
+    return {
+      type: isOwner ? 'OWNER' : 'COLLABORATOR',
+      status: collaborator.status
+    }
+  }
+
+  private async runUpdateStatusRules(
+    collaborator: { status: InnovationCollaboratorStatusEnum },
+    isOwner: boolean,
+    statusToUpdate: UpdateCollaboratorStatusType
+  ): Promise<void> {
+    if (isOwner) {
+      // If owner wants to update the status to cancel the collaborator needs to be in PENDING status
+      if (collaborator.status !== InnovationCollaboratorStatusEnum.PENDING && statusToUpdate === InnovationCollaboratorStatusEnum.CANCELLED) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS);
+      }
+      // If owner wants to update the status to removed the collaborator needs to be in ACTIVE status
+      if (collaborator.status !== InnovationCollaboratorStatusEnum.ACTIVE && statusToUpdate === InnovationCollaboratorStatusEnum.REMOVED) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS);
+      }
+    } else { // INVITED Collaborator
+      // If collaborator wants to update the status to ACTIVE/DECLINE the collaborator needs to be in PENDING status
+      if (collaborator.status !== InnovationCollaboratorStatusEnum.PENDING && [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.DECLINED].includes(statusToUpdate)) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS);
+      }
+      // If collaborator wants to update the status to LEFT the collaborator needs to be in ACTIVE status
+      if (collaborator.status !== InnovationCollaboratorStatusEnum.ACTIVE && statusToUpdate === InnovationCollaboratorStatusEnum.LEFT) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_UNPROCESSABLE_STATUS);
+      }
+      return;
+    }
+  }
+
 
 }

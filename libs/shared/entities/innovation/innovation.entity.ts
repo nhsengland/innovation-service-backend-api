@@ -239,7 +239,6 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
   withdrawReason: null | string;
 
-
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'owner_id' })
   owner: UserEntity;
