@@ -6,7 +6,7 @@ export type ResponseDTO = {
     id: string;
     name?: string;
     collaboratorRole?: string;
-    email: string;
+    email?: string;
     status: InnovationCollaboratorStatusEnum
   }[]
 }

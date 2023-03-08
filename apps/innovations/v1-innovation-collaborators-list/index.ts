@@ -1,6 +1,7 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@innovations/shared/decorators';
+import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -26,11 +27,16 @@ class V1InnovationCollaboratorsList {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order, ...filters } = queryParams;
 
-      await authorizationService.validate(context)
+      const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
+        .checkAccessorType()
+        .checkAssessmentType()
+        .checkAdminType()
         .checkInnovation()
         .verify();
+
+      const domainContext = auth.getContext();
 
       const result = await innovationCollaboratorsService.getCollaboratorsList(
         params.innovationId,
@@ -42,8 +48,8 @@ class V1InnovationCollaboratorsList {
         count: result.count,
         data: result.data.map((collaborator) => ({
           id: collaborator.id,
-          email: collaborator.email,
           status: collaborator.status,
+          ...([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.INNOVATOR].includes(domainContext.currentRole.role) && { email: collaborator.email }),
           ...(collaborator.collaboratorRole && { collaboratorRole: collaborator.collaboratorRole }),
           ...(collaborator.name && { name: collaborator.name })
         }))
