@@ -131,7 +131,8 @@ export class InnovationTransferService extends BaseService {
     requestUser: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
-    targetUserEmail: string
+    targetUserEmail: string,
+    ownerToCollaborator: boolean
   ): Promise<{ id: string }> {
 
     // Get innovation information.
@@ -162,6 +163,7 @@ export class InnovationTransferService extends BaseService {
         innovation: InnovationEntity.new({ id: innovationId }),
         createdBy: requestUser.id,
         updatedBy: requestUser.id,
+        ownerToCollaborator: ownerToCollaborator
       });
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 

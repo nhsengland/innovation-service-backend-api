@@ -43,7 +43,8 @@ class CreateInnovationTransfer {
         },
         domainContext,
         body.innovationId,
-        body.email
+        body.email,
+        body.ownerToCollaborator
       );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
