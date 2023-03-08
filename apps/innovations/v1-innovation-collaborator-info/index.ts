@@ -34,7 +34,7 @@ class V1InnovationCollaboratorInfo {
         id: collaborator.id,
         email: collaborator.email,
         status: collaborator.status,
-        collaboratorRole: collaborator.collaboratorRole,
+        role: collaborator.role,
         name: collaborator.name,
         innovation: {
           id: collaborator.innovation.id,
@@ -79,7 +79,7 @@ export default openApi(V1InnovationCollaboratorInfo.httpTrigger as AzureFunction
                 name: {
                   type: 'string'
                 },
-                collaboratorRole: {
+                role: {
                   type: 'string'
                 },
                 email: {

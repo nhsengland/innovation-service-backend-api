@@ -21,7 +21,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 
 export type BodyType = {
   status?: TypeFromArray<typeof status>,
-  collaboratorRole?: string
+  role?: string
 }
 export const BodySchema = Joi.object<BodyType>({
   status:
@@ -34,7 +34,7 @@ export const BodySchema = Joi.object<BodyType>({
         is: 'COLLABORATOR',
         then: Joi.string().valid(InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.DECLINED, InnovationCollaboratorStatusEnum.LEFT).optional()
       }),
-  collaboratorRole: Joi.when('$collaboratorType', {
+  role: Joi.when('$collaboratorType', {
     is: 'OWNER',
     then: Joi.string().optional(),
     otherwise: Joi.forbidden()

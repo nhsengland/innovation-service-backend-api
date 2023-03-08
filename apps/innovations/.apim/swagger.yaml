@@ -944,7 +944,7 @@ paths:
                     format: uuid
                   name:
                     type: string
-                  collaboratorRole:
+                  role:
                     type: string
                   email:
                     type: string
@@ -1022,7 +1022,7 @@ paths:
                         - ACTIVE
                         - DECLINED
                         - LEFT
-                collaboratorRole:
+                role:
                   oneOf:
                     - type: string
               additionalProperties: false

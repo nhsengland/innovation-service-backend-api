@@ -97,7 +97,7 @@ export class InnovationCollaboratorsService extends BaseService {
     data: {
       id: string;
       name?: string;
-      collaboratorRole?: string;
+      role?: string;
       email: string;
       status: InnovationCollaboratorStatusEnum
     }[]
@@ -186,7 +186,7 @@ export class InnovationCollaboratorsService extends BaseService {
       email: collaborator.email,
       status: collaborator.status,
       ...(collaborator.userId && { name: usersInfoMap.get(collaborator.userId)?.displayName ?? '' }),
-      ...(collaborator.collaboratorRole && { collaboratorRole: collaborator.collaboratorRole })
+      ...(collaborator.collaboratorRole && { role: collaborator.collaboratorRole })
     }));
 
     return {
@@ -203,7 +203,7 @@ export class InnovationCollaboratorsService extends BaseService {
   ): Promise<{
     id: string,
     name?: string,
-    collaboratorRole?: string,
+    role?: string,
     email: string,
     status: InnovationCollaboratorStatusEnum,
     innovation: { id: string, name: string, description: null | string, owner: { id: string, name?: string } },
@@ -249,7 +249,7 @@ export class InnovationCollaboratorsService extends BaseService {
       id: collaborator.id,
       email: collaborator.email,
       status: collaborator.status,
-      collaboratorRole: collaborator.collaboratorRole ?? undefined,
+      role: collaborator.collaboratorRole ?? undefined,
       name: collaboratorName ?? undefined,
       innovation: {
         id: collaborator.innovation.id,
@@ -268,7 +268,7 @@ export class InnovationCollaboratorsService extends BaseService {
     domainContext: DomainContextType,
     collaboratorId: string,
     isOwner: boolean, // Is either owner or collaborator at this point
-    data: { status?: UpdateCollaboratorStatusType, collaboratorRole?: string },
+    data: { status?: UpdateCollaboratorStatusType, role?: string },
     entityManager?: EntityManager
   ) {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -291,7 +291,7 @@ export class InnovationCollaboratorsService extends BaseService {
       {
         updatedBy: domainContext.id,
         ...(data.status && { status: data.status }),
-        ...(data.collaboratorRole && { collaboratorRole: data.collaboratorRole }),
+        ...(data.role && { collaboratorRole: data.role }),
         ...((!collaborator.user && !isOwner) && { user: UserEntity.new({ id: domainContext.id }) })
       }
     );

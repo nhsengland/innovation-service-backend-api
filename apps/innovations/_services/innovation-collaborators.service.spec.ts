@@ -51,7 +51,7 @@ describe('Innovation Collaborators Suite', () => {
 
       const expected = {
         email: randEmail(),
-        collaboratorRole: randRole(),
+        role: randRole(),
         status: InnovationCollaboratorStatusEnum.PENDING,
         innovation: testData.innovation.id,
         createdBy: testData.domainContexts.innovator.id,
@@ -64,7 +64,7 @@ describe('Innovation Collaborators Suite', () => {
         testData.innovation.id,
         {
           email: expected.email,
-          role: expected.collaboratorRole
+          role: expected.role
         },
         em
       );
@@ -74,7 +74,7 @@ describe('Innovation Collaborators Suite', () => {
         .getOne();
 
       expect(collaborator).toHaveProperty('id', dbCollaborator?.id);
-      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.collaboratorRole);
+      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.role);
       expect(dbCollaborator).toHaveProperty('status', expected.status);
       expect(dbCollaborator).toHaveProperty('innovationId', expected.innovation);
       expect(dbCollaborator).toHaveProperty('createdBy', expected.createdBy);
@@ -87,7 +87,7 @@ describe('Innovation Collaborators Suite', () => {
 
       const expected = {
         email: randEmail(),
-        collaboratorRole: randRole(),
+        role: randRole(),
         status: InnovationCollaboratorStatusEnum.PENDING,
         innovation: testData.innovation.id,
         createdBy: testData.domainContexts.innovator.id,
@@ -99,7 +99,7 @@ describe('Innovation Collaborators Suite', () => {
         testData.innovation.id,
         {
           email: expected.email,
-          role: expected.collaboratorRole
+          role: expected.role
         },
         em
       );
@@ -109,7 +109,7 @@ describe('Innovation Collaborators Suite', () => {
         .getOne();
 
       expect(collaborator).toHaveProperty('id', dbCollaborator?.id);
-      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.collaboratorRole);
+      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.role);
       expect(dbCollaborator).toHaveProperty('status', expected.status);
       expect(dbCollaborator).toHaveProperty('innovationId', expected.innovation);
       expect(dbCollaborator).toHaveProperty('createdBy', expected.createdBy);
@@ -124,7 +124,7 @@ describe('Innovation Collaborators Suite', () => {
 
       const expected = {
         email: 'innovator2@gmail.com',
-        collaboratorRole: randRole(),
+        role: randRole(),
         status: InnovationCollaboratorStatusEnum.PENDING,
         innovation: testData.innovationWithCollaborators.id,
         createdBy: testData.domainContexts.innovator.id,
@@ -137,7 +137,7 @@ describe('Innovation Collaborators Suite', () => {
         testData.innovationWithCollaborators.id,
         {
           email: expected.email,
-          role: expected.collaboratorRole
+          role: expected.role
         },
         em
       );
@@ -147,7 +147,7 @@ describe('Innovation Collaborators Suite', () => {
         .getOne();
 
       expect(collaborator).toHaveProperty('id', dbCollaborator?.id);
-      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.collaboratorRole);
+      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.role);
       expect(dbCollaborator).toHaveProperty('status', expected.status);
       expect(dbCollaborator).toHaveProperty('innovationId', expected.innovation);
       expect(dbCollaborator).toHaveProperty('createdBy', expected.createdBy);
@@ -246,7 +246,7 @@ describe('Innovation Collaborators Suite', () => {
           expect(collaborator.id).toBe(dbCollaborator.id);
           expect(collaborator.email).toBe(dbCollaborator.email);
           expect(collaborator.status).toBe(dbCollaborator.status);
-          expect(collaborator.collaboratorRole).toBeDefined();
+          expect(collaborator.role).toBeDefined();
         }
 
       }
@@ -308,7 +308,7 @@ describe('Innovation Collaborators Suite', () => {
 
         const expected = {
           id: collaboratorPendingWithoutUser.id,
-          collaboratorRole: collaboratorPendingWithoutUser.collaboratorRole,
+          role: collaboratorPendingWithoutUser.collaboratorRole,
           email: collaboratorPendingWithoutUser.email,
           status: collaboratorPendingWithoutUser.status,
           innovation: {
@@ -332,7 +332,7 @@ describe('Innovation Collaborators Suite', () => {
       it('for a existing user should return info for a new collaborator with the name of the user', async () => {
         const expected = {
           id: collaboratorPendingWithUser.id,
-          collaboratorRole: collaboratorPendingWithUser.collaboratorRole,
+          role: collaboratorPendingWithUser.collaboratorRole,
           name: 'Innovator 2 name',
           email: collaboratorPendingWithUser.email,
           status: collaboratorPendingWithUser.status,
@@ -364,7 +364,7 @@ describe('Innovation Collaborators Suite', () => {
 
         const expected = {
           id: collaboratorPendingWithUser.id,
-          collaboratorRole: collaboratorPendingWithUser.collaboratorRole,
+          role: collaboratorPendingWithUser.collaboratorRole,
           name: 'Innovator 2 name',
           email: collaboratorPendingWithUser.email,
           status: collaboratorPendingWithUser.status,
@@ -528,7 +528,7 @@ describe('Innovation Collaborators Suite', () => {
           testData.domainContexts.innovator,
           testData.collaborators.collaboratorPending.id,
           true,
-          { collaboratorRole: 'randomRole' },
+          { role: 'randomRole' },
           em
         );
 

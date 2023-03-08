@@ -4,7 +4,7 @@ import type { DateISOType } from "@innovations/shared/types";
 export type ResponseDTO = {
   id: string;
   name?: string;
-  collaboratorRole?: string;
+  role?: string;
   email: string;
   status: InnovationCollaboratorStatusEnum,
   innovation: {

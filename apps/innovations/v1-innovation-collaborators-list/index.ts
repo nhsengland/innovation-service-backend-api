@@ -50,7 +50,7 @@ class V1InnovationCollaboratorsList {
           id: collaborator.id,
           status: collaborator.status,
           ...([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.INNOVATOR].includes(domainContext.currentRole.role) && { email: collaborator.email }),
-          ...(collaborator.collaboratorRole && { collaboratorRole: collaborator.collaboratorRole }),
+          ...(collaborator.role && { role: collaborator.role }),
           ...(collaborator.name && { name: collaborator.name })
         }))
       });
