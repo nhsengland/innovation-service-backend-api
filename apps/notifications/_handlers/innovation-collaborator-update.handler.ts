@@ -111,7 +111,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       if (innovationCollaborator.user) { // user exists in the service
         this.inApp.push({
           innovationId: this.inputData.innovationId,
-          context: { type: NotificationContextTypeEnum.COLLABOARATOR, detail: NotificationContextDetailEnum.COLLABORATOR_UPDATE, id: this.inputData.innovationCollaborator.id },         
+          context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.COLLABORATOR_UPDATE, id: this.inputData.innovationCollaborator.id },         
           users: [{ userId: innovationCollaborator.user.id, roleId: innovationCollaborator.user.roleId }],
           params: {
             collaboratorId: innovationCollaborator.id

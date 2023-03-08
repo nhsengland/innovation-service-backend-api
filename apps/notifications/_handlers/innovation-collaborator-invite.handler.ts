@@ -8,7 +8,6 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 
 import { BaseHandler } from './base.handler';
 
-
 export class InnovationCollaboratorInviteHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
   EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
@@ -58,7 +57,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
 
       this.inApp.push({
         innovationId: this.inputData.innovationId,
-        context: { type: NotificationContextTypeEnum.COLLABOARATOR, detail: NotificationContextDetailEnum.COLLABORATOR_INVITE, id: this.inputData.innovationCollaboratorId },         
+        context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.COLLABORATOR_INVITE, id: this.inputData.innovationCollaboratorId },         
         users: [{ userId: collaborator.user.id, roleId: collaborator.user.roleId }],
         params: {
           collaboratorId: collaborator.id

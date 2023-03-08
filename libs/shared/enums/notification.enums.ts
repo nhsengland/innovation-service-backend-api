@@ -4,7 +4,6 @@ export enum NotificationContextTypeEnum {
   SUPPORT = 'SUPPORT',
   ACTION = 'ACTION',
   THREAD = 'THREAD',
-  COLLABOARATOR = 'COLLABORATOR',
   COMMENT = 'COMMENT' // TODO: Deprecated!
 }
 

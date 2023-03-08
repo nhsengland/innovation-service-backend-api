@@ -119,10 +119,7 @@ export class RecipientsService extends BaseService {
       .andWhere(`users.locked_at IS NULL`)
       .getMany();
 
-    const identityInfos = await this.identityProviderService.getUsersList(dbUsers.map(u => u.identityId));
-
-    return identityInfos;
-
+    return await this.identityProviderService.getUsersList(dbUsers.map(u => u.identityId));
   }
 
   async innovationInfoWithOwner(innovationId: string): Promise<{
@@ -445,9 +442,11 @@ export class RecipientsService extends BaseService {
     const dbCollaborator = await this.sqlConnection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select([
         'collaborator.id', 'collaborator.email', 'collaborator.status',
-        'user.id', 'user.identityId', 'user.serviceRoles'
+        'user.id', 'user.identityId', 
+        'userRoles.id', 'userRoles.role'
       ])
       .leftJoin('collaborator.user', 'user')
+      .leftJoin('user.serviceRoles', 'userRoles')
       .where('collaborator.id = :collaboratorId', { collaboratorId: innovationCollaboratorId })
       .getOne();
 
@@ -673,10 +672,7 @@ export class RecipientsService extends BaseService {
         .groupBy('users.id')
         .addGroupBy('users.external_id');
 
-    const result = await mainQuery.getRawMany<{ userId: string, identityId: string; latestInteractionDate: Date }>();
-
-    return result;
-
+    return await mainQuery.getRawMany<{ userId: string, identityId: string; latestInteractionDate: Date }>();
   }
 
   async idleSupportsByInnovation(): Promise<{
