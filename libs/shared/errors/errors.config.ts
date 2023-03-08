@@ -76,6 +76,16 @@ export class ServiceUnavailableError extends Error implements BaseErrorType {
   errorResponse(): AppResponse { return ResponseHelper.ServiceUnavailable({ error: this.name, message: this.message, details: this.details }); }
 }
 
+export class ConflictError extends Error implements BaseErrorType {
+  details: undefined | ErrorDetailsType;
+  constructor(name: ErrorNamesType, data?: { message?: string, details?: ErrorDetailsType }) {
+    super(data?.message || 'Request conflict');
+    this.name = name;
+    this.details = data?.details;
+  }
+  errorResponse(): AppResponse { return ResponseHelper.Conflict({ error: this.name, message: this.message, details: this.details }); }
+}
+
 export class UnprocessableEntityError extends Error implements BaseErrorType {
   details: undefined | ErrorDetailsType;
   constructor(name: ErrorNamesType, data?: { message?: string, details?: ErrorDetailsType }) {

@@ -118,6 +118,44 @@ describe('Innovation Collaborators Suite', () => {
       expect(dbCollaborator).toHaveProperty('userId', null);
     });
 
+    it('invite again for a user that is valid to invite again', async () => {
+      // Innovator 2 has an EXPIRED collaborator invitation
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator2.id, email: 'innovator2@gmail.com' } as any]);
+
+      const expected = {
+        email: 'innovator2@gmail.com',
+        collaboratorRole: randRole(),
+        status: InnovationCollaboratorStatusEnum.PENDING,
+        innovation: testData.innovationWithCollaborators.id,
+        createdBy: testData.domainContexts.innovator.id,
+        updatedBy: testData.domainContexts.innovator.id,
+        user: testData.baseUsers.innovator2.id
+      }
+
+      const collaborator = await sut.createCollaborator(
+        testData.domainContexts.innovator,
+        testData.innovationWithCollaborators.id,
+        {
+          email: expected.email,
+          role: expected.collaboratorRole
+        },
+        em
+      );
+
+      const dbCollaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
+        .where('collaborators.id = :collaboratorId', { collaboratorId: testData.collaborators.collaboratorExpired.id })
+        .getOne();
+
+      expect(collaborator).toHaveProperty('id', dbCollaborator?.id);
+      expect(dbCollaborator).toHaveProperty('collaboratorRole', expected.collaboratorRole);
+      expect(dbCollaborator).toHaveProperty('status', expected.status);
+      expect(dbCollaborator).toHaveProperty('innovationId', expected.innovation);
+      expect(dbCollaborator).toHaveProperty('createdBy', expected.createdBy);
+      expect(dbCollaborator).toHaveProperty('updatedBy', expected.updatedBy);
+      expect(dbCollaborator).toHaveProperty('userId', expected.user);
+      expect(dbCollaborator).toHaveProperty('invitedAt');
+    });
+
     it('return a error if there is an invite associated with an email/innovation', async () => {
 
       const email = randEmail();
@@ -148,6 +186,30 @@ describe('Innovation Collaborators Suite', () => {
 
       expect(err).toBeDefined();
       expect(err?.name).toBe('ICB.0002');
+
+    });
+
+    it('return a error if the owner is trying to create a invite for himself', async () => {
+
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator.id, email: 'innovator@gmail.com' } as any]);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.createCollaborator(
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          {
+            email: 'innovator@gmail.com',
+            role: randRole()
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('ICB.0005');
 
     });
   });

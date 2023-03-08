@@ -1,7 +1,7 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
 import { InnovationCollaboratorStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
-import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { ConflictError, ForbiddenError, InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainContextType } from '@innovations/shared/types';
@@ -27,41 +27,62 @@ export class InnovationCollaboratorsService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const invite = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .where('collaborators.email = :email', { email: data.email })
-      .andWhere('collaborators.innovation_id = :innovationId', { innovationId })
-      .getCount();
+    const dbCollaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .select(['collaborator.id', 'collaborator.status', 'collaborator.invitedAt'])
+      .where('collaborator.email = :email AND collaborator.innovation_id = :innovationId', { email: data.email, innovationId })
+      .getOne();
 
-    if (invite) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_ALREADY_CREATED_REQUEST);
+    if (dbCollaborator && [InnovationCollaboratorStatusEnum.ACTIVE, InnovationCollaboratorStatusEnum.PENDING].includes(dbCollaborator.status)) {
+      throw new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_WITH_VALID_REQUEST);
     }
 
     const [user] = await this.domainService.users.getUserByEmail(data.email);
 
-    const collaboratorObj = InnovationCollaboratorEntity.new({
-      email: data.email,
+    // Check to see if he is attempting to create an invite for himself.
+    if (domainContext.id === user?.id) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER);
+    }
+
+    const collaboratorObj = {
       collaboratorRole: data.role,
       status: InnovationCollaboratorStatusEnum.PENDING,
-      innovation: InnovationEntity.new({ id: innovationId }),
-      createdBy: domainContext.id,
       updatedBy: domainContext.id,
       invitedAt: new Date().toISOString(),
-      ...(user && { user: UserEntity.new({ id: user.id }) })
-    });
+    }
 
-    const collaborator = await connection.save(InnovationCollaboratorEntity, collaboratorObj);
+    let collaboratorId;
+    // Collaborator does not exist on DB.
+    if (!dbCollaborator) {
+      const collaborator = await connection.save(InnovationCollaboratorEntity, {
+        ...collaboratorObj,
+        email: data.email,
+        innovation: InnovationEntity.new({ id: innovationId }),
+        createdBy: domainContext.id,
+        ...(user && { user: UserEntity.new({ id: user.id }) })
+      });
+
+      collaboratorId = collaborator.id;
+    } else {
+      // If it reaches here, a collaborator has already been created before.
+      await connection.getRepository(InnovationCollaboratorEntity).update(
+        { id: dbCollaborator.id },
+        collaboratorObj
+      );
+
+      collaboratorId = dbCollaborator.id;
+    }
 
     await this.notifierService.send(
       { id: domainContext.id, identityId: domainContext.identityId },
       NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
       {
-        innovationCollaboratorId: collaborator.id,
+        innovationCollaboratorId: collaboratorId,
         innovationId: innovationId
       },
       domainContext,
     );
 
-    return { id: collaborator.id };
+    return { id: collaboratorId };
   }
 
   async getCollaboratorsList(
