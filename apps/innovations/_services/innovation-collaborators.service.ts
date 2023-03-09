@@ -1,6 +1,6 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import { InnovationCollaboratorStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
+import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ConflictError, ForbiddenError, InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -38,9 +38,17 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const [user] = await this.domainService.users.getUserByEmail(data.email);
 
-    // Check to see if he is attempting to create an invite for himself.
-    if (domainContext.id === user?.id) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER);
+    if (user) {
+      const isInnovator = user.roles.some(r => r.role === ServiceRoleEnum.INNOVATOR);
+      // Check to see if he is attempting to create an invite for a QA/A or NA
+      if (isInnovator === false) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR);
+      }
+
+      // Check to see if he is attempting to create an invite for himself.
+      if (domainContext.id === user?.id) {
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER);
+      }
     }
 
     const collaboratorObj = {

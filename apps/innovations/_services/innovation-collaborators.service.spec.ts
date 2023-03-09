@@ -3,7 +3,7 @@ import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helpe
 import { container } from '../_config';
 
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
+import { InnovationCollaboratorStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainUsersService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import { CacheService } from '@innovations/shared/services/storage/cache.service';
@@ -47,7 +47,7 @@ describe('Innovation Collaborators Suite', () => {
 
     it('create a collaborator for an existing user', async () => {
 
-      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator2.id } as any]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator2.id, roles: [{ role: ServiceRoleEnum.INNOVATOR }] } as any]);
 
       const expected = {
         email: randEmail(),
@@ -120,7 +120,7 @@ describe('Innovation Collaborators Suite', () => {
 
     it('invite again for a user that is valid to invite again', async () => {
       // Innovator 2 has an EXPIRED collaborator invitation
-      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator2.id, email: 'innovator2@gmail.com' } as any]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator2.id, email: 'innovator2@gmail.com', roles: [{ role: ServiceRoleEnum.INNOVATOR }] } as any]);
 
       const expected = {
         email: 'innovator2@gmail.com',
@@ -191,7 +191,7 @@ describe('Innovation Collaborators Suite', () => {
 
     it('return a error if the owner is trying to create a invite for himself', async () => {
 
-      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator.id, email: 'innovator@gmail.com' } as any]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.innovator.id, email: 'innovator@gmail.com', roles: [{ role: ServiceRoleEnum.INNOVATOR }] } as any]);
 
       let err: UnprocessableEntityError | null = null;
       try {
@@ -210,6 +210,30 @@ describe('Innovation Collaborators Suite', () => {
 
       expect(err).toBeDefined();
       expect(err?.name).toBe('ICB.0005');
+
+    });
+
+    it('return a error if he is trying to invite a QA', async () => {
+
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([{ id: testData.baseUsers.qualifyingAccessor.id, email: 'qa@gmail.com', roles: [{ role: ServiceRoleEnum.QUALIFYING_ACCESSOR }] } as any]);
+
+      let err: UnprocessableEntityError | null = null;
+      try {
+        await sut.createCollaborator(
+          testData.domainContexts.innovator,
+          testData.innovation.id,
+          {
+            email: 'qa@gmail.com',
+            role: randRole()
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe('ICB.0006');
 
     });
   });
