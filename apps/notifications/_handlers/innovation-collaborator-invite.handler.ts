@@ -39,7 +39,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath(`collaborator/${collaborator.id}`).buildUrl()
+          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath(`innovator/innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`).buildUrl()
         }
       });
 
@@ -51,7 +51,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
+          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath(`innovator/innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`).buildUrl()
         }
       });
 
