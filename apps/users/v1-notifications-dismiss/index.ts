@@ -28,12 +28,11 @@ class V1UserNotificationsDismiss {
         .checkInnovatorType()
         .verify();
 
-      const userInfo = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const affected = await notificationsService.dismissUserNotifications({ id: userInfo.id, organisationUnitId: domainContext.organisation?.organisationUnit?.id }, body);
+      const affected = await notificationsService.dismissUserNotifications(domainContext, body);
       context.res = ResponseHelper.Ok<ResponseDTO>({affected});
       return;
 
