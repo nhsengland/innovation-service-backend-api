@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationSectionEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { ActivityEnum, ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
@@ -102,8 +102,8 @@ export class InnovationSectionsService extends BaseService {
 
         const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
 
-        return { 
-          id: section.id, 
+        return {
+          id: section.id,
           section: section.section,
           status: section.status,
           submittedAt: section.submittedAt,
@@ -111,7 +111,7 @@ export class InnovationSectionsService extends BaseService {
             name: innovatorNames.get(section.submittedBy.identityId)?.displayName ?? 'unknown user',
             isOwner: section.submittedBy.id === innovation.owner.id
           } : null,
-          openActionsCount 
+          openActionsCount
         };
 
       } else {
@@ -159,16 +159,16 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const dbSection = await connection.createQueryBuilder(InnovationSectionEntity, 'section')
-    .select([
-      'section.id', 'section.section', 'section.status', 'section.submittedAt',
-      'submittedBy.id', 'submittedBy.identityId',
-      'sectionFiles.id', 'sectionFiles.displayFileName'
-    ])
-    .leftJoin('section.submittedBy', 'submittedBy')
-    .leftJoin('section.files', 'sectionFiles')
-    .where('section.innovation_id = :innovationId', { innovationId })
-    .andWhere('section.section = :sectionKey', { sectionKey })
-    .getOne();
+      .select([
+        'section.id', 'section.section', 'section.status', 'section.submittedAt',
+        'submittedBy.id', 'submittedBy.identityId',
+        'sectionFiles.id', 'sectionFiles.displayFileName'
+      ])
+      .leftJoin('section.submittedBy', 'submittedBy')
+      .leftJoin('section.files', 'sectionFiles')
+      .where('section.innovation_id = :innovationId', { innovationId })
+      .andWhere('section.section = :sectionKey', { sectionKey })
+      .getOne();
 
 
     let sectionData: null | { [key: string]: any } = null;
@@ -246,7 +246,9 @@ export class InnovationSectionsService extends BaseService {
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('sections.files', 'sectionFiles')
-      .where('innovation.id = :innovationId AND innovation.owner_id = :userId', { innovationId, userId: user.id })
+      .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE })
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('innovation.owner_id = :userId OR collaborator.user_id = :userId', { userId: user.id })
       .getOne();
 
     if (!innovation) {
@@ -389,7 +391,7 @@ export class InnovationSectionsService extends BaseService {
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
 
-        for(const action of requestedStatusActions) {
+        for (const action of requestedStatusActions) {
           await this.notifierService.send(
             { id: domainContext.id, identityId: domainContext.identityId },
             NotifierTypeEnum.ACTION_UPDATE,
@@ -403,7 +405,7 @@ export class InnovationSectionsService extends BaseService {
             },
             domainContext,
           );
-        }  
+        }
       }
 
       return { id: savedSection.id };
