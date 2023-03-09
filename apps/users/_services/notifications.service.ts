@@ -29,9 +29,7 @@ export class NotificationsService extends BaseService {
       .where('notificationUser.user_role_id = :id', { id: roleId })
       .andWhere('notificationUser.readAt IS NULL');
 
-    const total = await query.getCount();
-
-    return total;
+    return await query.getCount();
   }
 
 
