@@ -2,7 +2,7 @@ import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntit
 import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { DateISOType } from '@users/shared/types';
+import type { DateISOType, DomainContextType } from '@users/shared/types';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
@@ -17,20 +17,14 @@ export class NotificationsService extends BaseService {
    * @param entityManager optional entity manager to run the query (for transactions)
    * @returns the total
    */
-  public async getUserActiveNotificationsCounter(userId: string, organisationUnitId: string | undefined, entityManager?: EntityManager): Promise<number> {
+  public async getUserActiveNotificationsCounter(roleId: string, entityManager?: EntityManager): Promise<number> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em.createQueryBuilder(NotificationUserEntity, 'notificationUser')
       .innerJoin('notificationUser.notification', 'notification')
       .innerJoin('notification.innovation', 'innovation')             // fixes #104377
-      .where('notificationUser.user = :id', { id: userId })
+      .where('notificationUser.user_role_id = :id', { id: roleId })
       .andWhere('notificationUser.readAt IS NULL');
-
-    if (organisationUnitId) {
-      query.andWhere('notificationUser.organisationUnit = :orgUnit', { orgUnit: organisationUnitId });
-    } else {
-      query.andWhere('notificationUser.organisationUnit IS NULL');
-    }
 
     const total = await query.getCount();
 
@@ -49,7 +43,7 @@ export class NotificationsService extends BaseService {
    * @returns the total and the notifications
    */
   public async getUserNotifications(
-    user: { id: string, organisationUnitId: string | undefined },
+    domainContext: DomainContextType,
     filters: {
       contextTypes: NotificationContextTypeEnum[];
       unreadOnly: boolean;
@@ -71,14 +65,8 @@ export class NotificationsService extends BaseService {
     const query = em.createQueryBuilder(NotificationUserEntity, 'user')
       .innerJoinAndSelect('user.notification', 'notification')
       .innerJoin('notification.innovation', 'innovation')
-      .where('user.user = :userId', { userId: user.id });
+      .where('user.user_role_id = :roleId', { roleId: domainContext.currentRole.id });
     
-    if (user.organisationUnitId) {
-      query.andWhere('user.organisationUnit = :orgUnitId', { orgUnitId: user.organisationUnitId });
-    } else {
-      query.andWhere('user.organisationUnit IS NULL');
-    }
-
     // optional filters
     if (filters.unreadOnly) {
       query.andWhere('user.readAt IS NULL');
@@ -153,7 +141,7 @@ export class NotificationsService extends BaseService {
    * @returns the number of affected rows
    */
   async dismissUserNotifications(
-    user: { id: string, organisationUnitId?: string | undefined },
+    domainContext: DomainContextType,
     conditions: {
       notificationIds: string[];
       contextIds: string[];
@@ -168,24 +156,18 @@ export class NotificationsService extends BaseService {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, { message: 'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'});
     }
 
-    const params: { userId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { userId: user.id };
+    const params: { roleId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[] } = { roleId: domainContext.currentRole.id };
     const query = em.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: new Date().toISOString() })
-      .where('user_id = :userId')
+      .where('user_role_id = :roleId')
       .andWhere('deleted_at IS NULL')
       .andWhere('read_at IS NULL');
 
-    if (user.organisationUnitId) {
-      query.andWhere('organisation_unit_id = :orgUnitId', { orgUnitId: user.organisationUnitId });
-    } else {
-      query.andWhere('organisation_unit_id IS NULL');
-    }
-      
     if(!conditions.dismissAll) {
       const notificationQuery = em.createQueryBuilder(NotificationEntity, 'notification')
         .innerJoin('notification.notificationUsers', 'user')
         .select('notification.id')
-        .andWhere('user.id = :userId', { userId: user.id })
+        .andWhere('user.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
         .andWhere('user.read_at IS NULL');
   
       if (conditions.notificationIds.length > 0) {
