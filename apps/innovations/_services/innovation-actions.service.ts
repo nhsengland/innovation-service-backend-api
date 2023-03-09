@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -9,7 +9,7 @@ import { ActivityLogListParamsType, DateISOType, DomainContextType, isAccessorDo
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
-import type { EntityManager } from 'typeorm';
+import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
 
@@ -78,7 +78,11 @@ export class InnovationActionsService extends BaseService {
       .leftJoin('updatedByUserRole.user', 'updatedByUser');
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      query.andWhere('innovation.owner_id = :innovatorUserId', { innovatorUserId: domainContext.id });
+      query.leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE });
+      query.andWhere(new Brackets(qb => {
+        qb.andWhere('innovation.owner_id = :ownerId', { ownerId: domainContext.id });
+        qb.orWhere('collaborator.user_id = :userId', { userId: domainContext.id });
+      }));
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
@@ -282,11 +286,13 @@ export class InnovationActionsService extends BaseService {
         id: dbAction.createdByUserRole.user.id,
         name: createdByUser.displayName,
         role: dbAction.createdByUserRole.role,
-        ...(dbAction.createdByUserRole.organisationUnit && {organisationUnit: {
-          id: dbAction.createdByUserRole.organisationUnit.id,
-          name: dbAction.createdByUserRole.organisationUnit.name,
-          acronym: dbAction.createdByUserRole.organisationUnit.acronym
-        }})
+        ...(dbAction.createdByUserRole.organisationUnit && {
+          organisationUnit: {
+            id: dbAction.createdByUserRole.organisationUnit.id,
+            name: dbAction.createdByUserRole.organisationUnit.name,
+            acronym: dbAction.createdByUserRole.organisationUnit.acronym
+          }
+        })
       },
       ...(declineReason ? { declineReason } : {})
     };
@@ -405,7 +411,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     // Actions can only be updated from users from the same org unit
-    if(dbAction.innovationSupport?.organisationUnit.id !== domainContext.organisation?.organisationUnit?.id) {
+    if (dbAction.innovationSupport?.organisationUnit.id !== domainContext.organisation?.organisationUnit?.id) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_FROM_DIFFERENT_UNIT);
     }
 
