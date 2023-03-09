@@ -8,6 +8,7 @@ import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 const DateFilterKeys = ['submittedAt'] as const;
 const FieldsKeys = ['isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
+const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
 
 enum orderFields {
   name = 'name',
@@ -31,6 +32,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
   latestWorkedByMe?: boolean,
+  hasAccessThrough?: TypeFromArray<typeof HasAccessThroughKeys>[],
   dateFilter?: {
     field: TypeFromArray<typeof DateFilterKeys>,
     startDate?: DateISOType,
@@ -63,6 +65,10 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
   latestWorkedByMe: Joi.boolean().optional().default(false),
+  hasAccessThrough: Joi.when('$userType', {
+    is: 'INNOVATOR',
+    then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...HasAccessThroughKeys)).optional(),
+  }),
   dateFilter: JoiHelper.AppCustomJoi().stringArrayOfObjects().items(
     Joi.object({
       field: Joi.string().valid(...DateFilterKeys).required(),

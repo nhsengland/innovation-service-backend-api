@@ -1236,6 +1236,17 @@ paths:
                     - DESC
                 default:
                   default: DESC
+        - name: hasAccessThrough
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - owner
+                    - collaborator
         - name: dateFilter
           in: query
           required: false

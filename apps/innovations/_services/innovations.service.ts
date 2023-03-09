@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -40,6 +40,7 @@ export class InnovationsService extends BaseService {
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
       latestWorkedByMe?: boolean,
+      hasAccessThrough?: ('owner' | 'collaborator')[],
       dateFilter?: {
         field: 'submittedAt',
         startDate?: DateISOType,
@@ -117,7 +118,32 @@ export class InnovationsService extends BaseService {
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      innovationFetchQuery.andWhere('innovations.owner_id = :innovatorUserId', { innovatorUserId: user.id });
+
+      const conditions = new Map<'owner' | 'collaborator', { condition: string, parameters: ObjectLiteral }>([
+        ['owner', { condition: 'innovations.owner_id = :innovatorUserId', parameters: { innovatorUserId: user.id } }],
+        ['collaborator', { condition: 'collaborator.user_id = :userId', parameters: { userId: user.id } }]
+      ]);
+
+      if (filters.hasAccessThrough && filters.hasAccessThrough.length > 0) {
+        if (!filters.hasAccessThrough.includes('owner')) {
+          conditions.delete('owner');
+        }
+
+        if (!filters.hasAccessThrough.includes('collaborator')) {
+          conditions.delete('collaborator');
+        }
+      }
+
+      if (conditions.has('collaborator')) {
+        innovationFetchQuery.leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE });
+      }
+
+      innovationFetchQuery.andWhere(new Brackets(qb => {
+        for (const { condition, parameters } of conditions.values()) {
+          qb.orWhere(condition, parameters);
+        }
+      }));
+
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
