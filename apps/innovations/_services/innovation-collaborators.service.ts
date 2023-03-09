@@ -22,7 +22,10 @@ export class InnovationCollaboratorsService extends BaseService {
   async createCollaborator(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { email: string, role: string | null },
+    data: { 
+      email: string, 
+      role: string | null
+    },
     entityManager?: EntityManager,
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -354,6 +357,71 @@ export class InnovationCollaboratorsService extends BaseService {
     }
   }
 
+  async upsertCollaborator(    
+    domainContext: DomainContextType,
+    data: {
+      innovationId: string,
+      email: string,    
+      userId: string,
+      status: InnovationCollaboratorStatusEnum
+    },
+    entityManager?: EntityManager,
+  ): Promise<{ id: string }>  {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .withDeleted()
+      .select(['collaborator.id'])
+      .where('collaborator.email = :email AND collaborator.innovation_id = :innovationId', { email: data.email, innovationId: data.innovationId })
+      .getOne();
+    
+    if (collaborator) {
+      await connection.getRepository(InnovationCollaboratorEntity).restore({ id: collaborator.id },);
+      
+      await connection.getRepository(InnovationCollaboratorEntity).update(
+        { id: collaborator.id },
+        { 
+          status: data.status,
+          updatedBy: domainContext.id,
+        }
+      );
+      
+      return { id: collaborator.id }
+    } else {
+      const newCollaborator = await connection.save(InnovationCollaboratorEntity, {
+        status: data.status,
+        updatedBy: domainContext.id,   
+        email: data.email,
+        createdBy: domainContext.id,
+        invitedAt: new Date().toISOString(),
+        innovation: InnovationEntity.new({ id: data.innovationId }),
+        user: UserEntity.new({ id: data.userId })
+      });
+
+      return { id: newCollaborator.id }
+    }
+  }
+
+  async deleteCollaborator(
+    innovationId: string,
+    email: string,
+    entityManager?: EntityManager,
+  ): Promise<{ id: string }>  {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
+      .where('collaborators.email = :email AND collaborators.innovation_id = :innovationId', { email, innovationId })
+      .getOne();
+
+    if (!collaborator) {
+      return { id: '' };
+    }
+
+    await connection.softDelete(InnovationCollaboratorEntity, { id: collaborator.id });
+    return { id: collaborator.id };
+  }
+
+
   private async runUpdateStatusRules(
     collaborator: { status: InnovationCollaboratorStatusEnum },
     isOwner: boolean,
@@ -380,6 +448,4 @@ export class InnovationCollaboratorsService extends BaseService {
       return;
     }
   }
-
-
 }

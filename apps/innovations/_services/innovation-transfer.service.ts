@@ -2,12 +2,13 @@ import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
 import { InnovationEntity, InnovationTransferEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationTransferStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationCollaboratorStatusEnum, InnovationTransferStatusEnum, NotifierTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, IdentityProviderServiceSymbol, NotifierServiceSymbol, type DomainServiceType, type IdentityProviderServiceType, type NotifierServiceType } from '@innovations/shared/services';
 
 import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
+import { InnovationCollaboratorsServiceSymbol, type InnovationCollaboratorsServiceType } from './interfaces';
 
 
 type TransferQueryFilterType = {
@@ -25,7 +26,8 @@ export class InnovationTransferService extends BaseService {
   constructor(
     @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(InnovationCollaboratorsServiceSymbol) private collaboratorsService: InnovationCollaboratorsServiceType,
   ) { super(); }
 
 
@@ -222,13 +224,31 @@ export class InnovationTransferService extends BaseService {
       });
 
       if (status === InnovationTransferStatusEnum.COMPLETED) {
+        const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
+
+        if (innovation) {
+          const currentOwnerEmail = (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email
+
+          await this.collaboratorsService.upsertCollaborator(
+            domainContext,
+            {
+              innovationId: transfer.innovation.id,
+              email: currentOwnerEmail,
+              userId: innovation.owner.id,
+              status: transfer.ownerToCollaborator ? InnovationCollaboratorStatusEnum.ACTIVE : InnovationCollaboratorStatusEnum.LEFT
+            }
+          );
+        }
 
         await transactionManager.update(InnovationEntity,
           { id: transfer.innovation.id },
           {
             owner: { id: requestUser.id },
             updatedBy: requestUser.id,
-          });
+          }
+        );
+
+        await this.collaboratorsService.deleteCollaborator(transfer.innovation.id, transfer.email);
 
         await this.domainService.innovations.addActivityLog(
           transactionManager,
