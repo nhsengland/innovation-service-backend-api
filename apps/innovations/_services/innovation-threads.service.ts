@@ -366,7 +366,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async getThreadMessagesList(
-    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
     threadId: string,
     skip = 0,
     take = 10,
@@ -430,17 +430,19 @@ export class InnovationThreadsService extends BaseService {
       identityIds: authors,
     });
 
-    const notifications = await this.sqlConnection
+    const notifications = new Set((await this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notification')
-      .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
-      .innerJoinAndSelect('notificationUsers.user', 'users')
+      .select(['notification.params'])
+      .innerJoin('notification.notificationUsers', 'notificationUsers')
       .where('notification.context_id IN (:...contextIds)', {
-        contextIds: messages.map((m) => m.id),
+        contextIds: messages.map((m) => m.thread.id),
       })
-      .andWhere('users.id = :userId', { userId: requestUser.id })
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('notificationUsers.read_at IS NULL')
-      .getMany();
-
+      .getMany())
+      .filter(Boolean)
+      .map(n => JSON.parse(n.params).messageId));
+      
     const messageResult = messages.map((tm) => {
 
       const author = authorsMap.find(
@@ -454,7 +456,7 @@ export class InnovationThreadsService extends BaseService {
         id: tm.id,
         message: tm.message,
         createdAt: tm.createdAt,
-        isNew: notifications.find((n) => n.contextId === tm.id) ? true : false,
+        isNew: notifications.has(tm.id),
         isEditable: tm.isEditable,
         createdBy: {
           id: tm.author.id,

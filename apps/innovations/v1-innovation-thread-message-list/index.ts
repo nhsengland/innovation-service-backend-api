@@ -33,7 +33,7 @@ class V1InnovationThreadMessageList {
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
 
       let orderBy;
@@ -43,12 +43,12 @@ class V1InnovationThreadMessageList {
       }
 
       const result = await threadsService.getThreadMessagesList(
-        requestUser,
+        domainContext,
         pathParams.threadId,
         queryParams.skip,
         queryParams.take,
         orderBy,
-      )
+      );
 
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
