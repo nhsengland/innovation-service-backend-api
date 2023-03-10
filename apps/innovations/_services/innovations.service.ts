@@ -1803,19 +1803,19 @@ export class InnovationsService extends BaseService {
   /**
    * dismisses innovation notification for the requestUser according to optional conditions
    *
-   * @param requestUser the user that is dismissing the notification
+   * @param domainContext the user that is dismissing the notification
    * @param innovationId the innovation id
    * @param conditions extra conditions that control the dismissal
    *  - if notificationIds is set, only the notifications with the given ids will be dismissed
    *  - if notificationContext.id is set, only the notifications with the given context id will be dismissed
    *  - if notificationContext.type is set, only the notifications with the given context type will be dismissed
    */
-  async dismissNotifications(requestUser: DomainUserInfoType, domainContext: DomainContextType, innovationId: string, conditions: {
+  async dismissNotifications(domainContext: DomainContextType, innovationId: string, conditions: {
     notificationIds: string[],
     contextTypes: string[],
     contextIds: string[]
   }): Promise<void> {
-    const params: { userId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[], organisationUnitId?: string } = { userId: requestUser.id, innovationId };
+    const params: { roleId: string, innovationId: string, notificationIds?: string[], contextIds?: string[], contextTypes?: string[], organisationUnitId?: string } = { roleId: domainContext.currentRole.id, innovationId };
     const query = this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
       .select('notification.id')
       .where('notification.innovation_id = :innovationId', { innovationId });
@@ -1837,12 +1837,7 @@ export class InnovationsService extends BaseService {
     const updateQuery = this.sqlConnection.createQueryBuilder(NotificationUserEntity, 'user').update()
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
       .where('notification_id IN ( ' + query.getQuery() + ' )')
-      .andWhere('user_id = :userId AND read_at IS NULL');
-
-    if (domainContext.organisation?.organisationUnit?.id) {
-      params.organisationUnitId = domainContext.organisation.organisationUnit.id;
-      updateQuery.andWhere('organisation_unit_id = :organisationUnitId');
-    }
+      .andWhere('user_role_id = :roleId AND read_at IS NULL');
 
     await updateQuery.setParameters(params).execute();
 
