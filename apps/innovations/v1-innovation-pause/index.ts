@@ -32,7 +32,7 @@ class V1InnovationPause {
       const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation({ status: [InnovationStatusEnum.IN_PROGRESS] })
+        .checkInnovation({ isOwner: true, status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext()

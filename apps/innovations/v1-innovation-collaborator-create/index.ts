@@ -29,7 +29,7 @@ class V1InnovationCollaboratorCreate {
       const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation()
+        .checkInnovation({ isOwner: true })
         .verify();
 
       const domainContext = auth.getContext();

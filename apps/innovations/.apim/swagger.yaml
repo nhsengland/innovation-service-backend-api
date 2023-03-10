@@ -811,7 +811,7 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
-  /v1/collaborators/{collaboratorId}/check:
+  "/v1/collaborators/{collaboratorId}/check":
     head:
       description: Check if collaborator exists
       operationId: v1-innovation-collaboration-check
@@ -821,7 +821,6 @@ paths:
         - name: collaboratorId
           in: path
           required: true
-          description: Collaborator ID
           schema:
             type: string
             format: uuid
@@ -1690,7 +1689,6 @@ paths:
                           - SUPPORT
                           - ACTION
                           - THREAD
-                          - COLLABORATOR
                           - COMMENT
       responses:
         "204":

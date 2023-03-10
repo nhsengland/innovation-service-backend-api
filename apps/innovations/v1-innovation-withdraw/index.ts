@@ -31,7 +31,7 @@ class V1InnovationWithdraw {
       const auth = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
-        .checkInnovation()
+        .checkInnovation({ isOwner: true })
         .verify();
 
       const result = await innovationsService.withdrawInnovation(auth.getContext(), params.innovationId, body.message);
