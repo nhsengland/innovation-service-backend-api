@@ -421,6 +421,17 @@ export class InnovationCollaboratorsService extends BaseService {
     return { id: collaborator.id };
   }
 
+  async collaboratorExists(id: string, entityManager?: EntityManager): Promise<boolean> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
+      .select(['collaborators.id'])
+      .where('collaborators.id = :id AND collaborators.status = :status', { id, status: InnovationCollaboratorStatusEnum.PENDING })
+      .getOne();
+
+    return !!collaborator;
+  }
+
 
   private async runUpdateStatusRules(
     collaborator: { status: InnovationCollaboratorStatusEnum },
