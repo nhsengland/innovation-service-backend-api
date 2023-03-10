@@ -1,16 +1,17 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
-import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType } from './validation.schemas';
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType } from './validation.schemas';
 
 
 class V1AdminTermsOfUseCreate {
@@ -19,7 +20,7 @@ class V1AdminTermsOfUseCreate {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const toUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
 
@@ -28,7 +29,7 @@ class V1AdminTermsOfUseCreate {
       const auth = await authorizationService.validate(context)
         .checkAdminType()
         .verify();
-      const requestUser = auth.getUserInfo()
+      const requestUser = auth.getUserInfo();
 
       const result = await toUService.createTermsOfUse({ id: requestUser.id }, body);
 

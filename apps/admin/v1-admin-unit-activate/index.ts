@@ -5,15 +5,16 @@ import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import {
   AuthorizationServiceSymbol,
-  AuthorizationServiceType,
+  AuthorizationServiceType
 } from '@admin/shared/services';
-import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import type { OrganisationsService } from '../_services/organisations.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUnitActivate {
   @JwtDecoder()
@@ -24,7 +25,7 @@ class V1AdminUnitActivate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const organisationsService = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
+    const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
         const params = JoiHelper.Validate<ParamsType>(

@@ -29,6 +29,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   supportStatuses?: InnovationSupportStatusEnum[],
   groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
+  engagingOrganisationUnits?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
   latestWorkedByMe?: boolean,
@@ -38,6 +39,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
     startDate?: DateISOType,
     endDate?: DateISOType
   }[],
+  withDeleted?: boolean,  // this is only allowed for admin and is true in that case to keep previous behavior
   fields?: TypeFromArray<typeof FieldsKeys>[]
 }
 
@@ -78,6 +80,19 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   ).optional(),
   fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...FieldsKeys)).optional(),
 })
+  // special admin filters
+  .when(
+    '$userType', {
+      is: 'ADMIN',
+      then: Joi.object({
+        assignedToMe: Joi.forbidden(),
+        suggestedOnly: Joi.forbidden(),
+        latestWorkedByMe: Joi.forbidden(),
+        engagingOrganisationUnits: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
+        withDeleted: JoiHelper.AppCustomJoi().boolean().optional().default(true)
+      }),
+    }
+  )
   // make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
   .fork('order', (schema) => Joi.when('latestWorkedByMe', { is: true, then: schema.forbidden(), otherwise: schema.optional() })).messages({ 'any.unknown': 'order field is not allowed when latestWorkedByMe is true' })
   .required();

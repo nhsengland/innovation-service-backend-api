@@ -1,18 +1,19 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { SwaggerHelper } from '@admin/shared/helpers/swagger.helper'
+import { SwaggerHelper } from '@admin/shared/helpers/swagger.helper';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
-import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminTermsOfUseUpdate {
   @JwtDecoder()
@@ -23,14 +24,14 @@ class V1AdminTermsOfUseUpdate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const toUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
 
       const params = JoiHelper.Validate<ParamsType>(
         ParamsSchema,
         request.params
-      )
+      );
 
       const body = JoiHelper.Validate<BodyType>(
         BodySchema,
@@ -42,7 +43,7 @@ class V1AdminTermsOfUseUpdate {
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo()
+      const requestUser = auth.getUserInfo();
 
       const result = await toUService.updateTermsOfUse(
         { id: requestUser.id },

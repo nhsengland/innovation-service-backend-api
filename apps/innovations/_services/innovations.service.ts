@@ -37,6 +37,7 @@ export class InnovationsService extends BaseService {
       supportStatuses?: InnovationSupportStatusEnum[],
       groupedStatuses?: InnovationGroupedStatusEnum[],
       engagingOrganisations?: string[],
+      engagingOrganisationUnits?: string[],
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
       latestWorkedByMe?: boolean,
@@ -46,6 +47,7 @@ export class InnovationsService extends BaseService {
         startDate?: DateISOType,
         endDate?: DateISOType
       }[],
+      withDeleted?: boolean,
       fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
@@ -167,7 +169,7 @@ export class InnovationsService extends BaseService {
 
     }
 
-    if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
+    if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN && filters.withDeleted) {
       innovationFetchQuery.withDeleted();
     }
 
@@ -230,6 +232,12 @@ export class InnovationsService extends BaseService {
           WHERE eofilter_is.innovation_id = innovations.id AND eofilter_ou.organisation_id IN (:...engagingOrganisationsFilterSupportStatuses) AND eofilter_is.deleted_at IS NULL)`,
         { engagingOrganisationsFilterSupportStatuses: filters.engagingOrganisations }
       );
+    }
+
+    // this is similar to assignedToMe for A/QAs but simplier. They never overlap since this is admin only, but we should probably refactor this.
+    if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
+      innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports')
+        .andWhere('supports.organisation_unit_id IN (:...engagingOrganisationsUnits)', { engagingOrganisationsUnits: filters.engagingOrganisationUnits });
     }
 
     if (filters.assignedToMe) {

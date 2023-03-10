@@ -327,6 +327,7 @@ paths:
                       - SUPPORT
                       - ACTION
                       - THREAD
+                      - COLLABORATOR
                       - COMMENT
                   description: The context types
                   default: []
@@ -394,6 +395,7 @@ paths:
                 - SUPPORT
                 - ACTION
                 - THREAD
+                - COLLABORATOR
                 - COMMENT
             description: The context types to filter by
             default: []
@@ -453,6 +455,7 @@ paths:
                             - SUPPORT
                             - ACTION
                             - THREAD
+                            - COLLABOARATOR
                             - COMMENT
                           description: The notification context type
                         contextDetail:
