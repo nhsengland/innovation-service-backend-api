@@ -22,8 +22,8 @@ export class InnovationCollaboratorsService extends BaseService {
   async createCollaborator(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { 
-      email: string, 
+    data: {
+      email: string,
       role: string | null
     },
     entityManager?: EntityManager,
@@ -50,7 +50,7 @@ export class InnovationCollaboratorsService extends BaseService {
 
       // Check to see if he is attempting to create an invite for himself.
       if (domainContext.id === user?.id) {
-        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER);
+        throw new ConflictError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_CANT_BE_OWNER);
       }
     }
 
@@ -357,16 +357,16 @@ export class InnovationCollaboratorsService extends BaseService {
     }
   }
 
-  async upsertCollaborator(    
+  async upsertCollaborator(
     domainContext: DomainContextType,
     data: {
       innovationId: string,
-      email: string,    
+      email: string,
       userId: string,
       status: InnovationCollaboratorStatusEnum
     },
     entityManager?: EntityManager,
-  ): Promise<{ id: string }>  {
+  ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
@@ -374,23 +374,23 @@ export class InnovationCollaboratorsService extends BaseService {
       .select(['collaborator.id'])
       .where('collaborator.email = :email AND collaborator.innovation_id = :innovationId', { email: data.email, innovationId: data.innovationId })
       .getOne();
-    
+
     if (collaborator) {
       await connection.getRepository(InnovationCollaboratorEntity).restore({ id: collaborator.id },);
-      
+
       await connection.getRepository(InnovationCollaboratorEntity).update(
         { id: collaborator.id },
-        { 
+        {
           status: data.status,
           updatedBy: domainContext.id,
         }
       );
-      
+
       return { id: collaborator.id }
     } else {
       const newCollaborator = await connection.save(InnovationCollaboratorEntity, {
         status: data.status,
-        updatedBy: domainContext.id,   
+        updatedBy: domainContext.id,
         email: data.email,
         createdBy: domainContext.id,
         invitedAt: new Date().toISOString(),
@@ -406,7 +406,7 @@ export class InnovationCollaboratorsService extends BaseService {
     innovationId: string,
     email: string,
     entityManager?: EntityManager,
-  ): Promise<{ id: string }>  {
+  ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
