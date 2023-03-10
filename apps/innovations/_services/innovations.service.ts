@@ -135,7 +135,7 @@ export class InnovationsService extends BaseService {
       }
 
       if (conditions.has('collaborator')) {
-        innovationFetchQuery.leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE });
+        innovationFetchQuery.leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE });
       }
 
       innovationFetchQuery.andWhere(new Brackets(qb => {
