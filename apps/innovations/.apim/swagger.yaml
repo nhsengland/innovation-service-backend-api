@@ -837,7 +837,7 @@ paths:
                   format: email
                 role:
                   type: string
-                  maxLength: 255
+                  maxLength: 25
                   nullable: true
               required:
                 - email
@@ -1025,6 +1025,7 @@ paths:
                 role:
                   oneOf:
                     - type: string
+                      maxLength: 25
               additionalProperties: false
       responses:
         "200":

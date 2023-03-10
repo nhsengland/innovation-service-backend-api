@@ -13,5 +13,5 @@ export type BodyType = {
 }
 export const BodySchema = Joi.object<BodyType>({
   email: Joi.string().email().required(),
-  role: Joi.string().max(255).optional().allow(null)
+  role: Joi.string().max(25).optional().allow(null)
 }).required();
