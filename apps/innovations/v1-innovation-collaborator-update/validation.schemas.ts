@@ -36,7 +36,7 @@ export const BodySchema = Joi.object<BodyType>({
       }),
   role: Joi.when('$collaboratorType', {
     is: 'OWNER',
-    then: Joi.string().max(25).optional(),
+    then: Joi.string().max(25).allow(null, '').optional(),
     otherwise: Joi.forbidden()
   }),
 }).required();

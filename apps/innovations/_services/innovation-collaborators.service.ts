@@ -281,7 +281,7 @@ export class InnovationCollaboratorsService extends BaseService {
     isOwner: boolean, // Is either owner or collaborator at this point
     data: { status?: UpdateCollaboratorStatusType, role?: string },
     entityManager?: EntityManager
-  ) {
+  ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
