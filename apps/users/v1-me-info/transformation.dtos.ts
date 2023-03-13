@@ -13,6 +13,7 @@ export type ResponseDTO = {
   phone: null | string,
   termsOfUseAccepted: boolean,
   hasInnovationTransfers: boolean,
+  hasInnovationCollaborations: boolean,
   passwordResetAt: null | DateISOType,
   firstTimeSignInAt: null | DateISOType,
   organisations: {
