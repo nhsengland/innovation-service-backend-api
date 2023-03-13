@@ -414,7 +414,8 @@ export class InnovationsService extends BaseService {
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
 
       if (domainContext.organisation?.organisationUnit?.id) {
-        notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
+        notificationsQuery.innerJoin('notificationUsers.userRole', 'userRole');
+        notificationsQuery.innerJoin('userRole.organisationUnit', 'organisationUnit')
           .where('organisationUnit.id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
       }
 
