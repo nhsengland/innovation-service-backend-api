@@ -1,6 +1,6 @@
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
@@ -58,7 +58,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.COLLABORATOR_INVITE, id: this.inputData.innovationCollaboratorId },         
-        users: [{ userId: collaborator.user.id, roleId: collaborator.user.roleId }],
+        userRoleIds: [collaborator.user.roleId],
         params: {
           collaboratorId: collaborator.id
         }

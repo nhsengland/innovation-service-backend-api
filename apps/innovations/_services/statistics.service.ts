@@ -40,7 +40,7 @@ export class StatisticsService extends BaseService {
     return sections;
   }
 
-  async getUnreadMessages(innovationId: string, userId: string): Promise<{
+  async getUnreadMessages(innovationId: string, roleId: string): Promise<{
     count: number;
     lastSubmittedAt: null | string;
   }> {
@@ -53,7 +53,7 @@ export class StatisticsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('notification.context_type = :context_type', { context_type: NotificationContextTypeEnum.THREAD })
       .andWhere('notification.context_detail IN (:...context_detail)', { context_detail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] })
-      .andWhere('users.user_id = :userId', { userId })
+      .andWhere('users.user_role_id = :roleId', { roleId })
       .andWhere('users.readAt IS NULL')
       .getRawOne();
 
@@ -87,7 +87,7 @@ export class StatisticsService extends BaseService {
       count: actions.length,
       lastSubmittedSection: actions.length > 0 ? actions[0].section : null,
       lastSubmittedAt: actions.length > 0 ? actions[0].updatedAt : null,
-    }
+    };
   }
 
   async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{ section: InnovationSectionEnum, updatedAt: DateISOType }[]> {
@@ -145,7 +145,7 @@ export class StatisticsService extends BaseService {
     return sections;
   }
 
-  async getUnreadMessagesInitiatedBy(innovationId: string, userId: string): Promise<{
+  async getUnreadMessagesInitiatedBy(innovationId: string, roleId: string): Promise<{
     count: number;
     lastSubmittedAt: null | string;
   }> {
@@ -159,10 +159,10 @@ export class StatisticsService extends BaseService {
         'thread.id = notification.context_id AND notification.context_type = :contextType AND notification.context_detail IN (:...contextDetail)',
         { contextType: NotificationContextTypeEnum.THREAD, contextDetail: [NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, NotificationContextDetailEnum.THREAD_CREATION] }
       )
-      .where('users.user_id = :userId', { userId })
+      .where('users.user_role_id = :roleId', { roleId: roleId })
       .andWhere('users.read_at IS NULL')
       .andWhere('thread.innovation_id = :innovationId', { innovationId })
-      .andWhere('thread.created_by = :userId', { userId })
+      .andWhere('thread.author_user_role_id = :roleId', { roleId: roleId })
       .getRawMany());
 
     const unreadMessages = unreadMessageThreads.length;
@@ -177,7 +177,7 @@ export class StatisticsService extends BaseService {
     return {
       count: unreadMessages,
       lastSubmittedAt: latestMessage?.createdAt || null,
-    }
+    };
   }
 
 

@@ -11,18 +11,18 @@ export class UnreadMessagesThreadsInitiatedByStatisticsHandler extends Innovatio
     requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]) {
-    super(requestUser, domainContext, data)
+    super(requestUser, domainContext, data);
   }
 
   async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]> {
 
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const actions = await statisticsService.getUnreadMessagesInitiatedBy(this.data.innovationId, this.requestUser.id);
+    const actions = await statisticsService.getUnreadMessagesInitiatedBy(this.data.innovationId, this.domainContext.currentRole.id);
   
     return {
       count: actions.count,
       lastSubmittedAt: actions.lastSubmittedAt,
-    }
+    };
   }
 }

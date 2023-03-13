@@ -478,7 +478,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async getInnovationThreads(
-    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
     innovationId: string,
     skip = 0,
     take = 10,
@@ -590,9 +590,8 @@ export class InnovationThreadsService extends BaseService {
       .createQueryBuilder(NotificationEntity, 'notifications')
       .select(['notifications.context_id'])
       .innerJoin('notifications.notificationUsers', 'notificationUsers')
-      .innerJoin('notificationUsers.user', 'users')
       .where('notifications.context_id IN (:...threadIds)', { threadIds })
-      .andWhere('users.id = :userId', { userId: requestUser.id })
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('notificationUsers.read_at IS NULL');
 
     const notifications = new Set((await notificationsQuery.getMany()).map(n => n.contextId));

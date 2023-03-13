@@ -50,7 +50,7 @@ export class LockUserHandler extends BaseHandler<
         this.inApp.push({
           innovationId: innovation.id,
           context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.LOCK_USER, id: innovation.id },
-          users: uniqueUsers.map(user => ({ userId: user.id, roleId: user.roleId, organisationUnitId: user.organisationUnitId })),
+          userRoleIds: uniqueUsers.map(user => user.roleId),
           params: {}
         });
       }

@@ -1,13 +1,13 @@
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { InnovationCollaboratorStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
-import { BaseHandler } from './base.handler';
 import { EmailErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
+import { BaseHandler } from './base.handler';
 
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
@@ -112,7 +112,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         this.inApp.push({
           innovationId: this.inputData.innovationId,
           context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.COLLABORATOR_UPDATE, id: this.inputData.innovationCollaborator.id },         
-          users: [{ userId: innovationCollaborator.user.id, roleId: innovationCollaborator.user.roleId }],
+          userRoleIds: [innovationCollaborator.user.roleId],
           params: {
             collaboratorId: innovationCollaborator.id
           }

@@ -410,7 +410,7 @@ export class InnovationsService extends BaseService {
         // .addSelect('notifications.type', 'notifications_type')
         .innerJoin('notifications.innovation', 'innovation')
         .addSelect('innovation.id', 'innovation_id')
-        .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
+        .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_role_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: domainContext.currentRole.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
 
       if (domainContext.organisation?.organisationUnit?.id) {

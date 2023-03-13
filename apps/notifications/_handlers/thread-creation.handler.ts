@@ -79,7 +79,7 @@ export class ThreadCreationHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-      users: [{ userId: innovation.owner.id, roleId: innovation.owner.userRole.id }],
+      userRoleIds: [innovation.owner.userRole.id],
       params: { subject: thread.subject, messageId: this.inputData.messageId }
     });
 
@@ -111,7 +111,7 @@ export class ThreadCreationHandler extends BaseHandler<
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_CREATION, id: this.inputData.threadId },
-        users: assignedUsers.map(item => ({ userId: item.id, roleId: item.userRole.id, organisationUnitId: item.organisationUnitId })),
+        userRoleIds: assignedUsers.map(item => item.userRole.id),
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

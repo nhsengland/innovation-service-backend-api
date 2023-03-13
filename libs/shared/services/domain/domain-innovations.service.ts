@@ -235,7 +235,7 @@ export class DomainInnovationsService {
 
 
   async getUnreadNotifications(
-    userId: string,
+    roleId: string,
     contextIds: string[],
     entityManager?: EntityManager
   ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
@@ -243,10 +243,10 @@ export class DomainInnovationsService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const notifications = await em.createQueryBuilder(NotificationEntity, 'notification')
-      .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
-      .innerJoinAndSelect('notificationUsers.user', 'user')
+      .select(['notification.id', 'notification.contextType', 'notification.contextId', 'notification.params'])
+      .innerJoin('notification.notificationUsers', 'notificationUsers')
       .where('notification.context_id IN (:...contextIds)', { contextIds })
-      .andWhere('user.id = :userId', { userId })
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
       .andWhere('notificationUsers.read_at IS NULL')
       .getMany();
 

@@ -6,9 +6,9 @@ import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
 
+import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
-import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 
 @injectable()
 export class RecipientsService extends BaseService {
@@ -535,20 +535,20 @@ export class RecipientsService extends BaseService {
       await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
         .select('user.id', 'userId')
         .addSelect('user.external_id', 'userIdentityId')
-        .addSelect('serviceRoles.role', 'userRole')
+        .addSelect('userRole.role', 'userRole')
         .addSelect(`COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.ACTION}' then 1 else null end)`, 'actionsCount')
         .addSelect(`COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.THREAD}' then 1 else null end)`, 'messagesCount')
         .addSelect(`COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.SUPPORT}' then 1 else null end)`, 'supportsCount')
         .innerJoin('notification.notificationUsers', 'notificationUsers')
-        .innerJoin('notificationUsers.user', 'user')
+        .innerJoin('notificationUsers.userRole', 'userRole')
+        .innerJoin('userRole.user', 'user')
         .innerJoin('user.notificationPreferences', 'notificationPreferences')
-        .innerJoin('user.serviceRoles', 'serviceRoles')
         .where('notification.created_at >= :startDate AND notification.created_at < :endDate', { startDate: startDate.toISOString(), endDate: endDate.toISOString() })
         .andWhere('notificationPreferences.preference = :preference', { preference: EmailNotificationPreferenceEnum.DAILY })
         .andWhere('user.locked_at IS NULL')
         .groupBy('user.id')
         .addGroupBy('user.external_id')
-        .addGroupBy('serviceRoles.role')
+        .addGroupBy('userRole.role')
         .getRawMany() || [];
 
     return dbUsers

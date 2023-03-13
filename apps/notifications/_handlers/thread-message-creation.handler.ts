@@ -136,7 +136,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     
     const inAppRecipients = threadIntervenientUsers
       .filter(item => !item.locked)
-      .map(item => ({userId: item.id, roleId: item.userRole.id, userType: item.userType, organisationUnitId: item.organisationUnitId ?? undefined}));
+      .map(item => (item.userRole.id));
 
     // Always include Innovation owner in the notification center recipients
     const owner = innovation.owner;
@@ -147,14 +147,14 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // In the case the owner is not on the recipients list and the creator of the reply is not the owner her/himself
     // Add her/him to the recipients list of in app notifications
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
-      inAppRecipients.push({userId: owner.id, roleId: owner.userRole.id, userType: owner.userRole.role, organisationUnitId: undefined});
+      inAppRecipients.push(owner.userRole.id);
     }
 
     if (inAppRecipients.length > 0) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: { type: NotificationContextTypeEnum.THREAD, detail: NotificationContextDetailEnum.THREAD_MESSAGE_CREATION, id: this.inputData.threadId },
-        users: inAppRecipients,
+        userRoleIds: inAppRecipients,
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

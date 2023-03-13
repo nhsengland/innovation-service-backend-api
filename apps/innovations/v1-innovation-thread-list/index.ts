@@ -32,7 +32,7 @@ class V1InnovationThreadCreate {
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       let orderBy;
 
@@ -41,7 +41,7 @@ class V1InnovationThreadCreate {
       }
 
       const result = await threadsService.getInnovationThreads(
-        requestUser,
+        domainContext,
         pathParams.innovationId,
         queryParams.skip,
         queryParams.take,

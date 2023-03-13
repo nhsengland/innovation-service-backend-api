@@ -18,7 +18,7 @@ class V1SendInAppListener {
         requestUser: { id: string },
         innovationId: string,
         context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-        users: { userId: string, roleId: string, organisationUnitId?: string | undefined}[];
+        userRoleIds: string[];
         params: { [key: string]: string | number | string[] }
       }
     }
@@ -36,7 +36,7 @@ class V1SendInAppListener {
         message.data.requestUser,
         message.data.innovationId,
         message.data.context,
-        message.data.users,
+        message.data.userRoleIds,
         message.data.params
       );
 

@@ -27,11 +27,11 @@ class V1UserNotificationsDelete {
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
-      const userInfo = authInstance.getUserInfo();
+      const domainContext = authInstance.getContext();
 
       const queryParams = JoiHelper.Validate<PathParamType>(PathParamsSchema, request.params);
 
-      await notificationsService.deleteUserNotification(userInfo.id, queryParams.notificationId);
+      await notificationsService.deleteUserNotification(domainContext.currentRole.id, queryParams.notificationId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: queryParams.notificationId
       });

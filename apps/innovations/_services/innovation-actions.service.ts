@@ -167,7 +167,7 @@ export class InnovationActionsService extends BaseService {
     let notifications: { id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[] = [];
 
     if (filters.fields?.includes('notifications')) {
-      notifications = await this.domainService.innovations.getUnreadNotifications(domainContext.id, actions.map(action => action.id), em);
+      notifications = await this.domainService.innovations.getUnreadNotifications(domainContext.currentRole.id, actions.map(action => action.id), em);
     }
 
     const usersIds = actions.flatMap(action => [action.createdByUser.identityId, action.updatedByUserRole?.user.identityId]).filter(((u): u is string => u !== undefined));
