@@ -42,6 +42,7 @@ class V1InnovationCollaboratorUpdate {
       const result = await innovationCollaboratorsService.updateCollaborator(
         domainContext,
         params.collaboratorId,
+        params.innovationId,
         collaboratorType === 'OWNER',
         body
       );

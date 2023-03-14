@@ -278,6 +278,7 @@ export class InnovationCollaboratorsService extends BaseService {
   async updateCollaborator(
     domainContext: DomainContextType,
     collaboratorId: string,
+    innovationId: string,
     isOwner: boolean, // Is either owner or collaborator at this point
     data: { status?: UpdateCollaboratorStatusType, role?: string },
     entityManager?: EntityManager
@@ -285,12 +286,12 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.email', 'collaborator.id', 'collaborator.status', 'collaborator.invitedAt', 'collaborator.innovation_id'])
+      .select(['collaborator.email', 'collaborator.id', 'collaborator.status', 'collaborator.invitedAt'])
       .where('collaborator.id = :collaboratorId', { collaboratorId })
       .getOne();
 
     if (!collaborator) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
     if (data.status) {
@@ -312,7 +313,7 @@ export class InnovationCollaboratorsService extends BaseService {
         { id: domainContext.id, identityId: domainContext.identityId },
         NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
         {
-          innovationId: collaborator.innovationId,
+          innovationId: innovationId,
           innovationCollaborator: {
             id: collaborator.id,
             status: data.status

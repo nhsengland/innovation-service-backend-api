@@ -239,7 +239,7 @@ describe('Innovation Collaborators Suite', () => {
   });
 
   describe('getCollaboratorsList', () => {
-    let collaboratorsMap = new Map<string, InnovationCollaboratorEntity>();
+    const collaboratorsMap = new Map<string, InnovationCollaboratorEntity>();
 
     beforeAll(async () => {
       collaboratorsMap.set(InnovationCollaboratorStatusEnum.PENDING, testData.collaborators.collaboratorPending);
@@ -461,6 +461,7 @@ describe('Innovation Collaborators Suite', () => {
         const collaborator = await sut.updateCollaborator(
           testData.domainContexts.innovator,
           testData.collaborators.collaboratorActive.id,
+          testData.innovation.id,
           true,
           { status: InnovationCollaboratorStatusEnum.REMOVED },
           em
@@ -479,6 +480,7 @@ describe('Innovation Collaborators Suite', () => {
         const collaborator = await sut.updateCollaborator(
           testData.domainContexts.innovator,
           testData.collaborators.collaboratorPending.id,
+          testData.innovation.id,
           true,
           { status: InnovationCollaboratorStatusEnum.CANCELLED },
           em
@@ -500,6 +502,7 @@ describe('Innovation Collaborators Suite', () => {
           await sut.updateCollaborator(
             testData.domainContexts.innovator,
             testData.collaborators.collaboratorPending.id,
+            testData.innovation.id,
             true,
             { status: InnovationCollaboratorStatusEnum.REMOVED },
             em
@@ -519,6 +522,7 @@ describe('Innovation Collaborators Suite', () => {
           await sut.updateCollaborator(
             testData.domainContexts.innovator,
             testData.collaborators.collaboratorActive.id,
+            testData.innovation.id,
             true,
             { status: InnovationCollaboratorStatusEnum.CANCELLED },
             em
@@ -551,6 +555,7 @@ describe('Innovation Collaborators Suite', () => {
         const collaborator = await sut.updateCollaborator(
           testData.domainContexts.innovator,
           testData.collaborators.collaboratorPending.id,
+          testData.innovation.id,
           true,
           { role: 'randomRole' },
           em
@@ -569,6 +574,7 @@ describe('Innovation Collaborators Suite', () => {
         const collaborator = await sut.updateCollaborator(
           testData.domainContexts.innovator3,
           testData.collaborators.collaboratorPending.id,
+          testData.innovation.id,
           false,
           { status: InnovationCollaboratorStatusEnum.ACTIVE },
           em
@@ -588,6 +594,7 @@ describe('Innovation Collaborators Suite', () => {
         const collaborator = await sut.updateCollaborator(
           testData.domainContexts.innovator3,
           testData.collaborators.collaboratorPending.id,
+          testData.innovation.id,
           false,
           { status: InnovationCollaboratorStatusEnum.DECLINED },
           em
@@ -607,6 +614,7 @@ describe('Innovation Collaborators Suite', () => {
         const collaborator = await sut.updateCollaborator(
           testData.domainContexts.innovator3,
           testData.collaborators.collaboratorActive.id,
+          testData.innovation.id,
           false,
           { status: InnovationCollaboratorStatusEnum.LEFT },
           em
@@ -628,6 +636,7 @@ describe('Innovation Collaborators Suite', () => {
           await sut.updateCollaborator(
             testData.domainContexts.innovator3,
             testData.collaborators.collaboratorExpired.id,
+            testData.innovation.id,
             false,
             { status: InnovationCollaboratorStatusEnum.ACTIVE },
             em
@@ -647,6 +656,7 @@ describe('Innovation Collaborators Suite', () => {
           await sut.updateCollaborator(
             testData.domainContexts.innovator3,
             testData.collaborators.collaboratorExpired.id,
+            testData.innovation.id,
             false,
             { status: InnovationCollaboratorStatusEnum.DECLINED },
             em
@@ -666,6 +676,7 @@ describe('Innovation Collaborators Suite', () => {
           await sut.updateCollaborator(
             testData.domainContexts.innovator3,
             testData.collaborators.collaboratorExpired.id,
+            testData.innovation.id,
             false,
             { status: InnovationCollaboratorStatusEnum.LEFT },
             em
