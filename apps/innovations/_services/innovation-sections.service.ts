@@ -248,10 +248,10 @@ export class InnovationSectionsService extends BaseService {
       .leftJoinAndSelect('sections.files', 'sectionFiles')
       .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE })
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('innovation.owner_id = :userId OR collaborator.user_id = :userId', { userId: user.id })
+      .andWhere('(innovation.owner_id = :userId OR collaborator.user_id = :userId)', { userId: user.id })
       .getOne();
 
-    if (!innovation) {
+    if (!innovation || innovation.id !== innovationId) {  // This should never happen, but just in case some query returns the wrong innovation
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
