@@ -98,9 +98,18 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
+    let recipient: { type: 'email' | 'identityId', value: string, displayNameParam?: string };
+    
+    if (this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.REMOVED) {
+      //identityId is used here for display_name to work
+      recipient = { type: 'identityId', value: innovationCollaborator.user?.identityId ?? '', displayNameParam: 'display_name' };
+    } else {
+     recipient = { type: 'email', value: innovationCollaborator.email };
+    }
+    
     this.emails.push({
+      to: recipient,
       templateId,
-      to: { type: 'email', value: innovationCollaborator.email , ...(this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.REMOVED ? { displayNameParam: 'display_name' } : { })},
       params: {
         innovator_name: innovationOwnerInfo.displayName,
         innovation_name: innovation.name
