@@ -133,7 +133,7 @@ export class NotificationsService extends BaseService {
   async deleteUserNotification(roleId: string, notificationId: string, entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    await em.update(NotificationUserEntity, { roleId: roleId, notification: notificationId }, { deletedAt: (new Date()).toISOString() });
+    await em.update(NotificationUserEntity, { userRole: roleId, notification: notificationId }, { deletedAt: (new Date()).toISOString() });
   }
 
   /**
