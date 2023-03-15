@@ -238,6 +238,12 @@ export class InnovationsService extends BaseService {
     if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
       innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports')
         .andWhere('supports.organisation_unit_id IN (:...engagingOrganisationsUnits)', { engagingOrganisationsUnits: filters.engagingOrganisationUnits });
+    
+      if (filters.supportStatuses && filters.supportStatuses.length > 0) {
+        innovationFetchQuery
+          .leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id IN (:...engagingOrganisationsUnits)', { engagingOrganisationsUnits: filters.engagingOrganisationUnits })
+          .andWhere(`accessorSupports.status IN (:...supportStatuses)`, { supportStatuses: filters.supportStatuses });
+      }
     }
 
     if (filters.assignedToMe) {
@@ -373,6 +379,10 @@ export class InnovationsService extends BaseService {
         .addSelect('organisation.name', 'organisation_name')
         .addSelect('organisation.acronym', 'organisation_acronym')
         .where('supports.innovation_id IN (:...innovationsIds)', { innovationsIds });
+
+      if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
+        innovationsSupportsQuery.andWhere('organisationUnit.id IN (:...engagingOrganisationUnits)', { engagingOrganisationUnits: filters.engagingOrganisationUnits })
+      }
 
       if (fetchUsers) {
         innovationsSupportsQuery
