@@ -28,5 +28,6 @@ export type ResponseDTO = {
   lastEndSupportAt: null | DateISOType,
   export: { canUserExport: boolean, pendingRequestsCount: number },
   assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
-  supports?: null | { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
+  supports?: null | { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[],
+  collaboratorId?: string
 };

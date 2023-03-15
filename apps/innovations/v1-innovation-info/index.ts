@@ -71,7 +71,8 @@ class V1InnovationInfo {
             status: s.status,
             organisationUnitId: s.organisationUnitId
           }))
-        })
+        }),
+        collaboratorId: result.collaboratorId
       });
       return;
 
