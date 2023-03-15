@@ -31,7 +31,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: { id: string, identityId: string }, 
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE],
     domainContext: DomainContextType,
   ) {
@@ -149,17 +149,16 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     const assignedUsers = await this.recipientsService.innovationAssignedUsers({ innovationSupportId: this.inputData.innovationSupport.id });
 
-    // TODO: Maybe remove request user if he also assigned to the innovation?
-
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      userRoleIds: assignedUsers.map(user => user.userRole.id),
+      userRoleIds: assignedUsers.filter(user => user.userRole.id !== this.domainContext.currentRole.id).map(user => user.userRole.id),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
       }
     });
+
   }
 
   private async prepareInAppForAssessmentWhenWaitingStatus(): Promise<void> {
