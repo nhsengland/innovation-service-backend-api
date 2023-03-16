@@ -8,6 +8,7 @@ import type { DateISOType } from './date.types';
 export type RoleType = {
   id: string,
   role: ServiceRoleEnum,
+  lockedAt: DateISOType | null, 
   organisation?: {
     id: string,
     name: string,
