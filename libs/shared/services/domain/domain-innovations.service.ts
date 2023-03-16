@@ -83,6 +83,12 @@ export class DomainInnovationsService {
           })
           .execute();
 
+        
+        // supporting users (without duplicates) for notifications.
+        const supportingUserIds = [...(new Set(
+          dbInnovation.innovationSupports.flatMap(item => item.organisationUnitUsers.map(su => su.organisationUser.user.id))
+        ))];
+        
         // Update all supports to UNASSIGNED AND delete them.
         for (const innovationSupport of dbInnovation.innovationSupports) {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
@@ -103,10 +109,7 @@ export class DomainInnovationsService {
         toReturn.push({
           id: dbInnovation.id,
           name: dbInnovation.name,
-          // Return supporting users (without duplicates) for notifications.
-          supportingUserIds: [...(new Set(
-            dbInnovation.innovationSupports.flatMap(item => item.organisationUnitUsers.map(su => su.organisationUser.user.id))
-          ))]
+          supportingUserIds
         });
 
       }

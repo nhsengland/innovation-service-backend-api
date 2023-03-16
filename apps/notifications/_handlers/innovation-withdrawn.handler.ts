@@ -27,9 +27,10 @@ export class InnovationWithdrawnHandler extends BaseHandler<
   async run(): Promise<this> {
 
     const assignedUsers = await this.recipientsService.usersInfo(this.inputData.innovation.assignedUserIds);
+    const uniqueAssignedUsers = [...new Map(assignedUsers.map(item => [item['id'], item])).values()];
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const user of assignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
+    for (const user of uniqueAssignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },

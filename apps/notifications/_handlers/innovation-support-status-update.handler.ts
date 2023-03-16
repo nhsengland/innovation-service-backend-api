@@ -111,8 +111,11 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareEmailForNewAccessors(accessors?: {id: string}[]): Promise<void> {
+   
     const recipients = await this.recipientsService.usersInfo(accessors?.map(a => a.id) ?? []);
-    for (const recipient of recipients) {
+    const uniqueRecipients = [...new Map(recipients.map(item => [item['id'], item])).values()];
+    
+    for (const recipient of uniqueRecipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
         to: { type: 'identityId', value: recipient.identityId, displayNameParam: 'display_name' },
