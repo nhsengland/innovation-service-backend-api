@@ -173,6 +173,9 @@ export class DomainInnovationsService {
       type: this.getActivityLogType(configuration.activity),
       createdBy: configuration.domainContext.id,
       updatedBy: configuration.domainContext.id,
+      userRole: {
+        id: configuration.domainContext.currentRole.id,
+      },
       param: JSON.stringify({
         actionUserId: configuration.domainContext.id,
         actionUserRole: configuration.domainContext.currentRole.role,

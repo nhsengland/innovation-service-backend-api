@@ -84,7 +84,7 @@ export class TestDataBuilder {
       displayFileName: randText()
     });
 
-    return entityManager.getRepository(InnovationFileEntity).save(file)
+    return entityManager.getRepository(InnovationFileEntity).save(file);
   }
 
   async addActivityLog<T extends ActivityEnum>(
@@ -100,6 +100,9 @@ export class TestDataBuilder {
       type: configuration.activityType,
       createdBy: configuration.userId,
       updatedBy: configuration.userId,
+      userRole: {
+        id: configuration.domainContext.currentRole.id,
+      },
       param: JSON.stringify({
         actionUserId: configuration.userId,
         actionUserRole: configuration.domainContext.currentRole,
@@ -108,7 +111,7 @@ export class TestDataBuilder {
       })
     });
 
-    return entityManager.getRepository(ActivityLogEntity).save(activityLog)
+    return entityManager.getRepository(ActivityLogEntity).save(activityLog);
   }
 
 }
