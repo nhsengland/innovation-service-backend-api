@@ -1,6 +1,6 @@
 
 import type { ServiceRoleEnum } from '../enums';
-import type { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 
 
@@ -107,7 +107,16 @@ export type NotifierTemplatesType = {
     innovationId: string
   },
 
+  [NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE]: {
+    innovationId: string,
+    innovationCollaboratorId: string
+  },
 
+  [NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]: {
+    innovationId: string,
+    innovationCollaborator: { id: string, status: InnovationCollaboratorStatusEnum }
+  },
+  
   // Admin module.
   [NotifierTypeEnum.SLS_VALIDATION]: {
     code: string

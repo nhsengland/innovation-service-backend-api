@@ -32,7 +32,7 @@ class V1InnovationThreadCreate {
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
       let orderBy;
 
@@ -41,12 +41,12 @@ class V1InnovationThreadCreate {
       }
 
       const result = await threadsService.getInnovationThreads(
-        requestUser,
+        domainContext,
         pathParams.innovationId,
         queryParams.skip,
         queryParams.take,
         orderBy,
-      )
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
         threads: result.threads.map(thread => ({
@@ -62,6 +62,7 @@ class V1InnovationThreadCreate {
               id: thread.lastMessage.createdBy.id,
               name: thread.lastMessage.createdBy.name,
               type: thread.lastMessage.createdBy.role,
+              ...thread.lastMessage.createdBy.isOwner !== undefined && { isOwner: thread.lastMessage.createdBy.isOwner },
               organisationUnit: {
                 id: thread.lastMessage.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
                 name: thread.lastMessage.createdBy.organisationUnit?.name ?? '', // if the organisationUnit exists, then all props are ensured to exist

@@ -8,6 +8,7 @@ import type { DateISOType } from './date.types';
 export type RoleType = {
   id: string,
   role: ServiceRoleEnum,
+  lockedAt: DateISOType | null, 
   organisation?: {
     id: string,
     name: string,
@@ -52,10 +53,6 @@ export type InnovatorDomainContextType = {
     id: string,
     name: string,
     acronym: string | null,
-    role: InnovatorOrganisationRoleEnum,
-    isShadow: boolean,
-    size: string | null,
-    // organisationUser: { id: string },
     organisationUnit?: never
   },
   currentRole: {
@@ -81,11 +78,7 @@ export type AccessorDomainContextType = {
     id: string,
     name: string,
     acronym: string | null,
-    role: AccessorOrganisationRoleEnum,
-    size: string | null,
-    isShadow: boolean,
-    // organisationUser: { id: string },
-    organisationUnit: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }
+    organisationUnit: { id: string, name: string, acronym: string }
   },
   currentRole: {
     id: string,

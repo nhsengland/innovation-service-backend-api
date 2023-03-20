@@ -30,9 +30,8 @@ class CreateInnovationTransfer {
 
       const auth = await authorizationService.validate(context)
         .setInnovation(body.innovationId)
-        .checkAdminType()
         .checkInnovatorType()
-        .checkInnovation()
+        .checkInnovation({ isOwner: true })
         .verify();
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
@@ -43,7 +42,8 @@ class CreateInnovationTransfer {
         },
         domainContext,
         body.innovationId,
-        body.email
+        body.email,
+        body.ownerToCollaborator
       );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;

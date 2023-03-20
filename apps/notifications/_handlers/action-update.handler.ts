@@ -82,7 +82,7 @@ export class ActionUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
-      users: [{ userId: this.data.actionInfo.owner.id, roleId: this.data.actionInfo.owner.roleId, organisationUnitId: this.data.actionInfo.organisationUnit?.id }],
+      userRoleIds: [this.data.actionInfo.owner.roleId],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
@@ -135,7 +135,7 @@ export class ActionUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.ACTION, detail: NotificationContextDetailEnum.ACTION_UPDATE, id: this.inputData.action.id },
-      users: [{ userId: this.data.innovation.owner.id, roleId: this.data.innovation.owner.userRole.id}],
+      userRoleIds: [this.data.innovation.owner.userRole.id],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.

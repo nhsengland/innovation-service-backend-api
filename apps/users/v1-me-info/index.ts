@@ -36,6 +36,7 @@ class V1MeInfo {
 
       let termsOfUseAccepted = false;
       let hasInnovationTransfers = false;
+      let hasInnovationCollaborations = false;
       let userPreferences: {
         contactByPhone: boolean,
         contactByEmail:  boolean,
@@ -51,13 +52,15 @@ class V1MeInfo {
       if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
         termsOfUseAccepted = true;
         hasInnovationTransfers = false;
+        hasInnovationCollaborations = false;
       } else {
         termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role )).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
+        hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
       }
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
+        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));        
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -74,6 +77,7 @@ class V1MeInfo {
         firstTimeSignInAt: requestUser.firstTimeSignInAt,
         termsOfUseAccepted,
         hasInnovationTransfers,
+        hasInnovationCollaborations,
         organisations: requestUser.organisations
       });
       return;

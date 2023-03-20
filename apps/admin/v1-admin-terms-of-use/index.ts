@@ -7,11 +7,12 @@ import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
-import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 
 import { container } from '../_config';
 
 import { TermsOfUseTypeEnum } from '@admin/shared/enums';
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -24,7 +25,7 @@ class V1AdminTermsOfUse {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const toUService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
 

@@ -40,7 +40,7 @@ export class DomainUsersService {
         'userOrganisationUnits.id',
         'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym',
         // Service roles
-        'serviceRoles.id', 'serviceRoles.role',
+        'serviceRoles.id', 'serviceRoles.role', 'serviceRoles.lockedAt',
         'roleOrganisation.id', 'roleOrganisation.name', 'roleOrganisation.acronym',
         'roleOrganisationUnit.id', 'roleOrganisationUnit.name', 'roleOrganisationUnit.acronym'
       ])
@@ -264,18 +264,23 @@ export class DomainUsersService {
    * given a user and role retrieves the full role type
    * @param userId the user id
    * @param roleId the role id
+   * @param activeOnly whether to only return active roles (defaults to true)
    * @returns the full role type for the user if found, null otherwise
    */
-  async getUserRole(userId: string, roleId?: string): Promise<RoleType | null> {
+  async getUserRole(userId: string, roleId?: string, activeOnly = true): Promise<RoleType | null> {
     const query = this.sqlConnection.createQueryBuilder(UserRoleEntity, 'userRole')
       .select([
-        'userRole.id', 'userRole.role',
+        'userRole.id', 'userRole.role', 'userRole.lockedAt',
         'organisation.id', 'organisation.name', 'organisation.acronym',
         'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym'
       ])
       .leftJoin('userRole.organisation', 'organisation')
       .leftJoin('userRole.organisationUnit', 'organisationUnit')
       .where('userRole.user = :userId', { userId });
+
+    if (activeOnly) {
+      query.andWhere('userRole.lockedAt IS NULL');
+    }
 
     // currently we're returning the first role found when no roleId (related to TechDebt in v1-me-info) and this is to
     // keep current behavior. We shouldn't be calling this without roleId in the future.

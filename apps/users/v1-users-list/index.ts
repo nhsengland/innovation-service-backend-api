@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { AccessorOrganisationRoleEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
@@ -74,7 +74,7 @@ class V1UsersList {
 
           if (queryParams.organisationUnitId) {
             validation.checkAccessorType({
-              organisationRole: [AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR],
+              organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
               organisationUnitId: queryParams.organisationUnitId
             });
           }

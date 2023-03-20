@@ -8,6 +8,7 @@ import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 const DateFilterKeys = ['submittedAt'] as const;
 const FieldsKeys = ['isAssessmentOverdue', 'assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
+const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
 
 enum orderFields {
   name = 'name',
@@ -28,14 +29,17 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   supportStatuses?: InnovationSupportStatusEnum[],
   groupedStatuses?: InnovationGroupedStatusEnum[],
   engagingOrganisations?: string[],
+  engagingOrganisationUnits?: string[],
   assignedToMe?: boolean,
   suggestedOnly?: boolean,
   latestWorkedByMe?: boolean,
+  hasAccessThrough?: TypeFromArray<typeof HasAccessThroughKeys>[],
   dateFilter?: {
     field: TypeFromArray<typeof DateFilterKeys>,
     startDate?: DateISOType,
     endDate?: DateISOType
   }[],
+  withDeleted?: boolean,  // this is only allowed for admin and is true in that case to keep previous behavior
   fields?: TypeFromArray<typeof FieldsKeys>[]
 }
 
@@ -54,7 +58,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
       otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationStatusEnum))).optional()
     }),
   engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
-  supportStatuses: Joi.when('$userOrganisationRole', {
+  supportStatuses: Joi.when('$userType', {
     is: 'ACCESSOR',
     then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE)).optional(),
     otherwise: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum))).optional()
@@ -63,6 +67,10 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   assignedToMe: Joi.boolean().optional().default(false),
   suggestedOnly: Joi.boolean().optional().default(false),
   latestWorkedByMe: Joi.boolean().optional().default(false),
+  hasAccessThrough: Joi.when('$userType', {
+    is: 'INNOVATOR',
+    then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...HasAccessThroughKeys)).optional(),
+  }),
   dateFilter: JoiHelper.AppCustomJoi().stringArrayOfObjects().items(
     Joi.object({
       field: Joi.string().valid(...DateFilterKeys).required(),
@@ -72,6 +80,19 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Obje
   ).optional(),
   fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...FieldsKeys)).optional(),
 })
+  // special admin filters
+  .when(
+    '$userType', {
+      is: 'ADMIN',
+      then: Joi.object({
+        assignedToMe: Joi.forbidden(),
+        suggestedOnly: Joi.forbidden(),
+        latestWorkedByMe: Joi.forbidden(),
+        engagingOrganisationUnits: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
+        withDeleted: JoiHelper.AppCustomJoi().boolean().optional().default(true)
+      }),
+    }
+  )
   // make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
   .fork('order', (schema) => Joi.when('latestWorkedByMe', { is: true, then: schema.forbidden(), otherwise: schema.optional() })).messages({ 'any.unknown': 'order field is not allowed when latestWorkedByMe is true' })
-  .required()
+  .required();

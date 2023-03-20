@@ -4,13 +4,14 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
-import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
-import { BodySchema, BodyType } from './validation.schemas';
+import SYMBOLS from '../_services/symbols';
+import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
+import { BodySchema, BodyType } from './validation.schemas';
 
 
 class V1AdminUserCreate {
@@ -19,7 +20,7 @@ class V1AdminUserCreate {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
 
@@ -30,7 +31,7 @@ class V1AdminUserCreate {
         .checkAdminType()
         .verify();
 
-      const requestUser = auth.getUserInfo()
+      const requestUser = auth.getUserInfo();
 
       const result = await usersService.createUser({ id: requestUser.id }, body);
 

@@ -49,6 +49,7 @@ import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { DateISOType } from '../../types/date.types';
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
+import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 
 
@@ -100,7 +101,7 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'more_support_description', type: 'nvarchar', nullable: true })
   moreSupportDescription: null | string;
 
-  @Column({ name: "other_care_setting", type: 'nvarchar', length: 100, nullable: true })
+  @Column({ name: 'other_care_setting', type: 'nvarchar', length: 100, nullable: true })
   otherCareSetting: null | string;
 
   @Column({ name: 'has_problem_tackle_knowledge', type: 'nvarchar', nullable: true })
@@ -238,7 +239,6 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
   withdrawReason: null | string;
 
-
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'owner_id' })
   owner: UserEntity;
@@ -352,7 +352,7 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationDiseaseConditionEntity, record => record.innovation, {
     lazy: true,
-    cascade: ["insert", "update"],
+    cascade: ['insert', 'update'],
   })
   diseasesConditionsImpact: Promise<InnovationDiseaseConditionEntity[]>;
 
@@ -376,6 +376,9 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToOne(() => InnovationGroupedStatusViewEntity, record => record.innovation)
   innovationGroupedStatus: InnovationGroupedStatusViewEntity;
+
+  @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
+  collaborators: InnovationCollaboratorEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

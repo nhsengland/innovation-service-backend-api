@@ -41,6 +41,7 @@ class GetInnovationSectionInfo {
         section: result.section,
         status: result.status,
         submittedAt: result.submittedAt,
+        submittedBy: result.submittedBy,
         data: result.data,
         ...(result.actionsIds ? { actionsIds: result.actionsIds } : {})
       });

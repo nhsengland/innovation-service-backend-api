@@ -6,6 +6,7 @@ import type { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, Inno
 import type { ActivitiesParamsType, DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
+import { InnovationCollaboratorBuilder } from './innovation-collaborators.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
 import { InnovationBuilder } from './innovation.builder';
@@ -54,6 +55,10 @@ export class TestDataBuilder {
     return new InnovationActionBuilder(createdBy, innovationSection, innovationSupport);
   }
 
+  createCollaborator(domainContext: DomainContextType, innovation: InnovationEntity): InnovationCollaboratorBuilder {
+    return new InnovationCollaboratorBuilder(domainContext, innovation);
+  }
+
   async addUserToOrganisation(a: UserEntity, b: OrganisationEntity, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, entityManager: EntityManager): Promise<OrganisationUserEntity> {
     const orgUser = OrganisationUserEntity.new({
       organisation: OrganisationEntity.new(b),
@@ -79,7 +84,7 @@ export class TestDataBuilder {
       displayFileName: randText()
     });
 
-    return entityManager.getRepository(InnovationFileEntity).save(file)
+    return entityManager.getRepository(InnovationFileEntity).save(file);
   }
 
   async addActivityLog<T extends ActivityEnum>(
@@ -95,6 +100,9 @@ export class TestDataBuilder {
       type: configuration.activityType,
       createdBy: configuration.userId,
       updatedBy: configuration.userId,
+      userRole: {
+        id: configuration.domainContext.currentRole.id,
+      },
       param: JSON.stringify({
         actionUserId: configuration.userId,
         actionUserRole: configuration.domainContext.currentRole,
@@ -103,7 +111,7 @@ export class TestDataBuilder {
       })
     });
 
-    return entityManager.getRepository(ActivityLogEntity).save(activityLog)
+    return entityManager.getRepository(ActivityLogEntity).save(activityLog);
   }
 
 }

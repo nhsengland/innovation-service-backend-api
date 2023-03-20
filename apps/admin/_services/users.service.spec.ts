@@ -7,14 +7,15 @@ import { UserEntity } from '@admin/shared/entities';
 import { NOSQLConnectionService } from '@users/shared/services';
 
 import { container } from '../_config';
-import { UsersServiceSymbol, UsersServiceType } from './interfaces';
+import SYMBOLS from './symbols';
+import type { UsersService } from './users.service';
 
 describe('Admin / Services / Users Service', () => {
 
   let testData: TestDataType;
   let entityManager: EntityManager;
 
-  let usersService: UsersServiceType;
+  let usersService: UsersService;
 
 
   beforeAll(async () => {
@@ -24,7 +25,7 @@ describe('Admin / Services / Users Service', () => {
     // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
     // jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
-    usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     await TestsHelper.init();
     testData = TestsHelper.sampleData;

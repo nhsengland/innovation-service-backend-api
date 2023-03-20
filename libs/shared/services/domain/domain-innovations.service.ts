@@ -4,8 +4,8 @@ import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, Innovation
 import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
+import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
 
 export class DomainInnovationsService {
@@ -83,6 +83,12 @@ export class DomainInnovationsService {
           })
           .execute();
 
+        
+        // supporting users (without duplicates) for notifications.
+        const supportingUserIds = [...(new Set(
+          dbInnovation.innovationSupports.flatMap(item => item.organisationUnitUsers.map(su => su.organisationUser.user.id))
+        ))];
+        
         // Update all supports to UNASSIGNED AND delete them.
         for (const innovationSupport of dbInnovation.innovationSupports) {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
@@ -103,10 +109,7 @@ export class DomainInnovationsService {
         toReturn.push({
           id: dbInnovation.id,
           name: dbInnovation.name,
-          // Return supporting users (without duplicates) for notifications.
-          supportingUserIds: [...(new Set(
-            dbInnovation.innovationSupports.flatMap(item => item.organisationUnitUsers.map(su => su.organisationUser.user.id))
-          ))]
+          supportingUserIds
         });
 
       }
@@ -170,6 +173,9 @@ export class DomainInnovationsService {
       type: this.getActivityLogType(configuration.activity),
       createdBy: configuration.domainContext.id,
       updatedBy: configuration.domainContext.id,
+      userRole: {
+        id: configuration.domainContext.currentRole.id,
+      },
       param: JSON.stringify({
         actionUserId: configuration.domainContext.id,
         actionUserRole: configuration.domainContext.currentRole.role,
@@ -235,7 +241,7 @@ export class DomainInnovationsService {
 
 
   async getUnreadNotifications(
-    userId: string,
+    roleId: string,
     contextIds: string[],
     entityManager?: EntityManager
   ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
@@ -243,10 +249,10 @@ export class DomainInnovationsService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const notifications = await em.createQueryBuilder(NotificationEntity, 'notification')
-      .innerJoinAndSelect('notification.notificationUsers', 'notificationUsers')
-      .innerJoinAndSelect('notificationUsers.user', 'user')
+      .select(['notification.id', 'notification.contextType', 'notification.contextId', 'notification.params'])
+      .innerJoin('notification.notificationUsers', 'notificationUsers')
       .where('notification.context_id IN (:...contextIds)', { contextIds })
-      .andWhere('user.id = :userId', { userId })
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
       .andWhere('notificationUsers.read_at IS NULL')
       .getMany();
 
@@ -278,6 +284,7 @@ export class DomainInnovationsService {
 
   async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .innerJoinAndSelect('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -292,7 +299,8 @@ export class DomainInnovationsService {
    * @returns object with user info and organisation unit
    */
   async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
-    id: string, identityId: string, name?: string, locked: boolean, userRole: { id: string, role: ServiceRoleEnum },
+    id: string, identityId: string, name?: string, locked: boolean, isOwner?: boolean,
+    userRole: { id: string, role: ServiceRoleEnum },
     organisationUnit: { id: string, acronym: string } | null,
     emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
   }[]> {
@@ -300,6 +308,9 @@ export class DomainInnovationsService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'thread')
+      .select(['thread.id', 'innovation.id', 'owner.id'])
+      .innerJoin('thread.innovation', 'innovation')
+      .innerJoin('innovation.owner', 'owner')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -342,6 +353,7 @@ export class DomainInnovationsService {
           name: usersInfo.get(message.author.identityId)?.displayName ?? '',
           locked: !!message.author.lockedAt,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
+          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner.id},
           organisationUnit: message.authorUserRole.organisationUnit ? {
             id: message.authorUserRole.organisationUnit.id,
             acronym: message.authorUserRole.organisationUnit.acronym

@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
+import { InnovationEntity, NotificationEntity, NotificationUserEntity, UserRoleEntity } from '@notifications/shared/entities';
 import type { NotificationContextDetailEnum, NotificationContextTypeEnum, NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
@@ -56,7 +56,7 @@ export class DispatchService extends BaseService {
     requestUser: { id: string },
     innovationId: string,
     context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-    users: { userId: string, roleId: string, organisationUnitId?: string | undefined}[],
+    userRoleIds:string[],
     params: { [key: string]: string | number | string[] },
   ): Promise<{ id: string }> {
 
@@ -71,12 +71,10 @@ export class DispatchService extends BaseService {
         createdBy: requestUser.id
       }));
 
-      await transactionManager.save(NotificationUserEntity, users.map(user => NotificationUserEntity.new({
-        user: UserEntity.new({ id: user.userId }),                                                                                  // to be deprecated
+      await transactionManager.save(NotificationUserEntity, userRoleIds.map(roleId => NotificationUserEntity.new({
         notification: dbNotification,
         createdBy: requestUser.id,
-        organisationUnit: user.organisationUnitId ? OrganisationUnitEntity.new({ id: user.organisationUnitId }) : null,             // to be deprecated
-        userRole: UserRoleEntity.new({ id: user.roleId })
+        userRole: UserRoleEntity.new({ id: roleId })
       })));
 
       return { id: dbNotification.id };

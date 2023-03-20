@@ -6,11 +6,12 @@ import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers'
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
-import { ValidationServiceSymbol, ValidationServiceType } from '../_services/interfaces';
 import { container } from '../_config';
 
-import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import SYMBOLS from '../_services/symbols';
+import type { ValidationService } from '../_services/validation.service';
 import type { ResponseDTO } from './transformation.dtos';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class V1AdminValidate {
@@ -19,7 +20,7 @@ class V1AdminValidate {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const validationService = container.get<ValidationServiceType>(ValidationServiceSymbol);
+    const validationService = container.get<ValidationService>(SYMBOLS.ValidationService);
 
     try {
 

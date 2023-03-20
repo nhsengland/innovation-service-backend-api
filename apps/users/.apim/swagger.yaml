@@ -69,6 +69,20 @@ paths:
       responses:
         "204":
           description: The user email preferences were updated successfully
+  /v1/invites:
+    get:
+      description: Get collaboration invites list
+      operationId: v1-invites-list
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
   /v1/me:
     post:
       summary: Create a new user on DB
@@ -457,6 +471,8 @@ paths:
                             - SUPPORT_STATUS_UPDATE
                             - INNOVATION_REASSESSMENT_REQUEST
                             - INNOVATION_STOP_SHARING
+                            - COLLABORATOR_INVITE
+                            - COLLABORATOR_UPDATE
                           description: The notification context detail
                         contextId:
                           type: string

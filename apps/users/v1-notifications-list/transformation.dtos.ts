@@ -5,7 +5,7 @@ export type ResponseDTO = {
   count: number,
   data: {
     id: string;
-    innovation: { id: string; name: string, status: InnovationStatusEnum };
+    innovation: { id: string; name: string, status: InnovationStatusEnum, ownerName: string };
     contextType: NotificationContextTypeEnum;
     contextDetail: NotificationContextDetailEnum;
     contextId: string;

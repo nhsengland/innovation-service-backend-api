@@ -15,7 +15,8 @@ export type ResponseDTO = {
       createdAt: DateISOType,
       createdBy: {
         id: string, name: string,
-        type: undefined | ServiceRoleEnum,
+        type: ServiceRoleEnum,
+        isOwner?: boolean,
         organisationUnit: null | { id: string; name: string; acronym: string }
       }
     }

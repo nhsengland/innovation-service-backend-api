@@ -22,6 +22,9 @@ export class UserRoleEntity extends BaseEntity {
   @Column({ name: 'role', nullable: false })
   role: ServiceRoleEnum;
 
+  @Column({ name: 'locked_at', type: 'datetime2', nullable: true })
+  lockedAt: DateISOType | null;
+
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
@@ -61,6 +64,7 @@ export const roleEntity2RoleType = (role: UserRoleEntity): RoleType => {
   return {
     id: role.id,
     role: role.role,
+    lockedAt: role.lockedAt,
     ...(role.organisation && {
       organisation: {
         id: role.organisation.id,

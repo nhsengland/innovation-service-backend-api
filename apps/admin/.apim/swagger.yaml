@@ -725,3 +725,30 @@ paths:
           description: The user is not authorized to access validation data.
         "500":
           description: An error occurred while fetching the validation data.
+  "/v1/organisation-unit/{unit}/statistics":
+    get:
+      description: Get an organisation unit statistics
+      tags:
+        - "[v1] Organisation Unit Statistics"
+      operationId: v1-organisation-unit-statistics
+      parameters:
+        - name: unit
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: statistics
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - INNOVATIONS_PER_UNIT
+      responses:
+        "200":
+          description: Ok.
+        "400":
+          description: Bad request.

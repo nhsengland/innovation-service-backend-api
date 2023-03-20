@@ -11,18 +11,18 @@ export class UnreadMessagesStatisticsHandler extends InnovationsStatisticsHandle
     requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]) {
-    super(requestUser, domainContext, data)
+    super(requestUser, domainContext, data);
   }
 
   async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]> {
 
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const actions = await statisticsService.getUnreadMessages(this.data.innovationId, this.requestUser.id);
+    const actions = await statisticsService.getUnreadMessages(this.data.innovationId, this.domainContext.currentRole.id);
   
     return {
       count: actions.count,
       lastSubmittedAt: actions.lastSubmittedAt,
-    }
+    };
   }
 }

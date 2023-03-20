@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -37,14 +37,17 @@ export class InnovationsService extends BaseService {
       supportStatuses?: InnovationSupportStatusEnum[],
       groupedStatuses?: InnovationGroupedStatusEnum[],
       engagingOrganisations?: string[],
+      engagingOrganisationUnits?: string[],
       assignedToMe?: boolean,
       suggestedOnly?: boolean,
       latestWorkedByMe?: boolean,
+      hasAccessThrough?: ('owner' | 'collaborator')[],
       dateFilter?: {
         field: 'submittedAt',
         startDate?: DateISOType,
         endDate?: DateISOType
       }[],
+      withDeleted?: boolean,
       fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
     },
     pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
@@ -117,7 +120,32 @@ export class InnovationsService extends BaseService {
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      innovationFetchQuery.andWhere('innovations.owner_id = :innovatorUserId', { innovatorUserId: user.id });
+
+      const conditions = new Map<'owner' | 'collaborator', { condition: string, parameters: ObjectLiteral }>([
+        ['owner', { condition: 'innovations.owner_id = :innovatorUserId', parameters: { innovatorUserId: user.id } }],
+        ['collaborator', { condition: 'collaborator.user_id = :userId', parameters: { userId: user.id } }]
+      ]);
+
+      if (filters.hasAccessThrough && filters.hasAccessThrough.length > 0) {
+        if (!filters.hasAccessThrough.includes('owner')) {
+          conditions.delete('owner');
+        }
+
+        if (!filters.hasAccessThrough.includes('collaborator')) {
+          conditions.delete('collaborator');
+        }
+      }
+
+      if (conditions.has('collaborator')) {
+        innovationFetchQuery.leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE });
+      }
+
+      innovationFetchQuery.andWhere(new Brackets(qb => {
+        for (const { condition, parameters } of conditions.values()) {
+          qb.orWhere(condition, parameters);
+        }
+      }));
+
     }
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
@@ -131,7 +159,7 @@ export class InnovationsService extends BaseService {
       innovationFetchQuery.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
       innovationFetchQuery.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: domainContext.organisation?.id });
 
-      if (domainContext.organisation?.role === AccessorOrganisationRoleEnum.ACCESSOR) {
+      if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
       }
 
@@ -141,7 +169,7 @@ export class InnovationsService extends BaseService {
 
     }
 
-    if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
+    if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN && filters.withDeleted) {
       innovationFetchQuery.withDeleted();
     }
 
@@ -204,6 +232,18 @@ export class InnovationsService extends BaseService {
           WHERE eofilter_is.innovation_id = innovations.id AND eofilter_ou.organisation_id IN (:...engagingOrganisationsFilterSupportStatuses) AND eofilter_is.deleted_at IS NULL)`,
         { engagingOrganisationsFilterSupportStatuses: filters.engagingOrganisations }
       );
+    }
+
+    // this is similar to assignedToMe for A/QAs but simplier. They never overlap since this is admin only, but we should probably refactor this.
+    if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
+      innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports')
+        .andWhere('supports.organisation_unit_id IN (:...engagingOrganisationsUnits)', { engagingOrganisationsUnits: filters.engagingOrganisationUnits });
+    
+      if (filters.supportStatuses && filters.supportStatuses.length > 0) {
+        innovationFetchQuery
+          .leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id IN (:...engagingOrganisationsUnits)', { engagingOrganisationsUnits: filters.engagingOrganisationUnits })
+          .andWhere(`accessorSupports.status IN (:...supportStatuses)`, { supportStatuses: filters.supportStatuses });
+      }
     }
 
     if (filters.assignedToMe) {
@@ -340,6 +380,10 @@ export class InnovationsService extends BaseService {
         .addSelect('organisation.acronym', 'organisation_acronym')
         .where('supports.innovation_id IN (:...innovationsIds)', { innovationsIds });
 
+      if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
+        innovationsSupportsQuery.andWhere('organisationUnit.id IN (:...engagingOrganisationUnits)', { engagingOrganisationUnits: filters.engagingOrganisationUnits })
+      }
+
       if (fetchUsers) {
         innovationsSupportsQuery
           .leftJoin('supports.organisationUnitUsers', 'organisationUnitUsers')
@@ -376,11 +420,12 @@ export class InnovationsService extends BaseService {
         // .addSelect('notifications.type', 'notifications_type')
         .innerJoin('notifications.innovation', 'innovation')
         .addSelect('innovation.id', 'innovation_id')
-        .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
+        .innerJoin('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_role_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: domainContext.currentRole.id })
         .where('notifications.innovation_id IN (:...innovationsIds)', { innovationsIds });
 
       if (domainContext.organisation?.organisationUnit?.id) {
-        notificationsQuery.innerJoin('notificationUsers.organisationUnit', 'organisationUnit')
+        notificationsQuery.innerJoin('notificationUsers.userRole', 'userRole');
+        notificationsQuery.innerJoin('userRole.organisationUnit', 'organisationUnit')
           .where('organisationUnit.id = :orgUnitId', { orgUnitId: domainContext.organisation.organisationUnit.id });
       }
 
@@ -881,15 +926,29 @@ export class InnovationsService extends BaseService {
     lastEndSupportAt: null | DateISOType,
     export: { canUserExport: boolean, pendingRequestsCount: number },
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
-    supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[]
+    supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[],
+    collaboratorId?: string
   }> {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'innovationOwner')
-      .innerJoinAndSelect('innovationOwner.userOrganisations', 'userOrganisations')
-      .innerJoinAndSelect('userOrganisations.organisation', 'organisation')
-      .leftJoinAndSelect('innovation.categories', 'innovationCategories')
-      .innerJoinAndSelect('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
+      .select([
+        'innovation.id', 'innovation.name', 'innovation.description', 'innovation.status', 'innovation.statusUpdatedAt',
+        'innovation.submittedAt', 'innovation.countryName', 'innovation.postcode', 'innovation.otherCategoryDescription',
+        'innovationOwner.id',
+        'userOrganisations.id',
+        'organisation.isShadow', 'organisation.name', 'organisation.size',
+        'reassessmentRequests.id',
+        'innovationCategories.type',
+        'innovationGroupedStatus.groupedStatus',
+        'collaborator.id'
+      ])
+      .innerJoin('innovation.owner', 'innovationOwner')
+      .innerJoin('innovationOwner.userOrganisations', 'userOrganisations')
+      .innerJoin('userOrganisations.organisation', 'organisation')
+      .leftJoin('innovation.reassessmentRequests', 'reassessmentRequests')
+      .leftJoin('innovation.categories', 'innovationCategories')
+      .innerJoin('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
+      .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status AND collaborator.user_id = :userId', { status: InnovationCollaboratorStatusEnum.ACTIVE, userId: domainContext.id })
       .where('innovation.id = :innovationId', { innovationId: id });
 
     if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
@@ -898,35 +957,43 @@ export class InnovationsService extends BaseService {
 
     // Assessment relations.
     if (filters.fields?.includes('assessment')) {
-      query.leftJoinAndSelect('innovation.assessments', 'innovationAssessments');
-      query.leftJoinAndSelect('innovationAssessments.assignTo', 'assignTo');
+      query.leftJoin('innovation.assessments', 'innovationAssessments');
+      query.leftJoin('innovationAssessments.assignTo', 'assignTo');
+      query.addSelect([
+        'innovationAssessments.id', 'innovationAssessments.createdAt', 'innovationAssessments.finishedAt',
+        'assignTo.id'
+      ]);
     }
 
     // Supports relations.
     if (filters.fields?.includes('supports')) {
-      query.leftJoinAndSelect('innovation.innovationSupports', 'innovationSupports');
-      query.leftJoinAndSelect('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
+      query.leftJoin('innovation.innovationSupports', 'innovationSupports');
+      query.leftJoin('innovationSupports.organisationUnit', 'supportingOrganisationUnit');
+      query.addSelect([
+        'innovationSupports.id', 'innovationSupports.status',
+        'supportingOrganisationUnit.id'
+      ]);
     }
 
-    const result = await query.getOne();
-    if (!result) {
+    const innovation = await query.getOne();
+    if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
     // Fetch users names.
-    const ownerId = result.owner.id;
-    const assessmentUsersIds = filters.fields?.includes('assessment') ? result.assessments?.map(assessment => assessment.assignTo.id) : [];
+    const ownerId = innovation.owner.id;
+    const assessmentUsersIds = filters.fields?.includes('assessment') ? innovation.assessments?.map(assessment => assessment.assignTo.id) : [];
 
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
 
-    const categories = (await result.categories).map(item => item.type);
-    const ownerInfo = usersInfo.find(item => item.id === result.owner.id);
+    const categories = (await innovation.categories).map(item => item.type);
+    const ownerInfo = usersInfo.find(item => item.id === innovation.owner.id);
     const ownerPreferences = (await this.domainService.users.getUserPreferences(ownerId));
 
     // Export requests parsing.
     const innovationExport = {
       canUserExport: false,
-      pendingRequestsCount: (await result.exportRequests).filter(item => item.isRequestPending).length
+      pendingRequestsCount: (await innovation.exportRequests).filter(item => item.isRequestPending).length
     };
 
     switch (domainContext.currentRole.role) {
@@ -938,7 +1005,7 @@ export class InnovationsService extends BaseService {
         break;
       case ServiceRoleEnum.ACCESSOR:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        innovationExport.canUserExport = (await result.exportRequests).filter(item => item.isExportActive).length > 0;
+        innovationExport.canUserExport = (await innovation.exportRequests).some(item => item.isExportActive);
         break;
     }
 
@@ -947,21 +1014,21 @@ export class InnovationsService extends BaseService {
 
     if (filters.fields?.includes('assessment')) {
 
-      if (result.assessments.length === 0) { assessment = null; }
+      if (innovation.assessments.length === 0) { assessment = null; }
       else {
 
-        if (result.assessments.length > 1) { // This should never happen, but...
-          this.logger.error(`Innovation ${result.id} with ${result.assessments.length} assessments detected`);
+        if (innovation.assessments.length > 1) { // This should never happen, but...
+          this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
         }
 
-        if (result.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
-          const assignTo = usersInfo.find(item => (item.id === result.assessments[0]?.assignTo.id) && item.isActive);
+        if (innovation.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
+          const assignTo = usersInfo.find(item => (item.id === innovation.assessments[0]?.assignTo.id) && item.isActive);
           assessment = {
-            id: result.assessments[0].id,
-            createdAt: result.assessments[0].createdAt,
-            finishedAt: result.assessments[0].finishedAt,
+            id: innovation.assessments[0].id,
+            createdAt: innovation.assessments[0].createdAt,
+            finishedAt: innovation.assessments[0].finishedAt,
             assignedTo: { id: assignTo?.id ?? '', name: assignTo?.displayName ?? '' },
-            reassessmentCount: (await result.reassessmentRequests).length
+            reassessmentCount: (await innovation.reassessmentRequests).length
           };
 
         }
@@ -971,19 +1038,19 @@ export class InnovationsService extends BaseService {
     }
 
     return {
-      id: result.id,
-      name: result.name,
-      description: result.description,
-      status: result.status,
-      groupedStatus: result.innovationGroupedStatus.groupedStatus,
-      statusUpdatedAt: result.statusUpdatedAt,
-      submittedAt: result.submittedAt,
-      countryName: result.countryName,
-      postCode: result.postcode,
+      id: innovation.id,
+      name: innovation.name,
+      description: innovation.description,
+      status: innovation.status,
+      groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
+      statusUpdatedAt: innovation.statusUpdatedAt,
+      submittedAt: innovation.submittedAt,
+      countryName: innovation.countryName,
+      postCode: innovation.postcode,
       categories,
-      otherCategoryDescription: result.otherCategoryDescription,
+      otherCategoryDescription: innovation.otherCategoryDescription,
       owner: {
-        id: result.owner.id,
+        id: innovation.owner.id,
         name: ownerInfo?.displayName || '',
         email: ownerInfo?.email || '',
         contactByEmail: ownerPreferences.contactByEmail,
@@ -993,24 +1060,22 @@ export class InnovationsService extends BaseService {
         mobilePhone: ownerInfo?.mobilePhone || '',
         isActive: !!ownerInfo?.isActive,
         lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-        organisations: (await result.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
+        organisations: (await innovation.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
           name: item.organisation.name,
           size: item.organisation.size
         }))
       },
-      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(result.id),
-
+      lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
       export: innovationExport,
-
-      ...(assessment === undefined ? {} : { assessment }),
-
+      assessment,
       ...(!filters.fields?.includes('supports') ? {} : {
-        supports: (result.innovationSupports || []).map(support => ({
+        supports: (innovation.innovationSupports || []).map(support => ({
           id: support.id,
           status: support.status,
           organisationUnitId: support.organisationUnit.id
         }))
-      })
+      }),
+      collaboratorId: innovation.collaborators[0]?.id
     };
 
   }

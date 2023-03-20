@@ -1,4 +1,4 @@
-import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
@@ -31,7 +31,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: { id: string, identityId: string }, 
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE],
     domainContext: DomainContextType,
   ) {
@@ -111,8 +111,11 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareEmailForNewAccessors(accessors?: {id: string}[]): Promise<void> {
+   
     const recipients = await this.recipientsService.usersInfo(accessors?.map(a => a.id) ?? []);
-    for (const recipient of recipients) {
+    const uniqueRecipients = [...new Map(recipients.map(item => [item['id'], item])).values()];
+    
+    for (const recipient of uniqueRecipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
         to: { type: 'identityId', value: recipient.identityId, displayNameParam: 'display_name' },
@@ -136,7 +139,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: [{ userId: this.data.innovation.owner.id, roleId: this.data.innovation.owner.userRole.id }],
+      userRoleIds: [this.data.innovation.owner.userRole.id],
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
@@ -149,17 +152,16 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     const assignedUsers = await this.recipientsService.innovationAssignedUsers({ innovationSupportId: this.inputData.innovationSupport.id });
 
-    // TODO: Maybe remove request user if he also assigned to the innovation?
-
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: assignedUsers.map(user => ({ userId: user.id, roleId: user.userRole.id, organisationUnitId: user.organisationUnitId })),
+      userRoleIds: assignedUsers.filter(user => user.userRole.id !== this.domainContext.currentRole.id).map(user => user.userRole.id),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
       }
     });
+
   }
 
   private async prepareInAppForAssessmentWhenWaitingStatus(): Promise<void> {
@@ -169,7 +171,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: { type: NotificationContextTypeEnum.SUPPORT, detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, id: this.inputData.innovationSupport.id },
-      users: assessmentUsers.map(item => ({ userId: item.id, roleId: item.roleId, userType: ServiceRoleEnum.ASSESSMENT })),
+      userRoleIds: assessmentUsers.map(item => item.roleId),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status

@@ -11,23 +11,20 @@ import {
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@admin/shared/services';
 
-import {
-  OrganisationsServiceSymbol, OrganisationsServiceType,
-  TermsOfUseServiceSymbol, TermsOfUseServiceType,
-  UsersServiceSymbol, UsersServiceType,
-  ValidationServiceSymbol, ValidationServiceType
-} from '../_services/interfaces';
 import { OrganisationsService } from '../_services/organisations.service';
+import { StatisticsService } from '../_services/statistics.service';
+import { SYMBOLS } from '../_services/symbols';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 import { ValidationService } from '../_services/validation.service';
 
 
 // Specific inversify container configuration.
-container.bind<OrganisationsServiceType>(OrganisationsServiceSymbol).to(OrganisationsService).inSingletonScope();
-container.bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol).to(TermsOfUseService).inSingletonScope();
-container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
-container.bind<ValidationServiceType>(ValidationServiceSymbol).to(ValidationService).inSingletonScope();
+container.bind<OrganisationsService>(SYMBOLS.OrganisationsService).to(OrganisationsService).inSingletonScope();
+container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
+container.bind<TermsOfUseService>(SYMBOLS.TermsOfUseService).to(TermsOfUseService).inSingletonScope();
+container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();
+container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
 
 
 export const startup = async (): Promise<void> => {

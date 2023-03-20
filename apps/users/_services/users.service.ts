@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
 import { InnovationEntity, InnovationSupportEntity, InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
+import { AccessorOrganisationRoleEnum, InnovationCollaboratorStatusEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
@@ -11,6 +11,7 @@ import type { DateISOType, RoleType } from '@users/shared/types';
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
 import { BaseService } from './base.service';
+import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
 
 
 @injectable()
@@ -197,11 +198,8 @@ export class UsersService extends BaseService {
           identityId: dbUser.identityId,
           organisation: {
             id: dbOrganisation.id,
-            isShadow: dbOrganisation.isShadow,
             name: dbOrganisation.name,
-            size: dbOrganisation.size,
-            acronym: dbOrganisation.acronym,
-            role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+            acronym: dbOrganisation.acronym
           },
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR },
 
@@ -449,4 +447,35 @@ export class UsersService extends BaseService {
     await this.sqlConnection.manager.save(UserPreferenceEntity, preference);
   }
 
+  async getCollaborationsInvitesList(email: string, status: InnovationCollaboratorStatusEnum = InnovationCollaboratorStatusEnum.PENDING): Promise<{
+    id: string,
+    invitedAt: string
+    innovation: {
+      id: string,
+      name: string
+    }
+  }[]> { 
+
+    const invites = await this.sqlConnection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .select([
+        'collaborator.id', 'collaborator.invitedAt',
+        'innovation.id', 'innovation.name'
+      ])
+      .innerJoin('collaborator.innovation', 'innovation')  
+      .where('collaborator.email = :email', { email })      
+      .andWhere('collaborator.status = :status', { status: status })
+      .andWhere('DATEDIFF(day, collaborator.invitedAt, GETDATE()) < 31')
+      .getMany();   
+
+    const data = invites.map((invite) => ({
+      id: invite.id,
+      invitedAt: invite.invitedAt,
+      innovation: {
+        id: invite.innovation.id,
+        name: invite.innovation.name
+      }
+    }));
+
+    return data; 
+  }
 }

@@ -4,7 +4,7 @@ import type { EntityManager } from 'typeorm';
 import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { ActivityEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@innovations/shared/errors';
-import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
+import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { BaseService } from './base.service';
@@ -14,6 +14,7 @@ export class InnovationThreadsService extends BaseService {
 
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
+    @inject(IdentityProviderServiceSymbol) private identityProvider: IdentityProviderService,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
   ) {
     super();
@@ -386,6 +387,7 @@ export class InnovationThreadsService extends BaseService {
         id: string;
         name: string;
         role: string;
+        isOwner?: boolean;
         organisation: { id: string; name: string; acronym: string | null } | undefined;
         organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
       };
@@ -404,14 +406,17 @@ export class InnovationThreadsService extends BaseService {
         'organisationUnit.id', 'organisationUnit.acronym', 'organisationUnit.name',
         'thread.id', 'thread.subject', 'thread.author',
         'users.identityId',
+        'innovation.id',
+        'owner.id',
       ])
-      .leftJoin('messages.author', 'messageAuthor')
-      .leftJoin('messages.authorUserRole', 'authorUserRole')
+      .innerJoin('messages.author', 'messageAuthor')
+      .innerJoin('messages.authorUserRole', 'authorUserRole')
       .leftJoin('messages.authorOrganisationUnit', 'organisationUnit')
-      .leftJoin('messages.thread', 'thread')
+      .innerJoin('messages.thread', 'thread')
       .leftJoin('organisationUnit.organisation', 'organisation')
-      .leftJoin('thread.innovation', 'innovation')
-      .leftJoin('thread.author', 'users')
+      .innerJoin('thread.innovation', 'innovation')
+      .innerJoin('innovation.owner', 'owner')
+      .innerJoin('thread.author', 'users')
       .where('thread.id = :threadId', { threadId })
       .orderBy('messages.createdAt', order?.createdAt || 'DESC')
       .skip(skip)
@@ -426,9 +431,7 @@ export class InnovationThreadsService extends BaseService {
 
     const authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
 
-    const authorsMap = await this.domainService.users.getUsersList({
-      identityIds: authors,
-    });
+    const authorsMap = await this.identityProvider.getUsersMap(authors);
 
     const notifications = new Set((await this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notification')
@@ -445,9 +448,7 @@ export class InnovationThreadsService extends BaseService {
       
     const messageResult = messages.map((tm) => {
 
-      const author = authorsMap.find(
-        (author) => author.identityId === tm.author.identityId
-      );
+      const author = authorsMap.get(tm.author.identityId);
       
       const organisationUnit = tm.authorOrganisationUnit ?? undefined;
       const organisation = tm.authorOrganisationUnit?.organisation;
@@ -461,7 +462,8 @@ export class InnovationThreadsService extends BaseService {
         createdBy: {
           id: tm.author.id,
           name: author?.displayName || 'unknown user',
-          role: tm.authorUserRole?.role || '',
+          role: tm.authorUserRole.role,
+          ...tm.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner.id},
           organisation,
           organisationUnit,
         },
@@ -476,7 +478,7 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async getInnovationThreads(
-    requestUser: DomainUserInfoType,
+    domainContext: DomainContextType,
     innovationId: string,
     skip = 0,
     take = 10,
@@ -499,7 +501,8 @@ export class InnovationThreadsService extends BaseService {
         createdBy: {
           id: string, name: string,
           organisationUnit: null | { id: string; name: string; acronym: string }
-          role: undefined | ServiceRoleEnum,
+          role: ServiceRoleEnum,
+          isOwner?: boolean
         }
       }
     }[]
@@ -521,7 +524,12 @@ export class InnovationThreadsService extends BaseService {
     const query = this.sqlConnection
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .distinct(false)
-      .innerJoinAndSelect('thread.author', 'author')
+      .innerJoin('thread.author', 'author')
+      .innerJoin('thread.innovation', 'innovation')
+      .select([
+        'thread.id', 'thread.subject', 'thread.createdAt',
+        'innovation.owner'
+      ])
       .addSelect(`(${messageCountQuery.getSql()})`, 'messageCount')
       .addSelect(`(${countQuery.getSql()})`, 'count');
 
@@ -557,35 +565,36 @@ export class InnovationThreadsService extends BaseService {
 
     const threadMessagesQuery = this.sqlConnection
       .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
-      .innerJoinAndSelect('messages.author', 'author')
-      .innerJoinAndSelect('messages.thread', 'thread')
-      .leftJoinAndSelect('messages.authorUserRole', 'userRole')
-      .leftJoinAndSelect('messages.authorOrganisationUnit', 'orgUnit')
+      .select([
+        'messages.id', 'messages.createdAt',
+        'author.id', 'author.identityId',
+        'thread.id',
+        'userRole.role',
+        'orgUnit.id', 'orgUnit.name', 'orgUnit.acronym',
+      ])
+      .innerJoin('messages.author', 'author')
+      .innerJoin('messages.thread', 'thread')
+      .leftJoin('messages.authorUserRole', 'userRole')
+      .leftJoin('messages.authorOrganisationUnit', 'orgUnit')
       .where('thread.id IN (:...threadIds)', { threadIds })
       .orderBy('messages.created_at', 'DESC');
 
     const threadMessages = await threadMessagesQuery.getMany();
 
-    const userIds = [...new Set(threadMessages.map((tm) => tm.author.id))];
-    const messageAuthors = await this.domainService.users.getUsersList({
-      userIds,
-    });
+    const userIds = [...new Set(threadMessages.map((tm) => tm.author.identityId))];
+    const messageAuthors = await this.identityProvider.getUsersMap(userIds);
 
     const count = threads.find((_) => true)?.count || 0;
 
     const notificationsQuery = this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notifications')
-      .innerJoinAndSelect(
-        'notifications.notificationUsers',
-        'notificationUsers'
-      )
-      .innerJoinAndSelect('notificationUsers.user', 'users')
+      .select(['notifications.context_id'])
+      .innerJoin('notifications.notificationUsers', 'notificationUsers')
       .where('notifications.context_id IN (:...threadIds)', { threadIds })
-      .andWhere('users.id = :userId', { userId: requestUser.id })
-
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('notificationUsers.read_at IS NULL');
 
-    const notifications = await notificationsQuery.getMany();
+    const notifications = new Set((await notificationsQuery.getMany()).map(n => n.contextId));
 
     const result = await Promise.all(
       threads.map(async (t) => {
@@ -593,16 +602,13 @@ export class InnovationThreadsService extends BaseService {
           (tm) => tm.thread.id === t.thread_id
         );
 
-        const authorDB = message?.author;
-        const authorIdP = messageAuthors.find(
-          (ma) => ma.id === message?.author.id
-        );
+        if(!message) {
+          throw new Error('Message not found this should never happen');
+        }
 
-        const organisationUnit = message?.authorOrganisationUnit ?? undefined;
+        const organisationUnit = message.authorOrganisationUnit ?? undefined;
 
-        const hasUnreadNotification = notifications.find(
-          (n) => n.contextId === t.thread_id
-        );
+        const hasUnreadNotification = notifications.has(t.thread_id);
 
         return {
           id: t.thread_id,
@@ -611,12 +617,13 @@ export class InnovationThreadsService extends BaseService {
           createdAt: t.thread_created_at.toISOString(),
           isNew: hasUnreadNotification ? true : false,
           lastMessage: {
-            id: message!.id,
-            createdAt: message!.createdAt,
+            id: message.id,
+            createdAt: message.createdAt,
             createdBy: {
-              id: authorDB!.id,
-              name: authorIdP?.displayName || 'unknown user',
-              role: message?.authorUserRole?.role,
+              id: message.author.id,
+              name: messageAuthors.get(message.author.identityId)?.displayName || 'unknown user',
+              role: message.authorUserRole.role,
+              ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: t.owner_id === message.author.id},
               organisationUnit: organisationUnit
                 ? {
                   id: organisationUnit.id,

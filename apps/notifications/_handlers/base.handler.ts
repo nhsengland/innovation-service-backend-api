@@ -17,11 +17,10 @@ type HandlerEmailResponseType<T> = Array<{
   }
 }>;
 
-// TODO: REMOVE THE ORGANISATION UNIT ID FROM THE USERS OBJECT.
 type HandlerInAppResponseType<T> = Array<{
   innovationId: string;
   context: { type: NotificationContextTypeEnum, detail: NotificationContextDetailEnum, id: string },
-  users: { userId: string, roleId: string, organisationUnitId?: string | undefined }[];
+  userRoleIds: string[];
   params: T;
 }>;
 

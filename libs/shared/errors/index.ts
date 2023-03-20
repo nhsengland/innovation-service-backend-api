@@ -14,5 +14,6 @@ export {
   BadRequestError,
   InternalServerError,
   ServiceUnavailableError,
+  ConflictError,
   UnprocessableEntityError
 } from './errors.config';

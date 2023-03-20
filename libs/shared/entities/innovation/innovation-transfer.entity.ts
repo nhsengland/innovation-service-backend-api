@@ -26,7 +26,6 @@ export class InnovationTransferEntity extends BaseEntity {
   @Column({ name: 'email_count', nullable: false })
   emailCount: number;
 
-
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
@@ -34,6 +33,8 @@ export class InnovationTransferEntity extends BaseEntity {
   @Column({ name: 'finished_at', type: 'datetime2', nullable: true })
   finishedAt: DateISOType;
 
+  @Column({ name: 'owner_to_collaborator', type: 'bit', nullable: false })
+  ownerToCollaborator: boolean;
 
   static new(data: Partial<InnovationTransferEntity>): InnovationTransferEntity {
     const instance = new InnovationTransferEntity();

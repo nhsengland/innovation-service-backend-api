@@ -25,6 +25,7 @@ export class ResponseHelper {
   static Unauthorized<T>(data?: T): AppResponse { return this.FormattedResponse(401, data); }
   static Forbidden<T>(data?: T): AppResponse { return this.FormattedResponse(403, data); }
   static NotFound<T>(data?: T): AppResponse { return this.FormattedResponse(404, data); }
+  static Conflict<T>(data?: T): AppResponse { return this.FormattedResponse(409, data); }
   static UnprocessableEntity<T>(data?: T): AppResponse { return this.FormattedResponse(422, data); }
 
   // 500 Range.

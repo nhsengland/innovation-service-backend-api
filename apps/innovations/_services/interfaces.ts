@@ -1,5 +1,6 @@
 import type { InnovationActionsService } from './innovation-actions.service';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
+import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
 import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationSectionsService } from './innovation-sections.service';
 import type { InnovationSupportsService } from './innovation-supports.service';
@@ -33,6 +34,9 @@ export const InnovationTransferServiceSymbol = Symbol('InnovationTransferService
 
 export type InnovationsServiceType = typeof InnovationsService.prototype;
 export const InnovationsServiceSymbol = Symbol('InnovationsService');
+
+export type InnovationCollaboratorsServiceType = typeof InnovationCollaboratorsService.prototype;
+export const InnovationCollaboratorsServiceSymbol = Symbol('InnovationCollaboratorsService');
 
 export type PDFServiceType = typeof PDFService.prototype;
 export const PDFServiceSymbol = Symbol('PDFService');

@@ -44,6 +44,8 @@ export class OrganisationsService extends BaseService {
     ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }));
 
 
+    // Validar a lógica dos users to unlock, está a mostrar todos ^^ 
+    if(1==1) throw new Error('buu');
     // only want to clear actions with these statuses
     const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
@@ -207,11 +209,13 @@ export class OrganisationsService extends BaseService {
       );
     }
 
+    // TODO here
     // get users entities
     const usersToUnlock = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .innerJoin('user.userOrganisations', 'org_user')
-      .innerJoin('org_user.userOrganisationUnits', 'unit_user')
+      .innerJoin('user.serviceRoles', 'service_roles')
+      //.innerJoin('user.userOrganisations', 'org_user')
+      //.innerJoin('org_user.userOrganisationUnits', 'unit_user')
       .where('unit_user.id IN (:...userIds)', { userIds })
       .andWhere('unit_user.organisationUnit.id = :unitId', { unitId }) //ensure users to unlock belong to unit
       .getMany();

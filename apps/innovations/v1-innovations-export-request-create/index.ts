@@ -1,5 +1,5 @@
-import type { AzureFunction, HttpRequest } from '@azure/functions'
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
+import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
@@ -30,11 +30,7 @@ class V1InnovationsExportRequestsCreate {
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const params = JoiHelper.Validate<PathParamsType>(
-        PathParamsSchema,
-        request.params,
-        { userType: domainContext.currentRole, userOrganisationRole: domainContext.organisation?.role }
-      );
+      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 

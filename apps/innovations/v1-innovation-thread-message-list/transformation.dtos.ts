@@ -12,6 +12,7 @@ export type ResponseDTO = {
       id: string;
       name: string;
       role: string;
+      isOwner?: boolean;
       organisation: { id: string; name: string; acronym: string | null } | undefined;
       organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
     };

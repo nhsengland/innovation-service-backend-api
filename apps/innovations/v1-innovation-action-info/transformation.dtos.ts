@@ -1,5 +1,5 @@
-import type { InnovationActionStatusEnum, InnovationSectionEnum, ServiceRoleEnum } from '@innovations/shared/enums'
-import type { DateISOType } from '@innovations/shared/types'
+import type { InnovationActionStatusEnum, InnovationSectionEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
   id: string,
@@ -9,7 +9,7 @@ export type ResponseDTO = {
   description: string,
   createdAt: DateISOType,
   updatedAt: DateISOType,
-  updatedBy: { name: string, role?: ServiceRoleEnum | undefined }
-  createdBy: { id: string, name: string, role?: ServiceRoleEnum | undefined, organisationUnit?: { id: string, name: string, acronym?: string } }
+  updatedBy: { name: string, isOwner?: boolean, role: ServiceRoleEnum }
+  createdBy: { id: string, name: string, role: ServiceRoleEnum, organisationUnit?: { id: string, name: string, acronym?: string } }
   declineReason?: string
 }

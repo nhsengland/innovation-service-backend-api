@@ -811,6 +811,265 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
+  "/v1/collaborators/{collaboratorId}/check":
+    head:
+      description: Check if collaborator exists
+      operationId: v1-innovation-collaboration-check
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: collaboratorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Not Found
+  "/v1/{innovationId}/collaborators":
+    post:
+      description: Create (invites) a new collaborator for the innovations.
+      operationId: v1-innovation-collaborator-create
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The collaborator to be invited.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                role:
+                  type: string
+                  maxLength: 25
+                  nullable: true
+              required:
+                - email
+              additionalProperties: false
+      responses:
+        "200":
+          description: The collaborator has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The collaborator id.
+                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                required:
+                  - id
+        "400":
+          description: The collaborator could not be created.
+        "401":
+          description: The user is not authorized to create an collaborator.
+        "403":
+          description: The user is not allowed to create an collaborator.
+        "404":
+          description: The innovation could not be found.
+        "500":
+          description: An unexpected error occurred while creating the collaborator.
+    get:
+      description: Get a list of innovation collaborators.
+      operationId: v1-innovation-collaborators-list
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The list of innovation collaborators.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: The total number of records.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        role:
+                          type: string
+                        email:
+                          type: string
+                        status:
+                          type: string
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+  "/v1/{innovationId}/collaborators/{collaboratorId}":
+    get:
+      description: Get a collaborator information.
+      operationId: v1-innovation-collaborator-info
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: collaboratorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The innovation collaborator information.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  name:
+                    type: string
+                  role:
+                    type: string
+                  email:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - PENDING
+                      - ACTIVE
+                      - DECLINED
+                      - CANCELLED
+                      - REMOVED
+                      - LEFT
+                      - EXPIRED
+                  invitedAt:
+                    type: string
+                    format: date-time
+                  innovation:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      owner:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                            format: uuid
+                          name:
+                            type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    patch:
+      description: Updates information of collaborator.
+      operationId: v1-innovation-collaborator-update
+      tags:
+        - "[v1] Innovation Collaborators"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: collaboratorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The information to update collaborator invite.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  anyOf:
+                    - type: string
+                      enum:
+                        - CANCELLED
+                        - REMOVED
+                    - type: string
+                      enum:
+                        - ACTIVE
+                        - DECLINED
+                        - LEFT
+                role:
+                  oneOf:
+                    - type: string
+                      maxLength: 25
+                      nullable: true
+              additionalProperties: false
+      responses:
+        "200":
+          description: The collaborator has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The collaborator id.
+                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                required:
+                  - id
+        "400":
+          description: The collaborator could not be updated.
+        "401":
+          description: The user is not authorized to update an collaborator.
+        "403":
+          description: The user is not allowed to update an collaborator.
+        "404":
+          description: The innovation could not be found.
+        "500":
+          description: An unexpected error occurred while updating the collaborator.
   /v1:
     post:
       description: Create an innovation
@@ -997,6 +1256,17 @@ paths:
                     - DESC
                 default:
                   default: DESC
+        - name: hasAccessThrough
+          in: query
+          required: false
+          schema:
+            oneOf:
+              - type: array
+                items:
+                  type: string
+                  enum:
+                    - owner
+                    - collaborator
         - name: dateFilter
           in: query
           required: false
