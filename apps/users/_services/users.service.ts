@@ -2,16 +2,17 @@ import { inject, injectable } from 'inversify';
 import type { Repository } from 'typeorm';
 
 import { InnovationEntity, InnovationSupportEntity, InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '@users/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationCollaboratorStatusEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
+import { InnovationCollaboratorStatusEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
-import type { DateISOType, RoleType } from '@users/shared/types';
+import type { DateISOType } from '@users/shared/types';
 
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
 import { BaseService } from './base.service';
 import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
+import type { PaginationQueryParamsType } from '@users/shared/helpers';
 
 
 @injectable()
@@ -321,85 +322,87 @@ export class UsersService extends BaseService {
    */
   async getUserList(
     filters: { userTypes: ServiceRoleEnum[], organisationUnitId?: string, onlyActive?: boolean },
-    fields: ('email' | 'organisations' | 'units')[]
+    fields: ('email' | 'organisations' | 'units')[],
+    pagination: PaginationQueryParamsType<'createdAt'>,
   ): Promise<{
-    id: string,
-    email?: string,
-    isActive: boolean,
-    name: string,
-    roles: Pick<RoleType, 'role'>[],  // This might change in the future
-    organisations?: {
-      id: string,
-      name: string,
-      role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-      units?: { id: string, name: string, organisationUnitUserId: string }[]
+    count: number,
+    data: {
+      id: string;
+      name: string;
+      lockedAt: string | null;
+      roles: UserRoleEntity[];
+      email?: string;
+      organisationUnitUserId?: string;
     }[]
-  }[]> {
-    // [TechDebt]: add pagination if this gets used outside of admin bulk export, other cases always have narrower conditions
-    const query = this.sqlConnection.createQueryBuilder(UserEntity, 'user');
+  }> {
     const fieldSet = new Set(fields);
 
-    // Relations
-    if (fieldSet.has('organisations') || fieldSet.has('units') || filters.organisationUnitId) {
-      query.leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
-        .leftJoinAndSelect('userOrganisations.organisation', 'organisation');
-
-      if (fieldSet.has('units') || filters.organisationUnitId) {
-        query.leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-          .leftJoinAndSelect('userOrganisationUnits.organisationUnit', 'organisationUnit');
-      }
-    }
+    const query = this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles');
 
     // Filters
     if (filters.userTypes.length > 0) {
-      query.leftJoinAndSelect('user.serviceRoles', 'serviceRoles');
       query.andWhere('serviceRoles.role IN (:...userRoles)', { userRoles: filters.userTypes });
     }
+
     if (filters.organisationUnitId) {
-      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId });
+      query
+        .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
+        .leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
+        .leftJoin('userOrganisations.organisation', 'organisation')
+        .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
+        .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
+        .andWhere('roleOrganisationUnit.id = :organisationUnitId AND organisationUnit.id = :organisationUnitId', { organisationUnitId: filters.organisationUnitId });
     }
 
     if (filters.onlyActive) {
       query.andWhere('user.lockedAt IS NULL');
     }
 
+    query
+      .skip(pagination.skip)
+      .take(pagination.take);
+
+    for (const [key, order] of Object.entries(pagination.order)) {
+      let field: string;
+      switch (key) {
+        case 'createdAt': field = 'user.createdAt'; break;
+        default:
+          field = 'user.createdAt'; break;
+      }
+      query.addOrderBy(field, order);
+    }
+
     // Get users from database
-    const usersFromSQL = await query.getMany();
+    const [dbUsers, count] = await query.getManyAndCount();
+    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
 
-    const identityUsers = (await this.identityProviderService.getUsersList(usersFromSQL.map(u => u.identityId)));
+    const users = await Promise.all(dbUsers.map(async (dbUser) => {
 
-
-    return Promise.all(usersFromSQL.map(async user => {
-      let organisations: {
-        id: string,
-        name: string,
-        role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum
-        units?: { id: string, name: string, organisationUnitUserId: string }[]
-      }[] | undefined = undefined;
-
-      if (fieldSet.has('organisations') || fieldSet.has('units')) {
-        const userOrganisations = await user.userOrganisations;
-        organisations = userOrganisations.map(o => ({
-          id: o.organisation.id,
-          name: o.organisation.name,
-          role: o.role,
-          ...(fieldSet.has('units') ? { units: o.userOrganisationUnits.map(u => ({ id: u.organisationUnit.id, name: u.organisationUnit.name, organisationUnitUserId: u.id })) } : {})
-        }));
+      const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
+      if (!identityUser) {
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
 
-      // This needs to be improved to be out of the Promise.All
-      const b2cUser = identityUsers.find(item => item.identityId === user.identityId);
-      
-      return {
-        id: user.id,
-        isActive: !user.lockedAt,
-        roles: user.serviceRoles.map(sr => ({ role: sr.role })),
-        name: b2cUser?.displayName ?? 'N/A',
-        ...(fieldSet.has('email') ? { email: b2cUser?.email ?? 'N/A' } : {}),
-        ...(organisations ? { organisations } : {}),
-      };
+      const organisations: OrganisationUserEntity[] =  await dbUser.userOrganisations;
 
+      return {
+        id: dbUser.id,
+        isActive: !dbUser.lockedAt,
+        roles: dbUser.serviceRoles,
+        name: identityUser.displayName ?? 'N/A',        
+        lockedAt: dbUser.lockedAt,
+        ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {}),
+        ...(fieldSet.has('organisations') || fieldSet.has('units') ? {
+          organisationUnitUserId: organisations[0]?.userOrganisationUnits[0]?.id ?? ''
+        } : {})
+      }
     }));
+
+    return {
+      count: count,
+      data: users
+    };
   }
 
   /**
