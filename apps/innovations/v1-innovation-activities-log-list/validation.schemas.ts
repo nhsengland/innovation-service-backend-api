@@ -1,5 +1,5 @@
+import { ActivityTypeEnum } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
-import { ActivityTypeEnum } from '@innovations/shared/enums'
 import Joi from 'joi';
 
 enum orderFields {
@@ -20,6 +20,6 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 }
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({
   activityTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ActivityTypeEnum))).optional(),
-  startDate: Joi.date().optional(),
-  endDate: Joi.date().optional(),
+  startDate: JoiHelper.AppCustomJoi().decodeURIDate().optional(),
+  endDate: JoiHelper.AppCustomJoi().decodeURIDate().optional(),
 }).required();

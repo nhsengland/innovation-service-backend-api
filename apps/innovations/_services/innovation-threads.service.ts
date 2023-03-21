@@ -588,9 +588,9 @@ export class InnovationThreadsService extends BaseService {
 
     const notificationsQuery = this.sqlConnection
       .createQueryBuilder(NotificationEntity, 'notifications')
-      .select(['notifications.context_id'])
+      .select(['notifications.contextId'])
       .innerJoin('notifications.notificationUsers', 'notificationUsers')
-      .where('notifications.context_id IN (:...threadIds)', { threadIds })
+      .where('notifications.contextId IN (:...threadIds)', { threadIds })
       .andWhere('notificationUsers.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
       .andWhere('notificationUsers.read_at IS NULL');
 

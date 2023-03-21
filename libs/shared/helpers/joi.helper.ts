@@ -33,7 +33,7 @@ export class JoiHelper {
   }
 
 
-  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringArrayOfObjects: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema, decodeURIString: () => Joi.StringSchema } {
+  static AppCustomJoi(): Root & { stringArray: () => Joi.ArraySchema, stringArrayOfObjects: () => Joi.ArraySchema, stringObject: () => Joi.ObjectSchema, decodeURIString: () => Joi.StringSchema, decodeURIDate: () => Joi.DateSchema } {
 
     return Joi.extend(
 
@@ -69,6 +69,15 @@ export class JoiHelper {
         coerce(value) {
           return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value)}
         }
+      },
+
+      {
+        type: 'decodeURIDate',
+        base: Joi.date().meta({ baseType: 'date' }),
+        prepare(value, _helpers) {
+          return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value) }
+        }
+
       }
 
     );
