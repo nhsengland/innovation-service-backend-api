@@ -10,9 +10,9 @@ import type { DateISOType } from '@users/shared/types';
 
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
-import { BaseService } from './base.service';
 import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
+import { BaseService } from './base.service';
 
 
 @injectable()
@@ -224,7 +224,7 @@ export class UsersService extends BaseService {
       contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null,
       contactDetails?: string | null,
       mobilePhone?: string | null,
-      organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string }
+      organisation?: { id: string, isShadow: boolean, name?: null | string, size?: null | string, description?: null | string, registrationNumber?: null | string }
     }
   ): Promise<{ id: string }> {
 
@@ -244,16 +244,20 @@ export class UsersService extends BaseService {
 
       if (data.organisation) {
 
-        const organisationData: { isShadow: boolean, name?: string, size?: null | string } = {
+        const organisationData: { isShadow: boolean, name?: string, size?: null | string, description?: null | string, registrationNumber?: null | string } = {
           isShadow: data.organisation.isShadow
         };
 
         if (organisationData.isShadow) {
           organisationData.name = user.identityId;
           organisationData.size = null;
+          organisationData.description = null;
+          organisationData.registrationNumber = null;
         } else {
           if (data.organisation.name) { organisationData.name = data.organisation.name; }
           if (data.organisation.size) { organisationData.size = data.organisation.size; }
+          if (data.organisation.description) { organisationData.description = data.organisation.description; }
+          if (data.organisation.registrationNumber) { organisationData.registrationNumber = data.organisation.registrationNumber; }
         }
 
         await this.organisationRepository.update(data.organisation.id, organisationData);
@@ -384,13 +388,13 @@ export class UsersService extends BaseService {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
 
-      const organisations: OrganisationUserEntity[] =  await dbUser.userOrganisations;
+      const organisations: OrganisationUserEntity[] = await dbUser.userOrganisations;
 
       return {
         id: dbUser.id,
         isActive: !dbUser.lockedAt,
         roles: dbUser.serviceRoles,
-        name: identityUser.displayName ?? 'N/A',        
+        name: identityUser.displayName ?? 'N/A',
         lockedAt: dbUser.lockedAt,
         ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {}),
         ...(fieldSet.has('organisations') || fieldSet.has('units') ? {
@@ -457,18 +461,18 @@ export class UsersService extends BaseService {
       id: string,
       name: string
     }
-  }[]> { 
+  }[]> {
 
     const invites = await this.sqlConnection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select([
         'collaborator.id', 'collaborator.invitedAt',
         'innovation.id', 'innovation.name'
       ])
-      .innerJoin('collaborator.innovation', 'innovation')  
-      .where('collaborator.email = :email', { email })      
+      .innerJoin('collaborator.innovation', 'innovation')
+      .where('collaborator.email = :email', { email })
       .andWhere('collaborator.status = :status', { status: status })
       .andWhere('DATEDIFF(day, collaborator.invitedAt, GETDATE()) < 31')
-      .getMany();   
+      .getMany();
 
     const data = invites.map((invite) => ({
       id: invite.id,
@@ -479,6 +483,6 @@ export class UsersService extends BaseService {
       }
     }));
 
-    return data; 
+    return data;
   }
 }
