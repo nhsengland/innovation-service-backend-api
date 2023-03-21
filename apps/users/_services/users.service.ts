@@ -326,7 +326,7 @@ export class UsersService extends BaseService {
    */
   async getUserList(
     filters: { userTypes: ServiceRoleEnum[], organisationUnitId?: string, onlyActive?: boolean },
-    fields: ('email' | 'organisations' | 'units')[],
+    fields: ('email')[],
     pagination: PaginationQueryParamsType<'createdAt'>,
   ): Promise<{
     count: number,
@@ -388,8 +388,6 @@ export class UsersService extends BaseService {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
 
-      const organisations: OrganisationUserEntity[] = await dbUser.userOrganisations;
-
       return {
         id: dbUser.id,
         isActive: !dbUser.lockedAt,
@@ -397,8 +395,8 @@ export class UsersService extends BaseService {
         name: identityUser.displayName ?? 'N/A',
         lockedAt: dbUser.lockedAt,
         ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {}),
-        ...(fieldSet.has('organisations') || fieldSet.has('units') ? {
-          organisationUnitUserId: organisations[0]?.userOrganisationUnits[0]?.id ?? ''
+        ...(filters.organisationUnitId ? {
+          organisationUnitUserId: (await dbUser.userOrganisations)[0]?.userOrganisationUnits[0]?.id ?? ''
         } : {})
       }
     }));

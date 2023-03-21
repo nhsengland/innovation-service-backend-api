@@ -15,7 +15,7 @@ export type QueryParamsType = {
   userTypes: ServiceRoleEnum[];
   organisationUnitId?: string;
   onlyActive?: boolean;
-  fields: ('email' | 'organisations' | 'units')[];
+  fields: ('email')[];
 }
 
 export const QueryParamsSchema = Joi.alternatives().try(
@@ -27,7 +27,7 @@ export const QueryParamsSchema = Joi.alternatives().try(
     userTypes: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(ServiceRoleEnum))).min(1).description('Types of user to filter.'),
     organisationUnitId: Joi.string().guid().optional().description('Id of the organisation unit the user belongs to.'),
     onlyActive: Joi.boolean().optional().description('List only active users or all users.'),
-    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('email', 'organisations', 'units')).default([]).description('Additional fields to display in response.')
+    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('email')).default([]).description('Additional fields to display in response.')
   }).required()
 );
 
