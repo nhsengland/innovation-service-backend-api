@@ -1,4 +1,5 @@
-import type { DataSource, EntityManager, Repository } from 'typeorm';
+import { NotificationUserEntity } from '@innovations/shared/entities';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, OrganisationUnitEntity } from '../../entities';
 import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
@@ -83,12 +84,22 @@ export class DomainInnovationsService {
           })
           .execute();
 
-        
+        // Delete all unopened notifications related with this innovation
+        const unopenedNotificationsIds = await entityManager.createQueryBuilder(NotificationUserEntity, 'userNotification')
+          .select(['userNotification.id'])
+          .innerJoin('userNotification.notification', 'notification')
+          .innerJoin('notification.innovation', 'innovation')
+          .where('innovation.id = :innovationId', { innovationId: dbInnovation.id })
+          .andWhere('userNotification.read_at IS NULL')
+          .getMany();
+
+        await entityManager.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
+
         // supporting users (without duplicates) for notifications.
         const supportingUserIds = [...(new Set(
           dbInnovation.innovationSupports.flatMap(item => item.organisationUnitUsers.map(su => su.organisationUser.user.id))
         ))];
-        
+
         // Update all supports to UNASSIGNED AND delete them.
         for (const innovationSupport of dbInnovation.innovationSupports) {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
@@ -353,7 +364,7 @@ export class DomainInnovationsService {
           name: usersInfo.get(message.author.identityId)?.displayName ?? '',
           locked: !!message.author.lockedAt,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
-          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner.id},
+          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner.id },
           organisationUnit: message.authorUserRole.organisationUnit ? {
             id: message.authorUserRole.organisationUnit.id,
             acronym: message.authorUserRole.organisationUnit.acronym
