@@ -39,7 +39,7 @@ class V1MeInfo {
       let hasInnovationCollaborations = false;
       let userPreferences: {
         contactByPhone: boolean,
-        contactByEmail:  boolean,
+        contactByEmail: boolean,
         contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
         contactDetails: null | string,
       } = {
@@ -54,13 +54,13 @@ class V1MeInfo {
         hasInnovationTransfers = false;
         hasInnovationCollaborations = false;
       } else {
-        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role )).isAccepted;
+        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role)).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
         hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
       }
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));        
+        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -100,7 +100,7 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     tags: ['[v1] Users'],
     parameters: [],
     responses: {
-      200: { description: 'Successful operation'},
+      200: { description: 'Successful operation' },
       404: { description: 'Not found' }
     }
   }

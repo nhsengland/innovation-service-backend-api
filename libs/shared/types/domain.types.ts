@@ -41,6 +41,8 @@ export type DomainUserInfoType = {
     role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
     isShadow: boolean,
     size: null | string,
+    description: null | string,
+    registrationNumber: null | string,
     organisationUnits: { id: string, name: string, acronym: string, organisationUnitUser: { id: string } }[]
   }[],
 }

@@ -104,6 +104,8 @@ class DomainUserInfoBuilder {
           role: organisationUser.role,
           isShadow: organisation.isShadow,
           size: organisation.size,
+          description: organisation.description,
+          registrationNumber: organisation.registrationNumber,
           organisationUnits: organisationUnit ? [{
             id: organisationUnit.id,
             name: organisationUnit.name,

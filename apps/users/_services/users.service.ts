@@ -245,7 +245,7 @@ export class UsersService extends BaseService {
       if (data.organisation) {
 
         const organisationData: { isShadow: boolean, name?: string, size?: null | string, description?: null | string, registrationNumber?: null | string } = {
-          isShadow: data.organisation.isShadow
+          isShadow: data.organisation.isShadow,
         };
 
         if (organisationData.isShadow) {
@@ -257,7 +257,7 @@ export class UsersService extends BaseService {
           if (data.organisation.name) { organisationData.name = data.organisation.name; }
           if (data.organisation.size) { organisationData.size = data.organisation.size; }
           if (data.organisation.description) { organisationData.description = data.organisation.description; }
-          if (data.organisation.registrationNumber) { organisationData.registrationNumber = data.organisation.registrationNumber; }
+          organisationData.registrationNumber = data.organisation.registrationNumber;
         }
 
         await this.organisationRepository.update(data.organisation.id, organisationData);
