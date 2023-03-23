@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import type { Repository } from 'typeorm';
+import type { EntityManager, Repository } from 'typeorm';
 
 import { InnovationEntity, InnovationSupportEntity, InnovationTransferEntity, OrganisationEntity, OrganisationUserEntity, TermsOfUseEntity, TermsOfUseUserEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '@users/shared/entities';
 import { InnovationCollaboratorStatusEnum, InnovationTransferStatusEnum, InnovatorOrganisationRoleEnum, NotifierTypeEnum, OrganisationTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
@@ -236,42 +236,46 @@ export class UsersService extends BaseService {
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
     if (currentRole === ServiceRoleEnum.INNOVATOR) {
 
-      // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
-      // Updates the firstTimeSignInAt with the current date.
-      if (!user.firstTimeSignInAt) {
-        await this.userRepository.update(user.id, { firstTimeSignInAt: new Date().toISOString() });
-      }
+      await this.sqlConnection.transaction(async transaction => {
 
-      if (data.organisation) {
-
-        const organisationData: { isShadow: boolean, name?: string, size?: null | string, description?: null | string, registrationNumber?: null | string } = {
-          isShadow: data.organisation.isShadow,
-        };
-
-        if (organisationData.isShadow) {
-          organisationData.name = user.identityId;
-          organisationData.size = null;
-          organisationData.description = null;
-          organisationData.registrationNumber = null;
-        } else {
-          if (data.organisation.name) { organisationData.name = data.organisation.name; }
-          if (data.organisation.size) { organisationData.size = data.organisation.size; }
-          if (data.organisation.description) { organisationData.description = data.organisation.description; }
-          organisationData.registrationNumber = data.organisation.registrationNumber;
+        // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
+        // Updates the firstTimeSignInAt with the current date.
+        if (!user.firstTimeSignInAt) {
+          await transaction.getRepository(UserEntity).update(user.id, { firstTimeSignInAt: new Date().toISOString() });
         }
 
-        await this.organisationRepository.update(data.organisation.id, organisationData);
+        if (data.organisation) {
 
-      }
+          const organisationData: { isShadow: boolean, name?: string, size?: null | string, description?: null | string, registrationNumber?: null | string } = {
+            isShadow: data.organisation.isShadow,
+          };
 
-      const preferences: { contactByPhone: boolean, contactByEmail: boolean, contactByPhoneTimeframe: null | PhoneUserPreferenceEnum, contactDetails: null | string } = {
-        contactByPhone: data.contactByPhone as boolean,
-        contactByEmail: data.contactByEmail as boolean,
-        contactByPhoneTimeframe: data.contactByPhoneTimeframe ?? null,
-        contactDetails: data.contactDetails ?? null
-      };
+          if (organisationData.isShadow) {
+            organisationData.name = user.identityId;
+            organisationData.size = null;
+            organisationData.description = null;
+            organisationData.registrationNumber = null;
+          } else {
+            if (data.organisation.name) { organisationData.name = data.organisation.name; }
+            if (data.organisation.size) { organisationData.size = data.organisation.size; }
+            if (data.organisation.description) { organisationData.description = data.organisation.description; }
+            organisationData.registrationNumber = data.organisation.registrationNumber;
+          }
 
-      await this.upsertUserPreferences(user.id, preferences);
+          await transaction.getRepository(OrganisationEntity).update(data.organisation.id, organisationData);
+
+        }
+
+        const preferences: { contactByPhone: boolean, contactByEmail: boolean, contactByPhoneTimeframe: null | PhoneUserPreferenceEnum, contactDetails: null | string } = {
+          contactByPhone: data.contactByPhone as boolean,
+          contactByEmail: data.contactByEmail as boolean,
+          contactByPhoneTimeframe: data.contactByPhoneTimeframe ?? null,
+          contactDetails: data.contactDetails ?? null
+        };
+
+        await this.upsertUserPreferences(user.id, preferences, transaction);
+
+      });
     }
 
     // Remove the cache entry on update
@@ -419,10 +423,13 @@ export class UsersService extends BaseService {
       contactByEmail: boolean,
       contactByPhoneTimeframe: PhoneUserPreferenceEnum | null,
       contactDetails: string | null,
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<void> {
 
-    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const userPreferences = await connection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
     let preference: {
       user: {
         id: string,
@@ -449,7 +456,7 @@ export class UsersService extends BaseService {
 
     }
 
-    await this.sqlConnection.manager.save(UserPreferenceEntity, preference);
+    await connection.save(UserPreferenceEntity, preference);
   }
 
   async getCollaborationsInvitesList(email: string, status: InnovationCollaboratorStatusEnum = InnovationCollaboratorStatusEnum.PENDING): Promise<{
