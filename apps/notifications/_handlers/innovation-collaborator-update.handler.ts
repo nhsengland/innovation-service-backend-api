@@ -12,7 +12,9 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
-  EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR, 
+  EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER |
+  EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR | 
+  EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS, 
   { collaboratorId: string }
 > {
 
@@ -36,6 +38,10 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     
     if ([InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED].includes(this.inputData.innovationCollaborator.status)) {
       await this.prepareNotificationToCollaborator();
+    }
+
+    if ([InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)) {
+      await this.prepareNotificationToOtherCollaborators();
     }
 
     return this;
@@ -128,5 +134,36 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         });
       }
     } 
+  }
+  
+  async prepareNotificationToOtherCollaborators(): Promise<void> {
+
+    const innovation = await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId);
+    const collaboratorInfo = await this.identityProviderService.getUserInfo(this.domainContext.identityId);
+
+    let templateId: EmailTypeEnum;
+
+    switch (this.inputData.innovationCollaborator.status) {
+      case InnovationCollaboratorStatusEnum.LEFT:
+        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS;
+        break;
+      default:
+        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
+    }
+
+    const collaborators = innovation.collaborators.filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE);
+
+    for (const collaborator of collaborators) {
+      this.emails.push({
+        to: { type: 'identityId', value: collaborator.user?.identityId ?? '', displayNameParam: 'display_name' },
+        templateId,
+        params: {
+          collaborator_name: collaboratorInfo.displayName,
+          innovation_name: innovation.name,
+          ...(this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.LEFT ? { innovation_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/innovations/:innovationId').setPathParams({ innovationId: this.inputData.innovationId }).buildUrl() } : { } )
+        }
+      });
+    }
+
   }
 }

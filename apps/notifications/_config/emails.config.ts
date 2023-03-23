@@ -50,8 +50,8 @@ export enum EmailTypeEnum {
   INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER = '3437f816-e829-46aa-9be2-dafaa6f26fc1',
   INNOVATION_COLLABORATOR_LEAVES_TO_OWNER = 'a9efa7d2-4321-4703-9dad-f583196c989d',
   INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR = 'c53845c8-5d7e-4653-b9e6-d8ca5fa99713',
-  INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR = 'dd8762c8-3113-49ff-b25d-0aa42425f140'
-  
+  INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR = 'dd8762c8-3113-49ff-b25d-0aa42425f140',
+  INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS = '8db47a7d-6d3a-4ab6-8ebb-abec69397b93'
 }
 
 
@@ -112,4 +112,5 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER]: { innovator_name: string, collaborator_name: string, innovation_name: string },
   [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER]: { display_name?: string, collaborator_name: string, innovation_name: string, innovation_url: string },
   [EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR]: { display_name?: string, innovator_name: string, innovation_name: string },
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS]:  { display_name?: string, collaborator_name: string, innovation_name: string, innovation_url: string },
 }
