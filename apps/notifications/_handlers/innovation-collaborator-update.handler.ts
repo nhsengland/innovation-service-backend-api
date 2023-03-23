@@ -13,7 +13,7 @@ import { BaseHandler } from './base.handler';
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
   EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER |
-  EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR | 
+  EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR | 
   EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS, 
   { collaboratorId: string }
 > {
@@ -36,7 +36,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       await this.prepareNotificationToOwner();
     }
     
-    if ([InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED].includes(this.inputData.innovationCollaborator.status)) {
+    if ([InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED, InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)) {
       await this.prepareNotificationToCollaborator();
     }
 
@@ -100,13 +100,16 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       case InnovationCollaboratorStatusEnum.REMOVED:
         templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR;
         break;
+      case InnovationCollaboratorStatusEnum.LEFT:
+        templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR;
+        break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
     let recipient: { type: 'email' | 'identityId', value: string, displayNameParam?: string };
     
-    if (this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.REMOVED) {
+    if ([InnovationCollaboratorStatusEnum.REMOVED, InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)) {
       //identityId is used here for display_name to work
       recipient = { type: 'identityId', value: innovationCollaborator.user?.identityId ?? '', displayNameParam: 'display_name' };
     } else {
