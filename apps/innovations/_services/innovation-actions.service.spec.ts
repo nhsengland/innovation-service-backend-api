@@ -158,7 +158,7 @@ describe('Innovation Actions Suite', () => {
           contextId,
           contextType: NotificationContextTypeEnum.ACTION,
           id: randUuid(),
-          params: randText(),
+          params: {},
         })));
       });
 

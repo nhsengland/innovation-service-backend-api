@@ -67,7 +67,7 @@ export class DispatchService extends BaseService {
         contextDetail: context.detail,
         contextId: context.id,
         innovation: InnovationEntity.new({ id: innovationId }),
-        params: JSON.stringify(params),
+        params: params,
         createdBy: requestUser.id
       }));
 

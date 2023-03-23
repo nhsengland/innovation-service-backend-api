@@ -26,8 +26,8 @@ export class NotificationEntity extends BaseEntity {
   @Column({ type: 'uuid', name: 'context_id' })
   contextId: string;
   
-  @Column({ name: 'params' })
-  params: string;
+  @Column({ name: 'params', type: 'simple-json' })
+  params: Record<string,unknown>;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

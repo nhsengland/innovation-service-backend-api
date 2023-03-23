@@ -381,7 +381,7 @@ export class InnovationsService extends BaseService {
         .where('supports.innovation_id IN (:...innovationsIds)', { innovationsIds });
 
       if (filters.engagingOrganisationUnits && filters.engagingOrganisationUnits.length > 0) {
-        innovationsSupportsQuery.andWhere('organisationUnit.id IN (:...engagingOrganisationUnits)', { engagingOrganisationUnits: filters.engagingOrganisationUnits })
+        innovationsSupportsQuery.andWhere('organisationUnit.id IN (:...engagingOrganisationUnits)', { engagingOrganisationUnits: filters.engagingOrganisationUnits });
       }
 
       if (fetchUsers) {
@@ -453,7 +453,7 @@ export class InnovationsService extends BaseService {
           if (n.contextType === NotificationContextTypeEnum.THREAD) {
             notificationCounter.messages++;
           }
-          if (n.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (n.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(n.params).actionStatus === InnovationActionStatusEnum.REQUESTED)) {
+          if (n.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (n.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && n.params['actionStatus'] === InnovationActionStatusEnum.REQUESTED)) {
             notificationCounter.actions++;
           }
         }
@@ -1517,7 +1517,7 @@ export class InnovationsService extends BaseService {
     const [dbActivities, dbActivitiesCount] = await query.getManyAndCount();
 
     const usersIds = dbActivities.flatMap(item => {
-      const params = JSON.parse(item.param) as ActivityLogListParamsType;
+      const params = item.param as ActivityLogListParamsType;
       const p: string[] = [];
 
       if (params.actionUserId) { p.push(params.actionUserId); }
@@ -1531,7 +1531,7 @@ export class InnovationsService extends BaseService {
     return {
       count: dbActivitiesCount,
       data: dbActivities.map(item => {
-        const params = JSON.parse(item.param) as ActivityLogListParamsType;
+        const params = item.param as ActivityLogListParamsType;
 
         if (params.actionUserId) {
           params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '';

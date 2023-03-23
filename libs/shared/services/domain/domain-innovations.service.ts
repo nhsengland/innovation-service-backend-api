@@ -186,12 +186,12 @@ export class DomainInnovationsService {
       userRole: {
         id: configuration.domainContext.currentRole.id,
       },
-      param: JSON.stringify({
+      param: {
         actionUserId: configuration.domainContext.id,
         actionUserRole: configuration.domainContext.currentRole.role,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
         ...params
-      })
+      }
     });
 
     try {
@@ -254,7 +254,7 @@ export class DomainInnovationsService {
     roleId: string,
     contextIds: string[],
     entityManager?: EntityManager
-  ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[]> {
+  ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: Record<string, unknown> }[]> {
 
     const em = entityManager ?? this.sqlConnection.manager;
 

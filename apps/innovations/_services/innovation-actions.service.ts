@@ -164,7 +164,7 @@ export class InnovationActionsService extends BaseService {
     }
 
 
-    let notifications: { id: string, contextType: NotificationContextTypeEnum, contextId: string, params: string }[] = [];
+    let notifications: { id: string, contextType: NotificationContextTypeEnum, contextId: string, params: Record<string, unknown> }[] = [];
 
     if (filters.fields?.includes('notifications')) {
       notifications = await this.domainService.innovations.getUnreadNotifications(domainContext.currentRole.id, actions.map(action => action.id), em);
@@ -259,7 +259,7 @@ export class InnovationActionsService extends BaseService {
         .getOne();
 
       if (activityLogDeclineReason?.param) {
-        const params = JSON.parse(activityLogDeclineReason.param) as ActivityLogListParamsType;
+        const params = activityLogDeclineReason.param as ActivityLogListParamsType;
         declineReason = params.comment?.value ?? null;
       }
     }
