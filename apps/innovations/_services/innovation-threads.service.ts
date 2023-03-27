@@ -444,7 +444,7 @@ export class InnovationThreadsService extends BaseService {
       .andWhere('notificationUsers.read_at IS NULL')
       .getMany())
       .filter(Boolean)
-      .map(n => JSON.parse(n.params).messageId));
+      .map(n => n.params['messageId']));
       
     const messageResult = messages.map((tm) => {
 

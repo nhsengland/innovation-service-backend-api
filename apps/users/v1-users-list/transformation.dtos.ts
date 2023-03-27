@@ -1,3 +1,4 @@
+import type { UserRoleEntity } from '@users/shared/entities';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '@users/shared/enums';
 import type { DateISOType, RoleType } from '@users/shared/types';
 
@@ -22,21 +23,15 @@ type AdminPortalResponseDTO = {
 }
 
 type UserListResponseDTO = {
-  id: string;
-  name: string;
-  email?: string;
-  roles: Pick<RoleType, 'role'>[];  // this might change in the future keeping this way for compatibility
-  isActive: boolean;
-  organisations?: {
+  count: number,
+  data: {
     id: string;
     name: string;
-    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
-    units?: {
-      id: string;
-      name: string;
-      organisationUnitUserId: string // It's strange that we require this and use this id instead of the user id (or now the role id) to identify the user. Complicates things in the frontend
-    }[]
+    roles: UserRoleEntity[];
+    lockedAt: string | null,
+    email?: string;
+    organisationUnitUserId?: string;
   }[]
 }
 
-export type ResponseDTO = (AdminPortalResponseDTO | UserListResponseDTO)[]
+export type ResponseDTO = (AdminPortalResponseDTO[] | UserListResponseDTO)

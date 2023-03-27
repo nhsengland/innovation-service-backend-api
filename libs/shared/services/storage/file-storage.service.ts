@@ -20,7 +20,7 @@ export class FileStorageService {
 
   constructor() { }
 
-  private getUrl(filename: string, permissions: string): string {
+  private getUrl(filename: string, permissions: string, displayName: string): string {
 
     const starts = new Date();
     const expires = new Date(starts.getTime() + 900_000); // 15 minutes.
@@ -31,7 +31,8 @@ export class FileStorageService {
       expiresOn: expires,
       permissions: BlobSASPermissions.parse(permissions),
       containerName: FILE_STORAGE_CONFIG.storageContainer,
-      blobName: filename
+      blobName: filename,
+      contentDisposition: `filename=${displayName}`
     };
 
     const storageSharedKeyCredential = new StorageSharedKeyCredential(
@@ -51,11 +52,11 @@ export class FileStorageService {
   }
 
   getDownloadUrl(id: string, filename: string): string {
-    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ);
+    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ, filename);
   }
 
   getUploadUrl(id: string, filename: string): string {
-    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ + StoragePermissionsEnum.CREATE + StoragePermissionsEnum.WRITE);
+    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ + StoragePermissionsEnum.CREATE + StoragePermissionsEnum.WRITE, filename);
   }
 
 

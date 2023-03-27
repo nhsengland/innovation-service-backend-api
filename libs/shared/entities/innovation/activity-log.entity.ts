@@ -24,9 +24,8 @@ export class ActivityLogEntity extends BaseEntity {
   @JoinColumn({ name: 'user_role_id' })
   userRole: UserRoleEntity;
 
-  @Column({ name: 'param' })
-  param: string;
-
+  @Column({ name: 'param', type: 'simple-json' })
+  param: Record<string, unknown>;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })

@@ -59,6 +59,7 @@ class V1UsersList {
         return;
 
       } else if ('userTypes' in queryParams) {
+        const { skip, take, order } = queryParams;
 
         const validation = authorizationService.validate(context)
           .checkAdminType();
@@ -82,16 +83,12 @@ class V1UsersList {
         
         await validation.verify();
 
-        const users = await usersService.getUserList(queryParams, queryParams.fields);
-        context.res = ResponseHelper.Ok<ResponseDTO>(users.map(u => ({
-          id: u.id,
-          isActive: u.isActive,
-          name: u.name,
-          roles: u.roles,
-          ...(u.email ? { email: u.email } : {}),
-          ...(u.organisations ? { organisations: u.organisations } : {}),
-          
-        })));
+        const users = await usersService.getUserList(
+          queryParams, queryParams.fields,
+          { skip, take, order }
+        );
+        
+        context.res = ResponseHelper.Ok<ResponseDTO>(users);
         return;
 
       } else {

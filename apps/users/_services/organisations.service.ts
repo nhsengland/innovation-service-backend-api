@@ -1,6 +1,6 @@
 import { injectable } from 'inversify';
 
-import { OrganisationEntity, OrganisationUnitEntity } from '@users/shared/entities';
+import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum } from '@users/shared/enums';
 
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
@@ -111,14 +111,16 @@ export class OrganisationsService extends BaseService {
     id: string
     name: string,
     acronym: string,
-    userCount: number,
-    isActive: boolean
+    isActive: boolean,
+    canActivate: boolean
   }> {
 
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const unit = await connection.createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .leftJoinAndSelect('unit.organisationUnitUsers', 'orgUnitUsers')
+      .select([
+        'unit.id', 'unit.name', 'unit.acronym', 'unit.inactivatedAt'
+      ])
       .where('unit.id = :organisationUnitId', { organisationUnitId })
       .getOne();
 
@@ -126,12 +128,17 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
+    const hasQualifyingAccessor = !!(await connection.createQueryBuilder(UserRoleEntity, 'user')
+      .where('user.organisation_unit_id = :organisationUnitId', {organisationUnitId})
+      .andWhere("role = 'QUALIFYING_ACCESSOR'")
+      .getOne());
+
     return {
       id: unit.id,
       name: unit.name,
       acronym: unit.acronym,
-      userCount: (await unit.organisationUnitUsers).length,
-      isActive: !unit.inactivatedAt
+      isActive: !unit.inactivatedAt,
+      canActivate: hasQualifyingAccessor
     };
   }
 

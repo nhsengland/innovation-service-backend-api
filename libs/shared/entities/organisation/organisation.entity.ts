@@ -27,6 +27,12 @@ export class OrganisationEntity extends BaseEntity {
   @Column({ type: 'nvarchar', length: 255, nullable: true })
   size: null | string;
 
+  @Column({ type: 'nvarchar', length: 50, nullable: true })
+  description: null | string;
+
+  @Column({ type: 'nvarchar', length: 8, nullable: true })
+  registrationNumber: null | string;
+
   @Column({ name: 'is_shadow', nullable: false, default: false })
   isShadow: boolean;
 

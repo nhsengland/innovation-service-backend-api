@@ -23,6 +23,8 @@ export type ResponseDTO = {
     role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum,
     isShadow: boolean,
     size: null | string,
+    description: null | string,
+    registrationNumber: null | string,
     organisationUnits: { id: string; name: string; acronym: string; }[]
   }[]
 };

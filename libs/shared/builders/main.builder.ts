@@ -103,12 +103,12 @@ export class TestDataBuilder {
       userRole: {
         id: configuration.domainContext.currentRole.id,
       },
-      param: JSON.stringify({
+      param: {
         actionUserId: configuration.userId,
         actionUserRole: configuration.domainContext.currentRole,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
         ...params
-      })
+      }
     });
 
     return entityManager.getRepository(ActivityLogEntity).save(activityLog);

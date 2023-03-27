@@ -160,6 +160,36 @@ export class RecipientsService extends BaseService {
     };
 
   }
+  
+  async innovationInfoWithCollaborators(innovationId: string): Promise<{
+    name: string,
+    collaborators: { id: string, status: InnovationCollaboratorStatusEnum, user?: { id: string, identityId: string }}[]
+  }> {
+
+    const dbInnovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .select([
+        'innovation.name', 'collaborator.id', 'collaborator.status',
+        'collaboratorUser.id', 'collaboratorUser.identityId'
+      ])
+      .leftJoin('innovation.collaborators', 'collaborator')
+      .leftJoin('collaborator.user', 'collaboratorUser')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!dbInnovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    return {
+      name: dbInnovation.name,
+      collaborators: dbInnovation.collaborators.map(c => ({
+        id: c.id,
+        status: c.status,
+        ...(c.user && { user: { id: c.user.id, identityId: c.user.identityId }})
+      }))
+    };
+
+  }
 
   async innovationSharedOrganisationsWithUnits(innovationId: string): Promise<{
     id: string, name: string, acronym: null | string, organisationUnits: { id: string, name: string, acronym: string }[]

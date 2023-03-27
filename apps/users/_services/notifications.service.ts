@@ -119,7 +119,7 @@ export class NotificationsService extends BaseService {
         contextId: n.notification.contextId,
         createdAt: n.notification.createdAt,
         readAt: n.readAt,
-        params: JSON.parse(n.notification.params)
+        params: n.notification.params
       }))
     };
   }

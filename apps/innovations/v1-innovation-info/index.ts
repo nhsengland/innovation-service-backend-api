@@ -58,7 +58,7 @@ class V1InnovationInfo {
           name: result.owner.name,
           isActive: result.owner.isActive,
           // Contact details only sent to Assessment and Admin users.
-          ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { email: result.owner.email, mobilePhone: result.owner.mobilePhone, contactByEmail: result.owner.contactByEmail, contactByPhone: result.owner.contactByPhone, contactByPhoneTimeFrame: result.owner.contactByPhoneTimeframe, contactDetails: result.owner.contactDetails } : {}),
+          ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { email: result.owner.email, mobilePhone: result.owner.mobilePhone, contactByEmail: result.owner.contactByEmail, contactByPhone: result.owner.contactByPhone, contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe, contactDetails: result.owner.contactDetails } : {}),
           ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
           organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
         },

@@ -36,7 +36,7 @@ export class DomainUsersService {
         'user.id', 'user.identityId', 'user.lockedAt','user.firstTimeSignInAt', 'user.surveyId',
         // These should be removed in the future and use the service roles instead
         'userOrganisations.id', 'userOrganisations.role',
-        'organisation.id', 'organisation.name', 'organisation.acronym', 'organisation.size', 'organisation.isShadow',
+        'organisation.id', 'organisation.name', 'organisation.acronym', 'organisation.size', 'organisation.isShadow', 'organisation.description', 'organisation.registrationNumber',
         'userOrganisationUnits.id',
         'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym',
         // Service roles
@@ -88,6 +88,8 @@ export class DomainUsersService {
           size: organisation.size,
           role: userOrganisation.role,
           isShadow: organisation.isShadow,
+          description: organisation.description,
+          registrationNumber: organisation.registrationNumber,
           organisationUnits: organisationUnits.map(item => ({
             id: item.organisationUnit.id,
             acronym: item.organisationUnit.acronym,
