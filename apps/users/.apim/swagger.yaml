@@ -247,6 +247,18 @@ paths:
           description: Successful operation
         "404":
           description: Terms of use not found
+  /v1/me/innovations:
+    get:
+      description: Retrieves the user owned innovations
+      operationId: v1-me-innovations
+      tags:
+        - "[v1] Owned innovations information"
+      parameters: []
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Bad request
   /v1/notifications/counters:
     get:
       description: Returns the notifications counters

@@ -490,4 +490,32 @@ export class UsersService extends BaseService {
 
     return data;
   }
+
+  async getOwnedInnovations(userId: string): Promise<{
+    id: string
+    name: string,
+    collaboratorsCount: number,
+    transferCreatedAt: DateISOType | null
+  }[]> {
+
+    const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .select([
+        'innovations.id', 'innovations.name',
+        'collaborator.id',
+        'transfer.createdAt'
+      ])
+      .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE })
+      .leftJoin('innovations.transfers', 'transfer','transfer.status = :transferStatus', { transferStatus: InnovationTransferStatusEnum.PENDING } )
+      .where('innovations.owner_id = :userId', { userId })
+      .getMany()
+
+    const data = query.map((innovation) => ({
+      id: innovation.id,
+      name: innovation.name,
+      collaboratorsCount: innovation.collaborators.length,
+      transferCreatedAt: innovation.transfers[0]?.createdAt ?? null 
+    }));
+    
+    return data;
+  }
 }

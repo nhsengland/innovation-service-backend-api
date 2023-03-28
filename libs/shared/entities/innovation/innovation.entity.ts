@@ -51,6 +51,7 @@ import type { DateISOType } from '../../types/date.types';
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
+import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 
 @Entity('innovation')
@@ -379,6 +380,9 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
   collaborators: InnovationCollaboratorEntity[];
+
+  @OneToMany(() => InnovationTransferEntity, record => record.innovation)
+  transfers: InnovationTransferEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();
