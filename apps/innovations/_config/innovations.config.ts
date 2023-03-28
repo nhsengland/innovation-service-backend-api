@@ -19,7 +19,7 @@ import {
   InnovationCareSettingCatalogueEnum,
   InnovationCategoryCatalogueEnum,
   InnovationCertificationCatalogueEnum,
-  InnovationDiseaseConditionCatalogueEnum,
+  InnovationDiseasesConditionsImpactKeys,
   InnovationPathwayKnowledgeCatalogueEnum,
   InnovationRevenueTypeCatalogueEnum,
   InnovationSectionEnum,
@@ -99,7 +99,7 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
           name: Joi.string().required()
         })),
       cliniciansImpactDetails: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
-      diseasesConditionsImpact: Joi.array().items(Joi.string().valid(...Object.values(InnovationDiseaseConditionCatalogueEnum))).allow(null),
+      diseasesConditionsImpact: Joi.array().items(Joi.string().valid(...InnovationDiseasesConditionsImpactKeys)).allow(null),
     }).required().min(1)
   },
 
