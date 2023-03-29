@@ -315,7 +315,7 @@ export enum SubgroupBenefitCatalogueEnum {
   OTHER = 'OTHER'
 }
 
-export const InnovationDiseasesConditionsImpactKeys = [
+export const InnovationDiseasesConditionsImpactType = [
   'BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS',
   'BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_ALLERGIES',
   'BLOOD_AND_IMMUNE_SYSTEM_CONDITIONS_ANAPHYLAXIS',
@@ -482,4 +482,4 @@ export const InnovationDiseasesConditionsImpactKeys = [
   'UROLOGICAL_CONDITIONS_URINARY_INCONTINENCE',
   'UROLOGICAL_CONDITIONS_URINARY_TRACT_INFECTION'
 ] as const;
-export type InnovationDiseasesConditionsImpactType = typeof InnovationDiseasesConditionsImpactKeys[number];
+export type InnovationDiseasesConditionsImpactType = typeof InnovationDiseasesConditionsImpactType[number];

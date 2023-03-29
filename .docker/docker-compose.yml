@@ -3,12 +3,13 @@ version: '3.7'
 services:
   mssql:
     container_name: mssql
-    image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       - SA_PASSWORD=Pass@word
       - ACCEPT_EULA=Y
     ports:
       - "1433:1433"
+    restart: unless-stopped
       
   queue:
     container_name: queue

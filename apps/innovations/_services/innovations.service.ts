@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationCategoryEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportTypeEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
+import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationDocumentEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
@@ -13,6 +13,7 @@ import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
 
+import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import { BaseService } from './base.service';
 
@@ -1124,9 +1125,13 @@ export class InnovationsService extends BaseService {
     const surveyInfo = surveyId ? await this.getSurveyInfo(surveyId) : null;
 
     return this.sqlConnection.transaction(async transaction => {
+      const now = new Date().toISOString();
 
       const savedInnovation = await transaction.save(InnovationEntity, InnovationEntity.new({
 
+        /*
+         * Remove survey information not used any longer and probably irrelevant in the Innovation Record since it will be in document
+         *
         // Survey information.
         categories: Promise.resolve((surveyInfo?.categories || []).map(item => InnovationCategoryEntity.new({ type: item }))),
         otherCategoryDescription: surveyInfo?.otherCategoryDescription ?? null,
@@ -1141,6 +1146,7 @@ export class InnovationsService extends BaseService {
         hasEvidence: surveyInfo?.hasEvidence ?? null,
         // hasCostEvidence: surveyInfo.hasCostEvidence ?? null,
         supportTypes: Promise.resolve((surveyInfo?.supportTypes || []).map((e) => InnovationSupportTypeEntity.new({ type: e }))),
+        */
 
         // Remaining information.
         name: data.name,
@@ -1151,11 +1157,13 @@ export class InnovationsService extends BaseService {
         postcode: data.postcode,
         organisationShares: data.organisationShares.map(id => OrganisationEntity.new({ id })),
         owner: UserEntity.new({ id: user.id }),
+        createdAt: now,
         createdBy: user.id,
+        updatedAt: now,
         updatedBy: user.id
-
       }));
-
+      
+      await transaction.save(InnovationDocumentEntity, createDocumentFromInnovation(savedInnovation));
 
       // Mark some section to status DRAFT.
       let sectionsToBeInDraft: InnovationSectionEnum[] = [];

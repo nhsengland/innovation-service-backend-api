@@ -2,8 +2,8 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
@@ -36,7 +36,8 @@ class V1InnovationEvidenceUpdate {
 
       const result = await innovationSectionsService.updateInnovationEvidence(
         { id: requestUser.id },
-        params.evidenceId,
+        params.innovationId,
+        params.evidenceOffset,
         body
       );
 
@@ -49,7 +50,7 @@ class V1InnovationEvidenceUpdate {
   }
 }
 
-export default openApi(V1InnovationEvidenceUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/evidence/{evidenceId}', {
+export default openApi(V1InnovationEvidenceUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/evidence/{evidenceOffset}', {
   put: {
     description: 'Update an innovation evidence entry.',
     tags: ['Innovation'],

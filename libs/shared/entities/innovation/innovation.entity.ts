@@ -28,6 +28,7 @@ import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationUserTestEntity } from './innovation-user-test.entity';
 
 import type {
+  CarePathwayCatalogueEnum,
   CostComparisonCatalogueEnum,
   HasBenefitsCatalogueEnum,
   HasEvidenceCatalogueEnum,
@@ -50,9 +51,11 @@ import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import type { DateISOType } from '../../types/date.types';
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
+import { InnovationDocumentEntity } from './innovation-document.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 import { InnovationTransferEntity } from './innovation-transfer.entity';
 
+// TODO: after migration remove all "data" fields except for name, description, countryCode, postalcode
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -214,7 +217,7 @@ export class InnovationEntity extends BaseEntity {
   costComparison: null | CostComparisonCatalogueEnum;
 
   @Column({ name: 'care_pathway', type: 'nvarchar', nullable: true })
-  carePathway: null | string;
+  carePathway: null | CarePathwayCatalogueEnum;
 
   @Column({ name: 'patients_range', type: 'nvarchar', nullable: true })
   patientsRange: null | string;
@@ -381,6 +384,10 @@ export class InnovationEntity extends BaseEntity {
   @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
   collaborators: InnovationCollaboratorEntity[];
 
+  @OneToOne(() => InnovationDocumentEntity)
+  @JoinColumn({ name: 'id' })
+  document: InnovationDocumentEntity;
+  
   @OneToMany(() => InnovationTransferEntity, record => record.innovation)
   transfers: InnovationTransferEntity[];
 

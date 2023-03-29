@@ -6,11 +6,11 @@ import type { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } fro
 
 export type ParamsType = {
   innovationId: string,
-  evidenceId: string
+  evidenceOffset: number
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required().description('The innovation id.'),
-  evidenceId: Joi.string().guid().required().description('The evidence id.')
+  evidenceOffset: Joi.number().integer().min(0).required().description('The evidence id.')
 });
 
 export type BodyType = {

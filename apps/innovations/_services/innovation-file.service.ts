@@ -10,7 +10,7 @@ import { BaseService } from './base.service';
 export class InnovationFileService extends BaseService {
 
   constructor(@inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType) {
-    super()
+    super();
   }
   
   /**
@@ -43,6 +43,25 @@ export class InnovationFileService extends BaseService {
       id: file.id,
       displayFileName: file.displayFileName,
       url: this.fileStorageService.getUploadUrl(file.id, filename)
+    };
+  }
+
+  /**
+   * gets the files by id
+   * @param ids the file identifiers
+   * @param entityManager optional entity manager to use for the transaction
+   * @returns the files
+   */
+  async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileEntity[]> {
+
+    if(ids?.length === 0) {
+      return [];
     }
+    
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    return connection.createQueryBuilder(InnovationFileEntity, 'file')
+      .where('file.id IN (:...ids)', { ids })
+      .getMany();
   }
 }

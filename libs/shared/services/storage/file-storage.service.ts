@@ -68,7 +68,7 @@ export class FileStorageService {
       const blobClient = new BlobClient(url, storageSharedKeyCredential);
       const response = await blobClient.deleteIfExists({ deleteSnapshots: 'include' });
 
-      if (response.errorCode) {
+      if (response.errorCode && response.errorCode !== 'BlobNotFound') {
         // TODO: throw known error!
         throw new Error(
           `Failed to delete the file ${filename} with errorCode: ${response.errorCode}`

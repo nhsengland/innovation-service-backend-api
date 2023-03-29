@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["delete"],
-      "route": "v1/{innovationId}/evidence/{evidenceId}"
+      "route": "v1/{innovationId}/evidence/{evidenceOffset}"
     },
     { "type": "http", "direction": "out", "name": "res" }
   ]

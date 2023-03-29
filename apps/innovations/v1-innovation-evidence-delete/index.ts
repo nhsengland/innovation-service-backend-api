@@ -38,7 +38,7 @@ class V1InnovationEvidenceDelete {
       const result = await innovationSectionsService.deleteInnovationEvidence(
         { id: requestUser.id },
         innovation.id,
-        params.evidenceId
+        params.evidenceOffset
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, });
@@ -53,7 +53,7 @@ class V1InnovationEvidenceDelete {
 
 }
 
-export default openApi(V1InnovationEvidenceDelete.httpTrigger as AzureFunction, '/v1/{innovationId}/evidence/{evidenceId}', {
+export default openApi(V1InnovationEvidenceDelete.httpTrigger as AzureFunction, '/v1/{innovationId}/evidence/{evidenceOffset}', {
   delete: {
     description: 'Delete an innovation evidence entry.',
     tags: ['Innovation'],

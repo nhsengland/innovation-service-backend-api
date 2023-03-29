@@ -8,7 +8,7 @@
       "methods": [
         "get"
       ],
-      "route": "v1/{innovationId}/evidences/{evidenceId}"
+      "route": "v1/{innovationId}/evidences/{evidenceOffset}"
     },
     {
       "type": "http",

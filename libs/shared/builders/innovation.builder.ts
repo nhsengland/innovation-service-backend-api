@@ -1,14 +1,14 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
-import { CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
+import { createDocumentFromInnovation, DocumentType, InnovationDocumentEntity } from '../entities/innovation/innovation-document.entity';
+import { CarePathwayCatalogueEnum, CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationAreaCatalogueEnum, InnovationCareSettingCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationCertificationCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationSupportTypeCatalogueEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, StandardMetCatalogueEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
 import type { DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
 import { InnovationReassessmentBuilder } from './innovation-reassessment.builder';
 import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
-
 
 export class InnovationBuilder {
 
@@ -25,71 +25,124 @@ export class InnovationBuilder {
   private _organisationUnit: OrganisationUnitEntity;
   private _organisationUnitUsers: OrganisationUnitUserEntity[];
   private _assessmentUser: UserEntity;
+  private _document: DocumentType;
   
 
   constructor() {
     this.innovation = {
       name: randProduct().title,
       description: randText(),
-      accessibilityImpactDetails: randText(),
-      accessibilityStepsDetails: randText(),
-      benefittingOrganisations: randText(),
-      carePathway: randText(),
-      cliniciansImpactDetails: randText(),
-      costComparison: randBoolean() ? CostComparisonCatalogueEnum.CHEAPER : CostComparisonCatalogueEnum.NOT_SURE,
-      costDescription: randText(),
       countryName: randCountry(),
-      createdAt: new Date().toISOString(),
-      fundingDescription: randText(),
-      hasBenefits: randBoolean() ? HasBenefitsCatalogueEnum.YES : HasBenefitsCatalogueEnum.NOT_YET,
-      hasCostCareKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
-      hasCostKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
-      hasFunding: randBoolean() ? HasFundingCatalogueEnum.YES : HasFundingCatalogueEnum.NO,
-      hasCostSavingKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
-      hasDeployPlan: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-      hasEvidence: randBoolean() ? HasEvidenceCatalogueEnum.YES : HasEvidenceCatalogueEnum.IN_PROGRESS,
-      hasFinalProduct: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-      hasMarketResearch: randBoolean() ? HasMarketResearchCatalogueEnum.YES : HasMarketResearchCatalogueEnum.NOT_YET,
-      hasOtherIntellectual: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-      hasPatents: randBoolean() ? HasPatentsCatalogueEnum.HAS_AT_LEAST_ONE : HasPatentsCatalogueEnum.HAS_NONE,
-      hasProblemTackleKnowledge: randBoolean() ? HasProblemTackleKnowledgeCatalogueEnum.YES : HasProblemTackleKnowledgeCatalogueEnum.NOT_YET,
-      hasRegulationKnowledge: randBoolean() ? HasRegulationKnowledegeCatalogueEnum.YES_ALL : HasRegulationKnowledegeCatalogueEnum.NO,
-      hasResourcesToScale: randBoolean() ? HasResourcesToScaleCatalogueEnum.YES : HasResourcesToScaleCatalogueEnum.NO,
-      hasRevenueModel: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-      hasTests: randBoolean() ? HasTestsCatalogueEnum.YES : HasTestsCatalogueEnum.NOT_YET,
-      hasUKPathwayKnowledge: randBoolean() ? YesNoNotRelevantCatalogueEnum.YES : YesNoNotRelevantCatalogueEnum.NO,
-      usageExpectations: randText(),
-      otherCareSetting: randText(),
-      otherCategoryDescription: randText(),
-      otherEnvironmentalBenefit: randText(),
-      otherGeneralBenefit: randText(),
-      otherIntellectual: randText(),
-      otherMainCategoryDescription: randText(),
-      otherPatientsCitizensBenefit: randText(),
-      otherRegulationDescription: randText(),
-      otherRevenueDescription: randText(),
-
-      impactClinicians: randBoolean(),
-      impactPatients: randBoolean(),
-
-      mainCategory: InnovationCategoryCatalogueEnum.MEDICAL_DEVICE,
-      innovationPathwayKnowledge: randBoolean() ? InnovationPathwayKnowledgeCatalogueEnum.PATHWAY_EXISTS_AND_FITS : InnovationPathwayKnowledgeCatalogueEnum.NO_PATHWAY,
-      intervention: randText(),
-      isDeployed: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-      interventionImpact: randText(),
-      mainPurpose: MainPurposeCatalogueEnum.MONITOR_CONDITION,
-      marketResearch: randText(),
-      patientsRange: randText(),
-      moreSupportDescription: randText(),
-      payingOrganisations: randText(),
       postcode: randZipCode(),
-      potentialPathway: randText(),
-      problemsConsequences: randText(),
-      problemsTackled: randText(),
-      sellExpectations: randText(),
       surveyId: randUuid(),
       status: InnovationStatusEnum.IN_PROGRESS,
       assessments: [],
+      createdAt: new Date().toISOString(),
+    };
+
+    this._document = {
+      version: '202209',
+      INNOVATION_DESCRIPTION: {
+        name: this.innovation.name!,
+        description: this.innovation.description!,
+        countryName: this.innovation.countryName,
+        postcode: this.innovation.postcode!,
+        
+        areas: [InnovationAreaCatalogueEnum.CANCER],
+        careSettings: [InnovationCareSettingCatalogueEnum.INDUSTRY],
+        categories: [InnovationCategoryCatalogueEnum.MEDICAL_DEVICE, InnovationCategoryCatalogueEnum.AI],
+        hasFinalProduct: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+        mainCategory: InnovationCategoryCatalogueEnum.MEDICAL_DEVICE,
+        mainPurpose: MainPurposeCatalogueEnum.MONITOR_CONDITION,
+        moreSupportDescription: randText(),
+        otherCareSetting: randText(),
+        otherCategoryDescription: randText(),
+        otherMainCategoryDescription: randText(),
+        supportTypes: [InnovationSupportTypeCatalogueEnum.ADOPTION],
+      },
+      COMPARATIVE_COST_BENEFIT: {
+        costComparison: randBoolean() ? CostComparisonCatalogueEnum.CHEAPER : CostComparisonCatalogueEnum.NOT_SURE,
+        hasCostCareKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
+        hasCostSavingKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
+      },
+      COST_OF_INNOVATION: {
+        costDescription: randText(),
+        hasCostKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
+        patientsRange: randText(),
+        sellExpectations: randText(),
+        usageExpectations: randText(),
+      },
+      CURRENT_CARE_PATHWAY: {
+        carePathway: randBoolean() ? CarePathwayCatalogueEnum.BETTER_OPTION : CarePathwayCatalogueEnum.NO_KNOWLEDGE,
+        hasUKPathwayKnowledge: randBoolean() ? YesNoNotRelevantCatalogueEnum.YES : YesNoNotRelevantCatalogueEnum.NO,
+        innovationPathwayKnowledge: randBoolean() ? InnovationPathwayKnowledgeCatalogueEnum.PATHWAY_EXISTS_AND_FITS : InnovationPathwayKnowledgeCatalogueEnum.NO_PATHWAY,
+        potentialPathway: randText(),
+      },
+      EVIDENCE_OF_EFFECTIVENESS: {
+        evidences: [],
+        hasEvidence: randBoolean() ? HasEvidenceCatalogueEnum.YES : HasEvidenceCatalogueEnum.IN_PROGRESS,
+      },
+      IMPLEMENTATION_PLAN: {
+        deploymentPlans: [],
+        files: [],
+        hasDeployPlan: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+        hasResourcesToScale: randBoolean() ? HasResourcesToScaleCatalogueEnum.YES : HasResourcesToScaleCatalogueEnum.NO,
+        isDeployed: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+      },
+      INTELLECTUAL_PROPERTY: {
+        hasOtherIntellectual: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+        hasPatents: randBoolean() ? HasPatentsCatalogueEnum.HAS_AT_LEAST_ONE : HasPatentsCatalogueEnum.HAS_NONE,
+        otherIntellectual: randText(),
+      },
+      MARKET_RESEARCH: {
+        hasMarketResearch: randBoolean() ? HasMarketResearchCatalogueEnum.YES : HasMarketResearchCatalogueEnum.NOT_YET,
+        marketResearch: randText(),
+      },
+      REGULATIONS_AND_STANDARDS: {
+        files: [],
+        hasRegulationKnowledge: randBoolean() ? HasRegulationKnowledegeCatalogueEnum.YES_ALL : HasRegulationKnowledegeCatalogueEnum.NO,
+        otherRegulationDescription: randText(),
+        standards: [{type: InnovationCertificationCatalogueEnum.CE_UKCA_CLASS_I, hasMet: StandardMetCatalogueEnum.IN_PROGRESS}],
+      },
+      REVENUE_MODEL: {
+        benefittingOrganisations: randText(),
+        fundingDescription: randText(),
+        hasFunding: randBoolean() ? HasFundingCatalogueEnum.YES : HasFundingCatalogueEnum.NO,
+        hasRevenueModel: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+        otherRevenueDescription: randText(),
+        payingOrganisations: randText(),
+        revenues: []
+      },
+      TESTING_WITH_USERS: {
+        hasTests: randBoolean() ? HasTestsCatalogueEnum.YES : HasTestsCatalogueEnum.NOT_YET,
+        userTests: [],
+        files: []
+      },
+      UNDERSTANDING_OF_BENEFITS: {
+        accessibilityImpactDetails: randText(),
+        accessibilityStepsDetails: randText(),
+        environmentalBenefits: [],
+        generalBenefits: [],
+        hasBenefits: randBoolean() ? HasBenefitsCatalogueEnum.YES : HasBenefitsCatalogueEnum.NOT_YET,
+        otherEnvironmentalBenefit: randText(),
+        otherGeneralBenefit: randText(),
+        otherPatientsCitizensBenefit: randText(),
+        patientsCitizensBenefits: []
+      },
+      UNDERSTANDING_OF_NEEDS: {
+        subgroups: [],
+        cliniciansImpactDetails: randText(),
+        diseasesConditionsImpact: [],
+        impactClinicians: randBoolean(),
+        impactPatients: randBoolean(),
+      },
+      VALUE_PROPOSITION: {
+        hasProblemTackleKnowledge: randBoolean() ? HasProblemTackleKnowledgeCatalogueEnum.YES : HasProblemTackleKnowledgeCatalogueEnum.NOT_YET,
+        intervention: randText(),
+        interventionImpact: randText(),
+        problemsConsequences: randText(),
+        problemsTackled: randText(),
+      }
     };
 
   }
@@ -139,6 +192,11 @@ export class InnovationBuilder {
     return this;
   }
 
+  withDocument(document: DocumentType): InnovationBuilder {
+    this._document = document;
+    return this;
+  }
+
   withReassessment(): InnovationBuilder {
     if (!this._withAssessments) {
       throw new Error('Cannot create a reassessment without an assessment');
@@ -155,6 +213,9 @@ export class InnovationBuilder {
     this.innovation.organisationShares = organisation ? [organisation] : [];
 
     const innovation = await entityManager.getRepository(InnovationEntity).save(this.innovation);
+    const document = createDocumentFromInnovation(innovation);
+    document.document = this._document || document.document;
+    await entityManager.getRepository(InnovationDocumentEntity).save(document);
 
     let sections: InnovationSectionEntity[] | undefined;
     let support: InnovationSupportEntity | undefined;

@@ -301,8 +301,20 @@ export class DomainInnovationsService {
 
   }
 
+  async deleteInnovationFiles(transactionManager: EntityManager, files: string[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[] | string[]): Promise<void> {
 
-  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void> {
+    if(files.length === 0) {
+      return;
+    }
+
+    if(typeof files[0] === 'string') {
+      files = await transactionManager.createQueryBuilder(InnovationFileEntity, 'file').where('id IN (:...files)', { files }).getMany();
+    } else {
+      // if it's not string it's InnovationFileEntity
+      files = files as InnovationFileEntity[];
+    }
 
     for (const file of files) {
 

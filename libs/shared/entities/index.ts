@@ -17,6 +17,7 @@ import { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-a
 import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 import { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
+import { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
 import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 import { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
@@ -47,6 +48,7 @@ export { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-a
 export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 export { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
+export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 export { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
 export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 export { InnovationFileEntity } from './innovation/innovation-file.entity';
@@ -122,6 +124,7 @@ export const INNOVATION_ENTITIES = [
   InnovationClinicalAreaEntity,
   InnovationDeploymentPlanEntity,
   InnovationDiseaseConditionEntity,
+  InnovationDocumentEntity,
   InnovationEnvironmentalBenefitEntity,
   InnovationEvidenceEntity,
   InnovationExportRequestEntity,

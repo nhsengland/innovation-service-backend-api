@@ -19,7 +19,7 @@ import {
   InnovationCareSettingCatalogueEnum,
   InnovationCategoryCatalogueEnum,
   InnovationCertificationCatalogueEnum,
-  InnovationDiseasesConditionsImpactKeys,
+  InnovationDiseasesConditionsImpactType,
   InnovationPathwayKnowledgeCatalogueEnum,
   InnovationRevenueTypeCatalogueEnum,
   InnovationSectionEnum,
@@ -93,13 +93,9 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
     validation: Joi.object({
       impactPatients: Joi.boolean().strict(),
       impactClinicians: Joi.boolean().strict(),
-      subgroups: Joi.array().items(
-        Joi.object({
-          id: Joi.string().guid().allow(null).required(),
-          name: Joi.string().required()
-        })),
+      subgroups: Joi.array().items(Joi.string()).allow(null),
       cliniciansImpactDetails: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
-      diseasesConditionsImpact: Joi.array().items(Joi.string().valid(...InnovationDiseasesConditionsImpactKeys)).allow(null),
+      diseasesConditionsImpact: Joi.array().items(Joi.string().valid(...InnovationDiseasesConditionsImpactType)).allow(null),
     }).required().min(1)
   },
 
@@ -161,7 +157,7 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
     validation: Joi.object({
       hasRegulationKnowledge: Joi.string().valid(...Object.values(HasRegulationKnowledegeCatalogueEnum)),
       standards: Joi.array().items(Joi.object({
-        id: Joi.string().guid().allow(null).required(),
+// deprecated        id: Joi.string().guid().allow(null).required(),
         type: Joi.string().valid(...Object.values(InnovationCertificationCatalogueEnum)).required(),
         hasMet: Joi.string().valid(...Object.values(StandardMetCatalogueEnum)).allow(null)
       })),
@@ -190,7 +186,7 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
     validation: Joi.object({
       hasTests: Joi.string().valid(...Object.values(HasTestsCatalogueEnum)),
       userTests: Joi.array().items(Joi.object({
-        id: Joi.string().guid().allow(null).required(),
+// deprecated        id: Joi.string().guid().allow(null).required(),
         kind: Joi.string(),
         feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
       })),
@@ -244,7 +240,7 @@ export const INNOVATION_SECTIONS_CONFIG: { [key in InnovationSectionEnum]: {
       isDeployed: Joi.string().valid(...Object.values(YesOrNoCatalogueEnum)).allow(null),
       deploymentPlans: Joi.array().items(
         Joi.object({
-          id: Joi.string().guid().allow(null).required(),
+// deprecated          id: Joi.string().guid().allow(null).required(),
           name: Joi.string().required(),
           commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
           orgDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)

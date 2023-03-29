@@ -1387,7 +1387,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidence/{evidenceId}":
+  "/v1/{innovationId}/evidence/{evidenceOffset}":
     delete:
       description: Delete an innovation evidence entry.
       tags:
@@ -1401,12 +1401,12 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceId
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
       responses:
         "200":
           description: Innovation evidence info.
@@ -1442,12 +1442,12 @@ paths:
             type: string
             format: uuid
             description: The innovation id.
-        - name: evidenceId
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
             description: The evidence id.
       requestBody:
         description: The evidence data to update.
@@ -1506,7 +1506,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidences/{evidenceId}":
+  "/v1/{innovationId}/evidences/{evidenceOffset}":
     get:
       description: Get an innovation evidence info.
       tags:
@@ -1514,16 +1514,18 @@ paths:
       summary: Get an innovation evidence info.
       operationId: v1-innovation-evidence-info
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: evidenceId
+            format: uuid
+        - name: evidenceOffset
+          in: path
           required: true
           schema:
-            type: string
+            type: integer
+            minimum: 0
       responses:
         "200":
           description: Innovation section info.

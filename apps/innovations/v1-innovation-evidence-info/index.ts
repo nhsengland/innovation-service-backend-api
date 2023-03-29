@@ -4,7 +4,7 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
@@ -33,9 +33,8 @@ class GetInnovationEvidenceInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceId);
+      const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceOffset);
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
         evidenceType: result.evidenceType,
         clinicalEvidenceType: result.clinicalEvidenceType,
         description: result.description,
@@ -53,16 +52,13 @@ class GetInnovationEvidenceInfo {
 
 }
 
-export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/evidences/{evidenceId}', {
+export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/evidences/{evidenceOffset}', {
   get: {
     description: 'Get an innovation evidence info.',
     tags: ['Innovation'],
     summary: 'Get an innovation evidence info.',
     operationId: 'v1-innovation-evidence-info',
-    parameters: [
-      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-      { in: 'path', name: 'evidenceId', required: true, schema: { type: 'string' } },
-    ],
+    parameters: SwaggerHelper.paramJ2S({path: ParamsSchema}),
     responses: {
       200: {
         description: 'Innovation section info.',
