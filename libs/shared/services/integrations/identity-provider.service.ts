@@ -66,7 +66,7 @@ export class IdentityProviderService {
     client_secret: process.env['AD_CLIENT_SECRET'] || ''
   };
   private sessionData: { token: string, expiresAt: number } = { token: '', expiresAt: 0 };
-  private cache: CacheConfigType['IdentityUserInfo']
+  private cache: CacheConfigType['IdentityUserInfo'];
 
 
   constructor(
@@ -234,7 +234,7 @@ export class IdentityProviderService {
 
       const fields = ['displayName', 'identities', 'email', 'mobilePhone', 'accountEnabled', 'lastPasswordChangeDateTime', 'signInActivity'];
 
-      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`
+      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
 
       promises.push(
         axios.get<b2cGetUsersListDTO>(
@@ -339,7 +339,7 @@ export class IdentityProviderService {
     await this.verifyAccessToken();
 
     // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-delete?view=graph-rest-1.0&tabs=http
-    // Response: 204 No Content, so we can return direcly.
+    // Response: 204 No Content, so we can return directly.
     await axios.delete<undefined>(
       `https://graph.microsoft.com/v1.0/users/${identityId}`,
       { headers: { Authorization: `Bearer ${this.sessionData.token}` } }

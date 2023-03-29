@@ -29,7 +29,7 @@ class V1MeDelete {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await domainService.users.deleteUser(requestUser.id, requestUser.email, { reason: body.reason });
+      const result = await domainService.users.deleteUser(requestUser.id, { reason: body.reason });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

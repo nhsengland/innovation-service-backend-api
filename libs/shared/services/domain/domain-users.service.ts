@@ -212,15 +212,21 @@ export class DomainUsersService {
   }
 
 
-  async deleteUser(userId: string, userEmail: string, data: { reason: null | string }): Promise<{ id: string }> {
+  async deleteUser(userId: string, data: { reason: null | string }): Promise<{ id: string }> {
 
+    
     const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'userRole')
       .where('user.id = :userId', { userId })
       .getOne();
 
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
+
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
     return this.sqlConnection.transaction(async transaction => {
@@ -237,7 +243,7 @@ export class DomainUsersService {
 
         await this.domainInnovationsService.bulkUpdateCollaboratorStatus(
           transaction,
-          { id: dbUser.id, email: userEmail }
+          { id: dbUser.id, email: user.email }
         );
 
         if (dbInnovations.length > 0) {
