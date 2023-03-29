@@ -30,7 +30,7 @@ export const MessageSchema = Joi.object<MessageType>({
       id: Joi.string().guid().required()
     }).required(),
 
-    userRoleIds: Joi.array().items(Joi.string().guid().required()).required(),
+    userRoleIds: Joi.array().items(Joi.string().guid()).required(),
 
     params: Joi.object().required(),
 
