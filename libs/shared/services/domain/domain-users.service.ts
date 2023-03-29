@@ -212,7 +212,7 @@ export class DomainUsersService {
   }
 
 
-  async deleteUser(userId: string, data: { reason: null | string }): Promise<{ id: string }> {
+  async deleteUser(userId: string, userEmail: string, data: { reason: null | string }): Promise<{ id: string }> {
 
     const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
       .innerJoinAndSelect('user.serviceRoles', 'userRole')
@@ -235,12 +235,18 @@ export class DomainUsersService {
           .where('innovations.owner_id = :userId', { userId: dbUser.id })
           .getMany();
 
-        await this.domainInnovationsService.withdrawInnovations(
+        await this.domainInnovationsService.bulkUpdateCollaboratorStatus(
           transaction,
-          { id: dbUser.id, roleId: userInnovatorRole.id },
-          dbInnovations.map(item => ({ id: item.id, reason: null }))
+          { id: dbUser.id, email: userEmail }
         );
 
+        if (dbInnovations.length > 0) {
+          await this.domainInnovationsService.withdrawInnovations(
+            transaction,
+            { id: dbUser.id, roleId: userInnovatorRole.id },
+            dbInnovations.map(item => ({ id: item.id, reason: null }))
+          );
+        }
       }
 
       await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, {

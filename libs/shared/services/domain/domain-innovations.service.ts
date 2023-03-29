@@ -1,7 +1,7 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity } from '../../entities';
-import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
+import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationCollaboratorEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
@@ -132,6 +132,32 @@ export class DomainInnovationsService {
 
   }
 
+  async bulkUpdateCollaboratorStatus(
+    entityManager: EntityManager,
+    user: { id: string, email: string },
+  ): Promise<void> {
+    await entityManager.getRepository(InnovationCollaboratorEntity).update(
+      { 
+        email: user.email,
+        status: InnovationCollaboratorStatusEnum.PENDING
+      },
+      {
+        updatedBy: user.id,
+        status: InnovationCollaboratorStatusEnum.DECLINED
+      }
+    );
+
+    await this.sqlConnection.getRepository(InnovationCollaboratorEntity).update(
+      { 
+        email: user.email,
+        status: InnovationCollaboratorStatusEnum.ACTIVE
+      },
+      {
+        updatedBy: user.id,
+        status: InnovationCollaboratorStatusEnum.LEFT
+      }
+    );
+  }
 
   /**
   * This is a legacy support that should be replaced by the activities log in due time.

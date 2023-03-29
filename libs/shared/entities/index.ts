@@ -44,6 +44,7 @@ export { InnovationAssessmentEntity } from './innovation/innovation-assessment.e
 export { InnovationCareSettingEntity } from './innovation/innovation-care-setting.entity';
 export { InnovationCategoryEntity } from './innovation/innovation-category.entity';
 export { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-area.entity';
+export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 export { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
 export { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
