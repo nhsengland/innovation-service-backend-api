@@ -551,363 +551,7 @@ export class InnovationsService extends BaseService {
 
   }
 
-  // This is the original function just in case we need to check something (to be deleted later)
-  // async getInnovationsList(
-  //   user: { id: string, type: UserTypeEnum, organisationId?: string, organisationRole?: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum, organisationUnitId?: string },
-  //   filters: {
-  //     status: InnovationStatusEnum[],
-  //     name?: string,
-  //     mainCategories?: InnovationCategoryCatalogueEnum[],
-  //     locations?: InnovationLocationEnum[],
-  //     assessmentSupportStatus?: AssessmentSupportFilterEnum,
-  //     supportStatuses?: InnovationSupportStatusEnum[],
-  //     groupedStatuses?: InnovationGroupedStatusEnum[],
-  //     engagingOrganisations?: string[],
-  //     assignedToMe?: boolean,
-  //     suggestedOnly?: boolean,
-  //     latestWorkedByMe?: boolean,
-  //     fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics')[]
-  //   },
-  //   pagination: PaginationQueryParamsType<'name' | 'location' | 'mainCategory' | 'submittedAt' | 'updatedAt' | 'assessmentStartedAt' | 'assessmentFinishedAt'>
-  // ): Promise<{
-  //   count: number;
-  //   data: {
-  //     id: string,
-  //     name: string,
-  //     description: null | string,
-  //     status: InnovationStatusEnum,
-  //     statusUpdatedAt: DateISOType,
-  //     submittedAt: null | DateISOType,
-  //     updatedAt: null | DateISOType,
-  //     countryName: null | string,
-  //     postCode: null | string,
-  //     mainCategory: null | InnovationCategoryCatalogueEnum,
-  //     otherMainCategoryDescription: null | string,
-  //     isAssessmentOverdue?: boolean,
-  //     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
-  //     supports?: {
-  //       id: string,
-  //       status: InnovationSupportStatusEnum,
-  //       updatedAt: DateISOType,
-  //       organisation: {
-  //         id: string, name: string, acronym: null | string,
-  //         unit: {
-  //           id: string, name: string, acronym: string,
-  //           users?: { name: string, role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum }[]
-  //         }
-  //       }
-  //     }[],
-  //     notifications?: number,
-  //     statistics?: { actions: number, messages: number }
-  //   }[]
-  // }> {
-
-  //   const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations');
-
-  //   // Assessment relations.
-  //   if (filters.fields?.includes('assessment') || filters.suggestedOnly || pagination.order.assessmentStartedAt || pagination.order.assessmentFinishedAt) {
-  //     query.leftJoinAndSelect('innovations.assessments', 'assessments');
-  //     query.leftJoinAndSelect('assessments.assignTo', 'assignTo');
-  //     query.leftJoinAndSelect('innovations.reassessmentRequests', 'reassessmentRequests');
-  //   }
-  //   // Supports relations.
-  //   if (filters.fields?.includes('supports') || (filters.engagingOrganisations && filters.engagingOrganisations.length > 0) || filters.assignedToMe) {
-  //     query.leftJoinAndSelect('innovations.innovationSupports', 'supports');
-  //     query.leftJoinAndSelect('supports.organisationUnit', 'supportingOrganisationUnit');
-  //     query.leftJoinAndSelect('supportingOrganisationUnit.organisation', 'supportingOrganisation');
-  //     query.leftJoinAndSelect('supports.organisationUnitUsers', 'supportingUnitUsers');
-  //     query.leftJoinAndSelect('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
-  //     query.leftJoinAndSelect('supportingOrganisationUser.user', 'supportingUsers');
-  //   }
-  //   // Notifications.
-  //   if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
-  //     query.leftJoinAndSelect('innovations.notifications', 'notifications')
-  //     query.leftJoinAndSelect('notifications.notificationUsers', 'notificationUsers', 'notificationUsers.user_id = :notificationUserId AND notificationUsers.read_at IS NULL', { notificationUserId: user.id })
-  //   }
-  //   // Last worked on.
-  //   if (filters.latestWorkedByMe) {
-  //     query.andWhere('innovations.id IN (SELECT innovation_id FROM audit WHERE user_id=:userId AND action IN (:...actions) GROUP BY innovation_id ORDER BY MAX(date) DESC OFFSET :offset ROWS FETCH NEXT :fetch ROWS ONLY)',
-  //       { userId: user.id, actions: [ActionEnum.CREATE, ActionEnum.UPDATE], offset: pagination.skip, fetch: pagination.take });
-  //   }
-
-  //   if (user.type === UserTypeEnum.INNOVATOR) {
-  //     query.andWhere('innovations.owner_id = :innovatorUserId', { innovatorUserId: user.id });
-  //   }
-
-  //   if (user.type === UserTypeEnum.ASSESSMENT) {
-  //     query.andWhere('innovations.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] });
-  //   }
-
-  //   if (user.type === UserTypeEnum.ACCESSOR) {
-
-  //     query.innerJoin('innovations.organisationShares', 'shares');
-  //     query.leftJoin('innovations.innovationSupports', 'accessorSupports', 'accessorSupports.organisation_unit_id = :accessorSupportsOrganisationUnitId', { accessorSupportsOrganisationUnitId: user.organisationUnitId });
-  //     query.andWhere('innovations.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
-  //     query.andWhere('shares.id = :accessorOrganisationId', { accessorOrganisationId: user.organisationId });
-
-  //     if (user.organisationRole === AccessorOrganisationRoleEnum.ACCESSOR) {
-  //       query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', { accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
-  //       // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
-  //     }
-
-  //     if (filters.supportStatuses && filters.supportStatuses.length > 0) {
-  //       query.andWhere(`(accessorSupports.status IN (:...accessorSupportsSupportStatuses02) ${filters.supportStatuses.includes(InnovationSupportStatusEnum.UNASSIGNED) ? ' OR accessorSupports.status IS NULL' : ''})`, { accessorSupportsSupportStatuses02: filters.supportStatuses });
-  //     }
-
-  //   }
-
-  //   if (user.type === UserTypeEnum.ADMIN) {
-  //     query.withDeleted();
-  //   }
-
-  //   if (filters.groupedStatuses && filters.groupedStatuses.length > 0) {
-  //     const status = this.getGroupedToInnovationStatusMap(filters.groupedStatuses);
-
-  //     if (
-  //       (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === false)
-  //       || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_ASSESSMENT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT) === true)
-  //     ) {
-
-  //       status.splice(status.indexOf(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT), 1);
-
-  //       const isReassessment = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_NEEDS_REASSESSMENT);
-
-  //       query.orWhere(
-  //         `innovations.id IN (
-  //           SELECT innovations.id
-  //           FROM innovation innovations
-  //           FULL JOIN innovation_reassessment_request reassessmentRequests
-  //           ON reassessmentRequests.innovation_id = innovations.id
-  //           WHERE (innovations.status = :waitingNeedsAssessmentStatus AND reassessmentRequests.innovation_id ${isReassessment ? 'IS NOT' : 'IS'} NULL))`,
-  //         { waitingNeedsAssessmentStatus: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT }
-  //       );
-
-  //     }
-
-  //     if (
-  //       (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === true && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === false)
-  //       || (filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT) === false && filters.groupedStatuses.includes(InnovationGroupedStatusEnum.RECEIVING_SUPPORT) === true)
-  //     ) {
-
-  //       status.splice(status.indexOf(InnovationStatusEnum.IN_PROGRESS), 1);
-
-  //       const isAwaitingSupport = filters.groupedStatuses.includes(InnovationGroupedStatusEnum.AWAITING_SUPPORT);
-  //       const receivingSupportQuery = '(SELECT supports.innovation_id FROM innovation_support supports WHERE supports.status IN (:...receivingSupportStatus))';
-
-  //       query.orWhere(
-  //         `innovations.id IN (
-  //           SELECT innovations.id
-  //           FROM innovation innovations
-  //           WHERE (innovations.status = :inProgressStatus AND innovations.id ${isAwaitingSupport ? 'NOT IN' : 'IN'} ${receivingSupportQuery}))`,
-  //         { inProgressStatus: InnovationStatusEnum.IN_PROGRESS, receivingSupportStatus: [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.ENGAGING] }
-  //       );
-
-  //     }
-
-  //     if (status.length > 0) {
-  //       query.andWhere('innovations.status IN (:...status) ', { status });
-  //     }
-
-  //   }
-
-  //   // Filters.
-  //   if (filters.status && filters.status.length > 0) {
-  //     query.andWhere('innovations.status IN (:...status) ', { status: filters.status });
-  //   }
-
-  //   if (filters.name) {
-  //     query.andWhere('innovations.name LIKE :name', { name: `%${filters.name}%` });
-  //   }
-
-  //   if (filters.mainCategories && filters.mainCategories.length > 0) {
-  //     query.andWhere('innovations.main_category IN (:...mainCategories)', { mainCategories: filters.mainCategories });
-  //   }
-
-  //   if (filters.locations && filters.locations.length > 0) {
-
-  //     if (!filters.locations.includes(InnovationLocationEnum['Based outside UK'])) {
-  //       query.andWhere('innovations.country_name IN (:...locations)', { locations: filters.locations });
-  //     } else {
-
-  //       const knownLocations = Object.values(InnovationLocationEnum).filter(item => item !== InnovationLocationEnum['Based outside UK']);
-  //       const knownLocationsNotOnFilter = knownLocations.filter(item => !filters.locations?.includes(item));
-  //       const filterLocationsExceptOutsideUK = filters.locations.filter(item => item !== InnovationLocationEnum['Based outside UK']);
-
-  //       query.andWhere(`(
-  //       1 <> 1
-  //       ${filterLocationsExceptOutsideUK.length > 0 ? ' OR innovations.country_name  IN (:...filterLocationsExceptOutsideUK)' : ''}
-  //       ${knownLocationsNotOnFilter.length > 0 ? ' OR innovations.country_name NOT IN (:...knownLocationsNotOnFilter)' : ''}
-  //       )`, { filterLocationsExceptOutsideUK, knownLocationsNotOnFilter });
-
-  //     }
-  //   }
-
-  //   if (filters.assessmentSupportStatus) {
-  //     this.addInnovationSupportFilterSQL(query, filters.assessmentSupportStatus);
-  //   }
-
-  //   if (filters.engagingOrganisations && filters.engagingOrganisations.length > 0) {
-  //     query.andWhere(
-  //       `EXISTS (
-  //         SELECT eofilter_is.id
-  //         FROM innovation_support eofilter_is
-  //         INNER JOIN organisation_unit eofilter_ou ON eofilter_ou.id = eofilter_is.organisation_unit_id AND inactivated_at IS NULL AND eofilter_ou.deleted_at IS NULL
-  //         WHERE eofilter_is.innovation_id = innovations.id AND eofilter_ou.organisation_id IN (:...engagingOrganisationsFilterSupportStatuses) AND eofilter_is.deleted_at IS NULL)`,
-  //       { engagingOrganisationsFilterSupportStatuses: filters.engagingOrganisations }
-  //     );
-  //   }
-
-  //   if (filters.assignedToMe) {
-  //     query.andWhere('supportingUsers.id = :supportingUserId', { supportingUserId: user.id });
-  //   }
-
-  //   if (filters.suggestedOnly) {
-  //     query.leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits');
-  //     query.andWhere('assessmentOrganisationUnits.id = :suggestedOrganisationUnitId', { suggestedOrganisationUnitId: user.organisationUnitId });
-  //   }
-
-  //   // Pagination and order is builtin in the latestWorkedByMe query, otherwise extra joins would be required... OR CTEs
-  //   if (!filters.latestWorkedByMe) {
-  //     // Pagination and ordering.
-  //     query.skip(pagination.skip);
-  //     query.take(pagination.take);
-
-  //     for (const [key, order] of Object.entries(pagination.order)) {
-  //       let field: string;
-  //       switch (key) {
-  //         case 'name': field = 'innovations.name'; break;
-  //         case 'location': field = 'innovations.countryName'; break;
-  //         case 'mainCategory': field = 'innovations.mainCategory'; break;
-  //         case 'submittedAt': field = 'innovations.submittedAt'; break;
-  //         case 'updatedAt': field = 'innovations.updatedAt'; break;
-  //         case 'assessmentStartedAt': field = 'assessments.createdAt'; break;
-  //         case 'assessmentFinishedAt': field = 'assessments.finishedAt'; break;
-  //         default:
-  //           field = 'innovations.createdAt'; break;
-  //       }
-  //       query.addOrderBy(field, order);
-  //     }
-  //   }
-
-
-  //   const result = await query.getManyAndCount();
-
-  //   // Fetch users names.
-  //   const assessmentUsersIds = filters.fields?.includes('assessment') ? result[0]
-  //     .filter(innovation => innovation.assessments?.length > 0)
-  //     .flatMap(innovation => innovation.assessments.map(a => a.assignTo.id))
-  //     : [];
-  //   const supportingUsersIds = filters.fields?.includes('supports') ? result[0]
-  //     .filter(innovation => innovation.innovationSupports?.length > 0)
-  //     .flatMap(innovation => innovation.innovationSupports.flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id)))
-  //     : [];
-
-  //   const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...supportingUsersIds] }));
-
-
-  //   try {
-
-  //     return {
-  //       count: result[1],
-  //       data: await Promise.all(result[0].map(async innovation => {
-
-  //         // Assessment parsing.
-  //         let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
-
-  //         if (filters.fields?.includes('assessment')) {
-
-  //           if (innovation.assessments.length === 0) { assessment = null; }
-  //           else {
-
-  //             if (innovation.assessments.length > 1) { // This should never happen, but...
-  //               this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
-  //             }
-
-  //             if (innovation.assessments[0]) { // ... but if exists, on this list, we show information about one of them.
-
-  //               assessment = {
-  //                 id: innovation.assessments[0].id,
-  //                 createdAt: innovation.assessments[0].createdAt,
-  //                 finishedAt: innovation.assessments[0].finishedAt,
-  //                 assignedTo: {
-  //                   name: usersInfo.find(item => (item.id === innovation.assessments[0]?.assignTo.id) && item.isActive)?.displayName ?? ''
-  //                 },
-  //                 reassessmentCount: (await innovation.reassessmentRequests).length
-  //               };
-
-  //             }
-
-  //           }
-
-  //         }
-
-  //         return {
-  //           id: innovation.id,
-  //           name: innovation.name,
-  //           description: innovation.description,
-  //           status: innovation.status,
-  //           statusUpdatedAt: innovation.statusUpdatedAt,
-  //           submittedAt: innovation.submittedAt,
-  //           updatedAt: innovation.updatedAt,
-  //           countryName: innovation.countryName,
-  //           postCode: innovation.postcode,
-  //           mainCategory: innovation.mainCategory,
-  //           otherMainCategoryDescription: innovation.otherMainCategoryDescription,
-
-  //           ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays(innovation.submittedAt, new Date().toISOString()) > 7) }),
-  //           ...(assessment === undefined ? {} : { assessment }),
-
-  //           ...(!filters.fields?.includes('supports') ? {} : {
-  //             supports: (innovation.innovationSupports || []).map(support => ({
-  //               id: support.id,
-  //               status: support.status,
-  //               updatedAt: support.updatedAt,
-  //               organisation: {
-  //                 id: support.organisationUnit.organisation.id,
-  //                 name: support.organisationUnit.organisation.name,
-  //                 acronym: support.organisationUnit.organisation.acronym,
-  //                 unit: {
-  //                   id: support.organisationUnit.id,
-  //                   name: support.organisationUnit.name,
-  //                   acronym: support.organisationUnit.acronym,
-  //                   // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
-  //                   ...(support.organisationUnitUsers.length === 0 ? {} : {
-  //                     users: support.organisationUnitUsers.map(su => ({
-  //                       name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || '',
-  //                       role: su.organisationUser.role
-  //                     })).filter(authUser => authUser.name)
-  //                   })
-  //                 }
-  //               }
-  //             }))
-  //           }),
-
-  //           ...(!filters.fields?.includes('notifications') ? {} : {
-  //             notifications: await Promise.resolve(
-  //               (await innovation.notifications).reduce(async (acc, item) =>
-  //                 (await acc) + (await item.notificationUsers).length,
-  //                 Promise.resolve(0)
-  //               )
-  //             )
-  //           }),
-
-  //           ...(!filters.fields?.includes('statistics') ? {} : { statistics: await this.getInnovationStatistics(innovation) })
-
-  //         };
-
-  //       }))
-  //     };
-
-  //   } catch (error: any) {
-  //     if (Object.values(InnovationErrorsEnum).includes(error.name)) { throw error; }
-  //     else {
-  //       throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR);
-  //     }
-  //   }
-
-  // }
-
-  async getInnovationInfo(
+    async getInnovationInfo(
     domainContext: DomainContextType,
     id: string,
     filters: { fields?: ('assessment' | 'supports')[] }
@@ -934,12 +578,11 @@ export class InnovationsService extends BaseService {
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .select([
         'innovation.id', 'innovation.name', 'innovation.description', 'innovation.status', 'innovation.statusUpdatedAt',
-        'innovation.submittedAt', 'innovation.countryName', 'innovation.postcode', 'innovation.otherCategoryDescription',
+        'innovation.submittedAt', 'innovation.countryName', 'innovation.postcode',
         'innovationOwner.id',
         'userOrganisations.id',
         'organisation.isShadow', 'organisation.name', 'organisation.size',
         'reassessmentRequests.id',
-        'innovationCategories.type',
         'innovationGroupedStatus.groupedStatus',
         'collaborator.id'
       ])
@@ -947,7 +590,6 @@ export class InnovationsService extends BaseService {
       .innerJoin('innovationOwner.userOrganisations', 'userOrganisations')
       .innerJoin('userOrganisations.organisation', 'organisation')
       .leftJoin('innovation.reassessmentRequests', 'reassessmentRequests')
-      .leftJoin('innovation.categories', 'innovationCategories')
       .innerJoin('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
       .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status AND collaborator.user_id = :userId', { status: InnovationCollaboratorStatusEnum.ACTIVE, userId: domainContext.id })
       .where('innovation.id = :innovationId', { innovationId: id });
@@ -981,13 +623,20 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
+    // Only fetch the document category data (maybe create a helper for this in the future)
+    const documentData = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'innovationDocument')
+    .select("JSON_QUERY(document, '$.INNOVATION_DESCRIPTION.categories')", 'categories')
+    .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription')", 'otherCategoryDescription')
+    .where('innovationDocument.id = :innovationId', { innovationId: innovation.id })
+    .getRawOne();
+
     // Fetch users names.
     const ownerId = innovation.owner.id;
     const assessmentUsersIds = filters.fields?.includes('assessment') ? innovation.assessments?.map(assessment => assessment.assignTo.id) : [];
 
     const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
 
-    const categories = (await innovation.categories).map(item => item.type);
+    const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
     const ownerInfo = usersInfo.find(item => item.id === innovation.owner.id);
     const ownerPreferences = (await this.domainService.users.getUserPreferences(ownerId));
 
@@ -1049,7 +698,7 @@ export class InnovationsService extends BaseService {
       countryName: innovation.countryName,
       postCode: innovation.postcode,
       categories,
-      otherCategoryDescription: innovation.otherCategoryDescription,
+      otherCategoryDescription: documentData.otherCategoryDescription,
       owner: {
         id: innovation.owner.id,
         name: ownerInfo?.displayName || '',

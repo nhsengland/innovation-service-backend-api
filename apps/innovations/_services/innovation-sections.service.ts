@@ -297,8 +297,8 @@ export class InnovationSectionsService extends BaseService {
 
     let updateInnovation = false;
     if (sectionKey === InnovationSectionEnum.INNOVATION_DESCRIPTION) {
-      (['name', 'description', 'countryName', 'postcode'] as const).forEach(key => {
-        if (dataToUpdate[key]) {
+      (['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherMainCategoryDescription'] as const).forEach(key => {
+        if (dataToUpdate[key] !== undefined) {
           innovation[key] = dataToUpdate[key];
           updateInnovation = true;
         }
