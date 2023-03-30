@@ -44,6 +44,9 @@ export class DomainInnovationsService {
     try {
 
       for (const dbInnovation of dbInnovations) {
+        // Update innovation collaborators status
+        await this.bulkUpdateCollaboratorStatusByInnovation(entityManager, {id: user.id}, { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.REMOVED }, dbInnovation.id);
+        await this.bulkUpdateCollaboratorStatusByInnovation(entityManager, {id: user.id}, { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.CANCELLED }, dbInnovation.id);
 
         const reason = innovations.find(item => item.id === dbInnovation.id)?.reason || null;
 
@@ -132,29 +135,38 @@ export class DomainInnovationsService {
 
   }
 
-  async bulkUpdateCollaboratorStatus(
+  async bulkUpdateCollaboratorStatusByEmail(
     entityManager: EntityManager,
     user: { id: string, email: string },
+    status: { current: InnovationCollaboratorStatusEnum, next: InnovationCollaboratorStatusEnum }
   ): Promise<void> {
     await entityManager.getRepository(InnovationCollaboratorEntity).update(
       { 
         email: user.email,
-        status: InnovationCollaboratorStatusEnum.PENDING
+        status: status.current
       },
       {
         updatedBy: user.id,
-        status: InnovationCollaboratorStatusEnum.DECLINED
+        status: status.next
       }
     );
+  }
 
-    await this.sqlConnection.getRepository(InnovationCollaboratorEntity).update(
+  async bulkUpdateCollaboratorStatusByInnovation(
+    entityManager: EntityManager,
+    user: { id: string},
+    status: { current: InnovationCollaboratorStatusEnum, next: InnovationCollaboratorStatusEnum },
+    innovationId: string
+  ): Promise<void> {
+    await entityManager.getRepository(InnovationCollaboratorEntity).update(
       { 
-        email: user.email,
-        status: InnovationCollaboratorStatusEnum.ACTIVE
+        innovation: { id: innovationId },
+        status: status.current,
       },
       {
         updatedBy: user.id,
-        status: InnovationCollaboratorStatusEnum.LEFT
+        status: status.next,
+        deletedAt: new Date().toISOString()
       }
     );
   }

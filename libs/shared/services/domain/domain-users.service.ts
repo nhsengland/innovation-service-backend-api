@@ -2,7 +2,7 @@ import type { DataSource, Repository } from 'typeorm';
 
 import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
-import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
+import { InnovationCollaboratorStatusEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DateISOType, DomainUserInfoType, RoleType } from '../../types';
 
@@ -241,9 +241,16 @@ export class DomainUsersService {
           .where('innovations.owner_id = :userId', { userId: dbUser.id })
           .getMany();
 
-        await this.domainInnovationsService.bulkUpdateCollaboratorStatus(
+        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
           transaction,
-          { id: dbUser.id, email: user.email }
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.DECLINED }
+        );
+
+        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
         );
 
         if (dbInnovations.length > 0) {
