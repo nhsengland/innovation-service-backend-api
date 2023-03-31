@@ -1,15 +1,15 @@
-import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { InnovationExportRequestEntity } from '@innovations/shared/entities';
+import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import type { DomainContextType } from '@innovations/shared/types';
+import { injectable } from 'inversify';
 import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
+import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+import { buildDocumentFooterDefinition, buildDocumentHeaderDefinition, buildDocumentStylesDefinition, buildDocumentTOCDefinition } from '../_helpers/innovation.pdf.styles';
 import type { InnovationAllSectionsType, InnovationExportSectionAnswerType, InnovationExportSectionItemType, InnovationExportSectionType } from '../_types/innovation.types';
-import { buildDocumentHeaderDefinition, buildDocumentFooterDefinition, buildDocumentTOCDefinition, buildDocumentStylesDefinition } from '../_helpers/innovation.pdf.styles'
-import { injectable } from 'inversify';
-import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
-import { InnovationExportRequestEntity } from '@innovations/shared/entities';
-import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 
 @injectable()
 export class PDFService  extends BaseService{
@@ -26,6 +26,7 @@ export class PDFService  extends BaseService{
         .where('innovation.id = :innovationId', { innovationId })
         .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId: domainContext.organisation?.organisationUnit?.id })
         .andWhere('request.status = :status', { status: 'APPROVED' })
+        .orderBy('request.updated_at', 'DESC')
         .getOne();
       
       if (!request) {
@@ -69,7 +70,7 @@ export class PDFService  extends BaseService{
       footer: buildDocumentFooterDefinition(),
       content: buildDocumentTOCDefinition(innovationName),
       styles: buildDocumentStylesDefinition(),
-    }
+    };
 
     let sectionNumber = 1;
     body.forEach((entry: {title: string, sections: InnovationExportSectionType[]}) => {
