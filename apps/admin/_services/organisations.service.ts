@@ -2,12 +2,16 @@ import { inject, injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
 import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
+import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { UrlModel } from '@admin/shared/models';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
+import { ENV } from '../_config';
+import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
+import SYMBOLS from './symbols';
 
 
 @injectable()
@@ -15,7 +19,8 @@ export class OrganisationsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
+    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService,
   ) {
     super();
   }
@@ -44,8 +49,8 @@ export class OrganisationsService extends BaseService {
     ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }));
 
 
-    // Validar a lógica dos users to unlock, está a mostrar todos ^^ 
-    if(1==1) throw new Error('buu');
+    // Validar a lógica dos users to unlock, está a mostrar todos ^^
+    if (1 == 1) throw new Error('buu');
     // only want to clear actions with these statuses
     const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
@@ -249,6 +254,8 @@ export class OrganisationsService extends BaseService {
           { id: organisationId },
           { inactivatedAt: null }
         );
+
+        await this.createOrganisationAnnouncement(unit.organisation.name, transaction);
       }
 
       //Activate users of unit
@@ -430,17 +437,17 @@ export class OrganisationsService extends BaseService {
           );
           savedUnits.push(u);
         }
-        return { id: savedOrganisation.id, units: savedUnits };
+      } else {
+        //create shadow unit
+        const shadowUnit = await this.createOrganisationUnit(
+          org.id,
+          name,
+          acronym,
+          true,
+          transaction
+        );
+        savedUnits.push(shadowUnit);
       }
-      //create shadow unit
-      const shadowUnit = await this.createOrganisationUnit(
-        org.id,
-        name,
-        acronym,
-        true,
-        transaction
-      );
-      savedUnits.push(shadowUnit);
 
       return { id: savedOrganisation.id, units: savedUnits };
     });
@@ -503,5 +510,36 @@ export class OrganisationsService extends BaseService {
 
     return savedUnit;
   }
-  
+
+  private async createOrganisationAnnouncement(
+    orgName: string,
+    transaction: EntityManager
+  ): Promise<void> {
+
+    const announcementParams = {
+      title: 'A new support organisation has been added',
+      inset: {
+        title: `${orgName} has been added to the Innovation Service`,
+        link: { label: 'What does this organisation do? (open in a new window)', url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl() }
+      }
+    };
+
+    await this.announcementsService.createAnnouncement([ServiceRoleEnum.INNOVATOR], {
+      template: 'GENERIC',
+      params: {
+        ...announcementParams,
+        description: ['If you think this organisation might be able to support you, you can share your innovation with this organisation in your data sharing preferences.'],
+      }
+    }, transaction);
+
+    await this.announcementsService.createAnnouncement([ServiceRoleEnum.QUALIFYING_ACCESSOR], {
+      template: 'GENERIC',
+      params: {
+        ...announcementParams,
+        description: ['If you believe this organisation will offer the right support to any innovation, you can suggested it to them.'],
+      }
+    }, transaction);
+
+  }
+
 }

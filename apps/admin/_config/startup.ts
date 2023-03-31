@@ -17,6 +17,7 @@ import { SYMBOLS } from '../_services/symbols';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 import { ValidationService } from '../_services/validation.service';
+import { AnnouncementsService } from '../_services/announcements.service';
 
 
 // Specific inversify container configuration.
@@ -25,6 +26,7 @@ container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsServic
 container.bind<TermsOfUseService>(SYMBOLS.TermsOfUseService).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();
 container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
+container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
 
 
 export const startup = async (): Promise<void> => {

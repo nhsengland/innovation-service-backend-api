@@ -121,3 +121,8 @@ export enum EmailErrorsEnum {
 export enum AdminErrorsEnum {
   ADMIN_TERMS_OF_USER_NOT_FOUND = 'AT.0001',
 }
+
+export enum AnnouncementErrorsEnum {
+  ANNOUNCEMENT_NO_TARGET_ROLES = 'AN.0001',
+  ANNOUNCEMENT_NO_TARGET_USERS = 'AN.0002'
+}

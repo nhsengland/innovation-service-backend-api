@@ -1,4 +1,5 @@
 export * from './activity.enums';
+export * from './announcement.enums';
 export * from './catalog.enums';
 export * from './general.enums';
 export * from './innovation.enums';

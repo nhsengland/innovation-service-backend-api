@@ -5,6 +5,8 @@ import { TermsOfUseEntity } from './general/terms-of-use.entity';
 export { AuditEntity } from './general/audit.entity';
 export { TermsOfUseUserEntity } from './general/terms-of-use-user.entity';
 export { TermsOfUseEntity } from './general/terms-of-use.entity';
+import { AnnouncementEntity } from './user/announcement.entity';
+import { AnnouncementUserEntity } from './user/announcement-user.entity';
 
 // Innovation.
 import { ActivityLogEntity } from './innovation/activity-log.entity';
@@ -110,7 +112,9 @@ export { LastSupportStatusViewEntity } from './views/last-support-status.view.en
 export const GENERAL_ENTITIES = [
   AuditEntity,
   TermsOfUseEntity,
-  TermsOfUseUserEntity
+  TermsOfUseUserEntity,
+  AnnouncementEntity,
+  AnnouncementUserEntity
 ];
 
 export const INNOVATION_ENTITIES = [
