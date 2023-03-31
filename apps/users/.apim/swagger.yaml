@@ -200,8 +200,6 @@ paths:
                 reason:
                   type: string
                   maxLength: 2000
-              required:
-                - reason
               additionalProperties: false
       responses:
         "200":
