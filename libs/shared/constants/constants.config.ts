@@ -8,4 +8,8 @@ export const ORGANISATIONS_LENGTH_LIMITS = {
   size: 25,
   description: 50,
   registrationNumber: 8
-}
+};
+
+export const EXPIRATION_DATES = {
+  transfers: 1000 * 60 * 60 * 24 * 30
+};

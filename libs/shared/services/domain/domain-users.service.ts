@@ -237,7 +237,7 @@ export class DomainUsersService {
       if (userInnovatorRole) {
 
         const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-          .select(['innovations.id'])
+          .select(['innovations.id', 'innovations.expirationTransferDate'])
           .where('innovations.owner_id = :userId', { userId: dbUser.id })
           .getMany();
 

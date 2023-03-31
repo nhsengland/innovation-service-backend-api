@@ -63,7 +63,7 @@ export default openApi(V1MeInnovationsInfo.httpTrigger as AzureFunction, '/v1/me
                   collaboratorsCount: {
                     type: 'number',
                   },
-                  transferCreatedAt: {
+                  expirationTransferDate: {
                     type: 'string',
                   },
                 }

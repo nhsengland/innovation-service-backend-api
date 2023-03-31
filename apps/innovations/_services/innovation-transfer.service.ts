@@ -10,7 +10,6 @@ import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 import { InnovationCollaboratorsServiceSymbol, type InnovationCollaboratorsServiceType } from './interfaces';
 
-
 type TransferQueryFilterType = {
   id?: string,
   innovationId?: string,
@@ -169,7 +168,6 @@ export class InnovationTransferService extends BaseService {
       });
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
-
       await this.notifierService.send(
         { id: requestUser.id, identityId: requestUser.identityId },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, 
@@ -227,7 +225,7 @@ export class InnovationTransferService extends BaseService {
         const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
 
         if (innovation) {
-          const currentOwnerEmail = (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email
+          const currentOwnerEmail = (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email;
 
           await this.collaboratorsService.upsertCollaborator(
             domainContext,
@@ -245,6 +243,7 @@ export class InnovationTransferService extends BaseService {
           {
             owner: { id: requestUser.id },
             updatedBy: requestUser.id,
+            expires_at: null
           }
         );
 

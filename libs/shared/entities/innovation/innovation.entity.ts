@@ -72,6 +72,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'status_updated_at', type: 'datetime2' })
   statusUpdatedAt: DateISOType;
 
+  @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
+  expires_at: null | DateISOType;
+
   @Column({ name: 'survey_id', type: 'nvarchar', unique: true, nullable: true })
   surveyId: null | string;
 

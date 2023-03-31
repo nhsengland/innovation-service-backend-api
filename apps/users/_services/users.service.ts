@@ -13,6 +13,7 @@ import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import { BaseService } from './base.service';
+import { EXPIRATION_DATES } from '@users/shared/constants';
 
 
 @injectable()
@@ -495,7 +496,7 @@ export class UsersService extends BaseService {
     id: string
     name: string,
     collaboratorsCount: number,
-    transferCreatedAt: DateISOType | null
+    expirationTransferDate: DateISOType | null
   }[]> {
 
     const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
@@ -507,13 +508,13 @@ export class UsersService extends BaseService {
       .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE })
       .leftJoin('innovations.transfers', 'transfer','transfer.status = :transferStatus', { transferStatus: InnovationTransferStatusEnum.PENDING } )
       .where('innovations.owner_id = :userId', { userId })
-      .getMany()
+      .getMany();
 
     const data = query.map((innovation) => ({
       id: innovation.id,
       name: innovation.name,
       collaboratorsCount: innovation.collaborators.length,
-      transferCreatedAt: innovation.transfers[0]?.createdAt ?? null 
+      expirationTransferDate: innovation.transfers[0] ? new Date(Date.parse(innovation.transfers[0].createdAt) + EXPIRATION_DATES.transfers).toISOString() : null
     }));
     
     return data;
