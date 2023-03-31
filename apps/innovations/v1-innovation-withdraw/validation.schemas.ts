@@ -14,6 +14,6 @@ export type BodyType = {
   message: string
 }
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).trim().required().description('Message provided when withdrawing an innovation')
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).trim().description('Message provided when withdrawing an innovation')
 }).required();
   

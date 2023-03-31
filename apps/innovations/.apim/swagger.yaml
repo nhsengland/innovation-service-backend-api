@@ -3148,8 +3148,6 @@ paths:
                   type: string
                   maxLength: 200
                   description: Message provided when withdrawing an innovation
-              required:
-                - message
               additionalProperties: false
       responses:
         "200":

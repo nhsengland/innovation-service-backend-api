@@ -30,6 +30,10 @@ export class DomainInnovationsService {
     user: { id: string, roleId: string },
     innovations: { id: string, reason: null | string }[]
   ): Promise<{ id: string, name: string, supportingUserIds: string[] }[]> {
+    
+    if(!innovations.length) {
+      return [];
+    }
 
     const toReturn: { id: string, name: string, supportingUserIds: string[] }[] = [];
 
