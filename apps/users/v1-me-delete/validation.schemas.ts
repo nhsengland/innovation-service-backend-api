@@ -8,5 +8,5 @@ export type BodyType = {
 }
 
 export const BodySchema = Joi.object<BodyType>({
-  reason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large)
+  reason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null, '')
 }).required();
