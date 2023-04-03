@@ -6,7 +6,6 @@ import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentReq
 import { InnovationStatusEnum, YesOrNoCatalogueEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
-import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import { randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from './interfaces';
@@ -30,7 +29,6 @@ describe('Innovation Assessments Suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     em = await TestsHelper.getQueryRunnerEntityManager();
 
     innovationWithAssessment = await TestsHelper.TestDataBuilder

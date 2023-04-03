@@ -21,7 +21,6 @@ describe('Admin / Services / Users Service', () => {
   beforeAll(async () => {
 
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    // jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
     // jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 

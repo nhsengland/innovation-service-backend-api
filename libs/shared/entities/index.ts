@@ -108,7 +108,6 @@ export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 
-
 export const GENERAL_ENTITIES = [
   AuditEntity,
   TermsOfUseEntity,

@@ -20,9 +20,7 @@ describe('v1-innovation-action-create Suite', () => {
 
   beforeAll(async () => {
 
-    new MockBuilder()
-      .mockNoSQLServiceInit()
-      .mockCacheServiceThis();
+    new MockBuilder().mockNoSQLServiceInit();
       
     await TestsHelper.init();
     testData = TestsHelper.sampleData;

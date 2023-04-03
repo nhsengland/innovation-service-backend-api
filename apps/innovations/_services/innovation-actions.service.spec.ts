@@ -6,7 +6,6 @@ import { InnovationActionEntity, InnovationThreadEntity, InnovationThreadMessage
 import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { ForbiddenError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainInnovationsService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
-import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
@@ -30,7 +29,6 @@ describe('Innovation Actions Suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 

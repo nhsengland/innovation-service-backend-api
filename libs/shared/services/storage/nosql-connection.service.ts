@@ -3,6 +3,7 @@ import { connect, Mongoose } from 'mongoose';
 
 import { NOSQLDB_DEFAULT_CONNECTION } from '../../config';
 
+// TODO: This will be removed soon, remove anything related to survey / sts
 
 @injectable()
 export class NOSQLConnectionService {

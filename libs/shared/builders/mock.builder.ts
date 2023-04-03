@@ -2,7 +2,6 @@ import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { UserEntity } from '../entities';
 import { DomainUsersService, NOSQLConnectionService } from '../services';
-import { CacheService } from '../services/storage/cache.service';
 import type { DomainUserInfoType } from '../types';
 
 export class MockBuilder {
@@ -28,11 +27,6 @@ export class MockBuilder {
     return this;
   }
 
-
-  mockCacheServiceThis(): MockBuilder {
-    this._spies.push(jest.spyOn(CacheService.prototype, 'init').mockReturnThis());
-    return this;
-  }
 
   mockNoSQLServiceInit(): MockBuilder {
     this._spies.push(jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue());

@@ -32,20 +32,13 @@ export class CacheService {
     // Setting the cacheConfigMap here before connecting so that it's already available at injection time
     this.cacheConfigMap = {
       IdentityUserInfo: new RedisCache<IdentityUserInfo>(this.redis, this.logger, 'IdentityUserInfo')
-    }
-  }
+    };
 
-  /**
-   * initializes the cache service dependencies (ie: redis)
-   * @returns self
-   */
-  async init(): Promise<this> {
+    // Initialize Redis
     this.logger.log('Initializing cache service');
     this.redis.on('error', (err) => this.logger.error(err));
     this.redis.on('ready', () => this.logger.log('Redis is ready'));
-    await this.redis.connect();
-
-    return this;
+    void this.redis.connect();
   }
 
   /**

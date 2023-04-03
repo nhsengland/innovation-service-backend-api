@@ -4,10 +4,10 @@ import type { RecipientsService } from './recipients.service';
 
 
 export type DispatchServiceType = typeof DispatchService.prototype;
-export const DispatchServiceSymbol = Symbol('DispatchService');
+export const DispatchServiceSymbol = Symbol.for('DispatchService');
 
 export type EmailServiceType = typeof EmailService.prototype;
-export const EmailServiceSymbol = Symbol('EmailService');
+export const EmailServiceSymbol = Symbol.for('EmailService');
 
 export type RecipientsServiceType = typeof RecipientsService.prototype;
-export const RecipientsServiceSymbol = Symbol('RecipientsService');
+export const RecipientsServiceSymbol = Symbol.for('RecipientsService');

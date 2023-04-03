@@ -13,43 +13,44 @@ import type { FileStorageService } from '../services/storage/file-storage.servic
 import type { NOSQLConnectionService } from '../services/storage/nosql-connection.service';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import type { CacheService } from './storage/cache.service';
-import type { SQLConnectionTestService } from './storage/sql-connection-test.service';
+import type { SqlProvider } from './storage/sql-connection.provider';
 
 export type AuditServiceType = typeof AuditService.prototype;
-export const AuditServiceSymbol = Symbol('AuditService');
+export const AuditServiceSymbol = Symbol.for('AuditService');
 
 export type AuthorizationServiceType = typeof AuthorizationService.prototype;
-export const AuthorizationServiceSymbol = Symbol('AuthorizationService');
+export const AuthorizationServiceSymbol = Symbol.for('AuthorizationService');
 
 export type CacheServiceType = typeof CacheService.prototype;
-export const CacheServiceSymbol = Symbol('CacheService');
+export const CacheServiceSymbol = Symbol.for('CacheService');
 
 export type DomainServiceType = typeof DomainService.prototype;
-export const DomainServiceSymbol = Symbol('DomainService');
+export const DomainServiceSymbol = Symbol.for('DomainService');
 
 
 export type HttpServiceType = typeof HttpService.prototype;
-export const HttpServiceSymbol = Symbol('HttpService');
+export const HttpServiceSymbol = Symbol.for('HttpService');
 
 export type IdentityProviderServiceType = typeof IdentityProviderService.prototype;
-export const IdentityProviderServiceSymbol = Symbol('IdentityProviderService');
+export const IdentityProviderServiceSymbol = Symbol.for('IdentityProviderService');
 
 export type LoggerServiceType = typeof LoggerService.prototype;
-export const LoggerServiceSymbol = Symbol('LoggerService');
+export const LoggerServiceSymbol = Symbol.for('LoggerService');
 
 export type NotifierServiceType = typeof NotifierService.prototype;
-export const NotifierServiceSymbol = Symbol('NotifierService');
+export const NotifierServiceSymbol = Symbol.for('NotifierService');
 
 export type StorageQueueServiceType = typeof StorageQueueService.prototype;
-export const StorageQueueServiceSymbol = Symbol('StorageQueueService');
+export const StorageQueueServiceSymbol = Symbol.for('StorageQueueService');
 
 export type FileStorageServiceType = typeof FileStorageService.prototype;
-export const FileStorageServiceSymbol = Symbol('FileStorageService');
+export const FileStorageServiceSymbol = Symbol.for('FileStorageService');
 
 export type SQLConnectionServiceType = typeof SQLConnectionService.prototype;
-export const SQLConnectionServiceSymbol = Symbol('SQLConnectionService');
+export const SQLConnectionServiceSymbol = Symbol.for('SQLConnectionService');
+
+export type SQLProviderType = SqlProvider;
+export const SQLProviderSymbol = Symbol.for('SqlProvider');
 
 export type NOSQLConnectionServiceType = typeof NOSQLConnectionService.prototype;
-export const NOSQLConnectionServiceSymbol = Symbol('NOSQLConnectionService');
-
-export type SQLConnectionTestServiceType = typeof SQLConnectionTestService.prototype;
+export const NOSQLConnectionServiceSymbol = Symbol.for('NOSQLConnectionService');

@@ -1,36 +1,27 @@
-import { injectable } from 'inversify';
-import { DataSource } from 'typeorm';
+import { inject, injectable } from 'inversify';
+import type { DataSource } from 'typeorm';
 
-import { SQLDB_DEFAULT_CONNECTION } from '../../config';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
+import { SQLProviderSymbol, SQLProviderType } from '../interfaces';
 
 
 @injectable()
 export class SQLConnectionService {
-
   private connection: DataSource;
 
-  async init(): Promise<this> {
-
-    this.connection = new DataSource(SQLDB_DEFAULT_CONNECTION);
-
-    try {
-
-      await this.connection.initialize();
-      console.log('SQL Connection successfully created.');
-
-    } catch (error: any) {
-
-      throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, { details: error });
-
-    }
-
-    return this;
-
-  }
+  constructor(
+    @inject(SQLProviderSymbol) public readonly sqlProvider: SQLProviderType
+  ) {}
 
   getConnection(): DataSource {
+    if (!this.connection) {
+      throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {message: 'SQL Connection is not initialized'});
+    }
     return this.connection;
+  }
+
+  setConnection(conection: DataSource): void {
+    this.connection = conection;
   }
 
 }
