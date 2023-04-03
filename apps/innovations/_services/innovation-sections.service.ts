@@ -202,9 +202,8 @@ export class InnovationSectionsService extends BaseService {
 
     // Business Rule A/QAs can only see submitted sections
     // TODO: this can use history table to retrieve the last submitted section from the document if we choose to present them something they could previously see.
-    const sectionData = ([ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) && dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED) ?
-      undefined :
-      innovation.document.document[sectionKey];
+    const sectionHidden =  [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) && dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
+    const sectionData = innovation.document.document[sectionKey];
         
     let files: {id: string, displayFileName: string, url: string}[] | undefined;
     
@@ -226,7 +225,7 @@ export class InnovationSectionsService extends BaseService {
         name: submittedBy ?? 'unknown user',
         isOwner: dbSection.submittedBy.id === innovation.owner.id
       } : null,
-      data: sectionData ? {
+      data: !sectionHidden ? {
         ...sectionData,
         ...(files && { files })
       } : null,
