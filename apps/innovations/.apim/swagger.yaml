@@ -3147,6 +3147,7 @@ paths:
                 message:
                   type: string
                   maxLength: 200
+                  nullable: true
                   description: Message provided when withdrawing an innovation
               additionalProperties: false
       responses:

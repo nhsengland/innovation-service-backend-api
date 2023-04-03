@@ -216,6 +216,7 @@ export class DomainUsersService {
 
     
     const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+      .leftJoinAndSelect('user.serviceRoles', 'roles')
       .where('user.id = :userId', { userId })
       .getOne();
 
@@ -236,10 +237,7 @@ export class DomainUsersService {
 
       if (userInnovatorRole) {
 
-        const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-          .select(['innovations.id', 'innovations.expirationTransferDate'])
-          .where('innovations.owner_id = :userId', { userId: dbUser.id })
-          .getMany();
+        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(dbUser.id);
 
         await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
           transaction,
@@ -253,11 +251,23 @@ export class DomainUsersService {
           { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
         );
 
-        if (dbInnovations.length > 0) {
-          await this.domainInnovationsService.withdrawInnovations(
-            transaction,
-            { id: dbUser.id, roleId: userInnovatorRole.id },
-            dbInnovations.map(item => ({ id: item.id, reason: null }))
+        await this.domainInnovationsService.withdrawInnovations(
+          transaction,
+          { id: dbUser.id, roleId: userInnovatorRole.id },
+          dbInnovations
+            .filter(i => i.expirationTransferDate === null)
+            .map(item => ({ id: item.id, reason: null }))
+        );
+      
+        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
+          await this.sqlConnection.getRepository(InnovationEntity).update(
+            { 
+              id: dbInnovation.id
+            },
+            {
+              updatedBy: dbUser.id,
+              expires_at: dbInnovation.expirationTransferDate
+            }
           );
         }
       }

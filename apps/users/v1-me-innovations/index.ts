@@ -2,11 +2,10 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 
 
@@ -17,7 +16,7 @@ class V1MeInnovationsInfo {
   static async httpTrigger(context: CustomContextType): Promise<void> {
 
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
       const authInstance = await authorizationService.validate(context)
@@ -25,7 +24,7 @@ class V1MeInnovationsInfo {
         .verify();
       const requestUser = authInstance.getUserInfo();
 
-      const result = await usersService.getOwnedInnovations(requestUser.id);
+      const result = await domainService.innovations.getInnovationsByOwnerId(requestUser.id);
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
 

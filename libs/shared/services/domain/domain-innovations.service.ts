@@ -1,11 +1,12 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationCollaboratorEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity } from '../../entities';
-import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
+import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { ActivitiesParamsType, DomainContextType } from '../../types';
+import type { ActivitiesParamsType, DateISOType, DomainContextType } from '../../types';
 import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
+import { EXPIRATION_DATES } from '../../constants';
 
 
 export class DomainInnovationsService {
@@ -156,25 +157,6 @@ export class DomainInnovationsService {
     );
   }
 
-  async bulkUpdateCollaboratorStatusByInnovation(
-    entityManager: EntityManager,
-    user: { id: string},
-    status: { current: InnovationCollaboratorStatusEnum, next: InnovationCollaboratorStatusEnum },
-    innovationId: string
-  ): Promise<void> {
-    await entityManager.getRepository(InnovationCollaboratorEntity).update(
-      { 
-        innovation: { id: innovationId },
-        status: status.current,
-      },
-      {
-        updatedBy: user.id,
-        status: status.next,
-        deletedAt: new Date().toISOString()
-      }
-    );
-  }
-
   /**
   * This is a legacy support that should be replaced by the activities log in due time.
   * For now it is still alive and is responsible fot storing the following actions:
@@ -212,7 +194,6 @@ export class DomainInnovationsService {
 
   }
 
-
   async addActivityLog<T extends ActivityEnum>(
     transactionManager: EntityManager,
     configuration: { innovationId: string, activity: T, domainContext: DomainContextType },
@@ -245,52 +226,6 @@ export class DomainInnovationsService {
     }
 
   }
-
-  private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {
-
-    switch (activity) {
-      case ActivityEnum.INNOVATION_CREATION:
-      case ActivityEnum.INNOVATION_PAUSE:
-      case ActivityEnum.OWNERSHIP_TRANSFER:
-      case ActivityEnum.SHARING_PREFERENCES_UPDATE:
-        return ActivityTypeEnum.INNOVATION_MANAGEMENT;
-
-      case ActivityEnum.SECTION_DRAFT_UPDATE:
-      case ActivityEnum.SECTION_SUBMISSION:
-        return ActivityTypeEnum.INNOVATION_RECORD;
-
-      case ActivityEnum.INNOVATION_SUBMISSION:
-      case ActivityEnum.NEEDS_ASSESSMENT_START:
-      case ActivityEnum.NEEDS_ASSESSMENT_COMPLETED:
-      case ActivityEnum.NEEDS_ASSESSMENT_EDITED:
-      case ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED:
-        return ActivityTypeEnum.NEEDS_ASSESSMENT;
-
-      case ActivityEnum.ORGANISATION_SUGGESTION:
-      case ActivityEnum.SUPPORT_STATUS_UPDATE:
-        return ActivityTypeEnum.SUPPORT;
-
-      case ActivityEnum.COMMENT_CREATION:
-        return ActivityTypeEnum.COMMENTS;
-
-      case ActivityEnum.THREAD_CREATION:
-      case ActivityEnum.THREAD_MESSAGE_CREATION:
-        return ActivityTypeEnum.THREADS;
-
-      case ActivityEnum.ACTION_CREATION:
-      case ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_DECLINED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE:
-        return ActivityTypeEnum.ACTIONS;
-
-      default:
-        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_INVALID_ITEM);
-    }
-
-  }
-
 
   async getUnreadNotifications(
     roleId: string,
@@ -445,6 +380,98 @@ export class DomainInnovationsService {
     const groupedStatus = await query.getMany();
 
     return new Map(groupedStatus.map(cur => [cur.innovationId, cur.groupedStatus]));
+  }
+
+  async getInnovationsByOwnerId(userId: string): Promise<{
+    id: string
+    name: string,
+    collaboratorsCount: number,
+    expirationTransferDate: DateISOType | null
+  }[]> {
+
+    const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .select([
+        'innovations.id', 'innovations.name',
+        'collaborator.id',
+        'transfer.createdAt'
+      ])
+      .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE })
+      .leftJoin('innovations.transfers', 'transfer','transfer.status = :transferStatus', { transferStatus: InnovationTransferStatusEnum.PENDING } )
+      .where('innovations.owner_id = :userId', { userId })
+      .getMany();
+
+    const data = query.map((innovation) => ({
+      id: innovation.id,
+      name: innovation.name,
+      collaboratorsCount: innovation.collaborators.length,
+      expirationTransferDate: innovation.transfers[0] ? new Date(Date.parse(innovation.transfers[0].createdAt) + EXPIRATION_DATES.transfers).toISOString() : null
+    }));
+    
+    return data;
+  }
+  
+  private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {
+
+    switch (activity) {
+      case ActivityEnum.INNOVATION_CREATION:
+      case ActivityEnum.INNOVATION_PAUSE:
+      case ActivityEnum.OWNERSHIP_TRANSFER:
+      case ActivityEnum.SHARING_PREFERENCES_UPDATE:
+        return ActivityTypeEnum.INNOVATION_MANAGEMENT;
+
+      case ActivityEnum.SECTION_DRAFT_UPDATE:
+      case ActivityEnum.SECTION_SUBMISSION:
+        return ActivityTypeEnum.INNOVATION_RECORD;
+
+      case ActivityEnum.INNOVATION_SUBMISSION:
+      case ActivityEnum.NEEDS_ASSESSMENT_START:
+      case ActivityEnum.NEEDS_ASSESSMENT_COMPLETED:
+      case ActivityEnum.NEEDS_ASSESSMENT_EDITED:
+      case ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED:
+        return ActivityTypeEnum.NEEDS_ASSESSMENT;
+
+      case ActivityEnum.ORGANISATION_SUGGESTION:
+      case ActivityEnum.SUPPORT_STATUS_UPDATE:
+        return ActivityTypeEnum.SUPPORT;
+
+      case ActivityEnum.COMMENT_CREATION:
+        return ActivityTypeEnum.COMMENTS;
+
+      case ActivityEnum.THREAD_CREATION:
+      case ActivityEnum.THREAD_MESSAGE_CREATION:
+        return ActivityTypeEnum.THREADS;
+
+      case ActivityEnum.ACTION_CREATION:
+      case ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE:
+      case ActivityEnum.ACTION_STATUS_DECLINED_UPDATE:
+      case ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE:
+      case ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE:
+      case ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE:
+        return ActivityTypeEnum.ACTIONS;
+
+      default:
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_INVALID_ITEM);
+    }
+
+  }
+  
+  private async bulkUpdateCollaboratorStatusByInnovation(
+    entityManager: EntityManager,
+    user: { id: string},
+    status: { current: InnovationCollaboratorStatusEnum, next: InnovationCollaboratorStatusEnum },
+    innovationId: string
+  ): Promise<void> {
+    await entityManager.getRepository(InnovationCollaboratorEntity).update(
+      { 
+        innovation: { id: innovationId },
+        status: status.current,
+      },
+      {
+        updatedBy: user.id,
+        status: status.next,
+        deletedAt: new Date().toISOString()
+      }
+    );
   }
 
 }

@@ -13,7 +13,6 @@ import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import { BaseService } from './base.service';
-import { EXPIRATION_DATES } from '@users/shared/constants';
 
 
 @injectable()
@@ -489,34 +488,6 @@ export class UsersService extends BaseService {
       }
     }));
 
-    return data;
-  }
-
-  async getOwnedInnovations(userId: string): Promise<{
-    id: string
-    name: string,
-    collaboratorsCount: number,
-    expirationTransferDate: DateISOType | null
-  }[]> {
-
-    const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-      .select([
-        'innovations.id', 'innovations.name',
-        'collaborator.id',
-        'transfer.createdAt'
-      ])
-      .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE })
-      .leftJoin('innovations.transfers', 'transfer','transfer.status = :transferStatus', { transferStatus: InnovationTransferStatusEnum.PENDING } )
-      .where('innovations.owner_id = :userId', { userId })
-      .getMany();
-
-    const data = query.map((innovation) => ({
-      id: innovation.id,
-      name: innovation.name,
-      collaboratorsCount: innovation.collaborators.length,
-      expirationTransferDate: innovation.transfers[0] ? new Date(Date.parse(innovation.transfers[0].createdAt) + EXPIRATION_DATES.transfers).toISOString() : null
-    }));
-    
     return data;
   }
 }
