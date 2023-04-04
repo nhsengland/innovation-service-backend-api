@@ -47,9 +47,9 @@ export class InnovationTransferService extends BaseService {
   }
 
 
-  async getInnovationTransfersList(requestUserId: string, assignedToMe?: boolean): Promise<{
+  async getInnovationTransfersList(requestUserId: string, requestUserIdentityId: string, assignedToMe?: boolean): Promise<{
     id: string, email: string,
-    innovation: { id: string, name: string, owner: string }
+    innovation: { id: string, name: string, owner?: string }
   }[]> {
 
     const filter: TransferQueryFilterType = { status: InnovationTransferStatusEnum.PENDING };
@@ -64,22 +64,29 @@ export class InnovationTransferService extends BaseService {
     const transfers = await this.buildTransferQuery(filter).getMany();
 
     return Promise.all(transfers.map(async transfer => {
+      try {
+        const identityUser = await this.identityProviderService.getUserInfo(requestUserIdentityId);
 
-      const createdBy = await this.domainService.users.getUserInfo({ userId: transfer.createdBy });
-      const identiyUser = await this.identityProviderService.getUserInfo(createdBy.identityId);
-
-      return {
-        id: transfer.id,
-        email: transfer.email,
-        innovation: {
-          id: transfer.innovation.id,
-          name: transfer.innovation.name,
-          owner: identiyUser.displayName
-        }
-      };
-
+        return {
+          id: transfer.id,
+          email: transfer.email,
+          innovation: {
+            id: transfer.innovation.id,
+            name: transfer.innovation.name,
+            owner: identityUser.displayName
+          }
+        };
+      } catch (_) {
+        return {
+          id: transfer.id,
+          email: transfer.email,
+          innovation: {
+            id: transfer.innovation.id,
+            name: transfer.innovation.name
+          }
+        };
+      }   
     }));
-
   }
 
   async getPendingInnovationTransferInfo(id: string): Promise<{ userExists: boolean }> {

@@ -1018,9 +1018,9 @@ export class InnovationsService extends BaseService {
     const savedInnovations = await this.sqlConnection.transaction(async transaction => {
 
       return this.domainService.innovations.withdrawInnovations(
-        transaction,
         { id: context.id, roleId: context.currentRole.id },
-        [{ id: dbInnovation.id, reason }]
+        [{ id: dbInnovation.id, reason }],
+        transaction
       );
 
     });

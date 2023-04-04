@@ -216,7 +216,7 @@ export class DomainUsersService {
 
     
     const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .leftJoinAndSelect('user.serviceRoles', 'roles')
+      .innerJoinAndSelect('user.serviceRoles', 'roles')
       .where('user.id = :userId', { userId })
       .getOne();
 
@@ -252,11 +252,11 @@ export class DomainUsersService {
         );
 
         await this.domainInnovationsService.withdrawInnovations(
-          transaction,
           { id: dbUser.id, roleId: userInnovatorRole.id },
           dbInnovations
             .filter(i => i.expirationTransferDate === null)
-            .map(item => ({ id: item.id, reason: null }))
+            .map(item => ({ id: item.id, reason: null })),
+            transaction
         );
       
         for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
