@@ -9,7 +9,7 @@ let connection: DataSource;
 export const sqlProvider = (_context: interfaces.Context) => {
   return async (): Promise<DataSource> => {
     if(!connection) {
-      connection = process.env['JEST_WORKER_ID'] ? new DataSource(SQLDB_TESTS_CONNECTION) : new DataSource(SQLDB_DEFAULT_CONNECTION);
+      connection = process.env['JEST_WORKER_ID'] || process.env['NODE_ENV'] === 'test' ? new DataSource(SQLDB_TESTS_CONNECTION) : new DataSource(SQLDB_DEFAULT_CONNECTION);
       try {
         await connection.initialize();
         console.log('SQL Connection successfully created.');
