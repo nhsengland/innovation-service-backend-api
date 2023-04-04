@@ -1,3 +1,4 @@
+import type { AnnouncementsService } from './announcements.service';
 import type { NotificationsService } from './notifications.service';
 import type { OrganisationsService } from './organisations.service';
 import type { StatisticsService } from './statistics.service';
@@ -23,3 +24,6 @@ export const NotificationsServiceSymbol = Symbol.for('NotificationsService');
 
 export type StatisticsServiceType = typeof StatisticsService.prototype;
 export const StatisticsServiceSymbol = Symbol.for('StatisticsService');
+
+export type AnnouncementsServiceType = typeof AnnouncementsService.prototype;
+export const AnnouncementsServiceSymbol = Symbol.for('AnnouncementsService');

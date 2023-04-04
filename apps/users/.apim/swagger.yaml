@@ -5,6 +5,44 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  /v1/announcements:
+    get:
+      description: Returns the user announcements
+      operationId: v1-announcements-list
+      tags:
+        - "[v1] Announcements"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    template:
+                      type: string
+                      enum:
+                        - "0"
+                    targetRoles:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - INNOVATOR
+                          - ACCESSOR
+                          - ASSESSMENT
+                          - QUALIFYING_ACCESSOR
+                    createdAt:
+                      type: string
+                      format: date-time
+                    params:
+                      type: object
   /v1/email-preferences:
     get:
       description: Returns the user email notifications preferences

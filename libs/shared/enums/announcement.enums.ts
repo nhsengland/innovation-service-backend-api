@@ -6,6 +6,6 @@ export type AnnouncementParamsType = {
     title: string,
     inset?: { title: string, description?: string, link?: { label: string, url: string } },
     description: string[],
-    secondaryAction?: { label: string, url: string, openNewWindow: boolean }
+    secondaryAction?: { label: string, url: string }
   }
 }

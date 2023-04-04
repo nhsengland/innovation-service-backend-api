@@ -14,6 +14,7 @@ export type ResponseDTO = {
   termsOfUseAccepted: boolean,
   hasInnovationTransfers: boolean,
   hasInnovationCollaborations: boolean,
+  hasAnnouncements: boolean,
   passwordResetAt: null | DateISOType,
   firstTimeSignInAt: null | DateISOType,
   organisations: {

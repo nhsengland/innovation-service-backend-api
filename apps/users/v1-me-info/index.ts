@@ -7,7 +7,7 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymb
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import { AnnouncementsServiceSymbol, AnnouncementsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
@@ -23,6 +23,7 @@ class V1MeInfo {
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
     const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+    const announcementsService = container.get<AnnouncementsServiceType>(AnnouncementsServiceSymbol);
 
     try {
 
@@ -37,6 +38,7 @@ class V1MeInfo {
       let termsOfUseAccepted = false;
       let hasInnovationTransfers = false;
       let hasInnovationCollaborations = false;
+      let hasAnnouncements = false;
       let userPreferences: {
         contactByPhone: boolean,
         contactByEmail: boolean,
@@ -53,10 +55,12 @@ class V1MeInfo {
         termsOfUseAccepted = true;
         hasInnovationTransfers = false;
         hasInnovationCollaborations = false;
+        hasAnnouncements = false;
       } else {
         termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role)).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
         hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
+        hasAnnouncements = (await announcementsService.getAnnouncements(domainContext)).length > 0;
       }
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
@@ -78,6 +82,7 @@ class V1MeInfo {
         termsOfUseAccepted,
         hasInnovationTransfers,
         hasInnovationCollaborations,
+        hasAnnouncements,
         organisations: requestUser.organisations
       });
       return;

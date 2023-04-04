@@ -22,6 +22,9 @@ export class AnnouncementEntity extends BaseEntity {
   @Column({ name: 'params', type: 'simple-json', nullable: true })
   params: Record<string, unknown> | null;
 
+  @Column({ name: 'starts_at', type: 'datetime2' })
+  startsAt: DateISOType;
+
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
   expiresAt: DateISOType | null;
 

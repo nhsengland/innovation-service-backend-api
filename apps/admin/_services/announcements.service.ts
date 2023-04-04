@@ -21,6 +21,7 @@ export class AnnouncementsService extends BaseService {
     config: {
       template: T,
       params?: AnnouncementParamsType[T],
+      startsAt?: DateISOType,
       expiresAt?: DateISOType
     },
     entityManager?: EntityManager
@@ -47,6 +48,7 @@ export class AnnouncementsService extends BaseService {
         template: config.template,
         targetRoles,
         params: config?.params ?? null,
+        startsAt: config?.startsAt,
         expiresAt: config?.expiresAt ?? null
       });
 
