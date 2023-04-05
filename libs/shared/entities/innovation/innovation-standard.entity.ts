@@ -4,7 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from '../innovation/innovation.entity';
 
-import type { catalogStandardsType, catalogYesInProgressNotYet } from '../../../shared/schemas/innovation-record/220209/catalog.types';
+import type { catalogStandardsType, catalogYesInProgressNotYet } from '../../schemas/innovation-record/202209/catalog.types';
 
 /**
  * @deprecated to be removed with InnovationEntity changes

@@ -4,7 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from './innovation.entity';
 
-import { catalogRevenues } from '../../../shared/schemas/innovation-record/220209/catalog.types';
+import { catalogRevenues } from '../../schemas/innovation-record/202209/catalog.types';
 
 /**
  * @deprecated to be removed with InnovationEntity changes

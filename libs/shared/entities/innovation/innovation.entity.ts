@@ -29,7 +29,7 @@ import { InnovationUserTestEntity } from './innovation-user-test.entity';
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
-import type { catalogCarePathway, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogYesInProcessNotYet, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from '../../../shared/schemas/innovation-record/220209/catalog.types';
+import type { catalogCarePathway, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogYesInProcessNotYet, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from '../../schemas/innovation-record/202209/catalog.types';
 import type { DateISOType } from '../../types/date.types';
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';

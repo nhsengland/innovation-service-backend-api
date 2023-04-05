@@ -1,4 +1,4 @@
-import { catalogCategory, catalogYesInProgressNotYet, catalogYesNotYetNotSure, catalogsupportTypes } from '@users/shared/schemas/innovation-record/220209/catalog.types';
+import { catalogCategory, catalogYesInProgressNotYet, catalogYesNotYetNotSure, catalogsupportTypes } from '@users/shared/schemas/innovation-record/202209/catalog.types';
 import Joi from 'joi';
 
 export type BodyType = {

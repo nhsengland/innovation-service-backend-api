@@ -5,7 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { InnovationSubgroupBenefitEntity } from './innovation-subgroup-benefit.entity';
 
-import type { catalogCarePathway, catalogCostComparison, catalogPatientRange } from '../../../shared/schemas/innovation-record/220209/catalog.types';
+import type { catalogCarePathway, catalogCostComparison, catalogPatientRange } from '../../schemas/innovation-record/202209/catalog.types';
 
 /**
  * @deprecated to be removed with InnovationEntity changes

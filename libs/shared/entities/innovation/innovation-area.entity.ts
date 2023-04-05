@@ -2,7 +2,7 @@ import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { catalogAreas } from '../../schemas/innovation-record/220209/catalog.types';
+import { catalogAreas } from '../../schemas/innovation-record/202209/catalog.types';
 import { InnovationEntity } from './innovation.entity';
 
 /**

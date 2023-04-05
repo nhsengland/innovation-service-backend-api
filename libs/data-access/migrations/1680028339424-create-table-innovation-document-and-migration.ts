@@ -2,7 +2,7 @@ import { groupBy } from 'lodash';
 import type { DeepPartial, MigrationInterface, QueryRunner } from 'typeorm';
 
 import { InnovationAreaEntity, InnovationCareSettingEntity, InnovationCategoryEntity, InnovationDeploymentPlanEntity, InnovationDiseaseConditionEntity, InnovationDocumentEntity, InnovationEntity, InnovationEnvironmentalBenefitEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationGeneralBenefitEntity, InnovationPatientsCitizensBenefitEntity, InnovationRevenueEntity, InnovationStandardEntity, InnovationSubgroupEntity, InnovationSupportTypeEntity, InnovationUserTestEntity } from '../../shared/entities';
-import type { InnovationSections } from '../../shared/schemas/innovation-record/220209/catalog.types';
+import type { InnovationSections } from '../../shared/schemas/innovation-record/202209/catalog.types';
 
 export class createTableInnovationDocumentAndMigration1680028339424 implements MigrationInterface {
   name?: string | undefined;

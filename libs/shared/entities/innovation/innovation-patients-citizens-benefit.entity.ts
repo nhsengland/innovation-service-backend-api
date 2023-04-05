@@ -4,7 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from './innovation.entity';
 
-import { catalogPatientsCitizensBenefit } from '../../../shared/schemas/innovation-record/220209/catalog.types';
+import { catalogPatientsCitizensBenefit } from '../../schemas/innovation-record/202209/catalog.types';
 
 
 /**

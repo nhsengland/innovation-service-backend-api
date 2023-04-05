@@ -1,4 +1,4 @@
-import type { catalogClinicalEvidence, catalogEvidenceType } from '@innovations/shared/schemas/innovation-record/220209/catalog.types';
+import type { catalogClinicalEvidence, catalogEvidenceType } from '@innovations/shared/schemas/innovation-record/202209/catalog.types';
 
 export type ResponseDTO = {
   evidenceType: catalogEvidenceType,

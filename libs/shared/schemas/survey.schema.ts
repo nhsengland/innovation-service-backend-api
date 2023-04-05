@@ -2,7 +2,7 @@
 import { model, Model, models, Schema, Types } from 'mongoose';
 
 import { } from './innovation-record';
-import { catalogCategory, catalogsupportTypes, catalogYesInProgressNotYet, catalogYesNotYetNotSure } from './innovation-record/220209/catalog.types';
+import { catalogCategory, catalogsupportTypes, catalogYesInProgressNotYet, catalogYesNotYetNotSure } from './innovation-record/202209/catalog.types';
 
 export type SurveyAnswersType = {
   categories: catalogCategory[],
