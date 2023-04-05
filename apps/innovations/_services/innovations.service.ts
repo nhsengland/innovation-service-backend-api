@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, InnovationDocumentEntity, InnovationEntity, InnovationExportRequestEntity, InnovationReassessmentRequestEntity, InnovationSectionEntity, InnovationSupportEntity, LastSupportStatusViewEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCategoryCatalogueEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
@@ -14,6 +14,7 @@ import { InnovationLocationEnum } from '../_enums/innovation.enums';
 import type { InnovationExportRequestItemType, InnovationExportRequestListType, InnovationSectionModel } from '../_types/innovation.types';
 
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
 import { BaseService } from './base.service';
 
@@ -33,7 +34,7 @@ export class InnovationsService extends BaseService {
     filters: {
       status: InnovationStatusEnum[],
       name?: string,
-      mainCategories?: InnovationCategoryCatalogueEnum[],
+      mainCategories?: CurrentCatalogTypes.catalogCategory[],
       locations?: InnovationLocationEnum[],
       supportStatuses?: InnovationSupportStatusEnum[],
       groupedStatuses?: InnovationGroupedStatusEnum[],
@@ -64,7 +65,7 @@ export class InnovationsService extends BaseService {
       updatedAt: null | DateISOType,
       countryName: null | string,
       postCode: null | string,
-      mainCategory: null | InnovationCategoryCatalogueEnum,
+      mainCategory: null | CurrentCatalogTypes.catalogCategory,
       otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
       groupedStatus?: InnovationGroupedStatusEnum,
@@ -565,7 +566,7 @@ export class InnovationsService extends BaseService {
     submittedAt: null | DateISOType,
     countryName: null | string,
     postCode: null | string,
-    categories: InnovationCategoryCatalogueEnum[],
+    categories: CurrentCatalogTypes.catalogCategory[],
     otherCategoryDescription: null | string,
     owner: { id: string, name: string, email: string, contactByEmail: boolean, contactByPhone: boolean, contactByPhoneTimeframe: PhoneUserPreferenceEnum | null, contactDetails: string | null, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
     lastEndSupportAt: null | DateISOType,
@@ -815,25 +816,25 @@ export class InnovationsService extends BaseService {
       await transaction.save(InnovationDocumentEntity, createDocumentFromInnovation(savedInnovation));
 
       // Mark some section to status DRAFT.
-      let sectionsToBeInDraft: InnovationSectionEnum[] = [];
+      let sectionsToBeInDraft: CurrentCatalogTypes.InnovationSections[] = [];
 
       if (surveyInfo) {
         sectionsToBeInDraft = [
-          InnovationSectionEnum.INNOVATION_DESCRIPTION,
-          InnovationSectionEnum.VALUE_PROPOSITION,
-          InnovationSectionEnum.UNDERSTANDING_OF_BENEFITS,
-          InnovationSectionEnum.EVIDENCE_OF_EFFECTIVENESS,
-          InnovationSectionEnum.MARKET_RESEARCH,
-          InnovationSectionEnum.TESTING_WITH_USERS
+          'INNOVATION_DESCRIPTION',
+          'VALUE_PROPOSITION',
+          'UNDERSTANDING_OF_BENEFITS',
+          'EVIDENCE_OF_EFFECTIVENESS',
+          'MARKET_RESEARCH',
+          'TESTING_WITH_USERS'
         ];
       } else {
-        sectionsToBeInDraft = [InnovationSectionEnum.INNOVATION_DESCRIPTION];
+        sectionsToBeInDraft = ['INNOVATION_DESCRIPTION'];
       }
 
       for (const sectionKey of sectionsToBeInDraft) {
         await transaction.save(InnovationSectionEntity, InnovationSectionEntity.new({
           innovation: savedInnovation,
-          section: InnovationSectionEnum[sectionKey],
+          section: CurrentCatalogTypes.InnovationSections.find(s => s === sectionKey),
           status: InnovationSectionStatusEnum.DRAFT,
           createdBy: savedInnovation.createdBy,
           updatedBy: savedInnovation.updatedBy
@@ -1544,7 +1545,7 @@ export class InnovationsService extends BaseService {
       .where('section.innovation_id = :innovationId', { innovationId })
       .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED }).getCount();
 
-    const totalSections = Object.keys(InnovationSectionEnum).length;
+    const totalSections = CurrentCatalogTypes.InnovationSections.length;
 
 
     return {
@@ -1574,7 +1575,7 @@ export class InnovationsService extends BaseService {
 
     const innovationSections: InnovationSectionModel[] = [];
 
-    for (const key in InnovationSectionEnum) {
+    for (const key of CurrentCatalogTypes.InnovationSections) {
       const section = sections.find((sec) => sec.section === key);
       innovationSections.push(this.getInnovationSectionMetadata(key, section));
     }
@@ -1599,7 +1600,7 @@ export class InnovationsService extends BaseService {
 
   }
 
-  private getInnovationSectionMetadata(key: string, section?: InnovationSectionEntity): InnovationSectionModel {
+  private getInnovationSectionMetadata(key: CurrentCatalogTypes.InnovationSections, section?: InnovationSectionEntity): InnovationSectionModel {
 
     let result: InnovationSectionModel;
 
@@ -1615,7 +1616,7 @@ export class InnovationsService extends BaseService {
     } else {
       result = {
         id: null,
-        section: InnovationSectionEnum[key as keyof typeof InnovationSectionEnum],
+        section: key,
         status: InnovationSectionStatusEnum.NOT_STARTED,
         updatedAt: null,
         submittedAt: null,

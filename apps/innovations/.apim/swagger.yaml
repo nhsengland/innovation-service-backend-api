@@ -1136,15 +1136,586 @@ paths:
           schema:
             type: array
             items:
-              type: string
-              enum:
-                - MEDICAL_DEVICE
-                - PHARMACEUTICAL
-                - DIGITAL
-                - AI
-                - EDUCATION
-                - PPE
-                - OTHER
+              type: object
+              properties:
+                INNOVATION_DESCRIPTION:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    countryName:
+                      type: string
+                    postcode:
+                      type: string
+                      nullable: true
+                    hasFinalProduct:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                      nullable: true
+                    categories:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - MEDICAL_DEVICE
+                          - PHARMACEUTICAL
+                          - DIGITAL
+                          - AI
+                          - EDUCATION
+                          - PPE
+                          - OTHER
+                    otherCategoryDescription:
+                      type: string
+                      nullable: true
+                    mainCategory:
+                      type: string
+                      enum:
+                        - MEDICAL_DEVICE
+                        - PHARMACEUTICAL
+                        - DIGITAL
+                        - AI
+                        - EDUCATION
+                        - PPE
+                        - OTHER
+                      nullable: true
+                    otherMainCategoryDescription:
+                      type: string
+                      nullable: true
+                    areas:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - WORKFORCE
+                          - ECONOMIC_GROWTH
+                          - EVIDENCE_GENERATION
+                          - TRANSFORMED_OUT_OF_HOSPITAL_CARE
+                          - REDUCIND_PRESSURE_EMERGENCY_HOSPITAL_SERVICES
+                          - CONTROL_OVER_THEIR_OWN_HEALTH
+                          - DIGITALLY_ENABLING_PRIMARY_CARE
+                          - CANCER
+                          - MENTAL_HEALTH
+                          - CHILDREN_AND_YOUNG_PEOPLE
+                          - LEARNING_DISABILITIES_AND_AUTISM
+                          - CARDIOVASCULAR_DISEASE
+                          - STROKE_CARE
+                          - DIABETES
+                          - RESPIRATORY
+                          - RESEARCH_INNOVATION_DRIVE_FUTURE_OUTCOMES
+                          - GENOMICS
+                          - WIDER_SOCIAL_IMPACT
+                          - REDUCING_VARIATION_ACROSS_HEALTH_SYSTEM
+                          - FINANCIAL_PLANNING_ASSUMPTIONS
+                          - COVID_19
+                          - DATA_ANALYTICS_AND_RESEARCH
+                          - IMPROVING_SYSTEM_FLOW
+                          - INDEPENDENCE_AND_PREVENTION
+                          - OPERATIONAL_EXCELLENCE
+                          - PATIENT_ACTIVATION_AND_SELF_CARE
+                          - PATIENT_SAFETY
+                          - GREATER_SUPPORT_AND_RESOURCE_PRIMARY_CARE
+                    careSettings:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - STP_ICS
+                          - CCGS
+                          - ACUTE_TRUSTS_INPATIENT
+                          - ACUTE_TRUSTS_OUTPATIENT
+                          - PRIMARY_CARE
+                          - MENTAL_HEALTH
+                          - AMBULANCE
+                          - SOCIAL_CARE
+                          - INDUSTRY
+                          - COMMUNITY
+                          - ACADEMIA
+                          - DOMICILIARY_CARE
+                          - PHARMACY
+                          - URGENT_AND_EMERGENCY
+                          - OTHER
+                    otherCareSetting:
+                      type: string
+                      maxLength: 100
+                      nullable: true
+                    mainPurpose:
+                      type: string
+                      enum:
+                        - PREVENT_CONDITION
+                        - PREDICT_CONDITION
+                        - DIAGNOSE_CONDITION
+                        - MONITOR_CONDITION
+                        - PROVIDE_TREATMENT
+                        - MANAGE_CONDITION
+                        - ENABLING_CARE
+                      nullable: true
+                    supportTypes:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ADOPTION
+                          - ASSESSMENT
+                          - PRODUCT_MIGRATION
+                          - CLINICAL_TESTS
+                          - COMMERCIAL
+                          - PROCUREMENT
+                          - DEVELOPMENT
+                          - EVIDENCE_EVALUATION
+                          - FUNDING
+                          - INFORMATION
+                    moreSupportDescription:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                  additionalProperties: false
+                VALUE_PROPOSITION:
+                  type: object
+                  properties:
+                    hasProblemTackleKnowledge:
+                      type: string
+                      enum:
+                        - YES
+                        - NOT_YET
+                        - NOT_SURE
+                    problemsTackled:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    problemsConsequences:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    intervention:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    interventionImpact:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                  additionalProperties: false
+                UNDERSTANDING_OF_NEEDS:
+                  type: object
+                  properties:
+                    impactPatients:
+                      type: boolean
+                    impactClinicians:
+                      type: boolean
+                    subgroups:
+                      type: array
+                      items:
+                        type: string
+                      nullable: true
+                    cliniciansImpactDetails:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    diseasesConditionsImpact:
+                      type: array
+                      items:
+                        type: string
+                      nullable: true
+                  additionalProperties: false
+                UNDERSTANDING_OF_BENEFITS:
+                  type: object
+                  properties:
+                    hasBenefits:
+                      type: string
+                      enum:
+                        - YES
+                        - NOT_YET
+                        - NOT_SURE
+                    patientsCitizensBenefits:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - REDUCE_MORTALITY
+                          - REDUCE_FURTHER_TREATMENT
+                          - REDUCE_ADVERSE_EVENTS
+                          - ENABLE_EARLIER_DIAGNOSIS
+                          - REDUCE_RISKS
+                          - PREVENTS_CONDITION_OCCURRING
+                          - AVOIDS_UNNECESSARY_TREATMENT
+                          - ENABLES_NON_INVASIVELY_TEST
+                          - INCREASES_SELF_MANAGEMENT
+                          - INCREASES_LIFE_QUALITY
+                          - ENABLES_SHARED_CARE
+                      nullable: true
+                    generalBenefits:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - REDUCE_LENGTH_STAY
+                          - REDUCE_CRITICAL_CARE
+                          - REDUCE_EMERGENCY_ADMISSIONS
+                          - CHANGES_DELIVERY_SECONDARY_TO_PRIMARY
+                          - CHANGES_DELIVERY_INPATIENT_TO_DAY_CASE
+                          - INCREASES_COMPLIANCE
+                          - IMPROVES_COORDINATION
+                          - REDUCES_REFERRALS
+                          - LESS_TIME
+                          - FEWER_STAFF
+                          - FEWER_APPOINTMENTS
+                          - COST_SAVING
+                          - INCREASES_EFFICIENCY
+                          - IMPROVES_PERFORMANCE
+                          - OTHER
+                      minItems: 1
+                      maxItems: 3
+                      nullable: true
+                    otherGeneralBenefit:
+                      type: string
+                      nullable: true
+                    environmentalBenefits:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - NO_SIGNIFICANT_BENEFITS
+                          - LESS_ENERGY
+                          - LESS_RAW_MATERIALS
+                          - REDUCES_GAS_EMISSIONS
+                          - REDUCES_PLASTICS_USE
+                          - MINIMISES_WASTE
+                          - LOWER_ENVIRONMENTAL_IMPACT
+                          - OPTIMIZES_FINITE_RESOURCE_USE
+                          - USES_RECYCLED_MATERIALS
+                          - OTHER
+                      minItems: 1
+                      maxItems: 3
+                      nullable: true
+                    otherEnvironmentalBenefit:
+                      type: string
+                      nullable: true
+                    accessibilityImpactDetails:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    accessibilityStepsDetails:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                  additionalProperties: false
+                EVIDENCE_OF_EFFECTIVENESS:
+                  type: object
+                  properties:
+                    hasEvidence:
+                      type: string
+                      enum:
+                        - YES
+                        - IN_PROGRESS
+                        - NOT_YET
+                  additionalProperties: false
+                MARKET_RESEARCH:
+                  type: object
+                  properties:
+                    hasMarketResearch:
+                      type: string
+                      enum:
+                        - YES
+                        - IN_PROGRESS
+                        - NOT_YET
+                    marketResearch:
+                      type: string
+                      nullable: true
+                  additionalProperties: false
+                INTELLECTUAL_PROPERTY:
+                  type: object
+                  properties:
+                    hasPatents:
+                      type: string
+                      enum:
+                        - HAS_AT_LEAST_ONE
+                        - APPLIED_AT_LEAST_ONE
+                        - HAS_NONE
+                    hasOtherIntellectual:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                      nullable: true
+                    otherIntellectual:
+                      type: string
+                      nullable: true
+                  additionalProperties: false
+                REGULATIONS_AND_STANDARDS:
+                  type: object
+                  properties:
+                    hasRegulationKnowledge:
+                      type: string
+                      enum:
+                        - YES_ALL
+                        - YES_SOME
+                        - NO
+                        - NOT_RELEVANT
+                    standards:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            enum:
+                              - CE_UKCA_NON_MEDICAL
+                              - CE_UKCA_CLASS_I
+                              - CE_UKCA_CLASS_II_A
+                              - CE_UKCA_CLASS_II_B
+                              - CE_UKCA_CLASS_III
+                              - IVD_GENERAL
+                              - IVD_SELF_TEST
+                              - IVD_ANNEX_LIST_A
+                              - IVD_ANNEX_LIST_B
+                              - MARKETING
+                              - CQC
+                              - DTAC
+                              - OTHER
+                          hasMet:
+                            type: string
+                            enum:
+                              - YES
+                              - IN_PROGRESS
+                              - NOT_YET
+                            nullable: true
+                        required:
+                          - type
+                        additionalProperties: false
+                    otherRegulationDescription:
+                      type: string
+                      nullable: true
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                  additionalProperties: false
+                CURRENT_CARE_PATHWAY:
+                  type: object
+                  properties:
+                    hasUKPathwayKnowledge:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                        - NOT_RELEVANT
+                    innovationPathwayKnowledge:
+                      type: string
+                      enum:
+                        - PATHWAY_EXISTS_AND_CHANGED
+                        - PATHWAY_EXISTS_AND_FITS
+                        - NO_PATHWAY
+                      nullable: true
+                    potentialPathway:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    carePathway:
+                      type: string
+                      enum:
+                        - ONLY_OPTION
+                        - BETTER_OPTION
+                        - EQUIVALENT_OPTION
+                        - FIT_LESS_COSTS
+                        - NO_KNOWLEDGE
+                      nullable: true
+                  additionalProperties: false
+                TESTING_WITH_USERS:
+                  type: object
+                  properties:
+                    hasTests:
+                      type: string
+                      enum:
+                        - YES
+                        - IN_PROGRESS
+                        - NOT_YET
+                    userTests:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          kind:
+                            type: string
+                          feedback:
+                            type: string
+                            maxLength: 500
+                            nullable: true
+                        additionalProperties: false
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                  additionalProperties: false
+                COST_OF_INNOVATION:
+                  type: object
+                  properties:
+                    hasCostKnowledge:
+                      type: string
+                      enum:
+                        - DETAILED_ESTIMATE
+                        - ROUGH_IDEA
+                        - NO
+                    costDescription:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    patientsRange:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - UP_10000
+                          - BETWEEN_10000_500000
+                          - MORE_THAN_500000
+                          - NOT_SURE
+                          - NOT_RELEVANT
+                      nullable: true
+                    sellExpectations:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    usageExpectations:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                  additionalProperties: false
+                COMPARATIVE_COST_BENEFIT:
+                  type: object
+                  properties:
+                    hasCostSavingKnowledge:
+                      type: string
+                      enum:
+                        - DETAILED_ESTIMATE
+                        - ROUGH_IDEA
+                        - NO
+                    hasCostCareKnowledge:
+                      type: string
+                      enum:
+                        - DETAILED_ESTIMATE
+                        - ROUGH_IDEA
+                        - NO
+                      nullable: true
+                    costComparison:
+                      type: string
+                      enum:
+                        - CHEAPER
+                        - COSTS_MORE_WITH_SAVINGS
+                        - COSTS_MORE
+                        - NOT_SURE
+                      nullable: true
+                  additionalProperties: false
+                REVENUE_MODEL:
+                  type: object
+                  properties:
+                    hasRevenueModel:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    revenues:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ADVERTISING
+                          - DIRECT_PRODUCT_SALES
+                          - FEE_FOR_SERVICE
+                          - LEASE
+                          - SALES_OF_CONSUMABLES_OR_ACCESSORIES
+                          - SUBSCRIPTION
+                          - OTHER
+                    otherRevenueDescription:
+                      type: string
+                      nullable: true
+                    payingOrganisations:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    benefittingOrganisations:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                    hasFunding:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                        - NOT_RELEVANT
+                      nullable: true
+                    fundingDescription:
+                      type: string
+                      maxLength: 500
+                      nullable: true
+                  additionalProperties: false
+                IMPLEMENTATION_PLAN:
+                  type: object
+                  properties:
+                    hasDeployPlan:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    isDeployed:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                      nullable: true
+                    deploymentPlans:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          commercialBasis:
+                            type: string
+                            maxLength: 500
+                            nullable: true
+                          orgDeploymentAffect:
+                            type: string
+                            maxLength: 500
+                            nullable: true
+                        required:
+                          - name
+                        additionalProperties: false
+                    hasResourcesToScale:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                        - NOT_SURE
+                      nullable: true
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                  additionalProperties: false
+              required:
+                - INNOVATION_DESCRIPTION
+                - VALUE_PROPOSITION
+                - UNDERSTANDING_OF_NEEDS
+                - UNDERSTANDING_OF_BENEFITS
+                - EVIDENCE_OF_EFFECTIVENESS
+                - MARKET_RESEARCH
+                - INTELLECTUAL_PROPERTY
+                - REGULATIONS_AND_STANDARDS
+                - CURRENT_CARE_PATHWAY
+                - TESTING_WITH_USERS
+                - COST_OF_INNOVATION
+                - COMPARATIVE_COST_BENEFIT
+                - REVENUE_MODEL
+                - IMPLEMENTATION_PLAN
+              additionalProperties: false
         - name: locations
           in: query
           required: false
@@ -1551,20 +2122,20 @@ paths:
                   evidenceType:
                     type: string
                     enum:
-                      - - CLINICAL
-                        - ECONOMIC
-                        - OTHER
+                      - CLINICAL
+                      - ECONOMIC
+                      - OTHER
                     description: Evidence type.
                   clinicalEvidenceType:
                     type: string
                     enum:
-                      - - DATA_PUBLISHED
-                        - NON_RANDOMISED_COMPARATIVE_DATA
-                        - NON_RANDOMISED_NON_COMPARATIVE_DATA
-                        - CONFERENCE
-                        - RANDOMISED_CONTROLLED_TRIAL
-                        - UNPUBLISHED_DATA
-                        - OTHER
+                      - DATA_PUBLISHED
+                      - NON_RANDOMISED_COMPARATIVE_DATA
+                      - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                      - CONFERENCE
+                      - RANDOMISED_CONTROLLED_TRIAL
+                      - UNPUBLISHED_DATA
+                      - OTHER
                     description: Clinical Evidence type.
                   description:
                     type: string

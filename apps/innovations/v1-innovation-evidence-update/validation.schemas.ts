@@ -1,8 +1,7 @@
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
-import type { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
-
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 
 export type ParamsType = {
   innovationId: string,
@@ -14,8 +13,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 });
 
 export type BodyType = {
-  evidenceType: EvidenceTypeCatalogueEnum,
-  clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum,
+  evidenceType: CurrentCatalogTypes.catalogEvidenceType,
+  clinicalEvidenceType: CurrentCatalogTypes.catalogClinicalEvidence,
   description: string,
   summary: string,
   files: string[]

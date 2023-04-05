@@ -6,7 +6,8 @@ import { InnovationActionEntity } from './innovation-action.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
 import { InnovationEntity } from './innovation.entity';
 
-import { InnovationSectionEnum, InnovationSectionStatusEnum } from '../../enums/innovation.enums';
+import { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
+import { InnovationSectionStatusEnum } from '../../enums/innovation.enums';
 import type { DateISOType } from '../../types/date.types';
 import { UserEntity } from '../user/user.entity';
 
@@ -18,8 +19,8 @@ export class InnovationSectionEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ type: 'simple-enum', enum: InnovationSectionEnum, nullable: false })
-  section: InnovationSectionEnum;
+  @Column({ type: 'simple-enum', enum: CurrentCatalogTypes.InnovationSections, nullable: false })
+  section: CurrentCatalogTypes.InnovationSections;
 
   @Column({ type: 'simple-enum', enum: InnovationSectionStatusEnum, nullable: false })
   status: InnovationSectionStatusEnum;

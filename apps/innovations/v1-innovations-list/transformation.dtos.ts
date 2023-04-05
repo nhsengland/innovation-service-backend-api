@@ -1,4 +1,5 @@
-import type { AccessorOrganisationRoleEnum, InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum } from '@innovations/shared/enums';
+import type { AccessorOrganisationRoleEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum } from '@innovations/shared/enums';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
@@ -15,7 +16,7 @@ export type ResponseDTO = {
     updatedAt: null | DateISOType,
     countryName: null | string,
     postCode: null | string,
-    mainCategory: null | InnovationCategoryCatalogueEnum,
+    mainCategory: null | CurrentCatalogTypes.catalogCategory,
     otherMainCategoryDescription: null | string,
     isAssessmentOverdue?: boolean,
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },

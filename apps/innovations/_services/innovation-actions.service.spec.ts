@@ -3,8 +3,9 @@ import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helpe
 import { container } from '../_config';
 
 import { InnovationActionEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
-import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { ForbiddenError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { DomainInnovationsService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
@@ -52,7 +53,7 @@ describe('Innovation Actions Suite', () => {
         testData.innovation.id,
         {
           description: randText(),
-          section: Object.values(InnovationSectionEnum)[randNumber({ min: 0, max: Object.values(InnovationSectionEnum).length - 1 })]!
+          section: CurrentCatalogTypes.InnovationSections[randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })]!
         },
         em
       );
@@ -79,7 +80,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           {
             description: randText(),
-            section: Object.values(InnovationSectionEnum)[randNumber({ min: 0, max: Object.values(InnovationSectionEnum).length - 1 })]!,
+            section: CurrentCatalogTypes.InnovationSections[randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })]!,
           },
           em
         );
@@ -107,7 +108,7 @@ describe('Innovation Actions Suite', () => {
           randUuid(),
           {
             description: randText(),
-            section: Object.values(InnovationSectionEnum)[randNumber({ min: 0, max: Object.values(InnovationSectionEnum).length - 1 })]!,
+            section: CurrentCatalogTypes.InnovationSections[randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })]!,
           },
           em
         );
@@ -135,7 +136,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           {
             description: randText(),
-            section: randText() as InnovationSectionEnum,
+            section: randText() as CurrentCatalogTypes.InnovationSections,
           },
           em
         );
@@ -373,7 +374,7 @@ describe('Innovation Actions Suite', () => {
         .build(em);
 
       const section = (await innovation.sections)
-        .find(section => section.section === InnovationSectionEnum.CURRENT_CARE_PATHWAY);
+        .find(section => section.section === 'CURRENT_CARE_PATHWAY');
 
       const action = await TestsHelper.TestDataBuilder
         .createAction(testData.domainContexts.assessmentUser, section!)
@@ -382,14 +383,14 @@ describe('Innovation Actions Suite', () => {
 
       const actions = await sut.getActionsList(
         testData.domainContexts.assessmentUser,
-        { sections: [InnovationSectionEnum.CURRENT_CARE_PATHWAY], fields: [] },
+        { sections: ['CURRENT_CARE_PATHWAY'], fields: [] },
         { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
         em
       );
 
       expect(actions.count).toBe(1);
       expect(actions.data[0]).toHaveProperty('id', action!.id);
-      expect(actions.data[0]).toHaveProperty('section', InnovationSectionEnum.CURRENT_CARE_PATHWAY);
+      expect(actions.data[0]).toHaveProperty('section', 'CURRENT_CARE_PATHWAY');
     });
 
     it('should list all actions that are in COMPLETED status', async () => {

@@ -1,35 +1,34 @@
+import { catalogCategory, catalogYesInProgressNotYet, catalogYesNotYetNotSure, catalogsupportTypes } from '@users/shared/schemas/innovation-record/220209/catalog.types';
 import Joi from 'joi';
 
-import { HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasMarketResearchCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationSupportTypeCatalogueEnum, YesNotYetNotSureCatalogueEnum } from '@users/shared/enums';
-
 export type BodyType = {
-  categories: InnovationCategoryCatalogueEnum[],
+  categories: catalogCategory[],
   otherCategoryDescription: null | string,
-  mainCategory: InnovationCategoryCatalogueEnum,
+  mainCategory: catalogCategory,
   otherMainCategoryDescription: null | string,
-  hasProblemTackleKnowledge: HasProblemTackleKnowledgeCatalogueEnum,
-  hasMarketResearch: HasMarketResearchCatalogueEnum,
-  hasWhoBenefitsKnowledge: YesNotYetNotSureCatalogueEnum,
-  hasBenefits: HasBenefitsCatalogueEnum,
-  hasTests: HasTestsCatalogueEnum,
+  hasProblemTackleKnowledge: catalogYesNotYetNotSure,
+  hasMarketResearch: catalogYesInProgressNotYet,
+  hasWhoBenefitsKnowledge: catalogYesNotYetNotSure,
+  hasBenefits: catalogYesNotYetNotSure,
+  hasTests: catalogYesInProgressNotYet,
   hasRelevantCertifications: 'YES' | 'NOT_YET' | 'NO_KNOWLEDGE' | 'NOT_APPLICABLE',
-  hasEvidence: HasEvidenceCatalogueEnum,
+  hasEvidence: catalogYesInProgressNotYet,
   hasCostEvidence: 'YES' | 'IN_PROGRESS' | 'NOT_YET',
-  supportTypes: InnovationSupportTypeCatalogueEnum[]
+  supportTypes: catalogsupportTypes[]
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  categories: Joi.array().items(Joi.string().valid(...Object.values(InnovationCategoryCatalogueEnum))),
+  categories: Joi.array().items(Joi.string().valid(...catalogCategory)),
   otherCategoryDescription: Joi.string().allow(null),
-  mainCategory: Joi.string().valid(...Object.values(InnovationCategoryCatalogueEnum)),
+  mainCategory: Joi.string().valid(...catalogCategory),
   otherMainCategoryDescription: Joi.string().allow(null),
-  hasProblemTackleKnowledge: Joi.string().valid(...Object.values(HasProblemTackleKnowledgeCatalogueEnum)),
-  hasMarketResearch: Joi.string().valid(...Object.values(HasMarketResearchCatalogueEnum)),
-  hasWhoBenefitsKnowledge: Joi.string().valid(...Object.values(YesNotYetNotSureCatalogueEnum)),
-  hasBenefits: Joi.string().valid(...Object.values(HasBenefitsCatalogueEnum)),
-  hasTests: Joi.string().valid(...Object.values(HasTestsCatalogueEnum)),
+  hasProblemTackleKnowledge: Joi.string().valid(...catalogYesNotYetNotSure),
+  hasMarketResearch: Joi.string().valid(...catalogYesInProgressNotYet),
+  hasWhoBenefitsKnowledge: Joi.string().valid(...catalogYesNotYetNotSure),
+  hasBenefits: Joi.string().valid(...catalogYesNotYetNotSure),
+  hasTests: Joi.string().valid(...catalogYesInProgressNotYet),
   hasRelevantCertifications: Joi.string().valid('YES', 'NOT_YET', 'NO_KNOWLEDGE', 'NOT_APPLICABLE'),
-  hasEvidence: Joi.string().valid(...Object.values(HasEvidenceCatalogueEnum)),
+  hasEvidence: Joi.string().valid(...catalogYesInProgressNotYet),
   hasCostEvidence: Joi.string().valid('YES', 'IN_PROGRESS', 'NOT_YET'),
-  supportTypes: Joi.array().items(Joi.string().valid(...Object.values(InnovationSupportTypeCatalogueEnum)))
+  supportTypes: Joi.array().items(Joi.string().valid(...catalogsupportTypes))
 }).required();

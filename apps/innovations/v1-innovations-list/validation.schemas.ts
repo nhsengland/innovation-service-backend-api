@@ -1,8 +1,9 @@
 import Joi from 'joi';
 
-import { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
+import { InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
+import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { DateISOType, TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
@@ -20,10 +21,9 @@ enum orderFields {
   assessmentFinishedAt = 'assessmentFinishedAt'
 }
 
-
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   name?: string,
-  mainCategories?: InnovationCategoryCatalogueEnum[],
+  mainCategories?: CurrentCatalogTypes.catalogCategory[],
   locations?: InnovationLocationEnum[],
   status: InnovationStatusEnum[],
   supportStatuses?: InnovationSupportStatusEnum[],
@@ -46,7 +46,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({
   name: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional(),
-  mainCategories: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationCategoryCatalogueEnum))).optional(),
+  mainCategories: JoiHelper.AppCustomJoi().stringArray().items(CurrentDocumentSchemaMap).optional(),
   locations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationLocationEnum))).optional(),
   status:
     Joi.when('$userType', {

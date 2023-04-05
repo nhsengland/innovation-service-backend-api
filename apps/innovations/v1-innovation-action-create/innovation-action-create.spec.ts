@@ -2,7 +2,6 @@ import { TestDataType, TestsHelper } from '@innovations/shared/tests';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
-import { InnovationSectionEnum } from '@innovations/shared/enums';
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import v1InnovationActionCreate from '.';
@@ -51,7 +50,7 @@ describe('v1-innovation-action-create Suite', () => {
         .setMethod('POST')
         .setAuth(testData.domainContexts.accessor)
         .setBody({
-          section: InnovationSectionEnum.COST_OF_INNOVATION,
+          section: 'COST_OF_INNOVATION',
           description: randText(),
         })
         .invoke<{status: number}>(v1InnovationActionCreate);

@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionAliasEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -9,6 +9,7 @@ import { ActivityLogListParamsType, DateISOType, DomainContextType, isAccessorDo
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
@@ -29,7 +30,7 @@ export class InnovationActionsService extends BaseService {
     filters: {
       innovationId?: string,
       innovationName?: string,
-      sections?: InnovationSectionEnum[],
+      sections?: CurrentCatalogTypes.InnovationSections[],
       status?: InnovationActionStatusEnum[],
       innovationStatus?: InnovationStatusEnum[],
       createdByMe?: boolean,
@@ -46,7 +47,7 @@ export class InnovationActionsService extends BaseService {
       description: string,
       innovation: { id: string, name: string },
       status: InnovationActionStatusEnum,
-      section: InnovationSectionEnum,
+      section: CurrentCatalogTypes.InnovationSections,
       createdAt: DateISOType,
       updatedAt: DateISOType,
       updatedBy: { name: string, role?: ServiceRoleEnum | undefined },
@@ -212,7 +213,7 @@ export class InnovationActionsService extends BaseService {
     id: string,
     displayId: string,
     status: InnovationActionStatusEnum,
-    section: InnovationSectionEnum,
+    section: CurrentCatalogTypes.InnovationSections,
     description: string,
     createdAt: DateISOType,
     updatedAt: DateISOType,
@@ -304,7 +305,7 @@ export class InnovationActionsService extends BaseService {
     user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
-    data: { section: InnovationSectionEnum, description: string },
+    data: { section: CurrentCatalogTypes.InnovationSections, description: string },
     entityManager?: EntityManager,
   ): Promise<{ id: string }> {
 

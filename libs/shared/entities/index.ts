@@ -15,7 +15,6 @@ import { InnovationAreaEntity } from './innovation/innovation-area.entity';
 import { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 import { InnovationCareSettingEntity } from './innovation/innovation-care-setting.entity';
 import { InnovationCategoryEntity } from './innovation/innovation-category.entity';
-import { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-area.entity';
 import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 import { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
@@ -46,7 +45,6 @@ export { InnovationAreaEntity } from './innovation/innovation-area.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 export { InnovationCareSettingEntity } from './innovation/innovation-care-setting.entity';
 export { InnovationCategoryEntity } from './innovation/innovation-category.entity';
-export { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-area.entity';
 export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 export { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
@@ -124,7 +122,6 @@ export const INNOVATION_ENTITIES = [
   InnovationAssessmentEntity,
   InnovationCareSettingEntity,
   InnovationCategoryEntity,
-  InnovationClinicalAreaEntity,
   InnovationDeploymentPlanEntity,
   InnovationDiseaseConditionEntity,
   InnovationDocumentEntity,

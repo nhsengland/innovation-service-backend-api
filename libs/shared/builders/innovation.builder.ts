@@ -1,8 +1,9 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
-import { createDocumentFromInnovation, DocumentType, InnovationDocumentEntity } from '../entities/innovation/innovation-document.entity';
-import { CarePathwayCatalogueEnum, CostComparisonCatalogueEnum, HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasFundingCatalogueEnum, HasKnowledgeCatalogueEnum, HasMarketResearchCatalogueEnum, HasPatentsCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasRegulationKnowledegeCatalogueEnum, HasResourcesToScaleCatalogueEnum, HasTestsCatalogueEnum, InnovationAreaCatalogueEnum, InnovationCareSettingCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationCertificationCatalogueEnum, InnovationPathwayKnowledgeCatalogueEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovationSupportTypeCatalogueEnum, MainPurposeCatalogueEnum, ServiceRoleEnum, StandardMetCatalogueEnum, YesNoNotRelevantCatalogueEnum, YesOrNoCatalogueEnum } from '../enums';
+import { InnovationDocumentEntity, createDocumentFromInnovation } from '../entities/innovation/innovation-document.entity';
+import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '../enums';
+import type { DocumentType } from '../schemas/innovation-record';
 import type { DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
@@ -48,73 +49,73 @@ export class InnovationBuilder {
         countryName: this.innovation.countryName,
         postcode: this.innovation.postcode!,
         
-        areas: [InnovationAreaCatalogueEnum.CANCER],
-        careSettings: [InnovationCareSettingCatalogueEnum.INDUSTRY],
-        categories: [InnovationCategoryCatalogueEnum.MEDICAL_DEVICE, InnovationCategoryCatalogueEnum.AI],
-        hasFinalProduct: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-        mainCategory: InnovationCategoryCatalogueEnum.MEDICAL_DEVICE,
-        mainPurpose: MainPurposeCatalogueEnum.MONITOR_CONDITION,
+        areas: ['CANCER'],
+        careSettings: ['INDUSTRY'],
+        categories: ['MEDICAL_DEVICE', 'AI'],
+        hasFinalProduct: randBoolean() ? 'YES' : 'NO',
+        mainCategory: 'MEDICAL_DEVICE',
+        mainPurpose: 'MONITOR_CONDITION',
         moreSupportDescription: randText(),
         otherCareSetting: randText(),
         otherCategoryDescription: randText(),
         otherMainCategoryDescription: randText(),
-        supportTypes: [InnovationSupportTypeCatalogueEnum.ADOPTION],
+        supportTypes: ['ADOPTION'],
       },
       COMPARATIVE_COST_BENEFIT: {
-        costComparison: randBoolean() ? CostComparisonCatalogueEnum.CHEAPER : CostComparisonCatalogueEnum.NOT_SURE,
-        hasCostCareKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
-        hasCostSavingKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
+        costComparison: randBoolean() ? 'CHEAPER' : 'NOT_SURE',
+        hasCostCareKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
+        hasCostSavingKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
       },
       COST_OF_INNOVATION: {
         costDescription: randText(),
-        hasCostKnowledge: randBoolean() ? HasKnowledgeCatalogueEnum.DETAILED_ESTIMATE : HasKnowledgeCatalogueEnum.ROUGH_IDEA,
-        patientsRange: randText(),
+        hasCostKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
+        patientsRange: 'NOT_SURE',
         sellExpectations: randText(),
         usageExpectations: randText(),
       },
       CURRENT_CARE_PATHWAY: {
-        carePathway: randBoolean() ? CarePathwayCatalogueEnum.BETTER_OPTION : CarePathwayCatalogueEnum.NO_KNOWLEDGE,
-        hasUKPathwayKnowledge: randBoolean() ? YesNoNotRelevantCatalogueEnum.YES : YesNoNotRelevantCatalogueEnum.NO,
-        innovationPathwayKnowledge: randBoolean() ? InnovationPathwayKnowledgeCatalogueEnum.PATHWAY_EXISTS_AND_FITS : InnovationPathwayKnowledgeCatalogueEnum.NO_PATHWAY,
+        carePathway: randBoolean() ? 'BETTER_OPTION' : 'NO_KNOWLEDGE',
+        hasUKPathwayKnowledge: randBoolean() ? 'YES' : 'NO',
+        innovationPathwayKnowledge: randBoolean() ? 'PATHWAY_EXISTS_AND_FITS' : 'NO_PATHWAY',
         potentialPathway: randText(),
       },
       EVIDENCE_OF_EFFECTIVENESS: {
         evidences: [],
-        hasEvidence: randBoolean() ? HasEvidenceCatalogueEnum.YES : HasEvidenceCatalogueEnum.IN_PROGRESS,
+        hasEvidence: randBoolean() ? 'YES' : 'IN_PROGRESS',
       },
       IMPLEMENTATION_PLAN: {
         deploymentPlans: [],
         files: [],
-        hasDeployPlan: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-        hasResourcesToScale: randBoolean() ? HasResourcesToScaleCatalogueEnum.YES : HasResourcesToScaleCatalogueEnum.NO,
-        isDeployed: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+        hasDeployPlan: randBoolean() ? 'YES' : 'NO',
+        hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
+        isDeployed: randBoolean() ? 'YES' : 'NO',
       },
       INTELLECTUAL_PROPERTY: {
-        hasOtherIntellectual: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
-        hasPatents: randBoolean() ? HasPatentsCatalogueEnum.HAS_AT_LEAST_ONE : HasPatentsCatalogueEnum.HAS_NONE,
+        hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
+        hasPatents: randBoolean() ? 'HAS_AT_LEAST_ONE' : 'HAS_NONE',
         otherIntellectual: randText(),
       },
       MARKET_RESEARCH: {
-        hasMarketResearch: randBoolean() ? HasMarketResearchCatalogueEnum.YES : HasMarketResearchCatalogueEnum.NOT_YET,
+        hasMarketResearch: randBoolean() ? 'YES' : 'NOT_YET',
         marketResearch: randText(),
       },
       REGULATIONS_AND_STANDARDS: {
         files: [],
-        hasRegulationKnowledge: randBoolean() ? HasRegulationKnowledegeCatalogueEnum.YES_ALL : HasRegulationKnowledegeCatalogueEnum.NO,
+        hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
         otherRegulationDescription: randText(),
-        standards: [{type: InnovationCertificationCatalogueEnum.CE_UKCA_CLASS_I, hasMet: StandardMetCatalogueEnum.IN_PROGRESS}],
+        standards: [{type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS'}],
       },
       REVENUE_MODEL: {
         benefittingOrganisations: randText(),
         fundingDescription: randText(),
-        hasFunding: randBoolean() ? HasFundingCatalogueEnum.YES : HasFundingCatalogueEnum.NO,
-        hasRevenueModel: randBoolean() ? YesOrNoCatalogueEnum.YES : YesOrNoCatalogueEnum.NO,
+        hasFunding: randBoolean() ? 'YES' : 'NO',
+        hasRevenueModel: randBoolean() ? 'YES' : 'NO',
         otherRevenueDescription: randText(),
         payingOrganisations: randText(),
         revenues: []
       },
       TESTING_WITH_USERS: {
-        hasTests: randBoolean() ? HasTestsCatalogueEnum.YES : HasTestsCatalogueEnum.NOT_YET,
+        hasTests: randBoolean() ? 'YES' : 'NOT_YET',
         userTests: [],
         files: []
       },
@@ -123,10 +124,9 @@ export class InnovationBuilder {
         accessibilityStepsDetails: randText(),
         environmentalBenefits: [],
         generalBenefits: [],
-        hasBenefits: randBoolean() ? HasBenefitsCatalogueEnum.YES : HasBenefitsCatalogueEnum.NOT_YET,
+        hasBenefits: randBoolean() ? 'YES' : 'NOT_YET',
         otherEnvironmentalBenefit: randText(),
         otherGeneralBenefit: randText(),
-        otherPatientsCitizensBenefit: randText(),
         patientsCitizensBenefits: []
       },
       UNDERSTANDING_OF_NEEDS: {
@@ -137,7 +137,7 @@ export class InnovationBuilder {
         impactPatients: randBoolean(),
       },
       VALUE_PROPOSITION: {
-        hasProblemTackleKnowledge: randBoolean() ? HasProblemTackleKnowledgeCatalogueEnum.YES : HasProblemTackleKnowledgeCatalogueEnum.NOT_YET,
+        hasProblemTackleKnowledge: randBoolean() ? 'YES' : 'NOT_YET',
         intervention: randText(),
         interventionImpact: randText(),
         problemsConsequences: randText(),

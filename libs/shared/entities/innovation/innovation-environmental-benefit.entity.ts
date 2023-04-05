@@ -4,14 +4,16 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from './innovation.entity';
 
-import { EnvironmentalBenefitCatalogueEnum } from '../../enums/catalog.enums';
+import { catalogEnvironmentalBenefit } from '../../../shared/schemas/innovation-record/220209/catalog.types';
 
-
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_environmental_benefit')
 export class InnovationEnvironmentalBenefitEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: EnvironmentalBenefitCatalogueEnum, nullable: false })
-  type: EnvironmentalBenefitCatalogueEnum;
+  @PrimaryColumn({ type: 'simple-enum', enum: catalogEnvironmentalBenefit, nullable: false })
+  type: catalogEnvironmentalBenefit;
 
   @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
   innovationId: string;

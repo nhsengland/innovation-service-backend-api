@@ -1,9 +1,9 @@
-import type { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
+import type { catalogClinicalEvidence, catalogEvidenceType } from '@innovations/shared/schemas/innovation-record/220209/catalog.types';
 
 export type ResponseDTO = {
-  evidenceType: EvidenceTypeCatalogueEnum,
-  clinicalEvidenceType?: ClinicalEvidenceTypeCatalogueEnum,
+  evidenceType: catalogEvidenceType,
+  clinicalEvidenceType?: catalogClinicalEvidence,
   description?: string,
   summary?: string,
-  files?: { id: string; displayFileName: string; url: string }[];
+  files?: { id: string; name: string; url: string }[];
 }

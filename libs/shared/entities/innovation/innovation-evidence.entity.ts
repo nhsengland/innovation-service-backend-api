@@ -2,10 +2,9 @@ import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGe
 
 import { BaseEntity } from '../base.entity';
 
+import type { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
-
-import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '../../enums/catalog.enums';
 
 
 @Entity('innovation_evidence')
@@ -18,10 +17,10 @@ export class InnovationEvidenceEntity extends BaseEntity {
   summary: string;
 
   @Column({ name: 'evidence_type', type: 'nvarchar', nullable: true })
-  evidenceType: EvidenceTypeCatalogueEnum;
+  evidenceType: CurrentCatalogTypes.catalogEvidenceType;
 
   @Column({ name: 'clinical_evidence_type', type: 'nvarchar', nullable: true })
-  clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+  clinicalEvidenceType: CurrentCatalogTypes.catalogClinicalEvidence;
 
   @Column({ name: 'description', nullable: true })
   description: string;

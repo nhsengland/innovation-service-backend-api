@@ -1,8 +1,9 @@
 import Joi from 'joi';
 import type { ActivityEnum } from '../enums/activity.enums';
-import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
+import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 import type { DateISOType } from './date.types';
 
 export type RoleType = {
@@ -201,7 +202,7 @@ export type ActivityLogDBParamsType = {
   interveningUserId?: string;
 
   assessmentId?: string;
-  sectionId?: InnovationSectionEnum;
+  sectionId?: CurrentCatalogTypes.InnovationSections;
   actionId?: string;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
@@ -234,6 +235,7 @@ export type ActivityLogListParamsType = ActivityLogDBParamsType & {
 
 export type ActivitiesParamsType<T extends ActivityEnum> = Required<ActivityLogTemplatesType[T]>['params'];
 
+// TODO: TechDebt the sectionKeyEnum might not be true if different documment versions have different keys
 export type ActivityLogTemplatesType = {
   [ActivityEnum.INNOVATION_CREATION]: {
     params: Record<string, never>
@@ -245,10 +247,10 @@ export type ActivityLogTemplatesType = {
     params: { organisations: string[] }
   },
   [ActivityEnum.SECTION_DRAFT_UPDATE]: {
-    params: { sectionId: InnovationSectionEnum }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections }
   },
   [ActivityEnum.SECTION_SUBMISSION]: {
-    params: { sectionId: InnovationSectionEnum }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections }
   },
   INNOVATION_SUBMISSION: {
     params: Record<string, never>
@@ -269,10 +271,10 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   [ActivityEnum.ACTION_CREATION]: {
-    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string }, role: ServiceRoleEnum }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections, actionId: string, comment: { value: string }, role: ServiceRoleEnum }
   },
   [ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE]: {
-    params: { sectionId: InnovationSectionEnum, totalActions: number }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections, totalActions: number }
   },
   [ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE]: {
     params: { actionId: string }

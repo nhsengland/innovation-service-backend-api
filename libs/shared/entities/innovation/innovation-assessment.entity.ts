@@ -4,10 +4,10 @@ import { BaseEntity } from '../base.entity';
 
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
 import { UserEntity } from '../user/user.entity';
-import { InnovationEntity } from './innovation.entity';
 import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
+import { InnovationEntity } from './innovation.entity';
 
-import type { MaturityLevelCatalogueEnum, YesPartiallyNoCatalogueEnum } from '../../enums/catalog.enums';
+import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../../shared/enums';
 import type { DateISOType } from '../../types/date.types';
 
 
@@ -24,7 +24,7 @@ export class InnovationAssessmentEntity extends BaseEntity {
   summary: null | string;
 
   @Column({ name: 'maturity_level', type: 'nvarchar', nullable: true, length: 20 })
-  maturityLevel: null | MaturityLevelCatalogueEnum;
+  maturityLevel: null | MaturityLevelCatalogueType;
 
   @Column({ name: 'maturity_level_comment', type: 'nvarchar', nullable: true, length: 200 })
   maturityLevelComment: null | string;
@@ -33,43 +33,43 @@ export class InnovationAssessmentEntity extends BaseEntity {
   finishedAt: null | DateISOType;
 
   @Column({ name: 'has_regulatory_approvals', type: 'nvarchar', nullable: true, length: 20 })
-  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueEnum;
+  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_regulatory_approvals_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasRegulatoryApprovalsComment: null | string;
 
   @Column({ name: 'has_evidence', type: 'nvarchar', nullable: true, length: 20 })
-  hasEvidence: null | YesPartiallyNoCatalogueEnum;
+  hasEvidence: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_evidence_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasEvidenceComment: null | string;
 
   @Column({ name: 'has_validation', type: 'nvarchar', nullable: true, length: 20 })
-  hasValidation: null | YesPartiallyNoCatalogueEnum;
+  hasValidation: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_validation_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasValidationComment: null | string;
 
   @Column({ name: 'has_proposition', type: 'nvarchar', nullable: true, length: 20 })
-  hasProposition: null | YesPartiallyNoCatalogueEnum;
+  hasProposition: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_proposition_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasPropositionComment: null | string;
 
   @Column({ name: 'has_competition_knowledge', type: 'nvarchar', nullable: true, length: 20 })
-  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueEnum;
+  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_competition_knowledge_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasCompetitionKnowledgeComment: null | string;
 
   @Column({ name: 'has_implementation_plan', type: 'nvarchar', nullable: true, length: 20 })
-  hasImplementationPlan: null | YesPartiallyNoCatalogueEnum;
+  hasImplementationPlan: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_implementation_plan_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasImplementationPlanComment: null | string;
 
   @Column({ name: 'has_scale_resource', type: 'nvarchar', nullable: true, length: 20 })
-  hasScaleResource: null | YesPartiallyNoCatalogueEnum;
+  hasScaleResource: null | YesPartiallyNoCatalogueType;
 
   @Column({ name: 'has_scale_resource_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasScaleResourceComment: null | string;

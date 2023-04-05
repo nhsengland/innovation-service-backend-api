@@ -1,7 +1,6 @@
-import { InnovationAssessmentEntity, InnovationReassessmentRequestEntity, type InnovationEntity } from '../entities';
-import { YesOrNoCatalogueEnum } from '../enums';
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
+import { InnovationAssessmentEntity, InnovationReassessmentRequestEntity, type InnovationEntity } from '../entities';
 
 export class InnovationReassessmentBuilder {
 
@@ -14,7 +13,7 @@ export class InnovationReassessmentBuilder {
     this.innovationReassessment = InnovationReassessmentRequestEntity.new({
       innovation,
       assessment,
-      updatedInnovationRecord: YesOrNoCatalogueEnum.YES,
+      updatedInnovationRecord: 'YES',
       description: randText(),
       createdBy: assessment.createdBy
       });

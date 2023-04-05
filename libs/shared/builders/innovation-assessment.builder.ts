@@ -1,7 +1,6 @@
-import { InnovationAssessmentEntity, type InnovationEntity, type UserEntity } from '../entities';
-import { YesPartiallyNoCatalogueEnum, MaturityLevelCatalogueEnum } from '../enums';
-import { randPastDate, randText, randBoolean } from '@ngneat/falso';
+import { randBoolean, randPastDate, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
+import { InnovationAssessmentEntity, type InnovationEntity, type UserEntity } from '../entities';
 
 export class InnovationAssessmentBuilder {
 
@@ -12,21 +11,21 @@ export class InnovationAssessmentBuilder {
     this.innovationAssessment = InnovationAssessmentEntity.new({
       innovation,
       description: randText(),
-      hasCompetitionKnowledge: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasCompetitionKnowledge: randBoolean() ? 'YES' : 'NO',
       hasCompetitionKnowledgeComment: randText(),
-      hasEvidence: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasEvidence: randBoolean() ? 'YES' : 'NO',
       hasEvidenceComment: randText(),
-      hasImplementationPlan: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasImplementationPlan: randBoolean() ? 'YES' : 'NO',
       hasImplementationPlanComment: randText(),
-      hasProposition: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasProposition: randBoolean() ? 'YES' : 'NO',
       hasPropositionComment: randText(),
-      hasRegulatoryApprovals: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasRegulatoryApprovals: randBoolean() ? 'YES' : 'NO',
       hasRegulatoryApprovalsComment: randText(),
-      hasScaleResource: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasScaleResource: randBoolean() ? 'YES' : 'NO',
       hasScaleResourceComment: randText(),
-      hasValidation: randBoolean() ? YesPartiallyNoCatalogueEnum.YES : YesPartiallyNoCatalogueEnum.NO,
+      hasValidation: randBoolean() ? 'YES' : 'NO',
       hasValidationComment: randText(),
-      maturityLevel: MaturityLevelCatalogueEnum.READY,
+      maturityLevel: 'READY',
       maturityLevelComment: randText(),
       summary: randText(),
       updatedAt: randPastDate().toISOString()

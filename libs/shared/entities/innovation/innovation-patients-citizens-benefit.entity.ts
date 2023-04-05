@@ -4,14 +4,17 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from './innovation.entity';
 
-import { SubgroupBenefitCatalogueEnum } from '../../enums/catalog.enums';
+import { catalogPatientsCitizensBenefit } from '../../../shared/schemas/innovation-record/220209/catalog.types';
 
 
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_patients_citizens_benefit')
 export class InnovationPatientsCitizensBenefitEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: SubgroupBenefitCatalogueEnum, nullable: false })
-  type: SubgroupBenefitCatalogueEnum;
+  @PrimaryColumn({ type: 'simple-enum', enum: catalogPatientsCitizensBenefit, nullable: false })
+  type: catalogPatientsCitizensBenefit;
 
   @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
   innovationId: string;

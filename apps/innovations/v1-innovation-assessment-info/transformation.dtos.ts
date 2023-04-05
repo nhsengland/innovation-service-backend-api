@@ -1,9 +1,9 @@
-import type { YesOrNoCatalogueEnum } from '@innovations/shared/enums';
+import type { YesOrNoCatalogueType } from '@innovations/shared/enums';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
   id: string,
-  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
+  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueType, description: string },
   summary: null | string,
   description: null | string,
   finishedAt: null | DateISOType,

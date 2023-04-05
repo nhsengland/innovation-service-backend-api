@@ -2,7 +2,7 @@ import { groupBy } from 'lodash';
 import type { DeepPartial, MigrationInterface, QueryRunner } from 'typeorm';
 
 import { InnovationAreaEntity, InnovationCareSettingEntity, InnovationCategoryEntity, InnovationDeploymentPlanEntity, InnovationDiseaseConditionEntity, InnovationDocumentEntity, InnovationEntity, InnovationEnvironmentalBenefitEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationGeneralBenefitEntity, InnovationPatientsCitizensBenefitEntity, InnovationRevenueEntity, InnovationStandardEntity, InnovationSubgroupEntity, InnovationSupportTypeEntity, InnovationUserTestEntity } from '../../shared/entities';
-import { InnovationSectionEnum } from '../../shared/enums';
+import type { InnovationSections } from '../../shared/schemas/innovation-record/220209/catalog.types';
 
 export class createTableInnovationDocumentAndMigration1680028339424 implements MigrationInterface {
   name?: string | undefined;
@@ -82,10 +82,10 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
       'innovation.id'
     );
     
-    const filesMap = new Map<string, Map<InnovationSectionEnum, string[]>>();
+    const filesMap = new Map<string, Map<InnovationSections, string[]>>();
     for (const file of await queryRunner.manager.createQueryBuilder(InnovationFileEntity, 'file').getRawMany()) {
       if(!filesMap.has(file.file_innovation_id)) {
-        filesMap.set(file.file_innovation_id, new Map<InnovationSectionEnum, string[]>());
+        filesMap.set(file.file_innovation_id, new Map<InnovationSections, string[]>());
       }
       const innovationFiles = filesMap.get(file.file_innovation_id)!;
       if(!innovationFiles.has(file.file_context)) {
@@ -143,7 +143,6 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
             hasBenefits: innovation.hasBenefits ?? undefined,
             otherEnvironmentalBenefit: innovation.otherEnvironmentalBenefit ?? undefined,
             otherGeneralBenefit: innovation.otherGeneralBenefit ?? undefined,
-            otherPatientsCitizensBenefit: innovation.otherPatientsCitizensBenefit ?? undefined,
             patientsCitizensBenefits: innovationPatientsCitizensBenefits[innovation.id]?.map(b => b.type) ?? []
           },
           EVIDENCE_OF_EFFECTIVENESS: {
@@ -172,7 +171,7 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
               hasMet: s.hasMet ?? undefined,
               type: s.type,
             })) ?? [],
-            files: filesMap.get(innovation.id)?.get(InnovationSectionEnum.REGULATIONS_AND_STANDARDS) ?? []
+            files: filesMap.get(innovation.id)?.get('REGULATIONS_AND_STANDARDS') ?? []
           },
           CURRENT_CARE_PATHWAY: {
             carePathway: innovation.carePathway ?? undefined,
@@ -186,12 +185,12 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
               kind: t.kind,
               feedback: t.feedback
             })) ?? [],
-            files: filesMap.get(innovation.id)?.get(InnovationSectionEnum.TESTING_WITH_USERS) ?? []
+            files: filesMap.get(innovation.id)?.get('TESTING_WITH_USERS') ?? []
           },
           COST_OF_INNOVATION: {
             costDescription: innovation.costDescription ?? undefined,
             hasCostKnowledge: innovation.hasCostKnowledge ?? undefined,
-            patientsRange: innovation.patientsRange ?? undefined,
+            patientsRange: innovation.patientsRange as any ?? undefined,
             sellExpectations: innovation.sellExpectations ?? undefined,
             usageExpectations: innovation.usageExpectations ?? undefined,
           },
@@ -215,7 +214,7 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
               name: d.name ?? undefined,
               orgDeploymentAffect: d.orgDeploymentAffect ?? undefined,
             })) ?? [],
-            files: filesMap.get(innovation.id)?.get(InnovationSectionEnum.IMPLEMENTATION_PLAN) ?? [],
+            files: filesMap.get(innovation.id)?.get('IMPLEMENTATION_PLAN') ?? [],
             hasDeployPlan: innovation.hasDeployPlan ?? undefined,
             hasResourcesToScale: innovation.hasResourcesToScale ?? undefined,
             isDeployed: innovation.isDeployed ?? undefined

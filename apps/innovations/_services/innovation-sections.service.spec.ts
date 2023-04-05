@@ -4,7 +4,8 @@ import { container } from '../_config';
 
 import { InnovationSectionBuilder } from '@innovations/shared/builders/innovation-section.builder';
 import { InnovationBuilder } from '@innovations/shared/builders/innovation.builder';
-import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum, InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { DomainUsersService, NOSQLConnectionService } from '@innovations/shared/services';
 import { rand, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
@@ -86,7 +87,7 @@ describe('Innovation Sections Suite', () => {
     // arrange
     const innovation = testData.innovation;
 
-    const sectionKey = rand(Object.values(InnovationSectionEnum));
+    const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
 
     const sectionsList = await sut.getInnovationSectionInfo(
       testData.domainContexts.assessmentUser,
@@ -106,7 +107,7 @@ describe('Innovation Sections Suite', () => {
       .setOwner(testData.baseUsers.innovator)
       .build(em);
 
-    const sectionKey = rand(Object.values(InnovationSectionEnum));
+    const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
     await new InnovationSectionBuilder(innovation)
       .setSection(sectionKey)
       .setStatus(InnovationSectionStatusEnum.DRAFT)
@@ -133,7 +134,7 @@ describe('Innovation Sections Suite', () => {
       { id: innovator.id },
       testData.domainContexts.innovator,
       innovation.id,
-      InnovationSectionEnum.INNOVATION_DESCRIPTION,
+      'INNOVATION_DESCRIPTION',
       { summary: randText() }
     );
 
@@ -148,7 +149,7 @@ describe('Innovation Sections Suite', () => {
     .setOwner(testData.baseUsers.innovator)
     .build(em);
 
-  const sectionKey = rand(Object.values(InnovationSectionEnum));
+  const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
   await new InnovationSectionBuilder(innovation)
     .setSection(sectionKey)
     .setStatus(InnovationSectionStatusEnum.DRAFT)
@@ -176,8 +177,8 @@ describe('Innovation Sections Suite', () => {
       { id: innovator.id },
       innovation.id,
       {
-        evidenceType: EvidenceTypeCatalogueEnum.CLINICAL,
-        clinicalEvidenceType: rand(Object.values(ClinicalEvidenceTypeCatalogueEnum)),
+        evidenceType: 'CLINICAL',
+        clinicalEvidenceType: rand(Object.values(CurrentCatalogTypes.catalogClinicalEvidence)),
         description: randText(),
         summary: randText(),
         files: [file.id]
@@ -196,14 +197,14 @@ describe('Innovation Sections Suite', () => {
     const innovation = testData.innovation;
     const file = await TestsHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
-    const allowedEvidenceTypes = Object.values(EvidenceTypeCatalogueEnum).filter(et => et !== EvidenceTypeCatalogueEnum.CLINICAL);
+    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceType.filter(et => et !== 'CLINICAL');
 
     const evidence = await sut.createInnovationEvidence(
       { id: innovator.id },
       innovation.id,
       {
         evidenceType: rand(allowedEvidenceTypes),
-        clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum.OTHER,
+        clinicalEvidenceType: 'OTHER',
         description: randText(),
         summary: randText(),
         files: [file.id]

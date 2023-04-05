@@ -3,8 +3,8 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
@@ -73,12 +73,12 @@ export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, '
                 },
                 evidenceType: {
                   type: 'string',
-                  enum: [Object.values(EvidenceTypeCatalogueEnum)],
+                  enum: Object.values(CurrentCatalogTypes.catalogEvidenceType),
                   description: 'Evidence type.',
                 },
                 clinicalEvidenceType: {
                   type: 'string',
-                  enum: [Object.values(ClinicalEvidenceTypeCatalogueEnum)],
+                  enum: Object.values(CurrentCatalogTypes.catalogClinicalEvidence),
                   description: 'Clinical Evidence type.',
                 },
                 description: {

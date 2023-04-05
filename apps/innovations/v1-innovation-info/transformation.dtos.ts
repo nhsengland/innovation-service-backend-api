@@ -1,4 +1,5 @@
-import type { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
+import type { InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
@@ -11,7 +12,7 @@ export type ResponseDTO = {
   submittedAt: null | DateISOType,
   countryName: null | string,
   postCode: null | string,
-  categories: InnovationCategoryCatalogueEnum[],
+  categories: CurrentCatalogTypes.catalogCategory[],
   otherCategoryDescription: null | string,
   owner: {
     id: string,

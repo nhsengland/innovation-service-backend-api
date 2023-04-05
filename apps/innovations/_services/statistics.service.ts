@@ -1,6 +1,7 @@
 import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity } from '@innovations/shared/entities';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
@@ -12,7 +13,7 @@ export class StatisticsService extends BaseService {
     super();
   }
 
-  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<{ updatedAt: DateISOType, section: InnovationSectionEnum }[]> {
+  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<{ updatedAt: DateISOType, section: CurrentCatalogTypes.InnovationSections }[]> {
 
     const openActions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoin('action.innovationSection', 'section')
@@ -27,7 +28,7 @@ export class StatisticsService extends BaseService {
     return openActions;
   }
 
-  async getSubmittedSections(innovationId: string): Promise<{ updatedAt: DateISOType, section: InnovationSectionEnum }[]> {
+  async getSubmittedSections(innovationId: string): Promise<{ updatedAt: DateISOType, section: CurrentCatalogTypes.InnovationSections }[]> {
     const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section')
@@ -90,7 +91,7 @@ export class StatisticsService extends BaseService {
     };
   }
 
-  async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{ section: InnovationSectionEnum, updatedAt: DateISOType }[]> {
+  async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{ section: CurrentCatalogTypes.InnovationSections, updatedAt: DateISOType }[]> {
 
     const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
@@ -121,7 +122,7 @@ export class StatisticsService extends BaseService {
     return sections;
   }
 
-  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<{ section: InnovationSectionEnum, updatedAt: DateISOType }[]> {
+  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<{ section: CurrentCatalogTypes.InnovationSections, updatedAt: DateISOType }[]> {
 
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessments')
       .innerJoin('assessments.assignTo', 'assignTo')

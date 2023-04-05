@@ -1,7 +1,8 @@
 
 import type { ServiceRoleEnum } from '../enums';
-import type { InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
+import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 
 export type NotifierTemplatesType = {
@@ -45,12 +46,12 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.ACTION_CREATION]: {
     innovationId: string,
-    action: { id: string, section: InnovationSectionEnum }
+    action: { id: string, section: CurrentCatalogTypes.InnovationSections }
   },
 
   [NotifierTypeEnum.ACTION_UPDATE]: {
     innovationId: string,
-    action: { id: string, section: InnovationSectionEnum, status: InnovationActionStatusEnum }
+    action: { id: string, section: CurrentCatalogTypes.InnovationSections, status: InnovationActionStatusEnum }
     comment?: string
   },
 

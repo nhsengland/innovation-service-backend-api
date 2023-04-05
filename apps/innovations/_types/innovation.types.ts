@@ -1,9 +1,10 @@
-import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '@innovations/shared/enums';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
   id: string | null,
-  section: InnovationSectionEnum | null,
+  section: CurrentCatalogTypes.InnovationSections | null,
   status: InnovationSectionStatusEnum | null,
   actionStatus: InnovationActionStatusEnum | null,
   updatedAt: DateISOType | null,
@@ -12,26 +13,26 @@ export interface InnovationSectionModel {
 
 export type InnovationAssessmentType = {
   id: string,
-  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
+  reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo, description: string },
   summary: null | string,
   description: null | string,
   finishedAt: null | DateISOType,
   assignTo: { id: string, name: string },
-  maturityLevel: null | MaturityLevelCatalogueEnum,
+  maturityLevel: null | MaturityLevelCatalogueType,
   maturityLevelComment: null | string,
-  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueEnum,
+  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueType,
   hasRegulatoryApprovalsComment: null | string,
-  hasEvidence: null | YesPartiallyNoCatalogueEnum,
+  hasEvidence: null | YesPartiallyNoCatalogueType,
   hasEvidenceComment: null | string,
-  hasValidation: null | YesPartiallyNoCatalogueEnum,
+  hasValidation: null | YesPartiallyNoCatalogueType,
   hasValidationComment: null | string,
-  hasProposition: null | YesPartiallyNoCatalogueEnum,
+  hasProposition: null | YesPartiallyNoCatalogueType,
   hasPropositionComment: null | string,
-  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueEnum,
+  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueType,
   hasCompetitionKnowledgeComment: null | string,
-  hasImplementationPlan: null | YesPartiallyNoCatalogueEnum,
+  hasImplementationPlan: null | YesPartiallyNoCatalogueType,
   hasImplementationPlanComment: null | string,
-  hasScaleResource: null | YesPartiallyNoCatalogueEnum,
+  hasScaleResource: null | YesPartiallyNoCatalogueType,
   hasScaleResourceComment: null | string,
   suggestedOrganisations: OrganisationWithUnitsType[],
   updatedAt: null | DateISOType,

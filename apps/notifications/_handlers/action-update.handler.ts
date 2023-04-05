@@ -1,5 +1,5 @@
 import type { UserRoleEntity } from '@notifications/shared/entities';
-import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationSectionEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
@@ -8,13 +8,14 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import { BaseHandler } from './base.handler';
 
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
   EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR | EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR,
-  { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: InnovationSectionEnum }
+  { actionCode: string, actionStatus: '' | InnovationActionStatusEnum, section: CurrentCatalogTypes.InnovationSections }
 > {
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);

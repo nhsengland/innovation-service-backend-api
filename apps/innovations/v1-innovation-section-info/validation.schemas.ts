@@ -1,16 +1,16 @@
 import Joi from 'joi';
 
-import { InnovationSectionEnum } from '@innovations/shared/enums';
 import { JoiHelper } from '@innovations/shared/helpers';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 
 
 export type ParamsType = {
   innovationId: string;
-  sectionKey: InnovationSectionEnum
+  sectionKey: CurrentCatalogTypes.InnovationSections
 }
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  sectionKey: Joi.string().valid(...Object.values(InnovationSectionEnum)).required()
+  sectionKey: Joi.string().valid(...CurrentCatalogTypes.InnovationSections).required()
 }).required();
 
 export type QueryParamsType = {

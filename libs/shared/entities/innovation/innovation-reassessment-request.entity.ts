@@ -2,11 +2,9 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn
 
 import { BaseEntity } from '../base.entity';
 
+import type { YesOrNoCatalogueType } from '../../../shared/enums';
 import { InnovationAssessmentEntity } from './innovation-assessment.entity';
 import { InnovationEntity } from './innovation.entity';
-
-import type { YesOrNoCatalogueEnum } from '../../enums';
-
 
 @Entity('innovation_reassessment_request')
 export class InnovationReassessmentRequestEntity extends BaseEntity {
@@ -15,7 +13,7 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   id: string;
 
   @Column({ name: 'updated_innovation_record', type: 'varchar', nullable: true, length: 3 })
-  updatedInnovationRecord: YesOrNoCatalogueEnum;
+  updatedInnovationRecord: YesOrNoCatalogueType;
 
   @Column({ name: 'description', type: 'nvarchar', nullable: false, length: 200 })
   description: string;

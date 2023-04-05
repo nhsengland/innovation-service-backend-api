@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationStatusEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueType, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum, YesOrNoCatalogueType, YesPartiallyNoCatalogueType } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
@@ -154,21 +154,21 @@ export class InnovationAssessmentsService extends BaseService {
     data: {
       summary?: null | string,
       description?: null | string,
-      maturityLevel?: null | MaturityLevelCatalogueEnum,
+      maturityLevel?: null | MaturityLevelCatalogueType,
       maturityLevelComment?: null | string,
-      hasRegulatoryApprovals?: null | YesPartiallyNoCatalogueEnum,
+      hasRegulatoryApprovals?: null | YesPartiallyNoCatalogueType,
       hasRegulatoryApprovalsComment?: null | string,
-      hasEvidence?: null | YesPartiallyNoCatalogueEnum,
+      hasEvidence?: null | YesPartiallyNoCatalogueType,
       hasEvidenceComment?: null | string,
-      hasValidation?: null | YesPartiallyNoCatalogueEnum,
+      hasValidation?: null | YesPartiallyNoCatalogueType,
       hasValidationComment?: null | string,
-      hasProposition?: null | YesPartiallyNoCatalogueEnum,
+      hasProposition?: null | YesPartiallyNoCatalogueType,
       hasPropositionComment?: null | string,
-      hasCompetitionKnowledge?: null | YesPartiallyNoCatalogueEnum,
+      hasCompetitionKnowledge?: null | YesPartiallyNoCatalogueType,
       hasCompetitionKnowledgeComment?: null | string,
-      hasImplementationPlan?: null | YesPartiallyNoCatalogueEnum,
+      hasImplementationPlan?: null | YesPartiallyNoCatalogueType,
       hasImplementationPlanComment?: null | string,
-      hasScaleResource?: null | YesPartiallyNoCatalogueEnum,
+      hasScaleResource?: null | YesPartiallyNoCatalogueType,
       hasScaleResourceComment?: null | string,
       suggestedOrganisationUnitsIds?: string[],
       isSubmission?: boolean
@@ -303,7 +303,7 @@ export class InnovationAssessmentsService extends BaseService {
     user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
-    data: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string; },
+    data: { updatedInnovationRecord: YesOrNoCatalogueType, description: string; },
     entityManager?: EntityManager
   ): Promise<{ assessment: { id: string; }, reassessment: { id: string; }; }> {
 

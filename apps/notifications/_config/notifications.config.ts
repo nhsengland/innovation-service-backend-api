@@ -2,9 +2,10 @@ import type { Schema } from 'joi';
 import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
-import { InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { NotifierTemplatesType } from '@notifications/shared/types';
 
+import { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import {
   AccessorUnitChangeHandler,
   ActionCreationHandler,
@@ -12,6 +13,8 @@ import {
   DailyDigestHandler,
   IdleInnovatorsHandler,
   IdleSupportHandler,
+  InnovationCollaboratorInviteHandler,
+  InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
   // InnovationRecordExportApprovedHandler,
@@ -33,9 +36,7 @@ import {
   SLSValidationHandler,
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler,
-  InnovationCollaboratorInviteHandler,
-  InnovationCollaboratorUpdateHandler
+  UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import type { EmailTypeEnum } from './emails.config';
 
@@ -118,7 +119,7 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION]['action']>({
         id: Joi.string().guid().required(),
-        section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required()
+        section: Joi.string().valid(...CurrentCatalogTypes.InnovationSections).required()
       }).required()
     }).required()
   },
@@ -129,7 +130,7 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]['action']>({
         id: Joi.string().guid().required(),
-        section: Joi.string().valid(...Object.values(InnovationSectionEnum)).required(),
+        section: Joi.string().valid(...CurrentCatalogTypes.InnovationSections).required(),
         status: Joi.string().valid(...Object.values(InnovationActionStatusEnum)).required()
       }).required(),
       comment: Joi.string().optional()

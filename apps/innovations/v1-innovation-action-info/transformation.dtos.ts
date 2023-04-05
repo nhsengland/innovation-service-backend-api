@@ -1,11 +1,12 @@
-import type { InnovationActionStatusEnum, InnovationSectionEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import type { InnovationActionStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DateISOType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
   id: string,
   displayId: string,
   status: InnovationActionStatusEnum,
-  section: InnovationSectionEnum,
+  section: CurrentCatalogTypes.InnovationSections,
   description: string,
   createdAt: DateISOType,
   updatedAt: DateISOType,

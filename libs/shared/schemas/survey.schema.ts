@@ -1,22 +1,23 @@
 
 import { model, Model, models, Schema, Types } from 'mongoose';
 
-import { HasBenefitsCatalogueEnum, HasEvidenceCatalogueEnum, HasMarketResearchCatalogueEnum, HasProblemTackleKnowledgeCatalogueEnum, HasTestsCatalogueEnum, InnovationCategoryCatalogueEnum, InnovationSupportTypeCatalogueEnum, YesNotYetNotSureCatalogueEnum } from '../enums/catalog.enums';
+import { } from './innovation-record';
+import { catalogCategory, catalogsupportTypes, catalogYesInProgressNotYet, catalogYesNotYetNotSure } from './innovation-record/220209/catalog.types';
 
 export type SurveyAnswersType = {
-  categories: InnovationCategoryCatalogueEnum[],
+  categories: catalogCategory[],
   otherCategoryDescription: null | string,
-  mainCategory: InnovationCategoryCatalogueEnum,
+  mainCategory: catalogCategory,
   otherMainCategoryDescription: null | string,
-  hasProblemTackleKnowledge: HasProblemTackleKnowledgeCatalogueEnum,
-  hasMarketResearch: HasMarketResearchCatalogueEnum,
-  hasWhoBenefitsKnowledge: YesNotYetNotSureCatalogueEnum,
-  hasBenefits: HasBenefitsCatalogueEnum,
-  hasTests: HasTestsCatalogueEnum,
+  hasProblemTackleKnowledge: catalogYesNotYetNotSure,
+  hasMarketResearch: catalogYesInProgressNotYet,
+  hasWhoBenefitsKnowledge: catalogYesNotYetNotSure,
+  hasBenefits: catalogYesNotYetNotSure,
+  hasTests: catalogYesInProgressNotYet,
   hasRelevantCertifications: 'YES' | 'NOT_YET' | 'NO_KNOWLEDGE' | 'NOT_APPLICABLE',
-  hasEvidence: HasEvidenceCatalogueEnum,
+  hasEvidence: catalogYesInProgressNotYet,
   hasCostEvidence: 'YES' | 'IN_PROGRESS' | 'NOT_YET',
-  supportTypes: InnovationSupportTypeCatalogueEnum[]
+  supportTypes: catalogsupportTypes[]
 };
 
 type SurveySchemaType = {
@@ -31,19 +32,19 @@ const SurveySchema = new Schema<SurveySchemaType>(
   {
     id: Types.ObjectId,
     answers: new Schema<SurveyAnswersType>({
-      categories: Array<InnovationCategoryCatalogueEnum>,
+      categories: Array<catalogCategory>,
       otherCategoryDescription: { type: String, allowNull: true },
-      mainCategory: { type: String, enum: InnovationCategoryCatalogueEnum },
+      mainCategory: { type: String, enum: catalogCategory },
       otherMainCategoryDescription: { type: String, allowNull: true },
-      hasProblemTackleKnowledge: { type: String, enum: HasProblemTackleKnowledgeCatalogueEnum },
-      hasMarketResearch: { type: String, enum: HasMarketResearchCatalogueEnum },
-      hasWhoBenefitsKnowledge: { type: String, enum: YesNotYetNotSureCatalogueEnum },
-      hasBenefits: { type: String, enum: HasBenefitsCatalogueEnum },
-      hasTests: { type: String, enum: HasTestsCatalogueEnum },
+      hasProblemTackleKnowledge: { type: String, enum: catalogYesNotYetNotSure },
+      hasMarketResearch: { type: String, enum: catalogYesInProgressNotYet },
+      hasWhoBenefitsKnowledge: { type: String, enum: catalogYesNotYetNotSure },
+      hasBenefits: { type: String, enum: catalogYesNotYetNotSure },
+      hasTests: { type: String, enum: catalogYesInProgressNotYet },
       hasRelevantCertifications: { type: String, enum: ['YES', 'NOT_YET', 'NO_KNOWLEDGE', 'NOT_APPLICABLE'] },
-      hasEvidence: { type: String, enum: HasEvidenceCatalogueEnum },
+      hasEvidence: { type: String, enum: catalogYesInProgressNotYet },
       hasCostEvidence: { type: String, enum: ['YES', 'IN_PROGRESS', 'NOT_YET'] },
-      supportTypes: Array<InnovationSupportTypeCatalogueEnum>
+      supportTypes: Array<catalogsupportTypes>
     })
   },
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
