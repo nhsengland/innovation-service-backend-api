@@ -14,7 +14,7 @@ export type ResponseDTO = {
   postCode: null | string,
   categories: CurrentCatalogTypes.catalogCategory[],
   otherCategoryDescription: null | string,
-  owner: {
+  owner?: {
     id: string,
     name: string,
     isActive: boolean,

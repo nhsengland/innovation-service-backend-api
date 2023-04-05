@@ -336,6 +336,7 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .innerJoin('collaborator.innovation', 'innovation')
+      .withDeleted()
       .innerJoin('innovation.owner', 'innovationOwner')
       .select(['innovation.id', 'innovationOwner.id', 'collaborator.email', 'collaborator.status', 'collaborator.invitedAt'])
       .where('collaborator.id = :collaboratorId', { collaboratorId })

@@ -568,7 +568,7 @@ export class InnovationsService extends BaseService {
     postCode: null | string,
     categories: CurrentCatalogTypes.catalogCategory[],
     otherCategoryDescription: null | string,
-    owner: { id: string, name: string, email: string, contactByEmail: boolean, contactByPhone: boolean, contactByPhoneTimeframe: PhoneUserPreferenceEnum | null, contactDetails: string | null, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
+    owner?: { id: string, name: string, email: string, contactByEmail: boolean, contactByPhone: boolean, contactByPhoneTimeframe: PhoneUserPreferenceEnum | null, contactDetails: string | null, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
     lastEndSupportAt: null | DateISOType,
     export: { canUserExport: boolean, pendingRequestsCount: number },
     assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
@@ -586,10 +586,10 @@ export class InnovationsService extends BaseService {
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
         'collaborator.id'
-      ])
-      .innerJoin('innovation.owner', 'innovationOwner')
-      .innerJoin('innovationOwner.userOrganisations', 'userOrganisations')
-      .innerJoin('userOrganisations.organisation', 'organisation')
+      ])      
+      .leftJoin('innovation.owner', 'innovationOwner')
+      .leftJoin('innovationOwner.userOrganisations', 'userOrganisations')
+      .leftJoin('userOrganisations.organisation', 'organisation')
       .leftJoin('innovation.reassessmentRequests', 'reassessmentRequests')
       .innerJoin('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
       .leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status AND collaborator.user_id = :userId', { status: InnovationCollaboratorStatusEnum.ACTIVE, userId: domainContext.id })
@@ -632,14 +632,20 @@ export class InnovationsService extends BaseService {
     .getRawOne();
 
     // Fetch users names.
-    const ownerId = innovation.owner.id;
     const assessmentUsersIds = filters.fields?.includes('assessment') ? innovation.assessments?.map(assessment => assessment.assignTo.id) : [];
-
-    const usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[ownerId]] }));
-
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
-    const ownerInfo = usersInfo.find(item => item.id === innovation.owner.id);
-    const ownerPreferences = (await this.domainService.users.getUserPreferences(ownerId));
+    let usersInfo = [];
+    let ownerInfo = undefined;
+    let ownerPreferences = undefined;
+    
+
+    if (innovation.owner) {
+      ownerPreferences = (await this.domainService.users.getUserPreferences(innovation.owner.id));
+      usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds, ...[innovation.owner.id]] }));
+      ownerInfo = usersInfo.find(item => item.id === innovation.owner.id);
+    } else {
+      usersInfo = (await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds] }));
+    }
 
     // Export requests parsing.
     const innovationExport = {
@@ -700,22 +706,24 @@ export class InnovationsService extends BaseService {
       postCode: innovation.postcode,
       categories,
       otherCategoryDescription: documentData.otherCategoryDescription,
-      owner: {
-        id: innovation.owner.id,
-        name: ownerInfo?.displayName || '',
-        email: ownerInfo?.email || '',
-        contactByEmail: ownerPreferences.contactByEmail,
-        contactByPhone: ownerPreferences.contactByPhone,
-        contactByPhoneTimeframe: ownerPreferences.contactByPhoneTimeframe,
-        contactDetails: ownerPreferences.contactDetails,
-        mobilePhone: ownerInfo?.mobilePhone || '',
-        isActive: !!ownerInfo?.isActive,
-        lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-        organisations: (await innovation.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
-          name: item.organisation.name,
-          size: item.organisation.size
-        }))
-      },
+      ...(innovation.owner && ownerPreferences ? {
+        owner: {
+          id: innovation.owner.id,
+          name: ownerInfo?.displayName || '',
+          email: ownerInfo?.email || '',
+          contactByEmail: ownerPreferences.contactByEmail,
+          contactByPhone: ownerPreferences.contactByPhone,
+          contactByPhoneTimeframe: ownerPreferences.contactByPhoneTimeframe,
+          contactDetails: ownerPreferences.contactDetails,
+          mobilePhone: ownerInfo?.mobilePhone || '',
+          isActive: !!ownerInfo?.isActive,
+          lastLoginAt: ownerInfo?.lastLoginAt ?? null,
+          organisations: (await innovation.owner?.userOrganisations || []).filter(item => !item.organisation.isShadow).map(item => ({
+            name: item.organisation.name,
+            size: item.organisation.size
+          }))
+        }
+      } : {}),
       lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
       export: innovationExport,
       assessment,

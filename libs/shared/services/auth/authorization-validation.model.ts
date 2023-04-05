@@ -351,6 +351,7 @@ export class AuthorizationValidationModel {
 
     const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation')
       .select(['innovation.id', 'innovation.name', 'innovation.status', 'owner.id'])
+      .withDeleted()
       .innerJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId });
 
