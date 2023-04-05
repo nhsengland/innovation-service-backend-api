@@ -27,9 +27,8 @@ class V1UserAnnouncements {
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
-      const domainContext = authInstance.getContext();
 
-      const announcements = await announcementsService.getAnnouncements(domainContext);
+      const announcements = await announcementsService.getAnnouncements(authInstance.getContext());
       context.res = ResponseHelper.Ok<ResponseDTO>(announcements.map((announcement) => ({
         id: announcement.id,
         params: announcement.params,

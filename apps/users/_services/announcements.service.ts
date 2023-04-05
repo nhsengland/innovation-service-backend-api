@@ -1,5 +1,6 @@
 import { AnnouncementUserEntity } from '@users/shared/entities/user/announcement-user.entity';
 import type { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
+import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
 import type { DateISOType, DomainContextType } from '@users/shared/types';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
@@ -47,6 +48,29 @@ export class AnnouncementsService extends BaseService {
       targetRoles: announcement.targetRoles,
       createdAt: announcement.startsAt
     }));
+  }
+
+  async readAnnouncement(
+    domainContext: DomainContextType,
+    announcementId: string,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const userAnnouncement = await connection.createQueryBuilder(AnnouncementUserEntity, 'announcement')
+      .select(['announcement.id', 'announcement.targetRoles'])
+      .where('announcement.announcement_id = :announcementId', { announcementId })
+      .andWhere('announcement.user_id = :userId', { userId: domainContext.id })
+      .getOne();
+
+    if (!userAnnouncement || !userAnnouncement.targetRoles.includes(domainContext.currentRole.role)) {
+      throw new NotFoundError(UserErrorsEnum.USER_ANNOUNCEMENT_NOT_FOUND);
+    }
+
+    await connection.createQueryBuilder().update(AnnouncementUserEntity)
+      .set({ readAt: new Date().toISOString() })
+      .where('id = :announcementId', { announcementId: userAnnouncement.id })
+      .execute();
   }
 
 }

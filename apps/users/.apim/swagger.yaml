@@ -5,6 +5,22 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  "/v1/announcements/{announcementId}/read":
+    patch:
+      operationId: v1-announcement-read
+      description: Mark as read an announcement.
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Not found
   /v1/announcements:
     get:
       description: Returns the user announcements
