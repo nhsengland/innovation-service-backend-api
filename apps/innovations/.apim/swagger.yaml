@@ -812,8 +812,8 @@ paths:
         "500":
           description: An error occurred while creating the innovation assessment.
   "/v1/collaborators/{collaboratorId}/check":
-    head:
-      description: Check if collaborator exists
+    get:
+      description: Check collaborator
       operationId: v1-innovation-collaboration-check
       tags:
         - "[v1] Innovation Collaborators"
@@ -825,8 +825,19 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
+        "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userExists:
+                    type: boolean
+                    description: User exists in service
+                  collaboratorStatus:
+                    type: string
+                    description: Status of the collaborator invite
         "404":
           description: Not Found
   "/v1/{innovationId}/collaborators":

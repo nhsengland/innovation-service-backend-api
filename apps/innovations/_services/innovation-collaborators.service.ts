@@ -59,7 +59,7 @@ export class InnovationCollaboratorsService extends BaseService {
       status: InnovationCollaboratorStatusEnum.PENDING,
       updatedBy: domainContext.id,
       invitedAt: new Date().toISOString(),
-    }
+    };
 
     let collaboratorId;
     // Collaborator does not exist on DB.
@@ -342,7 +342,7 @@ export class InnovationCollaboratorsService extends BaseService {
       .getOne();
 
     if (!collaborator) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
     const isOwner = collaborator.innovation.owner.id === requestUser.id;
@@ -355,7 +355,7 @@ export class InnovationCollaboratorsService extends BaseService {
     return {
       type: isOwner ? 'OWNER' : 'COLLABORATOR',
       status: collaborator.status
-    }
+    };
   }
 
   async upsertCollaborator(
@@ -387,7 +387,7 @@ export class InnovationCollaboratorsService extends BaseService {
         }
       );
 
-      return { id: collaborator.id }
+      return { id: collaborator.id };
     } else {
       const newCollaborator = await connection.save(InnovationCollaboratorEntity, {
         status: data.status,
@@ -399,7 +399,7 @@ export class InnovationCollaboratorsService extends BaseService {
         user: UserEntity.new({ id: data.userId })
       });
 
-      return { id: newCollaborator.id }
+      return { id: newCollaborator.id };
     }
   }
 
@@ -422,15 +422,28 @@ export class InnovationCollaboratorsService extends BaseService {
     return { id: collaborator.id };
   }
 
-  async collaboratorExists(id: string, entityManager?: EntityManager): Promise<boolean> {
+  /**
+   * Checks if a given collaborator is in Pending status
+   * and if the invited user exists on the service 
+   * @param id 
+   * @param entityManager 
+   * @returns 
+   */
+  async checkCollaborator(id: string, entityManager?: EntityManager): Promise<{ userExists: boolean, collaboratorStatus: InnovationCollaboratorStatusEnum }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .select(['collaborators.id'])
-      .where('collaborators.id = :id AND collaborators.status = :status', { id, status: InnovationCollaboratorStatusEnum.PENDING })
+      .select(['collaborators.id', 'collaborators.status', 'collaborators.email'])
+      .where('collaborators.id = :id', { id })
       .getOne();
 
-    return !!collaborator;
+    if (!collaborator) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
+    }
+
+    const authUser = await this.identityProviderService.getUserInfoByEmail(collaborator.email);
+
+    return { userExists: !!authUser, collaboratorStatus: collaborator.status };
   }
 
 
