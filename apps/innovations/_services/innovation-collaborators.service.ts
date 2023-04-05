@@ -434,7 +434,7 @@ export class InnovationCollaboratorsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .select(['collaborators.id', 'collaborators.status', 'collaborators.email'])
+      .select(['collaborators.id', 'collaborators.status', 'collaborators.email', 'collaborators.invitedAt'])
       .where('collaborators.id = :id', { id })
       .getOne();
 
