@@ -224,17 +224,19 @@ export class InnovationCollaboratorsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .withDeleted()
       .innerJoin('collaborator.innovation', 'innovation')
       .leftJoin('collaborator.user', 'collaboratorUser')
       .innerJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.name', 'innovation.description', 'innovation.id',
-        'innovationOwner.identityId', 'innovationOwner.id',
+        'innovationOwner.identityId', 'innovationOwner.id', 'innovationOwner.deletedAt',
         'collaboratorUser.identityId',
         'collaborator.id', 'collaborator.email', 'collaborator.status', 'collaborator.collaboratorRole', 'collaborator.invitedAt', 'collaborator.createdBy'
       ])
       .where('collaborator.innovation = :innovationId AND collaborator.id = :collaboratorId', { innovationId, collaboratorId })
       .getOne();
+
     if (!collaborator) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
@@ -247,14 +249,12 @@ export class InnovationCollaboratorsService extends BaseService {
       }
     }
 
-    const userIds = [collaborator.innovation.owner.identityId];
+    let collaboratorName;
+    
     if (collaborator.user) {
-      userIds.push(collaborator.user.identityId);
+      const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
+      collaboratorName = collaboratorUser.displayName;
     }
-    const usersInfoMap = await this.identityProviderService.getUsersMap(userIds);
-
-    const collaboratorName = collaborator.user && usersInfoMap.get(collaborator.user.identityId)?.displayName;
-    const ownerName = usersInfoMap.get(collaborator.innovation.owner.identityId)?.displayName;
 
     return {
       id: collaborator.id,
@@ -267,8 +267,8 @@ export class InnovationCollaboratorsService extends BaseService {
         name: collaborator.innovation.name,
         description: collaborator.innovation.description,
         owner: {
-          id: collaborator.innovation.owner.id,
-          name: ownerName
+          id: collaborator.innovation.owner.id,          
+          name: collaborator.innovation.owner.deletedAt === null ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName : undefined
         },
       },
       invitedAt: collaborator.invitedAt

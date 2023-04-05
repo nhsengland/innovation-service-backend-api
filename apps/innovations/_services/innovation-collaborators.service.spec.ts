@@ -318,15 +318,14 @@ describe('Innovation Collaborators Suite', () => {
     beforeEach(async () => {
       collaboratorPendingWithoutUser = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).build(em);
       collaboratorPendingWithUser = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).setEmail('innovator2@gmail.com').setUser(testData.baseUsers.innovator2).build(em);
-
-      jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
-        { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name' } as any,
-        { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name' } as any
-      ]);
     });
 
     describe('asOwner', () => {
-      it('for a new user it should return info for a new collaborator without the name', async () => {
+      it('for a new user it should return info for a new collaborator without the name', async () => {  
+        jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+          { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name' } as any,
+          { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name' } as any
+        ]);
 
         const expected = {
           id: collaboratorPendingWithoutUser.id,
@@ -352,6 +351,14 @@ describe('Innovation Collaborators Suite', () => {
       });
 
       it('for a existing user should return info for a new collaborator with the name of the user', async () => {
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo')
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+          )
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name', email: 'innovator1@gmail.com' } as any
+          );
+
         const expected = {
           id: collaboratorPendingWithUser.id,
           role: collaboratorPendingWithUser.collaboratorRole,
@@ -380,9 +387,16 @@ describe('Innovation Collaborators Suite', () => {
 
     describe('asCollaborator', () => {
       it('should return info (with the name of the user) as collaborator user', async () => {
-        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue(
-          { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
-        );
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo')
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+          )
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+          )
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name', email: 'innovator1@gmail.com' } as any
+          );
 
         const expected = {
           id: collaboratorPendingWithUser.id,

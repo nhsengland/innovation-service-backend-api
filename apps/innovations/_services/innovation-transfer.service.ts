@@ -47,7 +47,7 @@ export class InnovationTransferService extends BaseService {
   }
 
 
-  async getInnovationTransfersList(requestUserId: string, requestUserIdentityId: string, assignedToMe?: boolean): Promise<{
+  async getInnovationTransfersList(requestUserId: string, assignedToMe?: boolean): Promise<{
     id: string, email: string,
     innovation: { id: string, name: string, owner?: string }
   }[]> {
@@ -65,7 +65,7 @@ export class InnovationTransferService extends BaseService {
 
     return Promise.all(transfers.map(async transfer => {
       try {
-        const identityUser = await this.identityProviderService.getUserInfo(requestUserIdentityId);
+        const createdBy = await this.domainService.users.getUserInfo({ userId: transfer.createdBy });
 
         return {
           id: transfer.id,
@@ -73,7 +73,7 @@ export class InnovationTransferService extends BaseService {
           innovation: {
             id: transfer.innovation.id,
             name: transfer.innovation.name,
-            owner: identityUser.displayName
+            owner: createdBy.displayName
           }
         };
       } catch (_) {

@@ -30,7 +30,7 @@ class V1InnovationTransferList {
         .verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationTransferService.getInnovationTransfersList(requestUser.id, requestUser.identityId, queryParams.assignedToMe);
+      const result = await innovationTransferService.getInnovationTransfersList(requestUser.id, queryParams.assignedToMe);
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
 
