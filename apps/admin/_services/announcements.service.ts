@@ -7,7 +7,7 @@ import type { DateISOType } from '@admin/shared/types';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { BaseService } from '../../admin/_services/base.service';
+import { BaseService } from './base.service';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
