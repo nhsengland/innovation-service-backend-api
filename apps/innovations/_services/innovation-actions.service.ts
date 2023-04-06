@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionAliasEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
@@ -9,7 +9,7 @@ import { ActivityLogListParamsType, DateISOType, DomainContextType, isAccessorDo
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
-import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
@@ -334,7 +334,7 @@ export class InnovationActionsService extends BaseService {
     );
 
     let actionCounter = (await innovationSection.actions).length;
-    const displayId = InnovationSectionAliasEnum[data.section] + (++actionCounter).toString().slice(-2).padStart(2, '0');
+    const displayId = CurrentDocumentConfig.InnovationSectionAliasEnum[data.section] + (++actionCounter).toString().slice(-2).padStart(2, '0');
 
     const actionObj = InnovationActionEntity.new({
       displayId: displayId,

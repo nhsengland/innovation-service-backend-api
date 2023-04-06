@@ -1,7 +1,24 @@
-import type { DocumentType202209 } from './document.type';
+import type { DocumentType202209 } from './document.types';
 
 export const allowFileUploads = new Set<keyof DocumentType202209 >([
   'REGULATIONS_AND_STANDARDS',
   'TESTING_WITH_USERS',
   'IMPLEMENTATION_PLAN'
-])
+]);
+
+export enum InnovationSectionAliasEnum {
+  INNOVATION_DESCRIPTION = 'ID',
+  VALUE_PROPOSITION = 'VP',
+  UNDERSTANDING_OF_NEEDS = 'UN',
+  UNDERSTANDING_OF_BENEFITS = 'UB',
+  EVIDENCE_OF_EFFECTIVENESS = 'EE',
+  MARKET_RESEARCH = 'MR',
+  INTELLECTUAL_PROPERTY = 'IP',
+  REGULATIONS_AND_STANDARDS = 'RS',
+  CURRENT_CARE_PATHWAY = 'CP',
+  TESTING_WITH_USERS = 'TU',
+  COST_OF_INNOVATION = 'CI',
+  COMPARATIVE_COST_BENEFIT = 'CB',
+  REVENUE_MODEL = 'RM',
+  IMPLEMENTATION_PLAN = 'IM',
+}

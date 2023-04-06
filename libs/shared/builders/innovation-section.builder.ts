@@ -11,7 +11,7 @@ export class InnovationSectionBuilder {
 
   constructor(innovation: InnovationEntity) {
     this.innovationSection = {
-      section: 'COMPARATIVE_COST_BENEFIT',
+      section: 'COST_OF_INNOVATION',
       status: InnovationSectionStatusEnum.NOT_STARTED,
       innovation: innovation,
     };

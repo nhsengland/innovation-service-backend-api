@@ -1,7 +1,7 @@
 import Joi from 'joi';
 import { TEXTAREA_LENGTH_LIMIT } from '../../../constants';
 import { catalogAreas, catalogCarePathway, catalogCareSettings, catalogCategory, catalogCostComparison, catalogEnvironmentalBenefit, catalogGeneralBenefit, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogPatientRange, catalogPatientsCitizensBenefit, catalogRevenues, catalogStandardsType, catalogsupportTypes, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from './catalog.types';
-import type { DocumentType202209 } from './document.type';
+import type { DocumentType202209 } from './document.types';
 
 export type DocumentValidationSchema202209Map = {
   [k in keyof Omit<DocumentType202209, 'version'>]: Joi.Schema<DocumentType202209[k]>;

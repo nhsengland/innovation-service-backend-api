@@ -42,68 +42,49 @@ export class InnovationBuilder {
     };
 
     this._document = {
-      version: '202209',
+      version: '202304',
       INNOVATION_DESCRIPTION: {
         name: this.innovation.name!,
         description: this.innovation.description!,
         countryName: this.innovation.countryName,
         postcode: this.innovation.postcode!,
         
-        areas: ['CANCER'],
+        areas: ['COVID_19'],
         careSettings: ['INDUSTRY'],
         categories: ['MEDICAL_DEVICE', 'AI'],
         hasFinalProduct: randBoolean() ? 'YES' : 'NO',
         mainCategory: 'MEDICAL_DEVICE',
         mainPurpose: 'MONITOR_CONDITION',
-        moreSupportDescription: randText(),
         otherCareSetting: randText(),
         otherCategoryDescription: randText(),
         otherMainCategoryDescription: randText(),
-        supportTypes: ['ADOPTION'],
-      },
-      COMPARATIVE_COST_BENEFIT: {
-        costComparison: randBoolean() ? 'CHEAPER' : 'NOT_SURE',
-        hasCostCareKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
-        hasCostSavingKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
-      },
-      COST_OF_INNOVATION: {
-        costDescription: randText(),
-        hasCostKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
-        patientsRange: 'NOT_SURE',
-        sellExpectations: randText(),
-        usageExpectations: randText(),
-      },
-      CURRENT_CARE_PATHWAY: {
-        carePathway: randBoolean() ? 'BETTER_OPTION' : 'NO_KNOWLEDGE',
-        hasUKPathwayKnowledge: randBoolean() ? 'YES' : 'NO',
-        innovationPathwayKnowledge: randBoolean() ? 'PATHWAY_EXISTS_AND_FITS' : 'NO_PATHWAY',
-        potentialPathway: randText(),
       },
       EVIDENCE_OF_EFFECTIVENESS: {
         evidences: [],
         hasEvidence: randBoolean() ? 'YES' : 'IN_PROGRESS',
       },
-      IMPLEMENTATION_PLAN: {
-        deploymentPlans: [],
-        files: [],
-        hasDeployPlan: randBoolean() ? 'YES' : 'NO',
-        hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
-        isDeployed: randBoolean() ? 'YES' : 'NO',
-      },
-      INTELLECTUAL_PROPERTY: {
-        hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
-        hasPatents: randBoolean() ? 'HAS_AT_LEAST_ONE' : 'HAS_NONE',
-        otherIntellectual: randText(),
-      },
       MARKET_RESEARCH: {
         hasMarketResearch: randBoolean() ? 'YES' : 'NOT_YET',
         marketResearch: randText(),
+      },
+      CURRENT_CARE_PATHWAY: {
+        innovationPathwayKnowledge: randBoolean() ? 'PATHWAY_EXISTS_AND_FITS' : 'NO_PATHWAY',
+        potentialPathway: randText(),
+      },
+      TESTING_WITH_USERS: {
+        userTests: [],
+        files: []
       },
       REGULATIONS_AND_STANDARDS: {
         files: [],
         hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
         otherRegulationDescription: randText(),
         standards: [{type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS'}],
+      },
+      INTELLECTUAL_PROPERTY: {
+        hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
+        hasPatents: randBoolean() ? 'HAS_AT_LEAST_ONE' : 'HAS_NONE',
+        otherIntellectual: randText(),
       },
       REVENUE_MODEL: {
         benefittingOrganisations: randText(),
@@ -114,11 +95,21 @@ export class InnovationBuilder {
         payingOrganisations: randText(),
         revenues: []
       },
-      TESTING_WITH_USERS: {
-        hasTests: randBoolean() ? 'YES' : 'NOT_YET',
-        userTests: [],
-        files: []
+      COST_OF_INNOVATION: {
+        costDescription: randText(),
+        hasCostKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
+        patientsRange: 'NOT_SURE',
+        sellExpectations: randText(),
+        usageExpectations: randText(),
       },
+      DEPLOYMENT: {
+        deploymentPlans: [],
+        files: [],
+        hasDeployPlan: randBoolean() ? 'YES' : 'NO',
+        hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
+        isDeployed: randBoolean() ? 'YES' : 'NO',
+      },
+      /*
       UNDERSTANDING_OF_BENEFITS: {
         accessibilityImpactDetails: randText(),
         accessibilityStepsDetails: randText(),
@@ -143,6 +134,7 @@ export class InnovationBuilder {
         problemsConsequences: randText(),
         problemsTackled: randText(),
       }
+      */
     };
 
   }

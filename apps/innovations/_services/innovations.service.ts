@@ -826,14 +826,10 @@ export class InnovationsService extends BaseService {
       // Mark some section to status DRAFT.
       let sectionsToBeInDraft: CurrentCatalogTypes.InnovationSections[] = [];
 
+      // TODO remove the survey in another story it's not used any longer
       if (surveyInfo) {
         sectionsToBeInDraft = [
-          'INNOVATION_DESCRIPTION',
-          'VALUE_PROPOSITION',
-          'UNDERSTANDING_OF_BENEFITS',
-          'EVIDENCE_OF_EFFECTIVENESS',
-          'MARKET_RESEARCH',
-          'TESTING_WITH_USERS'
+          'INNOVATION_DESCRIPTION'
         ];
       } else {
         sectionsToBeInDraft = ['INNOVATION_DESCRIPTION'];

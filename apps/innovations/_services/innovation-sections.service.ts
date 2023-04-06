@@ -8,6 +8,7 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { BaseService } from './base.service';
 
+import { NotImplementedError } from '@innovations/shared/errors/errors.config';
 import { CurrentCatalogTypes, CurrentDocumentConfig, EvidenceType } from '@innovations/shared/schemas/innovation-record';
 import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
@@ -160,6 +161,12 @@ export class InnovationSectionsService extends BaseService {
 
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    if (innovation.document.document.version !== CurrentDocumentConfig.version) {
+      // Currently we only support the latest document version.
+      // Supporting multiple versions will require selecting the correct sections and fields depending on the version
+      throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
     }
 
     const dbSection = await connection.createQueryBuilder(InnovationSectionEntity, 'section')
@@ -465,6 +472,12 @@ export class InnovationSectionsService extends BaseService {
     const document = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'document')
       .where('id = :innovationId', { innovationId })
       .getOne();
+
+    if (document?.document.version !== CurrentDocumentConfig.version) {
+      // Currently we only support the latest document version.
+      // This will soon change with PDF export of older versions.
+      throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
+    }
 
     for (const key of sectionOptions) {
 

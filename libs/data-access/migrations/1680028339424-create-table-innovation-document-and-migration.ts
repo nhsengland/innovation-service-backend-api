@@ -112,7 +112,7 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
             hasFinalProduct: innovation.hasFinalProduct ?? undefined,
             categories: innovationCategories[innovation.id]?.map(c => c.type) ?? [],
             otherCategoryDescription: innovation.otherCategoryDescription ?? undefined,
-            mainCategory: innovation.mainCategory ?? undefined,
+            mainCategory: innovation.mainCategory as any ?? undefined,
             otherMainCategoryDescription: innovation.otherMainCategoryDescription ?? undefined,
             areas: innovationAreas[innovation.id]?.map(a => a.type) ?? [],
             careSettings: innovationCareSettings[innovation.id]?.map(c => c.type) ?? [],
