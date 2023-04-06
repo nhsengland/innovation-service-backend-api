@@ -1,4 +1,4 @@
-import { JoiHelper } from '@innovations/shared/helpers';
+import { JoiHelper } from '@admin/shared/helpers';
 import Joi from 'joi';
 
 // set the possible statistics here
