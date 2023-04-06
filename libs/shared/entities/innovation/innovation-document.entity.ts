@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import type { DocumentType } from '../../schemas/innovation-record/index';
+import type { CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
 import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
@@ -32,30 +32,28 @@ export class InnovationDocumentEntity extends BaseEntity {
  * @returns the document entity to be created
  */
 export const createDocumentFromInnovation = (innovation: InnovationEntity): InnovationDocumentEntity => {
+  const document: CurrentDocumentType = {
+    version: '202304',
+    INNOVATION_DESCRIPTION: {
+      name: innovation.name,
+      description: innovation.description ?? undefined,
+      countryName: innovation.countryName,
+      postcode: innovation.postcode ?? undefined
+    },
+    EVIDENCE_OF_EFFECTIVENESS: {},
+    COST_OF_INNOVATION: {},
+    CURRENT_CARE_PATHWAY: {},
+    DEPLOYMENT: {},
+    INTELLECTUAL_PROPERTY: {},
+    MARKET_RESEARCH: {},
+    REGULATIONS_AND_STANDARDS: {},
+    REVENUE_MODEL: {},
+    TESTING_WITH_USERS: {}
+  }
+  
   return {
     id: innovation.id,
-    document: {
-      version: '202209',
-      INNOVATION_DESCRIPTION: {
-        name: innovation.name,
-        description: innovation.description ?? undefined,
-        countryName: innovation.countryName,
-        postcode: innovation.postcode ?? undefined
-      },
-      COMPARATIVE_COST_BENEFIT: {},
-      EVIDENCE_OF_EFFECTIVENESS: {},
-      COST_OF_INNOVATION: {},
-      CURRENT_CARE_PATHWAY: {},
-      IMPLEMENTATION_PLAN: {},
-      INTELLECTUAL_PROPERTY: {},
-      MARKET_RESEARCH: {},
-      REGULATIONS_AND_STANDARDS: {},
-      REVENUE_MODEL: {},
-      TESTING_WITH_USERS: {},
-      UNDERSTANDING_OF_BENEFITS: {},
-      UNDERSTANDING_OF_NEEDS: {},
-      VALUE_PROPOSITION: {}
-    },
+    document: document,
     isSnapshot: false,
     description: 'Initial document',
     innovation: innovation,
