@@ -75,7 +75,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   COST_OF_INNOVATION: Joi.object<DocumentType202304['COST_OF_INNOVATION']>({
     hasCostKnowledge: Joi.string().valid(...catalogHasCostKnowledge),
     costDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).allow(null),
-    patientsRange: Joi.array().items(Joi.string().valid(...catalogPatientRange)).allow(null),
+    patientsRange: Joi.string().valid(...catalogPatientRange).allow(null),
     eligibilityCriteria: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).allow(null),
     sellExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
     usageExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).allow(null),

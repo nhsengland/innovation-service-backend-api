@@ -1506,15 +1506,13 @@ paths:
                       maxLength: 1000
                       nullable: true
                     patientsRange:
-                      type: array
-                      items:
-                        type: string
-                        enum:
-                          - UP_10000
-                          - BETWEEN_10000_500000
-                          - MORE_THAN_500000
-                          - NOT_SURE
-                          - NOT_RELEVANT
+                      type: string
+                      enum:
+                        - UP_10000
+                        - BETWEEN_10000_500000
+                        - MORE_THAN_500000
+                        - NOT_SURE
+                        - NOT_RELEVANT
                       nullable: true
                     eligibilityCriteria:
                       type: string

@@ -296,7 +296,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (CurrentDocumentConfig.allowFileUploads.has(sectionKey)) {
         sectionDeletedFiles = section.files.filter(file => !dataToUpdate['files'].includes(file.id));
-        section.files = dataToUpdate['files'].map((id: string) => ({ id }));
+        section.files = (dataToUpdate['files'] ?? []).map((id: string) => ({ id }));
       }
     }
 
