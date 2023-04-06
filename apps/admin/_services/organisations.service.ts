@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
-import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
+import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { UrlModel } from '@admin/shared/models';
@@ -218,11 +218,10 @@ export class OrganisationsService extends BaseService {
     // get users entities
     const usersToUnlock = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
+      .select(['user.id'])
       .innerJoin('user.serviceRoles', 'service_roles')
-      //.innerJoin('user.userOrganisations', 'org_user')
-      //.innerJoin('org_user.userOrganisationUnits', 'unit_user')
-      .where('unit_user.id IN (:...userIds)', { userIds })
-      .andWhere('unit_user.organisationUnit.id = :unitId', { unitId }) //ensure users to unlock belong to unit
+      .where('user.id IN (:...userIds)', { userIds })
+      .andWhere('service_roles.organisation_unit_id = :unitId', { unitId }) //ensure users to unlock belong to unit
       .getMany();
 
     // get organisationUnitUser entities
@@ -258,10 +257,21 @@ export class OrganisationsService extends BaseService {
         await this.createOrganisationAnnouncement(unit.organisation.name, transaction);
       }
 
-      //Activate users of unit
-      for (const u of usersToUnlock) {
-        await transaction.update(UserEntity, { id: u.id }, { lockedAt: null });
-      }
+      // Activate users of unit and roles
+      const usersToUnlockId = usersToUnlock.map(u => u.id);
+
+      await transaction.update(
+        UserEntity,
+        { id: In(usersToUnlockId) },
+        { lockedAt: null }
+      );
+
+      await transaction.update(
+        UserRoleEntity,
+        { user: In(usersToUnlockId), organisationUnit: unitId },
+        { lockedAt: null }
+      );
+
       return { unitId };
     });
 
