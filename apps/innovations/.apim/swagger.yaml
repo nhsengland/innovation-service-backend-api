@@ -1148,17 +1148,14 @@ paths:
                     postcode:
                       type: string
                       maxLength: 20
-                      nullable: true
                     website:
                       type: string
                       maxLength: 100
-                      nullable: true
                     hasFinalProduct:
                       type: string
                       enum:
                         - YES
                         - NO
-                      nullable: true
                     categories:
                       type: array
                       items:
@@ -1177,10 +1174,10 @@ paths:
                           - FOOD_NUTRITION
                           - DATA_MONITORING
                           - OTHER
+                      minItems: 1
                     otherCategoryDescription:
                       type: string
                       maxLength: 100
-                      nullable: true
                     mainCategory:
                       type: string
                       enum:
@@ -1197,11 +1194,9 @@ paths:
                         - FOOD_NUTRITION
                         - DATA_MONITORING
                         - OTHER
-                      nullable: true
                     otherMainCategoryDescription:
                       type: string
                       maxLength: 100
-                      nullable: true
                     areas:
                       type: array
                       items:
@@ -1216,6 +1211,7 @@ paths:
                           - PATIENT_ACTIVATION_AND_SELF_CARE
                           - PATIENT_SAFETY
                           - NET_ZERO_GREENER_INNOVATION
+                      minItems: 1
                     careSettings:
                       type: array
                       items:
@@ -1237,10 +1233,10 @@ paths:
                           - THIRD_SECTOR_ORGANISATIONS
                           - URGENT_AND_EMERGENCY
                           - OTHER
+                      minItems: 1
                     otherCareSetting:
                       type: string
                       maxLength: 100
-                      nullable: true
                     mainPurpose:
                       type: string
                       enum:
@@ -1252,15 +1248,12 @@ paths:
                         - MANAGE_CONDITION
                         - ENABLING_CARE
                         - RISKS_CLIMATE_CHANGE
-                      nullable: true
                     supportDescription:
                       type: string
                       maxLength: 2000
-                      nullable: true
                     currentlyReceivingSupport:
                       type: string
                       maxLength: 2000
-                      nullable: true
                     involvedAACProgrammes:
                       type: array
                       items:
@@ -1279,6 +1272,7 @@ paths:
                           - Rapid Uptake Products Programme
                           - Small Business Research Initiative for Healthcare
                           - Test beds
+                      minItems: 1
                   additionalProperties: false
                 EVIDENCE_OF_EFFECTIVENESS: {}
                 MARKET_RESEARCH:
@@ -1293,7 +1287,6 @@ paths:
                     marketResearch:
                       type: string
                       maxLength: 1500
-                      nullable: true
                     optionBestDescribesInnovation:
                       type: string
                       enum:
@@ -1302,11 +1295,9 @@ paths:
                         - EQUIVALENT_ALTERNATIVE
                         - COST_EFFECT_ALTERNATIVE
                         - NOT_SURE
-                      nullable: true
                     whatCompetitorsAlternativesExist:
                       type: string
                       maxLength: 1500
-                      nullable: true
                   additionalProperties: false
                 CURRENT_CARE_PATHWAY:
                   type: object
@@ -1319,11 +1310,9 @@ paths:
                         - NO_PATHWAY
                         - DONT_KNOW
                         - NOT_PART_PATHWAY
-                      nullable: true
                     potentialPathway:
                       type: string
                       maxLength: 1000
-                      nullable: true
                   additionalProperties: false
                 TESTING_WITH_USERS:
                   type: object
@@ -1340,7 +1329,6 @@ paths:
                         - YES
                         - IN_PROGRESS
                         - NOT_YET
-                      nullable: true
                     intendedUserGroupsEngaged:
                       type: array
                       items:
@@ -1353,11 +1341,10 @@ paths:
                           - SERVICE_USERS
                           - CARERS
                           - OTHER
-                      nullable: true
+                      minItems: 1
                     otherIntendedUserGroupsEngaged:
                       type: string
                       maxLength: 100
-                      nullable: true
                     userTests:
                       type: array
                       items:
@@ -1369,13 +1356,14 @@ paths:
                           feedback:
                             type: string
                             maxLength: 200
-                            nullable: true
                         additionalProperties: false
+                      minItems: 1
                     files:
                       type: array
                       items:
                         type: string
                         format: uuid
+                      minItems: 1
                   additionalProperties: false
                 REGULATIONS_AND_STANDARDS:
                   type: object
@@ -1414,19 +1402,19 @@ paths:
                               - YES
                               - IN_PROGRESS
                               - NOT_YET
-                            nullable: true
                         required:
                           - type
                         additionalProperties: false
+                      minItems: 1
                     otherRegulationDescription:
                       type: string
                       maxLength: 100
-                      nullable: true
                     files:
                       type: array
                       items:
                         type: string
                         format: uuid
+                      minItems: 1
                   additionalProperties: false
                 INTELLECTUAL_PROPERTY:
                   type: object
@@ -1442,11 +1430,9 @@ paths:
                       enum:
                         - YES
                         - NO
-                      nullable: true
                     otherIntellectual:
                       type: string
                       maxLength: 100
-                      nullable: true
                   additionalProperties: false
                 REVENUE_MODEL:
                   type: object
@@ -1468,29 +1454,25 @@ paths:
                           - SALES_OF_CONSUMABLES_OR_ACCESSORIES
                           - SUBSCRIPTION
                           - OTHER
+                      minItems: 1
                     otherRevenueDescription:
                       type: string
                       maxLength: 100
-                      nullable: true
                     payingOrganisations:
                       type: string
                       maxLength: 1000
-                      nullable: true
                     benefittingOrganisations:
                       type: string
                       maxLength: 1000
-                      nullable: true
                     hasFunding:
                       type: string
                       enum:
                         - YES
                         - NO
                         - NOT_RELEVANT
-                      nullable: true
                     fundingDescription:
                       type: string
                       maxLength: 500
-                      nullable: true
                   additionalProperties: false
                 COST_OF_INNOVATION:
                   type: object
@@ -1504,7 +1486,6 @@ paths:
                     costDescription:
                       type: string
                       maxLength: 1000
-                      nullable: true
                     patientsRange:
                       type: string
                       enum:
@@ -1513,19 +1494,15 @@ paths:
                         - MORE_THAN_500000
                         - NOT_SURE
                         - NOT_RELEVANT
-                      nullable: true
                     eligibilityCriteria:
                       type: string
                       maxLength: 1000
-                      nullable: true
                     sellExpectations:
                       type: string
                       maxLength: 500
-                      nullable: true
                     usageExpectations:
                       type: string
                       maxLength: 1000
-                      nullable: true
                     costComparison:
                       type: string
                       enum:
@@ -1533,7 +1510,6 @@ paths:
                         - COSTS_MORE_WITH_SAVINGS
                         - COSTS_MORE
                         - NOT_SURE
-                      nullable: true
                   additionalProperties: false
                 DEPLOYMENT:
                   type: object
@@ -1548,32 +1524,30 @@ paths:
                       enum:
                         - YES
                         - NO
-                      nullable: true
                     deploymentPlans:
                       type: array
                       items:
                         type: string
                         maxLength: 100
+                      minItems: 1
                     commercialBasis:
                       type: string
                       maxLength: 2000
-                      nullable: true
                     organisationDeploymentAffect:
                       type: string
                       maxLength: 2000
-                      nullable: true
                     hasResourcesToScale:
                       type: string
                       enum:
                         - YES
                         - NO
                         - NOT_SURE
-                      nullable: true
                     files:
                       type: array
                       items:
                         type: string
                         format: uuid
+                      minItems: 1
                   additionalProperties: false
               required:
                 - INNOVATION_DESCRIPTION
