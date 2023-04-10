@@ -1,19 +1,19 @@
-import * as Document202209Catalog from "../202209/catalog.types";
-import { DocumentType202209 } from "../202209/document.types";
-import * as Document202304Catalog from "./catalog.types";
-import { DocumentType202304 } from "./document.types";
+import type * as Document202209Catalog from '../202209/catalog.types';
+import type { DocumentType202209 } from '../202209/document.types';
+import type * as Document202304Catalog from './catalog.types';
+import type { DocumentType202304 } from './document.types';
 
 const migrateCategory = (category?: Document202209Catalog.catalogCategory): Document202304Catalog.catalogCategory | undefined => {
   switch(category) {
     // only new options added so nothing to do
     default: return category;
   }
-}
+};
 
 const migrateAreas = (areas?: Document202209Catalog.catalogAreas): Document202304Catalog.catalogAreas | undefined => {
   switch(areas) {
     case 'DIGITALLY_ENABLING_PRIMARY_CARE':
-        return 'DIGITALISING_SYSTEM'
+        return 'DIGITALISING_SYSTEM';
     case 'WORKFORCE':
     case 'ECONOMIC_GROWTH':
     case 'EVIDENCE_GENERATION':
@@ -37,26 +37,26 @@ const migrateAreas = (areas?: Document202209Catalog.catalogAreas): Document20230
       return undefined;
     default: return areas;
   }
-}
+};
 
 const migrateCareSettings = (careSettings ?: Document202209Catalog.catalogCareSettings): Document202304Catalog.catalogCareSettings | undefined => {
   switch(careSettings) {
     case 'STP_ICS':
-      return 'ICS'
+      return 'ICS';
     case 'CCGS':
     case 'COMMUNITY':
     case 'DOMICILIARY_CARE':
       return undefined;
     default: return careSettings;
   }
-}
+};
 
 const migrateMainPurpose = (mainPurpose?: Document202209Catalog.catalogMainPurpose): Document202304Catalog.catalogMainPurpose | undefined => {
   switch(mainPurpose) {
     // only new options added so nothing to do
     default: return mainPurpose;
   }
-}
+};
 
 // Remove the partial
 export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentType202304 => {
@@ -99,6 +99,9 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
       ...original.COST_OF_INNOVATION,
       costComparison: original.COMPARATIVE_COST_BENEFIT.costComparison
     },
-    DEPLOYMENT: original.IMPLEMENTATION_PLAN,
-  }
-}
+    DEPLOYMENT: {
+      ...original.IMPLEMENTATION_PLAN,
+      deploymentPlans: original.IMPLEMENTATION_PLAN.deploymentPlans?.map((plan) => plan.name),
+    }
+  };
+};
