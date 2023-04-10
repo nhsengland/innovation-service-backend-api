@@ -1,4 +1,4 @@
-import type { catalogAreas, catalogCareSettings, catalogCategory, catalogClinicalEvidence, catalogCostComparison, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogIntendedUserGroupsEngaged, cataloginvolvedAACProgrammes, catalogMainPurpose, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure } from './catalog.types';
+import type { catalogAreas, catalogCareSettings, catalogCategory, catalogClinicalEvidence, catalogCostComparison, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogMainPurpose, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure } from './catalog.types';
 
 export type DocumentType202304 = {
   version: '202304';
@@ -19,7 +19,7 @@ export type DocumentType202304 = {
     mainPurpose?: catalogMainPurpose, // Items list changed.
     supportDescription?: string, // Renamed from "moreSupportDescription" field.
     currentlyReceivingSupport?: string, // New field.
-    involvedAACProgrammes?: cataloginvolvedAACProgrammes[] // New field.
+    involvedAACProgrammes?: catalogInvolvedAACProgrammes[] // New field.
   },
   // VALUE_PROPOSITION: {
   //   hasProblemTackleKnowledge?: catalogYesNotYetNotSure,
