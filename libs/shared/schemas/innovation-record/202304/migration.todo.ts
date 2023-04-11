@@ -67,18 +67,22 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
       description: original.INNOVATION_DESCRIPTION.description,
       postcode: original.INNOVATION_DESCRIPTION.postcode,
       countryName: original.INNOVATION_DESCRIPTION.countryName,
-      hasFinalProduct: original.INNOVATION_DESCRIPTION.hasFinalProduct,
       categories: original.INNOVATION_DESCRIPTION.categories?.map(migrateCategory).filter((u): u is Document202304Catalog.catalogCategory => u !== undefined),
       otherCategoryDescription: original.INNOVATION_DESCRIPTION.otherCategoryDescription,
       mainCategory: migrateCategory(original.INNOVATION_DESCRIPTION.mainCategory),
-      otherMainCategoryDescription: original.INNOVATION_DESCRIPTION.otherMainCategoryDescription,
       areas: original.INNOVATION_DESCRIPTION.areas?.map(migrateAreas).filter((u): u is Document202304Catalog.catalogAreas => u !== undefined),
       careSettings: original.INNOVATION_DESCRIPTION.careSettings?.map(migrateCareSettings).filter((u): u is Document202304Catalog.catalogCareSettings => u !== undefined),
       otherCareSetting: original.INNOVATION_DESCRIPTION.otherCareSetting,
       mainPurpose: migrateMainPurpose(original.INNOVATION_DESCRIPTION.mainPurpose),
       supportDescription: original.INNOVATION_DESCRIPTION.moreSupportDescription
     },
-    EVIDENCE_OF_EFFECTIVENESS: {} as any, // TODO
+    UNDERSTANDING_OF_NEEDS: {
+      problemsTackled: original.VALUE_PROPOSITION.problemsTackled,
+      diseasesConditionsImpact: original.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact,
+    },
+    EVIDENCE_OF_EFFECTIVENESS: {
+      hasEvidence: original.EVIDENCE_OF_EFFECTIVENESS.hasEvidence === 'YES' ? 'YES' : 'NOT_YET',
+    },
     MARKET_RESEARCH: {
       hasMarketResearch: original.MARKET_RESEARCH.hasMarketResearch,
       marketResearch: original.MARKET_RESEARCH.marketResearch,
@@ -102,6 +106,13 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
     DEPLOYMENT: {
       ...original.IMPLEMENTATION_PLAN,
       deploymentPlans: original.IMPLEMENTATION_PLAN.deploymentPlans?.map((plan) => plan.name),
-    }
+    },
+    evidences: original.EVIDENCE_OF_EFFECTIVENESS.evidences?.map((evidence) => ({
+      evidenceSubmitType: evidence.evidenceType === 'OTHER' ? 'OTHER_EFFECTIVENESS' : (evidence.evidenceType === 'CLINICAL' ? 'CLINICAL_OR_CARE' : 'COST_IMPACT_OR_ECONOMIC'),
+      evidenceType: evidence.clinicalEvidenceType,
+      description: evidence.description,
+      summary: evidence.summary ?? '',  // Don't believe this is possible but TS doesn't know that because of previous schema, if it was null then we just set it to empty string
+      files: evidence.files ?? [],
+    }))
   };
 };

@@ -35,13 +35,13 @@ class V1InnovationEvidenceDelete {
       const requestUser = auth.getUserInfo();
       const innovation = auth.getInnovationInfo();
 
-      const result = await innovationSectionsService.deleteInnovationEvidence(
+      await innovationSectionsService.deleteInnovationEvidence(
         { id: requestUser.id },
         innovation.id,
         params.evidenceOffset
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, });
+      context.res = ResponseHelper.Ok<ResponseDTO>({});
       return;
 
     } catch (error) {
@@ -68,10 +68,6 @@ export default openApi(V1InnovationEvidenceDelete.httpTrigger as AzureFunction, 
             schema: {
               type: 'object',
               properties: {
-                id: {
-                  type: 'string',
-                  description: 'Innovation evidence id.',
-                },
               },
             },
           },

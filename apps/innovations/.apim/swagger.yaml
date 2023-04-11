@@ -30,6 +30,8 @@ paths:
                   type: string
                   enum:
                     - INNOVATION_DESCRIPTION
+                    - UNDERSTANDING_OF_NEEDS
+                    - EVIDENCE_OF_EFFECTIVENESS
                     - MARKET_RESEARCH
                     - CURRENT_CARE_PATHWAY
                     - TESTING_WITH_USERS
@@ -1151,11 +1153,6 @@ paths:
                     website:
                       type: string
                       maxLength: 100
-                    hasFinalProduct:
-                      type: string
-                      enum:
-                        - YES
-                        - NO
                     categories:
                       type: array
                       items:
@@ -1194,9 +1191,6 @@ paths:
                         - FOOD_NUTRITION
                         - DATA_MONITORING
                         - OTHER
-                    otherMainCategoryDescription:
-                      type: string
-                      maxLength: 100
                     areas:
                       type: array
                       items:
@@ -1274,7 +1268,104 @@ paths:
                           - Test beds
                       minItems: 1
                   additionalProperties: false
-                EVIDENCE_OF_EFFECTIVENESS: {}
+                UNDERSTANDING_OF_NEEDS:
+                  type: object
+                  properties:
+                    problemsTackled:
+                      type: string
+                      maxLength: 1500
+                    howInnovationWork:
+                      type: string
+                      maxLength: 1500
+                    benefitsOrImpact:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 200
+                      minItems: 1
+                    impactDiseaseCondition:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    diseasesConditionsImpact:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 100
+                      minItems: 1
+                    estimatedCarbonReductionSavings:
+                      type: string
+                      enum:
+                        - YES
+                        - NOT_YET
+                        - NO
+                    estimatedCarbonReductionSavingsDescription:
+                      type: string
+                      maxLength: 2000
+                    carbonReductionPlan:
+                      type: string
+                      enum:
+                        - YES
+                        - WORKING_ON
+                        - NO
+                    keyHealthInequalities:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - MATERNITY
+                          - SEVER_MENTAL_ILLNESS
+                          - CHRONIC_RESPIRATORY_DISEASE
+                          - EARLY_CANCER_DIAGNOSIS
+                          - HYPERTENSION_CASE_FINDING
+                          - NONE
+                      minItems: 1
+                    completedHealthInequalitiesImpactAssessment:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                  additionalProperties: false
+                EVIDENCE_OF_EFFECTIVENESS:
+                  type: object
+                  properties:
+                    hasEvidence:
+                      type: string
+                      enum:
+                        - YES
+                        - NOT_YET
+                    currentlyCollectingEvidence:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    summaryOngoingEvidenceGathering:
+                      type: string
+                      maxLength: 1500
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                    needsSupportAnyArea:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - RESEARCH_GOVERNANCE
+                          - DATA_SHARING
+                          - CONFIDENTIAL_PATIENT_DATA
+                          - DO_NOT_NEED_SUPPORT
+                      minItems: 1
+                  additionalProperties: false
                 MARKET_RESEARCH:
                   type: object
                   properties:
@@ -1549,8 +1640,51 @@ paths:
                         format: uuid
                       minItems: 1
                   additionalProperties: false
+                evidences:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      evidenceSubmitType:
+                        type: string
+                        enum:
+                          - CLINICAL_OR_CARE
+                          - COST_IMPACT_OR_ECONOMIC
+                          - OTHER_EFFECTIVENESS
+                          - PRE_CLINICAL
+                          - REAL_WORLD
+                      evidenceType:
+                        type: string
+                        enum:
+                          - DATA_PUBLISHED
+                          - NON_RANDOMISED_COMPARATIVE_DATA
+                          - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                          - CONFERENCE
+                          - RANDOMISED_CONTROLLED_TRIAL
+                          - UNPUBLISHED_DATA
+                          - OTHER
+                      description:
+                        type: string
+                        maxLength: 200
+                      summary:
+                        type: string
+                        maxLength: 500
+                      files:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                        minItems: 1
+                    required:
+                      - evidenceSubmitType
+                      - summary
+                      - files
+                    additionalProperties: false
+                  minItems: 1
               required:
                 - INNOVATION_DESCRIPTION
+                - UNDERSTANDING_OF_NEEDS
+                - EVIDENCE_OF_EFFECTIVENESS
                 - MARKET_RESEARCH
                 - CURRENT_CARE_PATHWAY
                 - TESTING_WITH_USERS
@@ -1764,31 +1898,38 @@ paths:
             schema:
               type: object
               properties:
+                evidenceSubmitType:
+                  type: string
+                  enum:
+                    - CLINICAL_OR_CARE
+                    - COST_IMPACT_OR_ECONOMIC
+                    - OTHER_EFFECTIVENESS
+                    - PRE_CLINICAL
+                    - REAL_WORLD
                 evidenceType:
                   type: string
-                  description: The evidence type.
-                clinicalEvidenceType:
-                  type: string
-                  nullable: true
-                  description: The clinical evidence type.
+                  enum:
+                    - DATA_PUBLISHED
+                    - NON_RANDOMISED_COMPARATIVE_DATA
+                    - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                    - CONFERENCE
+                    - RANDOMISED_CONTROLLED_TRIAL
+                    - UNPUBLISHED_DATA
+                    - OTHER
                 description:
                   type: string
                   maxLength: 200
-                  nullable: true
-                  description: The evidence description.
                 summary:
                   type: string
                   maxLength: 500
-                  nullable: true
-                  description: Small summary of the evidence.
                 files:
                   type: array
                   items:
                     type: string
-                  description: Files to support the evidence.
+                    format: uuid
+                  minItems: 1
               required:
-                - evidenceType
-                - description
+                - evidenceSubmitType
                 - summary
                 - files
               additionalProperties: false
@@ -1799,10 +1940,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1840,10 +1978,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1883,31 +2018,38 @@ paths:
             schema:
               type: object
               properties:
+                evidenceSubmitType:
+                  type: string
+                  enum:
+                    - CLINICAL_OR_CARE
+                    - COST_IMPACT_OR_ECONOMIC
+                    - OTHER_EFFECTIVENESS
+                    - PRE_CLINICAL
+                    - REAL_WORLD
                 evidenceType:
                   type: string
-                  description: The evidence type.
-                clinicalEvidenceType:
-                  type: string
-                  nullable: true
-                  description: The clinical evidence type.
+                  enum:
+                    - DATA_PUBLISHED
+                    - NON_RANDOMISED_COMPARATIVE_DATA
+                    - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                    - CONFERENCE
+                    - RANDOMISED_CONTROLLED_TRIAL
+                    - UNPUBLISHED_DATA
+                    - OTHER
                 description:
                   type: string
                   maxLength: 200
-                  nullable: true
-                  description: The evidence description.
                 summary:
                   type: string
                   maxLength: 500
-                  nullable: true
-                  description: Small summary of the evidence.
                 files:
                   type: array
                   items:
                     type: string
-                  description: Files to support the evidence.
+                    format: uuid
+                  minItems: 1
               required:
-                - evidenceType
-                - description
+                - evidenceSubmitType
                 - summary
                 - files
               additionalProperties: false
@@ -1918,10 +2060,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1966,13 +2105,6 @@ paths:
                   evidenceType:
                     type: string
                     enum:
-                      - CLINICAL
-                      - ECONOMIC
-                      - OTHER
-                    description: Evidence type.
-                  clinicalEvidenceType:
-                    type: string
-                    enum:
                       - DATA_PUBLISHED
                       - NON_RANDOMISED_COMPARATIVE_DATA
                       - NON_RANDOMISED_NON_COMPARATIVE_DATA
@@ -1980,7 +2112,16 @@ paths:
                       - RANDOMISED_CONTROLLED_TRIAL
                       - UNPUBLISHED_DATA
                       - OTHER
-                    description: Clinical Evidence type.
+                    description: Evidence type.
+                  evidenceSubmitType:
+                    type: string
+                    enum:
+                      - CLINICAL_OR_CARE
+                      - COST_IMPACT_OR_ECONOMIC
+                      - OTHER_EFFECTIVENESS
+                      - PRE_CLINICAL
+                      - REAL_WORLD
+                    description: Clinical submit type.
                   description:
                     type: string
                     description: Evidence description.
@@ -2257,6 +2398,8 @@ paths:
             type: string
             enum:
               - INNOVATION_DESCRIPTION
+              - UNDERSTANDING_OF_NEEDS
+              - EVIDENCE_OF_EFFECTIVENESS
               - MARKET_RESEARCH
               - CURRENT_CARE_PATHWAY
               - TESTING_WITH_USERS

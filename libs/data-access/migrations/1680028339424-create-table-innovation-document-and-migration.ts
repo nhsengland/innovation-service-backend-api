@@ -148,8 +148,8 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
           EVIDENCE_OF_EFFECTIVENESS: {
             hasEvidence: innovation.hasEvidence ?? undefined,
             evidences: innovationEvidences[innovation.id]?.map( e => ({
-              evidenceType: e.evidenceType ?? undefined,
-              clinicalEvidenceType: e.clinicalEvidenceType ?? undefined,
+              evidenceType: e.evidenceType as any ?? undefined,
+              clinicalEvidenceType: e.clinicalEvidenceType as any ?? undefined,
               description: e.description ?? undefined,
               summary: e.summary ?? undefined,
               files: e.files.map(f => f.id)

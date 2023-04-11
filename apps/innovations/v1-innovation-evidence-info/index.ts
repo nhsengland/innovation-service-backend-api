@@ -36,7 +36,7 @@ class GetInnovationEvidenceInfo {
       const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceOffset);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         evidenceType: result.evidenceType,
-        clinicalEvidenceType: result.clinicalEvidenceType,
+        evidenceSubmitType: result.evidenceSubmitType,
         description: result.description,
         summary: result.summary,
         files: result.files
@@ -76,10 +76,10 @@ export default openApi(GetInnovationEvidenceInfo.httpTrigger as AzureFunction, '
                   enum: Object.values(CurrentCatalogTypes.catalogEvidenceType),
                   description: 'Evidence type.',
                 },
-                clinicalEvidenceType: {
+                evidenceSubmitType: {
                   type: 'string',
-                  enum: Object.values(CurrentCatalogTypes.catalogClinicalEvidence),
-                  description: 'Clinical Evidence type.',
+                  enum: Object.values(CurrentCatalogTypes.catalogEvidenceSubmitType),
+                  description: 'Clinical submit type.',
                 },
                 description: {
                   type: 'string',

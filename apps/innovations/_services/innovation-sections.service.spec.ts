@@ -166,20 +166,19 @@ describe('Innovation Sections Suite', () => {
     expect(section.id).toBeDefined();
   });
 
-  // TODO FIX THIS TEST WHEN EVIDENCES ARE FIXED
-  it.skip('should create clinical evidence', async () => {
+  it('should create clinical evidence', async () => {
     // arrange
 
     const innovator = testData.baseUsers.innovator;
     const innovation = testData.innovation;
     const file = await TestsHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
-    const evidence = await sut.createInnovationEvidence(
+    await sut.createInnovationEvidence(
       { id: innovator.id },
       innovation.id,
       {
-        evidenceType: 'CLINICAL',
-        clinicalEvidenceType: rand(Object.values(CurrentCatalogTypes.catalogClinicalEvidence)),
+        evidenceSubmitType: 'CLINICAL_OR_CARE',
+        evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
         description: randText(),
         summary: randText(),
         files: [file.id]
@@ -187,26 +186,25 @@ describe('Innovation Sections Suite', () => {
       em
     );
 
-    // assert
-    expect(evidence.id).toBeDefined();
+    // assert assuming if no error is thrown then the test is successful (for now)
   });
 
   // TODO FIX THIS TEST WHEN EVIDENCES ARE FIXED
-  it.skip('should create non-clinical evidence', async () => {
+  it('should create non-clinical evidence', async () => {
     // arrange
 
     const innovator = testData.baseUsers.innovator;
     const innovation = testData.innovation;
     const file = await TestsHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
-    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceType.filter(et => et !== 'CLINICAL');
+    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(et => et !== 'CLINICAL_OR_CARE');
 
-    const evidence = await sut.createInnovationEvidence(
+    await sut.createInnovationEvidence(
       { id: innovator.id },
       innovation.id,
       {
-        evidenceType: rand(allowedEvidenceTypes),
-        clinicalEvidenceType: 'OTHER',
+        evidenceSubmitType: rand(allowedEvidenceTypes),
+        evidenceType: 'OTHER',
         description: randText(),
         summary: randText(),
         files: [file.id]
@@ -214,8 +212,7 @@ describe('Innovation Sections Suite', () => {
       em
     );
 
-    // assert
-    expect(evidence.id).toBeDefined();
+    // assert assuming if no error is thrown then the test is successful (for now)
   });
 
 

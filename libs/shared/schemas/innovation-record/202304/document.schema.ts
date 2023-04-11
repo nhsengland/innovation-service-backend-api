@@ -1,11 +1,19 @@
 import Joi from 'joi';
 import { TEXTAREA_LENGTH_LIMIT } from '../../../constants';
-import { catalogAreas, catalogCareSettings, catalogCategory, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogMainPurpose, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure } from './catalog.types';
+import { catalogAreas, catalogCarbonReductionPlan, catalogCareSettings, catalogCategory, catalogCostComparison, catalogEvidenceSubmitType, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogKeyHealthInequalities, catalogMainPurpose, catalogNeedsSupportAnyArea, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYet, catalogYesNotYetNo } from './catalog.types';
 import type { DocumentType202304 } from './document.types';
 
 export type DocumentValidationSchema202304Map = {
   [k in keyof Omit<DocumentType202304, 'version'>]: Joi.Schema<DocumentType202304[k]>;
 }
+
+export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['evidences']>[number]>({
+  evidenceSubmitType: Joi.string().valid(...catalogEvidenceSubmitType).required(),
+  evidenceType: Joi.string().valid(...catalogEvidenceType),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small),
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+  files: Joi.array().items(Joi.string().guid()).min(1).required()
+});
 
 export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Map = {
   INNOVATION_DESCRIPTION: Joi.object<DocumentType202304['INNOVATION_DESCRIPTION']>({
@@ -14,11 +22,9 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     countryName: Joi.string().max(100),
     postcode: Joi.string().max(20),
     website: Joi.string().max(100),  // TODO not validating URL format atm
-    hasFinalProduct: Joi.string().valid(...catalogYesNo),
     categories: Joi.array().items(Joi.string().valid(...catalogCategory)).min(1),
     otherCategoryDescription: Joi.string().max(100),
     mainCategory: Joi.string().valid(...catalogCategory),
-    otherMainCategoryDescription: Joi.string().max(100),
     areas: Joi.array().items(Joi.string().valid(...catalogAreas)).min(1),
     careSettings: Joi.array().items(Joi.string().valid(...catalogCareSettings)).min(1),
     otherCareSetting: Joi.string().max(100),
@@ -27,7 +33,26 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     currentlyReceivingSupport: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
     involvedAACProgrammes: Joi.array().items(Joi.string().valid(...catalogInvolvedAACProgrammes)).min(1),
   }).required().min(1),
-  EVIDENCE_OF_EFFECTIVENESS: Joi.any(), // TODO this will be done after
+  UNDERSTANDING_OF_NEEDS: Joi.object<DocumentType202304['UNDERSTANDING_OF_NEEDS']>({
+    problemsTackled: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
+    howInnovationWork: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
+    benefitsOrImpact: Joi.array().items(Joi.string().max(TEXTAREA_LENGTH_LIMIT.small)).min(1),
+    impactDiseaseCondition: Joi.string().valid(...catalogYesNo),
+    diseasesConditionsImpact: Joi.array().items(Joi.string().max(100)).min(1),
+    estimatedCarbonReductionSavings: Joi.string().valid(...catalogYesNotYetNo),
+    estimatedCarbonReductionSavingsDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
+    carbonReductionPlan: Joi.string().valid(...catalogCarbonReductionPlan),
+    keyHealthInequalities: Joi.array().items(Joi.string().valid(...catalogKeyHealthInequalities)).min(1),
+    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo),
+    files: Joi.array().items(Joi.string().guid()).min(1)
+  }).required().min(1),
+  EVIDENCE_OF_EFFECTIVENESS: Joi.object<DocumentType202304['EVIDENCE_OF_EFFECTIVENESS']>({
+    hasEvidence: Joi.string().valid(...catalogYesNotYet),
+    currentlyCollectingEvidence: Joi.string().valid(...catalogYesNo),
+    summaryOngoingEvidenceGathering: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
+    files: Joi.array().items(Joi.string().guid()).min(1),
+    needsSupportAnyArea: Joi.array().items(Joi.string().valid(...catalogNeedsSupportAnyArea)).min(1),
+  }).required().min(1),
   MARKET_RESEARCH: Joi.object<DocumentType202304['MARKET_RESEARCH']>({
     hasMarketResearch: Joi.string().valid(...catalogYesInProgressNotYet),
     marketResearch: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
@@ -89,5 +114,6 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     organisationDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
     hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure),
     files: Joi.array().items(Joi.string().guid()).min(1)
-  }).required().min(1)
+  }).required().min(1),
+  evidences: Joi.array().items(EvidenceSchema202304).min(1)
 };

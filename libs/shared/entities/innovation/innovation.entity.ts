@@ -28,7 +28,7 @@ import { InnovationUserTestEntity } from './innovation-user-test.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
-import type { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
+import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
 import type { catalogCarePathway, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogYesInProcessNotYet, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from '../../schemas/innovation-record/202209/catalog.types';
 import type { DateISOType } from '../../types/date.types';
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
@@ -37,8 +37,9 @@ import { InnovationDocumentEntity } from './innovation-document.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
 import { InnovationTransferEntity } from './innovation-transfer.entity';
 
-// TODO: after migration remove all "data" fields except for name, description, countryCode, postalcode, mainCategory, otherMainCategory
+// TODO: after migration remove all "data" fields except for name, description, countryCode, postalcode, mainCategory, otherCategoryDescription
 // until removed all the other "enum" fields were typed with the 202209 version of the enum
+// when migrating update otherCategoryDescription with otherMainCategoryDescription content and remove otherMainCategoryDescription (also update sectionUpdate)
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {

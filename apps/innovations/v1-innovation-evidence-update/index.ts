@@ -34,14 +34,14 @@ class V1InnovationEvidenceUpdate {
 
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationSectionsService.updateInnovationEvidence(
+      await innovationSectionsService.updateInnovationEvidence(
         { id: requestUser.id },
         params.innovationId,
         params.evidenceOffset,
         body
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
+      context.res = ResponseHelper.Ok<ResponseDTO>({});
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -66,10 +66,6 @@ export default openApi(V1InnovationEvidenceUpdate.httpTrigger as AzureFunction, 
             schema: {
               type: 'object',
               properties: {
-                id: {
-                  type: 'string',
-                  description: 'Innovation evidence id.',
-                },
               },
             },
           },

@@ -40,6 +40,7 @@ export const createDocumentFromInnovation = (innovation: InnovationEntity): Inno
       countryName: innovation.countryName,
       postcode: innovation.postcode ?? undefined
     },
+    UNDERSTANDING_OF_NEEDS: {},
     EVIDENCE_OF_EFFECTIVENESS: {},
     COST_OF_INNOVATION: {},
     CURRENT_CARE_PATHWAY: {},

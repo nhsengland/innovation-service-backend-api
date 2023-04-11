@@ -52,16 +52,30 @@ export class InnovationBuilder {
         areas: ['COVID_19'],
         careSettings: ['INDUSTRY'],
         categories: ['MEDICAL_DEVICE', 'AI'],
-        hasFinalProduct: randBoolean() ? 'YES' : 'NO',
         mainCategory: 'MEDICAL_DEVICE',
         mainPurpose: 'MONITOR_CONDITION',
         otherCareSetting: randText(),
-        otherCategoryDescription: randText(),
-        otherMainCategoryDescription: randText(),
+        otherCategoryDescription: randText()
+      },
+      UNDERSTANDING_OF_NEEDS: {
+        benefitsOrImpact: [randText()],
+        carbonReductionPlan: randBoolean() ? 'YES' : 'NO',
+        completedHealthInequalitiesImpactAssessment: randBoolean() ? 'YES' : 'NO',
+        diseasesConditionsImpact: [randText()],
+        estimatedCarbonReductionSavings: randBoolean() ? 'YES' : 'NO',
+        estimatedCarbonReductionSavingsDescription: randText(),
+        files: [],
+        howInnovationWork: randText(),
+        impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
+        keyHealthInequalities: ['NONE'],
+        problemsTackled: randBoolean() ? 'YES' : 'NO',
       },
       EVIDENCE_OF_EFFECTIVENESS: {
-        evidences: [],
-        hasEvidence: randBoolean() ? 'YES' : 'IN_PROGRESS',
+        hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
+        currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
+        files: [],
+        needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
+        summaryOngoingEvidenceGathering: randText(),
       },
       MARKET_RESEARCH: {
         hasMarketResearch: randBoolean() ? 'YES' : 'NOT_YET',
@@ -109,32 +123,7 @@ export class InnovationBuilder {
         hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
         isDeployed: randBoolean() ? 'YES' : 'NO',
       },
-      /*
-      UNDERSTANDING_OF_BENEFITS: {
-        accessibilityImpactDetails: randText(),
-        accessibilityStepsDetails: randText(),
-        environmentalBenefits: [],
-        generalBenefits: [],
-        hasBenefits: randBoolean() ? 'YES' : 'NOT_YET',
-        otherEnvironmentalBenefit: randText(),
-        otherGeneralBenefit: randText(),
-        patientsCitizensBenefits: []
-      },
-      UNDERSTANDING_OF_NEEDS: {
-        subgroups: [],
-        cliniciansImpactDetails: randText(),
-        diseasesConditionsImpact: [],
-        impactClinicians: randBoolean(),
-        impactPatients: randBoolean(),
-      },
-      VALUE_PROPOSITION: {
-        hasProblemTackleKnowledge: randBoolean() ? 'YES' : 'NOT_YET',
-        intervention: randText(),
-        interventionImpact: randText(),
-        problemsConsequences: randText(),
-        problemsTackled: randText(),
-      }
-      */
+      evidences: [],
     };
 
   }

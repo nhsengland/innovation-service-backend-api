@@ -9,7 +9,7 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 import { BaseService } from './base.service';
 
 import { NotImplementedError } from '@innovations/shared/errors/errors.config';
-import { CurrentCatalogTypes, CurrentDocumentConfig, EvidenceType } from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes, CurrentDocumentConfig, CurrentDocumentType, CurrentEvidenceType } from '@innovations/shared/schemas/innovation-record';
 import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
 import type { InnovationSectionModel } from '../_types/innovation.types';
@@ -163,7 +163,8 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    if (innovation.document.document.version !== CurrentDocumentConfig.version) {
+    const document = innovation.document.document;
+    if (document.version !== CurrentDocumentConfig.version) {
       // Currently we only support the latest document version.
       // Supporting multiple versions will require selecting the correct sections and fields depending on the version
       throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
@@ -209,7 +210,15 @@ export class InnovationSectionsService extends BaseService {
     // Business Rule A/QAs can only see submitted sections
     // TODO: this can use history table to retrieve the last submitted section from the document if we choose to present them something they could previously see.
     const sectionHidden =  [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) && dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
-    const sectionData = innovation.document.document[sectionKey];
+    const sectionData = document[sectionKey];
+    
+    // Add special information for the EVIDENCE_OF_EFFECTIVENESS section
+    const evidenceData = sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS' ?
+      undefined :
+      document.evidences?.map(evidence => ({
+        evidenceSubmitType: evidence.evidenceSubmitType,
+        description: evidence.description
+      }));
         
     let files: {id: string, name: string, url: string}[] | undefined;
     
@@ -233,7 +242,8 @@ export class InnovationSectionsService extends BaseService {
       } : null,
       data: !sectionHidden ? {
         ...sectionData,
-        ...(files && { files })
+        ...(files && { files }),
+        ...(evidenceData && { evidences: evidenceData })
       } : null,
       ...(filters.fields?.includes('actions') && actions ? { actionsIds: actions?.map(action => (action.id)) } : {})
     };
@@ -302,9 +312,10 @@ export class InnovationSectionsService extends BaseService {
 
     let updateInnovation = false;
     if (sectionKey === 'INNOVATION_DESCRIPTION') {
-      (['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherMainCategoryDescription'] as const).forEach(key => {
+      (['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherCategoryDescription'] as const).forEach(key => {
         if (dataToUpdate[key] !== undefined) {
-          innovation[key] = dataToUpdate[key];
+          // This hack for otherCategoryDescription is to be removed in the future, maintaining for compatibility until InnovationEntity is updated.
+          innovation[key === 'otherCategoryDescription' ? 'otherMainCategoryDescription' : key] = dataToUpdate[key];
           updateInnovation = true;
         }
       });
@@ -506,25 +517,14 @@ export class InnovationSectionsService extends BaseService {
   async createInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceData: {
-      evidenceType: CurrentCatalogTypes.catalogEvidenceType,
-      clinicalEvidenceType: CurrentCatalogTypes.catalogClinicalEvidence,
-      description: string,
-      summary: string,
-      files: string[]
-    },
+    evidenceData: CurrentEvidenceType,
     entityManager?: EntityManager
-  ): Promise<{ id: string }> {
+  ): Promise<void> {
 
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const document = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('document.id = :innovationId', { innovationId })
-      .getOne();
-
-    if (!document) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
+    // Check if innovation exists and is of current version (throws error if it doesn't)
+    await this.getInnovationDocument(innovationId, connection);
 
     const section = await this.sqlConnection
       .createQueryBuilder(InnovationSectionEntity, 'section')
@@ -540,9 +540,9 @@ export class InnovationSectionsService extends BaseService {
     return connection.transaction(async (transaction) => {
       const updatedAt = new Date().toISOString();
 
-      const evidence = {
+      const evidence: CurrentEvidenceType = {
         evidenceType: evidenceData.evidenceType,
-        clinicalEvidenceType: evidenceData.clinicalEvidenceType,
+        evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
         summary: evidenceData.summary,
         files: evidenceData.files
@@ -551,7 +551,7 @@ export class InnovationSectionsService extends BaseService {
       await transaction.query(`
         UPDATE innovation_document 
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`append $.EVIDENCE_OF_EFFECTIVENESS.evidences`, JSON.stringify(evidence), user.id, updatedAt, innovationId]
+        [`append $.evidences`, JSON.stringify(evidence), user.id, updatedAt, innovationId]
       );
   
       await transaction.update(
@@ -563,10 +563,6 @@ export class InnovationSectionsService extends BaseService {
           updatedBy: user.id
         }
       );
-
-      // These returns should probably be revised
-      return { id: section.id };
-
     });
   }
 
@@ -574,20 +570,12 @@ export class InnovationSectionsService extends BaseService {
     user: { id: string },
     innovationId: string,
     evidenceOffset: number,
-    evidenceData: {
-      evidenceType: CurrentCatalogTypes.catalogEvidenceType;
-      clinicalEvidenceType: CurrentCatalogTypes.catalogClinicalEvidence;
-      description: string;
-      summary: string;
-      files: string[];
-    }
-  ): Promise<{ id: string }> {
+    evidenceData: CurrentEvidenceType
+  ): Promise<void> {
 
-    const document = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('document.id = :innovationId', { innovationId })
-      .getOne();
+    const document = await this.getInnovationDocument(innovationId);
 
-    const evidence = document?.document.EVIDENCE_OF_EFFECTIVENESS?.evidences?.[evidenceOffset];
+    const evidence = document.evidences?.[evidenceOffset];
 
     if (!evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
@@ -615,9 +603,9 @@ export class InnovationSectionsService extends BaseService {
         await this.domainService.innovations.deleteInnovationFiles(transaction, filesToDelete);
       }
 
-      const data: EvidenceType = {
+      const data: CurrentEvidenceType = {
         evidenceType: evidenceData.evidenceType,
-        clinicalEvidenceType: evidenceData.clinicalEvidenceType,
+        evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
         summary: evidenceData.summary,
         files: evidenceData.files.filter(f => existingFiles.has(f))
@@ -626,7 +614,7 @@ export class InnovationSectionsService extends BaseService {
       await transaction.query(`
         UPDATE innovation_document 
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.EVIDENCE_OF_EFFECTIVENESS.evidences[${evidenceOffset}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
+        [`$.evidences[${evidenceOffset}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
       );
 
       await transaction.update(
@@ -638,21 +626,15 @@ export class InnovationSectionsService extends BaseService {
           updatedBy: user.id
         }
       );
-
-      // These returns should probably be revised
-      return { id: section.id };
-
     });
 
   }
 
-  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceOffset: number): Promise<{ id: string }> {
+  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceOffset: number): Promise<void> {
 
-    const document = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('document.id = :innovationId', { innovationId })
-      .getOne();
+    const document = await this.getInnovationDocument(innovationId);
 
-    let evidences = document?.document.EVIDENCE_OF_EFFECTIVENESS?.evidences;
+    let evidences = document.evidences;
     const evidence = evidences?.[evidenceOffset];
 
     if (!evidences || !evidence) {
@@ -675,7 +657,7 @@ export class InnovationSectionsService extends BaseService {
       await transaction.query(`
         UPDATE innovation_document 
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.EVIDENCE_OF_EFFECTIVENESS.evidences`, JSON.stringify(evidences), user.id, updatedAt, innovationId]
+        [`$.evidences`, JSON.stringify(evidences), user.id, updatedAt, innovationId]
       );
       
       //update section status to draft
@@ -688,27 +670,17 @@ export class InnovationSectionsService extends BaseService {
           status: InnovationSectionStatusEnum.DRAFT
         }
       );
-
-      // These returns should probably be revised
-      return { id: innovationId };
-
     });
 
   }
 
-  async getInnovationEvidenceInfo(innovationId: string, evidenceOffset: number): Promise<{
-    evidenceType: EvidenceType['evidenceType'],
-    clinicalEvidenceType?: EvidenceType['clinicalEvidenceType'],
-    description?: string,
-    summary?: string,
-    files?: { id: string; name: string; url: string }[];
+  async getInnovationEvidenceInfo(innovationId: string, evidenceOffset: number): Promise<Omit<CurrentEvidenceType, 'files'> & {
+    files: { id: string; name: string; url: string }[];
   }> {
 
-    const document = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('document.id = :innovationId', { innovationId })
-      .getOne();
+    const document = await this.getInnovationDocument(innovationId);
 
-    const evidence = document?.document.EVIDENCE_OF_EFFECTIVENESS?.evidences?.[evidenceOffset];
+    const evidence = document.evidences?.[evidenceOffset];
 
     if (!evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
@@ -718,7 +690,7 @@ export class InnovationSectionsService extends BaseService {
 
     return {
       evidenceType: evidence.evidenceType,
-      clinicalEvidenceType: evidence.clinicalEvidenceType,
+      evidenceSubmitType: evidence.evidenceSubmitType,
       description: evidence.description,
       summary: evidence.summary,
       files: files.map(file => ({
@@ -755,5 +727,22 @@ export class InnovationSectionsService extends BaseService {
     }
 
     return result;
+  }
+
+  private async getInnovationDocument(innovationId: string, entityManager?: EntityManager): Promise<CurrentDocumentType> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+    const document = await connection.createQueryBuilder(InnovationDocumentEntity, 'document')
+      .where('document.id = :innovationId', { innovationId })
+      .getOne();
+    
+    if (!document) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    if(document.document.version !== CurrentDocumentConfig.version) {
+      throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
+    }
+
+    return document.document;
   }
 }
