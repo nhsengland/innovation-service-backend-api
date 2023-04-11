@@ -415,7 +415,7 @@ export class InnovationThreadsService extends BaseService {
       .innerJoin('messages.thread', 'thread')
       .leftJoin('organisationUnit.organisation', 'organisation')
       .innerJoin('thread.innovation', 'innovation')
-      .innerJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.owner', 'owner')
       .innerJoin('thread.author', 'users')
       .where('thread.id = :threadId', { threadId })
       .orderBy('messages.createdAt', order?.createdAt || 'DESC')
@@ -463,7 +463,7 @@ export class InnovationThreadsService extends BaseService {
           id: tm.author.id,
           name: author?.displayName || 'unknown user',
           role: tm.authorUserRole.role,
-          ...tm.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner.id},
+          ...tm.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner?.id ?? false},
           organisation,
           organisationUnit,
         },
@@ -525,7 +525,7 @@ export class InnovationThreadsService extends BaseService {
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .distinct(false)
       .innerJoin('thread.author', 'author')
-      .innerJoin('thread.innovation', 'innovation')
+      .leftJoin('thread.innovation', 'innovation')
       .select([
         'thread.id', 'thread.subject', 'thread.createdAt',
         'innovation.owner'
@@ -741,7 +741,7 @@ export class InnovationThreadsService extends BaseService {
 
     const innovation = await transaction
       .createQueryBuilder(InnovationEntity, 'innovations')
-      .innerJoinAndSelect('innovations.owner', 'owner')
+      .leftJoinAndSelect('innovations.owner', 'owner')
       .where('innovations.id = :innovationId', { innovationId })
       .getOneOrFail();
 

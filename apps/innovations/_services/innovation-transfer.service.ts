@@ -231,14 +231,12 @@ export class InnovationTransferService extends BaseService {
       if (status === InnovationTransferStatusEnum.COMPLETED) {
         const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
 
-        if (innovation) {
-          const currentOwnerEmail = (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email;
-
+        if (innovation && innovation.owner) {
           await this.collaboratorsService.upsertCollaborator(
             domainContext,
             {
               innovationId: transfer.innovation.id,
-              email: currentOwnerEmail,
+              email: (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email,
               userId: innovation.owner.id,
               status: transfer.ownerToCollaborator ? InnovationCollaboratorStatusEnum.ACTIVE : InnovationCollaboratorStatusEnum.LEFT
             }

@@ -53,7 +53,7 @@ export class InnovationSectionsService extends BaseService {
         'sections.id', 'sections.section', 'sections.status', 'sections.submittedAt',
         'submittedBy.id', 'submittedBy.identityId'
       ])
-      .innerJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.owner', 'owner')
       .innerJoin('innovation.sections', 'sections')
       .leftJoin('sections.submittedBy', 'submittedBy')
       .where('innovation.id = :innovationId', { innovationId })
@@ -113,7 +113,7 @@ export class InnovationSectionsService extends BaseService {
           submittedAt: section.submittedAt,
           submittedBy: section.submittedBy ? {
             name: innovatorNames.get(section.submittedBy.identityId)?.displayName ?? 'unknown user',
-            isOwner: section.submittedBy.id === innovation.owner.id
+            isOwner: section.submittedBy.id === innovation.owner?.id ?? false
           } : null,
           openActionsCount
         };
@@ -154,7 +154,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .innerJoinAndSelect('innovation.document', 'document')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();

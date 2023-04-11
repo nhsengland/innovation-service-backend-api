@@ -309,7 +309,7 @@ export class DomainInnovationsService {
 
   async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -335,7 +335,7 @@ export class DomainInnovationsService {
     const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'thread')
       .select(['thread.id', 'innovation.id', 'owner.id'])
       .innerJoin('thread.innovation', 'innovation')
-      .innerJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.owner', 'owner')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -378,7 +378,7 @@ export class DomainInnovationsService {
           name: usersInfo.get(message.author.identityId)?.displayName ?? '',
           locked: !!message.author.lockedAt,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
-          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner.id },
+          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner?.id },
           organisationUnit: message.authorUserRole.organisationUnit ? {
             id: message.authorUserRole.organisationUnit.id,
             acronym: message.authorUserRole.organisationUnit.acronym

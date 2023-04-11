@@ -238,7 +238,7 @@ export class InnovationActionsService extends BaseService {
       ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
-      .innerJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.owner', 'owner')
       .innerJoin('action.createdByUserRole', 'createdByUserRole')
       .innerJoin('createdByUserRole.user', 'createdByUser')
       .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrganisationUnit')
@@ -280,7 +280,7 @@ export class InnovationActionsService extends BaseService {
         name: lastUpdatedByUser.displayName,
         role: dbAction.updatedByUserRole.role,
         ...(dbAction.updatedByUserRole.role === ServiceRoleEnum.INNOVATOR && {
-          isOwner: dbAction.innovationSection.innovation.owner.id === dbAction.updatedByUserRole.user.id
+          isOwner: dbAction.innovationSection.innovation.owner?.id === dbAction.updatedByUserRole.user.id
         })
       },
       createdBy: {
@@ -312,7 +312,7 @@ export class InnovationActionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
