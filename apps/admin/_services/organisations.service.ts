@@ -538,7 +538,7 @@ export class OrganisationsService extends BaseService {
       template: 'GENERIC',
       params: {
         ...announcementParams,
-        description: ['If you think this organisation might be able to support you, you can share your innovation with this organisation in your data sharing preferences.'],
+        description: ['If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'],
       }
     }, transaction);
 
@@ -546,8 +546,13 @@ export class OrganisationsService extends BaseService {
       template: 'GENERIC',
       params: {
         ...announcementParams,
-        description: ['If you believe this organisation will offer the right support to any innovation, you can suggested it to them.'],
+        description: ['If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'],
       }
+    }, transaction);
+
+    await this.announcementsService.createAnnouncement([ServiceRoleEnum.ACCESSOR], {
+      template: 'GENERIC',
+      params: { ...announcementParams }
     }, transaction);
 
   }
