@@ -324,11 +324,20 @@ export class InnovationSectionsService extends BaseService {
     const sectionToBeSaved = section;
 
     return this.sqlConnection.transaction(async transaction => {
-      await transaction.query(`
-        UPDATE innovation_document 
-        SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
-      );
+      // Special case to clear evidences (dataToUpdate type is correct since it was previously validated by joi)
+      if (sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' && (dataToUpdate as CurrentDocumentType['EVIDENCE_OF_EFFECTIVENESS']).hasEvidence !== 'YES') {
+        await transaction.query(
+          `UPDATE innovation_document
+          SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
+        );
+      } else {
+        await transaction.query(
+          `UPDATE innovation_document
+          SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
+          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
+        );
+      }
 
       if(updateInnovation) {
         await transaction.save(InnovationEntity, {
