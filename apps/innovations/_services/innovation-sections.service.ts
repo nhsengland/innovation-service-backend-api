@@ -305,7 +305,7 @@ export class InnovationSectionsService extends BaseService {
       section.status = InnovationSectionStatusEnum.DRAFT;
 
       if (CurrentDocumentConfig.allowFileUploads.has(sectionKey)) {
-        sectionDeletedFiles = section.files.filter(file => !dataToUpdate['files'].includes(file.id));
+        sectionDeletedFiles = section.files.filter(file => !dataToUpdate['files']?.includes(file.id));
         section.files = (dataToUpdate['files'] ?? []).map((id: string) => ({ id }));
       }
     }
