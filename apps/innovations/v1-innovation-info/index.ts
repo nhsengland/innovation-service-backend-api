@@ -45,6 +45,7 @@ class V1InnovationInfo {
         id: result.id,
         name: result.name,
         description: result.description,
+        version: result.version,
         status: result.status,
         groupedStatus: result.groupedStatus,
         statusUpdatedAt: result.statusUpdatedAt,

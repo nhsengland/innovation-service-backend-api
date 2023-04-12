@@ -6,6 +6,7 @@ export type ResponseDTO = {
   id: string,
   name: string,
   description: null | string,
+  version: string,
   status: InnovationStatusEnum,
   groupedStatus: InnovationGroupedStatusEnum,
   statusUpdatedAt: DateISOType,

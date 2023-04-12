@@ -560,6 +560,7 @@ export class InnovationsService extends BaseService {
     id: string,
     name: string,
     description: null | string,
+    version: string,
     status: InnovationStatusEnum,
     groupedStatus: InnovationGroupedStatusEnum,
     statusUpdatedAt: DateISOType,
@@ -624,10 +625,11 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    // Only fetch the document category data (maybe create a helper for this in the future)
+    // Only fetch the document version and category data (maybe create a helper for this in the future)
     const documentData = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'innovationDocument')
     .select("JSON_QUERY(document, '$.INNOVATION_DESCRIPTION.categories')", 'categories')
     .addSelect("JSON_VALUE(document, '$.INNOVATION_DESCRIPTION.otherCategoryDescription')", 'otherCategoryDescription')
+    .addSelect('version', 'version')
     .where('innovationDocument.id = :innovationId', { innovationId: innovation.id })
     .getRawOne();
 
@@ -698,6 +700,7 @@ export class InnovationsService extends BaseService {
       id: innovation.id,
       name: innovation.name,
       description: innovation.description,
+      version: documentData.version,
       status: innovation.status,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
       statusUpdatedAt: innovation.statusUpdatedAt,
