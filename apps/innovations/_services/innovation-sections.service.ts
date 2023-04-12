@@ -548,7 +548,7 @@ export class InnovationSectionsService extends BaseService {
     const evidence = await this.sqlConnection
       .createQueryBuilder(InnovationEvidenceEntity, 'evidence')
       .innerJoinAndSelect('evidence.innovation', 'innovation')
-      .innerJoinAndSelect('evidence.files', 'files')
+      .leftJoinAndSelect('evidence.files', 'files')
       .where('evidence.id = :evidenceId', { evidenceId })
       .getOne();
 
@@ -567,10 +567,10 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    const evidenceFiles = await this.sqlConnection
+    const evidenceFiles = evidence.files.length ? await this.sqlConnection
       .createQueryBuilder(InnovationFileEntity, 'file')
       .where('file.id IN (:...fileIds)', { fileIds: evidence.files.map(f => f.id) })
-      .getMany();
+      .getMany() : [];
 
     const fileIds = evidenceFiles.map(f => f.id);
 
