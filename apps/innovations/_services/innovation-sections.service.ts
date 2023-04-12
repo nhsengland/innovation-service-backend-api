@@ -613,7 +613,7 @@ export class InnovationSectionsService extends BaseService {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.evidences', 'evidences')
-      .innerJoinAndSelect('evidences.files', 'files')
+      .leftJoinAndSelect('evidences.files', 'files')
       .innerJoinAndSelect('innovation.sections', 'sections')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -637,8 +637,10 @@ export class InnovationSectionsService extends BaseService {
     return this.sqlConnection.transaction(async transaction => {
 
       //delete files
-      await transaction.delete(InnovationFileEntity, { id: In(evidence.files.map(f => f.id)) });
-
+      if(evidence.files.length) {
+        await transaction.delete(InnovationFileEntity, { id: In(evidence.files.map(f => f.id)) });
+      }
+      
       //soft-delete evidence
       await transaction.update(InnovationEvidenceEntity, { id: evidenceId }, { updatedBy: user.id });
       await transaction.softDelete(InnovationEvidenceEntity, { id: evidence.id });
