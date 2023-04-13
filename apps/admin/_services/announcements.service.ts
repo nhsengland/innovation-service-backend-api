@@ -2,7 +2,7 @@ import { UserEntity } from '@admin/shared/entities';
 import { AnnouncementUserEntity } from '@admin/shared/entities/user/announcement-user.entity';
 import { AnnouncementEntity } from '@admin/shared/entities/user/announcement.entity';
 import type { AnnouncementParamsType, AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
-import { AnnouncementErrorsEnum, BadRequestError, UnprocessableEntityError } from '@admin/shared/errors';
+import { AnnouncementErrorsEnum, BadRequestError } from '@admin/shared/errors';
 import type { DateISOType } from '@admin/shared/types';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
@@ -22,7 +22,8 @@ export class AnnouncementsService extends BaseService {
       template: T,
       params?: AnnouncementParamsType[T],
       startsAt?: DateISOType,
-      expiresAt?: DateISOType
+      expiresAt?: DateISOType,
+      usersToExclude?: string[]
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -33,15 +34,23 @@ export class AnnouncementsService extends BaseService {
     }
 
     return await connection.transaction(async transaction => {
-      const targetUserIds = await transaction.createQueryBuilder(UserEntity, 'user')
+      const query = transaction.createQueryBuilder(UserEntity, 'user')
         .select(['user.id'])
         .innerJoin('user.serviceRoles', 'userRoles')
         .where('userRoles.role IN (:...targetRoles)', { targetRoles })
+        .andWhere('user.locked_at IS NULL')
         .groupBy('user.id')
-        .getMany();
+
+      if (config.usersToExclude &&  config.usersToExclude.length > 0) {
+        query.andWhere('user.id NOT IN (:...usersToExclude)', { usersToExclude: config.usersToExclude })
+      }
+
+      const targetUserIds = await query.getMany();
 
       if (targetUserIds.length === 0) {
-        throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_NO_TARGET_USERS);
+        // Handle this differently if it is exposed to the "public".
+        this.logger.log(`Creating an announcement with template ${config.template}: no target users found for roles ${targetRoles}.`);
+        return;
       }
 
       const announcement = await transaction.save(AnnouncementEntity, {

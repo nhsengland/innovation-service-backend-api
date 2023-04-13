@@ -254,7 +254,15 @@ export class OrganisationsService extends BaseService {
           { inactivatedAt: null }
         );
 
-        await this.createOrganisationAnnouncement(unit.organisation.name, transaction);
+        // Just send the announcement if this is the first time the organization has been activated.
+        if (unit.organisation.createdAt === unit.organisation.inactivatedAt) {
+          await this.createOrganisationAnnouncement(
+            unit.organisation.id,
+            unit.organisation.name,
+            transaction
+          );
+        }
+
       }
 
       // Activate users of unit and roles
@@ -399,9 +407,12 @@ export class OrganisationsService extends BaseService {
   }
 
   async createOrganisation(
-    name: string,
-    acronym: string,
-    units?: { name: string; acronym: string }[]
+    domainContext: DomainContextType,
+    data: {
+      name: string,
+      acronym: string,
+      units?: { name: string; acronym: string }[]
+    }
   ): Promise<{
     id: string;
     units: string[];
@@ -410,7 +421,7 @@ export class OrganisationsService extends BaseService {
     const result = await this.sqlConnection.transaction(async (transaction) => {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
+        .where('org.name = :name OR org.acronym = :acronym', { name: data.name, acronym: data.acronym })
         .getOne();
 
       if (orgNameOrAcronymAlreadyExists) {
@@ -419,10 +430,15 @@ export class OrganisationsService extends BaseService {
         );
       }
 
+      const now = new Date().toISOString();
       const org = OrganisationEntity.new({
-        name,
-        acronym,
-        inactivatedAt: new Date().toISOString(),
+        name: data.name,
+        acronym: data.acronym,
+        createdBy: domainContext.id,
+        createdAt: now,
+        inactivatedAt: now,
+        updatedAt: now,
+        updatedBy: domainContext.id,
         type: OrganisationTypeEnum.ACCESSOR,
         isShadow: false,
       });
@@ -435,9 +451,9 @@ export class OrganisationsService extends BaseService {
           if > 1 -> create specified units
         */
       const savedUnits: OrganisationUnitEntity[] = [];
-      if (units && units.length > 1) {
+      if (data.units && data.units.length > 1) {
         //create specified units
-        for (const unit of units) {
+        for (const unit of data.units) {
           const u = await this.createOrganisationUnit(
             savedOrganisation.id,
             unit.name,
@@ -451,8 +467,8 @@ export class OrganisationsService extends BaseService {
         //create shadow unit
         const shadowUnit = await this.createOrganisationUnit(
           org.id,
-          name,
-          acronym,
+          data.name,
+          data.acronym,
           true,
           transaction
         );
@@ -522,9 +538,15 @@ export class OrganisationsService extends BaseService {
   }
 
   private async createOrganisationAnnouncement(
+    organisationId: string,
     orgName: string,
     transaction: EntityManager
   ): Promise<void> {
+
+    const orgUsers = await transaction.createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.organisation_id = :organisationId', { organisationId })
+      .getMany();
+    const usersToExclude = orgUsers.map(u => u.userId);
 
     const announcementParams = {
       title: 'A new support organisation has been added',
@@ -547,12 +569,14 @@ export class OrganisationsService extends BaseService {
       params: {
         ...announcementParams,
         description: ['If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'],
-      }
+      },
+      usersToExclude
     }, transaction);
 
     await this.announcementsService.createAnnouncement([ServiceRoleEnum.ACCESSOR], {
       template: 'GENERIC',
-      params: { ...announcementParams }
+      params: { ...announcementParams },
+      usersToExclude
     }, transaction);
 
   }
