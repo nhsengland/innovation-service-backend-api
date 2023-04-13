@@ -228,9 +228,11 @@ export class InnovationTransferService extends BaseService {
         finishedAt: new Date().toISOString()
       });
 
+      // COMPLETED transfer flow
       if (status === InnovationTransferStatusEnum.COMPLETED) {
         const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
 
+        // It should run if we have an owner and update its status as collaborator
         if (innovation && innovation.owner) {
           await this.collaboratorsService.upsertCollaborator(
             domainContext,
@@ -262,6 +264,20 @@ export class InnovationTransferService extends BaseService {
           }
         );
 
+      }
+
+      // DECLINED transfer flow
+      if (status === InnovationTransferStatusEnum.DECLINED) {        
+        const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
+
+        // It should run if there is no innovation owner
+        if (innovation && !innovation.owner) {
+          await this.domainService.innovations.withdrawInnovations(
+            { id: '', roleId: '' },
+            [{id: transfer.innovation.id, reason: null}],
+            transactionManager
+          );
+        }
       }
 
       // It should send a notification for all cases

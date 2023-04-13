@@ -309,7 +309,11 @@ export class DomainInnovationsService {
 
   async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.owner', 'owner')
+      .select([
+        'innovation.id', 'innovation.name',
+        'owner.id', 'owner.identityId'
+      ])
+      .leftJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
