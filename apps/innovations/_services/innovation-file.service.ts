@@ -1,4 +1,6 @@
 import { inject, injectable } from 'inversify';
+import { basename, extname } from 'path';
+
 import type { EntityManager } from 'typeorm';
 
 import { InnovationFileEntity } from '@innovations/shared/entities';
@@ -31,10 +33,12 @@ export class InnovationFileService extends BaseService {
   ): Promise<{id: string, displayFileName: string, url: string}> {
     
     const connection = entityManager ?? this.sqlConnection.manager;
+    const extension = extname(filename);
+    const filenameWithoutExtension = basename(filename, extension);
     
     const file = await connection.save(InnovationFileEntity, {
       createdBy: userId,
-      displayFileName: filename.substring(0, 95), // failsafe to avoid filename too long (100 chars max)
+      displayFileName: filenameWithoutExtension.substring(0, 99-extension.length) + extension, // failsafe to avoid filename too long (100 chars max)
       innovation: { id: innovationId },
       context,
     });
