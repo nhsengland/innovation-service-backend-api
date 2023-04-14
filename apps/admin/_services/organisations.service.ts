@@ -4,6 +4,7 @@ import { EntityManager, In } from 'typeorm';
 import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { DatesHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
@@ -255,7 +256,7 @@ export class OrganisationsService extends BaseService {
         );
 
         // Just send the announcement if this is the first time the organization has been activated.
-        if (unit.organisation.createdAt === unit.organisation.inactivatedAt) {
+        if (DatesHelper.dateDiffInDays(unit.organisation.createdAt, unit.organisation.inactivatedAt) === 0) {
           await this.createOrganisationAnnouncement(
             unit.organisation.id,
             unit.organisation.name,

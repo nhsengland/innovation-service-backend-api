@@ -41,7 +41,7 @@ export class AnnouncementsService extends BaseService {
         .andWhere('user.locked_at IS NULL')
         .groupBy('user.id')
 
-      if (config.usersToExclude &&  config.usersToExclude.length > 0) {
+      if (config.usersToExclude && config.usersToExclude.length > 0) {
         query.andWhere('user.id NOT IN (:...usersToExclude)', { usersToExclude: config.usersToExclude })
       }
 
