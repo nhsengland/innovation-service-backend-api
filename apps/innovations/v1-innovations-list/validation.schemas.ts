@@ -4,7 +4,7 @@ import { InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportSta
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
 import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
-import type { DateISOType, TypeFromArray } from '@innovations/shared/types';
+import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 const DateFilterKeys = ['submittedAt'] as const;
@@ -36,8 +36,8 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   hasAccessThrough?: TypeFromArray<typeof HasAccessThroughKeys>[],
   dateFilter?: {
     field: TypeFromArray<typeof DateFilterKeys>,
-    startDate?: DateISOType,
-    endDate?: DateISOType
+    startDate?: Date,
+    endDate?: Date
   }[],
   withDeleted?: boolean,  // this is only allowed for admin and is true in that case to keep previous behavior
   fields?: TypeFromArray<typeof FieldsKeys>[]

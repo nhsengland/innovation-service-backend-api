@@ -30,7 +30,7 @@ import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
 import type { catalogCarePathway, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogYesInProcessNotYet, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from '../../schemas/innovation-record/202209/catalog.types';
-import type { DateISOType } from '../../types/date.types';
+
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
 import { InnovationDocumentEntity } from './innovation-document.entity';
@@ -54,10 +54,10 @@ export class InnovationEntity extends BaseEntity {
   status: InnovationStatusEnum;
 
   @Column({ name: 'status_updated_at', type: 'datetime2' })
-  statusUpdatedAt: DateISOType;
+  statusUpdatedAt: Date;
 
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
-  expires_at: null | DateISOType;
+  expires_at: null | Date;
 
   @Column({ name: 'survey_id', type: 'nvarchar', unique: true, nullable: true })
   surveyId: null | string;
@@ -72,7 +72,7 @@ export class InnovationEntity extends BaseEntity {
   postcode: null | string;
 
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
-  submittedAt: null | DateISOType;
+  submittedAt: null | Date;
 
   @Column({ name: 'other_main_category_description', type: 'nvarchar', nullable: true })
   otherMainCategoryDescription: null | string;

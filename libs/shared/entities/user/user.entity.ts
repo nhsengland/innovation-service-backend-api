@@ -7,7 +7,7 @@ import { OrganisationUserEntity } from '../organisation/organisation-user.entity
 import { NotificationPreferenceEntity } from './notification-preference.entity';
 import { UserRoleEntity } from './user-role.entity';
 
-import type { DateISOType } from '../../types/date.types';
+
 
 
 @Entity('user')
@@ -23,10 +23,10 @@ export class UserEntity extends BaseEntity {
   surveyId: null | string;
 
   @Column({ name: 'first_time_sign_in_at', type: 'datetime2', nullable: true })
-  firstTimeSignInAt: null | DateISOType;
+  firstTimeSignInAt: null | Date;
 
   @Column({ name: 'locked_at', type: 'datetime2', nullable: true })
-  lockedAt: null | DateISOType;
+  lockedAt: null | Date;
 
   @Column({ name: 'delete_reason', type: 'nvarchar', nullable: true })
   deleteReason: null | string;

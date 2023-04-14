@@ -8,7 +8,7 @@ import { InnovationEntity } from './innovation.entity';
 
 import { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
 import { InnovationSectionStatusEnum } from '../../enums/innovation.enums';
-import type { DateISOType } from '../../types/date.types';
+
 import { UserEntity } from '../user/user.entity';
 
 
@@ -26,7 +26,7 @@ export class InnovationSectionEntity extends BaseEntity {
   status: InnovationSectionStatusEnum;
 
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
-  submittedAt: DateISOType | null;
+  submittedAt: Date | null;
 
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'submitted_by' })

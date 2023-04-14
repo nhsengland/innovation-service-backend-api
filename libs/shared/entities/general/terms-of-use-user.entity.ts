@@ -1,12 +1,9 @@
-import { Entity, ManyToOne, JoinColumn, Unique, UpdateDateColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
 import { UserEntity } from '../user/user.entity';
 import { TermsOfUseEntity } from './terms-of-use.entity';
-
-import type { DateISOType } from '../../types/date.types';
-
 
 @Entity('terms_of_use_user')
 @Unique('uc_termsOfUse_user_idx', ['termsOfUse', 'user'])
@@ -16,8 +13,7 @@ export class TermsOfUseUserEntity extends BaseEntity {
   id: string;
 
   @UpdateDateColumn({ name: 'accepted_at', type: 'datetime2', nullable: false })
-  acceptedAt: DateISOType;
-
+  acceptedAt: Date;
 
   @ManyToOne(() => TermsOfUseEntity, { nullable: false })
   @JoinColumn({ name: 'tou_id' })

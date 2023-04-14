@@ -1,13 +1,13 @@
 import { ViewColumn, ViewEntity } from 'typeorm';
 
-import type { DateISOType } from '../../types/date.types';
+
 
 
 @ViewEntity()
 export class LastSupportStatusViewEntity {
 
   @ViewColumn()
-  statusChangedAt: DateISOType;
+  statusChangedAt: Date;
 
   @ViewColumn()
   innovationId: string;

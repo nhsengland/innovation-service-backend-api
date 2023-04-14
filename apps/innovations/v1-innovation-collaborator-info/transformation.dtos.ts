@@ -1,5 +1,5 @@
 import type { InnovationCollaboratorStatusEnum } from "@innovations/shared/enums";
-import type { DateISOType } from "@innovations/shared/types";
+
 
 export type ResponseDTO = {
   id: string;
@@ -16,5 +16,5 @@ export type ResponseDTO = {
       name?: string
     }
   },
-  invitedAt: DateISOType
+  invitedAt: Date
 }

@@ -1,7 +1,7 @@
 import { AnnouncementUserEntity } from '@users/shared/entities/user/announcement-user.entity';
 import type { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
 import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
-import type { DateISOType, DomainContextType } from '@users/shared/types';
+import type { DomainContextType } from '@users/shared/types';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
@@ -22,7 +22,7 @@ export class AnnouncementsService extends BaseService {
     template: AnnouncementTemplateType,
     targetRoles: ServiceRoleEnum[],
     params: Record<string, unknown> | null,
-    createdAt: DateISOType
+    createdAt: Date
   }[]> {
     const connection = entityManager ?? this.sqlConnection.manager;
 

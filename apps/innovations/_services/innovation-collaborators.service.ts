@@ -4,7 +4,7 @@ import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } f
 import { ConflictError, ForbiddenError, InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, ObjectLiteral } from 'typeorm';
 import { BaseService } from './base.service';
@@ -218,7 +218,7 @@ export class InnovationCollaboratorsService extends BaseService {
     email: string,
     status: InnovationCollaboratorStatusEnum,
     innovation: { id: string, name: string, description: null | string, owner: { id: string, name?: string } },
-    invitedAt: DateISOType,
+    invitedAt: Date,
   }> {
 
     const em = entityManager ?? this.sqlConnection.manager;

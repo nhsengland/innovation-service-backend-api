@@ -237,7 +237,7 @@ export class TestsHelper {
       // Pending, Active and Expired collaborator invites
       const collaboratorPending = await helper.createCollaborator(domainContexts.innovator, innovationWithCollaborators).build(entityManager);
       const collaboratorActive = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setStatus(InnovationCollaboratorStatusEnum.ACTIVE).build(entityManager);
-      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setUser(innovator2).setEmail('innovator2@gmail.com').setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31).toISOString()).build(entityManager);
+      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setUser(innovator2).setEmail('innovator2@gmail.com').setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31)).build(entityManager);
 
       return {
         innovation,

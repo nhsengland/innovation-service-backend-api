@@ -5,7 +5,7 @@ import { InnovationEntity, InnovationThreadEntity, InnovationThreadMessageEntity
 import { ActivityEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, GenericErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -312,7 +312,7 @@ export class InnovationThreadsService extends BaseService {
   ): Promise<{
     id: string;
     subject: string;
-    createdAt: string;
+    createdAt: Date;
     createdBy: {
       id: string;
       name: string;
@@ -352,7 +352,7 @@ export class InnovationThreadsService extends BaseService {
   ): Promise<{
     id: string;
     message: string;
-    createdAt: string;
+    createdAt: Date;
   }> {
 
     const message = await this.sqlConnection.createQueryBuilder(InnovationThreadMessageEntity, 'message')
@@ -380,7 +380,7 @@ export class InnovationThreadsService extends BaseService {
     messages: {
       id: string;
       message: string;
-      createdAt: DateISOType;
+      createdAt: Date;
       isNew: boolean;
       isEditable: boolean;
       createdBy: {
@@ -391,7 +391,7 @@ export class InnovationThreadsService extends BaseService {
         organisation: { id: string; name: string; acronym: string | null } | undefined;
         organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
       };
-      updatedAt: DateISOType;
+      updatedAt: Date;
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
@@ -493,11 +493,11 @@ export class InnovationThreadsService extends BaseService {
       id: string,
       subject: string,
       messageCount: number,
-      createdAt: DateISOType,
+      createdAt: Date,
       isNew: boolean,
       lastMessage: {
         id: string,
-        createdAt: DateISOType,
+        createdAt: Date,
         createdBy: {
           id: string, name: string,
           organisationUnit: null | { id: string; name: string; acronym: string }

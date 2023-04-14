@@ -4,7 +4,7 @@ import { InnovationActionEntity, InnovationDocumentEntity, InnovationEntity, Inn
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType } from '@innovations/shared/types/date.types';
+
 
 import { BaseService } from './base.service';
 
@@ -37,7 +37,7 @@ export class InnovationSectionsService extends BaseService {
     id: null | string,
     section: CurrentCatalogTypes.InnovationSections,
     status: InnovationSectionStatusEnum,
-    submittedAt: null | DateISOType,
+    submittedAt: null | Date,
     submittedBy: null | {
       name: string,
       isOwner: boolean
@@ -138,7 +138,7 @@ export class InnovationSectionsService extends BaseService {
     id: null | string,
     section: CurrentCatalogTypes.InnovationSections,
     status: InnovationSectionStatusEnum,
-    submittedAt: null | DateISOType,
+    submittedAt: null | Date,
     submittedBy: null | {
       name: string,
       isOwner: boolean,
@@ -265,7 +265,7 @@ export class InnovationSectionsService extends BaseService {
     const shouldAddActivityLog = innovation.status != InnovationStatusEnum.CREATED && !!section && section.status != InnovationSectionStatusEnum.DRAFT;
 
     // Use the same updatedAt for all entities to ease joins with historyTable
-    const updatedAt = new Date().toISOString();
+    const updatedAt = new Date();
 
     if (!section) { // Section don't exist yet, let's create it.
       section = InnovationSectionEntity.new({
@@ -381,7 +381,7 @@ export class InnovationSectionsService extends BaseService {
 
     return connection.transaction(async transaction => {
 
-      const now = new Date().toISOString();
+      const now = new Date();
 
       // Update section.
       dbSection.status = InnovationSectionStatusEnum.SUBMITTED;
@@ -482,7 +482,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     return connection.transaction(async (transaction) => {
-      const updatedAt = new Date().toISOString();
+      const updatedAt = new Date();
 
       const evidence: CurrentEvidenceType = {
         evidenceType: evidenceData.evidenceType,
@@ -541,7 +541,7 @@ export class InnovationSectionsService extends BaseService {
     
     return this.sqlConnection.transaction(async (transaction) => {
 
-      const updatedAt = new Date().toISOString();
+      const updatedAt = new Date();
 
       if(filesToDelete.length > 0) {
         await this.domainService.innovations.deleteInnovationFiles(transaction, filesToDelete);
@@ -590,7 +590,7 @@ export class InnovationSectionsService extends BaseService {
 
     return this.sqlConnection.transaction(async transaction => {
 
-      const updatedAt = new Date().toISOString();
+      const updatedAt = new Date();
 
       if(evidence.files && evidence.files.length > 0) {
         //delete files

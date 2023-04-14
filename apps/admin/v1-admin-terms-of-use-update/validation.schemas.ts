@@ -1,5 +1,5 @@
 import { TermsOfUseTypeEnum } from '@admin/shared/enums';
-import type { DateISOType } from '@admin/shared/types';
+
 import Joi from 'joi';
 
 export type ParamsType = {
@@ -14,7 +14,7 @@ export type BodyType = {
   name: string,
   touType: TermsOfUseTypeEnum,
   summary?: string,
-  releasedAt?: DateISOType
+  releasedAt?: Date
 }
 export const BodySchema = Joi.object<BodyType>({
   name: Joi.string().required().description('Name of the terms of use.'),

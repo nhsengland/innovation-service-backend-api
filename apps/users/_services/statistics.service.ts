@@ -3,7 +3,7 @@ import { injectable } from 'inversify';
 import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
-import type { DateISOType, DomainContextType, DomainUserInfoType } from '@users/shared/types';
+import type { DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
 
@@ -72,7 +72,7 @@ export class StatisticsService extends BaseService {
   async innovationsAssignedToMe(
     requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
-  ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
+  ): Promise<{ count: number, total: number, lastSubmittedAt: null | Date }> {
 
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
@@ -107,7 +107,7 @@ export class StatisticsService extends BaseService {
   async actionsToReview(
     requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
-  ): Promise<{ count: number, total: number, lastSubmittedAt: null | DateISOType }> {
+  ): Promise<{ count: number, total: number, lastSubmittedAt: null | Date }> {
 
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
@@ -150,7 +150,7 @@ export class StatisticsService extends BaseService {
   async innovationsToReview(
     _requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
-  ): Promise<{ count: number, lastSubmittedAt: null | DateISOType }> {
+  ): Promise<{ count: number, lastSubmittedAt: null | Date }> {
 
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 

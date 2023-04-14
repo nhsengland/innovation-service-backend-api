@@ -4,7 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import type { ServiceRoleEnum } from '../../enums';
 import { AnnouncementTemplateType } from '../../enums/announcement.enums';
-import type { DateISOType } from '../../types';
+
 import { AnnouncementUserEntity } from './announcement-user.entity';
 
 @Entity('announcement')
@@ -23,10 +23,10 @@ export class AnnouncementEntity extends BaseEntity {
   params: Record<string, unknown> | null;
 
   @Column({ name: 'starts_at', type: 'datetime2' })
-  startsAt: DateISOType;
+  startsAt: Date;
 
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
-  expiresAt: DateISOType | null;
+  expiresAt: Date | null;
 
   @OneToMany(() => AnnouncementUserEntity, record => record.announcement, { cascade: ['insert', 'update'] })
   announcementUsers: AnnouncementUserEntity[];

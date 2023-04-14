@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { inject, injectable } from 'inversify';
 
 import { GenericErrorsEnum, NotFoundError, ServiceUnavailableError, UnauthorizedError, UserErrorsEnum } from '../../errors';
-import type { DateISOType } from '../../types/date.types';
+
 import type { IdentityUserInfo } from '../../types/domain.types';
 import { CacheServiceSymbol, LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
@@ -44,7 +44,7 @@ type b2cGetUsersListDTO = {
     accountEnabled: boolean;
     createdDateTime: string;
     deletedDateTime: null | string;
-    lastPasswordChangeDateTime: null | DateISOType;
+    lastPasswordChangeDateTime: null | Date;
     signInActivity: {
       lastSignInDateTime: null | string;
       lastSignInRequestId: null | string;
@@ -252,8 +252,8 @@ export class IdentityProviderService {
         email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
         mobilePhone: u.mobilePhone,
         isActive: u.accountEnabled,
-        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime,
-        passwordResetAt: u.lastPasswordChangeDateTime,
+        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime ? new Date(u.signInActivity.lastSignInDateTime) : null,
+        passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null,
       }))
     ));
 

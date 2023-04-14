@@ -1,5 +1,5 @@
 import type { InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
-import type { DateISOType } from '@users/shared/types';
+
 
 export type ResponseDTO = {
   count: number,
@@ -9,8 +9,8 @@ export type ResponseDTO = {
     contextType: NotificationContextTypeEnum;
     contextDetail: NotificationContextDetailEnum;
     contextId: string;
-    createdAt: DateISOType;
-    readAt: DateISOType;
+    createdAt: Date;
+    readAt: Date;
     params: Record<string, unknown>; // used to be NotificationParamsType in legacy API;
   }[]
 }

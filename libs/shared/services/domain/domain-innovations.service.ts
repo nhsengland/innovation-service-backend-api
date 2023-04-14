@@ -1,12 +1,12 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationCollaboratorEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity, InnovationTransferEntity } from '../../entities';
+import { EXPIRATION_DATES } from '../../constants';
+import { ActivityLogEntity, InnovationActionEntity, InnovationCollaboratorEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity } from '../../entities';
 import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { ActivitiesParamsType, DateISOType, DomainContextType } from '../../types';
+import type { ActivitiesParamsType, DomainContextType } from '../../types';
 import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
-import { EXPIRATION_DATES } from '../../constants';
 
 
 export class DomainInnovationsService {
@@ -137,7 +137,7 @@ export class DomainInnovationsService {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
           innovationSupport.organisationUnitUsers = [];
           innovationSupport.updatedBy = userId;
-          innovationSupport.deletedAt = new Date().toISOString();
+          innovationSupport.deletedAt = new Date();
           await em.save(InnovationSupportEntity, innovationSupport);
         }
 
@@ -146,7 +146,7 @@ export class DomainInnovationsService {
         dbInnovation.updatedBy = userId;
         dbInnovation.organisationShares = [];
         dbInnovation.withdrawReason = reason;
-        dbInnovation.deletedAt = new Date().toISOString();
+        dbInnovation.deletedAt = new Date();
         dbInnovation.expires_at = null;
         await em.save(InnovationEntity, dbInnovation);
 
@@ -416,7 +416,7 @@ export class DomainInnovationsService {
     id: string
     name: string,
     collaboratorsCount: number,
-    expirationTransferDate: DateISOType | null
+    expirationTransferDate: Date | null
   }[]> {
 
     const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
@@ -434,7 +434,8 @@ export class DomainInnovationsService {
       id: innovation.id,
       name: innovation.name,
       collaboratorsCount: innovation.collaborators.length,
-      expirationTransferDate: innovation.transfers[0] ? new Date(Date.parse(innovation.transfers[0].createdAt) + EXPIRATION_DATES.transfers).toISOString() : null
+      expirationTransferDate: innovation.transfers[0] ? 
+        new Date(innovation.transfers[0].createdAt.getTime() + EXPIRATION_DATES.transfers) : null
     }));
     
     return data;

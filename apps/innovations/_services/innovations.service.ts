@@ -7,7 +7,7 @@ import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrors
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType, type DomainUsersService } from '@innovations/shared/services';
-import type { ActivityLogListParamsType, DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -46,8 +46,8 @@ export class InnovationsService extends BaseService {
       hasAccessThrough?: ('owner' | 'collaborator')[],
       dateFilter?: {
         field: 'submittedAt',
-        startDate?: DateISOType,
-        endDate?: DateISOType
+        startDate?: Date,
+        endDate?: Date
       }[],
       withDeleted?: boolean,
       fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[]
@@ -60,20 +60,20 @@ export class InnovationsService extends BaseService {
       name: string,
       description: null | string,
       status: InnovationStatusEnum,
-      statusUpdatedAt: DateISOType,
-      submittedAt: null | DateISOType,
-      updatedAt: null | DateISOType,
+      statusUpdatedAt: Date,
+      submittedAt: null | Date,
+      updatedAt: null | Date,
       countryName: null | string,
       postCode: null | string,
       mainCategory: null | CurrentCatalogTypes.catalogCategory,
       otherMainCategoryDescription: null | string,
       isAssessmentOverdue?: boolean,
       groupedStatus?: InnovationGroupedStatusEnum,
-      assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number },
+      assessment?: null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { name: string }, reassessmentCount: number },
       supports?: {
         id: string,
         status: InnovationSupportStatusEnum,
-        updatedAt: DateISOType,
+        updatedAt: Date,
         organisation: {
           id: string, name: string, acronym: null | string,
           unit: {
@@ -476,7 +476,7 @@ export class InnovationsService extends BaseService {
       count: innovationsCount,
       data: await Promise.all(innovations.map(async innovation => {
 
-        let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { name: string }, reassessmentCount: number };
+        let assessment: undefined | null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { name: string }, reassessmentCount: number };
         const supports = supportingOrganisationsMap.get(innovation.id);
 
         // Assessment parsing.
@@ -509,7 +509,7 @@ export class InnovationsService extends BaseService {
           otherMainCategoryDescription: innovation.otherMainCategoryDescription,
 
           ...(filters.fields?.includes('groupedStatus') && { groupedStatus: innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED }),
-          ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date().toISOString()) > 7) }),
+          ...(!filters.fields?.includes('isAssessmentOverdue') ? {} : { isAssessmentOverdue: !!(innovation.submittedAt && !assessment?.finishedAt && DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date()) > 7) }),
           ...(assessment && { assessment }),
           ...(supports && {
             supports: supports.map(support => ({
@@ -563,16 +563,16 @@ export class InnovationsService extends BaseService {
     version: string,
     status: InnovationStatusEnum,
     groupedStatus: InnovationGroupedStatusEnum,
-    statusUpdatedAt: DateISOType,
-    submittedAt: null | DateISOType,
+    statusUpdatedAt: Date,
+    submittedAt: null | Date,
     countryName: null | string,
     postCode: null | string,
     categories: CurrentCatalogTypes.catalogCategory[],
     otherCategoryDescription: null | string,
-    owner?: { id: string, name: string, email: string, contactByEmail: boolean, contactByPhone: boolean, contactByPhoneTimeframe: PhoneUserPreferenceEnum | null, contactDetails: string | null, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | DateISOType },
-    lastEndSupportAt: null | DateISOType,
+    owner?: { id: string, name: string, email: string, contactByEmail: boolean, contactByPhone: boolean, contactByPhoneTimeframe: PhoneUserPreferenceEnum | null, contactDetails: string | null, mobilePhone: null | string, organisations: { name: string, size: null | string }[], isActive: boolean, lastLoginAt?: null | Date },
+    lastEndSupportAt: null | Date,
     export: { canUserExport: boolean, pendingRequestsCount: number },
-    assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
+    assessment?: null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { id: string, name: string }, reassessmentCount: number },
     supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[],
     collaboratorId?: string
   }> {
@@ -669,7 +669,7 @@ export class InnovationsService extends BaseService {
     }
 
     // Assessment parsing.
-    let assessment: undefined | null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number };
+    let assessment: undefined | null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { id: string, name: string }, reassessmentCount: number };
 
     if (filters.fields?.includes('assessment')) {
 
@@ -786,7 +786,7 @@ export class InnovationsService extends BaseService {
     const surveyInfo = surveyId ? await this.getSurveyInfo(surveyId) : null;
 
     return this.sqlConnection.transaction(async transaction => {
-      const now = new Date().toISOString();
+      const now = new Date();
 
       const savedInnovation = await transaction.save(InnovationEntity, InnovationEntity.new({
 
@@ -813,7 +813,7 @@ export class InnovationsService extends BaseService {
         name: data.name,
         description: data.description,
         status: InnovationStatusEnum.CREATED,
-        statusUpdatedAt: new Date().toISOString(),
+        statusUpdatedAt: new Date(),
         countryName: data.countryName,
         postcode: data.postcode,
         organisationShares: data.organisationShares.map(id => OrganisationEntity.new({ id })),
@@ -1144,7 +1144,7 @@ export class InnovationsService extends BaseService {
     pagination: PaginationQueryParamsType<'createdAt'>
   ): Promise<{
     count: number,
-    data: { type: ActivityTypeEnum, activity: ActivityEnum, date: DateISOType, params: ActivityLogListParamsType }[]
+    data: { type: ActivityTypeEnum, activity: ActivityEnum, date: Date, params: ActivityLogListParamsType }[]
   }> {
 
     const query = this.sqlConnection
@@ -1394,7 +1394,7 @@ export class InnovationsService extends BaseService {
           acronym: r.organisationUnit.acronym,
         },
       },
-      expiresAt: r.exportExpiresAt?.toISOString(),
+      expiresAt: r.exportExpiresAt,
       isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED,
       updatedAt: r.updatedAt
     }));
@@ -1451,7 +1451,7 @@ export class InnovationsService extends BaseService {
           acronym: request.organisationUnit.acronym,
         },
       },
-      expiresAt: request.exportExpiresAt?.toISOString(),
+      expiresAt: request.exportExpiresAt,
       isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED,
       updatedAt: request.updatedAt
     };
@@ -1593,7 +1593,7 @@ export class InnovationsService extends BaseService {
 
   }
 
-  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<DateISOType | null> {
+  private async lastSupportStatusTransitionFromEngaging(innovationId: string): Promise<Date | null> {
 
     const result = await this.sqlConnection.createQueryBuilder(LastSupportStatusViewEntity, 'lastSupportStatus')
       .select('TOP 1 lastSupportStatus.statusChangedAt', 'statusChangedAt')
@@ -1603,7 +1603,7 @@ export class InnovationsService extends BaseService {
 
     if (!result) return null;
 
-    return result.statusChangedAt;
+    return new Date(result.statusChangedAt);
 
   }
 

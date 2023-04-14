@@ -4,7 +4,7 @@ import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } fr
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { InnovationCollaboratorStatusEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DateISOType, DomainUserInfoType, RoleType } from '../../types';
+import type { DomainUserInfoType, RoleType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
 
@@ -113,7 +113,7 @@ export class DomainUsersService {
     email: string,
     mobilePhone: null | string,
     isActive: boolean,
-    lastLoginAt: null | DateISOType
+    lastLoginAt: null | Date
   }[]> {
     // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)

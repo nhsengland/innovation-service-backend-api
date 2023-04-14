@@ -1,12 +1,12 @@
 import type { YesOrNoCatalogueType } from '@innovations/shared/enums';
-import type { DateISOType } from '@innovations/shared/types';
+
 
 export type ResponseDTO = {
   id: string,
   reassessment?: { updatedInnovationRecord: YesOrNoCatalogueType, description: string },
   summary: null | string,
   description: null | string,
-  finishedAt: null | DateISOType,
+  finishedAt: null | Date,
   assignTo: { id: string, name: string },
   maturityLevel: null | string,
   maturityLevelComment: null | string,
@@ -28,6 +28,6 @@ export type ResponseDTO = {
     id: string, name: string, acronym: null | string,
     units: { id: string, name: string, acronym: string }[]
   }[],
-  updatedAt: null | DateISOType,
+  updatedAt: null | Date,
   updatedBy: { id: string, name: string }
 };

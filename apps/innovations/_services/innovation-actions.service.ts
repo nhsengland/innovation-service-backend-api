@@ -5,7 +5,7 @@ import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusE
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import { ActivityLogListParamsType, DateISOType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
+import { ActivityLogListParamsType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
@@ -48,8 +48,8 @@ export class InnovationActionsService extends BaseService {
       innovation: { id: string, name: string },
       status: InnovationActionStatusEnum,
       section: CurrentCatalogTypes.InnovationSections,
-      createdAt: DateISOType,
-      updatedAt: DateISOType,
+      createdAt: Date,
+      updatedAt: Date,
       updatedBy: { name: string, role?: ServiceRoleEnum | undefined },
       createdBy: { id: string, name: string, role?: ServiceRoleEnum | undefined, organisationUnit?: { id: string, name: string, acronym?: string } },
       notifications?: number
@@ -215,8 +215,8 @@ export class InnovationActionsService extends BaseService {
     status: InnovationActionStatusEnum,
     section: CurrentCatalogTypes.InnovationSections,
     description: string,
-    createdAt: DateISOType,
-    updatedAt: DateISOType,
+    createdAt: Date,
+    updatedAt: Date,
     updatedBy: { name: string, role: ServiceRoleEnum, isOwner?: boolean },
     createdBy: { id: string, name: string, role: ServiceRoleEnum, organisationUnit?: { id: string, name: string, acronym?: string } },
     declineReason?: string

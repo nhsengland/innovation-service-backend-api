@@ -1,12 +1,10 @@
-import { Column, Entity, PrimaryGeneratedColumn, Index, OneToMany } from 'typeorm';
+import { Column, Entity, Index, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
 import { TermsOfUseUserEntity } from './terms-of-use-user.entity';
 
 import { TermsOfUseTypeEnum } from '../../enums/general.enums';
-import type { DateISOType } from '../../types/date.types';
-
 
 @Entity('terms_of_use')
 export class TermsOfUseEntity extends BaseEntity {
@@ -25,8 +23,7 @@ export class TermsOfUseEntity extends BaseEntity {
   summary: string;
 
   @Column({ type: 'datetime2', name: 'released_at', nullable: true })
-  releasedAt: null | DateISOType;
-
+  releasedAt: null | Date;
 
   @OneToMany(() => TermsOfUseUserEntity, record => record.termsOfUse, { lazy: true })
   termsOfUseUsers: TermsOfUseUserEntity[];

@@ -4,7 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import { NotificationEntity } from './notification.entity';
 
-import type { DateISOType } from '../../types/date.types';
+
 import { UserRoleEntity } from './user-role.entity';
 
 @Entity('notification_user')
@@ -14,7 +14,7 @@ export class NotificationUserEntity extends BaseEntity {
   id: number;
 
   @Column({ name: 'read_at', type: 'datetime2', nullable: true })
-  readAt: DateISOType;
+  readAt: Date;
 
   @ManyToOne(() => NotificationEntity)
   @JoinColumn({ name: 'notification_id' })

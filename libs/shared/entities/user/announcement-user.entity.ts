@@ -3,7 +3,7 @@ import { Column, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn 
 import { AnnouncementEntity } from './announcement.entity';
 
 import type { ServiceRoleEnum } from '../../enums';
-import type { DateISOType } from '../../types/date.types';
+
 import { UserEntity } from './user.entity';
 
 @Entity('announcement_user')
@@ -16,10 +16,10 @@ export class AnnouncementUserEntity {
   targetRoles: ServiceRoleEnum[];
 
   @Column({ name: 'read_at', type: 'datetime2', nullable: true })
-  readAt: DateISOType | null;
+  readAt: Date | null;
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime2', nullable: true })
-  deletedAt: DateISOType | null;
+  deletedAt: Date | null;
 
   @ManyToOne(() => AnnouncementEntity)
   @JoinColumn({ name: 'announcement_id' })

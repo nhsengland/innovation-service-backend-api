@@ -8,7 +8,6 @@ import { InnovationReassessmentRequestEntity } from './innovation-reassessment-r
 import { InnovationEntity } from './innovation.entity';
 
 import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../../shared/enums';
-import type { DateISOType } from '../../types/date.types';
 
 
 @Entity('innovation_assessment')
@@ -30,7 +29,7 @@ export class InnovationAssessmentEntity extends BaseEntity {
   maturityLevelComment: null | string;
 
   @Column({ name: 'finished_at', type: 'datetime2', nullable: true })
-  finishedAt: null | DateISOType;
+  finishedAt: null | Date;
 
   @Column({ name: 'has_regulatory_approvals', type: 'nvarchar', nullable: true, length: 20 })
   hasRegulatoryApprovals: null | YesPartiallyNoCatalogueType;

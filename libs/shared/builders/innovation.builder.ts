@@ -38,7 +38,7 @@ export class InnovationBuilder {
       surveyId: randUuid(),
       status: InnovationStatusEnum.IN_PROGRESS,
       assessments: [],
-      createdAt: new Date().toISOString(),
+      createdAt: new Date()
     };
 
     this._document = {

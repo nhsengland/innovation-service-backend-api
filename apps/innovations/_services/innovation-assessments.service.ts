@@ -209,7 +209,7 @@ export class InnovationAssessmentsService extends BaseService {
       // Following operations are only applied when submitting the assessment.
       if (data.isSubmission) {
 
-        assessment.finishedAt = new Date().toISOString();
+        assessment.finishedAt = new Date();
 
         // If it's first assessment submission
         if (!dbAssessment.finishedAt) {

@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGe
 
 import { BaseEntity } from '../base.entity';
 
-import type { DateISOType } from '../../types';
+
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportLogEntity } from '../innovation/innovation-support-log.entity';
 import { OrganisationUnitUserEntity } from './organisation-unit-user.entity';
@@ -25,7 +25,7 @@ export class OrganisationUnitEntity extends BaseEntity {
   isShadow: boolean;
 
   @Column({ name: 'inactivated_at', type: 'datetime2', nullable: true, default: null })
-  inactivatedAt: null | DateISOType;
+  inactivatedAt: null | Date;
 
   @Column({ name: 'organisation_id', nullable: false})
   organisationId: string;

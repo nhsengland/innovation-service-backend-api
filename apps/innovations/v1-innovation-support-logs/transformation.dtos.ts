@@ -1,5 +1,5 @@
 import type { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
-import type { DateISOType } from '@innovations/shared/types';
+
 
 export type ResponseDTO = {
   id: string;
@@ -7,7 +7,7 @@ export type ResponseDTO = {
   description: string;
   innovationSupportStatus: string;
   createdBy: string;
-  createdAt: DateISOType;
+  createdAt: Date;
   organisationUnit: null | {
     id: string;
     name: string;

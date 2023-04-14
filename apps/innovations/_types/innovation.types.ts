@@ -1,14 +1,14 @@
 import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
+import type { OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
   id: string | null,
   section: CurrentCatalogTypes.InnovationSections | null,
   status: InnovationSectionStatusEnum | null,
   actionStatus: InnovationActionStatusEnum | null,
-  updatedAt: DateISOType | null,
-  submittedAt: DateISOType | null
+  updatedAt: Date | null,
+  submittedAt: Date | null
 }
 
 export type InnovationAssessmentType = {
@@ -16,7 +16,7 @@ export type InnovationAssessmentType = {
   reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo, description: string },
   summary: null | string,
   description: null | string,
-  finishedAt: null | DateISOType,
+  finishedAt: null | Date,
   assignTo: { id: string, name: string },
   maturityLevel: null | MaturityLevelCatalogueType,
   maturityLevelComment: null | string,
@@ -35,7 +35,7 @@ export type InnovationAssessmentType = {
   hasScaleResource: null | YesPartiallyNoCatalogueType,
   hasScaleResourceComment: null | string,
   suggestedOrganisations: OrganisationWithUnitsType[],
-  updatedAt: null | DateISOType,
+  updatedAt: null | Date,
   updatedBy: { id: string, name: string }
 };
 
@@ -45,11 +45,11 @@ export type ThreadListModel = {
     id: string,
     subject: string,
     messageCount: number,
-    createdAt: DateISOType,
+    createdAt: Date,
     isNew: boolean,
     lastMessage: {
       id: string,
-      createdAt: DateISOType,
+      createdAt: Date,
       createdBy: {
         id: string,
         name: string,
@@ -73,19 +73,19 @@ export type InnovationExportRequestItemType = {
   isExportable: boolean,
   requestReason: string,
   rejectReason?: null | string,
-  expiresAt?: DateISOType, // Returned only when "opened".
+  expiresAt?: Date, // Returned only when "opened".
   organisation: {
     id: string,
     name: string,
     acronym: null | string, 
     organisationUnit: { id: string, name: string, acronym: null | string }
   },
-  createdAt: DateISOType,
+  createdAt: Date,
   createdBy: {  
     id: string,
     name: string
   },
-  updatedAt: DateISOType
+  updatedAt: Date
 }
 
 export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
@@ -113,7 +113,7 @@ export type InnovationSupportsLogType = {
   description: string;
   innovationSupportStatus: string;
   createdBy: string;
-  createdAt: DateISOType;
+  createdAt: Date;
   organisationUnit: null | {
     id: string;
     name: string;

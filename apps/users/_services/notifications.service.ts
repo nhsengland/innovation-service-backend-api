@@ -3,7 +3,7 @@ import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationS
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import { IdentityProviderService, IdentityProviderServiceSymbol } from '@users/shared/services';
-import type { DateISOType, DomainContextType } from '@users/shared/types';
+import type { DomainContextType } from '@users/shared/types';
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
@@ -58,8 +58,8 @@ export class NotificationsService extends BaseService {
       contextType: NotificationContextTypeEnum;
       contextDetail: NotificationContextDetailEnum;
       contextId: string;
-      createdAt: DateISOType;
-      readAt: DateISOType;
+      createdAt: Date;
+      readAt: Date;
       params: Record<string, unknown>;
     }[]
   }> {

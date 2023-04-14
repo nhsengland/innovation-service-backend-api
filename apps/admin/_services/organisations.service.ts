@@ -52,7 +52,7 @@ export class OrganisationsService extends BaseService {
       .groupBy('ur.user_id, u.external_id')
       .having('count(*) = 1')
       .getRawMany())
-      .map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }))
+      .map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }));
 
     // only want to clear actions with these statuses
     const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
@@ -96,7 +96,7 @@ export class OrganisationsService extends BaseService {
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
 
-      const now = new Date().toISOString();
+      const now = new Date();
 
       // Inactivate unit
       await transaction.update(
@@ -253,7 +253,7 @@ export class OrganisationsService extends BaseService {
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
       
-      const now = new Date().toISOString();
+      const now = new Date();
 
       // Activate unit
       await transaction.update(
@@ -446,7 +446,7 @@ export class OrganisationsService extends BaseService {
         );
       }
 
-      const now = new Date().toISOString();
+      const now = new Date();
       const org = OrganisationEntity.new({
         name: data.name,
         acronym: data.acronym,
@@ -544,7 +544,7 @@ export class OrganisationsService extends BaseService {
       OrganisationUnitEntity.new({
         name: name,
         acronym: acronym,
-        inactivatedAt: new Date().toISOString(),
+        inactivatedAt: new Date(),
         isShadow: isShadow,
         organisation: org,
       })

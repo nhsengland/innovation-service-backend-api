@@ -4,12 +4,12 @@ import type { InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
-import type { DateISOType } from './date.types';
+
 
 export type RoleType = {
   id: string,
   role: ServiceRoleEnum,
-  lockedAt: DateISOType | null, 
+  lockedAt: Date | null, 
   organisation?: {
     id: string,
     name: string,
@@ -31,9 +31,9 @@ export type DomainUserInfoType = {
   roles: RoleType[],
   phone: null | string,
   isActive: boolean,
-  lockedAt: null | DateISOType,
-  passwordResetAt: null | DateISOType,
-  firstTimeSignInAt: null | DateISOType,
+  lockedAt: null | Date,
+  passwordResetAt: null | Date,
+  firstTimeSignInAt: null | Date,
   surveyId: null | string,
   organisations: {
     id: string,
@@ -306,4 +306,4 @@ export type ActivityLogTemplatesType = {
 }
 
 // This is the type for B2C user info.
-export type IdentityUserInfo = { identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, passwordResetAt: null | DateISOType, lastLoginAt: null | DateISOType }
+export type IdentityUserInfo = { identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, passwordResetAt: null | Date, lastLoginAt: null | Date }

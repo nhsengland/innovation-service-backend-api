@@ -3,7 +3,7 @@ import { AnnouncementUserEntity } from '@admin/shared/entities/user/announcement
 import { AnnouncementEntity } from '@admin/shared/entities/user/announcement.entity';
 import type { AnnouncementParamsType, AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError } from '@admin/shared/errors';
-import type { DateISOType } from '@admin/shared/types';
+
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
@@ -21,8 +21,8 @@ export class AnnouncementsService extends BaseService {
     config: {
       template: T,
       params?: AnnouncementParamsType[T],
-      startsAt?: DateISOType,
-      expiresAt?: DateISOType,
+      startsAt?: Date,
+      expiresAt?: Date,
       usersToExclude?: string[]
     },
     entityManager?: EntityManager
@@ -39,10 +39,10 @@ export class AnnouncementsService extends BaseService {
         .innerJoin('user.serviceRoles', 'userRoles')
         .where('userRoles.role IN (:...targetRoles)', { targetRoles })
         .andWhere('user.locked_at IS NULL')
-        .groupBy('user.id')
+        .groupBy('user.id');
 
       if (config.usersToExclude && config.usersToExclude.length > 0) {
-        query.andWhere('user.id NOT IN (:...usersToExclude)', { usersToExclude: config.usersToExclude })
+        query.andWhere('user.id NOT IN (:...usersToExclude)', { usersToExclude: config.usersToExclude });
       }
 
       const targetUserIds = await query.getMany();
