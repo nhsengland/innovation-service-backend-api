@@ -1,4 +1,4 @@
-import type { catalogAreas, catalogCarbonReductionPlan, catalogCareSettings, catalogCategory, catalogCostComparison, catalogEvidenceSubmitType, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogKeyHealthInequalities, catalogMainPurpose, catalogNeedsSupportAnyArea, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYet, catalogYesNotYetNo } from './catalog.types';
+import type { catalogAreas, catalogCarbonReductionPlan, catalogCareSettings, catalogCategory, catalogCostComparison, catalogEvidenceSubmitType, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogHasRevenueModel, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogKeyHealthInequalities, catalogMainPurpose, catalogNeedsSupportAnyArea, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYet, catalogYesNotYetNo } from './catalog.types';
 
 export type DocumentType202304 = {
   version: '202304';
@@ -36,8 +36,8 @@ export type DocumentType202304 = {
     hasEvidence?: catalogYesNotYet,
     currentlyCollectingEvidence?: catalogYesNo,
     summaryOngoingEvidenceGathering?: string,
+    needsSupportAnyArea?: catalogNeedsSupportAnyArea[],
     files?: string[]
-    needsSupportAnyArea?: catalogNeedsSupportAnyArea[]
   },
   MARKET_RESEARCH: {
     hasMarketResearch?: catalogYesInProgressNotYet,
@@ -71,11 +71,12 @@ export type DocumentType202304 = {
   },
   INTELLECTUAL_PROPERTY: {
     hasPatents?: catalogHasPatents,
+    patentNumbers?: string, // New field.
     hasOtherIntellectual?: catalogYesNo,
     otherIntellectual?: string
   },
   REVENUE_MODEL: {
-    hasRevenueModel?: catalogYesNo,
+    hasRevenueModel?: catalogHasRevenueModel,
     revenues?: catalogRevenues[],
     otherRevenueDescription?: string,
     payingOrganisations?: string,

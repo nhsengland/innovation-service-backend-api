@@ -1,6 +1,6 @@
 import Joi from 'joi';
 import { TEXTAREA_LENGTH_LIMIT } from '../../../constants';
-import { catalogAreas, catalogCarbonReductionPlan, catalogCareSettings, catalogCategory, catalogCostComparison, catalogEvidenceSubmitType, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogKeyHealthInequalities, catalogMainPurpose, catalogNeedsSupportAnyArea, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYet, catalogYesNotYetNo } from './catalog.types';
+import { catalogAreas, catalogCarbonReductionPlan, catalogCareSettings, catalogCategory, catalogCostComparison, catalogEvidenceSubmitType, catalogEvidenceType, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogHasRevenueModel, catalogIntendedUserGroupsEngaged, catalogInvolvedAACProgrammes, catalogKeyHealthInequalities, catalogMainPurpose, catalogNeedsSupportAnyArea, catalogOptionBestDescribesInnovation, catalogPathwayKnowledge, catalogPatientRange, catalogRevenues, catalogStandardsType, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYet, catalogYesNotYetNo } from './catalog.types';
 import type { DocumentType202304 } from './document.types';
 
 export type DocumentValidationSchema202304Map = {
@@ -85,11 +85,12 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   }).required().min(1),
   INTELLECTUAL_PROPERTY: Joi.object<DocumentType202304['INTELLECTUAL_PROPERTY']>({
     hasPatents: Joi.string().valid(...catalogHasPatents),
+    patentNumbers: Joi.string().max(100),
     hasOtherIntellectual: Joi.string().valid(...catalogYesNo),
     otherIntellectual: Joi.string().max(100)
   }).required().min(1),
   REVENUE_MODEL: Joi.object<DocumentType202304['REVENUE_MODEL']>({
-    hasRevenueModel: Joi.string().valid(...catalogYesNo),
+    hasRevenueModel: Joi.string().valid(...catalogHasRevenueModel),
     revenues: Joi.array().items(Joi.string().valid(...catalogRevenues)).min(1),
     otherRevenueDescription: Joi.string().max(100),
     payingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
