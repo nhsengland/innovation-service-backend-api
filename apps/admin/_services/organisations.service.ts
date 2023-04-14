@@ -1,8 +1,8 @@
 import { inject, injectable } from 'inversify';
 import { EntityManager, In, IsNull } from 'typeorm';
 
-import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DatesHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
@@ -214,7 +214,7 @@ export class OrganisationsService extends BaseService {
   }
 
 
-  async activateUnit(organisationId: string, unitId: string, userIds: string[]): Promise<{ unitId: string }> {
+  async activateUnit(requestUser: DomainUserInfoType, organisationId: string, unitId: string, userIds: string[]): Promise<{ unitId: string }> {
 
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
@@ -228,35 +228,38 @@ export class OrganisationsService extends BaseService {
       );
     }
 
-    // get users entities
-    const usersToUnlock = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .select(['user.id'])
-      .innerJoin('user.serviceRoles', 'service_roles')
-      .where('user.id IN (:...userIds)', { userIds })
-      .andWhere('service_roles.organisation_unit_id = :unitId', { unitId }) //ensure users to unlock belong to unit
+    // unlocked locked users of selected users
+    const usersToUnlock = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
+      .select(['ur.id', 'ur.role', 'user.id', 'user.identityId'])
+      .innerJoin('ur.user', 'user')
+      .where('ur.user_id IN (:...userIds)', { userIds })
+      .andWhere('ur.organisation_unit_id = :unitId', { unitId }) //ensure users have role in unit
+      .andWhere('user.lockedAt IS NOT NULL')
       .getMany();
 
-    // get organisationUnitUser entities
-    const unitUsers = await this.sqlConnection
-      .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-      .innerJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-      .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
+    // unlock locked roles of selected users
+    const rolesToUnlock = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
+      .select(['ur.id', 'ur.role'])
+      .where('ur.organisation_unit_id = :orgUnitId', { orgUnitId: unitId }) // ensure users have role in unit
+      .andWhere('ur.locked_at IS NOT NULL')
       .getMany();
 
     //check if at least 1 user is QA
-    const canActivate = unitUsers.some(u => u.organisationUser.role === AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
+    const canActivate = usersToUnlock.some(u => u.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) || rolesToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR);
 
     if (!canActivate) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
     }
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
+      
+      const now = new Date().toISOString();
+
       // Activate unit
       await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
-        { inactivatedAt: null }
+        { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
       );
 
       // activate organistion to whom unit belongs if it is inactivated
@@ -264,7 +267,7 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           OrganisationEntity,
           { id: organisationId },
-          { inactivatedAt: null }
+          { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
         );
 
         // Just send the announcement if this is the first time the organization has been activated.
@@ -279,18 +282,18 @@ export class OrganisationsService extends BaseService {
       }
 
       // Activate users of unit and roles
-      const usersToUnlockId = usersToUnlock.map(u => u.id);
+      const usersToUnlockId = usersToUnlock.map(u => u.user.id);
 
       await transaction.update(
         UserEntity,
         { id: In(usersToUnlockId) },
-        { lockedAt: null }
+        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
       );
 
       await transaction.update(
         UserRoleEntity,
-        { user: In(usersToUnlockId), organisationUnit: unitId },
-        { lockedAt: null }
+        { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
+        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
       );
 
       return { unitId };
@@ -298,9 +301,9 @@ export class OrganisationsService extends BaseService {
 
     // unlock users in identity provider asynchronously
     // using identity-ops-queue
-    for (const user of usersToUnlock) {
+    for (const userRole of usersToUnlock) {
       await this.identityProviderService.updateUserAsync(
-        user.identityId,
+        userRole.user.identityId,
         { accountEnabled: true }
       );
     }

@@ -38,12 +38,15 @@ class V1AdminUnitActivate {
             request.body
         );
 
-        await authorizationService
+        const auth = await authorizationService
         .validate(context)
         .checkAdminType()
         .verify();
 
+        const requestUser = auth.getUserInfo();
+
         const result = await organisationsService.activateUnit(
+            requestUser,
             params.organisationId,
             params.organisationUnitId,
             body.userIds
