@@ -15,4 +15,8 @@ export class DatesHelper {
 
   }
 
+  static isDateEqual(firstDate: DateISOType, secondDate: DateISOType): boolean {
+    return new Date(firstDate).getTime() === new Date(secondDate).getTime();
+  }
+
 }

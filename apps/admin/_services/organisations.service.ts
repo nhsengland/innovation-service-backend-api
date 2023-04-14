@@ -256,7 +256,7 @@ export class OrganisationsService extends BaseService {
         );
 
         // Just send the announcement if this is the first time the organization has been activated.
-        if (DatesHelper.dateDiffInDays(unit.organisation.createdAt, unit.organisation.inactivatedAt) === 0) {
+        if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
           await this.createOrganisationAnnouncement(
             unit.organisation.id,
             unit.organisation.name,
