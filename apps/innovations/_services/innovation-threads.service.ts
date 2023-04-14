@@ -348,11 +348,10 @@ export class InnovationThreadsService extends BaseService {
       createdAt: thread.createdAt,
       createdBy: {
         id: author?.id ?? '',
-        name: author?.displayName || 'unknown user',
+        name: thread.author ? (author?.displayName || 'unknown user') : '[deleted user]',
       },
     };
   }
-  
 
   async getThreadMessageInfo(
     messageId: string
@@ -470,7 +469,7 @@ export class InnovationThreadsService extends BaseService {
         isEditable: tm.isEditable,
         createdBy: {
           id: tm.author?.id,
-          name: authorsMap.get(tm.author?.identityId)?.displayName || 'unknown user',
+          name: tm.author ? (authorsMap.get(tm.author.identityId)?.displayName || 'unknown user') : '[deleted user]',
           role: tm.authorUserRole?.role,
           ...tm.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner?.id ?? false},
           organisation,
@@ -630,7 +629,7 @@ export class InnovationThreadsService extends BaseService {
             createdAt: message.createdAt,
             createdBy: {
               id: message.author?.id,
-              name: messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user',
+              name: message.author ? (messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user') : '[deleted user]', 
               role: message.authorUserRole?.role,
               ...message.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {isOwner: t.owner_id === message.author.id},
               organisationUnit: organisationUnit
