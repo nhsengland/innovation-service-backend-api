@@ -9,10 +9,11 @@ import type { DateISOType } from '@innovations/shared/types/date.types';
 import { BaseService } from './base.service';
 
 import { NotImplementedError } from '@innovations/shared/errors/errors.config';
+import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
 import { CurrentCatalogTypes, CurrentDocumentConfig, CurrentDocumentType, CurrentEvidenceType } from '@innovations/shared/schemas/innovation-record';
+import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
-import type { InnovationSectionModel } from '../_types/innovation.types';
 import { InnovationFileService } from './innovation-file.service';
 import { InnovationFileServiceSymbol } from './interfaces';
 
@@ -210,26 +211,7 @@ export class InnovationSectionsService extends BaseService {
     // Business Rule A/QAs can only see submitted sections
     // TODO: this can use history table to retrieve the last submitted section from the document if we choose to present them something they could previously see.
     const sectionHidden =  [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) && dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
-    const sectionData = document[sectionKey];
-    
-    // Add special information for the EVIDENCE_OF_EFFECTIVENESS section
-    const evidenceData = sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS' ?
-      undefined :
-      document.evidences?.map(evidence => ({
-        evidenceSubmitType: evidence.evidenceSubmitType,
-        description: evidence.description
-      }));
-        
-    let files: {id: string, name: string, url: string}[] | undefined;
-    
-    // Add file URLs if needed
-    if (sectionData && 'files' in sectionData && sectionData.files?.length) {
-      files = (await this.innovationFileService.getFilesByIds(sectionData.files)).map(file => ({
-        id: file.id,
-        name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
-      }));
-    }
+    const sectionData = await this.getSectionData(document, sectionKey);
 
     return {
       id: dbSection?.id || null,
@@ -240,11 +222,7 @@ export class InnovationSectionsService extends BaseService {
         name: submittedBy ?? 'unknown user',
         isOwner: dbSection.submittedBy.id === innovation.owner.id
       } : null,
-      data: !sectionHidden ? {
-        ...sectionData,
-        ...(files && { files }),
-        ...(evidenceData && { evidences: evidenceData })
-      } : null,
+      data: !sectionHidden ? sectionData : null,
       ...(filters.fields?.includes('actions') && actions ? { actionsIds: actions?.map(action => (action.id)) } : {})
     };
 
@@ -472,54 +450,12 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
-  async findAllSections(innovationId: string): Promise<{ innovation: { name: string }, innovationSections: { section: InnovationSectionModel, data: Record<string, any> }[] }> {
+  async findAllSections(innovationId: string): Promise<{ section: {section: string}, data: Record<string, any> }[]> {
+    // TODO support older versions of the document
+    const document = await this.getInnovationDocument(innovationId);
+    const innovationSections = await Promise.all(this.getDocumentSections(document).map(async section => ({section: {section: section}, data: await this.getSectionData(document, section)})));
 
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.sections', 'sections')
-      .where('innovation.id = :innovationId', { innovationId })
-      .getOne();
-
-    if (!innovation) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
-
-    const sections = new Map((await innovation.sections).map(section => [section.section, section]));
-    const innovationSections: { section: InnovationSectionModel, data: Record<string, any> }[] = [];
-
-    // This is just because of typescript (maybe change enums to types later)
-    const sectionOptions = CurrentCatalogTypes.InnovationSections;
-
-    const document = await this.sqlConnection.createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('id = :innovationId', { innovationId })
-      .getOne();
-
-    if (document?.document.version !== CurrentDocumentConfig.version) {
-      // Currently we only support the latest document version.
-      // This will soon change with PDF export of older versions.
-      throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
-    }
-
-    for (const key of sectionOptions) {
-
-      const section = sections.get(key);
-
-      if (!section) {
-        continue;
-      }
-
-      const data = document?.document[key];
-
-      innovationSections.push({
-        section: this.getInnovationSectionMetadata(key, section),
-        data: data ?? {}
-      });
-
-    }
-
-    return {
-      innovation: { name: innovation.name },
-      innovationSections
-    };
+    return innovationSections;
   }
 
 
@@ -711,33 +647,6 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
-  private getInnovationSectionMetadata(key: CurrentCatalogTypes.InnovationSections, section?: InnovationSectionEntity): InnovationSectionModel {
-
-    let result: InnovationSectionModel;
-
-    if (section) {
-      result = {
-        id: section.id,
-        section: section.section,
-        status: section.status,
-        updatedAt: section.updatedAt,
-        submittedAt: section.submittedAt,
-        actionStatus: null,
-      };
-    } else {
-      result = {
-        id: null,
-        section: key,
-        status: InnovationSectionStatusEnum.NOT_STARTED,
-        updatedAt: null,
-        submittedAt: null,
-        actionStatus: null,
-      };
-    }
-
-    return result;
-  }
-
   private async getInnovationDocument(innovationId: string, entityManager?: EntityManager): Promise<CurrentDocumentType> {
     const connection = entityManager ?? this.sqlConnection.manager;
     const document = await connection.createQueryBuilder(InnovationDocumentEntity, 'document')
@@ -754,4 +663,57 @@ export class InnovationSectionsService extends BaseService {
 
     return document.document;
   }
+
+  /**
+   * returns the section data from the document adding the custom output format data:
+   * - files: [{ id, name, url }]
+   * - evidences: [{ evidenceSubmitType, description }]
+   * @param document the source document
+   * @param sectionKey the section key
+   * @returns section data with extra information
+   */
+  private async getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(document: T, sectionKey: K): Promise<T[K] & {
+    files?: { id: string; name: string; url: string }[];
+    evidences?: {
+      evidenceSubmitType: catalogEvidenceSubmitType;
+      description: string | undefined;
+    }[]
+  }> {
+    let evidenceData;
+
+    // Special case for evidence data
+    if(document.version === '202304') {
+      evidenceData =  sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS' ?
+        undefined :
+        document.evidences?.map(evidence => ({
+          evidenceSubmitType: evidence.evidenceSubmitType,
+          description: evidence.description
+        }));
+    }
+    const sectionData = document[sectionKey];
+    
+    let files: {id: string, name: string, url: string}[] | undefined;
+    const sectionFiles: string[] = (sectionData as any).files ?? [];
+    
+    // Add file URLs if needed
+    if (sectionFiles.length) {
+      files = (await this.innovationFileService.getFilesByIds(sectionFiles)).map(file => ({
+        id: file.id,
+        name: file.displayFileName,
+        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
+      }));
+    }
+
+    return {
+      ...sectionData,
+      ...(evidenceData && { evidences: evidenceData }),
+      ...(files && { files: files })
+    };
+  }
+
+  private getDocumentSections<T extends DocumentType>(document: T): Exclude<keyof T, 'version' | 'evidences'>[] {
+    const sections = Object.keys(document) as (keyof T)[];
+    return sections.filter(section => section !== 'version' && section !== 'evidences') as Exclude<keyof T, 'version' | 'evidences'>[];
+  }
+
 }

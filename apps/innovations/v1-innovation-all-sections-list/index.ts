@@ -36,7 +36,7 @@ class GetInnovationAllSectionsList {
         .verify();
 
       const result = await innovationSectionsService.findAllSections(params.innovationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>(result.innovationSections);
+      context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
 
     } catch (error) {
