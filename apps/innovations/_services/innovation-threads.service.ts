@@ -318,29 +318,36 @@ export class InnovationThreadsService extends BaseService {
       name: string;
     };
   }> {
-
     let thread: InnovationThreadEntity;
+
     try {
       thread = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
-        .innerJoinAndSelect('thread.author', 'author')
-        .innerJoinAndSelect('thread.innovation', 'innovation')
+        .select([
+          'thread.id', 'thread.subject', 'thread.createdAt',
+          'author.id', 'author.identityId'
+        ])
+        .leftJoin('thread.author', 'author')
         .where('thread.id = :threadId', { threadId })
         .getOneOrFail();
     } catch (error) {
       throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    const author = await this.domainService.users.getUserInfo({
-      userId: thread.author.id,
-      identityId: thread.author.identityId,
-    });
+    let author: DomainUserInfoType | null = null;
+
+    if (thread.author) {
+      author = await this.domainService.users.getUserInfo({
+        userId: thread.author.id,
+        identityId: thread.author.identityId,
+      });
+    }
 
     return {
       id: thread.id,
       subject: thread.subject,
       createdAt: thread.createdAt,
       createdBy: {
-        id: author.id,
+        id: author?.id ?? '',
         name: author?.displayName || 'unknown user',
       },
     };
