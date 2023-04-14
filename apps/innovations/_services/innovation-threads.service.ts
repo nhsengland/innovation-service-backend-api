@@ -207,7 +207,7 @@ export class InnovationThreadsService extends BaseService {
 
     const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'threads')
       .innerJoinAndSelect('threads.innovation', 'innovations')
-      .innerJoinAndSelect('threads.author', 'users')
+      .leftJoinAndSelect('threads.author', 'users')
       .where('threads.id = :threadId', { threadId })
       .getOne();
 
