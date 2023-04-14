@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+import { EntityManager, In, IsNull } from 'typeorm';
 
 import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
@@ -39,19 +39,21 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    // get users from unit
-    const usersToLock = (
-      await this.sqlConnection
-        .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-        .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-        .leftJoinAndSelect('org_user.user', 'user')
-        .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
-        .getMany()
-    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }));
+    // users for which the role in this unit is the only active role will be locked
+    const usersToLock = (await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
+      .select('ur.user_id', 'userId')
+      .addSelect('count(*)', 'cnt')
+      .addSelect('u.external_id', 'identityId')
+      .innerJoin('user_role', 'r', 'ur.user_id = r.user_id')
+      .innerJoin('user', 'u', 'ur.user_id = u.id')
+      .where('r.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
+      .andWhere('ur.lockedAt IS NULL')
+      .andWhere('r.lockedAt IS NULL')
+      .groupBy('ur.user_id, u.external_id')
+      .having('count(*) = 1')
+      .getRawMany())
+      .map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }))
 
-
-    // Validar a lógica dos users to unlock, está a mostrar todos ^^
-    if (1 == 1) throw new Error('buu');
     // only want to clear actions with these statuses
     const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
@@ -93,11 +95,14 @@ export class OrganisationsService extends BaseService {
     }
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
+
+      const now = new Date().toISOString();
+
       // Inactivate unit
       await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
-        { inactivatedAt: new Date().toISOString() }
+        { inactivatedAt: now }
       );
 
       // Clear actions issued by unit
@@ -133,18 +138,25 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           NotificationUserEntity,
           { notification: In(notificationsToMarkAsRead.map((n) => n.id)) },
-          { readAt: new Date().toISOString() }
+          { readAt: now }
         );
       }
 
-      // lock users of unit
+      // lock users of unit with only one active role
       if (usersToLock.length > 0) {
         await transaction.update(
           UserEntity,
-          { id: In(usersToLock.map((u) => u.id)) },
-          { lockedAt: new Date().toISOString() }
+          { id: In(usersToLock.map(ur => ur.id)) },
+          { lockedAt: now, updatedAt: now }
         );
       }
+
+      // lock all roles of unit
+      await transaction.update(
+        UserRoleEntity,
+        { organisationUnit: unitId, lockedAt: IsNull() },
+        { lockedAt: now, updatedAt: now }
+      );
 
       const organisationId = unit.organisationId;
 
@@ -160,7 +172,7 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           OrganisationEntity,
           { id: organisationId },
-          { inactivatedAt: new Date().toISOString() }
+          { inactivatedAt: now }
         );
       }
 
@@ -197,6 +209,7 @@ export class OrganisationsService extends BaseService {
         );
       }
     }
+
     return result;
   }
 
@@ -215,7 +228,6 @@ export class OrganisationsService extends BaseService {
       );
     }
 
-    // TODO here
     // get users entities
     const usersToUnlock = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
