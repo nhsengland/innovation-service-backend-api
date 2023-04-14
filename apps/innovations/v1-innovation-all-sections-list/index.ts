@@ -12,7 +12,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 
 class GetInnovationAllSectionsList {
@@ -26,6 +26,7 @@ class GetInnovationAllSectionsList {
     try {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const query = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       await authorizationService.validate(context)
         .setInnovation(params.innovationId)
@@ -35,7 +36,7 @@ class GetInnovationAllSectionsList {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.findAllSections(params.innovationId);
+      const result = await innovationSectionsService.findAllSections(params.innovationId, query.version);
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
 

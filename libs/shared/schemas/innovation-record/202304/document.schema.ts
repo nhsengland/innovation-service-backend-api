@@ -10,8 +10,8 @@ export type DocumentValidationSchema202304Map = {
 export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['evidences']>[number]>({
   evidenceSubmitType: Joi.string().valid(...catalogEvidenceSubmitType).required(),
   evidenceType: Joi.string().valid(...catalogEvidenceType),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small),
-  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+  description: Joi.string().max(50),
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).required(),
   files: Joi.array().items(Joi.string().guid()).min(1).required()
 });
 
@@ -20,7 +20,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     name: Joi.string().max(100).trim(),
     description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium),
     countryName: Joi.string().max(100),
-    postcode: Joi.string().max(20),
+    postcode: Joi.string().max(8),
     website: Joi.string().max(100),  // TODO not validating URL format atm
     categories: Joi.array().items(Joi.string().valid(...catalogCategory)).min(1),
     otherCategoryDescription: Joi.string().max(100),
@@ -70,7 +70,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     otherIntendedUserGroupsEngaged: Joi.string().max(100),
     userTests: Joi.array().items(Joi.object({
       kind: Joi.string().max(100),
-      feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small)
+      feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium)
     })).min(1),
     files: Joi.array().items(Joi.string().guid()).min(1)
   }).required().min(1),

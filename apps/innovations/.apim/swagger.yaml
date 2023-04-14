@@ -1149,7 +1149,7 @@ paths:
                       maxLength: 100
                     postcode:
                       type: string
-                      maxLength: 20
+                      maxLength: 8
                     website:
                       type: string
                       maxLength: 100
@@ -1446,7 +1446,7 @@ paths:
                             maxLength: 100
                           feedback:
                             type: string
-                            maxLength: 200
+                            maxLength: 500
                         additionalProperties: false
                       minItems: 1
                     files:
@@ -1665,10 +1665,10 @@ paths:
                           - OTHER
                       description:
                         type: string
-                        maxLength: 200
+                        maxLength: 50
                       summary:
                         type: string
-                        maxLength: 500
+                        maxLength: 1000
                       files:
                         type: array
                         items:
@@ -1918,10 +1918,10 @@ paths:
                     - OTHER
                 description:
                   type: string
-                  maxLength: 200
+                  maxLength: 50
                 summary:
                   type: string
-                  maxLength: 500
+                  maxLength: 1000
                 files:
                   type: array
                   items:
@@ -2038,10 +2038,10 @@ paths:
                     - OTHER
                 description:
                   type: string
-                  maxLength: 200
+                  maxLength: 50
                 summary:
                   type: string
-                  maxLength: 500
+                  maxLength: 1000
                 files:
                   type: array
                   items:

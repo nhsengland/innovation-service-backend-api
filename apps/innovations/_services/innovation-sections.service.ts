@@ -2,14 +2,14 @@ import { inject, injectable } from 'inversify';
 
 import { InnovationActionEntity, InnovationDocumentEntity, InnovationEntity, InnovationFileEntity, InnovationSectionEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { ActivityEnum, InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
+import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import { DomainServiceSymbol, DomainServiceType, FileStorageServiceSymbol, FileStorageServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
 import type { DateISOType } from '@innovations/shared/types/date.types';
 
 import { BaseService } from './base.service';
 
 import { NotImplementedError } from '@innovations/shared/errors/errors.config';
-import type { DocumentType } from '@innovations/shared/schemas/innovation-record';
+import type { DocumentType, DocumentTypeFromVersion } from '@innovations/shared/schemas/innovation-record';
 import { CurrentCatalogTypes, CurrentDocumentConfig, CurrentDocumentType, CurrentEvidenceType } from '@innovations/shared/schemas/innovation-record';
 import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import type { DomainContextType } from '@innovations/shared/types';
@@ -450,9 +450,8 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
-  async findAllSections(innovationId: string): Promise<{ section: {section: string}, data: Record<string, any> }[]> {
-    // TODO support older versions of the document
-    const document = await this.getInnovationDocument(innovationId);
+  async findAllSections(innovationId: string, version?: DocumentType['version']): Promise<{ section: {section: string}, data: Record<string, any> }[]> {
+    const document = await this.getInnovationDocument(innovationId, version ?? CurrentDocumentConfig.version);
     const innovationSections = await Promise.all(this.getDocumentSections(document).map(async section => ({section: {section: section}, data: await this.getSectionData(document, section)})));
 
     return innovationSections;
@@ -469,7 +468,7 @@ export class InnovationSectionsService extends BaseService {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
-    await this.getInnovationDocument(innovationId, connection);
+    await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version, connection);
 
     const section = await this.sqlConnection
       .createQueryBuilder(InnovationSectionEntity, 'section')
@@ -518,7 +517,7 @@ export class InnovationSectionsService extends BaseService {
     evidenceData: CurrentEvidenceType
   ): Promise<void> {
 
-    const document = await this.getInnovationDocument(innovationId);
+    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     const evidence = document.evidences?.[evidenceOffset];
 
@@ -577,7 +576,7 @@ export class InnovationSectionsService extends BaseService {
 
   async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceOffset: number): Promise<void> {
 
-    const document = await this.getInnovationDocument(innovationId);
+    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     let evidences = document.evidences;
     const evidence = evidences?.[evidenceOffset];
@@ -623,7 +622,7 @@ export class InnovationSectionsService extends BaseService {
     files: { id: string; name: string; url: string }[];
   }> {
 
-    const document = await this.getInnovationDocument(innovationId);
+    const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     const evidence = document.evidences?.[evidenceOffset];
 
@@ -647,21 +646,43 @@ export class InnovationSectionsService extends BaseService {
 
   }
 
-  private async getInnovationDocument(innovationId: string, entityManager?: EntityManager): Promise<CurrentDocumentType> {
+  /**
+   * retrieves the latest version of a document from the database and validates the version
+   * @param innovationId the innovation id
+   * @param version version of the document to retrieve
+   * @param entityManager optional entity manager for running inside transaction
+   * @returns the document
+   */
+  private async getInnovationDocument<V extends DocumentType['version'], T extends DocumentTypeFromVersion<V>>(innovationId: string, version: V, entityManager?: EntityManager): Promise<T> {
     const connection = entityManager ?? this.sqlConnection.manager;
-    const document = await connection.createQueryBuilder(InnovationDocumentEntity, 'document')
+    let document: DocumentType | undefined;
+
+    if (version === CurrentDocumentConfig.version) {
+      document = (await connection.createQueryBuilder(InnovationDocumentEntity, 'document')
       .where('document.id = :innovationId', { innovationId })
-      .getOne();
+      .andWhere('document.version = :version', { version })
+      .getOne())?.document;
+    } else {
+      const raw = await connection.query(`
+        SELECT TOP 1 document FROM innovation_document
+        FOR SYSTEM_TIME ALL
+        WHERE id = @0
+        AND version = @1
+        ORDER BY valid_to DESC
+      `, [innovationId, version]);
+      
+      document = raw.length ? JSON.parse(raw[0].document) : undefined;
+    }
     
     if (!document) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    if(document.document.version !== CurrentDocumentConfig.version) {
-      throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_NOT_SUPPORTED);
+    if(document.version !== version) {
+      throw new ConflictError(InnovationErrorsEnum.INNOVATION_DOCUMENT_VERSION_MISMATCH);
     }
 
-    return document.document;
+    return document as T;
   }
 
   /**
