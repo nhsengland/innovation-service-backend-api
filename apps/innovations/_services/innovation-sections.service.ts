@@ -537,8 +537,8 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    const existingFiles = new Set((await this.innovationFileService.getFilesByIds(evidence.files)).map(f => f.id));
-    const filesToDelete = evidenceData.files.filter(f => !existingFiles.has(f));
+    const existingFiles = (await this.innovationFileService.getFilesByIds(evidence.files)).map(f => f.id);
+    const filesToDelete = existingFiles.filter(f => !evidenceData.files.includes(f));
     
     return this.sqlConnection.transaction(async (transaction) => {
 
@@ -553,7 +553,7 @@ export class InnovationSectionsService extends BaseService {
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
         summary: evidenceData.summary,
-        files: evidenceData.files.filter(f => existingFiles.has(f))
+        files: evidenceData.files
       };
 
       await transaction.query(`
