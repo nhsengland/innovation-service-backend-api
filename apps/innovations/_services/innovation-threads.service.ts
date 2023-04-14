@@ -524,7 +524,7 @@ export class InnovationThreadsService extends BaseService {
     const query = this.sqlConnection
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .distinct(false)
-      .innerJoin('thread.author', 'author')
+      .leftJoin('thread.author', 'author')
       .leftJoin('thread.innovation', 'innovation')
       .select([
         'thread.id', 'thread.subject', 'thread.createdAt',
@@ -572,7 +572,7 @@ export class InnovationThreadsService extends BaseService {
         'userRole.role',
         'orgUnit.id', 'orgUnit.name', 'orgUnit.acronym',
       ])
-      .innerJoin('messages.author', 'author')
+      .leftJoin('messages.author', 'author')
       .innerJoin('messages.thread', 'thread')
       .leftJoin('messages.authorUserRole', 'userRole')
       .leftJoin('messages.authorOrganisationUnit', 'orgUnit')
@@ -581,7 +581,7 @@ export class InnovationThreadsService extends BaseService {
 
     const threadMessages = await threadMessagesQuery.getMany();
 
-    const userIds = [...new Set(threadMessages.map((tm) => tm.author.identityId))];
+    const userIds = [...new Set(threadMessages.filter((tm) => tm.author).map((tm) => tm.author?.identityId))];
     const messageAuthors = await this.identityProvider.getUsersMap(userIds);
 
     const count = threads.find((_) => true)?.count || 0;
@@ -620,10 +620,10 @@ export class InnovationThreadsService extends BaseService {
             id: message.id,
             createdAt: message.createdAt,
             createdBy: {
-              id: message.author.id,
-              name: messageAuthors.get(message.author.identityId)?.displayName || 'unknown user',
-              role: message.authorUserRole.role,
-              ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: t.owner_id === message.author.id},
+              id: message.author?.id,
+              name: messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user',
+              role: message.authorUserRole?.role,
+              ...message.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {isOwner: t.owner_id === message.author.id},
               organisationUnit: organisationUnit
                 ? {
                   id: organisationUnit.id,
