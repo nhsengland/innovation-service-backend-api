@@ -240,12 +240,13 @@ export class OrganisationsService extends BaseService {
     // unlock locked roles of selected users
     const rolesToUnlock = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
       .select(['ur.id', 'ur.role'])
-      .where('ur.organisation_unit_id = :orgUnitId', { orgUnitId: unitId }) // ensure users have role in unit
+      .where('ur.organisation_unit_id = :unitId', { unitId }) // ensure users have role in unit
+      .andWhere('ur.user_id IN (:...userIds)', { userIds })
       .andWhere('ur.locked_at IS NOT NULL')
       .getMany();
 
-    //check if at least 1 user is QA
-    const canActivate = usersToUnlock.some(u => u.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) || rolesToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR);
+       //check if at least 1 user is QA
+    const canActivate = usersToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) || rolesToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR);
 
     if (!canActivate) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
