@@ -31,5 +31,6 @@ export type ResponseDTO = {
   export: { canUserExport: boolean, pendingRequestsCount: number },
   assessment?: null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { id: string, name: string }, reassessmentCount: number },
   supports?: null | { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[],
-  collaboratorId?: string
+  collaboratorId?: string,
+  createdAt: Date
 };

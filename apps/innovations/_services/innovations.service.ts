@@ -574,13 +574,14 @@ export class InnovationsService extends BaseService {
     export: { canUserExport: boolean, pendingRequestsCount: number },
     assessment?: null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { id: string, name: string }, reassessmentCount: number },
     supports?: { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[],
-    collaboratorId?: string
+    collaboratorId?: string,
+    createdAt: Date
   }> {
 
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
       .select([
         'innovation.id', 'innovation.name', 'innovation.description', 'innovation.status', 'innovation.statusUpdatedAt',
-        'innovation.submittedAt', 'innovation.countryName', 'innovation.postcode',
+        'innovation.submittedAt', 'innovation.countryName', 'innovation.postcode', 'innovation.createdAt',
         'innovationOwner.id',
         'userOrganisations.id',
         'organisation.isShadow', 'organisation.name', 'organisation.size',
@@ -737,7 +738,8 @@ export class InnovationsService extends BaseService {
           organisationUnitId: support.organisationUnit.id
         }))
       }),
-      collaboratorId: innovation.collaborators[0]?.id
+      collaboratorId: innovation.collaborators[0]?.id,
+      createdAt: innovation.createdAt
     };
 
   }

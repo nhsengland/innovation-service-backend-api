@@ -77,7 +77,8 @@ class V1InnovationInfo {
             organisationUnitId: s.organisationUnitId
           }))
         }),
-        collaboratorId: result.collaboratorId
+        collaboratorId: result.collaboratorId,
+        createdAt: result.createdAt
       });
       return;
 
