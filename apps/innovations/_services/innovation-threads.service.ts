@@ -207,7 +207,7 @@ export class InnovationThreadsService extends BaseService {
 
     const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'threads')
       .innerJoinAndSelect('threads.innovation', 'innovations')
-      .innerJoinAndSelect('threads.author', 'users')
+      .leftJoinAndSelect('threads.author', 'users')
       .where('threads.id = :threadId', { threadId })
       .getOne();
 
@@ -318,34 +318,40 @@ export class InnovationThreadsService extends BaseService {
       name: string;
     };
   }> {
-
     let thread: InnovationThreadEntity;
+
     try {
       thread = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
-        .innerJoinAndSelect('thread.author', 'author')
-        .innerJoinAndSelect('thread.innovation', 'innovation')
+        .select([
+          'thread.id', 'thread.subject', 'thread.createdAt',
+          'author.id', 'author.identityId'
+        ])
+        .leftJoin('thread.author', 'author')
         .where('thread.id = :threadId', { threadId })
         .getOneOrFail();
     } catch (error) {
       throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    const author = await this.domainService.users.getUserInfo({
-      userId: thread.author.id,
-      identityId: thread.author.identityId,
-    });
+    let author: DomainUserInfoType | null = null;
+
+    if (thread.author) {
+      author = await this.domainService.users.getUserInfo({
+        userId: thread.author.id,
+        identityId: thread.author.identityId,
+      });
+    }
 
     return {
       id: thread.id,
       subject: thread.subject,
       createdAt: thread.createdAt,
       createdBy: {
-        id: author.id,
-        name: author?.displayName || 'unknown user',
+        id: author?.id ?? '',
+        name: thread.author ? (author?.displayName || 'unknown user') : '[deleted user]',
       },
     };
   }
-  
 
   async getThreadMessageInfo(
     messageId: string
@@ -409,14 +415,14 @@ export class InnovationThreadsService extends BaseService {
         'innovation.id',
         'owner.id',
       ])
-      .innerJoin('messages.author', 'messageAuthor')
-      .innerJoin('messages.authorUserRole', 'authorUserRole')
+      .leftJoin('messages.author', 'messageAuthor')
+      .leftJoin('messages.authorUserRole', 'authorUserRole')
       .leftJoin('messages.authorOrganisationUnit', 'organisationUnit')
       .innerJoin('messages.thread', 'thread')
       .leftJoin('organisationUnit.organisation', 'organisation')
       .innerJoin('thread.innovation', 'innovation')
       .leftJoin('innovation.owner', 'owner')
-      .innerJoin('thread.author', 'users')
+      .leftJoin('thread.author', 'users')
       .where('thread.id = :threadId', { threadId })
       .orderBy('messages.createdAt', order?.createdAt || 'DESC')
       .skip(skip)
@@ -426,10 +432,15 @@ export class InnovationThreadsService extends BaseService {
 
     const firstMessage = messages.find((_) => true);
 
-    const threadAuthor = firstMessage!.thread.author.identityId; // a thread always has at least 1 message
-    const threadMessagesAuthors = messages.map((tm) => tm.author.identityId);
+    const threadAuthor = firstMessage!.thread.author?.identityId; // a thread always has at least 1 message
+    const threadMessagesAuthors = messages.filter((tm) => tm.author).map((tm) => tm.author.identityId);
 
-    const authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
+    let authors = [];
+    if(threadAuthor){
+      authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
+    } else {
+      authors = [...new Set([...threadMessagesAuthors])];
+    }
 
     const authorsMap = await this.identityProvider.getUsersMap(authors);
 
@@ -446,10 +457,7 @@ export class InnovationThreadsService extends BaseService {
       .filter(Boolean)
       .map(n => n.params['messageId']));
       
-    const messageResult = messages.map((tm) => {
-
-      const author = authorsMap.get(tm.author.identityId);
-      
+    const messageResult = messages.map((tm) => {      
       const organisationUnit = tm.authorOrganisationUnit ?? undefined;
       const organisation = tm.authorOrganisationUnit?.organisation;
 
@@ -460,10 +468,10 @@ export class InnovationThreadsService extends BaseService {
         isNew: notifications.has(tm.id),
         isEditable: tm.isEditable,
         createdBy: {
-          id: tm.author.id,
-          name: author?.displayName || 'unknown user',
-          role: tm.authorUserRole.role,
-          ...tm.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner?.id ?? false},
+          id: tm.author?.id,
+          name: tm.author ? (authorsMap.get(tm.author.identityId)?.displayName || 'unknown user') : '[deleted user]',
+          role: tm.authorUserRole?.role,
+          ...tm.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {isOwner: tm.author.id === tm.thread.innovation.owner?.id ?? false},
           organisation,
           organisationUnit,
         },
@@ -524,7 +532,7 @@ export class InnovationThreadsService extends BaseService {
     const query = this.sqlConnection
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .distinct(false)
-      .innerJoin('thread.author', 'author')
+      .leftJoin('thread.author', 'author')
       .leftJoin('thread.innovation', 'innovation')
       .select([
         'thread.id', 'thread.subject', 'thread.createdAt',
@@ -572,7 +580,7 @@ export class InnovationThreadsService extends BaseService {
         'userRole.role',
         'orgUnit.id', 'orgUnit.name', 'orgUnit.acronym',
       ])
-      .innerJoin('messages.author', 'author')
+      .leftJoin('messages.author', 'author')
       .innerJoin('messages.thread', 'thread')
       .leftJoin('messages.authorUserRole', 'userRole')
       .leftJoin('messages.authorOrganisationUnit', 'orgUnit')
@@ -581,7 +589,7 @@ export class InnovationThreadsService extends BaseService {
 
     const threadMessages = await threadMessagesQuery.getMany();
 
-    const userIds = [...new Set(threadMessages.map((tm) => tm.author.identityId))];
+    const userIds = [...new Set(threadMessages.filter((tm) => tm.author).map((tm) => tm.author?.identityId))];
     const messageAuthors = await this.identityProvider.getUsersMap(userIds);
 
     const count = threads.find((_) => true)?.count || 0;
@@ -620,10 +628,10 @@ export class InnovationThreadsService extends BaseService {
             id: message.id,
             createdAt: message.createdAt,
             createdBy: {
-              id: message.author.id,
-              name: messageAuthors.get(message.author.identityId)?.displayName || 'unknown user',
-              role: message.authorUserRole.role,
-              ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {isOwner: t.owner_id === message.author.id},
+              id: message.author?.id,
+              name: message.author ? (messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user') : '[deleted user]', 
+              role: message.authorUserRole?.role,
+              ...message.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {isOwner: t.owner_id === message.author.id},
               organisationUnit: organisationUnit
                 ? {
                   id: organisationUnit.id,
