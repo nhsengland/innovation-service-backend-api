@@ -239,11 +239,11 @@ export class InnovationActionsService extends BaseService {
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
       .leftJoin('innovation.owner', 'owner')
-      .innerJoin('action.createdByUserRole', 'createdByUserRole')
-      .innerJoin('createdByUserRole.user', 'createdByUser')
+      .leftJoin('action.createdByUserRole', 'createdByUserRole')
+      .leftJoin('createdByUserRole.user', 'createdByUser')
       .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrganisationUnit')
-      .innerJoin('action.updatedByUserRole', 'updatedByUserRole')
-      .innerJoin('updatedByUserRole.user', 'updatedByUser')
+      .leftJoin('action.updatedByUserRole', 'updatedByUserRole')
+      .leftJoin('updatedByUserRole.user', 'updatedByUser')
       .where('action.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
@@ -266,7 +266,11 @@ export class InnovationActionsService extends BaseService {
     }
 
     const createdByUser = await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId);
-    const lastUpdatedByUser = await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId);
+
+    let lastUpdatedByUserName = '[deleted user]';
+    if (dbAction.updatedByUserRole) {
+      lastUpdatedByUserName = (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))?.displayName || 'unknown user';
+    }
 
     return {
       id: dbAction.id,
@@ -277,9 +281,9 @@ export class InnovationActionsService extends BaseService {
       createdAt: dbAction.createdAt,
       updatedAt: dbAction.updatedAt,
       updatedBy: {
-        name: lastUpdatedByUser.displayName,
-        role: dbAction.updatedByUserRole.role,
-        ...(dbAction.updatedByUserRole.role === ServiceRoleEnum.INNOVATOR && {
+        name: lastUpdatedByUserName,
+        role: dbAction.updatedByUserRole?.role,
+        ...(dbAction.updatedByUserRole?.role === ServiceRoleEnum.INNOVATOR && {
           isOwner: dbAction.innovationSection.innovation.owner?.id === dbAction.updatedByUserRole.user.id
         })
       },
