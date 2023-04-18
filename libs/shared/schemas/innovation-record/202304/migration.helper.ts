@@ -63,51 +63,51 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
   return {
     version: '202304',
     INNOVATION_DESCRIPTION: {
-      name: original.INNOVATION_DESCRIPTION.name,
-      description: original.INNOVATION_DESCRIPTION.description,
-      postcode: original.INNOVATION_DESCRIPTION.postcode,
-      countryName: original.INNOVATION_DESCRIPTION.countryName,
-      categories: original.INNOVATION_DESCRIPTION.categories?.map(migrateCategory).filter((u): u is Document202304Catalog.catalogCategory => u !== undefined),
-      otherCategoryDescription: original.INNOVATION_DESCRIPTION.otherCategoryDescription,
-      mainCategory: migrateCategory(original.INNOVATION_DESCRIPTION.mainCategory),
-      areas: original.INNOVATION_DESCRIPTION.areas?.map(migrateAreas).filter((u): u is Document202304Catalog.catalogAreas => u !== undefined),
-      careSettings: original.INNOVATION_DESCRIPTION.careSettings?.map(migrateCareSettings).filter((u): u is Document202304Catalog.catalogCareSettings => u !== undefined),
-      otherCareSetting: original.INNOVATION_DESCRIPTION.otherCareSetting,
-      mainPurpose: migrateMainPurpose(original.INNOVATION_DESCRIPTION.mainPurpose),
-      supportDescription: original.INNOVATION_DESCRIPTION.moreSupportDescription
+      name: original.INNOVATION_DESCRIPTION?.name,
+      description: original.INNOVATION_DESCRIPTION?.description,
+      postcode: original.INNOVATION_DESCRIPTION?.postcode,
+      countryName: original.INNOVATION_DESCRIPTION?.countryName,
+      categories: original.INNOVATION_DESCRIPTION?.categories?.map(migrateCategory).filter((u): u is Document202304Catalog.catalogCategory => u !== undefined),
+      otherCategoryDescription: original.INNOVATION_DESCRIPTION?.otherCategoryDescription,
+      mainCategory: migrateCategory(original.INNOVATION_DESCRIPTION?.mainCategory),
+      areas: original.INNOVATION_DESCRIPTION?.areas?.map(migrateAreas).filter((u): u is Document202304Catalog.catalogAreas => u !== undefined),
+      careSettings: original.INNOVATION_DESCRIPTION?.careSettings?.map(migrateCareSettings).filter((u): u is Document202304Catalog.catalogCareSettings => u !== undefined),
+      otherCareSetting: original.INNOVATION_DESCRIPTION?.otherCareSetting,
+      mainPurpose: migrateMainPurpose(original.INNOVATION_DESCRIPTION?.mainPurpose),
+      supportDescription: original.INNOVATION_DESCRIPTION?.moreSupportDescription
     },
     UNDERSTANDING_OF_NEEDS: {
-      problemsTackled: original.VALUE_PROPOSITION.problemsTackled,
-      diseasesConditionsImpact: original.UNDERSTANDING_OF_NEEDS.diseasesConditionsImpact,
+      problemsTackled: original.VALUE_PROPOSITION?.problemsTackled,
+      diseasesConditionsImpact: original.UNDERSTANDING_OF_NEEDS?.diseasesConditionsImpact,
     },
     EVIDENCE_OF_EFFECTIVENESS: {
-      hasEvidence: original.EVIDENCE_OF_EFFECTIVENESS.hasEvidence === 'YES' ? 'YES' : 'NOT_YET',
+      hasEvidence: original.EVIDENCE_OF_EFFECTIVENESS?.hasEvidence === 'YES' ? 'YES' : 'NOT_YET',
     },
     MARKET_RESEARCH: {
-      hasMarketResearch: original.MARKET_RESEARCH.hasMarketResearch,
-      marketResearch: original.MARKET_RESEARCH.marketResearch,
+      hasMarketResearch: original.MARKET_RESEARCH?.hasMarketResearch,
+      marketResearch: original.MARKET_RESEARCH?.marketResearch,
     },
     CURRENT_CARE_PATHWAY: {
-      innovationPathwayKnowledge: original.CURRENT_CARE_PATHWAY.innovationPathwayKnowledge,
-      potentialPathway: original.CURRENT_CARE_PATHWAY.potentialPathway,
+      innovationPathwayKnowledge: original.CURRENT_CARE_PATHWAY?.innovationPathwayKnowledge,
+      potentialPathway: original.CURRENT_CARE_PATHWAY?.potentialPathway,
     },
     TESTING_WITH_USERS: {
-      testedWithIntendedUsers: original.TESTING_WITH_USERS.hasTests,
-      userTests: original.TESTING_WITH_USERS.userTests,
-      files: original.TESTING_WITH_USERS.files,
+      testedWithIntendedUsers: original.TESTING_WITH_USERS?.hasTests,
+      userTests: original.TESTING_WITH_USERS?.userTests,
+      files: original.TESTING_WITH_USERS?.files,
     },
-    REGULATIONS_AND_STANDARDS: original.REGULATIONS_AND_STANDARDS,
-    INTELLECTUAL_PROPERTY: original.INTELLECTUAL_PROPERTY,
-    REVENUE_MODEL: original.REVENUE_MODEL,
+    REGULATIONS_AND_STANDARDS: original.REGULATIONS_AND_STANDARDS ?? {},
+    INTELLECTUAL_PROPERTY: original.INTELLECTUAL_PROPERTY ?? {},
+    REVENUE_MODEL: original.REVENUE_MODEL ?? {},
     COST_OF_INNOVATION: {
       ...original.COST_OF_INNOVATION,
-      costComparison: original.COMPARATIVE_COST_BENEFIT.costComparison
+      costComparison: original.COMPARATIVE_COST_BENEFIT?.costComparison
     },
     DEPLOYMENT: {
       ...original.IMPLEMENTATION_PLAN,
-      deploymentPlans: original.IMPLEMENTATION_PLAN.deploymentPlans?.map((plan) => plan.name),
+      deploymentPlans: original.IMPLEMENTATION_PLAN?.deploymentPlans?.map((plan) => plan.name),
     },
-    evidences: original.EVIDENCE_OF_EFFECTIVENESS.evidences?.map((evidence) => ({
+    evidences: original.EVIDENCE_OF_EFFECTIVENESS?.evidences?.map((evidence) => ({
       evidenceSubmitType: evidence.evidenceType === 'OTHER' ? 'OTHER_EFFECTIVENESS' : (evidence.evidenceType === 'CLINICAL' ? 'CLINICAL_OR_CARE' : 'COST_IMPACT_OR_ECONOMIC'),
       evidenceType: evidence.clinicalEvidenceType,
       description: evidence.description,

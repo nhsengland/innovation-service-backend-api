@@ -1204,6 +1204,7 @@ paths:
                           - OPERATIONAL_EXCELLENCE
                           - PATIENT_ACTIVATION_AND_SELF_CARE
                           - PATIENT_SAFETY
+                          - WORKFORCE_RESOURCE_OPTIMISATION
                           - NET_ZERO_GREENER_INNOVATION
                       minItems: 1
                     careSettings:
@@ -1516,6 +1517,9 @@ paths:
                         - HAS_AT_LEAST_ONE
                         - APPLIED_AT_LEAST_ONE
                         - HAS_NONE
+                    patentNumbers:
+                      type: string
+                      maxLength: 100
                     hasOtherIntellectual:
                       type: string
                       enum:
@@ -1533,6 +1537,7 @@ paths:
                       enum:
                         - YES
                         - NO
+                        - DONT_KNOW
                     revenues:
                       type: array
                       items:

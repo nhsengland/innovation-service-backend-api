@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import type { CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
+import { CurrentDocumentConfig, CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
 import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
@@ -13,6 +13,9 @@ export class InnovationDocumentEntity extends BaseEntity {
 
   @Column({ type: 'simple-json' })
   document: DocumentType;
+
+  @Column({ type: 'nvarchar', update: false, insert: false })
+  version: DocumentType['version'];
 
   @Column({ name: 'is_snapshot' })
   isSnapshot: boolean;
@@ -33,7 +36,7 @@ export class InnovationDocumentEntity extends BaseEntity {
  */
 export const createDocumentFromInnovation = (innovation: InnovationEntity): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
-    version: '202304',
+    version: CurrentDocumentConfig.version,
     INNOVATION_DESCRIPTION: {
       name: innovation.name,
       description: innovation.description ?? undefined,
@@ -50,10 +53,11 @@ export const createDocumentFromInnovation = (innovation: InnovationEntity): Inno
     REGULATIONS_AND_STANDARDS: {},
     REVENUE_MODEL: {},
     TESTING_WITH_USERS: {}
-  }
+  };
   
   return {
     id: innovation.id,
+    version: CurrentDocumentConfig.version,
     document: document,
     isSnapshot: false,
     description: 'Initial document',
