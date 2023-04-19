@@ -34,14 +34,15 @@ export class InnovationDocumentEntity extends BaseEntity {
  * @param innovation the source innovation
  * @returns the document entity to be created
  */
-export const createDocumentFromInnovation = (innovation: InnovationEntity): InnovationDocumentEntity => {
+export const createDocumentFromInnovation = (innovation: InnovationEntity, customFields?: { website?: string }): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
     version: CurrentDocumentConfig.version,
     INNOVATION_DESCRIPTION: {
       name: innovation.name,
       description: innovation.description ?? undefined,
       countryName: innovation.countryName,
-      postcode: innovation.postcode ?? undefined
+      postcode: innovation.postcode ?? undefined,
+      website: customFields?.website
     },
     UNDERSTANDING_OF_NEEDS: {},
     EVIDENCE_OF_EFFECTIVENESS: {},

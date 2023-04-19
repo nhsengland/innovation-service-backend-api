@@ -5,7 +5,6 @@ import { ActivityLogEntity, InnovationActionEntity, InnovationAssessmentEntity, 
 import { AccessorOrganisationRoleEnum, ActivityEnum, ActivityTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, InnovatorOrganisationRoleEnum, NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import { SurveyAnswersType, SurveyModel } from '@innovations/shared/schemas';
 import { DomainServiceSymbol, DomainServiceType, NotifierServiceSymbol, NotifierServiceType, type DomainUsersService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
@@ -761,85 +760,40 @@ export class InnovationsService extends BaseService {
   }
 
   async createInnovation(
-    user: { id: string },
     domainContext: DomainContextType,
-    data: { name: string, description: string, countryName: string, postcode: null | string, organisationShares: string[] },
-    surveyId: null | string
+    data: { name: string, description: string, countryName: string, postcode?: string, website?: string }
   ): Promise<{ id: string }> {
 
     // Sanity check if innovation name already exists (for the same user).
     const repeatedNamesCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .where('innovation.owner_id = :ownerId', { ownerId: user.id })
+      .where('innovation.owner_id = :ownerId', { ownerId: domainContext.id })
       .andWhere('TRIM(LOWER(innovation.name)) = :innovationName', { innovationName: data.name.trim().toLowerCase() })
       .getCount();
     if (repeatedNamesCount > 0) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ALREADY_EXISTS);
     }
 
-    // Sanity check if all organisation units exists.
-    const organisationsCount = await this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
-      .where('organisation.id IN (:...organisationIds)', { organisationIds: data.organisationShares })
-      .getCount();
-    if (organisationsCount != data.organisationShares.length) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND, { details: { error: 'Unknown organisations' } });
-    }
-
-    // If a surveyId is passed, take that survey answers.
-    const surveyInfo = surveyId ? await this.getSurveyInfo(surveyId) : null;
-
     return this.sqlConnection.transaction(async transaction => {
       const now = new Date();
 
       const savedInnovation = await transaction.save(InnovationEntity, InnovationEntity.new({
-
-        /*
-         * Remove survey information not used any longer and probably irrelevant in the Innovation Record since it will be in document
-         *
-        // Survey information.
-        categories: Promise.resolve((surveyInfo?.categories || []).map(item => InnovationCategoryEntity.new({ type: item }))),
-        otherCategoryDescription: surveyInfo?.otherCategoryDescription ?? null,
-        mainCategory: surveyInfo?.mainCategory ?? null,
-        otherMainCategoryDescription: surveyInfo?.otherMainCategoryDescription ?? null,
-        hasProblemTackleKnowledge: surveyInfo?.hasProblemTackleKnowledge ?? null,
-        hasMarketResearch: surveyInfo?.hasMarketResearch ?? null,
-        // hasWhoBenefitsKnowledge: surveyInfo?.hasWhoBenefitsKnowledge ?? null,
-        hasBenefits: surveyInfo?.hasBenefits || null,
-        hasTests: surveyInfo?.hasTests ?? null,
-        // hasRelevantCertifications: surveyInfo.hasRelevantCertifications ?? null,
-        hasEvidence: surveyInfo?.hasEvidence ?? null,
-        // hasCostEvidence: surveyInfo.hasCostEvidence ?? null,
-        supportTypes: Promise.resolve((surveyInfo?.supportTypes || []).map((e) => InnovationSupportTypeEntity.new({ type: e }))),
-        */
-
-        // Remaining information.
         name: data.name,
         description: data.description,
         status: InnovationStatusEnum.CREATED,
         statusUpdatedAt: new Date(),
         countryName: data.countryName,
         postcode: data.postcode,
-        organisationShares: data.organisationShares.map(id => OrganisationEntity.new({ id })),
-        owner: UserEntity.new({ id: user.id }),
+        owner: UserEntity.new({ id: domainContext.id }),
         createdAt: now,
-        createdBy: user.id,
+        createdBy: domainContext.id,
         updatedAt: now,
-        updatedBy: user.id
+        updatedBy: domainContext.id
       }));
-      
-      await transaction.save(InnovationDocumentEntity, createDocumentFromInnovation(savedInnovation));
+
+      await transaction.save(InnovationDocumentEntity, createDocumentFromInnovation(savedInnovation, { website: data.website }));
 
       // Mark some section to status DRAFT.
-      let sectionsToBeInDraft: CurrentCatalogTypes.InnovationSections[] = [];
-
-      // TODO remove the survey in another story it's not used any longer
-      if (surveyInfo) {
-        sectionsToBeInDraft = [
-          'INNOVATION_DESCRIPTION'
-        ];
-      } else {
-        sectionsToBeInDraft = ['INNOVATION_DESCRIPTION'];
-      }
-
+      const sectionsToBeInDraft: CurrentCatalogTypes.InnovationSections[] = ['INNOVATION_DESCRIPTION'];
       for (const sectionKey of sectionsToBeInDraft) {
         await transaction.save(InnovationSectionEntity, InnovationSectionEntity.new({
           innovation: savedInnovation,
@@ -1562,23 +1516,6 @@ export class InnovationsService extends BaseService {
       submittedAllSections: sectionsSubmitted === totalSections,
       submittedForNeedsAssessment: innovation.status !== InnovationStatusEnum.CREATED,
     };
-  }
-
-  /**
-  * Extracts information about the initial survey taken by the Innovator from CosmosDb
-  */
-  private async getSurveyInfo(surveyId: null | string): Promise<null | SurveyAnswersType> {
-
-    if (!surveyId) { return null; }
-
-    const survey = await SurveyModel.findById(surveyId).exec();
-
-    if (!survey) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SURVEY_ID_NOT_FOUND);
-    }
-
-    return survey.answers;
-
   }
 
   private async hasIncompleteSections(sections: InnovationSectionEntity[]): Promise<boolean> {

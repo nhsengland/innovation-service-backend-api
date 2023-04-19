@@ -1084,10 +1084,33 @@ paths:
       parameters: []
       operationId: v1-innovation-create
       requestBody:
+        description: The innovation to be created.
+        required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 500
+                countryName:
+                  type: string
+                  maxLength: 100
+                postcode:
+                  type: string
+                  maxLength: 8
+                website:
+                  type: string
+                  maxLength: 100
+              required:
+                - name
+                - description
+                - countryName
+              additionalProperties: false
       responses:
         "200":
           description: Success
