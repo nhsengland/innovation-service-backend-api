@@ -1201,10 +1201,11 @@ export class InnovationsService extends BaseService {
         const params = item.param as ActivityLogListParamsType;
 
         if (params.actionUserId) {
-          params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '';
+          params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '[deleted account]';
         }
-        if (params.interveningUserId) {
-          params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '';
+        
+        if (params.interveningUserId || params.interveningUserId === null) {
+          params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '[deleted account]';
         }
 
         return {

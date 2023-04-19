@@ -241,7 +241,7 @@ export type ActivityLogTemplatesType = {
     params: Record<string, never>
   },
   [ActivityEnum.OWNERSHIP_TRANSFER]: {
-    params: { interveningUserId: string }
+    params: { interveningUserId: string | null }
   },
   [ActivityEnum.SHARING_PREFERENCES_UPDATE]: {
     params: { organisations: string[] }

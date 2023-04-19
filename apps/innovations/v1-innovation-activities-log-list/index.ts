@@ -54,7 +54,7 @@ class V1InnovationsActivitiesLogList {
           date: item.date,
           params: item.params
         }))
-      })
+      });
       return;
 
     } catch (error) {
