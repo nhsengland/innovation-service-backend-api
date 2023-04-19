@@ -260,7 +260,7 @@ export class InnovationTransferService extends BaseService {
           transactionManager,
           { innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER, domainContext },
           {
-            interveningUserId: innovation && innovation.owner ? innovation.owner.id : ''
+            interveningUserId: innovation?.owner?.id ?? null
           }
         );
 

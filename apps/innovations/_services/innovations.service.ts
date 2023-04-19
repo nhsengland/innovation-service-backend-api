@@ -1203,12 +1203,9 @@ export class InnovationsService extends BaseService {
         if (params.actionUserId) {
           params.actionUserName = usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '[deleted account]';
         }
-        if (params.interveningUserId) {
+        
+        if (params.interveningUserId || params.interveningUserId === null) {
           params.interveningUserName = usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '[deleted account]';
-        }
-
-        if(params.interveningUserId === '') {
-          params.interveningUserName = '[deleted account]';
         }
 
         return {
