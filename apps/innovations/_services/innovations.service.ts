@@ -819,14 +819,14 @@ export class InnovationsService extends BaseService {
   async getInnovationShares(innovationId: string): Promise<{ organisation: { id: string, name: string, acronym: null | string } }[]> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.organisationShares', 'organisationShares')
+      .leftJoinAndSelect('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
     if (!innovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    return innovation.organisationShares.map(organisation => ({
+    return (innovation.organisationShares ?? []).map(organisation => ({
       organisation: {
         id: organisation.id,
         name: organisation.name,

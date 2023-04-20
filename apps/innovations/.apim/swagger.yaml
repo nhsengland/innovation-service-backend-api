@@ -2720,6 +2720,7 @@ paths:
                   items:
                     type: string
                     format: uuid
+                  minItems: 1
               required:
                 - organisations
               additionalProperties: false
