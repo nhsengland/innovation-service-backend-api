@@ -12,7 +12,7 @@ export * as CurrentCatalogTypes from './202304/catalog.types';
 export * as CurrentDocumentConfig from './202304/document.config';
 export const CurrentDocumentSchemaMap = DocumentValidationSchema202304Map;
 export type CurrentDocumentType = DocumentType202304;
-export type CurrentEvidenceType = NonNullable<DocumentType202304['evidences']>[number];
+export type CurrentEvidenceType = NonNullable<CurrentDocumentType['evidences']>[number];
 export const CurrentEvidenceSchema = EvidenceSchema202304;
 
 // Helpers

@@ -1706,7 +1706,6 @@ paths:
                     required:
                       - evidenceSubmitType
                       - summary
-                      - files
                     additionalProperties: false
                   minItems: 1
               required:
@@ -1959,7 +1958,6 @@ paths:
               required:
                 - evidenceSubmitType
                 - summary
-                - files
               additionalProperties: false
       responses:
         "200":
@@ -2079,7 +2077,6 @@ paths:
               required:
                 - evidenceSubmitType
                 - summary
-                - files
               additionalProperties: false
       responses:
         "200":

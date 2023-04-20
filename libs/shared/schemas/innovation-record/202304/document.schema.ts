@@ -12,7 +12,7 @@ export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['e
   evidenceType: Joi.string().valid(...catalogEvidenceType),
   description: Joi.string().max(50),
   summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).required(),
-  files: Joi.array().items(Joi.string().guid()).min(1).required()
+  files: Joi.array().items(Joi.string().guid()).min(1)
 });
 
 export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Map = {

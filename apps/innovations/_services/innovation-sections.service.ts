@@ -537,7 +537,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     const existingFiles = (await this.innovationFileService.getFilesByIds(evidence.files)).map(f => f.id);
-    const filesToDelete = existingFiles.filter(f => !evidenceData.files.includes(f));
+    const filesToDelete = existingFiles.filter(f => !evidenceData.files?.includes(f));
     
     return this.sqlConnection.transaction(async (transaction) => {
 
