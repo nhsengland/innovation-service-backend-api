@@ -529,9 +529,11 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
 
+    // don't allow units with the sme name or acronym inside the same organisation
     const unitNameOrAcronymAlreadyExists = await transaction
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
+      .where('unit.organisation_id = :organisationId', { organisationId })
+      .andWhere('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
       .getOne();
 
     if (unitNameOrAcronymAlreadyExists) {
