@@ -6,6 +6,6 @@ export type ResponseDTO = {
   name: string;
   touType: TermsOfUseTypeEnum;
   summary: string;
-  releaseAt: Date | null;
+  releasedAt: Date | null;
   createdAt: Date;
 }
