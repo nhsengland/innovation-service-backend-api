@@ -184,12 +184,12 @@ export class InnovationActionsService extends BaseService {
       createdAt: action.createdAt,
       updatedAt: action.updatedAt,
       updatedBy: {
-        name: (action.updatedByUserRole && usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ?? '',
+        name: (action.updatedByUserRole && usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ?? '[deleted account]',
         role: action.updatedByUserRole?.role,
       },
       createdBy: {
         id: action.createdByUser.id,
-        name: usersInfo.get(action.createdByUser.identityId)?.displayName ?? '',
+        name: usersInfo.get(action.createdByUser.identityId)?.displayName ?? '[deleted account]',
         role: action.createdByUserRole?.role,
         ...(action.innovationSupport ? {
           organisationUnit: {
