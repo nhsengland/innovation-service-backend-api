@@ -819,7 +819,8 @@ export class InnovationsService extends BaseService {
   async getInnovationShares(innovationId: string): Promise<{ organisation: { id: string, name: string, acronym: null | string } }[]> {
 
     const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.organisationShares', 'organisationShares')
+      .select(['innovation.id', 'organisationShares.id', 'organisationShares.name', 'organisationShares.acronym'])
+      .leftJoin('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
     if (!innovation) {
@@ -849,7 +850,8 @@ export class InnovationsService extends BaseService {
     }
 
     const innovation = await em.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.organisationShares', 'organisationShares')
+      .select(['innovation.id', 'organisationShares.id'])
+      .leftJoin('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
