@@ -1,6 +1,6 @@
 export type ResponseDTO = {
   id: string,
-  invitedAt: string,
+  invitedAt: Date,
   innovation: {
     id: string,
     name: string

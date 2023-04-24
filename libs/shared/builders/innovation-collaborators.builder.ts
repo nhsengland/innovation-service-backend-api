@@ -3,7 +3,7 @@ import type { EntityManager } from "typeorm";
 import type { InnovationEntity, UserEntity } from "../entities";
 import { InnovationCollaboratorEntity } from "../entities/innovation/innovation-collaborator.entity";
 import { InnovationCollaboratorStatusEnum } from "../enums";
-import type { DateISOType, DomainContextType } from "../types";
+import type { DomainContextType } from "../types";
 
 export class InnovationCollaboratorBuilder {
 
@@ -20,7 +20,7 @@ export class InnovationCollaboratorBuilder {
       innovation: innovation,
       createdBy: domainContext.id,
       updatedBy: domainContext.id,
-      invitedAt: new Date().toISOString()
+      invitedAt: new Date()
     }
   }
 
@@ -39,7 +39,7 @@ export class InnovationCollaboratorBuilder {
     return this;
   }
 
-  setInvitedAt(date: DateISOType): InnovationCollaboratorBuilder {
+  setInvitedAt(date: Date): InnovationCollaboratorBuilder {
     this.innovationCollaborator.invitedAt = date;
     return this;
   }

@@ -4,9 +4,11 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from '../innovation/innovation.entity';
 
-import { InnovationCertificationCatalogueEnum, StandardMetCatalogueEnum } from '../../enums/catalog.enums';
+import type { catalogStandardsType, catalogYesInProgressNotYet } from '../../schemas/innovation-record/202209/catalog.types';
 
-
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_standard')
 @Index(['type', 'innovation'], { unique: true })
 export class InnovationStandardEntity extends BaseEntity {
@@ -15,10 +17,10 @@ export class InnovationStandardEntity extends BaseEntity {
   id: string;
 
   @Column({ name: 'type', type: 'nvarchar' })
-  type: InnovationCertificationCatalogueEnum;
+  type: catalogStandardsType;
 
   @Column({ name: 'has_met', type: 'nvarchar' })
-  hasMet: StandardMetCatalogueEnum;
+  hasMet: catalogYesInProgressNotYet;
 
 
   @ManyToOne(() => InnovationEntity, { nullable: false })

@@ -1,6 +1,6 @@
 import { ViewColumn, ViewEntity } from 'typeorm';
 
-import type { DateISOType } from '../../types/date.types';
+
 
 
 @ViewEntity()
@@ -28,6 +28,6 @@ export class IdleSupportViewEntity {
   identityId: string;
 
   @ViewColumn()
-  latestActivity: DateISOType;
+  latestActivity: Date;
 
 }

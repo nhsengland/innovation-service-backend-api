@@ -2,16 +2,17 @@ import { Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
+import { catalogCareSettings } from '../../schemas/innovation-record/202209/catalog.types';
 import { InnovationEntity } from './innovation.entity';
 
-import { InnovationCareSettingCatalogueEnum } from '../../enums/catalog.enums';
-
-
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_care_setting')
 export class InnovationCareSettingEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: InnovationCareSettingCatalogueEnum, nullable: false })
-  type: InnovationCareSettingCatalogueEnum;
+  @PrimaryColumn({ type: 'simple-enum', enum: catalogCareSettings, nullable: false })
+  type: catalogCareSettings;
 
   @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
   innovationId: string;

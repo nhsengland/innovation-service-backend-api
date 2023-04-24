@@ -1,11 +1,11 @@
-import type { DateISOType } from '@innovations/shared/types';
+
 
 export type ResponseDTO = {
   count: number;
   messages: {
     id: string;
     message: string;
-    createdAt: DateISOType;
+    createdAt: Date;
     isNew: boolean;
     isEditable: boolean;
     createdBy: {
@@ -16,6 +16,6 @@ export type ResponseDTO = {
       organisation: { id: string; name: string; acronym: string | null } | undefined;
       organisationUnit: { id: string; name: string; acronym: string | null } | undefined;
     };
-    updatedAt: DateISOType;
+    updatedAt: Date;
   }[];
 }

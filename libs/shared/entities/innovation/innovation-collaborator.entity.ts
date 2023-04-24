@@ -3,7 +3,7 @@ import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGene
 import { BaseEntity } from '../base.entity';
 
 import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
-import type { DateISOType } from '../../types/date.types';
+
 import { UserEntity } from '../user/user.entity';
 import { InnovationEntity } from './innovation.entity';
 
@@ -24,7 +24,7 @@ export class InnovationCollaboratorEntity extends BaseEntity {
   collaboratorRole: null | string;
 
   @Column({ name: 'invited_at', type: 'datetime2' })
-  invitedAt: DateISOType;
+  invitedAt: Date;
 
   @RelationId('innovation')
   innovationId: string;

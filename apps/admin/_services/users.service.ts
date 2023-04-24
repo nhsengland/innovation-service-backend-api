@@ -203,7 +203,14 @@ export class UsersService extends BaseService {
             updatedBy: requestUser.id
           }));
 
-        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum[data.role], organisation: organisation, organisationUnit: unit }));
+        await transaction.save(UserRoleEntity,
+          UserRoleEntity.new({
+            user, role: ServiceRoleEnum[data.role],
+            organisation: organisation,
+            organisationUnit: unit,
+            createdBy: requestUser.id,
+            lockedAt: (organisation.inactivatedAt || unit.inactivatedAt) ? new Date() : null
+          }));
       }
 
       // needs assessor type

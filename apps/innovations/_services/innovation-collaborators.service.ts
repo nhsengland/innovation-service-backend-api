@@ -4,7 +4,7 @@ import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } f
 import { ConflictError, ForbiddenError, InnovationErrorsEnum, NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderService, IdentityProviderServiceSymbol, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import type { DateISOType, DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, ObjectLiteral } from 'typeorm';
 import { BaseService } from './base.service';
@@ -59,7 +59,7 @@ export class InnovationCollaboratorsService extends BaseService {
       status: InnovationCollaboratorStatusEnum.PENDING,
       updatedBy: domainContext.id,
       invitedAt: new Date().toISOString(),
-    }
+    };
 
     let collaboratorId;
     // Collaborator does not exist on DB.
@@ -218,23 +218,25 @@ export class InnovationCollaboratorsService extends BaseService {
     email: string,
     status: InnovationCollaboratorStatusEnum,
     innovation: { id: string, name: string, description: null | string, owner: { id: string, name?: string } },
-    invitedAt: DateISOType,
+    invitedAt: Date,
   }> {
 
     const em = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await em.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+      .withDeleted()
       .innerJoin('collaborator.innovation', 'innovation')
       .leftJoin('collaborator.user', 'collaboratorUser')
       .innerJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.name', 'innovation.description', 'innovation.id',
-        'innovationOwner.identityId', 'innovationOwner.id',
+        'innovationOwner.identityId', 'innovationOwner.id', 'innovationOwner.deletedAt',
         'collaboratorUser.identityId',
         'collaborator.id', 'collaborator.email', 'collaborator.status', 'collaborator.collaboratorRole', 'collaborator.invitedAt', 'collaborator.createdBy'
       ])
       .where('collaborator.innovation = :innovationId AND collaborator.id = :collaboratorId', { innovationId, collaboratorId })
       .getOne();
+
     if (!collaborator) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
@@ -247,14 +249,12 @@ export class InnovationCollaboratorsService extends BaseService {
       }
     }
 
-    const userIds = [collaborator.innovation.owner.identityId];
+    let collaboratorName;
+    
     if (collaborator.user) {
-      userIds.push(collaborator.user.identityId);
+      const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
+      collaboratorName = collaboratorUser.displayName;
     }
-    const usersInfoMap = await this.identityProviderService.getUsersMap(userIds);
-
-    const collaboratorName = collaborator.user && usersInfoMap.get(collaborator.user.identityId)?.displayName;
-    const ownerName = usersInfoMap.get(collaborator.innovation.owner.identityId)?.displayName;
 
     return {
       id: collaborator.id,
@@ -267,8 +267,8 @@ export class InnovationCollaboratorsService extends BaseService {
         name: collaborator.innovation.name,
         description: collaborator.innovation.description,
         owner: {
-          id: collaborator.innovation.owner.id,
-          name: ownerName
+          id: collaborator.innovation.owner.id,          
+          name: collaborator.innovation.owner.deletedAt === null ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName : undefined
         },
       },
       invitedAt: collaborator.invitedAt
@@ -336,13 +336,14 @@ export class InnovationCollaboratorsService extends BaseService {
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .innerJoin('collaborator.innovation', 'innovation')
+      .withDeleted()
       .innerJoin('innovation.owner', 'innovationOwner')
       .select(['innovation.id', 'innovationOwner.id', 'collaborator.email', 'collaborator.status', 'collaborator.invitedAt'])
       .where('collaborator.id = :collaboratorId', { collaboratorId })
       .getOne();
 
     if (!collaborator) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
     const isOwner = collaborator.innovation.owner.id === requestUser.id;
@@ -355,7 +356,7 @@ export class InnovationCollaboratorsService extends BaseService {
     return {
       type: isOwner ? 'OWNER' : 'COLLABORATOR',
       status: collaborator.status
-    }
+    };
   }
 
   async upsertCollaborator(
@@ -387,7 +388,7 @@ export class InnovationCollaboratorsService extends BaseService {
         }
       );
 
-      return { id: collaborator.id }
+      return { id: collaborator.id };
     } else {
       const newCollaborator = await connection.save(InnovationCollaboratorEntity, {
         status: data.status,
@@ -399,7 +400,7 @@ export class InnovationCollaboratorsService extends BaseService {
         user: UserEntity.new({ id: data.userId })
       });
 
-      return { id: newCollaborator.id }
+      return { id: newCollaborator.id };
     }
   }
 
@@ -422,15 +423,28 @@ export class InnovationCollaboratorsService extends BaseService {
     return { id: collaborator.id };
   }
 
-  async collaboratorExists(id: string, entityManager?: EntityManager): Promise<boolean> {
+  /**
+   * Checks if a given collaborator is in Pending status
+   * and if the invited user exists on the service 
+   * @param id 
+   * @param entityManager 
+   * @returns 
+   */
+  async checkCollaborator(id: string, entityManager?: EntityManager): Promise<{ userExists: boolean, collaboratorStatus: InnovationCollaboratorStatusEnum }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const collaborator = await connection.createQueryBuilder(InnovationCollaboratorEntity, 'collaborators')
-      .select(['collaborators.id'])
-      .where('collaborators.id = :id AND collaborators.status = :status', { id, status: InnovationCollaboratorStatusEnum.PENDING })
+      .select(['collaborators.id', 'collaborators.status', 'collaborators.email', 'collaborators.invitedAt'])
+      .where('collaborators.id = :id', { id })
       .getOne();
 
-    return !!collaborator;
+    if (!collaborator) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
+    }
+
+    const authUser = await this.identityProviderService.getUserInfoByEmail(collaborator.email);
+
+    return { userExists: !!authUser, collaboratorStatus: collaborator.status };
   }
 
 

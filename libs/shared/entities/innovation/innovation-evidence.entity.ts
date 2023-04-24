@@ -5,8 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { InnovationFileEntity } from './innovation-file.entity';
 
-import { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '../../enums/catalog.enums';
-
+// TODO: This entity will not be used anymore for the IR and can be removed
 
 @Entity('innovation_evidence')
 export class InnovationEvidenceEntity extends BaseEntity {
@@ -18,10 +17,10 @@ export class InnovationEvidenceEntity extends BaseEntity {
   summary: string;
 
   @Column({ name: 'evidence_type', type: 'nvarchar', nullable: true })
-  evidenceType: EvidenceTypeCatalogueEnum;
+  evidenceType: string;
 
   @Column({ name: 'clinical_evidence_type', type: 'nvarchar', nullable: true })
-  clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum;
+  clinicalEvidenceType: string;
 
   @Column({ name: 'description', nullable: true })
   description: string;

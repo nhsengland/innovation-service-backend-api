@@ -1,4 +1,4 @@
-import type { DateISOType } from '@innovations/shared/types';
+
 import { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import { ActionsToReviewStatisticsHandler } from '../_handlers/statistics/actions-to-review.handler';
 import { ActionsToSubmitStatisticsHandler } from '../_handlers/statistics/actions-to-submit.handler';
@@ -37,14 +37,14 @@ export const INNOVATION_STATISTICS_CONFIG: Record<keyof typeof InnovationStatist
 }
 
 export type InnovationStatisticsTemplateType = {
-  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]: { count: number; lastSubmittedSection: null | string; lastSubmittedAt: null | DateISOType; },
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]: { count: number; total: number; lastSubmittedSection: null | string; lastSubmittedAt: null | DateISOType; },
-  [InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]: { count: number; lastSubmittedAt: null | DateISOType; },
-  [InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: { count: number; lastSubmittedSection: null | string; lastSubmittedAt: null | DateISOType; },
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]: { count: number; total: number; lastSubmittedSection: null | string; lastSubmittedAt: null | DateISOType; },
+  [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]: { count: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date; },
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]: { count: number; total: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date; },
+  [InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]: { count: number; lastSubmittedAt: null | Date; },
+  [InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: { count: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date; },
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]: { count: number; total: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date; },
 
-  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER]: { count: number; total: number; lastSubmittedSection: null | string; lastSubmittedAt: null | DateISOType; },
-  [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: { count: number; lastSubmittedAt: null | DateISOType; },
+  [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER]: { count: number; total: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date; },
+  [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: { count: number; lastSubmittedAt: null | Date; },
 }
 
 export type InnovationStatisticsParamsTemplateType = {

@@ -30,12 +30,12 @@ class V1AdminOrganisationCreate {
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .checkAdminType()
         .verify();
 
-      const result = await organisationsService.createOrganisation(body.name, body.acronym, body.units);
+      const result = await organisationsService.createOrganisation(auth.getContext(), body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id, units: result.units });
       return;

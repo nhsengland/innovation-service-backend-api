@@ -10,7 +10,6 @@ import { InnovationAreaEntity } from './innovation-area.entity';
 import { InnovationAssessmentEntity } from './innovation-assessment.entity';
 import { InnovationCareSettingEntity } from './innovation-care-setting.entity';
 import { InnovationCategoryEntity } from './innovation-category.entity';
-import { InnovationClinicalAreaEntity } from './innovation-clinical-area.entity';
 import { InnovationDeploymentPlanEntity } from './innovation-deployment-plan.entity';
 import { InnovationDiseaseConditionEntity } from './innovation-disease-condition.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation-environmental-benefit.entity';
@@ -27,31 +26,20 @@ import { InnovationSupportTypeEntity } from './innovation-support-type.entity';
 import { InnovationSupportEntity } from './innovation-support.entity';
 import { InnovationUserTestEntity } from './innovation-user-test.entity';
 
-import type {
-  CostComparisonCatalogueEnum,
-  HasBenefitsCatalogueEnum,
-  HasEvidenceCatalogueEnum,
-  HasFundingCatalogueEnum,
-  HasKnowledgeCatalogueEnum,
-  HasMarketResearchCatalogueEnum,
-  HasPatentsCatalogueEnum,
-  HasProblemTackleKnowledgeCatalogueEnum,
-  HasRegulationKnowledegeCatalogueEnum,
-  HasResourcesToScaleCatalogueEnum,
-  HasTestsCatalogueEnum,
-  InnovationCategoryCatalogueEnum,
-  InnovationPathwayKnowledgeCatalogueEnum,
-  MainPurposeCatalogueEnum,
-  YesNoNotRelevantCatalogueEnum,
-  YesOrNoCatalogueEnum
-} from '../../enums/catalog.enums';
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
-import type { DateISOType } from '../../types/date.types';
+import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
+import type { catalogCarePathway, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogYesInProcessNotYet, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from '../../schemas/innovation-record/202209/catalog.types';
+
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
+import { InnovationDocumentEntity } from './innovation-document.entity';
 import { InnovationSupportLogEntity } from './innovation-support-log.entity';
+import { InnovationTransferEntity } from './innovation-transfer.entity';
 
+// TODO: after migration remove all "data" fields except for name, description, countryCode, postalcode, mainCategory, otherCategoryDescription
+// until removed all the other "enum" fields were typed with the 202209 version of the enum
+// when migrating update otherCategoryDescription with otherMainCategoryDescription content and remove otherMainCategoryDescription (also update sectionUpdate)
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -66,7 +54,10 @@ export class InnovationEntity extends BaseEntity {
   status: InnovationStatusEnum;
 
   @Column({ name: 'status_updated_at', type: 'datetime2' })
-  statusUpdatedAt: DateISOType;
+  statusUpdatedAt: Date;
+
+  @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
+  expires_at: null | Date;
 
   @Column({ name: 'survey_id', type: 'nvarchar', unique: true, nullable: true })
   surveyId: null | string;
@@ -81,7 +72,7 @@ export class InnovationEntity extends BaseEntity {
   postcode: null | string;
 
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
-  submittedAt: null | DateISOType;
+  submittedAt: null | Date;
 
   @Column({ name: 'other_main_category_description', type: 'nvarchar', nullable: true })
   otherMainCategoryDescription: null | string;
@@ -90,13 +81,13 @@ export class InnovationEntity extends BaseEntity {
   otherCategoryDescription: null | string;
 
   @Column({ name: 'main_category', type: 'nvarchar', nullable: true })
-  mainCategory: null | InnovationCategoryCatalogueEnum;
+  mainCategory: null | CurrentCatalogTypes.catalogCategory;
 
   @Column({ name: 'has_final_product', type: 'nvarchar', nullable: true })
-  hasFinalProduct: null | YesOrNoCatalogueEnum;
+  hasFinalProduct: null | catalogYesNo;
 
   @Column({ name: 'main_purpose', type: 'nvarchar', nullable: true })
-  mainPurpose: null | MainPurposeCatalogueEnum;
+  mainPurpose: null | catalogMainPurpose;
 
   @Column({ name: 'more_support_description', type: 'nvarchar', nullable: true })
   moreSupportDescription: null | string;
@@ -105,7 +96,7 @@ export class InnovationEntity extends BaseEntity {
   otherCareSetting: null | string;
 
   @Column({ name: 'has_problem_tackle_knowledge', type: 'nvarchar', nullable: true })
-  hasProblemTackleKnowledge: null | HasProblemTackleKnowledgeCatalogueEnum;
+  hasProblemTackleKnowledge: null | catalogYesNotYetNotSure;
 
   @Column({ name: 'problems_tackled', type: 'nvarchar', nullable: true })
   problemsTackled: null | string;
@@ -120,22 +111,22 @@ export class InnovationEntity extends BaseEntity {
   interventionImpact: null | string;
 
   @Column({ name: 'has_benefits', type: 'nvarchar', nullable: true })
-  hasBenefits: null | HasBenefitsCatalogueEnum;
+  hasBenefits: null | catalogYesNotYetNotSure;
 
   @Column({ name: 'has_evidence', type: 'nvarchar', nullable: true })
-  hasEvidence: null | HasEvidenceCatalogueEnum;
+  hasEvidence: null | catalogYesInProgressNotYet;
 
   @Column({ name: 'has_market_research', type: 'nvarchar', nullable: true })
-  hasMarketResearch: null | HasMarketResearchCatalogueEnum;
+  hasMarketResearch: null | catalogYesInProgressNotYet;
 
   @Column({ name: 'market_research', type: 'nvarchar', nullable: true })
   marketResearch: null | string;
 
   @Column({ name: 'has_patents', type: 'nvarchar', nullable: true })
-  hasPatents: null | HasPatentsCatalogueEnum;
+  hasPatents: null | catalogHasPatents;
 
   @Column({ name: 'has_other_intellectual', type: 'nvarchar', nullable: true })
-  hasOtherIntellectual: null | YesOrNoCatalogueEnum;
+  hasOtherIntellectual: null | catalogYesNo;
 
   @Column({ name: 'other_intellectual', type: 'nvarchar', nullable: true })
   otherIntellectual: null | string;
@@ -147,34 +138,34 @@ export class InnovationEntity extends BaseEntity {
   impactClinicians: boolean;
 
   @Column({ name: 'has_regulation_knowledge', type: 'nvarchar', nullable: true })
-  hasRegulationKnowledge: null | HasRegulationKnowledegeCatalogueEnum;
+  hasRegulationKnowledge: null | catalogHasRegulationKnowledge;
 
   @Column({ name: 'other_regulation_description', type: 'nvarchar', nullable: true })
   otherRegulationDescription: null | string;
 
   @Column({ name: 'has_uk_pathway_knowledge', type: 'nvarchar', nullable: true })
-  hasUKPathwayKnowledge: null | YesNoNotRelevantCatalogueEnum;
+  hasUKPathwayKnowledge: null | catalogYesNoNotRelevant;
 
   @Column({ name: 'innovation_pathway_knowledge', type: 'nvarchar', nullable: true })
-  innovationPathwayKnowledge: null | InnovationPathwayKnowledgeCatalogueEnum;
+  innovationPathwayKnowledge: null | catalogPathwayKnowledge;
 
   @Column({ name: 'potential_pathway', type: 'nvarchar', nullable: true })
   potentialPathway: null | string;
 
   @Column({ name: 'has_tests', type: 'nvarchar', nullable: true })
-  hasTests: null | HasTestsCatalogueEnum;
+  hasTests: null | catalogYesInProcessNotYet;
 
   @Column({ name: 'has_cost_knowledge', type: 'nvarchar', nullable: true })
-  hasCostKnowledge: null | HasKnowledgeCatalogueEnum;
+  hasCostKnowledge: null | catalogHasCostKnowledge;
 
   @Column({ name: 'has_cost_saving_knowledge', type: 'nvarchar', nullable: true })
-  hasCostSavingKnowledge: null | HasKnowledgeCatalogueEnum;
+  hasCostSavingKnowledge: null | catalogHasCostKnowledge;
 
   @Column({ name: 'has_cost_care_knowledge', type: 'nvarchar', nullable: true })
-  hasCostCareKnowledge: null | HasKnowledgeCatalogueEnum;
+  hasCostCareKnowledge: null | catalogHasCostKnowledge;
 
   @Column({ name: 'has_revenue_model', type: 'nvarchar', nullable: true })
-  hasRevenueModel: null | YesOrNoCatalogueEnum;
+  hasRevenueModel: null | catalogYesNo;
 
   @Column({ name: 'other_revenue_description', type: 'nvarchar', nullable: true })
   otherRevenueDescription: null | string;
@@ -186,19 +177,19 @@ export class InnovationEntity extends BaseEntity {
   benefittingOrganisations: null | string;
 
   @Column({ name: 'has_funding', type: 'nvarchar', nullable: true })
-  hasFunding: null | HasFundingCatalogueEnum;
+  hasFunding: null | catalogYesNoNotRelevant;
 
   @Column({ name: 'funding_description', type: 'nvarchar', nullable: true })
   fundingDescription: null | string;
 
   @Column({ name: 'has_deploy_plan', type: 'nvarchar', nullable: true })
-  hasDeployPlan: null | YesOrNoCatalogueEnum;
+  hasDeployPlan: null | catalogYesNo;
 
   @Column({ name: 'is_deployed', type: 'nvarchar', nullable: true })
-  isDeployed: null | YesOrNoCatalogueEnum;
+  isDeployed: null | catalogYesNo;
 
   @Column({ name: 'has_resources_to_scale', type: 'nvarchar', nullable: true })
-  hasResourcesToScale: null | HasResourcesToScaleCatalogueEnum;
+  hasResourcesToScale: null | catalogYesNoNotSure;
 
   @Column({ name: 'cost_description', type: 'nvarchar', nullable: true })
   costDescription: null | string;
@@ -210,10 +201,10 @@ export class InnovationEntity extends BaseEntity {
   usageExpectations: null | string;
 
   @Column({ name: 'cost_comparison', type: 'nvarchar', nullable: true })
-  costComparison: null | CostComparisonCatalogueEnum;
+  costComparison: null | catalogCostComparison;
 
   @Column({ name: 'care_pathway', type: 'nvarchar', nullable: true })
-  carePathway: null | string;
+  carePathway: null | catalogCarePathway;
 
   @Column({ name: 'patients_range', type: 'nvarchar', nullable: true })
   patientsRange: null | string;
@@ -289,12 +280,6 @@ export class InnovationEntity extends BaseEntity {
     cascade: ['insert', 'update']
   })
   categories: Promise<InnovationCategoryEntity[]>;
-
-  @OneToMany(() => InnovationClinicalAreaEntity, record => record.innovation, {
-    lazy: true,
-    cascade: ['insert', 'update']
-  })
-  clinicalAreas: Promise<InnovationClinicalAreaEntity[]>;
 
   @OneToMany(() => InnovationDeploymentPlanEntity, record => record.innovation, {
     lazy: true,
@@ -379,6 +364,13 @@ export class InnovationEntity extends BaseEntity {
 
   @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
   collaborators: InnovationCollaboratorEntity[];
+
+  @OneToOne(() => InnovationDocumentEntity)
+  @JoinColumn({ name: 'id' })
+  document: InnovationDocumentEntity;
+  
+  @OneToMany(() => InnovationTransferEntity, record => record.innovation)
+  transfers: InnovationTransferEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
     const instance = new InnovationEntity();

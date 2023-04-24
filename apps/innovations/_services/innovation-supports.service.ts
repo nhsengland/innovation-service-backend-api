@@ -396,7 +396,7 @@ export class InnovationSupportsService extends BaseService {
     }
     
     const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
-    .innerJoinAndSelect('innovation.owner', 'owner')
+    .leftJoinAndSelect('innovation.owner', 'owner')
     .leftJoinAndSelect('innovation.sections', 'sections')
     .leftJoinAndSelect('innovation.innovationSupports', 'supports')
     .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')

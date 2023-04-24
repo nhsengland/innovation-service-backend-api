@@ -13,5 +13,5 @@ export default async (): Promise<void> => {
   // Faking the resolved type as the entityDataType (this is exported as a POJO for jest but builder methods are expecting entities)
   const data = await TestsHelper.createSampleData();
   env['sampleData'] = JSON.stringify(await resolveNestedPromises(data));
-
+  env['CLIENT_WEB_BASE_URL'] = 'http://localhost:4200';
 };

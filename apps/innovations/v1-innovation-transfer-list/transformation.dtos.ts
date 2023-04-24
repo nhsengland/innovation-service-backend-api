@@ -4,6 +4,6 @@ export type ResponseDTO = {
   innovation: {
     id: string,
     name: string,
-    owner: string
+    owner?: string
   }
 }[];

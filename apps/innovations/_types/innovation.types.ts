@@ -1,40 +1,41 @@
-import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueEnum, YesOrNoCatalogueEnum, YesPartiallyNoCatalogueEnum } from '@innovations/shared/enums';
-import type { DateISOType, OrganisationWithUnitsType } from '@innovations/shared/types';
+import type { InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationSectionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '@innovations/shared/enums';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import type { OrganisationWithUnitsType } from '@innovations/shared/types';
 
 export interface InnovationSectionModel {
   id: string | null,
-  section: InnovationSectionEnum | null,
+  section: CurrentCatalogTypes.InnovationSections | null,
   status: InnovationSectionStatusEnum | null,
   actionStatus: InnovationActionStatusEnum | null,
-  updatedAt: DateISOType | null,
-  submittedAt: DateISOType | null
+  updatedAt: Date | null,
+  submittedAt: Date | null
 }
 
 export type InnovationAssessmentType = {
   id: string,
-  reassessment?: { updatedInnovationRecord: YesOrNoCatalogueEnum, description: string },
+  reassessment?: { updatedInnovationRecord: CurrentCatalogTypes.catalogYesNo, description: string },
   summary: null | string,
   description: null | string,
-  finishedAt: null | DateISOType,
+  finishedAt: null | Date,
   assignTo: { id: string, name: string },
-  maturityLevel: null | MaturityLevelCatalogueEnum,
+  maturityLevel: null | MaturityLevelCatalogueType,
   maturityLevelComment: null | string,
-  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueEnum,
+  hasRegulatoryApprovals: null | YesPartiallyNoCatalogueType,
   hasRegulatoryApprovalsComment: null | string,
-  hasEvidence: null | YesPartiallyNoCatalogueEnum,
+  hasEvidence: null | YesPartiallyNoCatalogueType,
   hasEvidenceComment: null | string,
-  hasValidation: null | YesPartiallyNoCatalogueEnum,
+  hasValidation: null | YesPartiallyNoCatalogueType,
   hasValidationComment: null | string,
-  hasProposition: null | YesPartiallyNoCatalogueEnum,
+  hasProposition: null | YesPartiallyNoCatalogueType,
   hasPropositionComment: null | string,
-  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueEnum,
+  hasCompetitionKnowledge: null | YesPartiallyNoCatalogueType,
   hasCompetitionKnowledgeComment: null | string,
-  hasImplementationPlan: null | YesPartiallyNoCatalogueEnum,
+  hasImplementationPlan: null | YesPartiallyNoCatalogueType,
   hasImplementationPlanComment: null | string,
-  hasScaleResource: null | YesPartiallyNoCatalogueEnum,
+  hasScaleResource: null | YesPartiallyNoCatalogueType,
   hasScaleResourceComment: null | string,
   suggestedOrganisations: OrganisationWithUnitsType[],
-  updatedAt: null | DateISOType,
+  updatedAt: null | Date,
   updatedBy: { id: string, name: string }
 };
 
@@ -44,11 +45,11 @@ export type ThreadListModel = {
     id: string,
     subject: string,
     messageCount: number,
-    createdAt: DateISOType,
+    createdAt: Date,
     isNew: boolean,
     lastMessage: {
       id: string,
-      createdAt: DateISOType,
+      createdAt: Date,
       createdBy: {
         id: string,
         name: string,
@@ -72,19 +73,19 @@ export type InnovationExportRequestItemType = {
   isExportable: boolean,
   requestReason: string,
   rejectReason?: null | string,
-  expiresAt?: DateISOType, // Returned only when "opened".
+  expiresAt?: Date, // Returned only when "opened".
   organisation: {
     id: string,
     name: string,
     acronym: null | string, 
     organisationUnit: { id: string, name: string, acronym: null | string }
   },
-  createdAt: DateISOType,
+  createdAt: Date,
   createdBy: {  
     id: string,
     name: string
   },
-  updatedAt: DateISOType
+  updatedAt: Date
 }
 
 export type InnovationExportRequestListType = InnovationExportRequestItemType[];  
@@ -112,7 +113,7 @@ export type InnovationSupportsLogType = {
   description: string;
   innovationSupportStatus: string;
   createdBy: string;
-  createdAt: DateISOType;
+  createdAt: Date;
   organisationUnit: null | {
     id: string;
     name: string;

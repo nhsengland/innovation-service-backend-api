@@ -1,10 +1,9 @@
 import { TestDataType, TestsHelper } from '@users/shared/tests/tests.helper';
 import { container } from '../_config';
 
+import { randUuid } from '@ngneat/falso';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import { NOSQLConnectionService } from '@users/shared/services';
-import { CacheService } from '@users/shared/services/storage/cache.service';
-import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 import { OrganisationsServiceSymbol, OrganisationsServiceType } from './interfaces';
@@ -25,7 +24,6 @@ describe('Innovation Assessments Suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 

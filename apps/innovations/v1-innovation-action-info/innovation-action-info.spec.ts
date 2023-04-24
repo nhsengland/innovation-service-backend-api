@@ -3,7 +3,7 @@ import { TestsHelper } from '@innovations/shared/tests/tests.helper';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
-import { InnovationActionStatusEnum, InnovationSectionEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum } from '@innovations/shared/errors';
 import type { ErrorDetailsType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
@@ -26,7 +26,7 @@ describe('v1-innovation-action-info Suite', () => {
     id: randomUUID(),
     displayId: 'UC01',
     status: InnovationActionStatusEnum.COMPLETED,
-    section: InnovationSectionEnum.IMPLEMENTATION_PLAN,
+    section: 'IMPLEMENTATION_PLAN',
     description: 'description 1',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -36,9 +36,7 @@ describe('v1-innovation-action-info Suite', () => {
 
   beforeAll(async () => {
 
-    new MockBuilder()
-      .mockNoSQLServiceInit()
-      .mockCacheServiceThis();
+    new MockBuilder().mockNoSQLServiceInit();
 
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
@@ -91,7 +89,7 @@ describe('v1-innovation-action-info Suite', () => {
         id: randomUUID(),
         displayId: 'UC01',
         status: InnovationActionStatusEnum.DECLINED,
-        section: InnovationSectionEnum.IMPLEMENTATION_PLAN,
+        section: 'IMPLEMENTATION_PLAN',
         description: 'description 1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

@@ -1,14 +1,15 @@
 import Joi from 'joi';
 import type { ActivityEnum } from '../enums/activity.enums';
-import type { InnovationSectionEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
-import type { DateISOType } from './date.types';
+import type { CurrentCatalogTypes } from '../schemas/innovation-record';
+
 
 export type RoleType = {
   id: string,
   role: ServiceRoleEnum,
-  lockedAt: DateISOType | null, 
+  lockedAt: Date | null, 
   organisation?: {
     id: string,
     name: string,
@@ -30,9 +31,9 @@ export type DomainUserInfoType = {
   roles: RoleType[],
   phone: null | string,
   isActive: boolean,
-  lockedAt: null | DateISOType,
-  passwordResetAt: null | DateISOType,
-  firstTimeSignInAt: null | DateISOType,
+  lockedAt: null | Date,
+  passwordResetAt: null | Date,
+  firstTimeSignInAt: null | Date,
   surveyId: null | string,
   organisations: {
     id: string,
@@ -201,7 +202,7 @@ export type ActivityLogDBParamsType = {
   interveningUserId?: string;
 
   assessmentId?: string;
-  sectionId?: InnovationSectionEnum;
+  sectionId?: CurrentCatalogTypes.InnovationSections;
   actionId?: string;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
@@ -234,21 +235,22 @@ export type ActivityLogListParamsType = ActivityLogDBParamsType & {
 
 export type ActivitiesParamsType<T extends ActivityEnum> = Required<ActivityLogTemplatesType[T]>['params'];
 
+// TODO: TechDebt the sectionKeyEnum might not be true if different documment versions have different keys
 export type ActivityLogTemplatesType = {
   [ActivityEnum.INNOVATION_CREATION]: {
     params: Record<string, never>
   },
   [ActivityEnum.OWNERSHIP_TRANSFER]: {
-    params: { interveningUserId: string }
+    params: { interveningUserId: string | null }
   },
   [ActivityEnum.SHARING_PREFERENCES_UPDATE]: {
     params: { organisations: string[] }
   },
   [ActivityEnum.SECTION_DRAFT_UPDATE]: {
-    params: { sectionId: InnovationSectionEnum }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections }
   },
   [ActivityEnum.SECTION_SUBMISSION]: {
-    params: { sectionId: InnovationSectionEnum }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections }
   },
   INNOVATION_SUBMISSION: {
     params: Record<string, never>
@@ -269,10 +271,10 @@ export type ActivityLogTemplatesType = {
     params: { innovationSupportStatus: InnovationSupportStatusEnum, organisationUnit: string, comment: { id: string, value: string } }
   },
   [ActivityEnum.ACTION_CREATION]: {
-    params: { sectionId: InnovationSectionEnum, actionId: string, comment: { value: string }, role: ServiceRoleEnum }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections, actionId: string, comment: { value: string }, role: ServiceRoleEnum }
   },
   [ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE]: {
-    params: { sectionId: InnovationSectionEnum, totalActions: number }
+    params: { sectionId: CurrentCatalogTypes.InnovationSections, totalActions: number }
   },
   [ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE]: {
     params: { actionId: string }
@@ -304,4 +306,4 @@ export type ActivityLogTemplatesType = {
 }
 
 // This is the type for B2C user info.
-export type IdentityUserInfo = { identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, passwordResetAt: null | DateISOType, lastLoginAt: null | DateISOType }
+export type IdentityUserInfo = { identityId: string, displayName: string, email: string, mobilePhone: null | string, isActive: boolean, passwordResetAt: null | Date, lastLoginAt: null | Date }

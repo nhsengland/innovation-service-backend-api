@@ -5,12 +5,11 @@ import YAML from 'yaml';
 import { container } from '@admin/shared/config/inversify.config';
 
 import {
-  CacheServiceSymbol, CacheServiceType,
   HttpServiceSymbol, HttpServiceType,
-  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
-  SQLConnectionServiceSymbol, SQLConnectionServiceType
+  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType
 } from '@admin/shared/services';
 
+import { AnnouncementsService } from '../_services/announcements.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { StatisticsService } from '../_services/statistics.service';
 import { SYMBOLS } from '../_services/symbols';
@@ -25,27 +24,20 @@ container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsServic
 container.bind<TermsOfUseService>(SYMBOLS.TermsOfUseService).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();
 container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
+container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
 
 
 export const startup = async (): Promise<void> => {
 
   console.log('Initializing Admin app function');
 
-  const cacheService = container.get<CacheServiceType>(CacheServiceSymbol);
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
   const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
-  const sqlConnectionService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
 
   try {
 
     console.group('Initializing Admin app function:');
 
-    // TODO: For some reason the SQL Connection must be initialized before the remaining services. There are errors related to inversify otherwise.
-    //       The inversify and startup must be revised.
-    //       Additionally the init method for these must be somehow a dependency so that other services (ie: baseService) don't startup before these were initialized.
-    await sqlConnectionService.init();
-
-    await cacheService.init();
     await noSqlConnectionService.init();
 
     console.log('Initialization complete');

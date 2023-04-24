@@ -5,6 +5,60 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
+  "/v1/announcements/{announcementId}/read":
+    patch:
+      operationId: v1-announcement-read
+      description: Mark as read an announcement.
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Not found
+  /v1/announcements:
+    get:
+      description: Returns the user announcements
+      operationId: v1-announcements-list
+      tags:
+        - "[v1] Announcements"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    template:
+                      type: string
+                      enum:
+                        - "0"
+                    targetRoles:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - INNOVATOR
+                          - ACCESSOR
+                          - ASSESSMENT
+                          - QUALIFYING_ACCESSOR
+                    createdAt:
+                      type: string
+                      format: date-time
+                    params:
+                      type: object
   /v1/email-preferences:
     get:
       description: Returns the user email notifications preferences
@@ -26,7 +80,7 @@ paths:
                       description: The type of notification
                       enum:
                         - ACTION
-                        - COMMENT
+                        - MESSAGE
                         - SUPPORT
                     preference:
                       type: string
@@ -53,7 +107,7 @@ paths:
                     type: string
                     enum:
                       - ACTION
-                      - COMMENT
+                      - MESSAGE
                       - SUPPORT
                   preference:
                     type: string
@@ -200,6 +254,7 @@ paths:
                 reason:
                   type: string
                   maxLength: 2000
+                  nullable: true
               additionalProperties: false
       responses:
         "200":
@@ -213,6 +268,33 @@ paths:
                     type: string
         "400":
           description: Bad request.
+  /v1/me/innovations:
+    get:
+      description: Retrieves the user owned innovations.
+      operationId: v1-me-innovations
+      tags:
+        - "[v1] Owned innovations information"
+      parameters: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    collaboratorsCount:
+                      type: number
+                    expirationTransferDate:
+                      type: string
+        "400":
+          description: Bad request
   /v1/me/terms-of-use/accept:
     patch:
       description: Accept user terms of use

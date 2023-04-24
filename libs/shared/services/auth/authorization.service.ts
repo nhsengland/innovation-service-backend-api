@@ -15,7 +15,8 @@ export class AuthorizationService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
-  ) { }
+  ) { 
+  }
 
 
   /**

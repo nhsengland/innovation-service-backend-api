@@ -2,9 +2,9 @@ import type { DataSource, Repository } from 'typeorm';
 
 import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
-import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
+import { InnovationCollaboratorStatusEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DateISOType, DomainUserInfoType, RoleType } from '../../types';
+import type { DomainUserInfoType, RoleType } from '../../types';
 
 import type { IdentityProviderServiceType } from '../interfaces';
 
@@ -113,7 +113,7 @@ export class DomainUsersService {
     email: string,
     mobilePhone: null | string,
     isActive: boolean,
-    lastLoginAt: null | DateISOType
+    lastLoginAt: null | Date
   }[]> {
     // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)
@@ -214,13 +214,20 @@ export class DomainUsersService {
 
   async deleteUser(userId: string, data: { reason: null | string }): Promise<{ id: string }> {
 
+    
     const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'userRole')
+      .innerJoinAndSelect('user.serviceRoles', 'roles')
       .where('user.id = :userId', { userId })
       .getOne();
 
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
+    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
+
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
     return this.sqlConnection.transaction(async transaction => {
@@ -230,17 +237,39 @@ export class DomainUsersService {
 
       if (userInnovatorRole) {
 
-        const dbInnovations = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
-          .select(['innovations.id'])
-          .where('innovations.owner_id = :userId', { userId: dbUser.id })
-          .getMany();
+        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(dbUser.id);
 
-        await this.domainInnovationsService.withdrawInnovations(
+        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
           transaction,
-          { id: dbUser.id, roleId: userInnovatorRole.id },
-          dbInnovations.map(item => ({ id: item.id, reason: null }))
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.DECLINED }
         );
 
+        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
+        );
+
+        await this.domainInnovationsService.withdrawInnovations(
+          { id: dbUser.id, roleId: userInnovatorRole.id },
+          dbInnovations
+            .filter(i => i.expirationTransferDate === null)
+            .map(item => ({ id: item.id, reason: null })),
+            transaction
+        );
+      
+        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
+          await this.sqlConnection.getRepository(InnovationEntity).update(
+            { 
+              id: dbInnovation.id
+            },
+            {
+              updatedBy: dbUser.id,
+              expires_at: dbInnovation.expirationTransferDate
+            }
+          );
+        }
       }
 
       await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, {

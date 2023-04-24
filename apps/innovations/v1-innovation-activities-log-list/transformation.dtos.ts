@@ -1,5 +1,5 @@
 import type { ActivityEnum, ActivityTypeEnum } from '@innovations/shared/enums';
-import type { ActivityLogListParamsType, DateISOType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType } from '@innovations/shared/types';
 
 export type ResponseDTO = {
   count: number;
@@ -7,7 +7,7 @@ export type ResponseDTO = {
   data: {
     type: ActivityTypeEnum,
     activity: ActivityEnum,
-    date: DateISOType,
+    date: Date,
     params: ActivityLogListParamsType
   }[]
 }

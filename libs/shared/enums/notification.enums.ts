@@ -28,7 +28,7 @@ export enum NotificationContextDetailEnum {
 
 export enum EmailNotificationTypeEnum { // Subset of NotificationContextTypeEnum.
   ACTION = 'ACTION',
-  COMMENT = 'COMMENT', // TODO: This should be deprecated in the future. Still active for now...
+  MESSAGE = 'MESSAGE',
   SUPPORT = 'SUPPORT'
 }
 

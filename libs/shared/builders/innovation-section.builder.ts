@@ -1,6 +1,7 @@
-import { InnovationSectionEntity, type InnovationEntity } from '../entities';
-import { InnovationSectionEnum, InnovationSectionStatusEnum } from '../enums';
 import type { EntityManager } from 'typeorm';
+import { InnovationSectionEntity, type InnovationEntity } from '../entities';
+import { InnovationSectionStatusEnum } from '../enums';
+import { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export class InnovationSectionBuilder {
 
@@ -10,7 +11,7 @@ export class InnovationSectionBuilder {
 
   constructor(innovation: InnovationEntity) {
     this.innovationSection = {
-      section: InnovationSectionEnum.COMPARATIVE_COST_BENEFIT,
+      section: 'COST_OF_INNOVATION',
       status: InnovationSectionStatusEnum.NOT_STARTED,
       innovation: innovation,
     };
@@ -23,7 +24,7 @@ export class InnovationSectionBuilder {
     return this;
   }
 
-  setSection(section: InnovationSectionEnum): InnovationSectionBuilder {
+  setSection(section: CurrentCatalogTypes.InnovationSections): InnovationSectionBuilder {
     this.innovationSection.section = section;
     return this;
   }
@@ -43,7 +44,7 @@ export class InnovationSectionBuilder {
 
     const sections = [];
      
-    for (const section of Object.values(InnovationSectionEnum)) {
+    for (const section of CurrentCatalogTypes.InnovationSections) {
       const sectionData = InnovationSectionEntity.new({
         innovation: this.innovation,
         section,

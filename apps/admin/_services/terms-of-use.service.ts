@@ -3,7 +3,7 @@ import type { TermsOfUseTypeEnum } from '@admin/shared/enums';
 import { NotFoundError } from '@admin/shared/errors';
 import { AdminErrorsEnum } from '@admin/shared/errors/errors.enums';
 import type { PaginationQueryParamsType } from '@admin/shared/helpers';
-import type { DateISOType } from '@admin/shared/types';
+
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
@@ -20,7 +20,7 @@ export class TermsOfUseService extends BaseService {
       name: string;
       touType: TermsOfUseTypeEnum;
       summary?: string;
-      releasedAt?: DateISOType;
+      releasedAt?: Date;
     }
   ): Promise<{ id: string }> {
     return await this.sqlConnection.transaction(async (transaction) => {
@@ -46,7 +46,7 @@ export class TermsOfUseService extends BaseService {
       name: string,
       touType: TermsOfUseTypeEnum,
       summary?: string,
-      releasedAt?: DateISOType
+      releasedAt?: Date
     },
     touId: string
   ):
@@ -83,14 +83,14 @@ export class TermsOfUseService extends BaseService {
       name: string;
       touType: TermsOfUseTypeEnum;
       summary: string;
-      releaseAt: DateISOType | null;
-      createdAt: DateISOType;
+      releasedAt: Date | null;
+      createdAt: Date;
     }[]
   }> {
     const em = entityManager || this.sqlConnection.manager;
-    
+
     const query = em.createQueryBuilder(TermsOfUseEntity, 'tou');
-    
+
     // Pagination and ordering.
     query.skip(pagination.skip);
     query.take(pagination.take);
@@ -114,7 +114,7 @@ export class TermsOfUseService extends BaseService {
         name: t.name,
         touType: t.touType,
         summary: t.summary,
-        releaseAt: t.releasedAt,
+        releasedAt: t.releasedAt,
         createdAt: t.createdAt
       }))
     };
@@ -131,25 +131,25 @@ export class TermsOfUseService extends BaseService {
     name: string;
     touType: TermsOfUseTypeEnum;
     summary: string;
-    releaseAt: DateISOType | null;
-    createdAt: DateISOType;
+    releasedAt: Date | null;
+    createdAt: Date;
   }> {
     const em = entityManager || this.sqlConnection.manager;
-    
+
     const tou = await em.createQueryBuilder(TermsOfUseEntity, 'tou')
       .where('tou.id = :id', { id })
       .getOne();
 
-    if(!tou) {
+    if (!tou) {
       throw new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USER_NOT_FOUND);
     }
-    
+
     return {
       id: tou.id,
       name: tou.name,
       touType: tou.touType,
       summary: tou.summary,
-      releaseAt: tou.releasedAt,
+      releasedAt: tou.releasedAt,
       createdAt: tou.createdAt
     };
   }

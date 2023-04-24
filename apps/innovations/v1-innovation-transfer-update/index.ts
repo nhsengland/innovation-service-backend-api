@@ -30,7 +30,7 @@ class V1InnovationTransferUpdate {
         .checkInnovatorType()
         .verify();
       const requestUser = auth.getUserInfo();
-      const domainContext = auth.getContext()
+      const domainContext = auth.getContext();
 
       const result = await transferService.updateInnovationTransferStatus({
         id: requestUser.id, identityId: requestUser.identityId

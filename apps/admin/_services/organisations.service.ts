@@ -1,13 +1,18 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+import { EntityManager, In, IsNull } from 'typeorm';
 
-import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, UserEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum } from '@admin/shared/enums';
+import { InnovationActionEntity, InnovationSupportEntity, NotificationEntity, NotificationUserEntity, OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { InnovationActionStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotifierTypeEnum, OrganisationTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { DatesHelper } from '@admin/shared/helpers';
+import { UrlModel } from '@admin/shared/models';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
+import { ENV } from '../_config';
+import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
+import SYMBOLS from './symbols';
 
 
 @injectable()
@@ -15,7 +20,8 @@ export class OrganisationsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
+    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService,
   ) {
     super();
   }
@@ -33,19 +39,21 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    // get users from unit
-    const usersToLock = (
-      await this.sqlConnection
-        .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-        .leftJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-        .leftJoinAndSelect('org_user.user', 'user')
-        .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
-        .getMany()
-    ).map(u => ({ id: u.organisationUser.user.id, identityId: u.organisationUser.user.identityId }));
+    // users for which the role in this unit is the only active role will be locked
+    const usersToLock = (await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
+      .select('ur.user_id', 'userId')
+      .addSelect('count(*)', 'cnt')
+      .addSelect('u.external_id', 'identityId')
+      .innerJoin('user_role', 'r', 'ur.user_id = r.user_id')
+      .innerJoin('user', 'u', 'ur.user_id = u.id')
+      .where('r.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
+      .andWhere('ur.lockedAt IS NULL')
+      .andWhere('r.lockedAt IS NULL')
+      .groupBy('ur.user_id, u.external_id')
+      .having('count(*) = 1')
+      .getRawMany())
+      .map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }));
 
-
-    // Validar a lógica dos users to unlock, está a mostrar todos ^^ 
-    if(1==1) throw new Error('buu');
     // only want to clear actions with these statuses
     const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
@@ -87,11 +95,14 @@ export class OrganisationsService extends BaseService {
     }
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
+
+      const now = new Date();
+
       // Inactivate unit
       await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
-        { inactivatedAt: new Date().toISOString() }
+        { inactivatedAt: now }
       );
 
       // Clear actions issued by unit
@@ -127,18 +138,25 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           NotificationUserEntity,
           { notification: In(notificationsToMarkAsRead.map((n) => n.id)) },
-          { readAt: new Date().toISOString() }
+          { readAt: now }
         );
       }
 
-      // lock users of unit
+      // lock users of unit with only one active role
       if (usersToLock.length > 0) {
         await transaction.update(
           UserEntity,
-          { id: In(usersToLock.map((u) => u.id)) },
-          { lockedAt: new Date().toISOString() }
+          { id: In(usersToLock.map(ur => ur.id)) },
+          { lockedAt: now, updatedAt: now }
         );
       }
+
+      // lock all roles of unit
+      await transaction.update(
+        UserRoleEntity,
+        { organisationUnit: unitId, lockedAt: IsNull() },
+        { lockedAt: now, updatedAt: now }
+      );
 
       const organisationId = unit.organisationId;
 
@@ -154,7 +172,7 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           OrganisationEntity,
           { id: organisationId },
-          { inactivatedAt: new Date().toISOString() }
+          { inactivatedAt: now }
         );
       }
 
@@ -191,11 +209,12 @@ export class OrganisationsService extends BaseService {
         );
       }
     }
+
     return result;
   }
 
 
-  async activateUnit(organisationId: string, unitId: string, userIds: string[]): Promise<{ unitId: string }> {
+  async activateUnit(requestUser: DomainUserInfoType, organisationId: string, unitId: string, userIds: string[]): Promise<{ unitId: string }> {
 
     const unit = await this.sqlConnection
       .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
@@ -209,37 +228,39 @@ export class OrganisationsService extends BaseService {
       );
     }
 
-    // TODO here
-    // get users entities
-    const usersToUnlock = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoin('user.serviceRoles', 'service_roles')
-      //.innerJoin('user.userOrganisations', 'org_user')
-      //.innerJoin('org_user.userOrganisationUnits', 'unit_user')
-      .where('unit_user.id IN (:...userIds)', { userIds })
-      .andWhere('unit_user.organisationUnit.id = :unitId', { unitId }) //ensure users to unlock belong to unit
+    // unlocked locked users of selected users
+    const usersToUnlock = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
+      .select(['ur.id', 'ur.role', 'user.id', 'user.identityId'])
+      .innerJoin('ur.user', 'user')
+      .where('ur.user_id IN (:...userIds)', { userIds })
+      .andWhere('ur.organisation_unit_id = :unitId', { unitId }) //ensure users have role in unit
+      .andWhere('user.lockedAt IS NOT NULL')
       .getMany();
 
-    // get organisationUnitUser entities
-    const unitUsers = await this.sqlConnection
-      .createQueryBuilder(OrganisationUnitUserEntity, 'org_unit_user')
-      .innerJoinAndSelect('org_unit_user.organisationUser', 'org_user')
-      .where('org_unit_user.organisation_unit_id = :unitId', { unitId })
+    // unlock locked roles of selected users
+    const rolesToUnlock = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'ur')
+      .select(['ur.id', 'ur.role'])
+      .where('ur.organisation_unit_id = :unitId', { unitId }) // ensure users have role in unit
+      .andWhere('ur.user_id IN (:...userIds)', { userIds })
+      .andWhere('ur.locked_at IS NOT NULL')
       .getMany();
 
-    //check if at least 1 user is QA
-    const canActivate = unitUsers.some(u => u.organisationUser.role === AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
+       //check if at least 1 user is QA
+    const canActivate = usersToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) || rolesToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR);
 
     if (!canActivate) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
     }
 
     const result = await this.sqlConnection.transaction(async (transaction) => {
+      
+      const now = new Date();
+
       // Activate unit
       await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
-        { inactivatedAt: null }
+        { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
       );
 
       // activate organistion to whom unit belongs if it is inactivated
@@ -247,22 +268,43 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           OrganisationEntity,
           { id: organisationId },
-          { inactivatedAt: null }
+          { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
         );
+
+        // Just send the announcement if this is the first time the organization has been activated.
+        if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
+          await this.createOrganisationAnnouncement(
+            unit.organisation.id,
+            unit.organisation.name,
+            transaction
+          );
+        }
+
       }
 
-      //Activate users of unit
-      for (const u of usersToUnlock) {
-        await transaction.update(UserEntity, { id: u.id }, { lockedAt: null });
-      }
+      // Activate users of unit and roles
+      const usersToUnlockId = usersToUnlock.map(u => u.user.id);
+
+      await transaction.update(
+        UserEntity,
+        { id: In(usersToUnlockId) },
+        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
+      );
+
+      await transaction.update(
+        UserRoleEntity,
+        { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
+        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
+      );
+
       return { unitId };
     });
 
     // unlock users in identity provider asynchronously
     // using identity-ops-queue
-    for (const user of usersToUnlock) {
+    for (const userRole of usersToUnlock) {
       await this.identityProviderService.updateUserAsync(
-        user.identityId,
+        userRole.user.identityId,
         { accountEnabled: true }
       );
     }
@@ -382,9 +424,12 @@ export class OrganisationsService extends BaseService {
   }
 
   async createOrganisation(
-    name: string,
-    acronym: string,
-    units?: { name: string; acronym: string }[]
+    domainContext: DomainContextType,
+    data: {
+      name: string,
+      acronym: string,
+      units?: { name: string; acronym: string }[]
+    }
   ): Promise<{
     id: string;
     units: string[];
@@ -393,7 +438,7 @@ export class OrganisationsService extends BaseService {
     const result = await this.sqlConnection.transaction(async (transaction) => {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('org.name = :name OR org.acronym = :acronym', { name, acronym })
+        .where('org.name = :name OR org.acronym = :acronym', { name: data.name, acronym: data.acronym })
         .getOne();
 
       if (orgNameOrAcronymAlreadyExists) {
@@ -402,10 +447,15 @@ export class OrganisationsService extends BaseService {
         );
       }
 
+      const now = new Date();
       const org = OrganisationEntity.new({
-        name,
-        acronym,
-        inactivatedAt: new Date().toISOString(),
+        name: data.name,
+        acronym: data.acronym,
+        createdBy: domainContext.id,
+        createdAt: now,
+        inactivatedAt: now,
+        updatedAt: now,
+        updatedBy: domainContext.id,
         type: OrganisationTypeEnum.ACCESSOR,
         isShadow: false,
       });
@@ -418,9 +468,9 @@ export class OrganisationsService extends BaseService {
           if > 1 -> create specified units
         */
       const savedUnits: OrganisationUnitEntity[] = [];
-      if (units && units.length > 1) {
+      if (data.units && data.units.length > 1) {
         //create specified units
-        for (const unit of units) {
+        for (const unit of data.units) {
           const u = await this.createOrganisationUnit(
             savedOrganisation.id,
             unit.name,
@@ -430,17 +480,17 @@ export class OrganisationsService extends BaseService {
           );
           savedUnits.push(u);
         }
-        return { id: savedOrganisation.id, units: savedUnits };
+      } else {
+        //create shadow unit
+        const shadowUnit = await this.createOrganisationUnit(
+          org.id,
+          data.name,
+          data.acronym,
+          true,
+          transaction
+        );
+        savedUnits.push(shadowUnit);
       }
-      //create shadow unit
-      const shadowUnit = await this.createOrganisationUnit(
-        org.id,
-        name,
-        acronym,
-        true,
-        transaction
-      );
-      savedUnits.push(shadowUnit);
 
       return { id: savedOrganisation.id, units: savedUnits };
     });
@@ -479,9 +529,11 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
 
+    // don't allow units with the same name or acronym inside the same organisation
     const unitNameOrAcronymAlreadyExists = await transaction
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .where('unit.name = :name OR unit.acronym = :acronym', { name, acronym })
+      .where('unit.organisation_id = :organisationId', { organisationId })
+      .andWhere('(unit.name = :name OR unit.acronym = :acronym)', { name, acronym })
       .getOne();
 
     if (unitNameOrAcronymAlreadyExists) {
@@ -495,7 +547,7 @@ export class OrganisationsService extends BaseService {
       OrganisationUnitEntity.new({
         name: name,
         acronym: acronym,
-        inactivatedAt: new Date().toISOString(),
+        inactivatedAt: new Date(),
         isShadow: isShadow,
         organisation: org,
       })
@@ -503,5 +555,49 @@ export class OrganisationsService extends BaseService {
 
     return savedUnit;
   }
-  
+
+  private async createOrganisationAnnouncement(
+    organisationId: string,
+    orgName: string,
+    transaction: EntityManager
+  ): Promise<void> {
+
+    const orgUsers = await transaction.createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.organisation_id = :organisationId', { organisationId })
+      .getMany();
+    const usersToExclude = orgUsers.map(u => u.userId);
+
+    const announcementParams = {
+      title: 'A new support organisation has been added',
+      inset: {
+        title: `${orgName} has been added to the Innovation Service`,
+        link: { label: 'What does this organisation do? (open in a new window)', url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl() }
+      }
+    };
+
+    await this.announcementsService.createAnnouncement([ServiceRoleEnum.INNOVATOR], {
+      template: 'GENERIC',
+      params: {
+        ...announcementParams,
+        description: ['If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'],
+      }
+    }, transaction);
+
+    await this.announcementsService.createAnnouncement([ServiceRoleEnum.QUALIFYING_ACCESSOR], {
+      template: 'GENERIC',
+      params: {
+        ...announcementParams,
+        description: ['If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'],
+      },
+      usersToExclude
+    }, transaction);
+
+    await this.announcementsService.createAnnouncement([ServiceRoleEnum.ACCESSOR], {
+      template: 'GENERIC',
+      params: { ...announcementParams },
+      usersToExclude
+    }, transaction);
+
+  }
+
 }

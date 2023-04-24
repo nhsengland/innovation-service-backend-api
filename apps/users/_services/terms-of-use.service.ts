@@ -1,9 +1,9 @@
 import { injectable } from 'inversify';
 
-import { ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
+import { ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { BadRequestError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
-import type { DateISOType } from '@users/shared/types';
+
 
 import { BaseService } from './base.service';
 
@@ -16,7 +16,7 @@ export class TermsOfUseService extends BaseService {
 	}
 
 
-	async getActiveTermsOfUseInfo(user: { id: string }, currentRole: ServiceRoleEnum | ''): Promise<{ id: string, name: string, summary: string, releasedAt: null | DateISOType, isAccepted: boolean }> {
+	async getActiveTermsOfUseInfo(user: { id: string }, currentRole: ServiceRoleEnum | ''): Promise<{ id: string, name: string, summary: string, releasedAt: null | Date, isAccepted: boolean }> {
 
 		let termsOfUseType: TermsOfUseTypeEnum;
 
@@ -78,7 +78,7 @@ export class TermsOfUseService extends BaseService {
 		await this.sqlConnection.getRepository(TermsOfUseUserEntity).save(TermsOfUseUserEntity.new({
 			termsOfUse: TermsOfUseEntity.new({ id: dbTermsOfUse.id }),
 			user: UserEntity.new({ id: requestUser.id }),
-			acceptedAt: new Date().toISOString()
+			acceptedAt: new Date()
 		}));
 
 		return {

@@ -5,7 +5,7 @@ import { TestDataBuilder, UserBuilder } from '../builders';
 import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
 import type { InnovationCollaboratorEntity } from '../entities/innovation/innovation-collaborator.entity';
 import { AccessorOrganisationRoleEnum, InnovationCollaboratorStatusEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
-import { SQLConnectionServiceSymbol, SQLConnectionTestService, type SQLConnectionServiceType, type SQLConnectionTestServiceType } from '../services';
+import { SQLConnectionServiceSymbol, type SQLConnectionServiceType } from '../services';
 import type { AccessorDomainContextType, AdminDomainContextType, AssessmentDomainContextType, DomainContextType, InnovatorDomainContextType } from '../types';
 
 
@@ -62,15 +62,16 @@ export class TestsHelper {
   static sampleData: TestDataType;
 
   static {
-    container.rebind<SQLConnectionTestServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionTestService).inSingletonScope();
     // Comment this if not using global setup / teardown
     this.sampleData = ((global as any).sampleData); // This is set in jest.setup.ts and is used to share data between tests)
   }
 
   static async init(): Promise<void> {
     const sqlService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
-    await sqlService.init();
     this.sqlConnection = sqlService.getConnection();
+    while(!this.sqlConnection.isInitialized) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
     // Uncomment this if not using global setup / teardown. It also requires clearing data in the afterAll hook
     // this.sampleData = await this.createSampleData();
   }
@@ -236,7 +237,7 @@ export class TestsHelper {
       // Pending, Active and Expired collaborator invites
       const collaboratorPending = await helper.createCollaborator(domainContexts.innovator, innovationWithCollaborators).build(entityManager);
       const collaboratorActive = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setStatus(InnovationCollaboratorStatusEnum.ACTIVE).build(entityManager);
-      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setUser(innovator2).setEmail('innovator2@gmail.com').setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31).toISOString()).build(entityManager);
+      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setUser(innovator2).setEmail('innovator2@gmail.com').setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31)).build(entityManager);
 
       return {
         innovation,

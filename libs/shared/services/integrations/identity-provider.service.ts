@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import { inject, injectable } from 'inversify';
 
 import { GenericErrorsEnum, NotFoundError, ServiceUnavailableError, UnauthorizedError, UserErrorsEnum } from '../../errors';
-import type { DateISOType } from '../../types/date.types';
+
 import type { IdentityUserInfo } from '../../types/domain.types';
 import { CacheServiceSymbol, LoggerServiceSymbol, LoggerServiceType, StorageQueueServiceSymbol, StorageQueueServiceType } from '../interfaces';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
@@ -44,7 +44,7 @@ type b2cGetUsersListDTO = {
     accountEnabled: boolean;
     createdDateTime: string;
     deletedDateTime: null | string;
-    lastPasswordChangeDateTime: null | DateISOType;
+    lastPasswordChangeDateTime: null | Date;
     signInActivity: {
       lastSignInDateTime: null | string;
       lastSignInRequestId: null | string;
@@ -66,7 +66,7 @@ export class IdentityProviderService {
     client_secret: process.env['AD_CLIENT_SECRET'] || ''
   };
   private sessionData: { token: string, expiresAt: number } = { token: '', expiresAt: 0 };
-  private cache: CacheConfigType['IdentityUserInfo']
+  private cache: CacheConfigType['IdentityUserInfo'];
 
 
   constructor(
@@ -234,7 +234,7 @@ export class IdentityProviderService {
 
       const fields = ['displayName', 'identities', 'email', 'mobilePhone', 'accountEnabled', 'lastPasswordChangeDateTime', 'signInActivity'];
 
-      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`
+      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
 
       promises.push(
         axios.get<b2cGetUsersListDTO>(
@@ -252,8 +252,8 @@ export class IdentityProviderService {
         email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
         mobilePhone: u.mobilePhone,
         isActive: u.accountEnabled,
-        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime,
-        passwordResetAt: u.lastPasswordChangeDateTime,
+        lastLoginAt: u.signInActivity && u.signInActivity.lastSignInDateTime ? new Date(u.signInActivity.lastSignInDateTime) : null,
+        passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null,
       }))
     ));
 
@@ -339,7 +339,7 @@ export class IdentityProviderService {
     await this.verifyAccessToken();
 
     // DOCS: https://docs.microsoft.com/pt-PT/graph/api/user-delete?view=graph-rest-1.0&tabs=http
-    // Response: 204 No Content, so we can return direcly.
+    // Response: 204 No Content, so we can return directly.
     await axios.delete<undefined>(
       `https://graph.microsoft.com/v1.0/users/${identityId}`,
       { headers: { Authorization: `Bearer ${this.sessionData.token}` } }

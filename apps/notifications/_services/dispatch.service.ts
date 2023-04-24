@@ -71,11 +71,14 @@ export class DispatchService extends BaseService {
         createdBy: requestUser.id
       }));
 
-      await transactionManager.save(NotificationUserEntity, userRoleIds.map(roleId => NotificationUserEntity.new({
-        notification: dbNotification,
-        createdBy: requestUser.id,
-        userRole: UserRoleEntity.new({ id: roleId })
-      })));
+      if(userRoleIds.length > 0) {
+        await transactionManager.save(NotificationUserEntity, userRoleIds.map(roleId => NotificationUserEntity.new({
+          notification: dbNotification,
+          createdBy: requestUser.id,
+          userRole: UserRoleEntity.new({ id: roleId })
+        })));
+      }
+
 
       return { id: dbNotification.id };
 

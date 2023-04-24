@@ -1,3 +1,4 @@
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import Joi from 'joi';
 
 
@@ -5,20 +6,13 @@ export type BodyType = {
   name: string,
   description: string,
   countryName: string,
-  postcode: null | string,
-  organisationShares: string[]
+  postcode?: string,
+  website?: string;
 }
 export const BodySchema = Joi.object<BodyType>({
   name: Joi.string().max(100).required().trim(),
-  description: Joi.string().required(),
-  countryName: Joi.string().required(),
-  postcode: Joi.string().allow(null).optional(),
-  organisationShares: Joi.array().items(Joi.string().guid()).min(1).required()
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+  countryName: Joi.string().max(100).required(),
+  postcode: Joi.string().max(8),
+  website: Joi.string().max(100),  // TODO not validating URL format atm
 }).required();
-
-export type QueryParamsType = {
-  useSurvey?: boolean
-}
-export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  useSurvey: Joi.bool().optional()
-});

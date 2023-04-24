@@ -3,10 +3,9 @@ import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helpe
 import { container } from '../_config';
 
 import { InnovationAssessmentEntity, InnovationEntity, InnovationReassessmentRequestEntity } from '@innovations/shared/entities';
-import { InnovationStatusEnum, YesOrNoCatalogueEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@innovations/shared/errors';
 import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
-import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import { randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from './interfaces';
@@ -30,7 +29,6 @@ describe('Innovation Assessments Suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     em = await TestsHelper.getQueryRunnerEntityManager();
 
     innovationWithAssessment = await TestsHelper.TestDataBuilder
@@ -313,7 +311,7 @@ describe('Innovation Assessments Suite', () => {
         testData.baseUsers.assessmentUser,
         testData.domainContexts.assessmentUser,
         innovationWithAssessment.id,
-        {updatedInnovationRecord: YesOrNoCatalogueEnum.YES, description: randText()},
+        {updatedInnovationRecord: 'YES', description: randText()},
         em
       );
 
@@ -336,7 +334,7 @@ describe('Innovation Assessments Suite', () => {
           testData.baseUsers.assessmentUser,
           testData.domainContexts.assessmentUser,
           innovationWithoutAssessment.id,
-          {updatedInnovationRecord: YesOrNoCatalogueEnum.YES, description: randText()},
+          {updatedInnovationRecord: 'YES', description: randText()},
           em
         );
       } catch (error) {
@@ -363,7 +361,7 @@ describe('Innovation Assessments Suite', () => {
           testData.baseUsers.assessmentUser,
           testData.domainContexts.assessmentUser,
           testData.innovation.id,
-          {updatedInnovationRecord: YesOrNoCatalogueEnum.YES, description: randText()},
+          {updatedInnovationRecord: 'YES', description: randText()},
           em
         );
       } catch (error) {

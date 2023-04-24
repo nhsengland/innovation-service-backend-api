@@ -1,7 +1,8 @@
 import { InnovationActionEntity, InnovationAssessmentEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity } from '@innovations/shared/entities';
-import { InnovationActionStatusEnum, InnovationSectionEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum, InnovationSupportStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@innovations/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
-import type { DateISOType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
 
@@ -12,7 +13,7 @@ export class StatisticsService extends BaseService {
     super();
   }
 
-  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<{ updatedAt: DateISOType, section: InnovationSectionEnum }[]> {
+  async getActions(innovationId: string, statuses: InnovationActionStatusEnum[]): Promise<{ updatedAt: Date, section: CurrentCatalogTypes.InnovationSections }[]> {
 
     const openActions = await this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoin('action.innovationSection', 'section')
@@ -27,7 +28,7 @@ export class StatisticsService extends BaseService {
     return openActions;
   }
 
-  async getSubmittedSections(innovationId: string): Promise<{ updatedAt: DateISOType, section: InnovationSectionEnum }[]> {
+  async getSubmittedSections(innovationId: string): Promise<{ updatedAt: Date, section: CurrentCatalogTypes.InnovationSections }[]> {
     const sections = await this.sqlConnection.createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section')
@@ -42,7 +43,7 @@ export class StatisticsService extends BaseService {
 
   async getUnreadMessages(innovationId: string, roleId: string): Promise<{
     count: number;
-    lastSubmittedAt: null | string;
+    lastSubmittedAt: null | Date;
   }> {
 
     const unreadMessages = await this.sqlConnection.createQueryBuilder(NotificationEntity, 'notification')
@@ -63,7 +64,7 @@ export class StatisticsService extends BaseService {
   async actionsToReview(
     innovationId: string,
     domainContext: DomainContextType,
-  ): Promise<{ count: number, lastSubmittedSection: null | string, lastSubmittedAt: null | DateISOType }> {
+  ): Promise<{ count: number, lastSubmittedSection: null | string, lastSubmittedAt: null | Date }> {
 
     const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
@@ -90,7 +91,7 @@ export class StatisticsService extends BaseService {
     };
   }
 
-  async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{ section: InnovationSectionEnum, updatedAt: DateISOType }[]> {
+  async getSubmittedSectionsSinceSupportStart(innovationId: string, domainContext: DomainContextType): Promise<{ section: CurrentCatalogTypes.InnovationSections, updatedAt: Date }[]> {
 
     const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
@@ -121,7 +122,7 @@ export class StatisticsService extends BaseService {
     return sections;
   }
 
-  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<{ section: InnovationSectionEnum, updatedAt: DateISOType }[]> {
+  async getSubmittedSectionsSinceAssessmentStart(innovationId: string, requestUser: DomainUserInfoType): Promise<{ section: CurrentCatalogTypes.InnovationSections, updatedAt: Date }[]> {
 
     const assessment = await this.sqlConnection.createQueryBuilder(InnovationAssessmentEntity, 'assessments')
       .innerJoin('assessments.assignTo', 'assignTo')
@@ -147,7 +148,7 @@ export class StatisticsService extends BaseService {
 
   async getUnreadMessagesInitiatedBy(innovationId: string, roleId: string): Promise<{
     count: number;
-    lastSubmittedAt: null | string;
+    lastSubmittedAt: null | Date;
   }> {
     // gets unread messages on this threads
     // the context id is always the thread id regardless if the detail is a message or a reply

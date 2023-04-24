@@ -30,19 +30,16 @@ paths:
                   type: string
                   enum:
                     - INNOVATION_DESCRIPTION
-                    - VALUE_PROPOSITION
                     - UNDERSTANDING_OF_NEEDS
-                    - UNDERSTANDING_OF_BENEFITS
                     - EVIDENCE_OF_EFFECTIVENESS
                     - MARKET_RESEARCH
-                    - INTELLECTUAL_PROPERTY
-                    - REGULATIONS_AND_STANDARDS
                     - CURRENT_CARE_PATHWAY
                     - TESTING_WITH_USERS
-                    - COST_OF_INNOVATION
-                    - COMPARATIVE_COST_BENEFIT
+                    - REGULATIONS_AND_STANDARDS
+                    - INTELLECTUAL_PROPERTY
                     - REVENUE_MODEL
-                    - IMPLEMENTATION_PLAN
+                    - COST_OF_INNOVATION
+                    - DEPLOYMENT
                   description: The section key.
                 description:
                   type: string
@@ -812,8 +809,8 @@ paths:
         "500":
           description: An error occurred while creating the innovation assessment.
   "/v1/collaborators/{collaboratorId}/check":
-    head:
-      description: Check if collaborator exists
+    get:
+      description: Check collaborator
       operationId: v1-innovation-collaboration-check
       tags:
         - "[v1] Innovation Collaborators"
@@ -825,8 +822,19 @@ paths:
             type: string
             format: uuid
       responses:
-        "204":
+        "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userExists:
+                    type: boolean
+                    description: User exists in service
+                  collaboratorStatus:
+                    type: string
+                    description: Status of the collaborator invite
         "404":
           description: Not Found
   "/v1/{innovationId}/collaborators":
@@ -1076,10 +1084,33 @@ paths:
       parameters: []
       operationId: v1-innovation-create
       requestBody:
+        description: The innovation to be created.
+        required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 500
+                countryName:
+                  type: string
+                  maxLength: 100
+                postcode:
+                  type: string
+                  maxLength: 8
+                website:
+                  type: string
+                  maxLength: 100
+              required:
+                - name
+                - description
+                - countryName
+              additionalProperties: false
       responses:
         "200":
           description: Success
@@ -1125,15 +1156,571 @@ paths:
           schema:
             type: array
             items:
-              type: string
-              enum:
-                - MEDICAL_DEVICE
-                - PHARMACEUTICAL
-                - DIGITAL
-                - AI
-                - EDUCATION
-                - PPE
-                - OTHER
+              type: object
+              properties:
+                INNOVATION_DESCRIPTION:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    countryName:
+                      type: string
+                      maxLength: 100
+                    postcode:
+                      type: string
+                      maxLength: 8
+                    website:
+                      type: string
+                      maxLength: 100
+                    categories:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - MEDICAL_DEVICE
+                          - IN_VITRO_DIAGNOSTIC
+                          - PHARMACEUTICAL
+                          - DIGITAL
+                          - AI
+                          - EDUCATION
+                          - PPE
+                          - MODELS_CARE
+                          - ESTATES_FACILITIES
+                          - TRAVEL_TRANSPORT
+                          - FOOD_NUTRITION
+                          - DATA_MONITORING
+                          - OTHER
+                      minItems: 1
+                    otherCategoryDescription:
+                      type: string
+                      maxLength: 100
+                    mainCategory:
+                      type: string
+                      enum:
+                        - MEDICAL_DEVICE
+                        - IN_VITRO_DIAGNOSTIC
+                        - PHARMACEUTICAL
+                        - DIGITAL
+                        - AI
+                        - EDUCATION
+                        - PPE
+                        - MODELS_CARE
+                        - ESTATES_FACILITIES
+                        - TRAVEL_TRANSPORT
+                        - FOOD_NUTRITION
+                        - DATA_MONITORING
+                        - OTHER
+                    areas:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - COVID_19
+                          - DATA_ANALYTICS_AND_RESEARCH
+                          - DIGITALISING_SYSTEM
+                          - IMPROVING_SYSTEM_FLOW
+                          - INDEPENDENCE_AND_PREVENTION
+                          - OPERATIONAL_EXCELLENCE
+                          - PATIENT_ACTIVATION_AND_SELF_CARE
+                          - PATIENT_SAFETY
+                          - WORKFORCE_RESOURCE_OPTIMISATION
+                          - NET_ZERO_GREENER_INNOVATION
+                      minItems: 1
+                    careSettings:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ACADEMIA
+                          - ACUTE_TRUSTS_INPATIENT
+                          - ACUTE_TRUSTS_OUTPATIENT
+                          - AMBULANCE
+                          - CARE_HOMES_CARE_SETTING
+                          - END_LIFE_CARE
+                          - ICS
+                          - INDUSTRY
+                          - LOCAL_AUTHORITY_EDUCATION
+                          - MENTAL_HEALTH
+                          - PHARMACY
+                          - PRIMARY_CARE
+                          - SOCIAL_CARE
+                          - THIRD_SECTOR_ORGANISATIONS
+                          - URGENT_AND_EMERGENCY
+                          - OTHER
+                      minItems: 1
+                    otherCareSetting:
+                      type: string
+                      maxLength: 100
+                    mainPurpose:
+                      type: string
+                      enum:
+                        - PREVENT_CONDITION
+                        - PREDICT_CONDITION
+                        - DIAGNOSE_CONDITION
+                        - MONITOR_CONDITION
+                        - PROVIDE_TREATMENT
+                        - MANAGE_CONDITION
+                        - ENABLING_CARE
+                        - RISKS_CLIMATE_CHANGE
+                    supportDescription:
+                      type: string
+                      maxLength: 2000
+                    currentlyReceivingSupport:
+                      type: string
+                      maxLength: 2000
+                    involvedAACProgrammes:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - No
+                          - Academic Health Science Network
+                          - Artificial Intelligence in Health and Care Award
+                          - Clinical Entrepreneur Programme
+                          - Early Access to Medicines Scheme
+                          - Innovation for Healthcare Inequalities Programme
+                          - Innovation and Technology Payment Programme
+                          - NHS Innovation Accelerator
+                          - NHS Insights Prioritisation Programme
+                          - Pathway Transformation Fund
+                          - Rapid Uptake Products Programme
+                          - Small Business Research Initiative for Healthcare
+                          - Test beds
+                      minItems: 1
+                  additionalProperties: false
+                UNDERSTANDING_OF_NEEDS:
+                  type: object
+                  properties:
+                    problemsTackled:
+                      type: string
+                      maxLength: 1500
+                    howInnovationWork:
+                      type: string
+                      maxLength: 1500
+                    benefitsOrImpact:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 200
+                      minItems: 1
+                    impactDiseaseCondition:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    diseasesConditionsImpact:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 100
+                      minItems: 1
+                    estimatedCarbonReductionSavings:
+                      type: string
+                      enum:
+                        - YES
+                        - NOT_YET
+                        - NO
+                    estimatedCarbonReductionSavingsDescription:
+                      type: string
+                      maxLength: 2000
+                    carbonReductionPlan:
+                      type: string
+                      enum:
+                        - YES
+                        - WORKING_ON
+                        - NO
+                    keyHealthInequalities:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - MATERNITY
+                          - SEVER_MENTAL_ILLNESS
+                          - CHRONIC_RESPIRATORY_DISEASE
+                          - EARLY_CANCER_DIAGNOSIS
+                          - HYPERTENSION_CASE_FINDING
+                          - NONE
+                      minItems: 1
+                    completedHealthInequalitiesImpactAssessment:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                  additionalProperties: false
+                EVIDENCE_OF_EFFECTIVENESS:
+                  type: object
+                  properties:
+                    hasEvidence:
+                      type: string
+                      enum:
+                        - YES
+                        - NOT_YET
+                    currentlyCollectingEvidence:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    summaryOngoingEvidenceGathering:
+                      type: string
+                      maxLength: 1500
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                    needsSupportAnyArea:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - RESEARCH_GOVERNANCE
+                          - DATA_SHARING
+                          - CONFIDENTIAL_PATIENT_DATA
+                          - DO_NOT_NEED_SUPPORT
+                      minItems: 1
+                  additionalProperties: false
+                MARKET_RESEARCH:
+                  type: object
+                  properties:
+                    hasMarketResearch:
+                      type: string
+                      enum:
+                        - YES
+                        - IN_PROGRESS
+                        - NOT_YET
+                    marketResearch:
+                      type: string
+                      maxLength: 1500
+                    optionBestDescribesInnovation:
+                      type: string
+                      enum:
+                        - ONE_OFF_INNOVATION
+                        - BETTER_ALTERNATIVE
+                        - EQUIVALENT_ALTERNATIVE
+                        - COST_EFFECT_ALTERNATIVE
+                        - NOT_SURE
+                    whatCompetitorsAlternativesExist:
+                      type: string
+                      maxLength: 1500
+                  additionalProperties: false
+                CURRENT_CARE_PATHWAY:
+                  type: object
+                  properties:
+                    innovationPathwayKnowledge:
+                      type: string
+                      enum:
+                        - PATHWAY_EXISTS_AND_CHANGED
+                        - PATHWAY_EXISTS_AND_FITS
+                        - NO_PATHWAY
+                        - DONT_KNOW
+                        - NOT_PART_PATHWAY
+                    potentialPathway:
+                      type: string
+                      maxLength: 1000
+                  additionalProperties: false
+                TESTING_WITH_USERS:
+                  type: object
+                  properties:
+                    involvedUsersDesignProcess:
+                      type: string
+                      enum:
+                        - YES
+                        - IN_PROGRESS
+                        - NOT_YET
+                    testedWithIntendedUsers:
+                      type: string
+                      enum:
+                        - YES
+                        - IN_PROGRESS
+                        - NOT_YET
+                    intendedUserGroupsEngaged:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - CLINICAL_SOCIAL_CARE_WORKING_INSIDE_UK
+                          - CLINICAL_SOCIAL_CARE_WORKING_OUTSIDE_UK
+                          - NON_CLINICAL_HEALTHCARE
+                          - PATIENTS
+                          - SERVICE_USERS
+                          - CARERS
+                          - OTHER
+                      minItems: 1
+                    otherIntendedUserGroupsEngaged:
+                      type: string
+                      maxLength: 100
+                    userTests:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          kind:
+                            type: string
+                            maxLength: 100
+                          feedback:
+                            type: string
+                            maxLength: 500
+                        additionalProperties: false
+                      minItems: 1
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                  additionalProperties: false
+                REGULATIONS_AND_STANDARDS:
+                  type: object
+                  properties:
+                    hasRegulationKnowledge:
+                      type: string
+                      enum:
+                        - YES_ALL
+                        - YES_SOME
+                        - NO
+                        - NOT_RELEVANT
+                    standards:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                            enum:
+                              - CE_UKCA_NON_MEDICAL
+                              - CE_UKCA_CLASS_I
+                              - CE_UKCA_CLASS_II_A
+                              - CE_UKCA_CLASS_II_B
+                              - CE_UKCA_CLASS_III
+                              - IVD_GENERAL
+                              - IVD_SELF_TEST
+                              - IVD_ANNEX_LIST_A
+                              - IVD_ANNEX_LIST_B
+                              - MARKETING
+                              - CQC
+                              - DTAC
+                              - OTHER
+                          hasMet:
+                            type: string
+                            enum:
+                              - YES
+                              - IN_PROGRESS
+                              - NOT_YET
+                        required:
+                          - type
+                        additionalProperties: false
+                      minItems: 1
+                    otherRegulationDescription:
+                      type: string
+                      maxLength: 100
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                  additionalProperties: false
+                INTELLECTUAL_PROPERTY:
+                  type: object
+                  properties:
+                    hasPatents:
+                      type: string
+                      enum:
+                        - HAS_AT_LEAST_ONE
+                        - APPLIED_AT_LEAST_ONE
+                        - HAS_NONE
+                    patentNumbers:
+                      type: string
+                      maxLength: 100
+                    hasOtherIntellectual:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    otherIntellectual:
+                      type: string
+                      maxLength: 100
+                  additionalProperties: false
+                REVENUE_MODEL:
+                  type: object
+                  properties:
+                    hasRevenueModel:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                        - DONT_KNOW
+                    revenues:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ADVERTISING
+                          - DIRECT_PRODUCT_SALES
+                          - FEE_FOR_SERVICE
+                          - LEASE
+                          - SALES_OF_CONSUMABLES_OR_ACCESSORIES
+                          - SUBSCRIPTION
+                          - OTHER
+                      minItems: 1
+                    otherRevenueDescription:
+                      type: string
+                      maxLength: 100
+                    payingOrganisations:
+                      type: string
+                      maxLength: 1000
+                    benefittingOrganisations:
+                      type: string
+                      maxLength: 1000
+                    hasFunding:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                        - NOT_RELEVANT
+                    fundingDescription:
+                      type: string
+                      maxLength: 500
+                  additionalProperties: false
+                COST_OF_INNOVATION:
+                  type: object
+                  properties:
+                    hasCostKnowledge:
+                      type: string
+                      enum:
+                        - DETAILED_ESTIMATE
+                        - ROUGH_IDEA
+                        - NO
+                    costDescription:
+                      type: string
+                      maxLength: 1000
+                    patientsRange:
+                      type: string
+                      enum:
+                        - UP_10000
+                        - BETWEEN_10000_500000
+                        - MORE_THAN_500000
+                        - NOT_SURE
+                        - NOT_RELEVANT
+                    eligibilityCriteria:
+                      type: string
+                      maxLength: 1000
+                    sellExpectations:
+                      type: string
+                      maxLength: 500
+                    usageExpectations:
+                      type: string
+                      maxLength: 1000
+                    costComparison:
+                      type: string
+                      enum:
+                        - CHEAPER
+                        - COSTS_MORE_WITH_SAVINGS
+                        - COSTS_MORE
+                        - NOT_SURE
+                  additionalProperties: false
+                DEPLOYMENT:
+                  type: object
+                  properties:
+                    hasDeployPlan:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    isDeployed:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                    deploymentPlans:
+                      type: array
+                      items:
+                        type: string
+                        maxLength: 100
+                      minItems: 1
+                    commercialBasis:
+                      type: string
+                      maxLength: 2000
+                    organisationDeploymentAffect:
+                      type: string
+                      maxLength: 2000
+                    hasResourcesToScale:
+                      type: string
+                      enum:
+                        - YES
+                        - NO
+                        - NOT_SURE
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                  additionalProperties: false
+                evidences:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      evidenceSubmitType:
+                        type: string
+                        enum:
+                          - CLINICAL_OR_CARE
+                          - COST_IMPACT_OR_ECONOMIC
+                          - OTHER_EFFECTIVENESS
+                          - PRE_CLINICAL
+                          - REAL_WORLD
+                      evidenceType:
+                        type: string
+                        enum:
+                          - DATA_PUBLISHED
+                          - NON_RANDOMISED_COMPARATIVE_DATA
+                          - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                          - CONFERENCE
+                          - RANDOMISED_CONTROLLED_TRIAL
+                          - UNPUBLISHED_DATA
+                          - OTHER
+                      description:
+                        type: string
+                        maxLength: 50
+                      summary:
+                        type: string
+                        maxLength: 1000
+                      files:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                        minItems: 1
+                    required:
+                      - evidenceSubmitType
+                      - summary
+                    additionalProperties: false
+                  minItems: 1
+              required:
+                - INNOVATION_DESCRIPTION
+                - UNDERSTANDING_OF_NEEDS
+                - EVIDENCE_OF_EFFECTIVENESS
+                - MARKET_RESEARCH
+                - CURRENT_CARE_PATHWAY
+                - TESTING_WITH_USERS
+                - REGULATIONS_AND_STANDARDS
+                - INTELLECTUAL_PROPERTY
+                - REVENUE_MODEL
+                - COST_OF_INNOVATION
+                - DEPLOYMENT
+              additionalProperties: false
         - name: locations
           in: query
           required: false
@@ -1338,33 +1925,39 @@ paths:
             schema:
               type: object
               properties:
+                evidenceSubmitType:
+                  type: string
+                  enum:
+                    - CLINICAL_OR_CARE
+                    - COST_IMPACT_OR_ECONOMIC
+                    - OTHER_EFFECTIVENESS
+                    - PRE_CLINICAL
+                    - REAL_WORLD
                 evidenceType:
                   type: string
-                  description: The evidence type.
-                clinicalEvidenceType:
-                  type: string
-                  nullable: true
-                  description: The clinical evidence type.
+                  enum:
+                    - DATA_PUBLISHED
+                    - NON_RANDOMISED_COMPARATIVE_DATA
+                    - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                    - CONFERENCE
+                    - RANDOMISED_CONTROLLED_TRIAL
+                    - UNPUBLISHED_DATA
+                    - OTHER
                 description:
                   type: string
-                  maxLength: 200
-                  nullable: true
-                  description: The evidence description.
+                  maxLength: 50
                 summary:
                   type: string
-                  maxLength: 500
-                  nullable: true
-                  description: Small summary of the evidence.
+                  maxLength: 1000
                 files:
                   type: array
                   items:
                     type: string
-                  description: Files to support the evidence.
+                    format: uuid
+                  minItems: 1
               required:
-                - evidenceType
-                - description
+                - evidenceSubmitType
                 - summary
-                - files
               additionalProperties: false
       responses:
         "200":
@@ -1373,10 +1966,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1387,7 +1977,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidence/{evidenceId}":
+  "/v1/{innovationId}/evidence/{evidenceOffset}":
     delete:
       description: Delete an innovation evidence entry.
       tags:
@@ -1401,12 +1991,12 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceId
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
       responses:
         "200":
           description: Innovation evidence info.
@@ -1414,10 +2004,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1442,12 +2029,12 @@ paths:
             type: string
             format: uuid
             description: The innovation id.
-        - name: evidenceId
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
             description: The evidence id.
       requestBody:
         description: The evidence data to update.
@@ -1457,33 +2044,39 @@ paths:
             schema:
               type: object
               properties:
+                evidenceSubmitType:
+                  type: string
+                  enum:
+                    - CLINICAL_OR_CARE
+                    - COST_IMPACT_OR_ECONOMIC
+                    - OTHER_EFFECTIVENESS
+                    - PRE_CLINICAL
+                    - REAL_WORLD
                 evidenceType:
                   type: string
-                  description: The evidence type.
-                clinicalEvidenceType:
-                  type: string
-                  nullable: true
-                  description: The clinical evidence type.
+                  enum:
+                    - DATA_PUBLISHED
+                    - NON_RANDOMISED_COMPARATIVE_DATA
+                    - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                    - CONFERENCE
+                    - RANDOMISED_CONTROLLED_TRIAL
+                    - UNPUBLISHED_DATA
+                    - OTHER
                 description:
                   type: string
-                  maxLength: 200
-                  nullable: true
-                  description: The evidence description.
+                  maxLength: 50
                 summary:
                   type: string
-                  maxLength: 500
-                  nullable: true
-                  description: Small summary of the evidence.
+                  maxLength: 1000
                 files:
                   type: array
                   items:
                     type: string
-                  description: Files to support the evidence.
+                    format: uuid
+                  minItems: 1
               required:
-                - evidenceType
-                - description
+                - evidenceSubmitType
                 - summary
-                - files
               additionalProperties: false
       responses:
         "200":
@@ -1492,10 +2085,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Innovation evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1506,7 +2096,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidences/{evidenceId}":
+  "/v1/{innovationId}/evidences/{evidenceOffset}":
     get:
       description: Get an innovation evidence info.
       tags:
@@ -1514,16 +2104,18 @@ paths:
       summary: Get an innovation evidence info.
       operationId: v1-innovation-evidence-info
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
-        - in: path
-          name: evidenceId
+            format: uuid
+        - name: evidenceOffset
+          in: path
           required: true
           schema:
-            type: string
+            type: integer
+            minimum: 0
       responses:
         "200":
           description: Innovation section info.
@@ -1538,21 +2130,23 @@ paths:
                   evidenceType:
                     type: string
                     enum:
-                      - - CLINICAL
-                        - ECONOMIC
-                        - OTHER
+                      - DATA_PUBLISHED
+                      - NON_RANDOMISED_COMPARATIVE_DATA
+                      - NON_RANDOMISED_NON_COMPARATIVE_DATA
+                      - CONFERENCE
+                      - RANDOMISED_CONTROLLED_TRIAL
+                      - UNPUBLISHED_DATA
+                      - OTHER
                     description: Evidence type.
-                  clinicalEvidenceType:
+                  evidenceSubmitType:
                     type: string
                     enum:
-                      - - DATA_PUBLISHED
-                        - NON_RANDOMISED_COMPARATIVE_DATA
-                        - NON_RANDOMISED_NON_COMPARATIVE_DATA
-                        - CONFERENCE
-                        - RANDOMISED_CONTROLLED_TRIAL
-                        - UNPUBLISHED_DATA
-                        - OTHER
-                    description: Clinical Evidence type.
+                      - CLINICAL_OR_CARE
+                      - COST_IMPACT_OR_ECONOMIC
+                      - OTHER_EFFECTIVENESS
+                      - PRE_CLINICAL
+                      - REAL_WORLD
+                    description: Clinical submit type.
                   description:
                     type: string
                     description: Evidence description.
@@ -1829,19 +2423,16 @@ paths:
             type: string
             enum:
               - INNOVATION_DESCRIPTION
-              - VALUE_PROPOSITION
               - UNDERSTANDING_OF_NEEDS
-              - UNDERSTANDING_OF_BENEFITS
               - EVIDENCE_OF_EFFECTIVENESS
               - MARKET_RESEARCH
-              - INTELLECTUAL_PROPERTY
-              - REGULATIONS_AND_STANDARDS
               - CURRENT_CARE_PATHWAY
               - TESTING_WITH_USERS
-              - COST_OF_INNOVATION
-              - COMPARATIVE_COST_BENEFIT
+              - REGULATIONS_AND_STANDARDS
+              - INTELLECTUAL_PROPERTY
               - REVENUE_MODEL
-              - IMPLEMENTATION_PLAN
+              - COST_OF_INNOVATION
+              - DEPLOYMENT
       responses:
         "200":
           description: Innovation section info.
@@ -2126,6 +2717,7 @@ paths:
                   items:
                     type: string
                     format: uuid
+                  minItems: 1
               required:
                 - organisations
               additionalProperties: false
@@ -3145,6 +3737,7 @@ paths:
                 message:
                   type: string
                   maxLength: 200
+                  nullable: true
                   description: Message provided when withdrawing an innovation
               additionalProperties: false
       responses:

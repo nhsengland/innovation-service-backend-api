@@ -5,6 +5,8 @@ import { TermsOfUseEntity } from './general/terms-of-use.entity';
 export { AuditEntity } from './general/audit.entity';
 export { TermsOfUseUserEntity } from './general/terms-of-use-user.entity';
 export { TermsOfUseEntity } from './general/terms-of-use.entity';
+import { AnnouncementEntity } from './user/announcement.entity';
+import { AnnouncementUserEntity } from './user/announcement-user.entity';
 
 // Innovation.
 import { ActivityLogEntity } from './innovation/activity-log.entity';
@@ -13,10 +15,10 @@ import { InnovationAreaEntity } from './innovation/innovation-area.entity';
 import { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 import { InnovationCareSettingEntity } from './innovation/innovation-care-setting.entity';
 import { InnovationCategoryEntity } from './innovation/innovation-category.entity';
-import { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-area.entity';
 import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 import { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
+import { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 import { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
 import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 import { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
@@ -43,9 +45,10 @@ export { InnovationAreaEntity } from './innovation/innovation-area.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 export { InnovationCareSettingEntity } from './innovation/innovation-care-setting.entity';
 export { InnovationCategoryEntity } from './innovation/innovation-category.entity';
-export { InnovationClinicalAreaEntity } from './innovation/innovation-clinical-area.entity';
+export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDeploymentPlanEntity } from './innovation/innovation-deployment-plan.entity';
 export { InnovationDiseaseConditionEntity } from './innovation/innovation-disease-condition.entity';
+export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 export { InnovationEnvironmentalBenefitEntity } from './innovation/innovation-environmental-benefit.entity';
 export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 export { InnovationFileEntity } from './innovation/innovation-file.entity';
@@ -103,11 +106,12 @@ export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 
-
 export const GENERAL_ENTITIES = [
   AuditEntity,
   TermsOfUseEntity,
-  TermsOfUseUserEntity
+  TermsOfUseUserEntity,
+  AnnouncementEntity,
+  AnnouncementUserEntity
 ];
 
 export const INNOVATION_ENTITIES = [
@@ -118,9 +122,9 @@ export const INNOVATION_ENTITIES = [
   InnovationAssessmentEntity,
   InnovationCareSettingEntity,
   InnovationCategoryEntity,
-  InnovationClinicalAreaEntity,
   InnovationDeploymentPlanEntity,
   InnovationDiseaseConditionEntity,
+  InnovationDocumentEntity,
   InnovationEnvironmentalBenefitEntity,
   InnovationEvidenceEntity,
   InnovationExportRequestEntity,

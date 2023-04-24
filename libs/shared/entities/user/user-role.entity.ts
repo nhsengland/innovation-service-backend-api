@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Relation
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
 import { GenericErrorsEnum, InternalServerError } from '../../errors';
-import type { DateISOType, RoleType } from '../../types';
+import type { RoleType } from '../../types';
 import { BaseEntity } from '../base.entity';
 
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
@@ -17,13 +17,13 @@ export class UserRoleEntity extends BaseEntity {
   id: string;
 
   @Column({ name: 'active_since', type: 'datetime2' })
-  activeSince: DateISOType;
+  activeSince: Date;
 
   @Column({ name: 'role', nullable: false })
   role: ServiceRoleEnum;
 
   @Column({ name: 'locked_at', type: 'datetime2', nullable: true })
-  lockedAt: DateISOType | null;
+  lockedAt: Date | null;
 
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'user_id' })

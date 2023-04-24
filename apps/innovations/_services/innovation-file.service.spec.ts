@@ -2,11 +2,10 @@ import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helpe
 import { container } from '../_config';
 
 import { NOSQLConnectionService } from '@innovations/shared/services';
-import { CacheService } from '@innovations/shared/services/storage/cache.service';
-import type { EntityManager } from 'typeorm';
-import { InnovationFileServiceSymbol, InnovationFileServiceType } from './interfaces';
-import type { InnovationFileService } from './innovation-file.service';
 import { randText } from '@ngneat/falso';
+import type { EntityManager } from 'typeorm';
+import type { InnovationFileService } from './innovation-file.service';
+import { InnovationFileServiceSymbol, InnovationFileServiceType } from './interfaces';
 
 describe('Innovation supports service test suite', () => {
 
@@ -22,7 +21,6 @@ describe('Innovation supports service test suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 

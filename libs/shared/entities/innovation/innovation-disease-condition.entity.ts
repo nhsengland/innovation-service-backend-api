@@ -5,14 +5,14 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from './innovation.entity';
 
-import { InnovationDiseasesConditionsImpactKeys, InnovationDiseasesConditionsImpactType } from '../../enums/catalog.enums';
-
-
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_disease_condition')
 export class InnovationDiseaseConditionEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: InnovationDiseasesConditionsImpactKeys, nullable: false })
-  type: InnovationDiseasesConditionsImpactType;
+  @PrimaryColumn({ nullable: false })
+  type: string;
 
   @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
   innovationId: string;

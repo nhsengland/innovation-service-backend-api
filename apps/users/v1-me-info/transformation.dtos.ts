@@ -1,5 +1,5 @@
 import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, PhoneUserPreferenceEnum } from '@users/shared/enums';
-import type { DateISOType, RoleType } from '@users/shared/types';
+import type { RoleType } from '@users/shared/types';
 
 export type ResponseDTO = {
   id: string,
@@ -14,8 +14,9 @@ export type ResponseDTO = {
   termsOfUseAccepted: boolean,
   hasInnovationTransfers: boolean,
   hasInnovationCollaborations: boolean,
-  passwordResetAt: null | DateISOType,
-  firstTimeSignInAt: null | DateISOType,
+  hasAnnouncements: boolean,
+  passwordResetAt: null | Date,
+  firstTimeSignInAt: null | Date,
   organisations: {
     id: string,
     acronym: string | null,

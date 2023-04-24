@@ -1,4 +1,4 @@
-import type { DateISOType } from '@innovations/shared/types';
+
 
 export type ResponseDTO = {
   threadMessage: {
@@ -9,6 +9,6 @@ export type ResponseDTO = {
     id: string;
     message: string;
     isEditable: boolean;
-    createdAt: DateISOType;
+    createdAt: Date;
   };
 }

@@ -45,6 +45,7 @@ class V1InnovationInfo {
         id: result.id,
         name: result.name,
         description: result.description,
+        version: result.version,
         status: result.status,
         groupedStatus: result.groupedStatus,
         statusUpdatedAt: result.statusUpdatedAt,
@@ -53,15 +54,19 @@ class V1InnovationInfo {
         postCode: result.postCode,
         categories: result.categories,
         otherCategoryDescription: result.otherCategoryDescription,
-        owner: {
-          id: result.owner.id,
-          name: result.owner.name,
-          isActive: result.owner.isActive,
-          // Contact details only sent to Assessment and Admin users.
-          ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { email: result.owner.email, mobilePhone: result.owner.mobilePhone, contactByEmail: result.owner.contactByEmail, contactByPhone: result.owner.contactByPhone, contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe, contactDetails: result.owner.contactDetails } : {}),
-          ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
-          organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
-        },
+        ...(result.owner === undefined ? {} :
+          {
+            owner: {
+              id: result.owner.id,
+              name: result.owner.name,
+              isActive: result.owner.isActive,
+              // Contact details only sent to Assessment and Admin users.
+              ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { email: result.owner.email, mobilePhone: result.owner.mobilePhone, contactByEmail: result.owner.contactByEmail, contactByPhone: result.owner.contactByPhone, contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe, contactDetails: result.owner.contactDetails } : {}),
+              ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
+              organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
+            }
+          }
+        ),
         lastEndSupportAt: result.lastEndSupportAt,
         export: result.export,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
@@ -72,7 +77,8 @@ class V1InnovationInfo {
             organisationUnitId: s.organisationUnitId
           }))
         }),
-        collaboratorId: result.collaboratorId
+        collaboratorId: result.collaboratorId,
+        createdAt: result.createdAt
       });
       return;
 

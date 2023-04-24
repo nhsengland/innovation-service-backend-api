@@ -1,4 +1,4 @@
-import { InnovationSectionEnum } from '@innovations/shared/enums';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 import { container } from '../../_config';
 import type { InnovationStatisticsParamsTemplateType, InnovationStatisticsTemplateType } from '../../_config/statistics.config';
@@ -12,16 +12,16 @@ export class SectionsSubmittedSinceAssessmentStartStatisticsHandler extends Inno
     requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER]) {
-    super(requestUser, domainContext, data)
+    super(requestUser, domainContext, data);
   }
 
   async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER]> {
     const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
   
-    const submittedSections = await statisticsService.getSubmittedSectionsSinceAssessmentStart(this.data.innovationId, this.requestUser)
+    const submittedSections = await statisticsService.getSubmittedSectionsSinceAssessmentStart(this.data.innovationId, this.requestUser);
   
     const sections = submittedSections;
-    const totalSections = Object.keys(InnovationSectionEnum).length;
+    const totalSections = CurrentCatalogTypes.InnovationSections.length;
     const lastSubmittedSection = sections.find(_ => true);
   
     return {
@@ -29,6 +29,6 @@ export class SectionsSubmittedSinceAssessmentStartStatisticsHandler extends Inno
       total: totalSections,
       lastSubmittedSection: lastSubmittedSection?.section || null,
       lastSubmittedAt: lastSubmittedSection?.updatedAt || null,
-    }
+    };
   }
 }

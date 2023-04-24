@@ -2,6 +2,7 @@ import 'reflect-metadata';
 
 import { Container } from 'inversify';
 
+import type { DataSource } from 'typeorm';
 import {
   AuthorizationService, AuthorizationServiceType, DomainService, DomainServiceType, FileStorageService, FileStorageServiceType, HttpService, HttpServiceType, IdentityProviderService,
   IdentityProviderServiceType, LoggerService, LoggerServiceType, NOSQLConnectionService, NOSQLConnectionServiceType, NotifierService, NotifierServiceType, SQLConnectionService,
@@ -12,11 +13,14 @@ import {
   AuditServiceSymbol,
   AuditServiceType,
   AuthorizationServiceSymbol, CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, FileStorageServiceSymbol, HttpServiceSymbol, IdentityProviderServiceSymbol, LoggerServiceSymbol, NOSQLConnectionServiceSymbol,
-  NotifierServiceSymbol, SQLConnectionServiceSymbol, StorageQueueServiceSymbol
+  NotifierServiceSymbol, SQLConnectionServiceSymbol, SQLProviderSymbol, StorageQueueServiceSymbol
 } from '../services/interfaces';
 import { CacheService } from '../services/storage/cache.service';
+import { SqlProvider, sqlProvider } from '../services/storage/sql-connection.provider';
 
 export const container: Container = new Container();
+
+container.bind<SqlProvider>(SQLProviderSymbol).toProvider<DataSource>(sqlProvider);
 
 container.bind<AuthorizationServiceType>(AuthorizationServiceSymbol).to(AuthorizationService).inSingletonScope();
 container.bind<DomainServiceType>(DomainServiceSymbol).to(DomainService).inSingletonScope();
@@ -30,3 +34,21 @@ container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQ
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<AuditServiceType>(AuditServiceSymbol).to(AuditService).inSingletonScope();
 container.bind<CacheServiceType>(CacheServiceSymbol).to(CacheService).inSingletonScope();
+
+// Initialize the services that depend on the SQL connection
+const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+domainService.sqlProvider().then((connection) => {
+  console.log('DomainService INIT');
+  domainService.setConnection(connection);
+}).catch((error) => {
+  console.log('SQLConnection ERROR', error);
+  process.exit(1);
+});
+const sqlService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+sqlService.sqlProvider().then((connection) => {
+  console.log('SQLConnection INIT');
+  sqlService.setConnection(connection);
+}).catch((error) => {
+  console.log('SQLConnection ERROR', error);
+  process.exit(1);
+});

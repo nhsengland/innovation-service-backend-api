@@ -1,4 +1,4 @@
-import type { DateISOType } from '@innovations/shared/types';
+
 
 export type ResponseDTO = {
   thread: {
@@ -7,6 +7,6 @@ export type ResponseDTO = {
     createdBy: {
       id: string;
     };
-    createdAt: DateISOType;
+    createdAt: Date;
   }
 }

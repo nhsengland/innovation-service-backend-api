@@ -1,10 +1,5 @@
-import type { ClinicalEvidenceTypeCatalogueEnum, EvidenceTypeCatalogueEnum } from '@innovations/shared/enums';
+import type { CurrentEvidenceType } from '@innovations/shared/schemas/innovation-record';
 
-export type ResponseDTO = {
-  id: string,
-  evidenceType: EvidenceTypeCatalogueEnum,
-  clinicalEvidenceType: ClinicalEvidenceTypeCatalogueEnum,
-  description: string,
-  summary: string,
-  files: { id: string; displayFileName: string; url: string }[];
+export type ResponseDTO = Omit<CurrentEvidenceType, 'files'> & {
+  files: { id: string; name: string; url: string }[];
 }

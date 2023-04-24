@@ -1,19 +1,21 @@
-import type { InnovationCategoryCatalogueEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
-import type { DateISOType } from '@innovations/shared/types';
+import type { InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, PhoneUserPreferenceEnum } from '@innovations/shared/enums';
+import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+
 
 export type ResponseDTO = {
   id: string,
   name: string,
   description: null | string,
+  version: string,
   status: InnovationStatusEnum,
   groupedStatus: InnovationGroupedStatusEnum,
-  statusUpdatedAt: DateISOType,
-  submittedAt: null | DateISOType,
+  statusUpdatedAt: Date,
+  submittedAt: null | Date,
   countryName: null | string,
   postCode: null | string,
-  categories: InnovationCategoryCatalogueEnum[],
+  categories: CurrentCatalogTypes.catalogCategory[],
   otherCategoryDescription: null | string,
-  owner: {
+  owner?: {
     id: string,
     name: string,
     isActive: boolean,
@@ -23,11 +25,12 @@ export type ResponseDTO = {
     contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null,
     mobilePhone?: null | string,
     organisations: null | { name: string, size: null | string }[],
-    lastLoginAt?: null | DateISOType
+    lastLoginAt?: null | Date
   },
-  lastEndSupportAt: null | DateISOType,
+  lastEndSupportAt: null | Date,
   export: { canUserExport: boolean, pendingRequestsCount: number },
-  assessment?: null | { id: string, createdAt: DateISOType, finishedAt: null | DateISOType, assignedTo: { id: string, name: string }, reassessmentCount: number },
+  assessment?: null | { id: string, createdAt: Date, finishedAt: null | Date, assignedTo: { id: string, name: string }, reassessmentCount: number },
   supports?: null | { id: string, status: InnovationSupportStatusEnum, organisationUnitId: string }[],
-  collaboratorId?: string
+  collaboratorId?: string,
+  createdAt: Date
 };

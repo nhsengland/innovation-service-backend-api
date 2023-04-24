@@ -1,7 +1,8 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity } from '../../entities';
-import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
+import { EXPIRATION_DATES } from '../../constants';
+import { ActivityLogEntity, InnovationActionEntity, InnovationCollaboratorEntity, InnovationEntity, InnovationExportRequestEntity, InnovationFileEntity, InnovationGroupedStatusViewEntity, InnovationSectionEntity, InnovationSupportEntity, InnovationSupportLogEntity, InnovationThreadEntity, InnovationThreadMessageEntity, InnovationTransferEntity, NotificationEntity, NotificationUserEntity, OrganisationUnitEntity } from '../../entities';
+import { ActivityEnum, ActivityTypeEnum, EmailNotificationPreferenceEnum, EmailNotificationTypeEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationExportRequestStatusEnum, InnovationGroupedStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum, NotificationContextTypeEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
@@ -26,18 +27,22 @@ export class DomainInnovationsService {
 
 
   async withdrawInnovations(
-    entityManager: EntityManager,
     user: { id: string, roleId: string },
-    innovations: { id: string, reason: null | string }[]
+    innovations: { id: string, reason: null | string }[],
+    entityManager?: EntityManager
   ): Promise<{ id: string, name: string, supportingUserIds: string[] }[]> {
     
     if(!innovations.length) {
       return [];
     }
+    const em = entityManager ?? this.sqlConnection.manager;
 
     const toReturn: { id: string, name: string, supportingUserIds: string[] }[] = [];
 
     const dbInnovations = await this.innovationRepository.createQueryBuilder('innovations')
+      .withDeleted()
+      .leftJoinAndSelect('innovations.owner', 'owner')
+      .leftJoinAndSelect('owner.serviceRoles', 'roles')
       .leftJoinAndSelect('innovations.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
       .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
@@ -48,18 +53,29 @@ export class DomainInnovationsService {
     try {
 
       for (const dbInnovation of dbInnovations) {
+        const userId = user.id === '' ? dbInnovation.owner.id : user.id;
+        const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(r => r.role === ServiceRoleEnum.INNOVATOR);
+        let roleId = user.roleId;
+        
+        if (innovationOwnerRole && user.roleId === '') {
+          roleId = innovationOwnerRole.id;
+        }
+
+        // Update innovation collaborators status
+        await this.bulkUpdateCollaboratorStatusByInnovation(em, {id: userId}, { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.REMOVED }, dbInnovation.id);
+        await this.bulkUpdateCollaboratorStatusByInnovation(em, {id: userId}, { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.CANCELLED }, dbInnovation.id);
 
         const reason = innovations.find(item => item.id === dbInnovation.id)?.reason || null;
 
         // Get all sections id's.
-        const sections = await entityManager.createQueryBuilder(InnovationSectionEntity, 'section')
+        const sections = await em.createQueryBuilder(InnovationSectionEntity, 'section')
           .select(['section.id'])
           .where('section.innovation_id = :innovationId', { innovationId: dbInnovation.id })
           .getMany();
         const sectionsIds = sections.map(section => section.id);
 
         // Close opened actions, and deleted them all afterwards, hence 2 querys needed for both operations.
-        await entityManager.createQueryBuilder().update(InnovationActionEntity)
+        await em.createQueryBuilder().update(InnovationActionEntity)
           .set({ status: InnovationActionStatusEnum.DECLINED })
           .where('innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)', {
             sectionsIds,
@@ -67,17 +83,17 @@ export class DomainInnovationsService {
           })
           .execute();
 
-        await entityManager.createQueryBuilder().update(InnovationActionEntity)
-          .set({ updatedBy: user.id, updatedByUserRole: user.roleId, deletedAt: new Date() })
+        await em.createQueryBuilder().update(InnovationActionEntity)
+          .set({ updatedBy: userId, updatedByUserRole: roleId, deletedAt: new Date() })
           .where('innovation_section_id IN (:...sectionsIds)', { sectionsIds })
           .execute();
 
         // Reject all PENDING AND APPROVED export requests.
-        await entityManager.createQueryBuilder().update(InnovationExportRequestEntity)
+        await em.createQueryBuilder().update(InnovationExportRequestEntity)
           .set({
             status: InnovationExportRequestStatusEnum.REJECTED,
             rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
-            updatedBy: user.id
+            updatedBy: userId
           })
           .where('innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))', {
             innovationId: dbInnovation.id,
@@ -87,8 +103,21 @@ export class DomainInnovationsService {
           })
           .execute();
 
+        // Reject PENDING transfer requests
+        await em.getRepository(InnovationTransferEntity).update(
+          { 
+            innovation: { id: dbInnovation.id },
+            status: InnovationTransferStatusEnum.PENDING,
+          },
+          {
+            status: InnovationTransferStatusEnum.CANCELED,
+            updatedBy: userId,
+            finishedAt: new Date().toISOString()
+          }
+        );
+
         // Delete all unopened notifications related with this innovation
-        const unopenedNotificationsIds = await entityManager.createQueryBuilder(NotificationUserEntity, 'userNotification')
+        const unopenedNotificationsIds = await em.createQueryBuilder(NotificationUserEntity, 'userNotification')
           .select(['userNotification.id'])
           .innerJoin('userNotification.notification', 'notification')
           .innerJoin('notification.innovation', 'innovation')
@@ -96,7 +125,7 @@ export class DomainInnovationsService {
           .andWhere('userNotification.read_at IS NULL')
           .getMany();
 
-        await entityManager.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
+        await em.softDelete(NotificationUserEntity, { id: In(unopenedNotificationsIds.map(c => c.id)) });
 
         // supporting users (without duplicates) for notifications.
         const supportingUserIds = [...(new Set(
@@ -107,18 +136,19 @@ export class DomainInnovationsService {
         for (const innovationSupport of dbInnovation.innovationSupports) {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
           innovationSupport.organisationUnitUsers = [];
-          innovationSupport.updatedBy = user.id;
-          innovationSupport.deletedAt = new Date().toISOString();
-          await entityManager.save(InnovationSupportEntity, innovationSupport);
+          innovationSupport.updatedBy = userId;
+          innovationSupport.deletedAt = new Date();
+          await em.save(InnovationSupportEntity, innovationSupport);
         }
 
         // Update innovations to WITHDRAWN, removes all shares AND deleted them.
         dbInnovation.status = InnovationStatusEnum.WITHDRAWN;
-        dbInnovation.updatedBy = user.id;
+        dbInnovation.updatedBy = userId;
         dbInnovation.organisationShares = [];
         dbInnovation.withdrawReason = reason;
-        dbInnovation.deletedAt = new Date().toISOString();
-        await entityManager.save(InnovationEntity, dbInnovation);
+        dbInnovation.deletedAt = new Date();
+        dbInnovation.expires_at = null;
+        await em.save(InnovationEntity, dbInnovation);
 
         toReturn.push({
           id: dbInnovation.id,
@@ -136,6 +166,22 @@ export class DomainInnovationsService {
 
   }
 
+  async bulkUpdateCollaboratorStatusByEmail(
+    entityManager: EntityManager,
+    user: { id: string, email: string },
+    status: { current: InnovationCollaboratorStatusEnum, next: InnovationCollaboratorStatusEnum }
+  ): Promise<void> {
+    await entityManager.getRepository(InnovationCollaboratorEntity).update(
+      { 
+        email: user.email,
+        status: status.current
+      },
+      {
+        updatedBy: user.id,
+        status: status.next
+      }
+    );
+  }
 
   /**
   * This is a legacy support that should be replaced by the activities log in due time.
@@ -174,7 +220,6 @@ export class DomainInnovationsService {
 
   }
 
-
   async addActivityLog<T extends ActivityEnum>(
     transactionManager: EntityManager,
     configuration: { innovationId: string, activity: T, domainContext: DomainContextType },
@@ -208,6 +253,194 @@ export class DomainInnovationsService {
 
   }
 
+  async getUnreadNotifications(
+    roleId: string,
+    contextIds: string[],
+    entityManager?: EntityManager
+  ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: Record<string, unknown> }[]> {
+
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const notifications = await em.createQueryBuilder(NotificationEntity, 'notification')
+      .select(['notification.id', 'notification.contextType', 'notification.contextId', 'notification.params'])
+      .innerJoin('notification.notificationUsers', 'notificationUsers')
+      .where('notification.context_id IN (:...contextIds)', { contextIds })
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
+      .andWhere('notificationUsers.read_at IS NULL')
+      .getMany();
+
+    return notifications.map(item => ({
+      id: item.id,
+      contextType: item.contextType,
+      contextId: item.contextId,
+      params: item.params
+    }));
+
+  }
+
+  async deleteInnovationFiles(transactionManager: EntityManager, files: string[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[] | string[]): Promise<void> {
+
+    if(files.length === 0) {
+      return;
+    }
+
+    if(typeof files[0] === 'string') {
+      files = await transactionManager.createQueryBuilder(InnovationFileEntity, 'file').where('id IN (:...files)', { files }).getMany();
+    } else {
+      // if it's not string it's InnovationFileEntity
+      files = files as InnovationFileEntity[];
+    }
+
+    for (const file of files) {
+
+      try {
+        await transactionManager.softDelete(InnovationFileEntity, { id: file.id });
+      } catch (error) {
+        // TODO: Log this here!
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_DELETE_ERROR);
+      }
+
+      await this.fileStorageService.deleteFile(file.id, file.displayFileName);
+
+    }
+  }
+
+  async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
+    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+      .select([
+        'innovation.id', 'innovation.name',
+        'owner.id', 'owner.identityId'
+      ])
+      .leftJoin('innovation.owner', 'owner')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    return innovation;
+  }
+
+  /**
+   * Gets the intervinients of a thread, i.e. all the message authors and the context
+   * in which the messages were created (organisationUnit) without duplicates
+   * @param threadId
+   * @param entityManager
+   * @returns object with user info and organisation unit
+   */
+  async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
+    id: string, identityId: string, name?: string, locked: boolean, isOwner?: boolean,
+    userRole: { id: string, role: ServiceRoleEnum },
+    organisationUnit: { id: string, acronym: string } | null,
+    emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
+  }[]> {
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'thread')
+      .select(['thread.id', 'innovation.id', 'owner.id'])
+      .innerJoin('thread.innovation', 'innovation')
+      .leftJoin('innovation.owner', 'owner')
+      .where('thread.id = :threadId', { threadId })
+      .getOne();
+
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    const messages = await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
+      .select([
+        'threadMessage.id',
+        'author.id', 'author.identityId', 'author.lockedAt',
+        'authorRole.id', 'authorRole.role',
+        'organisationUnit.id', 'organisationUnit.acronym',
+        'notificationPreferences.notification_id', 'notificationPreferences.preference'
+      ])
+      .innerJoin('threadMessage.author', 'author')
+      .innerJoin('threadMessage.authorUserRole', 'authorRole')
+      .leftJoin('authorRole.organisationUnit', 'organisationUnit')
+      .leftJoin('author.notificationPreferences', 'notificationPreferences')
+      .where('threadMessage.innovation_thread_id = :threadId', { threadId })
+      .andWhere('threadMessage.deleted_at IS NULL')
+      .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
+      .getMany();
+
+    const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
+    const duplicateSet = new Set<string>();
+
+    const authorIds = messages.map(m => m.author.identityId);
+
+    const usersInfo = await this.identityProviderService.getUsersMap(authorIds);
+
+    for (const message of messages) {
+      // filter duplicates based on roleId
+      if (!duplicateSet.has(message.authorUserRole.id)) {
+        duplicateSet.add(message.authorUserRole.id);
+
+        participants.push({
+          id: message.author.id,
+          identityId: message.author.identityId,
+          name: usersInfo.get(message.author.identityId)?.displayName ?? '',
+          locked: !!message.author.lockedAt,
+          userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
+          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner?.id },
+          organisationUnit: message.authorUserRole.organisationUnit ? {
+            id: message.authorUserRole.organisationUnit.id,
+            acronym: message.authorUserRole.organisationUnit.acronym
+          } : null,
+          emailNotificationPreferences: (await message.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
+        });
+      }
+    }
+
+    return participants;
+
+  }
+
+  async getInnovationsGroupedStatus(filters: { innovationIds?: string[], status?: InnovationGroupedStatusEnum }): Promise<Map<string, InnovationGroupedStatusEnum>> {
+    const query = this.sqlConnection.createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus');
+
+    if (filters.innovationIds && filters.innovationIds.length) {
+      query.andWhere('innovationGroupedStatus.innovationId IN (:...innovationIds)', { innovationIds: filters.innovationIds });
+    }
+
+    if (filters.status && filters.status.length) {
+      query.andWhere('innovationGroupedStatus.groupedStatus IN (:...status)', { status: filters.status });
+    }
+
+    const groupedStatus = await query.getMany();
+
+    return new Map(groupedStatus.map(cur => [cur.innovationId, cur.groupedStatus]));
+  }
+
+  async getInnovationsByOwnerId(userId: string): Promise<{
+    id: string
+    name: string,
+    collaboratorsCount: number,
+    expirationTransferDate: Date | null
+  }[]> {
+
+    const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovations')
+      .select([
+        'innovations.id', 'innovations.name',
+        'collaborator.id',
+        'transfer.createdAt'
+      ])
+      .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE })
+      .leftJoin('innovations.transfers', 'transfer','transfer.status = :transferStatus', { transferStatus: InnovationTransferStatusEnum.PENDING } )
+      .where('innovations.owner_id = :userId', { userId })
+      .getMany();
+
+    const data = query.map((innovation) => ({
+      id: innovation.id,
+      name: innovation.name,
+      collaboratorsCount: innovation.collaborators.length,
+      expirationTransferDate: innovation.transfers[0] ? 
+        new Date(innovation.transfers[0].createdAt.getTime() + EXPIRATION_DATES.transfers) : null
+    }));
+    
+    return data;
+  }
+  
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {
 
     switch (activity) {
@@ -252,149 +485,24 @@ export class DomainInnovationsService {
     }
 
   }
-
-
-  async getUnreadNotifications(
-    roleId: string,
-    contextIds: string[],
-    entityManager?: EntityManager
-  ): Promise<{ id: string, contextType: NotificationContextTypeEnum, contextId: string, params: Record<string, unknown> }[]> {
-
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const notifications = await em.createQueryBuilder(NotificationEntity, 'notification')
-      .select(['notification.id', 'notification.contextType', 'notification.contextId', 'notification.params'])
-      .innerJoin('notification.notificationUsers', 'notificationUsers')
-      .where('notification.context_id IN (:...contextIds)', { contextIds })
-      .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
-      .andWhere('notificationUsers.read_at IS NULL')
-      .getMany();
-
-    return notifications.map(item => ({
-      id: item.id,
-      contextType: item.contextType,
-      contextId: item.contextId,
-      params: item.params
-    }));
-
-  }
-
-
-  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void> {
-
-    for (const file of files) {
-
-      try {
-        await transactionManager.softDelete(InnovationFileEntity, { id: file.id });
-      } catch (error) {
-        // TODO: Log this here!
-        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_DELETE_ERROR);
+  
+  private async bulkUpdateCollaboratorStatusByInnovation(
+    entityManager: EntityManager,
+    user: { id: string},
+    status: { current: InnovationCollaboratorStatusEnum, next: InnovationCollaboratorStatusEnum },
+    innovationId: string
+  ): Promise<void> {
+    await entityManager.getRepository(InnovationCollaboratorEntity).update(
+      { 
+        innovation: { id: innovationId },
+        status: status.current,
+      },
+      {
+        updatedBy: user.id,
+        status: status.next,
+        deletedAt: new Date().toISOString()
       }
-
-      await this.fileStorageService.deleteFile(file.id, file.displayFileName);
-
-    }
-  }
-
-  async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {
-    const innovation = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
-      .where('innovation.id = :innovationId', { innovationId })
-      .getOne();
-
-    return innovation;
-  }
-
-  /**
-   * Gets the intervinients of a thread, i.e. all the message authors and the context
-   * in which the messages were created (organisationUnit) without duplicates
-   * @param threadId
-   * @param entityManager
-   * @returns object with user info and organisation unit
-   */
-  async threadIntervenients(threadId: string, entityManager?: EntityManager): Promise<{
-    id: string, identityId: string, name?: string, locked: boolean, isOwner?: boolean,
-    userRole: { id: string, role: ServiceRoleEnum },
-    organisationUnit: { id: string, acronym: string } | null,
-    emailNotificationPreferences: { type: EmailNotificationTypeEnum, preference: EmailNotificationPreferenceEnum }[]
-  }[]> {
-
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const thread = await connection.createQueryBuilder(InnovationThreadEntity, 'thread')
-      .select(['thread.id', 'innovation.id', 'owner.id'])
-      .innerJoin('thread.innovation', 'innovation')
-      .innerJoin('innovation.owner', 'owner')
-      .where('thread.id = :threadId', { threadId })
-      .getOne();
-
-    if (!thread) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
-    }
-
-    const messages = await connection.createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
-      .select([
-        'threadMessage.id',
-        'author.id', 'author.identityId', 'author.lockedAt',
-        'authorRole.id', 'authorRole.role',
-        'organisationUnit.id', 'organisationUnit.acronym',
-        'notificationPreferences.notification_id', 'notificationPreferences.preference'
-      ])
-      .innerJoin('threadMessage.author', 'author')
-      .innerJoin('threadMessage.authorUserRole', 'authorRole')
-      .leftJoin('authorRole.organisationUnit', 'organisationUnit')
-      .leftJoin('author.notificationPreferences', 'notificationPreferences')
-      .where('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .andWhere('threadMessage.deleted_at IS NULL')
-      .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .getMany();
-
-    const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
-    const duplicateSet = new Set<string>();
-
-    const authorIds = messages.map(m => m.author.identityId);
-
-    const usersInfo = await this.identityProviderService.getUsersMap(authorIds);
-
-    for (const message of messages) {
-      // filter duplicates based on roleId
-      if (!duplicateSet.has(message.authorUserRole.id)) {
-        duplicateSet.add(message.authorUserRole.id);
-
-        participants.push({
-          id: message.author.id,
-          identityId: message.author.identityId,
-          name: usersInfo.get(message.author.identityId)?.displayName ?? '',
-          locked: !!message.author.lockedAt,
-          userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
-          ...message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && { isOwner: message.author.id === thread.innovation.owner.id },
-          organisationUnit: message.authorUserRole.organisationUnit ? {
-            id: message.authorUserRole.organisationUnit.id,
-            acronym: message.authorUserRole.organisationUnit.acronym
-          } : null,
-          emailNotificationPreferences: (await message.author.notificationPreferences).map(emailPreference => ({ type: emailPreference.notification_id, preference: emailPreference.preference }))
-        });
-      }
-    }
-
-    return participants;
-
-  }
-
-  async getInnovationsGroupedStatus(filters: { innovationIds?: string[], status?: InnovationGroupedStatusEnum }): Promise<Map<string, InnovationGroupedStatusEnum>> {
-    const query = this.sqlConnection.createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus');
-
-    if (filters.innovationIds && filters.innovationIds.length) {
-      query.andWhere('innovationGroupedStatus.innovationId IN (:...innovationIds)', { innovationIds: filters.innovationIds });
-    }
-
-    if (filters.status && filters.status.length) {
-      query.andWhere('innovationGroupedStatus.groupedStatus IN (:...status)', { status: filters.status });
-    }
-
-    const groupedStatus = await query.getMany();
-
-    return new Map(groupedStatus.map(cur => [cur.innovationId, cur.groupedStatus]));
+    );
   }
 
 }

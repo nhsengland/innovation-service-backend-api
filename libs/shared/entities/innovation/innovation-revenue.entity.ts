@@ -4,14 +4,16 @@ import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from './innovation.entity';
 
-import { InnovationRevenueTypeCatalogueEnum } from '../../enums/catalog.enums';
+import { catalogRevenues } from '../../schemas/innovation-record/202209/catalog.types';
 
-
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_revenue')
 export class InnovationRevenueEntity extends BaseEntity {
 
-  @PrimaryColumn({ type: 'simple-enum', enum: InnovationRevenueTypeCatalogueEnum, nullable: false })
-  type: InnovationRevenueTypeCatalogueEnum;
+  @PrimaryColumn({ type: 'simple-enum', enum: catalogRevenues, nullable: false })
+  type: catalogRevenues;
 
   @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
   innovationId: string;

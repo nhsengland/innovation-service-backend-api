@@ -6,7 +6,6 @@ import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innov
 import { InnovationCollaboratorStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { DomainUsersService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
-import { CacheService } from '@innovations/shared/services/storage/cache.service';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randEmail, randRole, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
@@ -28,7 +27,6 @@ describe('Innovation Collaborators Suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    jest.spyOn(CacheService.prototype, 'init').mockReturnThis();
     jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
@@ -57,7 +55,7 @@ describe('Innovation Collaborators Suite', () => {
         createdBy: testData.domainContexts.innovator.id,
         updatedBy: testData.domainContexts.innovator.id,
         user: testData.baseUsers.innovator2.id
-      }
+      };
 
       const collaborator = await sut.createCollaborator(
         testData.domainContexts.innovator,
@@ -92,7 +90,7 @@ describe('Innovation Collaborators Suite', () => {
         innovation: testData.innovation.id,
         createdBy: testData.domainContexts.innovator.id,
         updatedBy: testData.domainContexts.innovator.id,
-      }
+      };
 
       const collaborator = await sut.createCollaborator(
         testData.domainContexts.innovator,
@@ -130,7 +128,7 @@ describe('Innovation Collaborators Suite', () => {
         createdBy: testData.domainContexts.innovator.id,
         updatedBy: testData.domainContexts.innovator.id,
         user: testData.baseUsers.innovator2.id
-      }
+      };
 
       const collaborator = await sut.createCollaborator(
         testData.domainContexts.innovator,
@@ -320,15 +318,14 @@ describe('Innovation Collaborators Suite', () => {
     beforeEach(async () => {
       collaboratorPendingWithoutUser = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).build(em);
       collaboratorPendingWithUser = await TestsHelper.TestDataBuilder.createCollaborator(testData.domainContexts.innovator, testData.innovation).setEmail('innovator2@gmail.com').setUser(testData.baseUsers.innovator2).build(em);
-
-      jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
-        { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name' } as any,
-        { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name' } as any
-      ]);
     });
 
     describe('asOwner', () => {
-      it('for a new user it should return info for a new collaborator without the name', async () => {
+      it('for a new user it should return info for a new collaborator without the name', async () => {  
+        jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+          { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name' } as any,
+          { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name' } as any
+        ]);
 
         const expected = {
           id: collaboratorPendingWithoutUser.id,
@@ -341,7 +338,7 @@ describe('Innovation Collaborators Suite', () => {
             description: testData.innovation.description,
             owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
           },
-        }
+        };
 
         const collaborator = await sut.getCollaboratorInfo(
           testData.domainContexts.innovator,
@@ -354,6 +351,14 @@ describe('Innovation Collaborators Suite', () => {
       });
 
       it('for a existing user should return info for a new collaborator with the name of the user', async () => {
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo')
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+          )
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name', email: 'innovator1@gmail.com' } as any
+          );
+
         const expected = {
           id: collaboratorPendingWithUser.id,
           role: collaboratorPendingWithUser.collaboratorRole,
@@ -366,7 +371,7 @@ describe('Innovation Collaborators Suite', () => {
             description: testData.innovation.description,
             owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
           },
-        }
+        };
 
         const collaborator = await sut.getCollaboratorInfo(
           testData.domainContexts.innovator,
@@ -382,9 +387,16 @@ describe('Innovation Collaborators Suite', () => {
 
     describe('asCollaborator', () => {
       it('should return info (with the name of the user) as collaborator user', async () => {
-        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue(
-          { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
-        );
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo')
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+          )
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator2.identityId, displayName: 'Innovator 2 name', email: 'innovator2@gmail.com' } as any
+          )
+          .mockResolvedValueOnce(
+            { identityId: testData.domainContexts.innovator.identityId, displayName: 'Innovator 1 name', email: 'innovator1@gmail.com' } as any
+          );
 
         const expected = {
           id: collaboratorPendingWithUser.id,
@@ -398,7 +410,7 @@ describe('Innovation Collaborators Suite', () => {
             description: testData.innovation.description,
             owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
           },
-        }
+        };
 
         const collaborator = await sut.getCollaboratorInfo(
           testData.domainContexts.innovator2,
@@ -566,7 +578,7 @@ describe('Innovation Collaborators Suite', () => {
           .getOne();
 
         expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.PENDING);
-        expect(dbCollaborator).toHaveProperty('collaboratorRole', 'randomRole')
+        expect(dbCollaborator).toHaveProperty('collaboratorRole', 'randomRole');
       });
 
       it('should update from PENDING to ACTIVE', async () => {
@@ -586,7 +598,7 @@ describe('Innovation Collaborators Suite', () => {
 
         expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.ACTIVE);
         expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator3.id);
-        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id)
+        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id);
       });
 
       it('should update from PENDING to DECLINED', async () => {
@@ -606,7 +618,7 @@ describe('Innovation Collaborators Suite', () => {
 
         expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.DECLINED);
         expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator3.id);
-        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id)
+        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id);
       });
 
       it('should update from ACTIVE to LEFT', async () => {
@@ -626,7 +638,7 @@ describe('Innovation Collaborators Suite', () => {
 
         expect(dbCollaborator).toHaveProperty('status', InnovationCollaboratorStatusEnum.LEFT);
         expect(dbCollaborator).toHaveProperty('updatedBy', testData.domainContexts.innovator3.id);
-        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id)
+        expect(dbCollaborator?.userId).toBe(testData.domainContexts.innovator3.id);
       });
 
       it('should return error while changing status to ACTIVE and current status is not PENDING', async () => {

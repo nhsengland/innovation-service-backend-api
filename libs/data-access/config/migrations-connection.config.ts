@@ -1,5 +1,5 @@
-import { DataSource } from 'typeorm';
 import { join } from 'path';
+import { DataSource } from 'typeorm';
 
 import { SQLDB_DEFAULT_CONNECTION } from '../../shared/config';
 

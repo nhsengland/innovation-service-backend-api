@@ -11,7 +11,7 @@ export type UserFullInfoDTO = {
   phone: null | string;
   displayName: string;
   type: ServiceRoleEnum;          // TODO: this should change with the roles, keeping it for now as admin only supports one role and this will be reviewed
-  lockedAt: null | string;
+  lockedAt: null | Date;
   innovations: {
     id: string;
     name: string;

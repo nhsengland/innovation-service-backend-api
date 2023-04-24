@@ -10,7 +10,6 @@ import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 import { InnovationCollaboratorsServiceSymbol, type InnovationCollaboratorsServiceType } from './interfaces';
 
-
 type TransferQueryFilterType = {
   id?: string,
   innovationId?: string,
@@ -50,7 +49,7 @@ export class InnovationTransferService extends BaseService {
 
   async getInnovationTransfersList(requestUserId: string, assignedToMe?: boolean): Promise<{
     id: string, email: string,
-    innovation: { id: string, name: string, owner: string }
+    innovation: { id: string, name: string, owner?: string }
   }[]> {
 
     const filter: TransferQueryFilterType = { status: InnovationTransferStatusEnum.PENDING };
@@ -65,22 +64,29 @@ export class InnovationTransferService extends BaseService {
     const transfers = await this.buildTransferQuery(filter).getMany();
 
     return Promise.all(transfers.map(async transfer => {
+      try {
+        const createdBy = await this.domainService.users.getUserInfo({ userId: transfer.createdBy });
 
-      const createdBy = await this.domainService.users.getUserInfo({ userId: transfer.createdBy });
-      const identiyUser = await this.identityProviderService.getUserInfo(createdBy.identityId);
-
-      return {
-        id: transfer.id,
-        email: transfer.email,
-        innovation: {
-          id: transfer.innovation.id,
-          name: transfer.innovation.name,
-          owner: identiyUser.displayName
-        }
-      };
-
+        return {
+          id: transfer.id,
+          email: transfer.email,
+          innovation: {
+            id: transfer.innovation.id,
+            name: transfer.innovation.name,
+            owner: createdBy.displayName
+          }
+        };
+      } catch (_) {
+        return {
+          id: transfer.id,
+          email: transfer.email,
+          innovation: {
+            id: transfer.innovation.id,
+            name: transfer.innovation.name
+          }
+        };
+      }   
     }));
-
   }
 
   async getPendingInnovationTransferInfo(id: string): Promise<{ userExists: boolean }> {
@@ -169,7 +175,6 @@ export class InnovationTransferService extends BaseService {
       });
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
-
       await this.notifierService.send(
         { id: requestUser.id, identityId: requestUser.identityId },
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, 
@@ -223,17 +228,17 @@ export class InnovationTransferService extends BaseService {
         finishedAt: new Date().toISOString()
       });
 
+      // COMPLETED transfer flow
       if (status === InnovationTransferStatusEnum.COMPLETED) {
         const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
 
-        if (innovation) {
-          const currentOwnerEmail = (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email
-
+        // It should run if we have an owner and update its status as collaborator
+        if (innovation && innovation.owner) {
           await this.collaboratorsService.upsertCollaborator(
             domainContext,
             {
               innovationId: transfer.innovation.id,
-              email: currentOwnerEmail,
+              email: (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email,
               userId: innovation.owner.id,
               status: transfer.ownerToCollaborator ? InnovationCollaboratorStatusEnum.ACTIVE : InnovationCollaboratorStatusEnum.LEFT
             }
@@ -245,6 +250,7 @@ export class InnovationTransferService extends BaseService {
           {
             owner: { id: requestUser.id },
             updatedBy: requestUser.id,
+            expires_at: null
           }
         );
 
@@ -254,10 +260,24 @@ export class InnovationTransferService extends BaseService {
           transactionManager,
           { innovationId: transfer.innovation.id, activity: ActivityEnum.OWNERSHIP_TRANSFER, domainContext },
           {
-            interveningUserId: requestUser.identityId
+            interveningUserId: innovation?.owner?.id ?? null
           }
         );
 
+      }
+
+      // DECLINED transfer flow
+      if (status === InnovationTransferStatusEnum.DECLINED) {        
+        const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
+
+        // It should run if there is no innovation owner
+        if (innovation && !innovation.owner) {
+          await this.domainService.innovations.withdrawInnovations(
+            { id: '', roleId: '' },
+            [{id: transfer.innovation.id, reason: null}],
+            transactionManager
+          );
+        }
       }
 
       // It should send a notification for all cases

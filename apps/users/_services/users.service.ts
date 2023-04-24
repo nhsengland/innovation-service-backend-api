@@ -6,7 +6,7 @@ import { InnovationCollaboratorStatusEnum, InnovationTransferStatusEnum, Innovat
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
-import type { DateISOType } from '@users/shared/types';
+
 
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
@@ -184,7 +184,7 @@ export class UsersService extends BaseService {
         await transactionManager.save(TermsOfUseUserEntity.new({
           termsOfUse: TermsOfUseEntity.new({ id: lastTermsOfUse.id }),
           user: UserEntity.new({ id: dbUser.id }),
-          acceptedAt: new Date().toISOString(),
+          acceptedAt: new Date(),
           createdBy: dbUser.id,
           updatedBy: dbUser.id
         }));
@@ -215,7 +215,7 @@ export class UsersService extends BaseService {
 
 
   async updateUserInfo(
-    user: { id: string, identityId: string, firstTimeSignInAt?: null | DateISOType },
+    user: { id: string, identityId: string, firstTimeSignInAt?: null | Date },
     currentRole: ServiceRoleEnum | '',
     data: {
       displayName: string,
@@ -311,7 +311,7 @@ export class UsersService extends BaseService {
 
       await this.identityProviderService.deleteUser(userId);
 
-      user.deletedAt = new Date().toISOString();
+      user.deletedAt = new Date();
       user.deleteReason = reason || '';
 
       const result = await transactionManager.save(user);
@@ -337,7 +337,7 @@ export class UsersService extends BaseService {
     data: {
       id: string;
       name: string;
-      lockedAt: string | null;
+      lockedAt: Date | null;
       roles: UserRoleEntity[];
       email?: string;
       organisationUnitUserId?: string;
@@ -402,7 +402,7 @@ export class UsersService extends BaseService {
         ...(filters.organisationUnitId ? {
           organisationUnitUserId: (await dbUser.userOrganisations)[0]?.userOrganisationUnits[0]?.id ?? ''
         } : {})
-      }
+      };
     }));
 
     return {
@@ -461,7 +461,7 @@ export class UsersService extends BaseService {
 
   async getCollaborationsInvitesList(email: string, status: InnovationCollaboratorStatusEnum = InnovationCollaboratorStatusEnum.PENDING): Promise<{
     id: string,
-    invitedAt: string
+    invitedAt: Date,
     innovation: {
       id: string,
       name: string

@@ -7,9 +7,10 @@ import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
-import { container, INNOVATION_SECTIONS_CONFIG } from '../_config';
+import { container } from '../_config';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 
+import { CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -26,7 +27,7 @@ class V1InnovationSectionUpdate {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const key = params.sectionKey;
-      const body = JoiHelper.Validate<{ [key: string]: any }>(INNOVATION_SECTIONS_CONFIG[key].validation, request.body);
+      const body = JoiHelper.Validate<{ [key: string]: any }>(CurrentDocumentSchemaMap[key], request.body);
 
       const authInstance = await authorizationService.validate(context)
         .setInnovation(params.innovationId)
@@ -34,7 +35,7 @@ class V1InnovationSectionUpdate {
         .checkInnovation()
         .verify();
       const requestUser = authInstance.getUserInfo();
-      const domainContext = authInstance.getContext()
+      const domainContext = authInstance.getContext();
 
       const result = await innovationSectionsService.updateInnovationSectionInfo({ id: requestUser.id }, domainContext, params.innovationId, params.sectionKey, body);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result?.id });

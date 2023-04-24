@@ -1,14 +1,15 @@
 import { inject, injectable } from 'inversify';
 
 import { ActivityLogEntity, InnovationActionEntity, InnovationEntity, InnovationSectionEntity, InnovationSupportEntity, UserEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationSectionAliasEnum, InnovationSectionEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
+import { ActivityEnum, InnovationActionStatusEnum, InnovationCollaboratorStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { ForbiddenError, InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { DomainServiceSymbol, DomainServiceType, IdentityProviderServiceSymbol, IdentityProviderServiceType, NotifierServiceSymbol, NotifierServiceType } from '@innovations/shared/services';
-import { ActivityLogListParamsType, DateISOType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
+import { ActivityLogListParamsType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
 
+import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
@@ -29,7 +30,7 @@ export class InnovationActionsService extends BaseService {
     filters: {
       innovationId?: string,
       innovationName?: string,
-      sections?: InnovationSectionEnum[],
+      sections?: CurrentCatalogTypes.InnovationSections[],
       status?: InnovationActionStatusEnum[],
       innovationStatus?: InnovationStatusEnum[],
       createdByMe?: boolean,
@@ -46,9 +47,9 @@ export class InnovationActionsService extends BaseService {
       description: string,
       innovation: { id: string, name: string },
       status: InnovationActionStatusEnum,
-      section: InnovationSectionEnum,
-      createdAt: DateISOType,
-      updatedAt: DateISOType,
+      section: CurrentCatalogTypes.InnovationSections,
+      createdAt: Date,
+      updatedAt: Date,
       updatedBy: { name: string, role?: ServiceRoleEnum | undefined },
       createdBy: { id: string, name: string, role?: ServiceRoleEnum | undefined, organisationUnit?: { id: string, name: string, acronym?: string } },
       notifications?: number
@@ -183,12 +184,12 @@ export class InnovationActionsService extends BaseService {
       createdAt: action.createdAt,
       updatedAt: action.updatedAt,
       updatedBy: {
-        name: (action.updatedByUserRole && usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ?? '',
+        name: (action.updatedByUserRole && usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ?? '[deleted account]',
         role: action.updatedByUserRole?.role,
       },
       createdBy: {
         id: action.createdByUser.id,
-        name: usersInfo.get(action.createdByUser.identityId)?.displayName ?? '',
+        name: usersInfo.get(action.createdByUser.identityId)?.displayName ?? '[deleted account]',
         role: action.createdByUserRole?.role,
         ...(action.innovationSupport ? {
           organisationUnit: {
@@ -212,10 +213,10 @@ export class InnovationActionsService extends BaseService {
     id: string,
     displayId: string,
     status: InnovationActionStatusEnum,
-    section: InnovationSectionEnum,
+    section: CurrentCatalogTypes.InnovationSections,
     description: string,
-    createdAt: DateISOType,
-    updatedAt: DateISOType,
+    createdAt: Date,
+    updatedAt: Date,
     updatedBy: { name: string, role: ServiceRoleEnum, isOwner?: boolean },
     createdBy: { id: string, name: string, role: ServiceRoleEnum, organisationUnit?: { id: string, name: string, acronym?: string } },
     declineReason?: string
@@ -237,12 +238,12 @@ export class InnovationActionsService extends BaseService {
       ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
-      .innerJoin('innovation.owner', 'owner')
-      .innerJoin('action.createdByUserRole', 'createdByUserRole')
-      .innerJoin('createdByUserRole.user', 'createdByUser')
+      .leftJoin('innovation.owner', 'owner')
+      .leftJoin('action.createdByUserRole', 'createdByUserRole')
+      .leftJoin('createdByUserRole.user', 'createdByUser')
       .leftJoin('createdByUserRole.organisationUnit', 'createdByUserOrganisationUnit')
-      .innerJoin('action.updatedByUserRole', 'updatedByUserRole')
-      .innerJoin('updatedByUserRole.user', 'updatedByUser')
+      .leftJoin('action.updatedByUserRole', 'updatedByUserRole')
+      .leftJoin('updatedByUserRole.user', 'updatedByUser')
       .where('action.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
@@ -265,7 +266,11 @@ export class InnovationActionsService extends BaseService {
     }
 
     const createdByUser = await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId);
-    const lastUpdatedByUser = await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId);
+
+    let lastUpdatedByUserName = '[deleted user]';
+    if (dbAction.updatedByUserRole) {
+      lastUpdatedByUserName = (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))?.displayName || 'unknown user';
+    }
 
     return {
       id: dbAction.id,
@@ -276,10 +281,10 @@ export class InnovationActionsService extends BaseService {
       createdAt: dbAction.createdAt,
       updatedAt: dbAction.updatedAt,
       updatedBy: {
-        name: lastUpdatedByUser.displayName,
-        role: dbAction.updatedByUserRole.role,
-        ...(dbAction.updatedByUserRole.role === ServiceRoleEnum.INNOVATOR && {
-          isOwner: dbAction.innovationSection.innovation.owner.id === dbAction.updatedByUserRole.user.id
+        name: lastUpdatedByUserName,
+        role: dbAction.updatedByUserRole?.role,
+        ...(dbAction.updatedByUserRole?.role === ServiceRoleEnum.INNOVATOR && {
+          isOwner: dbAction.innovationSection.innovation.owner?.id === dbAction.updatedByUserRole.user.id
         })
       },
       createdBy: {
@@ -304,14 +309,14 @@ export class InnovationActionsService extends BaseService {
     user: { id: string, identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
-    data: { section: InnovationSectionEnum, description: string },
+    data: { section: CurrentCatalogTypes.InnovationSections, description: string },
     entityManager?: EntityManager,
   ): Promise<{ id: string }> {
 
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const innovation = await connection.createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
@@ -333,7 +338,7 @@ export class InnovationActionsService extends BaseService {
     );
 
     let actionCounter = (await innovationSection.actions).length;
-    const displayId = InnovationSectionAliasEnum[data.section] + (++actionCounter).toString().slice(-2).padStart(2, '0');
+    const displayId = CurrentDocumentConfig.InnovationSectionAliasEnum[data.section] + (++actionCounter).toString().slice(-2).padStart(2, '0');
 
     const actionObj = InnovationActionEntity.new({
       displayId: displayId,

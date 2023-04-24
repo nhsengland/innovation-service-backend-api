@@ -5,9 +5,11 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { InnovationSubgroupBenefitEntity } from './innovation-subgroup-benefit.entity';
 
-import { CarePathwayCatalogueEnum, CostComparisonCatalogueEnum, PatientRangeCatalogueEnum } from '../../enums/catalog.enums';
+import type { catalogCarePathway, catalogCostComparison, catalogPatientRange } from '../../schemas/innovation-record/202209/catalog.types';
 
-
+/**
+ * @deprecated to be removed with InnovationEntity changes
+ */
 @Entity('innovation_subgroup')
 export class InnovationSubgroupEntity extends BaseEntity {
 
@@ -21,13 +23,13 @@ export class InnovationSubgroupEntity extends BaseEntity {
   conditions: string;
 
   @Column({ name: 'care_pathway', type: 'nvarchar', nullable: true })
-  carePathway: CarePathwayCatalogueEnum;
+  carePathway: catalogCarePathway;
 
   @Column({ name: 'cost_description', type: 'nvarchar', nullable: true })
   costDescription: string;
 
   @Column({ name: 'patients_range', type: 'nvarchar', nullable: true })
-  patientsRange: PatientRangeCatalogueEnum;
+  patientsRange: catalogPatientRange;
 
   @Column({ name: 'sell_expectations', type: 'nvarchar', nullable: true })
   sellExpectations: string;
@@ -36,7 +38,7 @@ export class InnovationSubgroupEntity extends BaseEntity {
   usageExpectations: string;
 
   @Column({ name: 'cost_comparison', type: 'nvarchar', nullable: true })
-  costComparison: CostComparisonCatalogueEnum;
+  costComparison: catalogCostComparison;
 
   @Column({ name: 'other_benefit', type: 'nvarchar', nullable: true })
   otherBenefit: string;
