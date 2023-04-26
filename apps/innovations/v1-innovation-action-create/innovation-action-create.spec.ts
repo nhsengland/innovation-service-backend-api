@@ -18,8 +18,6 @@ describe('v1-innovation-action-create Suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-
-    new MockBuilder().mockNoSQLServiceInit();
       
     await TestsHelper.init();
     testData = TestsHelper.sampleData;

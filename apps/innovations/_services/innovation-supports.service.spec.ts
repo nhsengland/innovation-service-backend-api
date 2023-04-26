@@ -4,7 +4,7 @@ import { container } from '../_config';
 import { InnovationEntity, InnovationSupportEntity, InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
-import { DomainInnovationsService, DomainUsersService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
+import { DomainInnovationsService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import { randText, randUuid } from '@ngneat/falso';
 import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
@@ -25,7 +25,6 @@ describe('Innovation supports service test suite', () => {
   });
 
   beforeEach(async () => {
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 

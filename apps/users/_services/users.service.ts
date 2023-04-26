@@ -137,7 +137,7 @@ export class UsersService extends BaseService {
 
   }
 
-  async createUserInnovator(user: { identityId: string }, data: { surveyId: null | string }): Promise<{ id: string }> {
+  async createUserInnovator(user: { identityId: string }): Promise<{ id: string }> {
 
     const identityIdExists = !!(await this.sqlConnection.createQueryBuilder(UserEntity, 'users').where('external_id = :userId', { userId: user.identityId }).getCount());
     if (identityIdExists) {
@@ -149,7 +149,6 @@ export class UsersService extends BaseService {
 
       const dbUser = await transactionManager.save(UserEntity.new({
         identityId: user.identityId,
-        surveyId: data.surveyId,
       }));
 
       // Creates default organisation.

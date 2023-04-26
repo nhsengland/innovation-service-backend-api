@@ -6,7 +6,7 @@ import { InnovationSectionBuilder } from '@innovations/shared/builders/innovatio
 import { InnovationBuilder } from '@innovations/shared/builders/innovation.builder';
 import { InnovationActionStatusEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { DomainUsersService, NOSQLConnectionService } from '@innovations/shared/services';
+import { DomainUsersService } from '@innovations/shared/services';
 import { rand, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from './interfaces';
@@ -25,7 +25,6 @@ describe('Innovation Sections Suite', () => {
   });
 
   beforeEach(async () => {
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(
       {
         displayName: randText(),

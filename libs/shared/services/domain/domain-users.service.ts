@@ -33,7 +33,7 @@ export class DomainUsersService {
     // The returning data for organisations/units will be reviewed later, doubling the joins at the moment though to keep current interface
     const query = this.userRepository.createQueryBuilder('user')
       .select([
-        'user.id', 'user.identityId', 'user.lockedAt','user.firstTimeSignInAt', 'user.surveyId',
+        'user.id', 'user.identityId', 'user.lockedAt','user.firstTimeSignInAt',
         // These should be removed in the future and use the service roles instead
         'userOrganisations.id', 'userOrganisations.role',
         'organisation.id', 'organisation.name', 'organisation.acronym', 'organisation.size', 'organisation.isShadow', 'organisation.description', 'organisation.registrationNumber',
@@ -75,7 +75,6 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      surveyId: dbUser.surveyId,
       organisations: (await dbUser.userOrganisations).map(userOrganisation => {
 
         const organisation = userOrganisation.organisation;

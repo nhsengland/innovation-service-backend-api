@@ -3,7 +3,6 @@ import { container } from '../_config';
 
 import { randUuid } from '@ngneat/falso';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
-import { NOSQLConnectionService } from '@users/shared/services';
 import type { EntityManager } from 'typeorm';
 
 import { OrganisationsServiceSymbol, OrganisationsServiceType } from './interfaces';
@@ -23,7 +22,6 @@ describe('Innovation Assessments Suite', () => {
   });
 
   beforeEach(async () => {
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 

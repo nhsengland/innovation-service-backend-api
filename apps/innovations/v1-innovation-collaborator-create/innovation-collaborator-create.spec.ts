@@ -24,8 +24,6 @@ describe('v1-innovation-collaborator-create Suite', () => {
 
   beforeAll(async () => {
 
-    new MockBuilder().mockNoSQLServiceInit();
-
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
 

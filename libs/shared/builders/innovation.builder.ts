@@ -1,4 +1,4 @@
-import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
+import { randBoolean, randCountry, randNumber, randProduct, randText, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
 import { InnovationDocumentEntity, createDocumentFromInnovation } from '../entities/innovation/innovation-document.entity';
@@ -35,7 +35,6 @@ export class InnovationBuilder {
       description: randText(),
       countryName: randCountry(),
       postcode: randZipCode(),
-      surveyId: randUuid(),
       status: InnovationStatusEnum.IN_PROGRESS,
       assessments: [],
       createdAt: new Date()

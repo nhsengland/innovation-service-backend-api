@@ -5,14 +5,14 @@ import { Container } from 'inversify';
 import type { DataSource } from 'typeorm';
 import {
   AuthorizationService, AuthorizationServiceType, DomainService, DomainServiceType, FileStorageService, FileStorageServiceType, HttpService, HttpServiceType, IdentityProviderService,
-  IdentityProviderServiceType, LoggerService, LoggerServiceType, NOSQLConnectionService, NOSQLConnectionServiceType, NotifierService, NotifierServiceType, SQLConnectionService,
+  IdentityProviderServiceType, LoggerService, LoggerServiceType, NotifierService, NotifierServiceType, SQLConnectionService,
   SQLConnectionServiceType, StorageQueueService, StorageQueueServiceType
 } from '../services';
 import { AuditService } from '../services/integrations/audit.service';
 import {
   AuditServiceSymbol,
   AuditServiceType,
-  AuthorizationServiceSymbol, CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, FileStorageServiceSymbol, HttpServiceSymbol, IdentityProviderServiceSymbol, LoggerServiceSymbol, NOSQLConnectionServiceSymbol,
+  AuthorizationServiceSymbol, CacheServiceSymbol, CacheServiceType, DomainServiceSymbol, FileStorageServiceSymbol, HttpServiceSymbol, IdentityProviderServiceSymbol, LoggerServiceSymbol,
   NotifierServiceSymbol, SQLConnectionServiceSymbol, SQLProviderSymbol, StorageQueueServiceSymbol
 } from '../services/interfaces';
 import { CacheService } from '../services/storage/cache.service';
@@ -30,7 +30,6 @@ container.bind<IdentityProviderServiceType>(IdentityProviderServiceSymbol).to(Id
 container.bind<LoggerServiceType>(LoggerServiceSymbol).to(LoggerService).inSingletonScope();
 container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).inSingletonScope();
 container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionService).inSingletonScope();
-container.bind<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).to(NOSQLConnectionService).inSingletonScope();
 container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
 container.bind<AuditServiceType>(AuditServiceSymbol).to(AuditService).inSingletonScope();
 container.bind<CacheServiceType>(CacheServiceSymbol).to(CacheService).inSingletonScope();

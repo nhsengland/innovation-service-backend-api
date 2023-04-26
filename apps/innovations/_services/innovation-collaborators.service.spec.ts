@@ -5,7 +5,7 @@ import { container } from '../_config';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
 import { InnovationCollaboratorStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { NotFoundError, UnauthorizedError, UnprocessableEntityError } from '@innovations/shared/errors';
-import { DomainUsersService, IdentityProviderService, NOSQLConnectionService, NotifierService } from '@innovations/shared/services';
+import { DomainUsersService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randEmail, randRole, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
@@ -26,7 +26,6 @@ describe('Innovation Collaborators Suite', () => {
   });
 
   beforeEach(async () => {
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
     jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
     em = await TestsHelper.getQueryRunnerEntityManager();
   });

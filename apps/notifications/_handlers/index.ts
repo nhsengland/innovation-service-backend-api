@@ -24,7 +24,6 @@ export { LockUserHandler } from './lock-user.handler';
 export { NeedsAssessmentAssessorUpdateHandler } from './needs-assessment-assessor-update.handler';
 export { NeedsAssessmentCompletedHandler } from './needs-assessment-completed.handler';
 export { NeedsAssessmentStartedHandler } from './needs-assessment-started.handler';
-export { SLSValidationHandler } from './sls-validation.handler';
 export { ThreadCreationHandler } from './thread-creation.handler';
 export { ThreadMessageCreationHandler } from './thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './unit-inactivation-support-status-completed.handler';

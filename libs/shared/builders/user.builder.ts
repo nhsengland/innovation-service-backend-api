@@ -18,9 +18,7 @@ export class UserBuilder extends BaseBuilder {
     this.user = UserEntity.new({
       firstTimeSignInAt: randPastDate(),
       identityId: randUuid(),
-      surveyId: randUuid(),
       serviceRoles: []
-
     });
 
   }

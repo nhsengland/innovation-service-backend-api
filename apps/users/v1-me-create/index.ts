@@ -41,7 +41,7 @@ class V1MeCreate {
 
       }
 
-      const result = await usersService.createUserInnovator({ identityId: body.identityId }, { surveyId: body.surveyId ?? null });
+      const result = await usersService.createUserInnovator({ identityId: body.identityId });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

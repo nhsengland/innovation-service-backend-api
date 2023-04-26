@@ -1,7 +1,6 @@
 import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
 import { container } from '../_config';
 
-import { NOSQLConnectionService } from '@innovations/shared/services';
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
@@ -20,7 +19,6 @@ describe('Innovation supports service test suite', () => {
   });
 
   beforeEach(async () => {
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 

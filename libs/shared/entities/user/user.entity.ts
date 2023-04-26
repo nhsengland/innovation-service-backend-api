@@ -19,9 +19,6 @@ export class UserEntity extends BaseEntity {
   @Column({ name: 'external_id', type: 'nvarchar', nullable: false })
   identityId: string;
 
-  @Column({ name: 'survey_id', type: 'nvarchar', nullable: true })
-  surveyId: null | string;
-
   @Column({ name: 'first_time_sign_in_at', type: 'datetime2', nullable: true })
   firstTimeSignInAt: null | Date;
 

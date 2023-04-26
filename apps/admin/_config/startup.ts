@@ -4,10 +4,7 @@ import YAML from 'yaml';
 
 import { container } from '@admin/shared/config/inversify.config';
 
-import {
-  HttpServiceSymbol, HttpServiceType,
-  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType
-} from '@admin/shared/services';
+import { HttpServiceSymbol, HttpServiceType } from '@admin/shared/services';
 
 import { AnnouncementsService } from '../_services/announcements.service';
 import { OrganisationsService } from '../_services/organisations.service';
@@ -32,13 +29,10 @@ export const startup = async (): Promise<void> => {
   console.log('Initializing Admin app function');
 
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
 
   try {
 
     console.group('Initializing Admin app function:');
-
-    await noSqlConnectionService.init();
 
     console.log('Initialization complete');
     console.groupEnd();

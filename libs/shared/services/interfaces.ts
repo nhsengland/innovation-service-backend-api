@@ -10,7 +10,6 @@ import type { NotifierService } from '../services/integrations/notifier.service'
 import type { StorageQueueService } from '../services/integrations/storage-queue.service';
 
 import type { FileStorageService } from '../services/storage/file-storage.service';
-import type { NOSQLConnectionService } from '../services/storage/nosql-connection.service';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import type { CacheService } from './storage/cache.service';
 import type { SqlProvider } from './storage/sql-connection.provider';
@@ -51,6 +50,3 @@ export const SQLConnectionServiceSymbol = Symbol.for('SQLConnectionService');
 
 export type SQLProviderType = SqlProvider;
 export const SQLProviderSymbol = Symbol.for('SqlProvider');
-
-export type NOSQLConnectionServiceType = typeof NOSQLConnectionService.prototype;
-export const NOSQLConnectionServiceSymbol = Symbol.for('NOSQLConnectionService');

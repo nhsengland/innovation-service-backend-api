@@ -630,26 +630,6 @@ paths:
                 type: array
                 items:
                   type: object
-  /v1/survey:
-    post:
-      operationId: v1-survey-create
-      description: Creates a Survey object with answers
-      tags:
-        - "[v1] Survey"
-      parameters: []
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier for survey object
-        "400":
-          description: Invalid survey payload
   /v1:
     head:
       operationId: v1-users-email-available

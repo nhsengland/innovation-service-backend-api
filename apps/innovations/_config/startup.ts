@@ -3,10 +3,7 @@ import type { Container } from 'inversify';
 import { join } from 'path';
 import YAML from 'yaml';
 
-import {
-  HttpServiceSymbol, NOSQLConnectionServiceSymbol,
-  type HttpServiceType, type NOSQLConnectionServiceType
-} from '@innovations/shared/services';
+import { HttpServiceSymbol, type HttpServiceType } from '@innovations/shared/services';
 
 
 export const startup = async (container: Container): Promise<void> => {
@@ -14,13 +11,11 @@ export const startup = async (container: Container): Promise<void> => {
   console.log('Initializing Innovations app function');
 
   const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
-  const noSqlConnectionService = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol);
 
   try {
 
     console.group('Initializing Innovations app function:');
 
-    await noSqlConnectionService.init();
 
     console.log('Initialization complete');
     console.groupEnd();

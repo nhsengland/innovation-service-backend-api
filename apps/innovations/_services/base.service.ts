@@ -1,10 +1,8 @@
 import { injectable } from 'inversify';
-import type { Mongoose } from 'mongoose';
 import type { DataSource } from 'typeorm';
 
 import {
   LoggerServiceSymbol, LoggerServiceType,
-  NOSQLConnectionServiceSymbol, NOSQLConnectionServiceType,
   SQLConnectionServiceSymbol, SQLConnectionServiceType
 } from '@innovations/shared/services';
 
@@ -28,14 +26,6 @@ export class BaseService {
       this._sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
     }
     return this._sqlConnection;
-  }
-
-  private _noSqlConnection: Mongoose;
-  get noSqlConnection(): Mongoose {
-    if(!this._noSqlConnection) {
-      this._noSqlConnection = container.get<NOSQLConnectionServiceType>(NOSQLConnectionServiceSymbol).getConnection();
-    }
-    return this._noSqlConnection;
   }
   
   constructor() {}

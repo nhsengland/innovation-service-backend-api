@@ -4,7 +4,6 @@ import { TestDataType, TestsHelper } from '@admin/shared/tests';
 
 import { UserEntity } from '@admin/shared/entities';
 // import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
-import { NOSQLConnectionService } from '@admin/shared/services';
 
 import { container } from '../_config';
 import SYMBOLS from './symbols';
@@ -20,7 +19,6 @@ describe('Admin / Services / Users Service', () => {
 
   beforeAll(async () => {
 
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
     // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
     // jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 

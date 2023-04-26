@@ -1,7 +1,7 @@
 import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { UserEntity } from '../entities';
-import { DomainUsersService, NOSQLConnectionService } from '../services';
+import { DomainUsersService } from '../services';
 import type { DomainUserInfoType } from '../types';
 
 export class MockBuilder {
@@ -28,12 +28,6 @@ export class MockBuilder {
   }
 
 
-  mockNoSQLServiceInit(): MockBuilder {
-    this._spies.push(jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue());
-    return this;
-  }
-
-
   mockDomainUser(
     user: UserEntity,
   ): DomainUserInfoBuilder {
@@ -50,7 +44,6 @@ export class MockBuilder {
       phone: randPhoneNumber(),
       // roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })], // Was like this before, not needed
       roles: user.serviceRoles,
-      surveyId: null,
       organisations: [],
     } as DomainUserInfoType;
 

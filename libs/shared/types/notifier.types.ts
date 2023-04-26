@@ -119,10 +119,6 @@ export type NotifierTemplatesType = {
   },
   
   // Admin module.
-  [NotifierTypeEnum.SLS_VALIDATION]: {
-    code: string
-  },
-
   [NotifierTypeEnum.LOCK_USER]: {
     user: { id: string }
   },

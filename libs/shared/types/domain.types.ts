@@ -34,7 +34,6 @@ export type DomainUserInfoType = {
   lockedAt: null | Date,
   passwordResetAt: null | Date,
   firstTimeSignInAt: null | Date,
-  surveyId: null | string,
   organisations: {
     id: string,
     name: string,

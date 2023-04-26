@@ -36,8 +36,6 @@ describe('v1-innovation-action-info Suite', () => {
 
   beforeAll(async () => {
 
-    new MockBuilder().mockNoSQLServiceInit();
-
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
 

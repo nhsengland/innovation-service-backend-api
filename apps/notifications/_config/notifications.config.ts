@@ -33,7 +33,6 @@ import {
   NeedsAssessmentAssessorUpdateHandler,
   NeedsAssessmentCompletedHandler,
   NeedsAssessmentStartedHandler,
-  SLSValidationHandler,
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
@@ -248,12 +247,6 @@ export const NOTIFICATIONS_CONFIG: {
   },
 
   // Admin module.
-  [NotifierTypeEnum.SLS_VALIDATION]: {
-    handler: SLSValidationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.SLS_VALIDATION]>({
-      code: Joi.string().required()
-    }).required()
-  },
 
   [NotifierTypeEnum.LOCK_USER]: {
     handler: LockUserHandler,
