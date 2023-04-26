@@ -2,6 +2,7 @@ import { BlobClient, BlobDeleteIfExistsResponse, BlobSASPermissions, BlobSASSign
 import { injectable } from 'inversify';
 import { extname } from 'path';
 
+import { basename } from 'path';
 import { FILE_STORAGE_CONFIG } from '../../config/file-storage.config';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
 
@@ -24,6 +25,14 @@ export class FileStorageService {
 
     const starts = new Date();
     const expires = new Date(starts.getTime() + 900_000); // 15 minutes.
+
+    // sanitize the displayName to remove any special characters causing issues with the contentDisposition (,)
+    displayName = displayName.replace(/[^a-zA-Z0-9-_. ]/g, '');
+    // if the displayName is empty, set it to the uuid filename (ie: chinese characters will be removed by the sanitize above)
+    const filenameWithoutExtension = basename(displayName, extname(displayName));
+    if(! filenameWithoutExtension.match(/\w+/)) {
+      displayName = filename;
+    }
 
     const signature: BlobSASSignatureValues = {
       protocol: SASProtocol.HttpsAndHttp,
