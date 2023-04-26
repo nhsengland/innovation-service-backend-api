@@ -44,6 +44,23 @@ export class DomainInnovationsService {
     );
   }
 
+  async withdrawExpiredInnovationsTransfers(entityManager?: EntityManager): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbTransfers = await em.createQueryBuilder(InnovationTransferEntity, 'transfers')
+      .where('DATEDIFF(day, transfers.created_at, GETDATE()) > 30')
+      .getMany();
+  
+    for (const dbTransfer of dbTransfers) { 
+      await em.save(InnovationTransferEntity, {
+        ...dbTransfer,
+        status: InnovationTransferStatusEnum.EXPIRED,
+        finishedAt: new Date().toISOString()
+      });
+    }
+ 
+  }
+
   async withdrawInnovations(
     user: { id: string, roleId: string },
     innovations: { id: string, reason: null | string }[],

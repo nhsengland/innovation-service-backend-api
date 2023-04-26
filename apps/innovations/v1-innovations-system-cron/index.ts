@@ -14,6 +14,8 @@ class V1InnovationsSystemSchedule {
     logger.log('Running cron job: V1InnovationsSystemSchedule');
     logger.log('Running cron job: V1InnovationsSystemSchedule - Withdraw Innovations');
     await domainService.innovations.withdrawExpiredInnovations();
+    logger.log('Running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer');
+    await domainService.innovations.withdrawExpiredInnovationsTransfers();
     logger.log('Running cron job: V1InnovationsSystemSchedule - Cleanup Innovation documents');
     await domainService.innovations.cleanupInnovationDocuments();
     logger.log('Finished cron job: V1InnovationsSystemSchedule');
