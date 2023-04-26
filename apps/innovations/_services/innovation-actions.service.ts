@@ -129,7 +129,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     if (filters.innovationStatus && filters.innovationStatus.length > 0) {
-      query.andWhere('innovation.status IN (:...statuses)', { statuses: filters.innovationStatus });
+      query.andWhere('innovation.status IN (:...innovationStatuses)', { innovationStatuses: filters.innovationStatus });
     }
 
     if (filters.createdByMe) {
