@@ -1,4 +1,4 @@
-export type ResponseDTO =  {
-  section: {section: string}, 
-  data: Record<string, any>
-}[]
+export type ResponseDTO = {
+  section: { section: string };
+  data: Record<string, any>;
+}[];

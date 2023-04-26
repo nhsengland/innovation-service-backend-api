@@ -1,27 +1,16 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovationRecordV31625572027787 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // innovation table
     await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "benefits"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "has_subgroups"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "has_subgroups"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD cost_description nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD sell_expectations nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD usage_expectations nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD cost_comparison nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD cost_description nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD sell_expectations nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD usage_expectations nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD cost_comparison nvarchar(255) NULL;`);
     await queryRunner.query(
       `ALTER TABLE "innovation" ADD clinicians_impact_details nvarchar(255) NULL;`
     );
@@ -40,12 +29,8 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
       `ALTER TABLE "innovation" ADD other_environmental_benefit nvarchar(255) NULL;`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD impact_patients bit NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD impact_clinicians bit NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD impact_patients bit NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD impact_clinicians bit NULL;`);
 
     // innovation_general_benefit table
     await queryRunner.query(`CREATE TABLE "innovation_general_benefit" (
@@ -90,9 +75,7 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
     );
 
     // innovation_subgroup table
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" DROP COLUMN "benefits"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" DROP COLUMN "benefits"`);
     await queryRunner.query(
       `ALTER TABLE "innovation_subgroup" ADD other_benefit nvarchar(255) NULL;`
     );
@@ -124,48 +107,22 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
 
   async down(queryRunner: QueryRunner): Promise<void> {
     // innovation table
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "cost_description"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "sell_expectations"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "usage_expectations"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "cost_comparison"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "clinicians_impact_details"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "cost_description"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "sell_expectations"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "usage_expectations"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "cost_comparison"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "clinicians_impact_details"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "accessibility_impact_details"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "accessibility_steps_details"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "accessibility_impact_details"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "accessibility_steps_details"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "other_general_benefit"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "other_environmental_benefit"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "impact_patients"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN "impact_clinicians"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "other_general_benefit"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "other_environmental_benefit"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "impact_patients"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN "impact_clinicians"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD benefits nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD has_subgroups nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD benefits nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD has_subgroups nvarchar(255) NULL;`);
 
     // innovation_general_benefit
     await queryRunner.query(
@@ -191,20 +148,12 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
       `ALTER TABLE "innovation_environmental_benefit" SET ( SYSTEM_VERSIONING = OFF )`
     );
     await queryRunner.query(`DROP TABLE "innovation_environmental_benefit"`);
-    await queryRunner.query(
-      `DROP TABLE "innovation_environmental_benefit_history"`
-    );
+    await queryRunner.query(`DROP TABLE "innovation_environmental_benefit_history"`);
 
     // innovation_subgroup table
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" DROP COLUMN "other_benefit"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" DROP COLUMN "other_condition"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" ADD benefits nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" DROP COLUMN "other_benefit"`);
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" DROP COLUMN "other_condition"`);
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" ADD benefits nvarchar(255) NULL;`);
 
     // innovation_subgroup_benefit table
     await queryRunner.query(
@@ -219,5 +168,4 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
     await queryRunner.query(`DROP TABLE "innovation_subgroup_benefit"`);
     await queryRunner.query(`DROP TABLE "innovation_subgroup_benefit_history"`);
   }
-
 }

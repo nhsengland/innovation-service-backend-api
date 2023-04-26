@@ -8,22 +8,21 @@ import { RedisCache } from './redis-cache.service';
 
 /**
  * Cache configuration type
- * 
+ *
  * This type is used to define the cache configuration for the application and is responsible for
  * type checking for the different caches
  */
 export type CacheConfigType = {
   IdentityUserInfo: RedisCache<IdentityUserInfo>;
-}
+};
 
 @injectable()
 /**
  * Cache service
- * 
+ *
  * This service is used to group all application caches and return them by their global identifier
  */
 export class CacheService {
-
   private cacheConfigMap: CacheConfigType;
   private redis: ReturnType<typeof createClient>;
 
@@ -31,7 +30,11 @@ export class CacheService {
     this.redis = createClient(REDIS_DEFAULT_CONNECTION);
     // Setting the cacheConfigMap here before connecting so that it's already available at injection time
     this.cacheConfigMap = {
-      IdentityUserInfo: new RedisCache<IdentityUserInfo>(this.redis, this.logger, 'IdentityUserInfo')
+      IdentityUserInfo: new RedisCache<IdentityUserInfo>(
+        this.redis,
+        this.logger,
+        'IdentityUserInfo'
+      ),
     };
 
     // Initialize Redis

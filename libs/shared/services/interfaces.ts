@@ -26,7 +26,6 @@ export const CacheServiceSymbol = Symbol.for('CacheService');
 export type DomainServiceType = typeof DomainService.prototype;
 export const DomainServiceSymbol = Symbol.for('DomainService');
 
-
 export type HttpServiceType = typeof HttpService.prototype;
 export const HttpServiceSymbol = Symbol.for('HttpService');
 

@@ -13,30 +13,24 @@ import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1AdminUserUpdate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
 
       const result = await usersService.updateUser(auth.getContext(), params.userId, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -61,16 +55,16 @@ export default openApi(V1AdminUserUpdate.httpTrigger as AzureFunction, '/v1/user
                 userId: {
                   type: 'string',
                   description: 'Id of the user.',
-                }
-              }
-            }
-          }
-        }
+                },
+              },
+            },
+          },
+        },
       },
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to lock a user.' },
       '404': { description: 'The user does not exist.' },
-      '500': { description: 'An error occurred while locking a user.' }
-    }
-  }
+      '500': { description: 'An error occurred while locking a user.' },
+    },
+  },
 });

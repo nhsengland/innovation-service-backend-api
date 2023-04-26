@@ -1,4 +1,4 @@
 export type ResponseDTO = {
-  assessmentId: string,
-  assessorId: string
-}
+  assessmentId: string;
+  assessorId: string;
+};

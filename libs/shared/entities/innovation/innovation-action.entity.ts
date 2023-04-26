@@ -9,10 +9,8 @@ import { InnovationActionStatusEnum } from '../../enums/innovation.enums';
 import { UserRoleEntity } from '../user/user-role.entity';
 import { UserEntity } from '../user/user.entity';
 
-
 @Entity('innovation_action')
 export class InnovationActionEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -24,7 +22,6 @@ export class InnovationActionEntity extends BaseEntity {
 
   @Column({ type: 'simple-enum', enum: InnovationActionStatusEnum, nullable: false })
   status: InnovationActionStatusEnum;
-
 
   @ManyToOne(() => InnovationSectionEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_section_id' })
@@ -51,5 +48,4 @@ export class InnovationActionEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

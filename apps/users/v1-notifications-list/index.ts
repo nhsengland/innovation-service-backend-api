@@ -2,7 +2,11 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import { InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
+import {
+  InnovationStatusEnum,
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum,
+} from '@users/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
@@ -13,54 +17,55 @@ import { NotificationsServiceSymbol, NotificationsServiceType } from '../_servic
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1UserNotifications {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
+    const notificationsService = container.get<NotificationsServiceType>(
+      NotificationsServiceSymbol
+    );
 
     try {
-      const authInstance = await authService.validate(context)
+      const authInstance = await authService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
-      const domainContext = authInstance.getContext(); 
+      const domainContext = authInstance.getContext();
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order, ...filters } = queryParams;
 
-      const notifications = await notificationsService.getUserNotifications(domainContext, filters, { skip, take, order });
+      const notifications = await notificationsService.getUserNotifications(
+        domainContext,
+        filters,
+        { skip, take, order }
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: notifications.total,
-        data: notifications.data.map(notification => ({
+        data: notifications.data.map((notification) => ({
           id: notification.id,
           innovation: {
             id: notification.innovation.id,
             name: notification.innovation.name,
             status: notification.innovation.status,
-            ownerName: notification.innovation.ownerName
+            ownerName: notification.innovation.ownerName,
           },
           contextType: notification.contextType,
           contextDetail: notification.contextDetail,
           contextId: notification.contextId,
           createdAt: notification.createdAt,
           readAt: notification.readAt,
-          params: notification.params
-        }))
+          params: notification.params,
+        })),
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/notifications', {
@@ -68,7 +73,7 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
     description: 'Returns the user notifications',
     operationId: 'v1-notifications-list',
     tags: ['[v1] Notifications'],
-    parameters: SwaggerHelper.paramJ2S({query: QueryParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'Success',
@@ -138,13 +143,13 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
                         type: 'object',
                         description: 'The notification params',
                       },
-                    }
-                  }
-                }
+                    },
+                  },
+                },
               },
             },
-          }
-        }
+          },
+        },
       },
     },
   },

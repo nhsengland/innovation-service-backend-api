@@ -1,4 +1,3 @@
-
 export enum EmailTypeEnum {
   ACCOUNT_CREATION_TO_INNOVATOR = '62486954-b235-4aa6-8b8d-960191fc6e69',
   INNOVATION_SUBMITED_TO_INNOVATOR = 'f34dd5fd-815b-4cc5-841d-46623ee85ad6',
@@ -54,63 +53,281 @@ export enum EmailTypeEnum {
   INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR = '319228ec-121d-430c-8024-b938343232ba',
 }
 
-
 /**
  * NOTE: Usually, display_name is optional because email-listener will fill it in.
  */
 export type EmailTemplatesType = {
-  [EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR]: { display_name?: string, innovation_service_url: string },
-  [EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR]: { display_name?: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS]: { display_name?: string, innovation_name: string, innovation_url: string },
-  [EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR]: { display_name?: string, innovation_name: string, message_url: string },
-  [EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR]: { display_name?: string, innovation_name: string, needs_assessment_url: string },
-  [EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA]: { display_name?: string, innovation_name: string, innovation_url: string },
-  [EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA]: { display_name?: string, innovation_name: string, innovation_url: string },
-  [EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA]: { display_name?: string, innovation_url: string },
-  [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR]: { display_name?: string, innovation_name: string, organisation_name: string, support_status: string, support_status_change_comment: string, support_url: string },
-  [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS]: { display_name?: string, qa_name: string, innovation_url: string },
-  [EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
-  [EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
-  [EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, action_url: string },
-  [EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR]: { display_name?: string, innovator_name: string, innovation_name: string, declined_action_reason: string, action_url: string },
-  [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, thread_url: string }
-  [EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string, thread_url: string }
-  [EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL]: { display_name?: string, subject: string, innovation_name: string, thread_url: string }
-  [EmailTypeEnum.COMMENT_CREATION_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, comment_url: string },
-  [EmailTypeEnum.COMMENT_CREATION_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string, comment_url: string },
-  [EmailTypeEnum.COMMENT_REPLY_TO_ALL]: { display_name?: string, innovation_name: string, comment_url: string },
-  [EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS]: { display_name?: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER]: { innovator_name: string, innovation_name: string, transfer_url: string },
-  [EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER]: { innovator_name: string, innovation_name: string, transfer_url: string },
-  [EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER]: { innovator_name?: string, innovation_name: string, new_innovator_name: string, new_innovator_email: string },
-  [EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER]: { innovator_name?: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER]: { innovator_name?: string, new_innovator_name: string, innovation_name: string },
-  [EmailTypeEnum.LOCK_USER_TO_LOCKED_USER]: { display_name?: string },
-  [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED]: { display_name?: string, old_organisation: string, old_unit: string, new_organisation: string, new_unit: string },
-  [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT]: { display_name?: string, user_name: string, old_unit: string },
-  [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT]: { display_name?: string, user_name: string, new_unit: string },
-  [EmailTypeEnum.ACCESSOR_DAILY_DIGEST]: { display_name?: string, actions_count: string, messages_count: string, supports_count: string },
-  [EmailTypeEnum.INNOVATOR_DAILY_DIGEST]: { display_name?: string, actions_count: string, messages_count: string, supports_count: string },
-  [EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: { display_name?: string, unit_name: string, innovation_name: string, support_url: string },
-  [EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD]: { display_name?: string, innovation_name: string },
-  [EmailTypeEnum.QA_A_IDLE_SUPPORT]: { display_name?: string, innovation_name: string, innovator_name: string },
-  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR]: { display_name?: string, accessor_name: string, unit_name: string, innovation_name: string, pdf_request_comment: string, pdf_export_url: string },
-  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR]: { display_name?: string, innovation_name: string, innovator_name: string, innovation_url: string },
-  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR]: { display_name?: string, innovation_name: string, innovator_name: string, innovation_url: string, pdf_rejection_comment: null | string },
-  [EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST]: { display_name?: string, innovation_name: string, innovation_url: string, accessor_name: string, proposed_status: string, request_status_update_comment: string },
+  [EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_service_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    message_url: string;
+  };
+  [EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    needs_assessment_url: string;
+  };
+  [EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA]: { display_name?: string; innovation_url: string };
+  [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    organisation_name: string;
+    support_status: string;
+    support_status_change_comment: string;
+    support_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS]: {
+    display_name?: string;
+    qa_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR]: {
+    display_name?: string;
+    accessor_name: string;
+    unit_name: string;
+    action_url: string;
+  };
+  [EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR]: {
+    display_name?: string;
+    accessor_name: string;
+    unit_name: string;
+    action_url: string;
+  };
+  [EmailTypeEnum.ACTION_DECLINED_TO_INNOVATOR]: {
+    display_name?: string;
+    accessor_name: string;
+    unit_name: string;
+    action_url: string;
+  };
+  [EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR]: {
+    display_name?: string;
+    innovator_name: string;
+    innovation_name: string;
+    declined_action_reason: string;
+    action_url: string;
+  };
+  [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR]: {
+    display_name?: string;
+    accessor_name: string;
+    unit_name: string;
+    thread_url: string;
+  };
+  [EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS]: {
+    display_name?: string;
+    innovation_name: string;
+    thread_url: string;
+  };
+  [EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL]: {
+    display_name?: string;
+    subject: string;
+    innovation_name: string;
+    thread_url: string;
+  };
+  [EmailTypeEnum.COMMENT_CREATION_TO_INNOVATOR]: {
+    display_name?: string;
+    accessor_name: string;
+    unit_name: string;
+    comment_url: string;
+  };
+  [EmailTypeEnum.COMMENT_CREATION_TO_ASSIGNED_USERS]: {
+    display_name?: string;
+    innovation_name: string;
+    comment_url: string;
+  };
+  [EmailTypeEnum.COMMENT_REPLY_TO_ALL]: {
+    display_name?: string;
+    innovation_name: string;
+    comment_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS]: {
+    display_name?: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER]: {
+    innovator_name: string;
+    innovation_name: string;
+    transfer_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER]: {
+    innovator_name: string;
+    innovation_name: string;
+    transfer_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER]: {
+    innovator_name?: string;
+    innovation_name: string;
+    new_innovator_name: string;
+    new_innovator_email: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER]: {
+    innovator_name?: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER]: {
+    innovator_name?: string;
+    new_innovator_name: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.LOCK_USER_TO_LOCKED_USER]: { display_name?: string };
+  [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED]: {
+    display_name?: string;
+    old_organisation: string;
+    old_unit: string;
+    new_organisation: string;
+    new_unit: string;
+  };
+  [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT]: {
+    display_name?: string;
+    user_name: string;
+    old_unit: string;
+  };
+  [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT]: {
+    display_name?: string;
+    user_name: string;
+    new_unit: string;
+  };
+  [EmailTypeEnum.ACCESSOR_DAILY_DIGEST]: {
+    display_name?: string;
+    actions_count: string;
+    messages_count: string;
+    supports_count: string;
+  };
+  [EmailTypeEnum.INNOVATOR_DAILY_DIGEST]: {
+    display_name?: string;
+    actions_count: string;
+    messages_count: string;
+    supports_count: string;
+  };
+  [EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED]: {
+    display_name?: string;
+    unit_name: string;
+    innovation_name: string;
+    support_url: string;
+  };
+  [EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD]: { display_name?: string; innovation_name: string };
+  [EmailTypeEnum.QA_A_IDLE_SUPPORT]: {
+    display_name?: string;
+    innovation_name: string;
+    innovator_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR]: {
+    display_name?: string;
+    accessor_name: string;
+    unit_name: string;
+    innovation_name: string;
+    pdf_request_comment: string;
+    pdf_export_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR]: {
+    display_name?: string;
+    innovation_name: string;
+    innovator_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR]: {
+    display_name?: string;
+    innovation_name: string;
+    innovator_name: string;
+    innovation_url: string;
+    pdf_rejection_comment: null | string;
+  };
+  [EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_url: string;
+    accessor_name: string;
+    proposed_status: string;
+    request_status_update_comment: string;
+  };
 
-  [EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS]: { display_name?: string, innovator_name: string, innovation_name: string, stop_sharing_comment: string },
-  [EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR]: { display_name?: string, innovation_name: string, innovation_url: string },
-  [EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR]: { display_name?: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT]: { display_name?: string, innovation_name: string, innovation_url: string },
-  
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER]: { display_name?: string, innovator_name: string, innovation_name: string, transfer_url: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER]: { innovator_name: string, innovation_name: string, transfer_url: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR]: { innovator_name: string, innovation_name: string }, 
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER]: { display_name?: string, collaborator_name: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER]: { innovator_name: string, collaborator_name: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER]: { display_name?: string, collaborator_name: string, innovation_name: string, innovation_url: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR]: { display_name?: string, innovator_name: string, innovation_name: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS]:  { display_name?: string, collaborator_name: string, innovation_name: string, innovation_url: string },
-  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR]:  { display_name?: string, innovation_name: string },
-}
+  [EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS]: {
+    display_name?: string;
+    innovator_name: string;
+    innovation_name: string;
+    stop_sharing_comment: string;
+  };
+  [EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_REASSESSMENT_REQUEST_TO_NEEDS_ASSESSMENT]: {
+    display_name?: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER]: {
+    display_name?: string;
+    innovator_name: string;
+    innovation_name: string;
+    transfer_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER]: {
+    innovator_name: string;
+    innovation_name: string;
+    transfer_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR]: {
+    innovator_name: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER]: {
+    display_name?: string;
+    collaborator_name: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER]: {
+    innovator_name: string;
+    collaborator_name: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER]: {
+    display_name?: string;
+    collaborator_name: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR]: {
+    display_name?: string;
+    innovator_name: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS]: {
+    display_name?: string;
+    collaborator_name: string;
+    innovation_name: string;
+    innovation_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR]: {
+    display_name?: string;
+    innovation_name: string;
+  };
+};

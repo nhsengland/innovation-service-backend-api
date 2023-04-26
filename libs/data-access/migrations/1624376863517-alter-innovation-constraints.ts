@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovationConstraints1624376863517 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // drop constraints
     await queryRunner.query(
@@ -22,9 +21,7 @@ export class alterInnovationConstraints1624376863517 implements MigrationInterfa
     );
 
     // innovation table
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"`);
     await queryRunner.query(
       `ALTER TABLE "innovation" ADD CONSTRAINT "CK_innovation_status" CHECK (([status] in ('COMPLETE','ARCHIVED','NEEDS_ASSESSMENT_REVIEW','IN_PROGRESS','WAITING_NEEDS_ASSESSMENT','CREATED','NEEDS_ASSESSMENT')))`
     );
@@ -40,12 +37,9 @@ export class alterInnovationConstraints1624376863517 implements MigrationInterfa
     );
 
     // innovation table
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"`);
     await queryRunner.query(
       `ALTER TABLE "innovation" ADD CONSTRAINT "CK_innovation_status" CHECK (([status]='COMPLETE' OR [status]='ABANDONED' OR [status]='NEEDS_ASSESSMENT_REVIEW' OR [status]='IN_PROGRESS' OR [status]='WAITING_NEEDS_ASSESSMENT' OR [status]='CREATED' OR [status]='NEEDS_ASSESSMENT'))`
     );
   }
-
 }

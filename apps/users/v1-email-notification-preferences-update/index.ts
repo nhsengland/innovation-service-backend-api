@@ -11,17 +11,17 @@ import { NotificationsServiceSymbol, NotificationsServiceType } from '../_servic
 
 import { BodySchema, BodyType } from './validation.schemas';
 
-
 class V1UserEmailNotificationsInfo {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
+    const notificationsService = container.get<NotificationsServiceType>(
+      NotificationsServiceSymbol
+    );
 
     try {
-      const authInstance = await authService.validate(context)
+      const authInstance = await authService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
@@ -33,26 +33,27 @@ class V1UserEmailNotificationsInfo {
 
       context.res = ResponseHelper.NoContent();
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction, '/v1/email-preferences', {
-  put: {
-    description: 'Updates the user email preferences ',
-    operationId: 'v1-email-notification-preferences-upsert',
-    tags: ['[v1] Email Preferences'],
-    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
-    responses: {
-      204: {
-        description: 'The user email preferences were updated successfully',
+export default openApi(
+  V1UserEmailNotificationsInfo.httpTrigger as AzureFunction,
+  '/v1/email-preferences',
+  {
+    put: {
+      description: 'Updates the user email preferences ',
+      operationId: 'v1-email-notification-preferences-upsert',
+      tags: ['[v1] Email Preferences'],
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
+      responses: {
+        204: {
+          description: 'The user email preferences were updated successfully',
+        },
       },
     },
-  },
-});
+  }
+);

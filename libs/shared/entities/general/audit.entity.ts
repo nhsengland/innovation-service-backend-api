@@ -12,17 +12,17 @@ export class AuditEntity {
   // Didn't do the relation on purpose as I don't expect this to be used to fetch users.
   @Column({ name: 'user_id', type: 'uniqueidentifier', nullable: false })
   userId: string;
-  
-  @Column({name: 'date', type: 'datetime2', nullable: false})
+
+  @Column({ name: 'date', type: 'datetime2', nullable: false })
   date: Date;
 
   @Column({ name: 'action', type: 'simple-enum', enum: ActionEnum, nullable: false })
   action: ActionEnum;
-  
-  @Column({name: 'target', type: 'simple-enum', enum: TargetEnum, nullable: false})
+
+  @Column({ name: 'target', type: 'simple-enum', enum: TargetEnum, nullable: false })
   target: TargetEnum;
-  
-  @Column({name: 'target_id', type: 'uniqueidentifier', nullable: true})
+
+  @Column({ name: 'target_id', type: 'uniqueidentifier', nullable: true })
   targetId?: string;
 
   // Metadata to help with queries
@@ -33,7 +33,7 @@ export class AuditEntity {
   // Metadata not really used at the moment
   @Column({ name: 'invocation_id', type: 'nvarchar', nullable: true })
   invocationId?: string;
-  
+
   @Column({ name: 'function_name', type: 'nvarchar', nullable: true })
   functionName?: string;
 

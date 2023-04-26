@@ -1,6 +1,5 @@
 import type { TermsOfUseTypeEnum } from '@admin/shared/enums';
 
-
 export type ResponseDTO = {
   id: string;
   name: string;
@@ -8,4 +7,4 @@ export type ResponseDTO = {
   summary: string;
   releasedAt: Date | null;
   createdAt: Date;
-}
+};

@@ -3,7 +3,7 @@ export enum InnovationLocationEnum {
   'Scotland' = 'Scotland',
   'Wales' = 'Wales',
   'Northern Ireland' = 'Northern Ireland',
-  'Based outside UK' = 'Based outside UK'
+  'Based outside UK' = 'Based outside UK',
 }
 
 export enum InnovationFileUploadContextEnum {
@@ -11,7 +11,7 @@ export enum InnovationFileUploadContextEnum {
   EVIDENCE_OF_EFFECTIVENESS = 'EVIDENCE_OF_EFFECTIVENESS',
   TESTING_WITH_USERS = 'TESTING_WITH_USERS',
   REGULATIONS_AND_STANDARDS = 'REGULATIONS_AND_STANDARDS',
-  IMPLEMENTATION_PLAN = 'IMPLEMENTATION_PLAN'
+  IMPLEMENTATION_PLAN = 'IMPLEMENTATION_PLAN',
 }
 
 export enum InnovationThreadSubjectEnum {

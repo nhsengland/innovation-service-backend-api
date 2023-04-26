@@ -1,7 +1,6 @@
 import { Column, CreateDateColumn, DeleteDateColumn, UpdateDateColumn } from 'typeorm';
 
 export class BaseEntity {
-
   @CreateDateColumn({ name: 'created_at', type: 'datetime2', update: false })
   createdAt: Date;
 
@@ -16,5 +15,4 @@ export class BaseEntity {
 
   @DeleteDateColumn({ name: 'deleted_at', type: 'datetime2', nullable: true })
   deletedAt: Date;
-
 }

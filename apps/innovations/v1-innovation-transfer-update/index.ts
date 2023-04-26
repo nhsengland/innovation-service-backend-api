@@ -7,38 +7,44 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
+import {
+  InnovationTransferServiceSymbol,
+  InnovationTransferServiceType,
+} from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validations.schema';
 
-
 class V1InnovationTransferUpdate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const transferService = container.get<InnovationTransferServiceType>(InnovationTransferServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
+    const transferService = container.get<InnovationTransferServiceType>(
+      InnovationTransferServiceSymbol
+    );
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context)
-        .checkInnovatorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().verify();
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const result = await transferService.updateInnovationTransferStatus({
-        id: requestUser.id, identityId: requestUser.identityId
-      }, domainContext, params.transferId, body.status);
+      const result = await transferService.updateInnovationTransferStatus(
+        {
+          id: requestUser.id,
+          identityId: requestUser.identityId,
+        },
+        domainContext,
+        params.transferId,
+        body.status
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -46,48 +52,52 @@ class V1InnovationTransferUpdate {
   }
 }
 
-export default openApi(V1InnovationTransferUpdate.httpTrigger as AzureFunction, '/v1/transfers/{transferId}', {
-  patch: {
-    description: 'Update an innovation transfer status',
-    operationId: 'v1-innovation-transfer-update',
-    parameters: [
-      {
-        name: 'transferId',
-        in: 'path',
-        required: true,
-        description: 'The innovation transfer id',
-        schema: {
-          type: 'string',
-        },
-      },
-    ],
-    requestBody: {
-      description: 'The innovation transfer status',
-      required: true,
-      content: {
-        'application/json': {
+export default openApi(
+  V1InnovationTransferUpdate.httpTrigger as AzureFunction,
+  '/v1/transfers/{transferId}',
+  {
+    patch: {
+      description: 'Update an innovation transfer status',
+      operationId: 'v1-innovation-transfer-update',
+      parameters: [
+        {
+          name: 'transferId',
+          in: 'path',
+          required: true,
+          description: 'The innovation transfer id',
           schema: {
-            type: 'object',
+            type: 'string',
+          },
+        },
+      ],
+      requestBody: {
+        description: 'The innovation transfer status',
+        required: true,
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+            },
           },
         },
       },
+      responses: {
+        204: {
+          description: 'The innovation transfer status has been updated',
+        },
+        400: {
+          description: 'The innovation transfer status is invalid',
+        },
+        401: {
+          description: 'The user is not authorized to update the innovation transfer status',
+        },
+        404: {
+          description: 'The innovation transfer does not exist',
+        },
+        500: {
+          description: 'An error occurred while updating the innovation transfer status',
+        },
+      },
     },
-    responses: {
-      204: {
-        description: 'The innovation transfer status has been updated',
-      },
-      400: {
-        description: 'The innovation transfer status is invalid',
-      },
-      401: {
-        description: 'The user is not authorized to update the innovation transfer status',
-      },
-      404: {
-        description: 'The innovation transfer does not exist',
-      },
-      500: {
-        description: 'An error occurred while updating the innovation transfer status',
-      },
-    },
-  },
-});
+  }
+);

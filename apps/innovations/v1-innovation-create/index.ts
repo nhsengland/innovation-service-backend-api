@@ -13,35 +13,32 @@ import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/i
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
-
 class V1InnovationCreate {
-
   @JwtDecoder()
-  @Audit({ action: ActionEnum.CREATE, target: TargetEnum.INNOVATION, identifierResponseField: 'id' })
+  @Audit({
+    action: ActionEnum.CREATE,
+    target: TargetEnum.INNOVATION,
+    identifierResponseField: 'id',
+  })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const innovationService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
 
     try {
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context)
-        .checkInnovatorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().verify();
 
       const result = await innovationService.createInnovation(auth.getContext(), body);
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1', {
@@ -49,7 +46,9 @@ export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1', {
     description: 'Create an innovation',
     parameters: [],
     operationId: 'v1-innovation-create',
-    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The innovation to be created.' }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
+      description: 'The innovation to be created.',
+    }),
     responses: {
       200: {
         description: 'Success',

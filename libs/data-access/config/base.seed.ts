@@ -1,8 +1,14 @@
-import { Connection, EntitySchema, getConnection, MigrationInterface, ObjectType, QueryRunner, Repository } from 'typeorm';
-
+import {
+  Connection,
+  EntitySchema,
+  getConnection,
+  MigrationInterface,
+  ObjectType,
+  QueryRunner,
+  Repository,
+} from 'typeorm';
 
 export abstract class BaseSeed implements MigrationInterface {
-
   public abstract name: string;
 
   public abstract up(queryRunner: QueryRunner): Promise<any>;
@@ -16,5 +22,4 @@ export abstract class BaseSeed implements MigrationInterface {
   protected getRepository<T>(target: ObjectType<T> | EntitySchema<T> | string): Repository<T> {
     return this.getConnection().getRepository(target);
   }
-
 }

@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterTableExportRequestChangeFieldSizes1667910679993
-  implements MigrationInterface {
+export class alterTableExportRequestChangeFieldSizes1667910679993 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER Table [dbo].[innovation_export_request] 

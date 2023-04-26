@@ -6,6 +6,6 @@ export default index({
     version: '1.0.0',
   },
   servers: [
-    { url: 'https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api' }
-  ]
+    { url: 'https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api' },
+  ],
 });

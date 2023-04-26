@@ -1,10 +1,9 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-
-export class alterTableNotificationsgAddConstraintInnovationStopSharing1672335869744 implements MigrationInterface {
-
+export class alterTableNotificationsgAddConstraintInnovationStopSharing1672335869744
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"
     `);
@@ -25,11 +24,9 @@ export class alterTableNotificationsgAddConstraintInnovationStopSharing167233586
         'INNOVATION_REASSESSMENT_REQUEST',
         'INNOVATION_STOP_SHARING'
       ))`);
-
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"
     `);
@@ -49,7 +46,5 @@ export class alterTableNotificationsgAddConstraintInnovationStopSharing167233586
         'SUPPORT_STATUS_UPDATE',
         'INNOVATION_REASSESSMENT_REQUEST'
       ))`);
-
   }
-
 }

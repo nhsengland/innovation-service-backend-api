@@ -15,33 +15,24 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUnitInactivate {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
-      const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params
-      );
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
 
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
-      
+
       const result = await organisationsService.inactivateUnit(
         requestUser,
         domainContext,
-        params.organisationUnitId,
+        params.organisationUnitId
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });

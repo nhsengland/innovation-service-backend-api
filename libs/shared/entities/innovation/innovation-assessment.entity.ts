@@ -1,4 +1,13 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -7,12 +16,13 @@ import { UserEntity } from '../user/user.entity';
 import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 import { InnovationEntity } from './innovation.entity';
 
-import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../../shared/enums';
-
+import type {
+  MaturityLevelCatalogueType,
+  YesPartiallyNoCatalogueType,
+} from '../../../shared/enums';
 
 @Entity('innovation_assessment')
 export class InnovationAssessmentEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,7 +44,12 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'has_regulatory_approvals', type: 'nvarchar', nullable: true, length: 20 })
   hasRegulatoryApprovals: null | YesPartiallyNoCatalogueType;
 
-  @Column({ name: 'has_regulatory_approvals_comment', type: 'nvarchar', nullable: true, length: 200 })
+  @Column({
+    name: 'has_regulatory_approvals_comment',
+    type: 'nvarchar',
+    nullable: true,
+    length: 200,
+  })
   hasRegulatoryApprovalsComment: null | string;
 
   @Column({ name: 'has_evidence', type: 'nvarchar', nullable: true, length: 20 })
@@ -58,13 +73,23 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'has_competition_knowledge', type: 'nvarchar', nullable: true, length: 20 })
   hasCompetitionKnowledge: null | YesPartiallyNoCatalogueType;
 
-  @Column({ name: 'has_competition_knowledge_comment', type: 'nvarchar', nullable: true, length: 200 })
+  @Column({
+    name: 'has_competition_knowledge_comment',
+    type: 'nvarchar',
+    nullable: true,
+    length: 200,
+  })
   hasCompetitionKnowledgeComment: null | string;
 
   @Column({ name: 'has_implementation_plan', type: 'nvarchar', nullable: true, length: 20 })
   hasImplementationPlan: null | YesPartiallyNoCatalogueType;
 
-  @Column({ name: 'has_implementation_plan_comment', type: 'nvarchar', nullable: true, length: 200 })
+  @Column({
+    name: 'has_implementation_plan_comment',
+    type: 'nvarchar',
+    nullable: true,
+    length: 200,
+  })
   hasImplementationPlanComment: null | string;
 
   @Column({ name: 'has_scale_resource', type: 'nvarchar', nullable: true, length: 20 })
@@ -73,8 +98,9 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'has_scale_resource_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasScaleResourceComment: null | string;
 
-
-  @OneToOne(() => InnovationReassessmentRequestEntity, record => record.assessment, { nullable: true })
+  @OneToOne(() => InnovationReassessmentRequestEntity, (record) => record.assessment, {
+    nullable: true,
+  })
   reassessmentRequest: null | InnovationReassessmentRequestEntity;
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
@@ -85,25 +111,25 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @JoinColumn({ name: 'assign_to_id' })
   assignTo: UserEntity;
 
-  @ManyToMany(() => OrganisationUnitEntity, record => record.innovationAssessments, { nullable: true })
+  @ManyToMany(() => OrganisationUnitEntity, (record) => record.innovationAssessments, {
+    nullable: true,
+  })
   @JoinTable({
     name: 'innovation_assessment_organisation_unit',
     joinColumn: {
       name: 'innovation_assessment_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
       name: 'organisation_unit_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
   })
   organisationUnits: OrganisationUnitEntity[];
-
 
   static new(data: Partial<InnovationAssessmentEntity>): InnovationAssessmentEntity {
     const instance = new InnovationAssessmentEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

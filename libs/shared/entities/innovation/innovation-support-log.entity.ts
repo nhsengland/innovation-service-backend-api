@@ -1,4 +1,12 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -7,10 +15,8 @@ import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportLogTypeEnum } from '../../enums/innovation.enums';
 
-
 @Entity('innovation_support_log')
 export class InnovationSupportLogEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -23,7 +29,6 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @Column({ name: 'description' })
   description: string;
 
-
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
@@ -32,25 +37,25 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
-  @ManyToMany(() => OrganisationUnitEntity, record => record.innovationSupportLogs, { nullable: true })
+  @ManyToMany(() => OrganisationUnitEntity, (record) => record.innovationSupportLogs, {
+    nullable: true,
+  })
   @JoinTable({
     name: 'innovation_support_log_organisation_unit',
     joinColumn: {
       name: 'innovation_support_log_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
       name: 'organisation_unit_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
   })
   suggestedOrganisationUnits: OrganisationUnitEntity[];
-
 
   static new(data: Partial<InnovationSupportLogEntity>): InnovationSupportLogEntity {
     const instance = new InnovationSupportLogEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

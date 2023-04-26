@@ -4,12 +4,10 @@ import { BaseEntity } from '../base.entity';
 
 import { NotificationEntity } from './notification.entity';
 
-
 import { UserRoleEntity } from './user-role.entity';
 
 @Entity('notification_user')
 export class NotificationUserEntity extends BaseEntity {
-
   @PrimaryColumn({ name: 'id', type: 'bigint', generated: true })
   id: number;
 
@@ -29,5 +27,4 @@ export class NotificationUserEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

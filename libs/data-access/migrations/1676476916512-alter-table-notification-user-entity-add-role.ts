@@ -1,10 +1,9 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableNotificationUserEntityAddRole1676476916512 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-      // Fix some data that might be wrong
-      await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    // Fix some data that might be wrong
+    await queryRunner.query(`
         UPDATE user_role
           SET organisation_id = ou.organisation_id
           FROM user_role r
@@ -21,9 +20,11 @@ export class alterTableNotificationUserEntityAddRole1676476916512 implements Mig
           WHERE r.organisation_unit_id is null AND r.role IN ('ACCESSOR', 'QUALIFYING_ACCESSOR');
       `);
 
-      await queryRunner.query(`ALTER TABLE "notification_user" ADD "user_role_id" uniqueidentifier NULL`);
+    await queryRunner.query(
+      `ALTER TABLE "notification_user" ADD "user_role_id" uniqueidentifier NULL`
+    );
 
-      await queryRunner.query(`
+    await queryRunner.query(`
         UPDATE notification_user
           SET "user_role_id"=r.id
           FROM notification_user n
@@ -36,10 +37,12 @@ export class alterTableNotificationUserEntityAddRole1676476916512 implements Mig
           WHERE user_role_id IS NULL;
       `);
 
-      await queryRunner.query(`ALTER TABLE "notification_user" ALTER COLUMN "user_role_id" uniqueidentifier NOT NULL`);
-    }
+    await queryRunner.query(
+      `ALTER TABLE "notification_user" ALTER COLUMN "user_role_id" uniqueidentifier NOT NULL`
+    );
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {      
-      await queryRunner.query(`ALTER TABLE "notification_user" DROP COLUMN "user_role_id"`);
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE "notification_user" DROP COLUMN "user_role_id"`);
+  }
 }

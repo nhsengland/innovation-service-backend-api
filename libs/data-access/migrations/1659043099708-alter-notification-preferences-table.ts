@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterNotificationPreferencesTable1659043099708
-  implements MigrationInterface {
+export class alterNotificationPreferencesTable1659043099708 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `ALTER TABLE "notification_preference" ADD "preference" nvarchar(100) NOT NULL CONSTRAINT "df_notification_preference_preference" DEFAULT 'INSTANTLY';`
@@ -15,9 +14,7 @@ export class alterNotificationPreferencesTable1659043099708
       `ALTER TABLE "notification_preference" DROP CONSTRAINT "df_user_is_subscribed"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "notification_preference" DROP COLUMN is_subscribed`
-    );
+    await queryRunner.query(`ALTER TABLE "notification_preference" DROP COLUMN is_subscribed`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -33,8 +30,6 @@ export class alterNotificationPreferencesTable1659043099708
       `ALTER TABLE "notification_preference" DROP CONSTRAINT "df_notification_preference_preference"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "notification_preference" DROP COLUMN preference`
-    );
+    await queryRunner.query(`ALTER TABLE "notification_preference" DROP COLUMN preference`);
   }
 }

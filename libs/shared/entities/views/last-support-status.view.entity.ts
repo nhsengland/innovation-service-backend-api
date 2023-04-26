@@ -1,11 +1,7 @@
 import { ViewColumn, ViewEntity } from 'typeorm';
 
-
-
-
 @ViewEntity()
 export class LastSupportStatusViewEntity {
-
   @ViewColumn()
   statusChangedAt: Date;
 
@@ -32,5 +28,4 @@ export class LastSupportStatusViewEntity {
 
   @ViewColumn()
   organisationUnitAcronym: string;
-
 }

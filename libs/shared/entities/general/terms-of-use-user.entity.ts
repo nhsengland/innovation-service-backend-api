@@ -1,4 +1,11 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Unique,
+  UpdateDateColumn,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -8,7 +15,6 @@ import { TermsOfUseEntity } from './terms-of-use.entity';
 @Entity('terms_of_use_user')
 @Unique('uc_termsOfUse_user_idx', ['termsOfUse', 'user'])
 export class TermsOfUseUserEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -28,5 +34,4 @@ export class TermsOfUseUserEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

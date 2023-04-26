@@ -16,13 +16,12 @@ enum SubgroupBenefitCatalogueEnum {
   ENABLES_NON_INVASIVELY_TEST = 'ENABLES_NON_INVASIVELY_TEST',
   INCREASES_SELF_MANAGEMENT = 'INCREASES_SELF_MANAGEMENT',
   INCREASES_LIFE_QUALITY = 'INCREASES_LIFE_QUALITY',
-  ENABLES_SHARED_CARE = 'ENABLES_SHARED_CARE'
+  ENABLES_SHARED_CARE = 'ENABLES_SHARED_CARE',
 }
 
 @Entity('innovation_subgroup_benefit')
 @Index(['type', 'innovationSubgroup'], { unique: true })
 export class InnovationSubgroupBenefitEntity extends BaseEntity {
-
   @PrimaryColumn({ type: 'simple-enum', enum: SubgroupBenefitCatalogueEnum, nullable: false })
   type: SubgroupBenefitCatalogueEnum;
 
@@ -30,11 +29,9 @@ export class InnovationSubgroupBenefitEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_subgroup_id' })
   innovationSubgroup: InnovationSubgroupEntity;
 
-
   static new(data: Partial<InnovationSubgroupBenefitEntity>): InnovationSubgroupBenefitEntity {
     const instance = new InnovationSubgroupBenefitEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

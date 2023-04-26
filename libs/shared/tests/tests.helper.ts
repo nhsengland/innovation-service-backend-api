@@ -2,12 +2,30 @@ import { container } from '../config/inversify.config';
 
 import type { DataSource, EntityManager } from 'typeorm';
 import { TestDataBuilder, UserBuilder } from '../builders';
-import type { InnovationEntity, OrganisationEntity, OrganisationUnitEntity, OrganisationUnitUserEntity, OrganisationUserEntity, UserEntity } from '../entities';
+import type {
+  InnovationEntity,
+  OrganisationEntity,
+  OrganisationUnitEntity,
+  OrganisationUnitUserEntity,
+  OrganisationUserEntity,
+  UserEntity,
+} from '../entities';
 import type { InnovationCollaboratorEntity } from '../entities/innovation/innovation-collaborator.entity';
-import { AccessorOrganisationRoleEnum, InnovationCollaboratorStatusEnum, InnovatorOrganisationRoleEnum, OrganisationTypeEnum, ServiceRoleEnum } from '../enums';
+import {
+  AccessorOrganisationRoleEnum,
+  InnovationCollaboratorStatusEnum,
+  InnovatorOrganisationRoleEnum,
+  OrganisationTypeEnum,
+  ServiceRoleEnum,
+} from '../enums';
 import { SQLConnectionServiceSymbol, type SQLConnectionServiceType } from '../services';
-import type { AccessorDomainContextType, AdminDomainContextType, AssessmentDomainContextType, DomainContextType, InnovatorDomainContextType } from '../types';
-
+import type {
+  AccessorDomainContextType,
+  AdminDomainContextType,
+  AssessmentDomainContextType,
+  DomainContextType,
+  InnovatorDomainContextType,
+} from '../types';
 
 export type TestDataType = {
   innovation: InnovationEntity;
@@ -31,7 +49,7 @@ export type TestDataType = {
     innovator: InnovatorDomainContextType;
     innovator2: InnovatorDomainContextType;
     innovator3: InnovatorDomainContextType;
-  }
+  };
   organisationUsers: {
     innovator: OrganisationUserEntity;
     accessor: OrganisationUserEntity;
@@ -52,25 +70,24 @@ export type TestDataType = {
     collaboratorPending: InnovationCollaboratorEntity;
     collaboratorActive: InnovationCollaboratorEntity;
     collaboratorExpired: InnovationCollaboratorEntity;
-  }
-}
+  };
+};
 
 // In jest the static classes are not shared between test suites so it ended up not making much difference to use static
 export class TestsHelper {
-
   static sqlConnection: DataSource;
   static sampleData: TestDataType;
 
   static {
     // Comment this if not using global setup / teardown
-    this.sampleData = ((global as any).sampleData); // This is set in jest.setup.ts and is used to share data between tests)
+    this.sampleData = (global as any).sampleData; // This is set in jest.setup.ts and is used to share data between tests)
   }
 
   static async init(): Promise<void> {
     const sqlService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
     this.sqlConnection = sqlService.getConnection();
-    while(!this.sqlConnection.isInitialized) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+    while (!this.sqlConnection.isInitialized) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
     // Uncomment this if not using global setup / teardown. It also requires clearing data in the afterAll hook
     // this.sampleData = await this.createSampleData();
@@ -89,34 +106,106 @@ export class TestsHelper {
   }
 
   static async createSampleData(): Promise<TestDataType> {
-
     const retVal = await this.sqlConnection.transaction(async (entityManager: EntityManager) => {
-
       const helper = new TestDataBuilder();
 
-      const innovatorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
-      const innovator2Organisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
-      const innovator3Organisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.INNOVATOR).build(entityManager);
-      const accessorOrganisation = await helper.createOrganisation().ofType(OrganisationTypeEnum.ACCESSOR).build(entityManager);
-      const organisationUnit = await helper.createOrganisationUnit().addToOrganisation(accessorOrganisation).build(entityManager);
+      const innovatorOrganisation = await helper
+        .createOrganisation()
+        .ofType(OrganisationTypeEnum.INNOVATOR)
+        .build(entityManager);
+      const innovator2Organisation = await helper
+        .createOrganisation()
+        .ofType(OrganisationTypeEnum.INNOVATOR)
+        .build(entityManager);
+      const innovator3Organisation = await helper
+        .createOrganisation()
+        .ofType(OrganisationTypeEnum.INNOVATOR)
+        .build(entityManager);
+      const accessorOrganisation = await helper
+        .createOrganisation()
+        .ofType(OrganisationTypeEnum.ACCESSOR)
+        .build(entityManager);
+      const organisationUnit = await helper
+        .createOrganisationUnit()
+        .addToOrganisation(accessorOrganisation)
+        .build(entityManager);
 
-      const admin = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ADMIN).save()).getUser();
-      const innovator = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovatorOrganisation).save()).getUser();
-      const innovator2 = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovator2Organisation).save()).getUser();
-      const innovator3 = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovator3Organisation).save()).getUser();
-      const accessor = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ACCESSOR, accessorOrganisation, organisationUnit).save()).getUser();
-      const qualifyingAccessor = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, accessorOrganisation, organisationUnit).save()).getUser();
-      const assessmentUser = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
-      const assessmentUser2 = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()).getUser();
+      const admin = (
+        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ADMIN).save()
+      ).getUser();
+      const innovator = (
+        await new UserBuilder(entityManager)
+          .addRole(ServiceRoleEnum.INNOVATOR, innovatorOrganisation)
+          .save()
+      ).getUser();
+      const innovator2 = (
+        await new UserBuilder(entityManager)
+          .addRole(ServiceRoleEnum.INNOVATOR, innovator2Organisation)
+          .save()
+      ).getUser();
+      const innovator3 = (
+        await new UserBuilder(entityManager)
+          .addRole(ServiceRoleEnum.INNOVATOR, innovator3Organisation)
+          .save()
+      ).getUser();
+      const accessor = (
+        await new UserBuilder(entityManager)
+          .addRole(ServiceRoleEnum.ACCESSOR, accessorOrganisation, organisationUnit)
+          .save()
+      ).getUser();
+      const qualifyingAccessor = (
+        await new UserBuilder(entityManager)
+          .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, accessorOrganisation, organisationUnit)
+          .save()
+      ).getUser();
+      const assessmentUser = (
+        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()
+      ).getUser();
+      const assessmentUser2 = (
+        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ASSESSMENT).save()
+      ).getUser();
 
-      const innovatorOrgUser = await helper.addUserToOrganisation(innovator, innovatorOrganisation, InnovatorOrganisationRoleEnum.INNOVATOR_OWNER, entityManager);
-      const innovator2OrgUser = await helper.addUserToOrganisation(innovator2, innovator2Organisation, InnovatorOrganisationRoleEnum.INNOVATOR_OWNER, entityManager);
-      const innovator3OrgUser = await helper.addUserToOrganisation(innovator3, innovator3Organisation, InnovatorOrganisationRoleEnum.INNOVATOR_OWNER, entityManager);
-      const accessorOrgU = await helper.addUserToOrganisation(accessor, accessorOrganisation, AccessorOrganisationRoleEnum.ACCESSOR, entityManager);
-      const qualifyingAccessorOrgU = await helper.addUserToOrganisation(qualifyingAccessor, accessorOrganisation, AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, entityManager);
+      const innovatorOrgUser = await helper.addUserToOrganisation(
+        innovator,
+        innovatorOrganisation,
+        InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+        entityManager
+      );
+      const innovator2OrgUser = await helper.addUserToOrganisation(
+        innovator2,
+        innovator2Organisation,
+        InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+        entityManager
+      );
+      const innovator3OrgUser = await helper.addUserToOrganisation(
+        innovator3,
+        innovator3Organisation,
+        InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
+        entityManager
+      );
+      const accessorOrgU = await helper.addUserToOrganisation(
+        accessor,
+        accessorOrganisation,
+        AccessorOrganisationRoleEnum.ACCESSOR,
+        entityManager
+      );
+      const qualifyingAccessorOrgU = await helper.addUserToOrganisation(
+        qualifyingAccessor,
+        accessorOrganisation,
+        AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR,
+        entityManager
+      );
 
-      const accessorOrgUnitUser = await helper.addUserToOrganisationUnit(accessorOrgU, organisationUnit, entityManager);
-      const qaOrgUnitUser = await helper.addUserToOrganisationUnit(qualifyingAccessorOrgU, organisationUnit, entityManager);
+      const accessorOrgUnitUser = await helper.addUserToOrganisationUnit(
+        accessorOrgU,
+        organisationUnit,
+        entityManager
+      );
+      const qaOrgUnitUser = await helper.addUserToOrganisationUnit(
+        qualifyingAccessorOrgU,
+        organisationUnit,
+        entityManager
+      );
 
       //#region DomainContexts
       const domainContexts: TestDataType['domainContexts'] = {
@@ -125,8 +214,8 @@ export class TestsHelper {
           identityId: admin.identityId,
           currentRole: {
             id: admin.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ADMIN
-          }
+            role: ServiceRoleEnum.ADMIN,
+          },
         },
         accessor: {
           id: accessor.id,
@@ -138,12 +227,12 @@ export class TestsHelper {
             organisationUnit: {
               id: organisationUnit.id,
               name: organisationUnit.name,
-              acronym: organisationUnit.acronym
-            }
+              acronym: organisationUnit.acronym,
+            },
           },
           currentRole: {
             id: accessor.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ACCESSOR
+            role: ServiceRoleEnum.ACCESSOR,
           },
         },
         qualifyingAccessor: {
@@ -156,12 +245,12 @@ export class TestsHelper {
             organisationUnit: {
               id: organisationUnit.id,
               name: organisationUnit.name,
-              acronym: organisationUnit.acronym
-            }
+              acronym: organisationUnit.acronym,
+            },
           },
           currentRole: {
             id: qualifyingAccessor.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.QUALIFYING_ACCESSOR
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
           },
         },
         assessmentUser: {
@@ -169,7 +258,7 @@ export class TestsHelper {
           identityId: assessmentUser.identityId,
           currentRole: {
             id: assessmentUser.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ASSESSMENT
+            role: ServiceRoleEnum.ASSESSMENT,
           },
         },
         assessmentUser2: {
@@ -177,7 +266,7 @@ export class TestsHelper {
           identityId: assessmentUser2.identityId,
           currentRole: {
             id: assessmentUser2.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ASSESSMENT
+            role: ServiceRoleEnum.ASSESSMENT,
           },
         },
         innovator: {
@@ -190,7 +279,7 @@ export class TestsHelper {
           },
           currentRole: {
             id: innovator.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.INNOVATOR
+            role: ServiceRoleEnum.INNOVATOR,
           },
         },
         innovator2: {
@@ -199,11 +288,11 @@ export class TestsHelper {
           organisation: {
             id: innovator2Organisation.id,
             name: innovator2Organisation.name,
-            acronym: innovator2Organisation.acronym
+            acronym: innovator2Organisation.acronym,
           },
           currentRole: {
             id: innovator2.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.INNOVATOR
+            role: ServiceRoleEnum.INNOVATOR,
           },
         },
         innovator3: {
@@ -212,17 +301,18 @@ export class TestsHelper {
           organisation: {
             id: innovator3Organisation.id,
             name: innovator3Organisation.name,
-            acronym: innovator3Organisation.acronym
+            acronym: innovator3Organisation.acronym,
           },
           currentRole: {
             id: innovator3.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.INNOVATOR
+            role: ServiceRoleEnum.INNOVATOR,
           },
-        }
+        },
       };
       //#endregion
 
-      const innovation = await helper.createInnovation()
+      const innovation = await helper
+        .createInnovation()
         .setOwner(innovator)
         .withSupportsAndAccessors(organisationUnit, [accessorOrgUnitUser])
         .withActions(domainContexts.accessor)
@@ -230,14 +320,29 @@ export class TestsHelper {
         .withAssessments(assessmentUser)
         .build(entityManager);
 
-      const innovationWithCollaborators = await helper.createInnovation()
+      const innovationWithCollaborators = await helper
+        .createInnovation()
         .setOwner(innovator)
         .build(entityManager);
 
       // Pending, Active and Expired collaborator invites
-      const collaboratorPending = await helper.createCollaborator(domainContexts.innovator, innovationWithCollaborators).build(entityManager);
-      const collaboratorActive = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setStatus(InnovationCollaboratorStatusEnum.ACTIVE).build(entityManager);
-      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(domainContexts.innovator, innovationWithCollaborators).setUser(innovator2).setEmail('innovator2@gmail.com').setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31)).build(entityManager);
+      const collaboratorPending = await helper
+        .createCollaborator(domainContexts.innovator, innovationWithCollaborators)
+        .build(entityManager);
+      const collaboratorActive = await TestsHelper.TestDataBuilder.createCollaborator(
+        domainContexts.innovator,
+        innovationWithCollaborators
+      )
+        .setStatus(InnovationCollaboratorStatusEnum.ACTIVE)
+        .build(entityManager);
+      const collaboratorExpired = await TestsHelper.TestDataBuilder.createCollaborator(
+        domainContexts.innovator,
+        innovationWithCollaborators
+      )
+        .setUser(innovator2)
+        .setEmail('innovator2@gmail.com')
+        .setInvitedAt(new Date(Date.now() - 1000 * 60 * 60 * 24 * 31))
+        .build(entityManager);
 
       return {
         innovation,
@@ -250,7 +355,7 @@ export class TestsHelper {
           innovator,
           innovator2,
           innovator3,
-          admin
+          admin,
         },
         domainContexts: domainContexts,
         organisationUsers: {
@@ -276,15 +381,13 @@ export class TestsHelper {
         collaborators: {
           collaboratorPending,
           collaboratorActive,
-          collaboratorExpired
-        }
+          collaboratorExpired,
+        },
       };
     });
 
-
     this.sampleData = retVal as any; // TODO: Solve these any's!!!
     return this.sampleData;
-
   }
 
   public static getUser(userType: ServiceRoleEnum): [UserEntity, DomainContextType] {
@@ -351,7 +454,6 @@ export class TestsHelper {
     await em.queryRunner?.rollbackTransaction();
     await em.queryRunner?.release();
   }
-
 }
 
 // export default TestsHelper;

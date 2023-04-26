@@ -12,62 +12,58 @@ import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/i
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationsOverdueAssessments {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
 
     try {
-
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context)
-        .checkAssessmentType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAssessmentType().verify();
       const domainContext = auth.getContext();
 
-      const result = await innovationsService.getNeedsAssessmentOverdueInnovations(
-        domainContext,
-        { innovationStatus: queryParams.status, assignedToMe: queryParams.assignedToMe }
-      );
+      const result = await innovationsService.getNeedsAssessmentOverdueInnovations(domainContext, {
+        innovationStatus: queryParams.status,
+        assignedToMe: queryParams.assignedToMe,
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ overdue: result });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-
-export default openApi(V1InnovationsOverdueAssessments.httpTrigger as AzureFunction, '/v1/overdue-assessments', {
-  get: {
-    operationId: 'v1-innovations-overdue-assessments',
-    description: 'Get assessment overdue innovations',
-    parameters: [],
-    responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Unique identifier for innovation object' },
+export default openApi(
+  V1InnovationsOverdueAssessments.httpTrigger as AzureFunction,
+  '/v1/overdue-assessments',
+  {
+    get: {
+      operationId: 'v1-innovations-overdue-assessments',
+      description: 'Get assessment overdue innovations',
+      parameters: [],
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', description: 'Unique identifier for innovation object' },
+                },
               },
             },
           },
         },
+        400: { description: 'Invalid innovation payload' },
       },
-      400: { description: 'Invalid innovation payload' },
     },
-  },
-});
+  }
+);

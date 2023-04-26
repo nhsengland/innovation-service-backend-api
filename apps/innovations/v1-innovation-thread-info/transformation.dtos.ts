@@ -1,5 +1,3 @@
-
-
 export type ResponseDTO = {
   id: string;
   subject: string;
@@ -8,4 +6,4 @@ export type ResponseDTO = {
     id: string;
     name: string;
   };
-}
+};

@@ -12,7 +12,6 @@ import type { EntityManager } from 'typeorm';
 import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from './interfaces';
 
 describe('Innovation Sections Suite', () => {
-
   let sut: InnovationSectionsServiceType;
 
   let testData: TestDataType;
@@ -25,11 +24,9 @@ describe('Innovation Sections Suite', () => {
   });
 
   beforeEach(async () => {
-    jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(
-      {
-        displayName: randText(),
-      } as any
-    );
+    jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
+      displayName: randText(),
+    } as any);
     em = await TestsHelper.getQueryRunnerEntityManager();
   });
 
@@ -42,8 +39,13 @@ describe('Innovation Sections Suite', () => {
     // arrange
     const innovation = testData.innovation;
 
-    await TestsHelper.TestDataBuilder
-      .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+    await TestsHelper.TestDataBuilder.createAction(
+      testData.domainContexts.accessor,
+      (
+        await innovation.sections
+      )[0]!,
+      innovation.innovationSupports[0]!
+    )
       .setStatus(InnovationActionStatusEnum.REQUESTED)
       .build(em);
 
@@ -53,7 +55,7 @@ describe('Innovation Sections Suite', () => {
       em
     );
 
-    const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a,b) => a+b, 0);
+    const actionCount = sectionsList.map((s) => s.openActionsCount).reduce((a, b) => a + b, 0);
 
     expect(sectionsList).toBeDefined();
     expect(actionCount).toEqual(2); // one from the database plus the one we added
@@ -63,8 +65,13 @@ describe('Innovation Sections Suite', () => {
     // arrange
     const innovation = testData.innovation;
 
-    await TestsHelper.TestDataBuilder
-      .createAction(testData.domainContexts.accessor, (await innovation.sections)[0]!, (innovation.innovationSupports)[0]!)
+    await TestsHelper.TestDataBuilder.createAction(
+      testData.domainContexts.accessor,
+      (
+        await innovation.sections
+      )[0]!,
+      innovation.innovationSupports[0]!
+    )
       .setUpdatedBy(testData.baseUsers.innovator.id)
       .setStatus(InnovationActionStatusEnum.SUBMITTED)
       .build(em);
@@ -74,15 +81,14 @@ describe('Innovation Sections Suite', () => {
       innovation.id,
       em
     );
-    
-    const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a,b) => a+b, 0);
+
+    const actionCount = sectionsList.map((s) => s.openActionsCount).reduce((a, b) => a + b, 0);
 
     expect(sectionsList).toBeDefined();
     expect(actionCount).toEqual(1); // The DB has no record in submitted status and we added one
   });
 
-  it('should get submitted section info',async () => {
-    
+  it('should get submitted section info', async () => {
     // arrange
     const innovation = testData.innovation;
 
@@ -98,8 +104,7 @@ describe('Innovation Sections Suite', () => {
     expect(sectionsList.id).toBeDefined();
   });
 
-  it('should not get draft section info as accessor',async () => {
-    
+  it('should not get draft section info as accessor', async () => {
     // arrange
 
     const innovation = await new InnovationBuilder()
@@ -145,14 +150,14 @@ describe('Innovation Sections Suite', () => {
     // arrange
 
     const innovation = await new InnovationBuilder()
-    .setOwner(testData.baseUsers.innovator)
-    .build(em);
+      .setOwner(testData.baseUsers.innovator)
+      .build(em);
 
-  const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
-  await new InnovationSectionBuilder(innovation)
-    .setSection(sectionKey)
-    .setStatus(InnovationSectionStatusEnum.DRAFT)
-    .build(em);
+    const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
+    await new InnovationSectionBuilder(innovation)
+      .setSection(sectionKey)
+      .setStatus(InnovationSectionStatusEnum.DRAFT)
+      .build(em);
 
     const section = await sut.submitInnovationSection(
       testData.domainContexts.innovator,
@@ -180,7 +185,7 @@ describe('Innovation Sections Suite', () => {
         evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
         description: randText(),
         summary: randText(),
-        files: [file.id]
+        files: [file.id],
       },
       em
     );
@@ -196,7 +201,9 @@ describe('Innovation Sections Suite', () => {
     const innovation = testData.innovation;
     const file = await TestsHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
-    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(et => et !== 'CLINICAL_OR_CARE');
+    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(
+      (et) => et !== 'CLINICAL_OR_CARE'
+    );
 
     await sut.createInnovationEvidence(
       { id: innovator.id },
@@ -206,13 +213,11 @@ describe('Innovation Sections Suite', () => {
         evidenceType: 'OTHER',
         description: randText(),
         summary: randText(),
-        files: [file.id]
+        files: [file.id],
       },
       em
     );
 
     // assert assuming if no error is thrown then the test is successful (for now)
   });
-
-
 });

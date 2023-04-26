@@ -6,5 +6,8 @@ enum orderFields {
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields>;
 
-export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({}).required();
-
+export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
+  orderKeys: Object.keys(orderFields),
+})
+  .append<QueryParamsType>({})
+  .required();

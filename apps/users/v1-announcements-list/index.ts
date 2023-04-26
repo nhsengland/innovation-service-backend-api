@@ -5,46 +5,44 @@ import { ResponseHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
-
 import { container } from '../_config';
 import { AnnouncementsServiceSymbol, AnnouncementsServiceType } from '../_services/interfaces';
 
 import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
 
-
 class V1UserAnnouncements {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const announcementsService = container.get<AnnouncementsServiceType>(AnnouncementsServiceSymbol);
+    const announcementsService = container.get<AnnouncementsServiceType>(
+      AnnouncementsServiceSymbol
+    );
 
     try {
-      const authInstance = await authService.validate(context)
+      const authInstance = await authService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
 
       const announcements = await announcementsService.getAnnouncements(authInstance.getContext());
-      context.res = ResponseHelper.Ok<ResponseDTO>(announcements.map((announcement) => ({
-        id: announcement.id,
-        params: announcement.params,
-        createdAt: announcement.createdAt,
-        targetRoles: announcement.targetRoles,
-        template: announcement.template
-      })));
+      context.res = ResponseHelper.Ok<ResponseDTO>(
+        announcements.map((announcement) => ({
+          id: announcement.id,
+          params: announcement.params,
+          createdAt: announcement.createdAt,
+          targetRoles: announcement.targetRoles,
+          template: announcement.template,
+        }))
+      );
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1UserAnnouncements.httpTrigger as AzureFunction, '/v1/announcements', {
@@ -74,8 +72,8 @@ export default openApi(V1UserAnnouncements.httpTrigger as AzureFunction, '/v1/an
                     type: 'array',
                     items: {
                       type: 'string',
-                      enum: Object.keys(ServiceRoleEnum)
-                    }
+                      enum: Object.keys(ServiceRoleEnum),
+                    },
                   },
                   createdAt: {
                     type: 'string',
@@ -84,11 +82,11 @@ export default openApi(V1UserAnnouncements.httpTrigger as AzureFunction, '/v1/an
                   params: {
                     type: 'object',
                   },
-                }
-              }
+                },
+              },
             },
-          }
-        }
+          },
+        },
       },
     },
   },

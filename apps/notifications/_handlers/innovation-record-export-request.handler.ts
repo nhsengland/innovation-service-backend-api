@@ -10,26 +10,32 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
   EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
   Record<string, never>
 > {
-
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
-    domainContext: DomainContextType,
+    domainContext: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
 
   async run(): Promise<this> {
-
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
+    const innovation = await this.recipientsService.innovationInfoWithOwner(
+      this.inputData.innovationId
+    );
+    const request = await this.recipientsService.getExportRequestWithRelations(
+      this.inputData.requestId
+    );
 
     if (innovation.owner.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
-        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        to: {
+          type: 'identityId',
+          value: innovation.owner.identityId,
+          displayNameParam: 'display_name',
+        },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
@@ -37,10 +43,10 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
           accessor_name: request.createdBy.name,
           pdf_request_comment: request.exportRequest.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/export/list')
-          .setPathParams({ innovationId: this.inputData.innovationId })
-          .buildUrl(), // TODO: Check what exactly is this URL.
-        }
+            .addPath('innovator/innovations/:innovationId/export/list')
+            .setPathParams({ innovationId: this.inputData.innovationId })
+            .buildUrl(), // TODO: Check what exactly is this URL.
+        },
       });
     }
 

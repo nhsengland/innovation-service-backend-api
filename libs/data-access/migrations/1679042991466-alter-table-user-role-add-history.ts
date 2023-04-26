@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableUserRoleAddHistory1679042991466 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE user_role ADD
         [valid_from] datetime2 GENERATED ALWAYS AS ROW START CONSTRAINT df_user_role_valid_from DEFAULT SYSUTCDATETIME(),
@@ -19,5 +17,4 @@ export class alterTableUserRoleAddHistory1679042991466 implements MigrationInter
   async down(_queryRunner: QueryRunner): Promise<void> {
     // deprecated
   }
-
 }

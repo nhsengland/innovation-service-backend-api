@@ -11,18 +11,17 @@ import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/int
 
 import type { ResponseDTO } from './transformation.dtos';
 
-
 class V1MeTermsOfUseAccept {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
 
     try {
-
-      const authInstance = await authorizationService.validate(context)
+      const authInstance = await authorizationService
+        .validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -30,45 +29,46 @@ class V1MeTermsOfUseAccept {
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const result = await termsOfUseService.acceptActiveTermsOfUse({ id: requestUser.id }, domainContext.currentRole.role);
+      const result = await termsOfUseService.acceptActiveTermsOfUse(
+        { id: requestUser.id },
+        domainContext.currentRole.role
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
-
       context.res = ResponseHelper.Error(context, error);
       return;
-
     }
-
   }
-
 }
 
-
 // TODO: Improve response
-export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/me/terms-of-use/accept', {
-  patch: {
-    description: 'Accept user terms of use',
-    operationId: 'v1-me-terms-of-use-accept',
-    tags: ['[v1] Terms of Use'],
-    parameters: [],
-    responses: {
-      200: {
-        description: 'Successful operation',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'Operation identifier' }
-              }
-            }
-          }
-        }
+export default openApi(
+  V1MeTermsOfUseAccept.httpTrigger as AzureFunction,
+  '/v1/me/terms-of-use/accept',
+  {
+    patch: {
+      description: 'Accept user terms of use',
+      operationId: 'v1-me-terms-of-use-accept',
+      tags: ['[v1] Terms of Use'],
+      parameters: [],
+      responses: {
+        200: {
+          description: 'Successful operation',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', description: 'Operation identifier' },
+                },
+              },
+            },
+          },
+        },
+        422: { description: 'Unprocessable Entity' },
       },
-      422: {description: 'Unprocessable Entity'},
-    }
+    },
   }
-});
+);

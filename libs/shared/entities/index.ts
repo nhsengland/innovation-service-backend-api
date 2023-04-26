@@ -111,7 +111,7 @@ export const GENERAL_ENTITIES = [
   TermsOfUseEntity,
   TermsOfUseUserEntity,
   AnnouncementEntity,
-  AnnouncementUserEntity
+  AnnouncementUserEntity,
 ];
 
 export const INNOVATION_ENTITIES = [
@@ -151,7 +151,7 @@ export const ORGANISATION_ENTITIES = [
   OrganisationUnitUserEntity,
   OrganisationUnitEntity,
   OrganisationUserEntity,
-  OrganisationEntity
+  OrganisationEntity,
 ];
 
 export const USER_ENTITIES = [
@@ -162,11 +162,11 @@ export const USER_ENTITIES = [
   NotificationEntity,
   UserRoleEntity,
   UserEntity,
-  UserPreferenceEntity
+  UserPreferenceEntity,
 ];
 
 export const VIEW_ENTITIES = [
   IdleSupportViewEntity,
   InnovationGroupedStatusViewEntity,
-  LastSupportStatusViewEntity
+  LastSupportStatusViewEntity,
 ];

@@ -7,9 +7,7 @@ import type { EntityManager } from 'typeorm';
 
 import { OrganisationsServiceSymbol, OrganisationsServiceType } from './interfaces';
 
-
 describe('Innovation Assessments Suite', () => {
-
   let sut: OrganisationsServiceType;
 
   let testData: TestDataType;
@@ -32,9 +30,12 @@ describe('Innovation Assessments Suite', () => {
 
   describe('getOrganisationInfo', () => {
     it('should get the organisation info', async () => {
+      const organisationInfo = await sut.getOrganisationInfo(
+        testData.organisation.accessor.id,
+        true,
+        em
+      );
 
-      const organisationInfo = await sut.getOrganisationInfo(testData.organisation.accessor.id, true, em);
-      
       const org = testData.organisation.accessor;
       const unit = testData.organisationUnit.accessor;
 
@@ -42,32 +43,30 @@ describe('Innovation Assessments Suite', () => {
         id: org.id,
         name: org.name,
         acronym: org.acronym,
-        organisationUnits: [{
-          id: unit.id,
-          name: unit.name,
-          acronym: unit.acronym,
-          isActive: !unit.inactivatedAt,
-          userCount: 2 // unit has QA and A users
-        }],
-        isActive: !org.inactivatedAt
+        organisationUnits: [
+          {
+            id: unit.id,
+            name: unit.name,
+            acronym: unit.acronym,
+            isActive: !unit.inactivatedAt,
+            userCount: 2, // unit has QA and A users
+          },
+        ],
+        isActive: !org.inactivatedAt,
       });
     });
 
-  it('should not get organisation info if it does not exist', async () => {
+    it('should not get organisation info if it does not exist', async () => {
+      let err: NotFoundError | null = null;
 
-    let err: NotFoundError | null = null;
+      try {
+        await sut.getOrganisationInfo(randUuid());
+      } catch (error) {
+        err = error as NotFoundError;
+      }
 
-    try {
-      await sut.getOrganisationInfo(randUuid());
-    }
-    catch (error) {
-      err = error as NotFoundError;
-    }
-
-    expect(err).toBeDefined();
-    expect(err?.name).toBe(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    });
   });
-
-  });
-
 });

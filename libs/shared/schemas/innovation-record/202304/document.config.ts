@@ -1,6 +1,6 @@
 import type { DocumentType202304 } from './document.types';
 
-export const allowFileUploads = new Set<keyof DocumentType202304 >([
+export const allowFileUploads = new Set<keyof DocumentType202304>([
   'UNDERSTANDING_OF_NEEDS',
   'EVIDENCE_OF_EFFECTIVENESS',
   'REGULATIONS_AND_STANDARDS',
@@ -21,5 +21,5 @@ export enum InnovationSectionAliasEnum {
   INTELLECTUAL_PROPERTY = 'IP',
   REVENUE_MODEL = 'RM',
   COST_OF_INNOVATION = 'CI',
-  DEPLOYMENT = 'D'
+  DEPLOYMENT = 'D',
 }

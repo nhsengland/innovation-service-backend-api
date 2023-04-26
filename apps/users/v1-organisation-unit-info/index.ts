@@ -12,25 +12,20 @@ import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_servic
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1OrganisationUnitInfo {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const organisationsService = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
+    const organisationsService = container.get<OrganisationsServiceType>(
+      OrganisationsServiceSymbol
+    );
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      await authorizationService.validate(context).checkAdminType().verify();
 
       const result = await organisationsService.getOrganisationUnitInfo(params.organisationUnitId);
 
@@ -53,7 +48,7 @@ export default openApi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
-          description: 'Success.'
+          description: 'Success.',
         },
         '400': {
           description: 'Bad request.',

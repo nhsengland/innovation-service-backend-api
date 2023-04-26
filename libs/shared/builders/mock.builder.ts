@@ -5,10 +5,9 @@ import { DomainUsersService } from '../services';
 import type { DomainUserInfoType } from '../types';
 
 export class MockBuilder {
-
   private _spies: jest.SpyInstance[] = [];
 
-  constructor() { }
+  constructor() {}
 
   public reset(): void {
     for (const spy of this._spies) {
@@ -21,17 +20,12 @@ export class MockBuilder {
     return this._spies;
   }
 
-
   public addSpy(spy: jest.SpyInstance): MockBuilder {
     this._spies.push(spy);
     return this;
   }
 
-
-  mockDomainUser(
-    user: UserEntity,
-  ): DomainUserInfoBuilder {
-
+  mockDomainUser(user: UserEntity): DomainUserInfoBuilder {
     const data = {
       id: user.id,
       identityId: user.identityId,
@@ -48,13 +42,10 @@ export class MockBuilder {
     } as DomainUserInfoType;
 
     return new DomainUserInfoBuilder(data, this);
-
   }
-
 }
 
 class DomainUserInfoBuilder {
-
   user: DomainUserInfoType;
   builder: MockBuilder;
   constructor(user: DomainUserInfoType, builder: MockBuilder) {
@@ -63,8 +54,8 @@ class DomainUserInfoBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<MockBuilder> {
-
-    const user = await entityManager.createQueryBuilder(UserEntity, 'user')
+    const user = await entityManager
+      .createQueryBuilder(UserEntity, 'user')
       .leftJoinAndSelect('user.serviceRoles', 'roles')
       .leftJoinAndSelect('user.userOrganisations', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.organisation', 'organisation')
@@ -74,13 +65,13 @@ class DomainUserInfoBuilder {
       .getOne();
 
     const userOrganisations = await user?.userOrganisations;
-    const organisationUser = userOrganisations?.find(_ => true);
+    const organisationUser = userOrganisations?.find((_) => true);
     const organisation = organisationUser?.organisation;
 
     // this.user.roles = user?.serviceRoles ?? []; // Was like this before, not needed
 
     if (organisation) {
-      const organisationUnitUser = organisationUser.userOrganisationUnits.find(_ => true);
+      const organisationUnitUser = organisationUser.userOrganisationUnits.find((_) => true);
       const organisationUnit = organisationUnitUser?.organisationUnit;
 
       this.user.organisations = [
@@ -93,19 +84,25 @@ class DomainUserInfoBuilder {
           size: organisation.size,
           description: organisation.description,
           registrationNumber: organisation.registrationNumber,
-          organisationUnits: organisationUnit ? [{
-            id: organisationUnit.id,
-            name: organisationUnit.name,
-            acronym: organisationUnit.acronym,
-            organisationUnitUser: {
-              id: organisationUnitUser.id,
-            }
-          }] : [],
-        }
+          organisationUnits: organisationUnit
+            ? [
+                {
+                  id: organisationUnit.id,
+                  name: organisationUnit.name,
+                  acronym: organisationUnit.acronym,
+                  organisationUnitUser: {
+                    id: organisationUnitUser.id,
+                  },
+                },
+              ]
+            : [],
+        },
       ];
     }
 
-    this.builder.addSpy(jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user));
+    this.builder.addSpy(
+      jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user)
+    );
     return this.builder;
   }
 }

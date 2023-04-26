@@ -14,22 +14,25 @@ import { ActionEnum, TargetEnum } from '@innovations/shared/services/integration
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationInfo {
-
   @JwtDecoder()
-  @Audit({ action: ActionEnum.READ, target: TargetEnum.INNOVATION, identifierParam: 'innovationId' })
+  @Audit({
+    action: ActionEnum.READ,
+    target: TargetEnum.INNOVATION,
+    identifierParam: 'innovationId',
+  })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovation()
         .verify();
@@ -54,43 +57,57 @@ class V1InnovationInfo {
         postCode: result.postCode,
         categories: result.categories,
         otherCategoryDescription: result.otherCategoryDescription,
-        ...(result.owner === undefined ? {} :
-          {
-            owner: {
-              id: result.owner.id,
-              name: result.owner.name,
-              isActive: result.owner.isActive,
-              // Contact details only sent to Assessment and Admin users.
-              ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { email: result.owner.email, mobilePhone: result.owner.mobilePhone, contactByEmail: result.owner.contactByEmail, contactByPhone: result.owner.contactByPhone, contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe, contactDetails: result.owner.contactDetails } : {}),
-              ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum) ? { lastLoginAt: result.owner.lastLoginAt } : {}),
-              organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
-            }
-          }
-        ),
+        ...(result.owner === undefined
+          ? {}
+          : {
+              owner: {
+                id: result.owner.id,
+                name: result.owner.name,
+                isActive: result.owner.isActive,
+                // Contact details only sent to Assessment and Admin users.
+                ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(
+                  domainContext.currentRole.role as ServiceRoleEnum
+                )
+                  ? {
+                      email: result.owner.email,
+                      mobilePhone: result.owner.mobilePhone,
+                      contactByEmail: result.owner.contactByEmail,
+                      contactByPhone: result.owner.contactByPhone,
+                      contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe,
+                      contactDetails: result.owner.contactDetails,
+                    }
+                  : {}),
+                ...([ServiceRoleEnum.ADMIN].includes(
+                  domainContext.currentRole.role as ServiceRoleEnum
+                )
+                  ? { lastLoginAt: result.owner.lastLoginAt }
+                  : {}),
+                organisations:
+                  result.owner.organisations.length > 0 ? result.owner.organisations : null,
+              },
+            }),
         lastEndSupportAt: result.lastEndSupportAt,
         export: result.export,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
-        ...(result.supports === undefined ? {} : {
-          supports: result.supports.map(s => ({
-            id: s.id,
-            status: s.status,
-            organisationUnitId: s.organisationUnitId
-          }))
-        }),
+        ...(result.supports === undefined
+          ? {}
+          : {
+              supports: result.supports.map((s) => ({
+                id: s.id,
+                status: s.status,
+                organisationUnitId: s.organisationUnitId,
+              })),
+            }),
         collaboratorId: result.collaboratorId,
-        createdAt: result.createdAt
+        createdAt: result.createdAt,
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
-
 
 export default openApi(V1InnovationInfo.httpTrigger as AzureFunction, '/v1/{innovationId}', {
   get: {
@@ -105,8 +122,8 @@ export default openApi(V1InnovationInfo.httpTrigger as AzureFunction, '/v1/{inno
         description: 'Innovation ID',
         schema: {
           type: 'string',
-          format: 'uuid'
-        }
+          format: 'uuid',
+        },
       },
     ],
     responses: {

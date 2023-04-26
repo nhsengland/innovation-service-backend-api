@@ -3,7 +3,12 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
+import {
+  AuthorizationServiceSymbol,
+  AuthorizationServiceType,
+  DomainServiceSymbol,
+  DomainServiceType,
+} from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -11,36 +16,29 @@ import { container } from '../_config';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
-
 class V1MeDelete {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context)
-        .checkInnovatorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().verify();
       const requestUser = auth.getUserInfo();
 
       const result = await domainService.users.deleteUser(requestUser.id, { reason: body.reason });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1MeDelete.httpTrigger as AzureFunction, '/v1/me/delete', {
@@ -57,12 +55,12 @@ export default openApi(V1MeDelete.httpTrigger as AzureFunction, '/v1/me/delete',
           'application/json': {
             schema: {
               type: 'object',
-              properties: { id: { type: 'string' } }
-            }
-          }
-        }
+              properties: { id: { type: 'string' } },
+            },
+          },
+        },
       },
-      '400': { description: 'Bad request.' }
-    }
-  }
+      '400': { description: 'Bad request.' },
+    },
+  },
 });

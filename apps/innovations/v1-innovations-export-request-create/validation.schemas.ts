@@ -3,11 +3,11 @@ import Joi from 'joi';
 
 export type BodyType = {
   requestReason: string;
-}
+};
 
 export type PathParamsType = {
   innovationId: string;
-}
+};
 
 export const BodySchema = Joi.object<BodyType>({
   requestReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),

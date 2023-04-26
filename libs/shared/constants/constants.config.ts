@@ -1,9 +1,9 @@
-export const TEXTAREA_LENGTH_LIMIT = { 
+export const TEXTAREA_LENGTH_LIMIT = {
   small: 200,
   medium: 500,
   mediumUp: 1000,
   largeDown: 1500,
-  large: 2000
+  large: 2000,
 };
 
 export const ORGANISATIONS_LENGTH_LIMITS = {
@@ -13,9 +13,9 @@ export const ORGANISATIONS_LENGTH_LIMITS = {
   unit_acronym: 10,
   size: 25,
   description: 50,
-  registrationNumber: 8
+  registrationNumber: 8,
 };
 
 export const EXPIRATION_DATES = {
-  transfers: 1000 * 60 * 60 * 24 * 30
+  transfers: 1000 * 60 * 60 * 24 * 30,
 };

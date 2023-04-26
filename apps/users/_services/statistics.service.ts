@@ -1,99 +1,131 @@
 import { injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { InnovationActionStatusEnum, InnovationStatusEnum, InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
+import {
+  InnovationActionEntity,
+  InnovationEntity,
+  InnovationSupportEntity,
+} from '@users/shared/entities';
+import {
+  InnovationActionStatusEnum,
+  InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
+  InnovationSupportStatusEnum,
+  ServiceRoleEnum,
+} from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
 
-
 @injectable()
 export class StatisticsService extends BaseService {
-
   constructor() {
     super();
   }
 
-  async waitingAssessment(): Promise<{ count: number, overdue: number }> {
-
-    const query = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+  async waitingAssessment(): Promise<{ count: number; overdue: number }> {
+    const query = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
+      .where('innovation.status IN (:...assessmentInnovationStatus)', {
+        assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT],
+      })
       .getCount();
 
-    const overdueCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const overdueCount = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
-      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`)
+      .where('innovation.status IN (:...assessmentInnovationStatus)', {
+        assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT],
+      })
+      .andWhere(
+        `DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`
+      )
       .getCount();
 
     return {
       count: query,
-      overdue: overdueCount
+      overdue: overdueCount,
     };
-
   }
 
-
-  async assignedInnovations(userId: string): Promise<{ count: number; total: number; overdue: number }> {
-
-    const count = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+  async assignedInnovations(
+    userId: string
+  ): Promise<{ count: number; total: number; overdue: number }> {
+    const count = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
-      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+      .where('innovation.status IN (:...assessmentInnovationStatus)', {
+        assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT],
+      })
       .andWhere('assignTo.id = :userId', { userId })
       .getCount();
 
-    const total = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const total = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
-      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
+      .where('innovation.status IN (:...assessmentInnovationStatus)', {
+        assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT],
+      })
 
       .getCount();
 
-    const overdueCount = await this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation')
+    const overdueCount = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
-      .where('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT] })
-      .andWhere(`DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`)
+      .where('innovation.status IN (:...assessmentInnovationStatus)', {
+        assessmentInnovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT],
+      })
+      .andWhere(
+        `DATEDIFF(day, innovation.submitted_at, GETDATE()) > 7 AND assessments.finished_at IS NULL`
+      )
       .andWhere('assignTo.id = :userId', { userId })
       .getCount();
-
 
     return {
       count: count,
       total: total,
-      overdue: overdueCount
+      overdue: overdueCount,
     };
-
   }
 
   async innovationsAssignedToMe(
     requestUser: DomainUserInfoType,
-    domainContext: DomainContextType,
-  ): Promise<{ count: number, total: number, lastSubmittedAt: null | Date }> {
-
+    domainContext: DomainContextType
+  ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const {myUnitInnovationsCount, lastSubmittedAt} = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
+    const { myUnitInnovationsCount, lastSubmittedAt } = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
       .select('count(*)', 'myUnitInnovationsCount')
       .addSelect('MAX(innovationSupports.updated_at)', 'lastSubmittedAt')
-      .where('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
-      .andWhere('innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
+      .where('innovationSupports.status = :status', {
+        status: InnovationSupportStatusEnum.ENGAGING,
+      })
+      .andWhere('innovationSupports.organisation_unit_id = :organisationUnit', {
+        organisationUnit: organisationUnit,
+      })
       .getRawOne();
-      
-    const myAssignedInnovationsCount = await this.sqlConnection.createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
+
+    const myAssignedInnovationsCount = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
       .innerJoin('innovationSupports.organisationUnitUsers', 'unitUsers')
       .innerJoin('unitUsers.organisationUser', 'orgUsers')
       .innerJoin('orgUsers.user', 'user')
-      .where('unitUsers.organisation_unit_id = :organisationUnit', { organisationUnit: organisationUnit })
+      .where('unitUsers.organisation_unit_id = :organisationUnit', {
+        organisationUnit: organisationUnit,
+      })
       .andWhere('user.id = :userId', { userId: requestUser.id })
-      .andWhere('innovationSupports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
+      .andWhere('innovationSupports.status = :status', {
+        status: InnovationSupportStatusEnum.ENGAGING,
+      })
       .getCount();
 
     return {
@@ -101,35 +133,37 @@ export class StatisticsService extends BaseService {
       total: myUnitInnovationsCount,
       lastSubmittedAt: lastSubmittedAt,
     };
-
   }
 
   async actionsToReview(
     requestUser: DomainUserInfoType,
-    domainContext: DomainContextType,
-  ): Promise<{ count: number, total: number, lastSubmittedAt: null | Date }> {
-
+    domainContext: DomainContextType
+  ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
-    const myActionsQuery = this.sqlConnection.createQueryBuilder(InnovationActionEntity, 'actions')
+    const myActionsQuery = this.sqlConnection
+      .createQueryBuilder(InnovationActionEntity, 'actions')
       .select('actions.status', 'status')
       .addSelect('count(*)', 'count')
       .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
       .where('actions.created_by = :userId', { userId: requestUser.id })
-      .andWhere('actions.status IN (:...status)', { status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED] });
+      .andWhere('actions.status IN (:...status)', {
+        status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED],
+      });
 
-    if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR || domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+    if (
+      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
+      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
+    ) {
       if (!organisationUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
       myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit });
     }
 
-    const myActionsCount = await myActionsQuery
-      .groupBy('actions.status')
-      .getRawMany();
+    const myActionsCount = await myActionsQuery.groupBy('actions.status').getRawMany();
 
     const actions: Record<string, any> = {
       SUBMITTED: { count: 0, lastSubmittedAt: null },
@@ -142,51 +176,68 @@ export class StatisticsService extends BaseService {
     return {
       count: actions['SUBMITTED'].count,
       total: actions['SUBMITTED'].count + actions['REQUESTED'].count,
-      lastSubmittedAt: Object.values(actions).map(_ => _.lastSubmittedAt).sort((a, b) => b - a)[0] || null,
+      lastSubmittedAt:
+        Object.values(actions)
+          .map((_) => _.lastSubmittedAt)
+          .sort((a, b) => b - a)[0] || null,
     };
-
   }
 
   async innovationsToReview(
     _requestUser: DomainUserInfoType,
-    domainContext: DomainContextType,
-  ): Promise<{ count: number, lastSubmittedAt: null | Date }> {
-
+    domainContext: DomainContextType
+  ): Promise<{ count: number; lastSubmittedAt: null | Date }> {
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const {count, lastSubmittedAt} = await this.sqlConnection.createQueryBuilder()
-        .select('count(*)', 'count')
-        .addSelect('MAX(lastSubmittedAt)', 'lastSubmittedAt')
-        .from(qb => (qb.from(InnovationEntity, 'innovations')
-          .select('innovations.id')
-          .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
-          .innerJoin('innovations.organisationShares', 'organisationShares')
-          .innerJoin('organisationShares.organisationUnits', 'organisationUnits')
-          .leftJoin('innovations.innovationSupports', 'innovationSupports', 'innovationSupports.innovation_id = innovations.id AND innovationSupports.organisation_unit_id = :organisationUnit', { organisationUnit })
-          .leftJoin('innovations.assessments', 'assessments')
-          .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
-          .leftJoin('innovations.innovationSupportLogs', 'supportLogs', 'supportLogs.type = :supportLogType', { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
-          .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
-          .andWhere('(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)', { supportStatus: InnovationSupportStatusEnum.UNASSIGNED })
-          .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
-          .andWhere(
-            `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
-            { suggestedOrganisationUnitId: organisationUnit}
-          )
-          .andWhere('organisationUnits.id = :organisationUnit', { organisationUnit })
-          .groupBy('innovations.id')), 'innovations'
-        )
-        .getRawOne();
+    const { count, lastSubmittedAt } = await this.sqlConnection
+      .createQueryBuilder()
+      .select('count(*)', 'count')
+      .addSelect('MAX(lastSubmittedAt)', 'lastSubmittedAt')
+      .from(
+        (qb) =>
+          qb
+            .from(InnovationEntity, 'innovations')
+            .select('innovations.id')
+            .addSelect('MAX(innovations.submitted_at)', 'lastSubmittedAt')
+            .innerJoin('innovations.organisationShares', 'organisationShares')
+            .innerJoin('organisationShares.organisationUnits', 'organisationUnits')
+            .leftJoin(
+              'innovations.innovationSupports',
+              'innovationSupports',
+              'innovationSupports.innovation_id = innovations.id AND innovationSupports.organisation_unit_id = :organisationUnit',
+              { organisationUnit }
+            )
+            .leftJoin('innovations.assessments', 'assessments')
+            .leftJoin('assessments.organisationUnits', 'assessmentOrganisationUnits')
+            .leftJoin(
+              'innovations.innovationSupportLogs',
+              'supportLogs',
+              'supportLogs.type = :supportLogType',
+              { supportLogType: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION }
+            )
+            .leftJoin('supportLogs.suggestedOrganisationUnits', 'supportLogOrgUnit')
+            .andWhere(
+              '(innovationSupports.id IS NULL OR innovationSupports.status = :supportStatus)',
+              { supportStatus: InnovationSupportStatusEnum.UNASSIGNED }
+            )
+            .andWhere('innovations.status = :status', { status: InnovationStatusEnum.IN_PROGRESS })
+            .andWhere(
+              `(assessmentOrganisationUnits.id = :suggestedOrganisationUnitId OR supportLogOrgUnit.id =:suggestedOrganisationUnitId)`,
+              { suggestedOrganisationUnitId: organisationUnit }
+            )
+            .andWhere('organisationUnits.id = :organisationUnit', { organisationUnit })
+            .groupBy('innovations.id'),
+        'innovations'
+      )
+      .getRawOne();
 
     return {
       count: count,
       lastSubmittedAt: lastSubmittedAt,
     };
-
   }
-
 }

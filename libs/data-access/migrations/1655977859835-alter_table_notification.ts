@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableNotification1655977859835 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(
       `ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_user_id"`
     );
@@ -98,5 +96,4 @@ export class alterTableNotification1655977859835 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "notification_user"`);
     await queryRunner.query(`DROP TABLE "notification"`);
   }
-
 }

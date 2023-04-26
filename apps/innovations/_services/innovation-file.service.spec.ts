@@ -7,7 +7,6 @@ import type { InnovationFileService } from './innovation-file.service';
 import { InnovationFileServiceSymbol, InnovationFileServiceType } from './interfaces';
 
 describe('Innovation supports service test suite', () => {
-
   let sut: InnovationFileService;
   let testData: TestDataType;
   let em: EntityManager;
@@ -29,7 +28,6 @@ describe('Innovation supports service test suite', () => {
 
   describe('uploadInnovationFile', () => {
     it('should updload an innovation file', async () => {
-
       const filename = randText();
 
       const file = await sut.uploadInnovationFile(

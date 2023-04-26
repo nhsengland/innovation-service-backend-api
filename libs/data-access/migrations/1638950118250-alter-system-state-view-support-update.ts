@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterSystemStateViewSupportUpdate1638950118250 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `
@@ -393,5 +392,4 @@ export class alterSystemStateViewSupportUpdate1638950118250 implements Migration
             `
     );
   }
-
 }

@@ -1,8 +1,8 @@
 import Joi from 'joi';
 
 export type ParamsType = {
-  organisationId: string,
-  organisationUnitId: string
+  organisationId: string;
+  organisationUnitId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   organisationId: Joi.string().guid().required(),
@@ -10,8 +10,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-    userIds: string[],
-}
+  userIds: string[];
+};
 export const BodySchema = Joi.object<BodyType>({
-  userIds: Joi.array().items(Joi.string()).required()
+  userIds: Joi.array().items(Joi.string()).required(),
 }).required();

@@ -1,4 +1,3 @@
-
 export const SYMBOLS = {
   OrganisationsService: Symbol.for('OrganisationsService'),
   StatisticsService: Symbol.for('StatisticsService'),

@@ -1,5 +1,3 @@
-
-
 export type ResponseDTO = {
   thread: {
     id: string;
@@ -8,5 +6,5 @@ export type ResponseDTO = {
       id: string;
     };
     createdAt: Date;
-  }
-}
+  };
+};

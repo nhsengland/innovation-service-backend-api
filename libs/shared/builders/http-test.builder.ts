@@ -1,12 +1,9 @@
-
 import type { Context, HttpMethod, HttpRequest, Logger } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
 
 import type { CustomContextType, DomainContextType } from '../types';
 
-
 export class HttpTestBuilder {
-
   private request: HttpRequest = {
     url: '',
     method: 'GET',
@@ -15,18 +12,31 @@ export class HttpTestBuilder {
     params: {},
     query: {},
     rawBody: '',
-    user: { id: randUuid(), type: 'AppService', username: randUserName(), identityProvider: 'AzureAD', claimsPrincipalData: {} },
+    user: {
+      id: randUuid(),
+      type: 'AppService',
+      username: randUserName(),
+      identityProvider: 'AzureAD',
+      claimsPrincipalData: {},
+    },
   } as HttpRequest;
 
   private context: CustomContextType;
 
   private logger: Logger = {
-    info: (...args: any[]) => { console.info(...args); },
-    warn: (...args: any[]) => { console.warn(...args); },
-    error: (...args: any[]) => { console.error(...args); },
-    verbose: (...args: any[]) => { console.log(...args); },
+    info: (...args: any[]) => {
+      console.info(...args);
+    },
+    warn: (...args: any[]) => {
+      console.warn(...args);
+    },
+    error: (...args: any[]) => {
+      console.error(...args);
+    },
+    verbose: (...args: any[]) => {
+      console.log(...args);
+    },
   } as unknown as Logger;
-
 
   public setContext(): HttpTestBuilder {
     const context = {
@@ -35,12 +45,10 @@ export class HttpTestBuilder {
           identityId: randUuid(),
           name: randUserName(),
         },
-        context: {
-
-        }
+        context: {},
       },
       log: this.logger,
-      done: () => { },
+      done: () => {},
       res: {},
       bindings: {},
       bindingData: {
@@ -104,15 +112,16 @@ export class HttpTestBuilder {
       user: {
         identityId: domainContext.identityId,
         name: randUserName(), // is not used
-        roleId: domainContext.currentRole.id
+        roleId: domainContext.currentRole.id,
       },
     };
     return this;
   }
 
-  public async invoke<T = any>(func: (context: Context, ...args: any[]) => (void | Promise<any>)): Promise<T> {
+  public async invoke<T = any>(
+    func: (context: Context, ...args: any[]) => void | Promise<any>
+  ): Promise<T> {
     await func(this.context, this.request);
     return this.context.res as T;
   }
-
 }

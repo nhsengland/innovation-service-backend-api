@@ -1,7 +1,8 @@
-import type { MigrationInterface, QueryRunner } from "typeorm";
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class migrationsNotificationPreferenceUpdateCommentToMessage1679666240591 implements MigrationInterface {
-
+export class migrationsNotificationPreferenceUpdateCommentToMessage1679666240591
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       UPDATE notification_preference
@@ -10,6 +11,5 @@ export class migrationsNotificationPreferenceUpdateCommentToMessage1679666240591
     `);
   }
 
-  public async down(): Promise<void> { }
-
+  public async down(): Promise<void> {}
 }

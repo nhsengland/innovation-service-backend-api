@@ -1,10 +1,9 @@
 import Joi = require('joi');
 
-
 export type ParamsType = {
   transferId: string;
-}
+};
 
 export const ParamsSchema = Joi.object<ParamsType>({
-  transferId: Joi.string().guid().required()
+  transferId: Joi.string().guid().required(),
 }).required();

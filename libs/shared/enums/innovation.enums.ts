@@ -6,7 +6,7 @@ export enum InnovationStatusEnum {
   // NEEDS_ASSESSMENT_REVIEW = 'NEEDS_ASSESSMENT_REVIEW', // Not it use nowadays.
   WITHDRAWN = 'WITHDRAWN',
   COMPLETE = 'COMPLETE',
-  PAUSED = 'PAUSED'
+  PAUSED = 'PAUSED',
 }
 
 export enum InnovationGroupedStatusEnum {
@@ -17,7 +17,7 @@ export enum InnovationGroupedStatusEnum {
   RECEIVING_SUPPORT = 'RECEIVING_SUPPORT',
   NO_ACTIVE_SUPPORT = 'NO_ACTIVE_SUPPORT',
   AWAITING_NEEDS_REASSESSMENT = 'AWAITING_NEEDS_REASSESSMENT',
-  WITHDRAWN = 'WITHDRAWN'
+  WITHDRAWN = 'WITHDRAWN',
 }
 
 export enum InnovationActionStatusEnum {
@@ -28,7 +28,7 @@ export enum InnovationActionStatusEnum {
   DELETED = 'DELETED',
   DECLINED = 'DECLINED',
   COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
+  CANCELLED = 'CANCELLED',
 }
 
 export enum InnovationSectionStatusEnum {
@@ -82,5 +82,5 @@ export enum InnovationCollaboratorStatusEnum {
   CANCELLED = 'CANCELLED',
   REMOVED = 'REMOVED',
   LEFT = 'LEFT',
-  EXPIRED = 'EXPIRED'
+  EXPIRED = 'EXPIRED',
 }

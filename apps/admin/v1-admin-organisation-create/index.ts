@@ -3,10 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType
-} from '@admin/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -18,22 +15,16 @@ import { BodySchema, BodyType } from './validation.schemas';
 
 class V1AdminOrganisationCreate {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
 
       const result = await organisationsService.createOrganisation(auth.getContext(), body);
 
@@ -53,7 +44,9 @@ export default openApi(
     post: {
       description: 'Create an organisation.',
       operationId: 'v1-admin-organisation-create',
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The organisation to be created.' }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
+        description: 'The organisation to be created.',
+      }),
       responses: {
         '200': {
           description: 'The organisation has been created.',
@@ -68,8 +61,8 @@ export default openApi(
                   },
                   units: {
                     type: 'string',
-                    description: 'Ids of the organisation units belonging to the organisation.'
-                  }
+                    description: 'Ids of the organisation units belonging to the organisation.',
+                  },
                 },
               },
             },

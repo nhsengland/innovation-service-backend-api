@@ -11,19 +11,18 @@ import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
 import type { ResponseDTO } from './transformation.dtos';
 import { QuerySchema, QueryType } from './validation.schemas';
 
-
 class GetUserStatistics {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
 
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    
     try {
-
       const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .checkAccessorType()
         .checkInnovatorType()
         .checkAssessmentType()
@@ -35,19 +34,16 @@ class GetUserStatistics {
       const stats = await StatisticsHandlersHelper.runHandler(
         requestUser,
         domainContext,
-        query.statistics,
-      ); 
-  
+        query.statistics
+      );
+
       context.res = ResponseHelper.Ok<ResponseDTO>(stats);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(GetUserStatistics.httpTrigger as AzureFunction, '/v1/statistics', {
@@ -56,7 +52,12 @@ export default openApi(GetUserStatistics.httpTrigger as AzureFunction, '/v1/stat
     operationId: 'v1-users-statistics',
     tags: ['[v1] User Statistics'],
     parameters: [
-      { in: 'query', name: 'statistics', required: false, schema: { type: 'string', enum: Object.keys(UserStatisticsEnum) } },
+      {
+        in: 'query',
+        name: 'statistics',
+        required: false,
+        schema: { type: 'string', enum: Object.keys(UserStatisticsEnum) },
+      },
     ],
     responses: {
       200: {
@@ -64,12 +65,11 @@ export default openApi(GetUserStatistics.httpTrigger as AzureFunction, '/v1/stat
         content: {
           'application/json': {
             schema: {
-              type: 'object'
+              type: 'object',
             },
-          }
-        }
+          },
+        },
       },
     },
   },
 });
-

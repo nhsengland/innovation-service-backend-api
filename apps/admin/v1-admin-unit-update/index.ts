@@ -3,10 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType
-} from '@admin/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -18,43 +15,31 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 
 class V1AdminUnitUpdate {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
-        const params = JoiHelper.Validate<ParamsType>(
-            ParamsSchema,
-            request.params
-        );
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-        const body = JoiHelper.Validate<BodyType>(
-            BodySchema,
-            request.body
-        );
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-        await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      await authorizationService.validate(context).checkAdminType().verify();
 
-        const result = await organisationsService.updateUnit(
-            params.organisationUnitId,
-            body.name,
-            body.acronym
-        );
+      const result = await organisationsService.updateUnit(
+        params.organisationUnitId,
+        body.name,
+        body.acronym
+      );
 
-        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.id });
-        return;
-        } catch (error) {
-        context.res = ResponseHelper.Error(context, error);
-        return;
-        }
+      context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.id });
+      return;
+    } catch (error) {
+      context.res = ResponseHelper.Error(context, error);
+      return;
+    }
   }
 }
 
@@ -89,18 +74,18 @@ export default openApi(
         description: 'New name and acronym for the unit.',
         required: true,
         content: {
-            'application/json': {
-                schema: {
-                    type: 'object',
-                    properties: {
-                        userIds: {
-                            type: 'string',
-                            description: 'Name and acronym for the unit.'
-                        }
-                    }
-                }
-            }
-        }
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                userIds: {
+                  type: 'string',
+                  description: 'Name and acronym for the unit.',
+                },
+              },
+            },
+          },
+        },
       },
       responses: {
         '200': {

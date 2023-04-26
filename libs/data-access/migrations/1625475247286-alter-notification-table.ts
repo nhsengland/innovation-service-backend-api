@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterNotificationTable1625475247286 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // Drop current notification table
     await queryRunner.dropTable('notification', true);
@@ -70,5 +69,4 @@ export class alterNotificationTable1625475247286 implements MigrationInterface {
         )`
     );
   }
-
 }

@@ -6,34 +6,28 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 
 import { BaseHandler } from './base.handler';
 
-
 export class IdleInnovatorsHandler extends BaseHandler<
   NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD,
   EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
   Record<string, never>
 > {
-
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string; },
+    requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
-    domainContext: DomainContextType,
+    domainContext: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
 
-
   async run(): Promise<this> {
-
     await this.notifyIdleInnovators();
 
     return this;
-
   }
 
   private async notifyIdleInnovators(): Promise<void> {
-
     const idleInnovators = await this.recipientsService.incompleteInnovationRecordOwners();
 
     for (const user of idleInnovators) {
@@ -42,10 +36,8 @@ export class IdleInnovatorsHandler extends BaseHandler<
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
           innovation_name: user.innovationName,
-        }
+        },
       });
     }
-
   }
-
 }

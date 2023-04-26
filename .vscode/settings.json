@@ -12,5 +12,11 @@
   "debug.internalConsoleOptions": "neverOpen",
   "files.associations": {
     "**/azure-pipelines.yml": "azure-pipelines"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }

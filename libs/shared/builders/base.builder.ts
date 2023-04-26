@@ -1,8 +1,6 @@
 import type { EntityManager } from 'typeorm';
 
-
 export class BaseBuilder {
-
   private entityManager: EntityManager;
 
   constructor(entityManager: EntityManager) {
@@ -12,5 +10,4 @@ export class BaseBuilder {
   getEntityManager() {
     return this.entityManager;
   }
-
 }

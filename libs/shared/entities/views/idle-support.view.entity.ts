@@ -1,11 +1,7 @@
 import { ViewColumn, ViewEntity } from 'typeorm';
 
-
-
-
 @ViewEntity()
 export class IdleSupportViewEntity {
-
   @ViewColumn()
   innovationId: string;
 
@@ -29,5 +25,4 @@ export class IdleSupportViewEntity {
 
   @ViewColumn()
   latestActivity: Date;
-
 }

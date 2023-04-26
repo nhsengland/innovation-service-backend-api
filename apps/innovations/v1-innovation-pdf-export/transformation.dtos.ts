@@ -1,7 +1,6 @@
-
-import type { InnovationSectionModel } from '../_types/innovation.types'
+import type { InnovationSectionModel } from '../_types/innovation.types';
 
 export type ResponseDTO = {
-  section: InnovationSectionModel,
-  data: null | { [key: string]: string }
-}[]
+  section: InnovationSectionModel;
+  data: null | { [key: string]: string };
+}[];

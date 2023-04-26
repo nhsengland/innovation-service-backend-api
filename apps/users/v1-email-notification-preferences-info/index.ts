@@ -12,17 +12,17 @@ import { NotificationsServiceSymbol, NotificationsServiceType } from '../_servic
 
 import type { ResponseDTO } from './transformation.dtos';
 
-
 class V1UserEmailNotificationsInfo {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<void> {
-
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
+    const notificationsService = container.get<NotificationsServiceType>(
+      NotificationsServiceSymbol
+    );
 
     try {
-      const authInstance = await authService.validate(context)
+      const authInstance = await authService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
@@ -30,52 +30,55 @@ class V1UserEmailNotificationsInfo {
       const userInfo = authInstance.getUserInfo();
 
       const emailPreferences = await notificationsService.getUserEmailPreferences(userInfo.id);
-      context.res = ResponseHelper.Ok<ResponseDTO>(emailPreferences.map(p => ({
-        notificationType: p.notificationType,
-        preference: p.preference,
-      })));
+      context.res = ResponseHelper.Ok<ResponseDTO>(
+        emailPreferences.map((p) => ({
+          notificationType: p.notificationType,
+          preference: p.preference,
+        }))
+      );
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction, '/v1/email-preferences', {
-  get: {
-    description: 'Returns the user email notifications preferences',
-    operationId: 'v1-email-notification-preferences-info',
-    tags: ['[v1] Email Preferences'],
-    responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  notificationType: {
-                    type: 'string',
-                    description: 'The type of notification',
-                    enum: Object.values(EmailNotificationTypeEnum),
+export default openApi(
+  V1UserEmailNotificationsInfo.httpTrigger as AzureFunction,
+  '/v1/email-preferences',
+  {
+    get: {
+      description: 'Returns the user email notifications preferences',
+      operationId: 'v1-email-notification-preferences-info',
+      tags: ['[v1] Email Preferences'],
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    notificationType: {
+                      type: 'string',
+                      description: 'The type of notification',
+                      enum: Object.values(EmailNotificationTypeEnum),
+                    },
+                    preference: {
+                      type: 'string',
+                      description: 'The preference of the notification',
+                      enum: Object.values(EmailNotificationPreferenceEnum),
+                    },
                   },
-                  preference: {
-                    type: 'string',
-                    description: 'The preference of the notification',
-                    enum: Object.values(EmailNotificationPreferenceEnum)
-                  }
-                }
-              }
-            }
-          }
-        }
+                },
+              },
+            },
+          },
+        },
       },
     },
-  },
-});
+  }
+);

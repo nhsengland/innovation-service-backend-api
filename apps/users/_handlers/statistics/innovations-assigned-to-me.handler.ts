@@ -4,12 +4,10 @@ import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_serv
 import type { UserStatisticsTemplateType } from '../../_config/statistics.config';
 import type { DomainContextType, DomainUserInfoType } from '@users/shared/types';
 
-
 export const innovationsAssignedToMeStatisticsHandler = async (
   requestUser: DomainUserInfoType,
   domainContext: DomainContextType
 ): Promise<UserStatisticsTemplateType[UserStatisticsEnum.INNOVATIONS_ASSIGNED_TO_ME_COUNTER]> => {
-
   const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
 
   const innovations = await statisticsService.innovationsAssignedToMe(requestUser, domainContext);
@@ -19,5 +17,4 @@ export const innovationsAssignedToMeStatisticsHandler = async (
     total: innovations.total,
     lastSubmittedAt: innovations.lastSubmittedAt,
   };
-
 };

@@ -12,20 +12,16 @@ import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/i
 import type { ResponseDTO } from './transformation.dtos';
 import { PathParamsSchema, PathParamsType } from './validation.schemas';
 
-
 class V1InnovationsExportRequestInfo {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
 
     try {
-
-      const auth = await authorizationService.validate(context)
-        .checkAccessorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
       const domainContext = auth.getContext();
 
@@ -43,37 +39,37 @@ class V1InnovationsExportRequestInfo {
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result); // this content is stripped.
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-
-export default openApi(V1InnovationsExportRequestInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests', {
-  head: {
-    operationId: 'v1-innovations-export-request-check',
-    description: 'Get export request info.',
-    tags: ['[v1] Innovations'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        required: true,
-        description: 'Innovation ID',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
+export default openApi(
+  V1InnovationsExportRequestInfo.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/export-requests',
+  {
+    head: {
+      operationId: 'v1-innovations-export-request-check',
+      description: 'Get export request info.',
+      tags: ['[v1] Innovations'],
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          required: true,
+          description: 'Innovation ID',
+          schema: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+      ],
+      responses: {
+        200: { description: 'Success' },
+        403: { description: 'Forbidden' },
       },
-    ],
-    responses: {
-      200: { description: 'Success' },
-      403: { description: 'Forbidden' },
     },
-  },
-});
+  }
+);

@@ -4,8 +4,7 @@ import { randCompanyName, randAlpha, randBoolean } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 export class OrganisationBuilder {
-  
-  organisation: Partial<OrganisationEntity> = { };
+  organisation: Partial<OrganisationEntity> = {};
 
   constructor() {
     this.organisation = {
@@ -14,7 +13,6 @@ export class OrganisationBuilder {
       isShadow: randBoolean(),
       type: OrganisationTypeEnum.ACCESSOR,
     };
-    
   }
 
   ofType(type: OrganisationTypeEnum): OrganisationBuilder {
@@ -28,7 +26,9 @@ export class OrganisationBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<OrganisationEntity> {
-    const organisation = await entityManager.getRepository(OrganisationEntity).save(this.organisation);
+    const organisation = await entityManager
+      .getRepository(OrganisationEntity)
+      .save(this.organisation);
     return organisation;
   }
 }

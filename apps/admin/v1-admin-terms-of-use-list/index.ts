@@ -18,23 +18,16 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1AdminTermsOfUseList {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
-
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      await authorizationService.validate(context).checkAdminType().verify();
 
       const result = await toUService.getTermsOfUseList(queryParams);
 
@@ -47,55 +40,51 @@ class V1AdminTermsOfUseList {
   }
 }
 
-export default openApi(
-  V1AdminTermsOfUseList.httpTrigger as AzureFunction,
-  '/v1/tou',
-  {
-    get: {
-      description: 'List of terms of use.',
-      operationId: 'v1-admin-terms-of-use-list',
-      parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
-      responses: {
-        '200': {
-          description: 'The list of terms of use versions.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  count: {
-                    type: 'number',
-                    description: 'The total number of terms of use.',
+export default openApi(V1AdminTermsOfUseList.httpTrigger as AzureFunction, '/v1/tou', {
+  get: {
+    description: 'List of terms of use.',
+    operationId: 'v1-admin-terms-of-use-list',
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
+    responses: {
+      '200': {
+        description: 'The list of terms of use versions.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                count: {
+                  type: 'number',
+                  description: 'The total number of terms of use.',
+                },
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string', format: 'uuid' },
+                      name: { type: 'string' },
+                      touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
+                      summary: { type: 'string' },
+                      releaseAt: { type: 'string', format: 'date-time', nullable: true },
+                      createdAt: { type: 'string', format: 'date-time' },
+                    },
                   },
-                  data: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: { type: 'string', format: 'uuid' },
-                        name: { type: 'string' },
-                        touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
-                        summary: { type: 'string' },
-                        releaseAt: { type: 'string', format: 'date-time', nullable: true },
-                        createdAt: { type: 'string', format: 'date-time' },
-                      }
-                    }
-                  }
                 },
               },
             },
           },
         },
-        '400': {
-          description: 'Bad request.',
-        },
-        '401': {
-          description: 'The user is not authorized to get terms of use.',
-        },
-        '500': {
-          description: 'An error occurred while listing the terms of use.',
-        },
+      },
+      '400': {
+        description: 'Bad request.',
+      },
+      '401': {
+        description: 'The user is not authorized to get terms of use.',
+      },
+      '500': {
+        description: 'An error occurred while listing the terms of use.',
       },
     },
-  }
-);
+  },
+});

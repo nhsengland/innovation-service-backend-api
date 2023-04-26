@@ -3,5 +3,5 @@ export type ResponseDTO = {
   name: string;
   acronym: string;
   isActive?: boolean;
-  organisationUnits?: { id: string; name: string; acronym: string; isActive?: boolean}[];
-}[]
+  organisationUnits?: { id: string; name: string; acronym: string; isActive?: boolean }[];
+}[];

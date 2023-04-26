@@ -12,52 +12,65 @@ import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
-import { DefaultUserBodySchema, DefaultUserBodyType, InnovatorBodySchema, InnovatorBodyType } from './validation.schemas';
-
+import {
+  DefaultUserBodySchema,
+  DefaultUserBodyType,
+  InnovatorBodySchema,
+  InnovatorBodyType,
+} from './validation.schemas';
 
 class V1MeUpdate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
 
     try {
-
       const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      if ([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
+      if (
+        [
+          ServiceRoleEnum.ADMIN,
+          ServiceRoleEnum.ASSESSMENT,
+          ServiceRoleEnum.ACCESSOR,
+          ServiceRoleEnum.QUALIFYING_ACCESSOR,
+        ].includes(domainContext.currentRole.role)
+      ) {
+        const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(
+          DefaultUserBodySchema,
+          request.body
+        );
 
-        const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(DefaultUserBodySchema, request.body);
-
-        await authInstance
-          .checkAdminType()
-          .checkAssessmentType()
-          .checkAccessorType()
-          .verify();
+        await authInstance.checkAdminType().checkAssessmentType().checkAccessorType().verify();
 
         const accessorResult = await usersService.updateUserInfo(
-          { id: requestUser.id, identityId: requestUser.identityId},
+          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext.currentRole.role,
           { displayName: accessorBody.displayName }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
-
       } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-
-        const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(InnovatorBodySchema, request.body);
+        const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(
+          InnovatorBodySchema,
+          request.body
+        );
 
         await authInstance
           .checkInnovatorType({ organisationId: innovatorBody.organisation.id })
           .verify();
 
         const innovatorResult = await usersService.updateUserInfo(
-          { id: requestUser.id, identityId: requestUser.identityId, firstTimeSignInAt: requestUser.firstTimeSignInAt },
+          {
+            id: requestUser.id,
+            identityId: requestUser.identityId,
+            firstTimeSignInAt: requestUser.firstTimeSignInAt,
+          },
           domainContext.currentRole.role,
           {
             displayName: innovatorBody.displayName,
@@ -65,25 +78,21 @@ class V1MeUpdate {
             contactByPhone: innovatorBody.contactByPhone,
             contactByPhoneTimeframe: innovatorBody.contactByPhoneTimeframe,
             contactDetails: innovatorBody.contactDetails,
-            ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
-            organisation: innovatorBody.organisation
+            ...(innovatorBody.mobilePhone !== undefined
+              ? { mobilePhone: innovatorBody.mobilePhone }
+              : {}),
+            organisation: innovatorBody.organisation,
           }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
         return;
-
       } else {
-
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
-
       }
-
     } catch (error) {
-
       context.res = ResponseHelper.Error(context, error);
       return;
-
     }
   }
 }
@@ -135,7 +144,7 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
                     example: 'small',
                   },
                 },
-              }
+              },
             },
           },
         },
@@ -151,7 +160,6 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
               properties: {
                 id: { type: 'string' },
               },
-
             },
           },
         },
@@ -170,7 +178,6 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
           },
         },
       },
-    }
-
-  }
+    },
+  },
 });

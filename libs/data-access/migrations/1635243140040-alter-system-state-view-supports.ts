@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterSystemStateViewSupports1635243140040 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE OR ALTER VIEW [vw_system_state] AS
       SELECT 
@@ -132,12 +130,10 @@ export class alterSystemStateViewSupports1635243140040 implements MigrationInter
                   [user] u
               where u.deleted_at is null
           ) innovatorsQuery;
-                `
-    );
+                `);
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
             CREATE OR ALTER VIEW [vw_system_state] AS
             SELECT 
@@ -262,8 +258,6 @@ export class alterSystemStateViewSupports1635243140040 implements MigrationInter
                         [user] u
                     where u.deleted_at is null
                 ) innovatorsQuery;
-        `
-    );
+        `);
   }
-
 }

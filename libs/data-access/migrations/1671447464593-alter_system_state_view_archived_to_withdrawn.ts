@@ -1,9 +1,8 @@
-import type { MigrationInterface, QueryRunner } from 'typeorm'
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterSystemStateViewArchivedToWithdrawn1671447464593 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
 
         CREATE OR ALTER VIEW [vw_system_state] AS
 
@@ -203,10 +202,10 @@ export class alterSystemStateViewArchivedToWithdrawn1671447464593 implements Mig
           [dbo].[innovation] as i
         ) innovationsCountBasedOnMainCategory;
     `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.query(`
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
 
         CREATE OR ALTER VIEW [vw_system_state] AS
 
@@ -406,6 +405,5 @@ export class alterSystemStateViewArchivedToWithdrawn1671447464593 implements Mig
           [dbo].[innovation] as i
         ) innovationsCountBasedOnMainCategory;
       `);
-    }
-
+  }
 }

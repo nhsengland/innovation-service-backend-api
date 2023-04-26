@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createActivityLogTable1637135704839 implements MigrationInterface {
-
   name = 'createActivityLogTable1637135704839';
 
   async up(queryRunner: QueryRunner): Promise<void> {
@@ -32,5 +31,4 @@ export class createActivityLogTable1637135704839 implements MigrationInterface {
 
     await queryRunner.query(`DROP TABLE "activity_log"`);
   }
-
 }

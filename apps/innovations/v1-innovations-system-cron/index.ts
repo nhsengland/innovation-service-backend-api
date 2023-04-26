@@ -1,12 +1,14 @@
-import { DomainServiceSymbol, DomainServiceType, LoggerServiceSymbol, LoggerServiceType } from '@innovations/shared/services';
+import {
+  DomainServiceSymbol,
+  DomainServiceType,
+  LoggerServiceSymbol,
+  LoggerServiceType,
+} from '@innovations/shared/services';
 import { container } from '../_config';
-
 
 // Run every day at 01:00 (Summer Time) or 02:00 (Winter time)
 class V1InnovationsSystemSchedule {
-
   static async cronTrigger(): Promise<void> {
-
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
     const logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 

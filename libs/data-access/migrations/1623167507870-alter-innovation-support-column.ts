@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovationSupportColumn1623167507870 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // Rename Column
     await queryRunner.query(
@@ -29,5 +28,4 @@ export class alterInnovationSupportColumn1623167507870 implements MigrationInter
       `ALTER TABLE "innovation_support" ADD CONSTRAINT "fk_innovation_support_organisation_unit_organisation_user_id" FOREIGN KEY ("organisation_user_id") REFERENCES "organisation_unit"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
   }
-
 }

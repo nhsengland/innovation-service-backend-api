@@ -7,27 +7,25 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 
 import { BaseHandler } from './base.handler';
 
-
 export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
   EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-  { organisationUnitName: string, supportStatus: InnovationSupportStatusEnum }
+  { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
-
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED],
-    domainContext: DomainContextType,
+    domainContext: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
 
-
   async run(): Promise<this> {
-
-    const innovationInfo = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovationInfo = await this.recipientsService.innovationInfoWithOwner(
+      this.inputData.innovationId
+    );
     const innovatorInfo = await this.recipientsService.userInfo(innovationInfo.owner.id);
     const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
@@ -42,13 +40,11 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/support')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl()
-        }
+            .buildUrl(),
+        },
       });
     }
-    
+
     return this;
-
   }
-
 }

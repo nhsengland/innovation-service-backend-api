@@ -1,5 +1,4 @@
-
-export type ResponseDTO ={ 
-  submittedAllSections: boolean; 
-  submittedForNeedsAssessment: boolean; 
-}
+export type ResponseDTO = {
+  submittedAllSections: boolean;
+  submittedForNeedsAssessment: boolean;
+};

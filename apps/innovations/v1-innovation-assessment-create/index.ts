@@ -1,13 +1,9 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import {
-    AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 
-import type {
-    CustomContextType
-} from '@innovations/shared/types';
+import type { CustomContextType } from '@innovations/shared/types';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
@@ -15,26 +11,34 @@ import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import { container } from '../_config';
-import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
+import {
+  InnovationAssessmentsServiceSymbol,
+  InnovationAssessmentsServiceType,
+} from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 
-
 class CreateInnovationAssessment {
-
   @JwtDecoder()
-  @Audit({ action: ActionEnum.CREATE, target: TargetEnum.ASSESSMENT, identifierResponseField: 'id' })
+  @Audit({
+    action: ActionEnum.CREATE,
+    target: TargetEnum.ASSESSMENT,
+    identifierResponseField: 'id',
+  })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationAssessmentsService = container.get<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
+    const innovationAssessmentsService = container.get<InnovationAssessmentsServiceType>(
+      InnovationAssessmentsServiceSymbol
+    );
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
@@ -49,7 +53,6 @@ class CreateInnovationAssessment {
       );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -57,76 +60,80 @@ class CreateInnovationAssessment {
   }
 }
 
-export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, '/v1/{innovationId}/assessments', {
-  post: {
-    summary: 'Create an innovation assessment',
-    description: 'Create an innovation assessment.',
-    operationId: 'v1-innovation-assessment-create',
-    tags: ['Innovation Assessment'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'The innovation id.',
-        required: true,
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
-    ],
-    requestBody: {
-      description: 'The innovation assessment data.',
-      required: true,
-      content: {
-        'application/json': {
+export default openApi(
+  CreateInnovationAssessment.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/assessments',
+  {
+    post: {
+      summary: 'Create an innovation assessment',
+      description: 'Create an innovation assessment.',
+      operationId: 'v1-innovation-assessment-create',
+      tags: ['Innovation Assessment'],
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          description: 'The innovation id.',
+          required: true,
           schema: {
-            type: 'object',
-            properties: {
-              comment: {
-                type: 'string',
-                description: 'The comment for the assessment.'
-              },
-            },
-            required: ['comment']
-          }
-        }
-      }
-    },
-    responses: {
-      200: {
-        description: 'The innovation assessment has been created.',
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+      ],
+      requestBody: {
+        description: 'The innovation assessment data.',
+        required: true,
         content: {
           'application/json': {
             schema: {
               type: 'object',
               properties: {
-                id: {
+                comment: {
                   type: 'string',
-                  format: 'uuid',
-                  description: 'The innovation assessment id.'
+                  description: 'The comment for the assessment.',
                 },
               },
-              required: ['id']
-            }
-          }
-        }
+              required: ['comment'],
+            },
+          },
+        },
       },
-      400: {
-        description: 'The innovation assessment has not been created.',
+      responses: {
+        200: {
+          description: 'The innovation assessment has been created.',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: {
+                    type: 'string',
+                    format: 'uuid',
+                    description: 'The innovation assessment id.',
+                  },
+                },
+                required: ['id'],
+              },
+            },
+          },
+        },
+        400: {
+          description: 'The innovation assessment has not been created.',
+        },
+        401: {
+          description: 'The user is not authenticated.',
+        },
+        403: {
+          description: 'The user is not authorized to create an innovation assessment.',
+        },
+        404: {
+          description: 'The innovation does not exist.',
+        },
+        500: {
+          description: 'An error occurred while creating the innovation assessment.',
+        },
       },
-      401: {
-        description: 'The user is not authenticated.',
-      },
-      403: {
-        description: 'The user is not authorized to create an innovation assessment.',
-      },
-      404: {
-        description: 'The innovation does not exist.',
-      },
-      500: {
-        description: 'An error occurred while creating the innovation assessment.',
-      }
-    }
+    },
   }
-});
+);

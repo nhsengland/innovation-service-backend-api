@@ -5,14 +5,17 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { InnovationSubgroupBenefitEntity } from './innovation-subgroup-benefit.entity';
 
-import type { catalogCarePathway, catalogCostComparison, catalogPatientRange } from '../../schemas/innovation-record/202209/catalog.types';
+import type {
+  catalogCarePathway,
+  catalogCostComparison,
+  catalogPatientRange,
+} from '../../schemas/innovation-record/202209/catalog.types';
 
 /**
  * @deprecated to be removed with InnovationEntity changes
  */
 @Entity('innovation_subgroup')
 export class InnovationSubgroupEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -46,19 +49,19 @@ export class InnovationSubgroupEntity extends BaseEntity {
   @Column({ name: 'other_condition', type: 'nvarchar', nullable: true })
   otherCondition: string;
 
-
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @OneToMany(() => InnovationSubgroupBenefitEntity, record => record.innovationSubgroup, { lazy: true, cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationSubgroupBenefitEntity, (record) => record.innovationSubgroup, {
+    lazy: true,
+    cascade: ['insert', 'update'],
+  })
   benefits: Promise<InnovationSubgroupBenefitEntity[]>;
-
 
   static new(data: Partial<InnovationSubgroupEntity>): InnovationSubgroupEntity {
     const instance = new InnovationSubgroupEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

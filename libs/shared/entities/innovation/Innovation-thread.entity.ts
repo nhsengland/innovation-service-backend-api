@@ -1,4 +1,3 @@
-
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
@@ -10,24 +9,26 @@ import { InnovationEntity } from './innovation.entity';
 import { UserRoleEntity } from '..';
 import { ThreadContextTypeEnum } from '../../enums/innovation.enums';
 
-
 @Entity('innovation_thread')
 export class InnovationThreadEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ length: 100 })
   subject: string;
 
-  @Column({ type: 'simple-enum', name: 'context_type', enum: ThreadContextTypeEnum, nullable: true })
+  @Column({
+    type: 'simple-enum',
+    name: 'context_type',
+    enum: ThreadContextTypeEnum,
+    nullable: true,
+  })
   contextType: ThreadContextTypeEnum | undefined;
 
   @Column({ type: 'uniqueidentifier', name: 'context_id', nullable: true })
   contextId: string | undefined;
 
-
-  @OneToMany(() => InnovationThreadMessageEntity, message => message.thread, {
+  @OneToMany(() => InnovationThreadMessageEntity, (message) => message.thread, {
     lazy: true,
     cascade: ['insert'],
   })
@@ -45,11 +46,9 @@ export class InnovationThreadEntity extends BaseEntity {
   @JoinColumn({ name: 'author_user_role_id' })
   authorUserRole: UserRoleEntity;
 
-
   static new(data: Partial<InnovationThreadEntity>): InnovationThreadEntity {
     const instance = new InnovationThreadEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

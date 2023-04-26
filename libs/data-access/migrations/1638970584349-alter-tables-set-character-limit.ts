@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTablesSetCharacterLimit1638970584349 implements MigrationInterface {
-
   name = 'alterTablesSetCharacterLimit1638970584349';
 
   async up(queryRunner: QueryRunner): Promise<void> {
@@ -23,5 +22,4 @@ export class alterTablesSetCharacterLimit1638970584349 implements MigrationInter
       `ALTER TABLE "innovation_deployment_plan" ALTER COLUMN commercial_basis nvarchar(255) NULL;`
     );
   }
-
 }

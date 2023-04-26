@@ -10,15 +10,12 @@ import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
 
 describe('Admin / Services / Users Service', () => {
-
   let testData: TestDataType;
   let entityManager: EntityManager;
 
   let usersService: UsersService;
 
-
   beforeAll(async () => {
-
     // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
     // jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
@@ -26,7 +23,6 @@ describe('Admin / Services / Users Service', () => {
 
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
-
   });
 
   beforeEach(async () => {
@@ -38,33 +34,41 @@ describe('Admin / Services / Users Service', () => {
   });
 
   it('should lock a user', async () => {
-
     const userAdminContext = testData.domainContexts.admin;
     const userInnovator = testData.baseUsers.innovator;
 
-    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, entityManager);
+    await usersService.updateUser(
+      userAdminContext,
+      userInnovator.id,
+      { accountEnabled: false },
+      entityManager
+    );
 
-    const updatedUser = await entityManager.createQueryBuilder(UserEntity, 'user')
+    const updatedUser = await entityManager
+      .createQueryBuilder(UserEntity, 'user')
       .where('user.id = :userId', { userId: userInnovator.id })
       .getOne();
 
     expect(updatedUser?.lockedAt).toBeTruthy();
-
   });
 
   it('should unlock a user', async () => {
-
     const userAdminContext = testData.domainContexts.admin;
     const userInnovator = testData.baseUsers.innovator;
 
-    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: true }, entityManager);
+    await usersService.updateUser(
+      userAdminContext,
+      userInnovator.id,
+      { accountEnabled: true },
+      entityManager
+    );
 
-    const updatedUser = await entityManager.createQueryBuilder(UserEntity, 'user')
+    const updatedUser = await entityManager
+      .createQueryBuilder(UserEntity, 'user')
       .where('user.id = :userId', { userId: userInnovator.id })
       .getOne();
 
     expect(updatedUser?.lockedAt).toBeNull();
-
   });
 
   // it('should change an accessor role', async () => {
@@ -88,5 +92,4 @@ describe('Admin / Services / Users Service', () => {
   //   expect(updatedUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
 
   // });
-
 });

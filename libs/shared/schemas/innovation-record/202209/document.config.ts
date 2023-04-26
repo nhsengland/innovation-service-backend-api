@@ -1,9 +1,9 @@
 import type { DocumentType202209 } from './document.types';
 
-export const allowFileUploads = new Set<keyof DocumentType202209 >([
+export const allowFileUploads = new Set<keyof DocumentType202209>([
   'REGULATIONS_AND_STANDARDS',
   'TESTING_WITH_USERS',
-  'IMPLEMENTATION_PLAN'
+  'IMPLEMENTATION_PLAN',
 ]);
 
 export enum InnovationSectionAliasEnum {

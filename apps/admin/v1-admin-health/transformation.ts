@@ -1,3 +1,3 @@
 export type ResponseDTO = {
-    status: 'OK' | 'NOK'
-}
+  status: 'OK' | 'NOK';
+};

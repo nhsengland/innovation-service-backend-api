@@ -1,4 +1,14 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -29,7 +39,21 @@ import { InnovationUserTestEntity } from './innovation-user-test.entity';
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
-import type { catalogCarePathway, catalogCostComparison, catalogHasCostKnowledge, catalogHasPatents, catalogHasRegulationKnowledge, catalogMainPurpose, catalogPathwayKnowledge, catalogYesInProcessNotYet, catalogYesInProgressNotYet, catalogYesNo, catalogYesNoNotRelevant, catalogYesNoNotSure, catalogYesNotYetNotSure } from '../../schemas/innovation-record/202209/catalog.types';
+import type {
+  catalogCarePathway,
+  catalogCostComparison,
+  catalogHasCostKnowledge,
+  catalogHasPatents,
+  catalogHasRegulationKnowledge,
+  catalogMainPurpose,
+  catalogPathwayKnowledge,
+  catalogYesInProcessNotYet,
+  catalogYesInProgressNotYet,
+  catalogYesNo,
+  catalogYesNoNotRelevant,
+  catalogYesNoNotSure,
+  catalogYesNotYetNotSure,
+} from '../../schemas/innovation-record/202209/catalog.types';
 
 import { InnovationGroupedStatusViewEntity } from '../views/innovation-grouped-status.view.entity';
 import { InnovationCollaboratorEntity } from './innovation-collaborator.entity';
@@ -43,7 +67,6 @@ import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -231,142 +254,160 @@ export class InnovationEntity extends BaseEntity {
   @JoinColumn({ name: 'owner_id' })
   owner: UserEntity;
 
-  @ManyToMany(() => OrganisationEntity, record => record.innovationShares, { nullable: true, cascade: ['update'] })
+  @ManyToMany(() => OrganisationEntity, (record) => record.innovationShares, {
+    nullable: true,
+    cascade: ['update'],
+  })
   @JoinTable({
     name: 'innovation_share',
     joinColumn: {
       name: 'innovation_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
     inverseJoinColumn: {
       name: 'organisation_id',
-      referencedColumnName: 'id'
+      referencedColumnName: 'id',
     },
   })
   organisationShares: OrganisationEntity[];
 
-  @OneToMany(() => InnovationAssessmentEntity, record => record.innovation, { cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationAssessmentEntity, (record) => record.innovation, {
+    cascade: ['insert', 'update'],
+  })
   assessments: InnovationAssessmentEntity[];
 
-  @OneToMany(() => InnovationSectionEntity, record => record.innovation, {
+  @OneToMany(() => InnovationSectionEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   sections: Promise<InnovationSectionEntity[]>;
 
-  @OneToMany(() => InnovationSubgroupEntity, record => record.innovation, {
+  @OneToMany(() => InnovationSubgroupEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   subgroups: Promise<InnovationSubgroupEntity[]>;
 
-  @OneToMany(() => InnovationAreaEntity, record => record.innovation, {
+  @OneToMany(() => InnovationAreaEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   areas: Promise<InnovationAreaEntity[]>;
 
-  @OneToMany(() => InnovationCareSettingEntity, record => record.innovation, {
+  @OneToMany(() => InnovationCareSettingEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   careSettings: Promise<InnovationCareSettingEntity[]>;
 
-  @OneToMany(() => InnovationCategoryEntity, record => record.innovation, {
+  @OneToMany(() => InnovationCategoryEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   categories: Promise<InnovationCategoryEntity[]>;
 
-  @OneToMany(() => InnovationDeploymentPlanEntity, record => record.innovation, {
+  @OneToMany(() => InnovationDeploymentPlanEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   deploymentPlans: Promise<InnovationDeploymentPlanEntity[]>;
 
-  @OneToMany(() => InnovationEvidenceEntity, record => record.innovation, {
+  @OneToMany(() => InnovationEvidenceEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   evidences: Promise<InnovationEvidenceEntity[]>;
 
-  @OneToMany(() => InnovationStandardEntity, record => record.innovation, {
+  @OneToMany(() => InnovationStandardEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   standards: Promise<InnovationStandardEntity[]>;
 
-  @OneToMany(() => InnovationRevenueEntity, record => record.innovation, {
+  @OneToMany(() => InnovationRevenueEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   revenues: Promise<InnovationRevenueEntity[]>;
 
-  @OneToMany(() => InnovationUserTestEntity, record => record.innovation, {
+  @OneToMany(() => InnovationUserTestEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   userTests: Promise<InnovationUserTestEntity[]>;
 
-  @OneToMany(() => InnovationSupportTypeEntity, record => record.innovation, {
+  @OneToMany(() => InnovationSupportTypeEntity, (record) => record.innovation, {
     lazy: true,
     cascade: ['insert', 'update'],
   })
   supportTypes: Promise<InnovationSupportTypeEntity[]>;
 
-  @OneToMany(() => InnovationGeneralBenefitEntity, record => record.innovation, {
+  @OneToMany(() => InnovationGeneralBenefitEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   generalBenefits: Promise<InnovationGeneralBenefitEntity[]>;
 
-  @OneToMany(() => InnovationEnvironmentalBenefitEntity, record => record.innovation, {
+  @OneToMany(() => InnovationEnvironmentalBenefitEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   environmentalBenefits: Promise<InnovationEnvironmentalBenefitEntity[]>;
 
-  @OneToMany(() => InnovationPatientsCitizensBenefitEntity, record => record.innovation, {
+  @OneToMany(() => InnovationPatientsCitizensBenefitEntity, (record) => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update']
+    cascade: ['insert', 'update'],
   })
   patientsCitizensBenefits: Promise<InnovationPatientsCitizensBenefitEntity[]>;
 
-  @OneToMany(() => InnovationDiseaseConditionEntity, record => record.innovation, {
+  @OneToMany(() => InnovationDiseaseConditionEntity, (record) => record.innovation, {
     lazy: true,
     cascade: ['insert', 'update'],
   })
   diseasesConditionsImpact: Promise<InnovationDiseaseConditionEntity[]>;
 
-  @OneToMany(() => CommentEntity, record => record.innovation, { lazy: true })
+  @OneToMany(() => CommentEntity, (record) => record.innovation, { lazy: true })
   comments: Promise<CommentEntity[]>;
 
-  @OneToMany(() => InnovationSupportEntity, record => record.innovation, { cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationSupportEntity, (record) => record.innovation, {
+    cascade: ['insert', 'update'],
+  })
   innovationSupports: InnovationSupportEntity[];
 
-  @OneToMany(() => InnovationSupportLogEntity, record => record.innovation, { cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationSupportLogEntity, (record) => record.innovation, {
+    cascade: ['insert', 'update'],
+  })
   innovationSupportLogs: InnovationSupportLogEntity[];
 
-  @OneToMany(() => NotificationEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  @OneToMany(() => NotificationEntity, (record) => record.innovation, {
+    lazy: true,
+    cascade: ['insert', 'update'],
+  })
   notifications: Promise<NotificationEntity[]>;
 
-  @OneToMany(() => InnovationReassessmentRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationReassessmentRequestEntity, (record) => record.innovation, {
+    lazy: true,
+    cascade: ['insert', 'update'],
+  })
   reassessmentRequests: Promise<InnovationReassessmentRequestEntity[]>;
 
-  @OneToMany(() => InnovationExportRequestEntity, record => record.innovation, { lazy: true, cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationExportRequestEntity, (record) => record.innovation, {
+    lazy: true,
+    cascade: ['insert', 'update'],
+  })
   exportRequests: Promise<InnovationExportRequestEntity[]>;
 
-  @OneToOne(() => InnovationGroupedStatusViewEntity, record => record.innovation)
+  @OneToOne(() => InnovationGroupedStatusViewEntity, (record) => record.innovation)
   innovationGroupedStatus: InnovationGroupedStatusViewEntity;
 
-  @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
+  @OneToMany(() => InnovationCollaboratorEntity, (record) => record.innovation)
   collaborators: InnovationCollaboratorEntity[];
 
   @OneToOne(() => InnovationDocumentEntity)
   @JoinColumn({ name: 'id' })
   document: InnovationDocumentEntity;
-  
-  @OneToMany(() => InnovationTransferEntity, record => record.innovation)
+
+  @OneToMany(() => InnovationTransferEntity, (record) => record.innovation)
   transfers: InnovationTransferEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {
@@ -374,5 +415,4 @@ export class InnovationEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

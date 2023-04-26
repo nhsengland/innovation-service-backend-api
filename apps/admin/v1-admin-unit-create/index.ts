@@ -3,10 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType
-} from '@admin/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -18,32 +15,29 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 
 class V1AdminUnitCreate {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-        const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-        const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
+      await authorizationService.validate(context).checkAdminType().verify();
 
-        await authorizationService
-            .validate(context)
-            .checkAdminType()
-            .verify();
+      const result = await organisationsService.createUnit(
+        params.organisationId,
+        body.name,
+        body.acronym
+      );
 
-        const result = await organisationsService.createUnit(params.organisationId, body.name, body.acronym);
-
-        context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
-        return;
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
+      return;
     } catch (error) {
-        context.res = ResponseHelper.Error(context, error);
-        return;
+      context.res = ResponseHelper.Error(context, error);
+      return;
     }
   }
 }
@@ -56,7 +50,9 @@ export default openApi(
       description: 'Create an organisation unit.',
       operationId: 'v1-admin-unit-create',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The organisation unit to be created.' }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
+        description: 'The organisation unit to be created.',
+      }),
       responses: {
         '200': {
           description: 'The organisation unit has been created.',

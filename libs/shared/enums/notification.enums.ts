@@ -4,7 +4,7 @@ export enum NotificationContextTypeEnum {
   SUPPORT = 'SUPPORT',
   ACTION = 'ACTION',
   THREAD = 'THREAD',
-  COMMENT = 'COMMENT' // TODO: Deprecated!
+  COMMENT = 'COMMENT', // TODO: Deprecated!
 }
 
 export enum NotificationContextDetailEnum {
@@ -22,23 +22,21 @@ export enum NotificationContextDetailEnum {
   INNOVATION_REASSESSMENT_REQUEST = 'INNOVATION_REASSESSMENT_REQUEST',
   INNOVATION_STOP_SHARING = 'INNOVATION_STOP_SHARING',
   COLLABORATOR_INVITE = 'COLLABORATOR_INVITE',
-  COLLABORATOR_UPDATE = 'COLLABORATOR_UPDATE'
+  COLLABORATOR_UPDATE = 'COLLABORATOR_UPDATE',
 }
-
 
 export enum EmailNotificationTypeEnum { // Subset of NotificationContextTypeEnum.
   ACTION = 'ACTION',
   MESSAGE = 'MESSAGE',
-  SUPPORT = 'SUPPORT'
+  SUPPORT = 'SUPPORT',
 }
 
 export enum EmailNotificationPreferenceEnum {
   NEVER = 'NEVER',
   INSTANTLY = 'INSTANTLY',
-  DAILY = 'DAILY'
+  DAILY = 'DAILY',
 }
 
-
 export enum NotificationLogTypeEnum {
-  QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT'
+  QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT',
 }

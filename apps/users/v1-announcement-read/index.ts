@@ -10,21 +10,21 @@ import { container } from '../_config';
 import { AnnouncementsServiceSymbol, AnnouncementsServiceType } from '../_services/interfaces';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
-
 class V1UserAnnouncementRead {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const announcementsService = container.get<AnnouncementsServiceType>(AnnouncementsServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
+    const announcementsService = container.get<AnnouncementsServiceType>(
+      AnnouncementsServiceSymbol
+    );
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
@@ -40,15 +40,18 @@ class V1UserAnnouncementRead {
   }
 }
 
-
-export default openApi(V1UserAnnouncementRead.httpTrigger as AzureFunction, '/v1/announcements/{announcementId}/read', {
-  patch: {
-    operationId: 'v1-announcement-read',
-    description: 'Mark as read an announcement.',
-    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-    responses: {
-      204: { description: 'Success' },
-      404: { description: 'Not found' },
+export default openApi(
+  V1UserAnnouncementRead.httpTrigger as AzureFunction,
+  '/v1/announcements/{announcementId}/read',
+  {
+    patch: {
+      operationId: 'v1-announcement-read',
+      description: 'Mark as read an announcement.',
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      responses: {
+        204: { description: 'Success' },
+        404: { description: 'Not found' },
+      },
     },
-  },
-});
+  }
+);

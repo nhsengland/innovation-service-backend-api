@@ -12,17 +12,17 @@ import { NotificationsServiceSymbol, NotificationsServiceType } from '../_servic
 import type { ResponseDTO } from './transformation.dtos';
 import { PathParamsSchema, PathParamType } from './validation.schemas';
 
-
 class V1UserNotificationsDelete {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
+    const notificationsService = container.get<NotificationsServiceType>(
+      NotificationsServiceSymbol
+    );
 
     try {
-      const authInstance = await authService.validate(context)
+      const authInstance = await authService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
@@ -31,41 +31,45 @@ class V1UserNotificationsDelete {
 
       const queryParams = JoiHelper.Validate<PathParamType>(PathParamsSchema, request.params);
 
-      await notificationsService.deleteUserNotification(domainContext.currentRole.id, queryParams.notificationId);
+      await notificationsService.deleteUserNotification(
+        domainContext.currentRole.id,
+        queryParams.notificationId
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: queryParams.notificationId
+        id: queryParams.notificationId,
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '/v1/notifications/{notificationId}', {
-  delete: {
-    description: 'Returns the id of the deleted notification',
-    operationId: 'v1-notifications-delete',
-    tags: ['[v1] Notifications'],
-    parameters: SwaggerHelper.paramJ2S({path: PathParamsSchema}),
-    responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', description: 'The notification id' }
-              }
-            }
-          }
-        }
+export default openApi(
+  V1UserNotificationsDelete.httpTrigger as AzureFunction,
+  '/v1/notifications/{notificationId}',
+  {
+    delete: {
+      description: 'Returns the id of the deleted notification',
+      operationId: 'v1-notifications-delete',
+      tags: ['[v1] Notifications'],
+      parameters: SwaggerHelper.paramJ2S({ path: PathParamsSchema }),
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', description: 'The notification id' },
+                },
+              },
+            },
+          },
+        },
       },
     },
-  },
-});
+  }
+);

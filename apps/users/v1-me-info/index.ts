@@ -3,30 +3,41 @@ import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
+import {
+  AuthorizationServiceSymbol,
+  AuthorizationServiceType,
+  DomainServiceSymbol,
+  DomainServiceType,
+} from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { AnnouncementsServiceSymbol, AnnouncementsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import {
+  AnnouncementsServiceSymbol,
+  AnnouncementsServiceType,
+  TermsOfUseServiceSymbol,
+  TermsOfUseServiceType,
+  UsersServiceSymbol,
+  UsersServiceType,
+} from '../_services/interfaces';
 
 import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
 import type { ResponseDTO } from './transformation.dtos';
 
-
-
 class V1MeInfo {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
     const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-    const announcementsService = container.get<AnnouncementsServiceType>(AnnouncementsServiceSymbol);
+    const announcementsService = container.get<AnnouncementsServiceType>(
+      AnnouncementsServiceSymbol
+    );
 
     try {
-
       const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
       // [TechDebt] - TODO the domain context isn't always available and currently it's picking one at random (first)
@@ -40,10 +51,10 @@ class V1MeInfo {
       let hasInnovationCollaborations = false;
       let hasAnnouncements = false;
       let userPreferences: {
-        contactByPhone: boolean,
-        contactByEmail: boolean,
-        contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
-        contactDetails: null | string,
+        contactByPhone: boolean;
+        contactByEmail: boolean;
+        contactByPhoneTimeframe: null | PhoneUserPreferenceEnum;
+        contactDetails: null | string;
       } = {
         contactByEmail: false,
         contactByPhone: false,
@@ -57,14 +68,21 @@ class V1MeInfo {
         hasInnovationCollaborations = false;
         hasAnnouncements = false;
       } else {
-        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role)).isAccepted;
-        hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
-        hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
+        termsOfUseAccepted = (
+          await termsOfUseService.getActiveTermsOfUseInfo(
+            { id: requestUser.id },
+            domainContext.currentRole.role
+          )
+        ).isAccepted;
+        hasInnovationTransfers =
+          (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
+        hasInnovationCollaborations =
+          (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
         hasAnnouncements = (await announcementsService.getAnnouncements(domainContext)).length > 0;
       }
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
+        userPreferences = await domainService.users.getUserPreferences(requestUser.id);
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -83,19 +101,15 @@ class V1MeInfo {
         hasInnovationTransfers,
         hasInnovationCollaborations,
         hasAnnouncements,
-        organisations: requestUser.organisations
+        organisations: requestUser.organisations,
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
-
 
 // TODO: Improve response
 export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
@@ -106,7 +120,7 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     parameters: [],
     responses: {
       200: { description: 'Successful operation' },
-      404: { description: 'Not found' }
-    }
-  }
+      404: { description: 'Not found' },
+    },
+  },
 });

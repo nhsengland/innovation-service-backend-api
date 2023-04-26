@@ -8,32 +8,37 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 
 import { BaseHandler } from './base.handler';
 
-
 export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
   EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
   Record<string, never>
 > {
-
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION],
-    domainContext: DomainContextType,
+    domainContext: DomainContextType
   ) {
     super(requestUser, data, domainContext);
   }
 
-
   async run(): Promise<this> {
-
     // Retrieve innovation shared organisations units
-    const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(this.inputData.innovationId);
-    const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation => organisation.organisationUnits.map(unit => unit.id));
-    
-    const suggestedSharedOrganisationUnitsIds = sharedOrganisationUnitsIds.filter(id => this.inputData.organisationUnitIds.includes(id));
-    const suggestedOrganisationUnitsUsers = await this.recipientsService.organisationUnitsQualifyingAccessors(suggestedSharedOrganisationUnitsIds);
+    const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(
+      this.inputData.innovationId
+    );
+    const sharedOrganisationUnitsIds = sharedOrganisations.flatMap((organisation) =>
+      organisation.organisationUnits.map((unit) => unit.id)
+    );
+
+    const suggestedSharedOrganisationUnitsIds = sharedOrganisationUnitsIds.filter((id) =>
+      this.inputData.organisationUnitIds.includes(id)
+    );
+    const suggestedOrganisationUnitsUsers =
+      await this.recipientsService.organisationUnitsQualifyingAccessors(
+        suggestedSharedOrganisationUnitsIds
+      );
 
     for (const user of suggestedOrganisationUnitsUsers) {
       this.emails.push({
@@ -44,13 +49,11 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl()
-        }
+            .buildUrl(),
+        },
       });
     }
 
     return this;
-
   }
-
 }

@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createInnovationGroupedStatusViewEntity1676569564450 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE OR ALTER VIEW [innovation_grouped_status_view_entity] AS
       SELECT innovation.id,
@@ -41,11 +39,8 @@ export class createInnovationGroupedStatusViewEntity1676569564450 implements Mig
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
 			DROP VIEW dbo.[innovation_grouped_status_view_entity]
 		`);
-
   }
-
 }

@@ -1,17 +1,22 @@
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
-
 
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportLogEntity } from '../innovation/innovation-support-log.entity';
 import { OrganisationUnitUserEntity } from './organisation-unit-user.entity';
 import { OrganisationEntity } from './organisation.entity';
 
-
 @Entity('organisation_unit')
 export class OrganisationUnitEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -27,27 +32,29 @@ export class OrganisationUnitEntity extends BaseEntity {
   @Column({ name: 'inactivated_at', type: 'datetime2', nullable: true, default: null })
   inactivatedAt: null | Date;
 
-  @Column({ name: 'organisation_id', nullable: false})
+  @Column({ name: 'organisation_id', nullable: false })
   organisationId: string;
 
   @ManyToOne(() => OrganisationEntity, { nullable: false })
   @JoinColumn({ name: 'organisation_id' })
   organisation: OrganisationEntity;
 
-  @ManyToMany(() => InnovationAssessmentEntity, record => record.organisationUnits, { lazy: true })
+  @ManyToMany(() => InnovationAssessmentEntity, (record) => record.organisationUnits, {
+    lazy: true,
+  })
   innovationAssessments: Promise<InnovationAssessmentEntity[]>;
 
-  @ManyToMany(() => InnovationSupportLogEntity, record => record.suggestedOrganisationUnits, { lazy: true })
+  @ManyToMany(() => InnovationSupportLogEntity, (record) => record.suggestedOrganisationUnits, {
+    lazy: true,
+  })
   innovationSupportLogs: Promise<InnovationSupportLogEntity[]>;
 
-  @OneToMany(() => OrganisationUnitUserEntity, record => record.organisationUnit, { lazy: true })
+  @OneToMany(() => OrganisationUnitUserEntity, (record) => record.organisationUnit, { lazy: true })
   organisationUnitUsers: Promise<OrganisationUnitUserEntity[]>;
-
 
   static new(data: Partial<OrganisationUnitEntity>): OrganisationUnitEntity {
     const instance = new OrganisationUnitEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

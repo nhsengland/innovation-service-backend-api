@@ -1,4 +1,13 @@
-import { AfterLoad, Column, Entity, JoinColumn, ManyToOne, OneToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import {
+  AfterLoad,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToOne,
+  PrimaryGeneratedColumn,
+  RelationId,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -7,10 +16,8 @@ import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
 import { UserEntity } from '../user/user.entity';
 import { InnovationEntity } from './innovation.entity';
 
-
 @Entity('innovation_collaborator')
 export class InnovationCollaboratorEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -40,18 +47,15 @@ export class InnovationCollaboratorEntity extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: null | UserEntity;
 
-
   // Expires after 30 days.
   @AfterLoad()
   setInviteExpired(): void {
     if (this.status === InnovationCollaboratorStatusEnum.PENDING) {
-
       const isExpired = new Date(this.invitedAt) < new Date(Date.now() - 1000 * 60 * 60 * 24 * 30);
 
       if (isExpired) {
         this.status = InnovationCollaboratorStatusEnum.EXPIRED;
       }
-
     }
   }
 
@@ -60,5 +64,4 @@ export class InnovationCollaboratorEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

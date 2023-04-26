@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class migrateCommentsToMessages1661341116965 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
 
       -- Migrate comments created WHEN: needs assessment start.
@@ -100,14 +98,11 @@ export class migrateCommentsToMessages1661341116965 implements MigrationInterfac
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
 
       DELETE FROM innovation_thread_message;
       DELETE FROM innovation_thread;
 
     `);
-
   }
-
 }

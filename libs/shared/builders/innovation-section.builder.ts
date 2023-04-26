@@ -4,8 +4,7 @@ import { InnovationSectionStatusEnum } from '../enums';
 import { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export class InnovationSectionBuilder {
-
-  innovationSection: Partial<InnovationSectionEntity> = { };
+  innovationSection: Partial<InnovationSectionEntity> = {};
   innovation: InnovationEntity;
   private generateAll = false;
 
@@ -15,7 +14,7 @@ export class InnovationSectionBuilder {
       status: InnovationSectionStatusEnum.NOT_STARTED,
       innovation: innovation,
     };
-    
+
     this.innovation = innovation;
   }
 
@@ -35,15 +34,15 @@ export class InnovationSectionBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<InnovationSectionEntity[]> {
-
- 
     if (!this.generateAll) {
-      const innovationSection = await entityManager.getRepository(InnovationSectionEntity).save(this.innovationSection);
+      const innovationSection = await entityManager
+        .getRepository(InnovationSectionEntity)
+        .save(this.innovationSection);
       return [innovationSection];
     }
 
     const sections = [];
-     
+
     for (const section of CurrentCatalogTypes.InnovationSections) {
       const sectionData = InnovationSectionEntity.new({
         innovation: this.innovation,
@@ -53,8 +52,7 @@ export class InnovationSectionBuilder {
 
       sections.push(await entityManager.getRepository(InnovationSectionEntity).save(sectionData));
     }
-    
-   return sections;
-    
+
+    return sections;
   }
 }

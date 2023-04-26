@@ -1,35 +1,37 @@
 export const buildDocumentHeaderDefinition = (): any => {
-    return (current: number) => {
-      if (current > 1) {
-        return {
-          columns: [{
+  return (current: number) => {
+    if (current > 1) {
+      return {
+        columns: [
+          {
             text: 'Innovation Record',
             style: 'dimmed',
             margin: [10, 10, 10, 10],
             alignment: 'right',
             italic: true,
-          }],
-        };
-      } else return;
-    }
-}
+          },
+        ],
+      };
+    } else return;
+  };
+};
 
 export const buildDocumentFooterDefinition = (): any => {
-    return (current: number, total: number) => {
-      if (current > 1) {
-        return {
-          columns: [
-            {
-              text: `${current} of ${total}`,
-              style: 'footer',
-              alignment: 'right',
-              margin: [0, 0, 10, 10],
-            },
-          ]
-        };
-      } else return;
-    }
-}
+  return (current: number, total: number) => {
+    if (current > 1) {
+      return {
+        columns: [
+          {
+            text: `${current} of ${total}`,
+            style: 'footer',
+            alignment: 'right',
+            margin: [0, 0, 10, 10],
+          },
+        ],
+      };
+    } else return;
+  };
+};
 
 export const buildDocumentTOCDefinition = (innovationName: string): any => {
   return [
@@ -61,11 +63,11 @@ export const buildDocumentTOCDefinition = (innovationName: string): any => {
     {
       toc: {
         title: { text: 'INDEX', style: 'header' },
-        numberStyle: { bold: true }
-      }
-    }
-  ]
-}
+        numberStyle: { bold: true },
+      },
+    },
+  ];
+};
 
 export const buildDocumentStylesDefinition = (): any => {
   return {
@@ -105,10 +107,10 @@ export const buildDocumentStylesDefinition = (): any => {
       italics: true,
     },
     quote: {
-      italics: true
+      italics: true,
     },
     small: {
-      fontSize: 10
+      fontSize: 10,
     },
     answer: {
       fontSize: 12,
@@ -121,7 +123,7 @@ export const buildDocumentStylesDefinition = (): any => {
     footer: {
       fontSize: 10,
       color: '#999999',
-      italics: true,           
+      italics: true,
     },
-  }
-}
+  };
+};

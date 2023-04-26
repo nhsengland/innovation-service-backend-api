@@ -7,26 +7,30 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from '../_services/interfaces';
+import {
+  InnovationThreadsServiceSymbol,
+  InnovationThreadsServiceType,
+} from '../_services/interfaces';
 
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationThreadMessageList {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const threadsService = container.get<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
+    const threadsService = container.get<InnovationThreadsServiceType>(
+      InnovationThreadsServiceSymbol
+    );
 
     try {
-
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
@@ -34,7 +38,6 @@ class V1InnovationThreadMessageList {
         .verify();
 
       const domainContext = auth.getContext();
-
 
       let orderBy;
 
@@ -47,20 +50,19 @@ class V1InnovationThreadMessageList {
         pathParams.threadId,
         queryParams.skip,
         queryParams.take,
-        orderBy,
+        orderBy
       );
-
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
-        messages: result.messages.map(message => ({
+        messages: result.messages.map((message) => ({
           id: message.id,
           createdAt: message.createdAt,
           createdBy: {
             id: message.createdBy.id,
             name: message.createdBy.name,
             role: message.createdBy.role,
-            ...message.createdBy.isOwner !== undefined && { isOwner: message.createdBy.isOwner },
+            ...(message.createdBy.isOwner !== undefined && { isOwner: message.createdBy.isOwner }),
             organisationUnit: {
               id: message.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
               name: message.createdBy.organisationUnit?.name ?? '',
@@ -80,146 +82,147 @@ class V1InnovationThreadMessageList {
       });
 
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-export default openApi(V1InnovationThreadMessageList.httpTrigger as AzureFunction, '/v1/{innovationId}/threads/{threadId}/messages', {
-  get: {
-    summary: 'Get a list of messages from a thread',
-    description: 'Get a list of messages from a thread',
-    operationId: 'v1-innovation-thread-message-list',
-    tags: ['[v1] Innovation Threads'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'Innovation ID',
-        required: true,
-        schema: {
-          type: 'string',
+export default openApi(
+  V1InnovationThreadMessageList.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/threads/{threadId}/messages',
+  {
+    get: {
+      summary: 'Get a list of messages from a thread',
+      description: 'Get a list of messages from a thread',
+      operationId: 'v1-innovation-thread-message-list',
+      tags: ['[v1] Innovation Threads'],
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          description: 'Innovation ID',
+          required: true,
+          schema: {
+            type: 'string',
+          },
         },
-      },
-      {
-        name: 'threadId',
-        in: 'path',
-        description: 'Thread ID',
-        required: true,
-        schema: {
-          type: 'string',
+        {
+          name: 'threadId',
+          in: 'path',
+          description: 'Thread ID',
+          required: true,
+          schema: {
+            type: 'string',
+          },
         },
-      },
-      {
-        name: 'skip',
-        in: 'query',
-        description: 'Number of records to skip',
-        required: false,
-        schema: {
-          type: 'number',
+        {
+          name: 'skip',
+          in: 'query',
+          description: 'Number of records to skip',
+          required: false,
+          schema: {
+            type: 'number',
+          },
         },
-      },
-      {
-        name: 'take',
-        in: 'query',
-        description: 'Number of records to take',
-        required: false,
-        schema: {
-          type: 'number',
+        {
+          name: 'take',
+          in: 'query',
+          description: 'Number of records to take',
+          required: false,
+          schema: {
+            type: 'number',
+          },
         },
-      },
-      {
-        name: 'order',
-        in: 'query',
-        description: 'Order of the records',
-        required: false,
-        schema: {
-          type: 'string',
-          enum: ['ASC', 'DESC'],
+        {
+          name: 'order',
+          in: 'query',
+          description: 'Order of the records',
+          required: false,
+          schema: {
+            type: 'string',
+            enum: ['ASC', 'DESC'],
+          },
         },
-      },
-    ],
-    responses: {
-      200: {
-        description: 'Returns a list of messages from a thread',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                count: {
-                  type: 'number',
-                },
-                messages: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                      },
-                      createdAt: {
-                        type: 'string',
-                      },
-                      createdBy: {
-                        type: 'object',
-                        properties: {
-                          id: {
-                            type: 'string',
-                          },
-                          name: {
-                            type: 'string',
-                          },
-                          type: {
-                            type: 'string',
-                            enum: ['INNOVATOR', 'ASSESSOR', 'ACCESSOR'],
-                          },
-                          organisationUnit: {
-                            type: 'object',
-                            properties: {
-                              id: {
-                                type: 'string',
-                              },
-                              name: {
-                                type: 'string',
-                              },
-                              acronym: {
-                                type: 'string',
+      ],
+      responses: {
+        200: {
+          description: 'Returns a list of messages from a thread',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  count: {
+                    type: 'number',
+                  },
+                  messages: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: {
+                          type: 'string',
+                        },
+                        createdAt: {
+                          type: 'string',
+                        },
+                        createdBy: {
+                          type: 'object',
+                          properties: {
+                            id: {
+                              type: 'string',
+                            },
+                            name: {
+                              type: 'string',
+                            },
+                            type: {
+                              type: 'string',
+                              enum: ['INNOVATOR', 'ASSESSOR', 'ACCESSOR'],
+                            },
+                            organisationUnit: {
+                              type: 'object',
+                              properties: {
+                                id: {
+                                  type: 'string',
+                                },
+                                name: {
+                                  type: 'string',
+                                },
+                                acronym: {
+                                  type: 'string',
+                                },
                               },
                             },
-                          },
-                          organisation: {
-                            type: 'object',
-                            properties: {
-                              id: {
-                                type: 'string',
-                              },
-                              name: {
-                                type: 'string',
-                              },
-                              acronym: {
-                                type: 'string',
+                            organisation: {
+                              type: 'object',
+                              properties: {
+                                id: {
+                                  type: 'string',
+                                },
+                                name: {
+                                  type: 'string',
+                                },
+                                acronym: {
+                                  type: 'string',
+                                },
                               },
                             },
                           },
                         },
-                      },
-                      isEditable: {
-                        type: 'boolean',
-                      },
-                      isNew: {
-                        type: 'boolean',
-                      },
-                      message: {
-                        type: 'string',
-                      },
-                      updatedAt: {
-                        type: 'string',
+                        isEditable: {
+                          type: 'boolean',
+                        },
+                        isNew: {
+                          type: 'boolean',
+                        },
+                        message: {
+                          type: 'string',
+                        },
+                        updatedAt: {
+                          type: 'string',
+                        },
                       },
                     },
                   },
@@ -228,23 +231,22 @@ export default openApi(V1InnovationThreadMessageList.httpTrigger as AzureFunctio
             },
           },
         },
-      },
-      400: {
-        description: 'Bad request',
-      },
-      401: {
-        description: 'Unauthorized',
-      },
-      403: {
-        description: 'Forbidden',
-      },
-      404: {
-        description: 'Not found',
-      },
-      500: {
-        description: 'Internal server error',
+        400: {
+          description: 'Bad request',
+        },
+        401: {
+          description: 'Unauthorized',
+        },
+        403: {
+          description: 'Forbidden',
+        },
+        404: {
+          description: 'Not found',
+        },
+        500: {
+          description: 'Internal server error',
+        },
       },
     },
-  },
-});
-
+  }
+);

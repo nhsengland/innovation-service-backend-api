@@ -13,5 +13,5 @@ export abstract class InnovationsStatisticsHandler {
     this.data = data;
   }
 
-  abstract run() : Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]>
+  abstract run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum]>;
 }

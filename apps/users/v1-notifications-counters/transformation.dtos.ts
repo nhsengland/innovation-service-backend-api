@@ -1,3 +1,3 @@
 export type ResponseDTO = {
-  total: number
-}
+  total: number;
+};

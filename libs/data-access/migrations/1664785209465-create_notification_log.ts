@@ -1,7 +1,6 @@
-import type { MigrationInterface, QueryRunner } from "typeorm"
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createNotificationLog1664785209465 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE "notification_log" (
@@ -15,14 +14,13 @@ export class createNotificationLog1664785209465 implements MigrationInterface {
       "params" nvarchar(max) NOT NULL,
       CONSTRAINT "pk_notification_log_id" PRIMARY KEY ("id"))`);
 
-      await queryRunner.query(
-        `ALTER TABLE "notification_log" ADD CONSTRAINT "CK_notification_log_notification_type"
+    await queryRunner.query(
+      `ALTER TABLE "notification_log" ADD CONSTRAINT "CK_notification_log_notification_type"
         CHECK (notification_type IN ('QA_A_IDLE_SUPPORT'))`
-      );
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE notification_log`);
   }
-
 }

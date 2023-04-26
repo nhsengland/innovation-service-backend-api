@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterSystemStateViewPrimaryCategoryNew1645171971106 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
 
         CREATE OR ALTER VIEW [vw_system_state] AS
@@ -207,7 +205,6 @@ export class alterSystemStateViewPrimaryCategoryNew1645171971106 implements Migr
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
         CREATE OR ALTER VIEW [vw_system_state] AS
                             
@@ -389,7 +386,5 @@ export class alterSystemStateViewPrimaryCategoryNew1645171971106 implements Migr
             and u.deleted_at is null and i.deleted_at is null
         ) innovationAvgDayNAQuery;
     `);
-
   }
-
 }

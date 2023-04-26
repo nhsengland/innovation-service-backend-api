@@ -1,11 +1,8 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterCommentsTable1624379664148 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "comment" ALTER COLUMN message nvarchar(max) NOT NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "comment" ALTER COLUMN message nvarchar(max) NOT NULL;`);
 
     await queryRunner.query(
       `ALTER TABLE "comment" ADD organisation_unit_id uniqueidentifier NULL;`
@@ -26,9 +23,6 @@ export class alterCommentsTable1624379664148 implements MigrationInterface {
       `ALTER TABLE "innovation" DROP CONSTRAINT "fk_comment_organisation_unit_id"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "comment" DROP COLUMN "organisation_unit_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "comment" DROP COLUMN "organisation_unit_id"`);
   }
-
 }

@@ -3,10 +3,9 @@ import type { EntityManager } from 'typeorm';
 import { InnovationAssessmentEntity, type InnovationEntity, type UserEntity } from '../entities';
 
 export class InnovationAssessmentBuilder {
-
-  innovationAssessment: Partial<InnovationAssessmentEntity> = { };
+  innovationAssessment: Partial<InnovationAssessmentEntity> = {};
   innovation: InnovationEntity;
- 
+
   constructor(innovation: InnovationEntity) {
     this.innovationAssessment = InnovationAssessmentEntity.new({
       innovation,
@@ -28,7 +27,7 @@ export class InnovationAssessmentBuilder {
       maturityLevel: 'READY',
       maturityLevelComment: randText(),
       summary: randText(),
-      updatedAt: randPastDate()
+      updatedAt: randPastDate(),
     });
 
     this.innovation = innovation;
@@ -47,14 +46,14 @@ export class InnovationAssessmentBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<InnovationAssessmentEntity> {
-
     if (!this.innovationAssessment.assignTo) {
       throw new Error('Assessment must be assigned to a user');
     }
 
-    const innovationAssessment = await entityManager.getRepository(InnovationAssessmentEntity).save(this.innovationAssessment);
+    const innovationAssessment = await entityManager
+      .getRepository(InnovationAssessmentEntity)
+      .save(this.innovationAssessment);
 
     return innovationAssessment;
   }
-
 }

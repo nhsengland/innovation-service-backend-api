@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createInnovationCollaboratorTable1676569564520 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE "innovation_collaborator" (
         "id" uniqueidentifier NOT NULL CONSTRAINT "df_innovation_collaborator_id" DEFAULT NEWSEQUENTIALID(),
@@ -38,18 +36,14 @@ export class createInnovationCollaboratorTable1676569564520 implements Migration
     await queryRunner.query(`
       CREATE INDEX "idx_innovation_collaborator_user_id" ON "innovation_collaborator" ("user_id") WHERE deleted_at IS NULL
     `);
-
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation_collaborator" SET ( SYSTEM_VERSIONING = OFF )
     `);
 
     await queryRunner.query(`DROP TABLE "innovation_collaborator"`);
     await queryRunner.query(`DROP TABLE "innovation_collaborator_history"`);
-
   }
-
 }

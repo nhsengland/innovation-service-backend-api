@@ -13,36 +13,29 @@ import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
-
 class V1AdminTermsOfUseCreate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context)
-        .checkAdminType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
       const requestUser = auth.getUserInfo();
 
       const result = await toUService.createTermsOfUse({ id: requestUser.id }, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1AdminTermsOfUseCreate.httpTrigger as AzureFunction, '/v1/tou', {
@@ -58,11 +51,11 @@ export default openApi(V1AdminTermsOfUseCreate.httpTrigger as AzureFunction, '/v
             schema: {
               type: 'object',
               properties: {
-                unitId: { type: 'string', description: 'Id of the created terms of use.' }
-              }
-            }
-          }
-        }
+                unitId: { type: 'string', description: 'Id of the created terms of use.' },
+              },
+            },
+          },
+        },
       },
       '400': {
         description: 'Bad request.',
@@ -72,7 +65,7 @@ export default openApi(V1AdminTermsOfUseCreate.httpTrigger as AzureFunction, '/v
       },
       '500': {
         description: 'An error occurred while creating the terms of use.',
-      }
-    }
-  }
+      },
+    },
+  },
 });

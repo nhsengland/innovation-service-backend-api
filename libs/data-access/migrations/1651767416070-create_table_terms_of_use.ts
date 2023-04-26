@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTableTermsOfUse1651767416070 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE terms_of_use (
         id uniqueidentifier NOT NULL CONSTRAINT "df_terms_of_use" DEFAULT NEWSEQUENTIALID(),
@@ -18,15 +16,10 @@ export class createTableTermsOfUse1651767416070 implements MigrationInterface {
         deleted_at datetime2,
         CONSTRAINT "pk_terms_of_use_id" PRIMARY KEY ("id"),
         CONSTRAINT "unique_name" UNIQUE (name)
-      )`
-    );
-
+      )`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`DROP TABLE terms_of_use`);
-
   }
-
 }

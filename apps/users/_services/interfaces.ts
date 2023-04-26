@@ -5,7 +5,6 @@ import type { StatisticsService } from './statistics.service';
 import type { TermsOfUseService } from './terms-of-use.service';
 import type { UsersService } from './users.service';
 
-
 export type OrganisationsServiceType = typeof OrganisationsService.prototype;
 export const OrganisationsServiceSymbol = Symbol.for('OrganisationsService');
 

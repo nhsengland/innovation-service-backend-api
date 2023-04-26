@@ -6,33 +6,27 @@ import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers'
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
-
 import { container } from '../_config';
 import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1UserEmailAvailable {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
 
     try {
-
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      await authorizationService.validate(context)
-          .checkAdminType()
-          .verify();
+      await authorizationService.validate(context).checkAdminType().verify();
 
       const result = await usersService.existsUserByEmail(queryParams.email);
       context.res = result ? ResponseHelper.Ok({}) : ResponseHelper.NotFound();
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -45,10 +39,10 @@ export default openApi(V1UserEmailAvailable.httpTrigger as AzureFunction, '/v1',
     operationId: 'v1-users-email-available',
     description: 'Check if email is available for a new user.',
     tags: ['[v1] Users'],
-    parameters: SwaggerHelper.paramJ2S({query: QueryParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: { description: 'Email is already in use.' },
-      404: { description: 'Email is available.'}
-    }
-  }
+      404: { description: 'Email is available.' },
+    },
+  },
 });

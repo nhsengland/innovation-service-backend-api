@@ -1,2 +1,1 @@
-   
-export type ResponseDTO = {canExport: boolean};
+export type ResponseDTO = { canExport: boolean };

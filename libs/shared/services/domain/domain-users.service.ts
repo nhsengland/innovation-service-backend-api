@@ -2,7 +2,11 @@ import type { DataSource, Repository } from 'typeorm';
 
 import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
-import { InnovationCollaboratorStatusEnum, PhoneUserPreferenceEnum, ServiceRoleEnum } from '../../enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  PhoneUserPreferenceEnum,
+  ServiceRoleEnum,
+} from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainUserInfoType, RoleType } from '../../types';
 
@@ -10,9 +14,7 @@ import type { IdentityProviderServiceType } from '../interfaces';
 
 import type { DomainInnovationsService } from './domain-innovations.service';
 
-
 export class DomainUsersService {
-
   userRepository: Repository<UserEntity>;
 
   constructor(
@@ -23,26 +25,43 @@ export class DomainUsersService {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
 
-
-  async getUserInfo(data: { userId?: string, identityId?: string }): Promise<DomainUserInfoType> {
-
+  async getUserInfo(data: { userId?: string; identityId?: string }): Promise<DomainUserInfoType> {
     if (!data.userId && !data.identityId) {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
     }
 
     // The returning data for organisations/units will be reviewed later, doubling the joins at the moment though to keep current interface
-    const query = this.userRepository.createQueryBuilder('user')
+    const query = this.userRepository
+      .createQueryBuilder('user')
       .select([
-        'user.id', 'user.identityId', 'user.lockedAt','user.firstTimeSignInAt',
+        'user.id',
+        'user.identityId',
+        'user.lockedAt',
+        'user.firstTimeSignInAt',
         // These should be removed in the future and use the service roles instead
-        'userOrganisations.id', 'userOrganisations.role',
-        'organisation.id', 'organisation.name', 'organisation.acronym', 'organisation.size', 'organisation.isShadow', 'organisation.description', 'organisation.registrationNumber',
+        'userOrganisations.id',
+        'userOrganisations.role',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'organisation.size',
+        'organisation.isShadow',
+        'organisation.description',
+        'organisation.registrationNumber',
         'userOrganisationUnits.id',
-        'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym',
         // Service roles
-        'serviceRoles.id', 'serviceRoles.role', 'serviceRoles.lockedAt',
-        'roleOrganisation.id', 'roleOrganisation.name', 'roleOrganisation.acronym',
-        'roleOrganisationUnit.id', 'roleOrganisationUnit.name', 'roleOrganisationUnit.acronym'
+        'serviceRoles.id',
+        'serviceRoles.role',
+        'serviceRoles.lockedAt',
+        'roleOrganisation.id',
+        'roleOrganisation.name',
+        'roleOrganisation.acronym',
+        'roleOrganisationUnit.id',
+        'roleOrganisationUnit.name',
+        'roleOrganisationUnit.acronym',
       ])
       .leftJoin('user.userOrganisations', 'userOrganisations')
       .leftJoin('userOrganisations.organisation', 'organisation')
@@ -52,9 +71,11 @@ export class DomainUsersService {
       .leftJoin('serviceRoles.organisation', 'roleOrganisation')
       .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit');
 
-
-    if (data.userId) { query.where('user.id = :userId', { userId: data.userId }); }
-    else if (data.identityId) { query.where('user.external_id = :identityId', { identityId: data.identityId }); }
+    if (data.userId) {
+      query.where('user.id = :userId', { userId: data.userId });
+    } else if (data.identityId) {
+      query.where('user.external_id = :identityId', { identityId: data.identityId });
+    }
 
     const dbUser = await query.getOne();
 
@@ -75,8 +96,7 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      organisations: (await dbUser.userOrganisations).map(userOrganisation => {
-
+      organisations: (await dbUser.userOrganisations).map((userOrganisation) => {
         const organisation = userOrganisation.organisation;
         const organisationUnits = userOrganisation.userOrganisationUnits;
 
@@ -89,31 +109,31 @@ export class DomainUsersService {
           isShadow: organisation.isShadow,
           description: organisation.description,
           registrationNumber: organisation.registrationNumber,
-          organisationUnits: organisationUnits.map(item => ({
+          organisationUnits: organisationUnits.map((item) => ({
             id: item.organisationUnit.id,
             acronym: item.organisationUnit.acronym,
             name: item.organisationUnit.name,
             organisationUnitUser: {
-              id: item.id
-            }
-          }))
+              id: item.id,
+            },
+          })),
         };
-
-      })
+      }),
     };
-
   }
 
-  async getUsersList(data: { userIds?: string[], identityIds?: string[] }): Promise<{
-    id: string,
-    identityId: string,
-    displayName: string,
-    roles: UserRoleEntity[];
-    email: string,
-    mobilePhone: null | string,
-    isActive: boolean,
-    lastLoginAt: null | Date
-  }[]> {
+  async getUsersList(data: { userIds?: string[]; identityIds?: string[] }): Promise<
+    {
+      id: string;
+      identityId: string;
+      displayName: string;
+      roles: UserRoleEntity[];
+      email: string;
+      mobilePhone: null | string;
+      isActive: boolean;
+      lastLoginAt: null | Date;
+    }[]
+  > {
     // [TechDebt]: This function breaks with more than 2100 users (probably shoulnd't happen anyway)
     // However we're doing needless query since we could force the identityId (only place calling it has it)
     // and it would also be easy to do in chunks of 1000 users or so.
@@ -125,24 +145,33 @@ export class DomainUsersService {
     }
 
     // If provided information is empty, nothing to do here!
-    if ((data.userIds && data.userIds.length === 0) || (data.identityIds && data.identityIds.length === 0)) {
+    if (
+      (data.userIds && data.userIds.length === 0) ||
+      (data.identityIds && data.identityIds.length === 0)
+    ) {
       return [];
     }
 
-    const query = this.userRepository.createQueryBuilder('users')
+    const query = this.userRepository
+      .createQueryBuilder('users')
       .innerJoinAndSelect('users.serviceRoles', 'serviceRoles');
-    if (data.userIds) { query.where('users.id IN (:...userIds)', { userIds: data.userIds }); }
-    else if (data.identityIds) { query.where('users.external_id IN (:...identityIds)', { identityIds: data.identityIds }); }
+    if (data.userIds) {
+      query.where('users.id IN (:...userIds)', { userIds: data.userIds });
+    } else if (data.identityIds) {
+      query.where('users.external_id IN (:...identityIds)', { identityIds: data.identityIds });
+    }
 
     const dbUsers = await query.getMany();
-    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
+    const identityUsers = await this.identityProviderService.getUsersList(
+      dbUsers.map((items) => items.identityId)
+    );
 
-
-    return dbUsers.map(dbUser => {
-
-      const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
+    return dbUsers.map((dbUser) => {
+      const identityUser = identityUsers.find((item) => item.identityId === dbUser.identityId);
       if (!identityUser) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
+          details: { context: 'S.DU.gUL' },
+        });
       }
 
       return {
@@ -155,19 +184,19 @@ export class DomainUsersService {
         isActive: !dbUser.lockedAt,
         lastLoginAt: identityUser.lastLoginAt,
       };
-
     });
-
   }
 
   async getUserPreferences(userId: string): Promise<{
-    contactByPhone: boolean,
-    contactByEmail: boolean,
-    contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
-    contactDetails: null | string,
+    contactByPhone: boolean;
+    contactByEmail: boolean;
+    contactByPhoneTimeframe: null | PhoneUserPreferenceEnum;
+    contactDetails: null | string;
   }> {
-
-    const userPreferences = await this.sqlConnection.createQueryBuilder(UserPreferenceEntity, 'preference').where('preference.user = :userId', { userId: userId }).getOne();
+    const userPreferences = await this.sqlConnection
+      .createQueryBuilder(UserPreferenceEntity, 'preference')
+      .where('preference.user = :userId', { userId: userId })
+      .getOne();
 
     return {
       contactByPhone: userPreferences?.contactByPhone ?? false,
@@ -180,14 +209,15 @@ export class DomainUsersService {
   /**
    * returns a user based on email
    * @param email the email to search
-   * @param filters 
+   * @param filters
    *  - userRoles: the user roles to filter by.
    * @returns the user as an array.
    */
-  async getUserByEmail(email: string, filters?: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
-
+  async getUserByEmail(
+    email: string,
+    filters?: { userRoles: ServiceRoleEnum[] }
+  ): Promise<DomainUserInfoType[]> {
     try {
-
       const authUser = await this.identityProviderService.getUserInfoByEmail(email);
       if (!authUser) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
@@ -196,7 +226,13 @@ export class DomainUsersService {
       const dbUser = await this.getUserInfo({ identityId: authUser.identityId });
       if (filters) {
         // Apply filters.
-        if (filters.userRoles.length === 0 || (filters.userRoles.length > 0 && filters.userRoles.some(userRole => dbUser.roles.map(r => r.role).includes(userRole)))) {
+        if (
+          filters.userRoles.length === 0 ||
+          (filters.userRoles.length > 0 &&
+            filters.userRoles.some((userRole) =>
+              dbUser.roles.map((r) => r.role).includes(userRole)
+            ))
+        ) {
           return [dbUser];
         } else {
           throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -210,11 +246,9 @@ export class DomainUsersService {
     }
   }
 
-
   async deleteUser(userId: string, data: { reason: null | string }): Promise<{ id: string }> {
-
-    
-    const dbUser = await this.sqlConnection.createQueryBuilder(UserEntity, 'user')
+    const dbUser = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
       .innerJoinAndSelect('user.serviceRoles', 'roles')
       .where('user.id = :userId', { userId })
       .getOne();
@@ -229,65 +263,78 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    return this.sqlConnection.transaction(async transaction => {
-
+    return this.sqlConnection.transaction(async (transaction) => {
       // If user has innovator role, deals with it's innovations.
-      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
+      const userInnovatorRole = dbUser.serviceRoles.find(
+        (item) => item.role === ServiceRoleEnum.INNOVATOR
+      );
 
       if (userInnovatorRole) {
-
-        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(dbUser.id);
-
-        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
-          transaction,
-          { id: dbUser.id, email: user.email },
-          { current: InnovationCollaboratorStatusEnum.PENDING, next: InnovationCollaboratorStatusEnum.DECLINED }
+        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(
+          dbUser.id
         );
 
         await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
           transaction,
           { id: dbUser.id, email: user.email },
-          { current: InnovationCollaboratorStatusEnum.ACTIVE, next: InnovationCollaboratorStatusEnum.LEFT }
+          {
+            current: InnovationCollaboratorStatusEnum.PENDING,
+            next: InnovationCollaboratorStatusEnum.DECLINED,
+          }
+        );
+
+        await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
+          transaction,
+          { id: dbUser.id, email: user.email },
+          {
+            current: InnovationCollaboratorStatusEnum.ACTIVE,
+            next: InnovationCollaboratorStatusEnum.LEFT,
+          }
         );
 
         await this.domainInnovationsService.withdrawInnovations(
           { id: dbUser.id, roleId: userInnovatorRole.id },
           dbInnovations
-            .filter(i => i.expirationTransferDate === null)
-            .map(item => ({ id: item.id, reason: null })),
-            transaction
+            .filter((i) => i.expirationTransferDate === null)
+            .map((item) => ({ id: item.id, reason: null })),
+          transaction
         );
-      
-        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
+
+        for (const dbInnovation of dbInnovations.filter((i) => i.expirationTransferDate !== null)) {
           await this.sqlConnection.getRepository(InnovationEntity).update(
-            { 
-              id: dbInnovation.id
+            {
+              id: dbInnovation.id,
             },
             {
               updatedBy: dbUser.id,
-              expires_at: dbInnovation.expirationTransferDate
+              expires_at: dbInnovation.expirationTransferDate,
             }
           );
         }
       }
 
-      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, {
-        deletedAt: new Date().toISOString()
-      });
+      await transaction.update(
+        UserRoleEntity,
+        { user: { id: dbUser.id } },
+        {
+          deletedAt: new Date().toISOString(),
+        }
+      );
 
-      await transaction.update(UserEntity, { id: dbUser.id }, {
-        deleteReason: data.reason,
-        deletedAt: new Date().toISOString()
-      });
-
+      await transaction.update(
+        UserEntity,
+        { id: dbUser.id },
+        {
+          deleteReason: data.reason,
+          deletedAt: new Date().toISOString(),
+        }
+      );
 
       // If all went well, deleted from B2C.
       await this.identityProviderService.deleteUser(dbUser.identityId);
 
       return { id: dbUser.id };
-
     });
-
   }
 
   /**
@@ -298,11 +345,18 @@ export class DomainUsersService {
    * @returns the full role type for the user if found, null otherwise
    */
   async getUserRole(userId: string, roleId?: string, activeOnly = true): Promise<RoleType | null> {
-    const query = this.sqlConnection.createQueryBuilder(UserRoleEntity, 'userRole')
+    const query = this.sqlConnection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
       .select([
-        'userRole.id', 'userRole.role', 'userRole.lockedAt',
-        'organisation.id', 'organisation.name', 'organisation.acronym',
-        'organisationUnit.id', 'organisationUnit.name', 'organisationUnit.acronym'
+        'userRole.id',
+        'userRole.role',
+        'userRole.lockedAt',
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym',
       ])
       .leftJoin('userRole.organisation', 'organisation')
       .leftJoin('userRole.organisationUnit', 'organisationUnit')
@@ -322,5 +376,4 @@ export class DomainUsersService {
 
     return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
   }
-  
 }

@@ -1,4 +1,12 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -9,7 +17,6 @@ import { InnovationFileEntity } from './innovation-file.entity';
 
 @Entity('innovation_evidence')
 export class InnovationEvidenceEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -25,12 +32,11 @@ export class InnovationEvidenceEntity extends BaseEntity {
   @Column({ name: 'description', nullable: true })
   description: string;
 
-
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
+  @ManyToMany(() => InnovationFileEntity, (record) => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_evidence_file',
     joinColumn: { name: 'innovation_evidence_id', referencedColumnName: 'id' },
@@ -38,11 +44,9 @@ export class InnovationEvidenceEntity extends BaseEntity {
   })
   files: InnovationFileEntity[];
 
-
   static new(data: Partial<InnovationEvidenceEntity>): InnovationEvidenceEntity {
     const instance = new InnovationEvidenceEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

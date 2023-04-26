@@ -5,7 +5,5 @@ export default index({
     title: 'Users API @ NHS Innovation Service',
     version: '1.0.0',
   },
-  servers: [
-    { url: 'https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api' }
-  ]
+  servers: [{ url: 'https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api' }],
 });

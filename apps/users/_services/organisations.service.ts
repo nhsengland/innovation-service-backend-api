@@ -7,16 +7,26 @@ import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
-
 @injectable()
 export class OrganisationsService extends BaseService {
+  constructor() {
+    super();
+  }
 
-  constructor() { super(); }
-
-
-  async getOrganisationsList(filters: { fields?: ('organisationUnits')[], withInactive?: boolean }): Promise<{ id: string, name: string, acronym: string, isActive: boolean, organisationUnits?: { id: string; name: string; acronym: string; isActive: boolean;}[] }[]> {
-
-    const query = this.sqlConnection.createQueryBuilder(OrganisationEntity, 'organisation')
+  async getOrganisationsList(filters: {
+    fields?: 'organisationUnits'[];
+    withInactive?: boolean;
+  }): Promise<
+    {
+      id: string;
+      name: string;
+      acronym: string;
+      isActive: boolean;
+      organisationUnits?: { id: string; name: string; acronym: string; isActive: boolean }[];
+    }[]
+  > {
+    const query = this.sqlConnection
+      .createQueryBuilder(OrganisationEntity, 'organisation')
       .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR });
 
     if (!filters.withInactive) {
@@ -35,52 +45,56 @@ export class OrganisationsService extends BaseService {
 
     const dbOrganisations = await query.getMany();
 
-
     return Promise.all(
-      dbOrganisations.map(async organisation => ({
+      dbOrganisations.map(async (organisation) => ({
         id: organisation.id,
         name: organisation.name,
         acronym: organisation.acronym ?? '',
         isActive: !organisation.inactivatedAt,
 
-        ...(!filters.fields?.includes('organisationUnits') ? {} : {
-          organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
-            id: organisationUnit.id,
-            name: organisationUnit.name,
-            acronym: organisationUnit.acronym,
-            isActive: !organisationUnit.inactivatedAt,
-          }))
-        })
-
+        ...(!filters.fields?.includes('organisationUnits')
+          ? {}
+          : {
+              organisationUnits: (await organisation.organisationUnits).map((organisationUnit) => ({
+                id: organisationUnit.id,
+                name: organisationUnit.name,
+                acronym: organisationUnit.acronym,
+                isActive: !organisationUnit.inactivatedAt,
+              })),
+            }),
       }))
     );
   }
 
-  async getOrganisationInfo(organisationId: string, onlyActiveUsers?: boolean, entityManager?: EntityManager): Promise<{
-    id: string,
-    name: string,
-    acronym: string | null,
+  async getOrganisationInfo(
+    organisationId: string,
+    onlyActiveUsers?: boolean,
+    entityManager?: EntityManager
+  ): Promise<{
+    id: string;
+    name: string;
+    acronym: string | null;
     organisationUnits: {
-        id: string,
-        name: string,
-        acronym: string,
-        isActive: boolean,
-        userCount: number,
-    }[],
-    isActive: boolean
+      id: string;
+      name: string;
+      acronym: string;
+      isActive: boolean;
+      userCount: number;
+    }[];
+    isActive: boolean;
   }> {
-
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisationQuery = connection.createQueryBuilder(OrganisationEntity, 'organisation')
+    const organisationQuery = connection
+      .createQueryBuilder(OrganisationEntity, 'organisation')
       .leftJoinAndSelect('organisation.organisationUnits', 'unit')
       .leftJoinAndSelect('unit.organisationUnitUsers', 'unitUsers')
       .where('organisation.id = :organisationId', { organisationId });
 
-
     if (onlyActiveUsers) {
-      organisationQuery.leftJoinAndSelect('unitUsers.organisationUser', 'orgUser')
-      .leftJoinAndSelect('orgUser.user', 'user');
+      organisationQuery
+        .leftJoinAndSelect('unitUsers.organisationUser', 'orgUser')
+        .leftJoinAndSelect('orgUser.user', 'user');
     }
 
     const organisation = await organisationQuery.getOne();
@@ -89,38 +103,48 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
 
-    const organisationUnits = await Promise.all((await organisation.organisationUnits).map(async unit => ({
-      id: unit.id,
-      name: unit.name,
-      acronym: unit.acronym,
-      isActive: !unit.inactivatedAt,
-      userCount: onlyActiveUsers ? (await unit.organisationUnitUsers).filter(unitUser => !unitUser.organisationUser.user.lockedAt).length : (await unit.organisationUnitUsers).length
-    })));
+    const organisationUnits = await Promise.all(
+      (
+        await organisation.organisationUnits
+      ).map(async (unit) => ({
+        id: unit.id,
+        name: unit.name,
+        acronym: unit.acronym,
+        isActive: !unit.inactivatedAt,
+        userCount: onlyActiveUsers
+          ? (
+              await unit.organisationUnitUsers
+            ).filter((unitUser) => !unitUser.organisationUser.user.lockedAt).length
+          : (
+              await unit.organisationUnitUsers
+            ).length,
+      }))
+    );
 
     return {
       id: organisation.id,
       name: organisation.name,
       acronym: organisation.acronym,
       organisationUnits,
-      isActive: !organisation.inactivatedAt
+      isActive: !organisation.inactivatedAt,
     };
-
   }
 
-  async getOrganisationUnitInfo(organisationUnitId: string, entityManager?: EntityManager): Promise<{
-    id: string
-    name: string,
-    acronym: string,
-    isActive: boolean,
-    canActivate: boolean
+  async getOrganisationUnitInfo(
+    organisationUnitId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    id: string;
+    name: string;
+    acronym: string;
+    isActive: boolean;
+    canActivate: boolean;
   }> {
-
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const unit = await connection.createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .select([
-        'unit.id', 'unit.name', 'unit.acronym', 'unit.inactivatedAt'
-      ])
+    const unit = await connection
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .select(['unit.id', 'unit.name', 'unit.acronym', 'unit.inactivatedAt'])
       .where('unit.id = :organisationUnitId', { organisationUnitId })
       .getOne();
 
@@ -128,8 +152,9 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const hasQualifyingAccessor = !!(await connection.createQueryBuilder(UserRoleEntity, 'user')
-      .where('user.organisation_unit_id = :organisationUnitId', {organisationUnitId})
+    const hasQualifyingAccessor = !!(await connection
+      .createQueryBuilder(UserRoleEntity, 'user')
+      .where('user.organisation_unit_id = :organisationUnitId', { organisationUnitId })
       .andWhere("role = 'QUALIFYING_ACCESSOR'")
       .getOne());
 
@@ -138,8 +163,7 @@ export class OrganisationsService extends BaseService {
       name: unit.name,
       acronym: unit.acronym,
       isActive: !unit.inactivatedAt,
-      canActivate: hasQualifyingAccessor
+      canActivate: hasQualifyingAccessor,
     };
   }
-
 }

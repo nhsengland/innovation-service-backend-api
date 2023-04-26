@@ -1,4 +1,3 @@
 export type ResponseDTO = {
-    unitId: string
+  unitId: string;
 };
-  

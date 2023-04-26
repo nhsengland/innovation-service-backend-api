@@ -10,7 +10,6 @@ import type { InnovationsService } from './innovations.service';
 import type { PDFService } from './pdf.service';
 import type { StatisticsService } from './statistics.service';
 
-
 export type InnovationActionsServiceType = typeof InnovationActionsService.prototype;
 export const InnovationActionsServiceSymbol = Symbol.for('InnovationActionsService');
 

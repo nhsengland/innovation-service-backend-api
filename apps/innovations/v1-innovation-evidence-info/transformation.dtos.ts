@@ -2,4 +2,4 @@ import type { CurrentEvidenceType } from '@innovations/shared/schemas/innovation
 
 export type ResponseDTO = Omit<CurrentEvidenceType, 'files'> & {
   files: { id: string; name: string; url: string }[];
-}
+};

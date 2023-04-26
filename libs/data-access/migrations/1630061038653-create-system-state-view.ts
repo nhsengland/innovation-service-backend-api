@@ -1,10 +1,8 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createSystemStateView1630061038653 implements MigrationInterface {
-
-	async up(queryRunner: QueryRunner): Promise<void> {
-
-		await queryRunner.query(`
+  async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
         CREATE OR ALTER VIEW [vw_system_state] AS
           SELECT 
             -- users
@@ -111,14 +109,11 @@ export class createSystemStateView1630061038653 implements MigrationInterface {
             where u.deleted_at is null
           ) innovatorsQuery;
     `);
-	}
+  }
 
-	async down(queryRunner: QueryRunner): Promise<void> {
-
-		await queryRunner.query(`
+  async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
 			DROP VIEW dbo.[vw_system_state]
 		`);
-
-	}
-
+  }
 }

@@ -12,18 +12,17 @@ import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/i
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './validation.schemas';
 
-
 class V1InnovationsExportRequestsUpdate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
     const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
 
     try {
-
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .verify();
@@ -31,12 +30,11 @@ class V1InnovationsExportRequestsUpdate {
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const params = JoiHelper.Validate<PathParamsType>(
-        PathParamsSchema,
-        request.params
-      );
+      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: domainContext.currentRole.role });
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
+        userType: domainContext.currentRole.role,
+      });
 
       const { rejectReason, status } = body;
 
@@ -49,47 +47,47 @@ class V1InnovationsExportRequestsUpdate {
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-
-export default openApi(V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests/{requestId}/status', {
-  patch: {
-    operationId: 'v1-innovations-export-requests-update-status',
-    description: 'updates export request status',
-    tags: ['[v1] Innovations'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        required: true,
-        description: 'Innovation ID',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
+export default openApi(
+  V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/export-requests/{requestId}/status',
+  {
+    patch: {
+      operationId: 'v1-innovations-export-requests-update-status',
+      description: 'updates export request status',
+      tags: ['[v1] Innovations'],
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          required: true,
+          description: 'Innovation ID',
+          schema: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+        {
+          name: 'requestId',
+          in: 'path',
+          required: true,
+          description: 'Export request ID',
+          schema: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+      ],
+      responses: {
+        200: { description: 'Success' },
+        400: { description: 'Invalid innovation payload' },
       },
-      {
-        name: 'requestId',
-        in: 'path',
-        required: true,
-        description: 'Export request ID',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
-    ],
-    responses: {
-      200: { description: 'Success' },
-      400: { description: 'Invalid innovation payload' },
     },
-  },
-});
+  }
+);

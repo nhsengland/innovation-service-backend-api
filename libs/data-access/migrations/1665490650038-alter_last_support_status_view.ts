@@ -1,7 +1,6 @@
-import type { MigrationInterface, QueryRunner } from 'typeorm'
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterLastSupportStatusView1665136834576 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         
@@ -34,10 +33,10 @@ export class alterLastSupportStatusView1665136834576 implements MigrationInterfa
               B.status IN ('COMPLETE', 'NOT_YET', 'UNSUITABLE')
               AND DATEDIFF(DAY, B.updated_at, GETDATE()) > 7
               AND C.cnt IS NULL     
-        `)
+        `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query('DROP VIEW dbo.idle_support_view_entity')
+    await queryRunner.query('DROP VIEW dbo.idle_support_view_entity');
   }
 }

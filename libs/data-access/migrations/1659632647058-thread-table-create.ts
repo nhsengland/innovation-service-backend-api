@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class threadTableCreate1659632647058 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE "innovation_thread" (
         "id" uniqueidentifier NOT NULL CONSTRAINT "df_inonvation_thread_id" DEFAULT NEWSEQUENTIALID(),
@@ -45,14 +43,10 @@ export class threadTableCreate1659632647058 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "innovation_thread_message" ADD CONSTRAINT "fk_innovation_thread_message_user" FOREIGN KEY ("author_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
     );
-
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`DROP TABLE innovation_thread_message`);
     await queryRunner.query(`DROP TABLE innovation_thread`);
-
   }
-
 }

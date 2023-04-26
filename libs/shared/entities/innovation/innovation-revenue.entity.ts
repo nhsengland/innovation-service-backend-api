@@ -11,23 +11,19 @@ import { catalogRevenues } from '../../schemas/innovation-record/202209/catalog.
  */
 @Entity('innovation_revenue')
 export class InnovationRevenueEntity extends BaseEntity {
-
   @PrimaryColumn({ type: 'simple-enum', enum: catalogRevenues, nullable: false })
   type: catalogRevenues;
 
   @PrimaryColumn({ type: 'uniqueidentifier', name: 'innovation_id' })
   innovationId: string;
 
-
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
-
 
   static new(data: Partial<InnovationRevenueEntity>): InnovationRevenueEntity {
     const instance = new InnovationRevenueEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

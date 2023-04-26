@@ -8,7 +8,6 @@ import { UserEntity } from './user.entity';
 
 @Entity('announcement_user')
 export class AnnouncementUserEntity {
-
   @PrimaryColumn({ name: 'id', type: 'bigint', generated: true })
   id: number;
 
@@ -34,5 +33,4 @@ export class AnnouncementUserEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class threadsAddColumnContexts1661174798831 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation_thread" ADD context_id  uniqueidentifier NULL
     `);
@@ -19,7 +17,6 @@ export class threadsAddColumnContexts1661174798831 implements MigrationInterface
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation_thread" DROP CONSTRAINT "CK_innovation_thread_context_type"
     `);
@@ -31,7 +28,5 @@ export class threadsAddColumnContexts1661174798831 implements MigrationInterface
     await queryRunner.query(`
       ALTER TABLE "innovation_thread" DROP COLUMN context_id
     `);
-
   }
-
 }

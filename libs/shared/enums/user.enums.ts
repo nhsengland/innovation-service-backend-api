@@ -6,9 +6,8 @@ export enum ServiceRoleEnum {
   QUALIFYING_ACCESSOR = 'QUALIFYING_ACCESSOR',
 }
 
-
 export enum PhoneUserPreferenceEnum {
   MORNING = 'MORNING',
   AFTERNOON = 'AFTERNOON',
-  DAILY = 'DAILY'
+  DAILY = 'DAILY',
 }

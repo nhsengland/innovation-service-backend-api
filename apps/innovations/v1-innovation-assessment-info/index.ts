@@ -7,27 +7,35 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from '../_services/interfaces';
+import {
+  InnovationAssessmentsServiceSymbol,
+  InnovationAssessmentsServiceType,
+} from '../_services/interfaces';
 
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1InnovationAssessmentInfo {
-
   @JwtDecoder()
-  @Audit({ action: ActionEnum.READ, target: TargetEnum.ASSESSMENT, identifierParam: 'assessmentId' })
+  @Audit({
+    action: ActionEnum.READ,
+    target: TargetEnum.ASSESSMENT,
+    identifierParam: 'assessmentId',
+  })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationAssessmentsService = container.get<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol);
+    const authorizationService = container.get<AuthorizationServiceType>(
+      AuthorizationServiceSymbol
+    );
+    const innovationAssessmentsService = container.get<InnovationAssessmentsServiceType>(
+      InnovationAssessmentsServiceSymbol
+    );
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context)
+      await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
@@ -36,7 +44,9 @@ class V1InnovationAssessmentInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationAssessmentsService.getInnovationAssessmentInfo(params.assessmentId);
+      const result = await innovationAssessmentsService.getInnovationAssessmentInfo(
+        params.assessmentId
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
@@ -60,145 +70,148 @@ class V1InnovationAssessmentInfo {
         hasImplementationPlanComment: result.hasImplementationPlanComment,
         hasScaleResource: result.hasScaleResource,
         hasScaleResourceComment: result.hasScaleResourceComment,
-        suggestedOrganisations: result.suggestedOrganisations.map(item => ({
-          id: item.id, name: item.name, acronym: item.acronym,
-          units: item.units
+        suggestedOrganisations: result.suggestedOrganisations.map((item) => ({
+          id: item.id,
+          name: item.name,
+          acronym: item.acronym,
+          units: item.units,
         })),
         updatedAt: result.updatedAt,
-        updatedBy: result.updatedBy
+        updatedBy: result.updatedBy,
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-export default openApi(V1InnovationAssessmentInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/assessments/{assessmentId}', {
-  get: {
-    summary: 'Get Innovation Assessment Info',
-    description: 'Get Innovation Assessment Info',
-    tags: ['Innovation Assessment Info'],
-    operationId: 'v1-innovation-assessment-info',
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'Innovation Id',
-        required: true,
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      },
-      {
-        name: 'assessmentId',
-        in: 'path',
-        description: 'Assessment Id',
-        required: true,
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
-      }
-    ],
-    responses: {
-      200: {
-        description: 'Success',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', format: 'uuid' },
-                summary: { type: 'string' },
-                description: { type: 'string' },
-                finishedAt: { type: 'string', format: 'date-time' },
-                assignTo: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string', format: 'uuid' },
-                    name: { type: 'string' }
-                  }
-                },
-                maturityLevel: { type: 'string' },
-                maturityLevelComment: { type: 'string' },
-                hasRegulatoryApprovals: { type: 'boolean' },
-                hasRegulatoryApprovalsComment: { type: 'string' },
-                hasEvidence: { type: 'boolean' },
-                hasEvidenceComment: { type: 'string' },
-                hasValidation: { type: 'boolean' },
-                hasValidationComment: { type: 'string' },
-                hasProposition: { type: 'boolean' },
-                hasPropositionComment: { type: 'string' },
-                hasCompetitionKnowledge: { type: 'boolean' },
-                hasCompetitionKnowledgeComment: { type: 'string' },
-                hasImplementationPlan: { type: 'boolean' },
-                hasImplementationPlanComment: { type: 'string' },
-                hasScaleResource: { type: 'boolean' },
-                hasScaleResourceComment: { type: 'string' },
-                suggestedOrganisations: {
-                  type: 'array',
-                  items: {
+export default openApi(
+  V1InnovationAssessmentInfo.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/assessments/{assessmentId}',
+  {
+    get: {
+      summary: 'Get Innovation Assessment Info',
+      description: 'Get Innovation Assessment Info',
+      tags: ['Innovation Assessment Info'],
+      operationId: 'v1-innovation-assessment-info',
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          description: 'Innovation Id',
+          required: true,
+          schema: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+        {
+          name: 'assessmentId',
+          in: 'path',
+          description: 'Assessment Id',
+          required: true,
+          schema: {
+            type: 'string',
+            format: 'uuid',
+          },
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  summary: { type: 'string' },
+                  description: { type: 'string' },
+                  finishedAt: { type: 'string', format: 'date-time' },
+                  assignTo: {
                     type: 'object',
                     properties: {
                       id: { type: 'string', format: 'uuid' },
                       name: { type: 'string' },
-                      acronym: { type: 'string' },
-                      units: {
-                        type: 'array',
-                        items: {
-                          type: 'object',
-                          properties: {
-                            id: { type: 'string', format: 'uuid' },
-                            name: { type: 'string' },
-                            acronym: { type: 'string' },
-                            organisation: {
-                              type: 'object',
-                              properties: {
-                                id: { type: 'string', format: 'uuid' },
-                                name: { type: 'string' },
-                                acronym: { type: 'string' }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                    },
+                  },
+                  maturityLevel: { type: 'string' },
+                  maturityLevelComment: { type: 'string' },
+                  hasRegulatoryApprovals: { type: 'boolean' },
+                  hasRegulatoryApprovalsComment: { type: 'string' },
+                  hasEvidence: { type: 'boolean' },
+                  hasEvidenceComment: { type: 'string' },
+                  hasValidation: { type: 'boolean' },
+                  hasValidationComment: { type: 'string' },
+                  hasProposition: { type: 'boolean' },
+                  hasPropositionComment: { type: 'string' },
+                  hasCompetitionKnowledge: { type: 'boolean' },
+                  hasCompetitionKnowledgeComment: { type: 'string' },
+                  hasImplementationPlan: { type: 'boolean' },
+                  hasImplementationPlanComment: { type: 'string' },
+                  hasScaleResource: { type: 'boolean' },
+                  hasScaleResourceComment: { type: 'string' },
+                  suggestedOrganisations: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string', format: 'uuid' },
+                        name: { type: 'string' },
+                        acronym: { type: 'string' },
+                        units: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              id: { type: 'string', format: 'uuid' },
+                              name: { type: 'string' },
+                              acronym: { type: 'string' },
+                              organisation: {
+                                type: 'object',
+                                properties: {
+                                  id: { type: 'string', format: 'uuid' },
+                                  name: { type: 'string' },
+                                  acronym: { type: 'string' },
+                                },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                  updatedAt: { type: 'string', format: 'date-time' },
+                  updatedBy: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string', format: 'uuid' },
+                      name: { type: 'string' },
+                    },
+                  },
                 },
-                updatedAt: { type: 'string', format: 'date-time' },
-                updatedBy: {
-                  type: 'object',
-                  properties: {
-                    id: { type: 'string', format: 'uuid' },
-                    name: { type: 'string' }
-                  }
-                },
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
+        400: {
+          description: 'Bad Request',
+        },
+        401: {
+          description: 'Unauthorized',
+        },
+        403: {
+          description: 'Forbidden',
+        },
+        404: {
+          description: 'Not Found',
+        },
+        500: {
+          description: 'Internal Server Error',
+        },
       },
-      400: {
-        description: 'Bad Request',
-      },
-      401: {
-        description: 'Unauthorized',
-      },
-      403: {
-        description: 'Forbidden',
-      },
-      404: {
-        description: 'Not Found',
-      },
-      500: {
-        description: 'Internal Server Error',
-      }
-    }
+    },
   }
-});
+);

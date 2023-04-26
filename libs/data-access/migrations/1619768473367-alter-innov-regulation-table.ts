@@ -1,12 +1,9 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovRegulationTable1619768473367 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // DROP COLUMN innovation_evidence column
-    await queryRunner.query(
-      `ALTER TABLE "innovation_evidence" DROP COLUMN name`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_evidence" DROP COLUMN name`);
 
     // DROP innovation_regulation_standard TABLE
     await queryRunner.query(
@@ -21,9 +18,7 @@ export class alterInnovRegulationTable1619768473367 implements MigrationInterfac
       `ALTER TABLE "innovation_regulation_standard" SET ( SYSTEM_VERSIONING = OFF )`
     );
     await queryRunner.query(`DROP TABLE "innovation_regulation_standard"`);
-    await queryRunner.query(
-      `DROP TABLE "innovation_regulation_standard_history"`
-    );
+    await queryRunner.query(`DROP TABLE "innovation_regulation_standard_history"`);
 
     // RECREATE innovation_standard TABLE
     await queryRunner.query(`CREATE TABLE "innovation_standard" (
@@ -51,11 +46,7 @@ export class alterInnovRegulationTable1619768473367 implements MigrationInterfac
     );
   }
 
-
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "innovation_evidence" ADD COLUMN name nvarchar(255)`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_evidence" ADD COLUMN name nvarchar(255)`);
   }
-
 }

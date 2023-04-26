@@ -7,10 +7,8 @@ import { UserRoleEntity } from '../user/user-role.entity';
 import { UserEntity } from '../user/user.entity';
 import { InnovationThreadEntity } from './Innovation-thread.entity';
 
-
 @Entity('innovation_thread_message')
 export class InnovationThreadMessageEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -19,7 +17,6 @@ export class InnovationThreadMessageEntity extends BaseEntity {
 
   @Column({ name: 'is_editable', nullable: false, default: false })
   isEditable: boolean;
-
 
   @ManyToOne(() => InnovationThreadEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_thread_id' })
@@ -31,7 +28,7 @@ export class InnovationThreadMessageEntity extends BaseEntity {
 
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'author_organisation_unit_id' })
-  authorOrganisationUnit: OrganisationUnitEntity | null;  // to be deprecated
+  authorOrganisationUnit: OrganisationUnitEntity | null; // to be deprecated
 
   @ManyToOne(() => UserRoleEntity, { nullable: false })
   @JoinColumn({ name: 'author_user_role_id' })
@@ -42,5 +39,4 @@ export class InnovationThreadMessageEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

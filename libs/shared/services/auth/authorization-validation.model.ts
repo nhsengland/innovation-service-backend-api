@@ -1,7 +1,12 @@
 import 'reflect-metadata';
 import { Brackets } from 'typeorm';
 
-import { InnovationCollaboratorStatusEnum, InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '../../enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
+  InnovationSupportStatusEnum,
+  ServiceRoleEnum,
+} from '../../enums';
 import { ForbiddenError, UnprocessableEntityError } from '../../errors';
 import type { DomainContextType, DomainUserInfoType } from '../../types';
 
@@ -36,16 +41,18 @@ enum UserValidationKeys {
   checkAdminType = 'adminTypeValidation',
   checkAssessmentType = 'assessmentTypeValidation',
   checkAccessorType = 'accessorTypeValidation',
-  checkInnovatorType = 'innovatorTypeValidation'
+  checkInnovatorType = 'innovatorTypeValidation',
 }
 enum InnovationValidationKeys {
-  checkInnovation = 'innovationValidation'
+  checkInnovation = 'innovationValidation',
 }
 
 export class AuthorizationValidationModel {
-
-  private user: { identityId?: string, data?: DomainUserInfoType } = {};
-  private innovation: { id?: string, data?: undefined | { id: string, name: string, status: InnovationStatusEnum, owner: string } } = {};
+  private user: { identityId?: string; data?: DomainUserInfoType } = {};
+  private innovation: {
+    id?: string;
+    data?: undefined | { id: string; name: string; status: InnovationStatusEnum; owner: string };
+  } = {};
   private roleId?: string;
   // this will change in the future, it has some duplicate information and DomainContextType can probably be reduced without issues
   private domainContext: { data?: DomainContextType } = {};
@@ -53,10 +60,7 @@ export class AuthorizationValidationModel {
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
 
-  constructor(
-    private domainService: DomainServiceType
-  ) { }
-
+  constructor(private domainService: DomainServiceType) {}
 
   setUser(identityId: string): this {
     this.user = { identityId };
@@ -74,24 +78,31 @@ export class AuthorizationValidationModel {
   }
 
   getUserInfo(): DomainUserInfoType {
-    if (this.user.data) { return this.user.data; }
+    if (this.user.data) {
+      return this.user.data;
+    }
     throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED);
   }
 
   getContext(): DomainContextType {
-    if (this.domainContext.data) { return this.domainContext.data; }
+    if (this.domainContext.data) {
+      return this.domainContext.data;
+    }
     throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
   }
 
-  getInnovationInfo(): { id: string, name: string, status: InnovationStatusEnum } {
-    if (this.innovation.data) { return this.innovation.data; }
+  getInnovationInfo(): { id: string; name: string; status: InnovationStatusEnum } {
+    if (this.innovation.data) {
+      return this.innovation.data;
+    }
     throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED);
   }
 
-
   // User validations.
   checkSelfUser(identityId: string): this {
-    this.userValidations.set(UserValidationKeys.checkSelfUser, () => this.selfUserValidation(identityId));
+    this.userValidations.set(UserValidationKeys.checkSelfUser, () =>
+      this.selfUserValidation(identityId)
+    );
     return this;
   }
   private selfUserValidation(userId: string): null | AuthErrorsEnum {
@@ -99,40 +110,61 @@ export class AuthorizationValidationModel {
   }
 
   checkAdminType(data?: { role?: ServiceRoleEnum[] }): this {
-    this.userValidations.set(UserValidationKeys.checkAdminType, () => this.adminTypeValidation(data));
+    this.userValidations.set(UserValidationKeys.checkAdminType, () =>
+      this.adminTypeValidation(data)
+    );
     return this;
   }
 
   private adminTypeValidation(data?: { role?: ServiceRoleEnum[] }): null | AuthErrorsEnum {
-
     let error: null | AuthErrorsEnum = null;
 
     if (this.domainContext.data?.currentRole.role !== ServiceRoleEnum.ADMIN) {
       error = AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
     }
-    if (!error && data?.role && !data.role.some(role => this.user.data?.roles.map(r => r.role).includes(role))) {
+    if (
+      !error &&
+      data?.role &&
+      !data.role.some((role) => this.user.data?.roles.map((r) => r.role).includes(role))
+    ) {
       error = AuthErrorsEnum.AUTH_USER_ROLE_NOT_ALLOWED;
     }
 
     return error;
-
   }
 
   checkAssessmentType(): this {
-    this.userValidations.set(UserValidationKeys.checkAssessmentType, () => this.assessmentTypeValidation());
+    this.userValidations.set(UserValidationKeys.checkAssessmentType, () =>
+      this.assessmentTypeValidation()
+    );
     return this;
   }
   private assessmentTypeValidation(): null | AuthErrorsEnum {
-    return this.domainContext.data?.currentRole.role === ServiceRoleEnum.ASSESSMENT ? null : AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
+    return this.domainContext.data?.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      ? null
+      : AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
   }
 
-  checkAccessorType(data?: { organisationRole?: (ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR)[], organisationId?: string, organisationUnitId?: string }): this {
-    this.userValidations.set(UserValidationKeys.checkAccessorType, () => this.accessorTypeValidation(data));
+  checkAccessorType(data?: {
+    organisationRole?: (ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR)[];
+    organisationId?: string;
+    organisationUnitId?: string;
+  }): this {
+    this.userValidations.set(UserValidationKeys.checkAccessorType, () =>
+      this.accessorTypeValidation(data)
+    );
     return this;
   }
-  private accessorTypeValidation(data?: { organisationRole?: ServiceRoleEnum[], organisationId?: string, organisationUnitId?: string }): null | AuthErrorsEnum {
-
-    if (![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(this.domainContext.data?.currentRole.role as ServiceRoleEnum)) {
+  private accessorTypeValidation(data?: {
+    organisationRole?: ServiceRoleEnum[];
+    organisationId?: string;
+    organisationUnitId?: string;
+  }): null | AuthErrorsEnum {
+    if (
+      ![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(
+        this.domainContext.data?.currentRole.role as ServiceRoleEnum
+      )
+    ) {
       return AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
     }
 
@@ -144,29 +176,36 @@ export class AuthorizationValidationModel {
       return AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT;
     }
 
-    if (this.user.data?.organisations.length === 0) { // Accessors should ALWAYS have an organisation. This is just a sanity check!
+    if (this.user.data?.organisations.length === 0) {
+      // Accessors should ALWAYS have an organisation. This is just a sanity check!
       return AuthErrorsEnum.AUTH_USER_WITHOUT_ORGANISATION;
     }
-    if (data?.organisationRole && !data.organisationRole.some(role => role === this.domainContext.data?.currentRole.role)) {
+    if (
+      data?.organisationRole &&
+      !data.organisationRole.some((role) => role === this.domainContext.data?.currentRole.role)
+    ) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_ROLE_NOT_ALLOWED;
     }
     if (data?.organisationId && data.organisationId !== this.domainContext.data.organisation.id) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED;
     }
-    if (data?.organisationUnitId && data.organisationUnitId !== this.domainContext.data.organisation.organisationUnit?.id) {
+    if (
+      data?.organisationUnitId &&
+      data.organisationUnitId !== this.domainContext.data.organisation.organisationUnit?.id
+    ) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED;
     }
 
     return null;
-
   }
 
   checkInnovatorType(data?: { organisationId?: string }): this {
-    this.userValidations.set(UserValidationKeys.checkInnovatorType, () => this.innovatorTypeValidation(data));
+    this.userValidations.set(UserValidationKeys.checkInnovatorType, () =>
+      this.innovatorTypeValidation(data)
+    );
     return this;
   }
   private innovatorTypeValidation(data?: { organisationId?: string }): null | AuthErrorsEnum {
-
     if (this.domainContext.data?.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       return AuthErrorsEnum.AUTH_USER_TYPE_NOT_ALLOWED;
     }
@@ -175,28 +214,31 @@ export class AuthorizationValidationModel {
       return AuthErrorsEnum.AUTH_MISSING_ORGANISATION_CONTEXT;
     }
 
-    if (this.user.data?.organisations.length === 0) { // Innovators should ALWAYS have an organisation. This is just a sanity check!
+    if (this.user.data?.organisations.length === 0) {
+      // Innovators should ALWAYS have an organisation. This is just a sanity check!
       return AuthErrorsEnum.AUTH_USER_WITHOUT_ORGANISATION;
     }
 
     if (data?.organisationId && data.organisationId !== this.domainContext.data.organisation.id) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED;
     }
-    
-    return null;
 
+    return null;
   }
 
   // Innovation validations.
-  checkInnovation(data?: { 
-    status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] },
-    isOwner?: boolean
+  checkInnovation(data?: {
+    status?: InnovationStatusEnum[] | { [key in ServiceRoleEnum]?: InnovationStatusEnum[] };
+    isOwner?: boolean;
   }): this {
-    this.innovationValidations.set(InnovationValidationKeys.checkInnovation, () => this.innovationValidation(data));
+    this.innovationValidations.set(InnovationValidationKeys.checkInnovation, () =>
+      this.innovationValidation(data)
+    );
     return this;
   }
-  private innovationValidation(data?: Parameters<AuthorizationValidationModel['checkInnovation']>[0]): null | AuthErrorsEnum {
-
+  private innovationValidation(
+    data?: Parameters<AuthorizationValidationModel['checkInnovation']>[0]
+  ): null | AuthErrorsEnum {
     if (!this.innovation.data) {
       return AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED;
     }
@@ -207,39 +249,40 @@ export class AuthorizationValidationModel {
 
     const domainContext = this.getContext();
     if (data?.status && domainContext.currentRole) {
+      const status = Array.isArray(data.status)
+        ? data.status
+        : data.status[domainContext.currentRole.role];
 
-      const status = Array.isArray(data.status) ? data.status : data.status[domainContext.currentRole.role];
-
-      if (!(status ?? []).some(status => status === this.innovation.data?.status)) {
+      if (!(status ?? []).some((status) => status === this.innovation.data?.status)) {
         return AuthErrorsEnum.AUTH_INNOVATION_STATUS_NOT_ALLOWED;
       }
-
     }
 
     return null;
-
   }
 
   async verify(): Promise<this> {
-
     let validations: (null | AuthErrorsEnum)[] = [];
 
-    if (!this.user.identityId) { throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED); }
-    if (!this.user.data) { this.user.data = await this.fetchUserData(this.user.identityId); }
+    if (!this.user.identityId) {
+      throw new ForbiddenError(AuthErrorsEnum.AUTH_USER_NOT_LOADED);
+    }
+    if (!this.user.data) {
+      this.user.data = await this.fetchUserData(this.user.identityId);
+    }
 
     if (!this.domainContext.data?.currentRole) {
-
       // get user role from db
       const role = await this.domainService.users.getUserRole(this.user.data.id, this.roleId);
 
-      if(!role) {
+      if (!role) {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_CURRENT_ROLE);
       }
-      
+
       // This is going to be reviewed with domainContext changes
-      switch(role.role) {
+      switch (role.role) {
         case ServiceRoleEnum.INNOVATOR:
-          if(!role.organisation) {
+          if (!role.organisation) {
             throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_CONTEXT);
           }
           this.domainContext.data = {
@@ -248,7 +291,7 @@ export class AuthorizationValidationModel {
             organisation: {
               id: role.organisation.id,
               name: role.organisation.name,
-              acronym: role.organisation.acronym
+              acronym: role.organisation.acronym,
             },
             currentRole: {
               id: role.id,
@@ -258,7 +301,7 @@ export class AuthorizationValidationModel {
           break;
         case ServiceRoleEnum.QUALIFYING_ACCESSOR:
         case ServiceRoleEnum.ACCESSOR:
-          if(!role.organisationUnit || !role.organisation) {
+          if (!role.organisationUnit || !role.organisation) {
             throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_ORGANISATION_UNIT_CONTEXT);
           }
           this.domainContext.data = {
@@ -272,12 +315,12 @@ export class AuthorizationValidationModel {
                 id: role.organisationUnit.id,
                 name: role.organisationUnit.name,
                 acronym: role.organisationUnit.acronym,
-              }
+              },
             },
             currentRole: {
               id: role.id,
               role: role.role,
-            }
+            },
           };
           break;
         case ServiceRoleEnum.ASSESSMENT:
@@ -302,7 +345,9 @@ export class AuthorizationValidationModel {
           break;
         default:
           const roleType: never = role.role;
-          throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN, {details: {roleType}});
+          throw new UnprocessableEntityError(AuthErrorsEnum.AUTH_USER_TYPE_UNKNOWN, {
+            details: { roleType },
+          });
       }
     }
 
@@ -312,89 +357,130 @@ export class AuthorizationValidationModel {
 
     // User validations. (Only if there's anything to validate).
     if (this.userValidations.size > 0) {
-
-      this.userValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
-      if (!validations.some(item => item === null)) {
-        const error = validations.find(item => item !== null) || AuthErrorsEnum.AUTH_USER_UNAUTHORIZED;
+      this.userValidations.forEach((checkMethod) => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
+      if (!validations.some((item) => item === null)) {
+        const error =
+          validations.find((item) => item !== null) || AuthErrorsEnum.AUTH_USER_UNAUTHORIZED;
         throw new ForbiddenError(error);
       }
-
     }
 
     // Innovation validations. (Only if there's anything to validate).
     if (this.innovationValidations.size > 0) {
-
       validations = [];
-      if (!this.innovation.id) { throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED); }
-      if (!this.domainContext.data) { throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_DOMAIN_CONTEXT); }
-      if (!this.innovation.data) { this.innovation.data = await this.fetchInnovationData(this.user.data, this.innovation.id, this.domainContext.data); }
-
-      this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
-      if (!validations.some(item => item === null)) {
-        const error = validations.find(item => item !== null) || AuthErrorsEnum.AUTH_USER_UNAUTHORIZED;
-        throw new ForbiddenError(error);
+      if (!this.innovation.id) {
+        throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_NOT_LOADED);
+      }
+      if (!this.domainContext.data) {
+        throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_DOMAIN_CONTEXT);
+      }
+      if (!this.innovation.data) {
+        this.innovation.data = await this.fetchInnovationData(
+          this.user.data,
+          this.innovation.id,
+          this.domainContext.data
+        );
       }
 
+      this.innovationValidations.forEach((checkMethod) => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
+      if (!validations.some((item) => item === null)) {
+        const error =
+          validations.find((item) => item !== null) || AuthErrorsEnum.AUTH_USER_UNAUTHORIZED;
+        throw new ForbiddenError(error);
+      }
     }
 
     return this;
-
   }
-
 
   // Data fetching methods.
   private async fetchUserData(identityId: string): Promise<DomainUserInfoType> {
     return this.domainService.users.getUserInfo({ identityId });
   }
 
-  private async fetchInnovationData(user: DomainUserInfoType, innovationId: string, context: DomainContextType): Promise<undefined | { id: string, name: string, status: InnovationStatusEnum, owner: string }> {
-
-    const query = this.domainService.innovations.innovationRepository.createQueryBuilder('innovation')
+  private async fetchInnovationData(
+    user: DomainUserInfoType,
+    innovationId: string,
+    context: DomainContextType
+  ): Promise<
+    undefined | { id: string; name: string; status: InnovationStatusEnum; owner: string }
+  > {
+    const query = this.domainService.innovations.innovationRepository
+      .createQueryBuilder('innovation')
       .select(['innovation.id', 'innovation.name', 'innovation.status', 'owner.id'])
       .withDeleted()
       .innerJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId });
 
     if (context.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      query.leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', { status: InnovationCollaboratorStatusEnum.ACTIVE });
-      query.andWhere(new Brackets(qb => {
-        qb.andWhere('innovation.owner_id = :ownerId', { ownerId: user.id });
-        qb.orWhere('collaborator.user_id = :userId', { userId: user.id });
-      }));
+      query.leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', {
+        status: InnovationCollaboratorStatusEnum.ACTIVE,
+      });
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.andWhere('innovation.owner_id = :ownerId', { ownerId: user.id });
+          qb.orWhere('collaborator.user_id = :userId', { userId: user.id });
+        })
+      );
     }
 
     if (context.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-      query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', { assessmentInnovationStatus: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT, InnovationStatusEnum.NEEDS_ASSESSMENT, InnovationStatusEnum.IN_PROGRESS] });
+      query.andWhere('innovation.status IN (:...assessmentInnovationStatus)', {
+        assessmentInnovationStatus: [
+          InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
+          InnovationStatusEnum.NEEDS_ASSESSMENT,
+          InnovationStatusEnum.IN_PROGRESS,
+        ],
+      });
     }
 
-    if (context.currentRole.role === ServiceRoleEnum.ACCESSOR || context.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
-
+    if (
+      context.currentRole.role === ServiceRoleEnum.ACCESSOR ||
+      context.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
+    ) {
       // Sanity checks!
-      if (!context ||
+      if (
+        !context ||
         !context.organisation ||
         !context.organisation.id ||
         !context.currentRole.role ||
         !context.organisation.organisationUnit ||
-        !context.organisation.organisationUnit.id) {
+        !context.organisation.organisationUnit.id
+      ) {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
       }
 
       query.innerJoin('innovation.organisationShares', 'innovationShares');
-      query.andWhere('innovation.status IN (:...accessorInnovationStatus)', { accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE] });
-      query.andWhere('innovationShares.id = :accessorOrganisationId', { accessorOrganisationId: context.organisation.id });
+      query.andWhere('innovation.status IN (:...accessorInnovationStatus)', {
+        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE],
+      });
+      query.andWhere('innovationShares.id = :accessorOrganisationId', {
+        accessorOrganisationId: context.organisation.id,
+      });
 
       if (context.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.innerJoin('innovation.innovationSupports', 'innovationSupports');
-        query.andWhere('innovationSupports.status IN (:...supportStatuses)', { supportStatuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE] });
-        query.andWhere('innovationSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: context.organisation.organisationUnit.id });
+        query.andWhere('innovationSupports.status IN (:...supportStatuses)', {
+          supportStatuses: [
+            InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.COMPLETE,
+          ],
+        });
+        query.andWhere('innovationSupports.organisation_unit_id = :organisationUnitId ', {
+          organisationUnitId: context.organisation.organisationUnit.id,
+        });
       }
-
     }
 
     const innovation = await query.getOne();
 
-    return (innovation ? { id: innovation.id, name: innovation.name, status: innovation.status, owner: innovation.owner.id } : undefined);
-
+    return innovation
+      ? {
+          id: innovation.id,
+          name: innovation.name,
+          status: innovation.status,
+          owner: innovation.owner.id,
+        }
+      : undefined;
   }
-
 }

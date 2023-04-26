@@ -4,9 +4,9 @@ import { type StatisticsServiceType, StatisticsServiceSymbol } from '../../_serv
 import type { UserStatisticsTemplateType } from '../../_config/statistics.config';
 import type { DomainUserInfoType } from '@users/shared/types';
 
-
-export const assignedInnovationsStatisticsHandler = async (requestUser: DomainUserInfoType): Promise<UserStatisticsTemplateType[UserStatisticsEnum.ASSIGNED_INNOVATIONS_COUNTER]> => {
-
+export const assignedInnovationsStatisticsHandler = async (
+  requestUser: DomainUserInfoType
+): Promise<UserStatisticsTemplateType[UserStatisticsEnum.ASSIGNED_INNOVATIONS_COUNTER]> => {
   const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
 
   const actions = await statisticsService.assignedInnovations(requestUser.id);
@@ -16,5 +16,4 @@ export const assignedInnovationsStatisticsHandler = async (requestUser: DomainUs
     total: actions.total,
     overdue: actions.overdue,
   };
-
-}
+};

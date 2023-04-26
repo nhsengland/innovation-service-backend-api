@@ -2,12 +2,15 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import { CurrentDocumentConfig, CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
+import {
+  CurrentDocumentConfig,
+  CurrentDocumentType,
+  DocumentType,
+} from '../../schemas/innovation-record/index';
 import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
 export class InnovationDocumentEntity extends BaseEntity {
-
   @PrimaryColumn({ type: 'uniqueidentifier' })
   id: string;
 
@@ -20,13 +23,12 @@ export class InnovationDocumentEntity extends BaseEntity {
   @Column({ name: 'is_snapshot' })
   isSnapshot: boolean;
 
-  @Column({type: 'nvarchar', nullable: true })
+  @Column({ type: 'nvarchar', nullable: true })
   description: string | null;
 
   @OneToOne(() => InnovationEntity)
   @JoinColumn({ name: 'id' })
   innovation: InnovationEntity;
-
 }
 
 /**
@@ -34,7 +36,10 @@ export class InnovationDocumentEntity extends BaseEntity {
  * @param innovation the source innovation
  * @returns the document entity to be created
  */
-export const createDocumentFromInnovation = (innovation: InnovationEntity, customFields?: { website?: string }): InnovationDocumentEntity => {
+export const createDocumentFromInnovation = (
+  innovation: InnovationEntity,
+  customFields?: { website?: string }
+): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
     version: CurrentDocumentConfig.version,
     INNOVATION_DESCRIPTION: {
@@ -42,7 +47,7 @@ export const createDocumentFromInnovation = (innovation: InnovationEntity, custo
       description: innovation.description ?? undefined,
       countryName: innovation.countryName,
       postcode: innovation.postcode ?? undefined,
-      website: customFields?.website
+      website: customFields?.website,
     },
     UNDERSTANDING_OF_NEEDS: {},
     EVIDENCE_OF_EFFECTIVENESS: {},
@@ -53,9 +58,9 @@ export const createDocumentFromInnovation = (innovation: InnovationEntity, custo
     MARKET_RESEARCH: {},
     REGULATIONS_AND_STANDARDS: {},
     REVENUE_MODEL: {},
-    TESTING_WITH_USERS: {}
+    TESTING_WITH_USERS: {},
   };
-  
+
   return {
     id: innovation.id,
     version: CurrentDocumentConfig.version,
@@ -67,6 +72,6 @@ export const createDocumentFromInnovation = (innovation: InnovationEntity, custo
     createdBy: innovation.createdBy,
     updatedAt: innovation.updatedAt,
     updatedBy: innovation.updatedBy,
-    deletedAt: innovation.deletedAt
+    deletedAt: innovation.deletedAt,
   };
 };
