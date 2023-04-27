@@ -58,7 +58,7 @@ export class InnovationFileService extends BaseService {
    */
   async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileEntity[]> {
 
-    if(ids?.length === 0) {
+    if(!ids?.length) {
       return [];
     }
     
