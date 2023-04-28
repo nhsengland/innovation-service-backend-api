@@ -357,12 +357,14 @@ export class InnovationSectionsService extends BaseService {
     if (!section) {
       // Section don't exist yet, let's create it.
       section = InnovationSectionEntity.new({
-        section: sectionKey,
         innovation,
+        section: sectionKey,
         status: InnovationSectionStatusEnum.DRAFT,
+        
         createdBy: user.id,
-        updatedBy: user.id,
         updatedAt: updatedAt,
+        updatedBy: user.id,
+        
         files:
           CurrentDocumentConfig.allowFileUploads.has(sectionKey) && dataToUpdate['files']
             ? dataToUpdate['files'].map((id: string) => ({ id }))
@@ -394,9 +396,7 @@ export class InnovationSectionsService extends BaseService {
         ] as const
       ).forEach((key) => {
         if (dataToUpdate[key] !== undefined) {
-          // This hack for otherCategoryDescription is to be removed in the future, maintaining for compatibility until InnovationEntity is updated.
-          innovation[key === 'otherCategoryDescription' ? 'otherMainCategoryDescription' : key] =
-            dataToUpdate[key];
+          innovation[key] = dataToUpdate[key];
           updateInnovation = true;
         }
       });

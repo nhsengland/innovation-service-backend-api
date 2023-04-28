@@ -1081,8 +1081,8 @@ paths:
   /v1:
     post:
       description: Create an innovation
-      parameters: []
       operationId: v1-innovation-create
+      parameters: []
       requestBody:
         description: The innovation to be created.
         required: true

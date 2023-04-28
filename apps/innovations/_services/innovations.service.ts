@@ -783,7 +783,7 @@ export class InnovationsService extends BaseService {
             countryName: innovation.countryName,
             postCode: innovation.postcode,
             mainCategory: innovation.mainCategory,
-            otherMainCategoryDescription: innovation.otherMainCategoryDescription,
+            otherMainCategoryDescription: innovation.otherCategoryDescription,
 
             ...(filters.fields?.includes('groupedStatus') && {
               groupedStatus:
@@ -1168,12 +1168,14 @@ export class InnovationsService extends BaseService {
         InnovationEntity,
         InnovationEntity.new({
           name: data.name,
-          description: data.description,
+
+          countryName: data.countryName,
+          description: data.description,          
+          owner: UserEntity.new({ id: domainContext.id }),
+          postcode: data.postcode,
           status: InnovationStatusEnum.CREATED,
           statusUpdatedAt: new Date(),
-          countryName: data.countryName,
-          postcode: data.postcode,
-          owner: UserEntity.new({ id: domainContext.id }),
+          
           createdAt: now,
           createdBy: domainContext.id,
           updatedAt: now,
@@ -1197,6 +1199,7 @@ export class InnovationsService extends BaseService {
             innovation: savedInnovation,
             section: CurrentCatalogTypes.InnovationSections.find((s) => s === sectionKey),
             status: InnovationSectionStatusEnum.DRAFT,
+            
             createdBy: savedInnovation.createdBy,
             updatedBy: savedInnovation.updatedBy,
           })
@@ -1206,9 +1209,9 @@ export class InnovationsService extends BaseService {
       await this.domainService.innovations.addActivityLog(
         transaction,
         {
-          innovationId: savedInnovation.id,
           activity: ActivityEnum.INNOVATION_CREATION,
           domainContext,
+          innovationId: savedInnovation.id,
         },
         {}
       );

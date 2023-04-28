@@ -17,8 +17,8 @@ class V1InnovationCreate {
   @JwtDecoder()
   @Audit({
     action: ActionEnum.CREATE,
-    target: TargetEnum.INNOVATION,
     identifierResponseField: 'id',
+    target: TargetEnum.INNOVATION,
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(
@@ -44,8 +44,8 @@ class V1InnovationCreate {
 export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1', {
   post: {
     description: 'Create an innovation',
-    parameters: [],
     operationId: 'v1-innovation-create',
+    parameters: [],
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
       description: 'The innovation to be created.',
     }),

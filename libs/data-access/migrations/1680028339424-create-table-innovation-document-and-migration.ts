@@ -1,26 +1,5 @@
-import { groupBy } from 'lodash';
-import type { DeepPartial, MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-import {
-  InnovationAreaEntity,
-  InnovationCareSettingEntity,
-  InnovationCategoryEntity,
-  InnovationDeploymentPlanEntity,
-  InnovationDiseaseConditionEntity,
-  InnovationDocumentEntity,
-  InnovationEntity,
-  InnovationEnvironmentalBenefitEntity,
-  InnovationEvidenceEntity,
-  InnovationFileEntity,
-  InnovationGeneralBenefitEntity,
-  InnovationPatientsCitizensBenefitEntity,
-  InnovationRevenueEntity,
-  InnovationStandardEntity,
-  InnovationSubgroupEntity,
-  InnovationSupportTypeEntity,
-  InnovationUserTestEntity,
-} from '../../shared/entities';
-import type { InnovationSections } from '../../shared/schemas/innovation-record/202209/catalog.types';
 
 export class createTableInnovationDocumentAndMigration1680028339424 implements MigrationInterface {
   name?: string | undefined;
@@ -52,6 +31,9 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
       ALTER TABLE "innovation_document" ADD CONSTRAINT CK_snapshot_description_is_not_null CHECK (is_snapshot=0 OR (is_snapshot=1 AND description IS NOT NULL));
     `);
 
+    /*
+     * Leaving this just for history purposes. This was the original migration script that was used to create the innovation document
+     * the InnovationEntity has been updated to use the InnovationDocumentEntity instead. This is now invalid.
     const innovations = await queryRunner.manager
       .createQueryBuilder(InnovationEntity, 'innovation')
       .withDeleted()
@@ -304,6 +286,7 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
       const chunk = documents.splice(0, 100);
       await queryRunner.manager.getRepository(InnovationDocumentEntity).save(chunk);
     }
+    */
   }
 
   public async down(_queryRunner: QueryRunner): Promise<void> {
