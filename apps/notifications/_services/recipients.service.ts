@@ -42,7 +42,6 @@ import { BaseService } from './base.service';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
-import type { EmailTypeEnum } from '../_config';
 
 @injectable()
 export class RecipientsService extends BaseService {
