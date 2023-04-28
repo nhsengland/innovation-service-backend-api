@@ -188,8 +188,8 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
       .addSelect('innovations.postcode', 'innovations_postcode')
       .addSelect(
-        'innovations.otherMainCategoryDescription',
-        'innovations_other_main_category_description'
+        'innovations.otherCategoryDescription',
+        'innovations_other_category_description'
       );
 
     // Assessment relations.

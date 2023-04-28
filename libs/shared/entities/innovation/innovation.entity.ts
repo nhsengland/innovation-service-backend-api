@@ -29,8 +29,6 @@ import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
 
 
-// TODO migration: when migrating update otherCategoryDescription with otherMainCategoryDescription content and remove otherMainCategoryDescription (also update sectionUpdate)
-
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
