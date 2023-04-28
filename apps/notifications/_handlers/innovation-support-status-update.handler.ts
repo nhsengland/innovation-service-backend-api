@@ -17,6 +17,16 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 import type { UserRoleEntity } from '@notifications/shared/entities';
 import { BaseHandler } from './base.handler';
 
+type innovatorRecipientType = {
+  id: string;
+  identityId: string;
+  userRole: UserRoleEntity;
+  isActive: boolean;
+  emailNotificationPreferences: {
+    type: EmailNotificationTypeEnum;
+    preference: EmailNotificationPreferenceEnum;
+  }[];
+}
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
   | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR
@@ -29,17 +39,9 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   private data: {
     innovation?: {
       name: string;
-      owner: {
-        id: string;
-        identityId: string;
-        userRole: UserRoleEntity;
-        isActive: boolean;
-        emailNotificationPreferences: {
-          type: EmailNotificationTypeEnum;
-          preference: EmailNotificationPreferenceEnum;
-        }[];
-      };
+      owner: innovatorRecipientType;
     };
+    innovationCollaborators?: innovatorRecipientType[];
     requestUserAdditionalInfo?: {
       displayName?: string;
       organisation: { id: string; name: string };
@@ -60,6 +62,10 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       userId: this.requestUser.id,
     });
 
+    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    this.data.innovationCollaborators = (await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId)).collaborators.map(c => c.user)
+      .filter((item): item is innovatorRecipientType => item !== undefined); //filter undefined items
+
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
       organisation: {
@@ -72,17 +78,13 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       },
     };
 
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-
     // If the innovation is not found, then we don't need to send any notification. (This could probably throw an error as it should not happen, but leaving like this.)
     if (!this.data.innovation) {
       return this;
     }
 
     if (this.inputData.innovationSupport.statusChanged) {
-      await this.prepareEmailForInnovator();
+      await this.prepareEmailForInnovators();
       await this.prepareInAppForInnovator();
 
       if (
@@ -111,20 +113,26 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
   // Private methods.
 
-  private async prepareEmailForInnovator(): Promise<void> {
+  private async prepareEmailForInnovators(): Promise<void> {
+
+    const innovators: innovatorRecipientType[] = [this.data.innovation?.owner as innovatorRecipientType, ]
+    if (this.data.innovationCollaborators && this.data.innovationCollaborators.length > 0) {
+      innovators.push(...this.data.innovationCollaborators);
+    }
+    for (const innovator of innovators)
     // Send email only to user if email preference INSTANTLY.
     if (
       this.isEmailPreferenceInstantly(
         EmailNotificationTypeEnum.SUPPORT,
-        this.data.innovation?.owner.emailNotificationPreferences || []
+        innovator.emailNotificationPreferences || []
       ) &&
-      this.data.innovation?.owner.isActive
+      innovator.isActive
     ) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
         to: {
           type: 'identityId',
-          value: this.data.innovation?.owner.identityId || '',
+          value: innovator.identityId || '',
           displayNameParam: 'display_name',
         },
         params: {

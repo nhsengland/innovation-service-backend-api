@@ -42,6 +42,7 @@ import { BaseService } from './base.service';
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
+import type { EmailTypeEnum } from '../_config';
 
 @injectable()
 export class RecipientsService extends BaseService {
@@ -241,7 +242,15 @@ export class RecipientsService extends BaseService {
     collaborators: {
       id: string;
       status: InnovationCollaboratorStatusEnum;
-      user?: { id: string; identityId: string };
+      user?: {
+        id: string;
+        identityId: string;
+        userRole: UserRoleEntity | undefined;
+        emailNotificationPreferences: {
+          type: EmailNotificationTypeEnum;
+          preference: EmailNotificationPreferenceEnum;
+        }[];
+      };
     }[];
   }> {
     const dbInnovation = await this.sqlConnection
@@ -252,9 +261,15 @@ export class RecipientsService extends BaseService {
         'collaborator.status',
         'collaboratorUser.id',
         'collaboratorUser.identityId',
+        'serviceRole.id',
+        'serviceRole.role',
+        'notificationPreferences.notification_id',
+        'notificationPreferences.preference'
       ])
       .leftJoin('innovation.collaborators', 'collaborator')
       .leftJoin('collaborator.user', 'collaboratorUser')
+      .leftJoin('collaboratorUser.serviceRoles', 'serviceRole')
+      .leftJoin('collaboratorUser.notificationPreferences', 'notificationPreferences')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -264,11 +279,15 @@ export class RecipientsService extends BaseService {
 
     return {
       name: dbInnovation.name,
-      collaborators: dbInnovation.collaborators.map((c) => ({
+      collaborators: await Promise.all(dbInnovation.collaborators.map(async c => ({
         id: c.id,
         status: c.status,
-        ...(c.user && { user: { id: c.user.id, identityId: c.user.identityId } }),
-      })),
+        ...(c.user && { user: {
+          id: c.user.id, identityId: c.user.identityId,
+          userRole: c.user.serviceRoles.find(sR => sR.role === ServiceRoleEnum.INNOVATOR),
+          isActive: !c.user.lockedAt,
+          emailNotificationPreferences: (await c.user.notificationPreferences).map(item => ({ type: item.notification_id, preference: item.preference })) }})
+      })))
     };
   }
 
@@ -389,9 +408,7 @@ export class RecipientsService extends BaseService {
     );
   }
 
-  async userInnovationsWithAssignedUsers(
-    userId: string
-  ): Promise<
+  async userInnovationsWithAssignedUsers(userId: string): Promise<
     {
       id: string;
       assignedUsers: {
@@ -658,9 +675,7 @@ export class RecipientsService extends BaseService {
     );
   }
 
-  async innovationTransferInfoWithOwner(
-    transferId: string
-  ): Promise<{
+  async innovationTransferInfoWithOwner(transferId: string): Promise<{
     id: string;
     email: string;
     status: InnovationTransferStatusEnum;
@@ -1072,9 +1087,7 @@ export class RecipientsService extends BaseService {
     }
   }
 
-  async getExportRequestWithRelations(
-    requestId: string
-  ): Promise<{
+  async getExportRequestWithRelations(requestId: string): Promise<{
     exportRequest: InnovationExportRequestEntity;
     createdBy: { id: string; identityId: string; name: string; isActive: boolean };
   }> {
