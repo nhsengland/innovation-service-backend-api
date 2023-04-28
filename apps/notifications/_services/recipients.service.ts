@@ -1,5 +1,4 @@
 import {
-  CommentEntity,
   IdleSupportViewEntity,
   InnovationActionEntity,
   InnovationEntity,
@@ -612,58 +611,6 @@ export class RecipientsService extends BaseService {
         identityId: item.identityId,
         userRole: authors.get(item.id)?.context.role ?? null,
         organisationUnitId: authors.get(item.id)?.context.organisationUnitId ?? null,
-        emailNotificationPreferences: (await item.notificationPreferences).map(
-          (emailPreference) => ({
-            type: emailPreference.notification_id,
-            preference: emailPreference.preference,
-          })
-        ),
-      }))
-    );
-  }
-
-  // TODO: Deprecated!
-  async commentIntervenientUsers(commentId: string): Promise<
-    {
-      id: string;
-      identityId: string;
-      userRoles: ServiceRoleEnum[];
-      emailNotificationPreferences: {
-        type: EmailNotificationTypeEnum;
-        preference: EmailNotificationPreferenceEnum;
-      }[];
-    }[]
-  > {
-    const dbCommentUsers =
-      (await this.sqlConnection
-        .createQueryBuilder(UserEntity, 'user')
-        .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
-        .leftJoinAndSelect('user.notificationPreferences', 'notificationPreferences')
-        .innerJoin(
-          (subQuery) =>
-            subQuery
-              .select('subQ_User.id', 'id')
-              .from(CommentEntity, 'subQ_Comment')
-              .innerJoin(
-                UserEntity,
-                'subQ_User',
-                'subQ_User.id = subQ_Comment.created_by AND subQ_User.locked_at IS NULL'
-              )
-              .andWhere('subQ_Comment.id = :commentId OR subQ_Comment.reply_to_id = :replyTo', {
-                commentId,
-                replyTo: commentId,
-              })
-              .groupBy('subQ_User.id'),
-          'commentUsers',
-          'commentUsers.id = user.id'
-        )
-        .getMany()) || [];
-
-    return Promise.all(
-      dbCommentUsers.map(async (item) => ({
-        id: item.id,
-        identityId: item.identityId,
-        userRoles: item.serviceRoles.map((r) => r.role),
         emailNotificationPreferences: (await item.notificationPreferences).map(
           (emailPreference) => ({
             type: emailPreference.notification_id,

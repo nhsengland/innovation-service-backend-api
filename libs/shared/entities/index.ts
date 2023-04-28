@@ -55,7 +55,6 @@ export { OrganisationUserEntity } from './organisation/organisation-user.entity'
 export { OrganisationEntity } from './organisation/organisation.entity';
 
 // User.
-import { CommentEntity } from './user/comment.entity';
 import { NotificationLogEntity } from './user/notification-log.entity';
 import { NotificationPreferenceEntity } from './user/notification-preference.entity';
 import { NotificationUserEntity } from './user/notification-user.entity';
@@ -63,7 +62,6 @@ import { NotificationEntity } from './user/notification.entity';
 import { UserPreferenceEntity } from './user/user-preference.entity';
 import { UserRoleEntity } from './user/user-role.entity';
 import { UserEntity } from './user/user.entity';
-export { CommentEntity } from './user/comment.entity';
 export { NotificationPreferenceEntity } from './user/notification-preference.entity';
 export { NotificationUserEntity } from './user/notification-user.entity';
 export { NotificationEntity } from './user/notification.entity';
@@ -116,7 +114,6 @@ export const ORGANISATION_ENTITIES = [
 ];
 
 export const USER_ENTITIES = [
-  CommentEntity,
   NotificationLogEntity,
   NotificationPreferenceEntity,
   NotificationUserEntity,
