@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "schedule": "0 0 3 * * *",
+      "name": "myTimerCleanupDocument",
+      "type": "timerTrigger",
+      "direction": "in"
+    }
+  ]
+}
