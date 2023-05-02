@@ -2,6 +2,7 @@ import type { UserRoleEntity } from '@notifications/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationTypeEnum,
+  InnovationCollaboratorStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -30,6 +31,17 @@ type ThreadIntervenientUserTypeAlias = {
   organisationUnitId?: string | null;
   emailNotificationPreferences: EmailNotificationPreferenceTypeAlias[];
 };
+
+type innovatorRecipientType = {
+  id: string;
+  identityId: string;
+  userRole: UserRoleEntity;
+  isActive: boolean;
+  emailNotificationPreferences: {
+    type: EmailNotificationTypeEnum;
+    preference: EmailNotificationPreferenceEnum;
+  }[];
+}
 
 type InnovationTypeAlias = {
   name: string;
@@ -147,17 +159,24 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     return this;
   }
 
-  private pushInAppNotifications(
+  private async pushInAppNotifications(
     threadIntervenientUsers: ThreadIntervenientUserTypeAlias[],
     innovation: InnovationTypeAlias,
     thread: ThreadTypeAlias
-  ): void {
+  ): Promise<void> {
+
     const inAppRecipients = threadIntervenientUsers
       .filter((item) => !item.locked)
       .map((item) => item.userRole.id);
 
-    // Always include Innovation owner in the notification center recipients
+    const threadIntervenientUserRoleIds = threadIntervenientUsers.map(i => i.userRole.id);
+
+    // Always include Innovation owner and collaborators in the notification center recipients
     const owner = innovation.owner;
+    const collaborators = (await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId)).collaborators
+      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
+      .map(c => c.user)
+      .filter((item): item is innovatorRecipientType => item !== undefined && item.userRole !== undefined && !threadIntervenientUserRoleIds.includes(item.userRole.id)) //filter undefined items and thread intervenient users
 
     // Check is the innovation owner is already part of the recipients list to avoid duplicated notifications
     const ownerIncluded = threadIntervenientUsers.find((i) => i.id === owner.id);
@@ -167,6 +186,8 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     if (!ownerIncluded && owner.id !== this.requestUser.id) {
       inAppRecipients.push(owner.userRole.id);
     }
+
+    inAppRecipients.push(...collaborators.map(c => c.userRole.id))
 
     if (inAppRecipients.length > 0) {
       this.inApp.push({

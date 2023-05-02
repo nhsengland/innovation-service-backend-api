@@ -1,6 +1,7 @@
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationTypeEnum,
+  InnovationCollaboratorStatusEnum,
   InnovationSupportStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
@@ -63,7 +64,9 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     });
 
     this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    this.data.innovationCollaborators = (await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId)).collaborators.map(c => c.user)
+    this.data.innovationCollaborators = (await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId)).collaborators
+      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
+      .map(c => c.user)
       .filter((item): item is innovatorRecipientType => item !== undefined); //filter undefined items
 
     this.data.requestUserAdditionalInfo = {

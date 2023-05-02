@@ -13,7 +13,8 @@ export enum EmailTypeEnum {
   ACTION_CANCELLED_TO_INNOVATOR = '1bac0f02-25b1-42c1-843d-c97d58ad3db2',
   ACTION_DECLINED_TO_INNOVATOR = '3ac886c6-8352-4047-874f-66183d2d2d82',
   ACTION_DECLINED_TO_ACCESSOR = '8e1aba67-18a2-439c-8787-38435e73e6b5',
-  THREAD_CREATION_TO_INNOVATOR = '193601d9-4e46-4129-8f79-0f45e015410d',
+  THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER = '193601d9-4e46-4129-8f79-0f45e015410d',
+  THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR = '9016c786-c857-4e96-95d2-15ad18e756da',
   THREAD_CREATION_TO_ASSIGNED_USERS = '59838237-8909-42ca-a708-de38e29a4d65',
   THREAD_MESSAGE_CREATION_TO_ALL = 'e5b8f107-0af2-441e-9856-e93f8ea2a123',
   COMMENT_CREATION_TO_INNOVATOR = 'fc3a50df-ee25-46e4-a51d-33e98406b124', // TODO: Deprecated!
@@ -129,10 +130,16 @@ export type EmailTemplatesType = {
     declined_action_reason: string;
     action_url: string;
   };
-  [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR]: {
+  [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER]: {
     display_name?: string;
     accessor_name: string;
     unit_name: string;
+    thread_url: string;
+  };
+  [EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR]: {
+    display_name?: string;
+    subject: string;
+    innovation_name: string;
     thread_url: string;
   };
   [EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS]: {
