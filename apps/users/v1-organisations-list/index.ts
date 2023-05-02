@@ -8,8 +8,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { OrganisationsServiceSymbol, OrganisationsServiceType } from '../_services/interfaces';
 
+import type { OrganisationsService } from '../_services/organisations.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
@@ -17,9 +18,7 @@ class V1OrganisationsList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const organisationsService = container.get<OrganisationsServiceType>(
-      OrganisationsServiceSymbol
-    );
+    const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
       const auth = await authService

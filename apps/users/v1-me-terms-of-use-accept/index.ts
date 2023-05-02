@@ -7,8 +7,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
 
 class V1MeTermsOfUseAccept {
@@ -17,7 +18,7 @@ class V1MeTermsOfUseAccept {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
       const authInstance = await authorizationService

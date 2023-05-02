@@ -1,47 +1,33 @@
 import { container } from '@users/shared/config/inversify.config';
 
-import {
-  AnnouncementsServiceSymbol,
-  AnnouncementsServiceType,
-  NotificationsServiceSymbol,
-  NotificationsServiceType,
-  OrganisationsServiceSymbol,
-  OrganisationsServiceType,
-  StatisticsServiceSymbol,
-  StatisticsServiceType,
-  TermsOfUseServiceSymbol,
-  TermsOfUseServiceType,
-  UsersServiceSymbol,
-  UsersServiceType,
-} from '../_services/interfaces';
-
 import { AnnouncementsService } from '../_services/announcements.service';
 import { NotificationsService } from '../_services/notifications.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { StatisticsService } from '../_services/statistics.service';
+import { SYMBOLS } from '../_services/symbols';
 import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 
 // Specific inversify container configuration.
 container
-  .bind<OrganisationsServiceType>(OrganisationsServiceSymbol)
+  .bind<OrganisationsService>(SYMBOLS.OrganisationsService)
   .to(OrganisationsService)
   .inSingletonScope();
 container
-  .bind<TermsOfUseServiceType>(TermsOfUseServiceSymbol)
+  .bind<TermsOfUseService>(SYMBOLS.TermsOfUseService)
   .to(TermsOfUseService)
   .inSingletonScope();
-container.bind<UsersServiceType>(UsersServiceSymbol).to(UsersService).inSingletonScope();
+container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();
 container
-  .bind<NotificationsServiceType>(NotificationsServiceSymbol)
+  .bind<NotificationsService>(SYMBOLS.NotificationsService)
   .to(NotificationsService)
   .inSingletonScope();
 container
-  .bind<StatisticsServiceType>(StatisticsServiceSymbol)
+  .bind<StatisticsService>(SYMBOLS.StatisticsService)
   .to(StatisticsService)
   .inSingletonScope();
 container
-  .bind<AnnouncementsServiceType>(AnnouncementsServiceSymbol)
+  .bind<AnnouncementsService>(SYMBOLS.AnnouncementsService)
   .to(AnnouncementsService)
   .inSingletonScope();
 

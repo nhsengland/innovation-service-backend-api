@@ -6,15 +6,16 @@ import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
 
 import { container } from '../_config';
-import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
+import type { CustomContextType } from '@users/shared/types';
+import SYMBOLS from '../_services/symbols';
+import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
-import type { CustomContextType } from '@users/shared/types';
 
 class V1MeCreate {
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);

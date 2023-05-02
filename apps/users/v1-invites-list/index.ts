@@ -7,7 +7,8 @@ import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@user
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
+import SYMBOLS from '../_services/symbols';
+import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
 
 class V1UserInvitesList {
@@ -16,7 +17,7 @@ class V1UserInvitesList {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
+    const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
       const authInstance = await authorizationService

@@ -7,7 +7,8 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { AnnouncementsServiceSymbol, AnnouncementsServiceType } from '../_services/interfaces';
+import type { AnnouncementsService } from '../_services/announcements.service';
+import SYMBOLS from '../_services/symbols';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1UserAnnouncementRead {
@@ -16,9 +17,7 @@ class V1UserAnnouncementRead {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const announcementsService = container.get<AnnouncementsServiceType>(
-      AnnouncementsServiceSymbol
-    );
+    const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);

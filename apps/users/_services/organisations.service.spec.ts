@@ -5,16 +5,17 @@ import { randUuid } from '@ngneat/falso';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import type { EntityManager } from 'typeorm';
 
-import { OrganisationsServiceSymbol, OrganisationsServiceType } from './interfaces';
+import type { OrganisationsService } from './organisations.service';
+import SYMBOLS from './symbols';
 
 describe('Innovation Assessments Suite', () => {
-  let sut: OrganisationsServiceType;
+  let sut: OrganisationsService;
 
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
-    sut = container.get<OrganisationsServiceType>(OrganisationsServiceSymbol);
+    sut = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
   });

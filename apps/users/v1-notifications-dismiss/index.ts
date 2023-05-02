@@ -7,8 +7,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { NotificationsServiceSymbol, NotificationsServiceType } from '../_services/interfaces';
 
+import type { NotificationsService } from '../_services/notifications.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType } from './validation.schemas';
 
@@ -16,9 +17,7 @@ class V1UserNotificationsDismiss {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const notificationsService = container.get<NotificationsServiceType>(
-      NotificationsServiceSymbol
-    );
+    const notificationsService = container.get<NotificationsService>(SYMBOLS.NotificationsService);
 
     try {
       const authInstance = await authService

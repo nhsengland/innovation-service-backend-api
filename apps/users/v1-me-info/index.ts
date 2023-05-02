@@ -12,16 +12,12 @@ import {
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import {
-  AnnouncementsServiceSymbol,
-  AnnouncementsServiceType,
-  TermsOfUseServiceSymbol,
-  TermsOfUseServiceType,
-  UsersServiceSymbol,
-  UsersServiceType,
-} from '../_services/interfaces';
 
 import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import type { AnnouncementsService } from '../_services/announcements.service';
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
+import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
 
 class V1MeInfo {
@@ -30,12 +26,10 @@ class V1MeInfo {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
-    const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-    const announcementsService = container.get<AnnouncementsServiceType>(
-      AnnouncementsServiceSymbol
-    );
+    const usersService = container.get<UsersService>(SYMBOLS.UsersService);
+    const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
+    const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
       const authInstance = await authorizationService.validate(context).verify();

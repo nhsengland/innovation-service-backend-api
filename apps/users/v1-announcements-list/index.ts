@@ -6,18 +6,17 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { AnnouncementsServiceSymbol, AnnouncementsServiceType } from '../_services/interfaces';
 
 import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
+import type { AnnouncementsService } from '../_services/announcements.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 
 class V1UserAnnouncements {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const announcementsService = container.get<AnnouncementsServiceType>(
-      AnnouncementsServiceSymbol
-    );
+    const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
       const authInstance = await authService
