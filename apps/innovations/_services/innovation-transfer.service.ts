@@ -1,12 +1,17 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import { InnovationEntity, InnovationTransferEntity } from '@innovations/shared/entities';
+import {
+  InnovationEntity,
+  InnovationTransferEntity,
+  UserEntity,
+} from '@innovations/shared/entities';
 import {
   ActivityEnum,
   InnovationCollaboratorStatusEnum,
   InnovationTransferStatusEnum,
   NotifierTypeEnum,
+  ServiceRoleEnum,
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
@@ -185,8 +190,10 @@ export class InnovationTransferService extends BaseService {
   ): Promise<{ id: string }> {
     // Get innovation information.
     const innovation = await this.sqlConnection
-      .getRepository(InnovationEntity)
-      .findOne({ where: { id: innovationId } });
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id'])
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
     if (!innovation) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
@@ -205,6 +212,19 @@ export class InnovationTransferService extends BaseService {
     if (targetUser && targetUser.identityId === requestUser.identityId) {
       throw new UnprocessableEntityError(
         InnovationErrorsEnum.INNOVATION_TRANSFER_REQUESTED_FOR_SELF
+      );
+    }
+
+    // Check if target user is an Innovator
+    const isTargetUserInnovator = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .innerJoin('user.serviceRoles', 'userRoles')
+      .where('user.identityId = :identityId', { identityId: targetUser?.identityId })
+      .andWhere('userRoles.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+      .getCount();
+    if (!isTargetUserInnovator) {
+      throw new UnprocessableEntityError(
+        InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR
       );
     }
 
