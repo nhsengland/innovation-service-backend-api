@@ -1,7 +1,6 @@
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationTypeEnum,
-  InnovationCollaboratorStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -16,17 +15,6 @@ import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/int
 
 import { BaseHandler } from './base.handler';
 import type { UserRoleEntity } from '@notifications/shared/entities';
-
-type InnovatorRecipientType = {
-  id: string;
-  identityId: string;
-  userRole: UserRoleEntity;
-  isActive: boolean;
-  emailNotificationPreferences: {
-    type: EmailNotificationTypeEnum;
-    preference: EmailNotificationPreferenceEnum;
-  }[];
-}
 
 export class ThreadCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_CREATION,
@@ -140,10 +128,7 @@ export class ThreadCreationHandler extends BaseHandler<
         ? 'needs assessment'
         : this.domainContext?.organisation?.organisationUnit?.name ?? '';
 
-    const collaborators = (await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId)).collaborators
-      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
-      .map(c => c.user)
-      .filter((item): item is InnovatorRecipientType => item !== undefined); //filter undefined items
+    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
 
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
 
@@ -189,11 +174,10 @@ export class ThreadCreationHandler extends BaseHandler<
   private async prepareNotificationForOwnerAndCollaboratorsFromInnovator(): Promise<void> {
 
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-    const collaborators = (await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId)).collaborators
-      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
-      .map(c => c.user)
-      .filter((item): item is InnovatorRecipientType => item !== undefined && item.userRole !== undefined && item.userRole.id !== this.domainContext.currentRole.id) //filter undefined items and request user
-    
+
+    const collaborators = (await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId))
+      .filter(item => item.userRole !== undefined && item.userRole.id !== this.domainContext.currentRole.id) //filter undefined items and request user
+      
     if (this.data.innovation?.owner && this.domainContext.currentRole.id !== this.data.innovation?.owner.userRole.id) {
       collaborators.push(this.data.innovation?.owner)
     }

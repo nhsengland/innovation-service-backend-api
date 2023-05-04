@@ -42,6 +42,17 @@ import { InnovationCollaboratorEntity } from '@notifications/shared/entities/inn
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
 
+type InnovatorRecipientType = {
+  id: string;
+  identityId: string;
+  userRole: UserRoleEntity;
+  isActive: boolean;
+  emailNotificationPreferences: {
+    type: EmailNotificationTypeEnum;
+    preference: EmailNotificationPreferenceEnum;
+  }[];
+};
+
 @injectable()
 export class RecipientsService extends BaseService {
   constructor(
@@ -262,7 +273,7 @@ export class RecipientsService extends BaseService {
         'serviceRole.id',
         'serviceRole.role',
         'notificationPreferences.notification_id',
-        'notificationPreferences.preference'
+        'notificationPreferences.preference',
       ])
       .leftJoin('innovation.collaborators', 'collaborator')
       .leftJoin('collaborator.user', 'collaboratorUser')
@@ -277,15 +288,23 @@ export class RecipientsService extends BaseService {
 
     return {
       name: dbInnovation.name,
-      collaborators: await Promise.all(dbInnovation.collaborators.map(async c => ({
-        id: c.id,
-        status: c.status,
-        ...(c.user && { user: {
-          id: c.user.id, identityId: c.user.identityId,
-          userRole: c.user.serviceRoles.find(sR => sR.role === ServiceRoleEnum.INNOVATOR),
-          isActive: !c.user.lockedAt,
-          emailNotificationPreferences: (await c.user.notificationPreferences).map(item => ({ type: item.notification_id, preference: item.preference })) }})
-      })))
+      collaborators: await Promise.all(
+        dbInnovation.collaborators.map(async (c) => ({
+          id: c.id,
+          status: c.status,
+          ...(c.user && {
+            user: {
+              id: c.user.id,
+              identityId: c.user.identityId,
+              userRole: c.user.serviceRoles.find((sR) => sR.role === ServiceRoleEnum.INNOVATOR),
+              isActive: !c.user.lockedAt,
+              emailNotificationPreferences: (
+                await c.user.notificationPreferences
+              ).map((item) => ({ type: item.notification_id, preference: item.preference })),
+            },
+          }),
+        }))
+      ),
     };
   }
 
@@ -458,7 +477,7 @@ export class RecipientsService extends BaseService {
     displayId: string;
     status: InnovationActionStatusEnum;
     organisationUnit?: { id: string; name: string; acronym: string };
-    owner: { id: string; identityId: string; roleId: string };
+    owner: { id: string; identityId: string; roleId: string; role: ServiceRoleEnum };
   }> {
     const dbAction = await this.sqlConnection
       .createQueryBuilder(InnovationActionEntity, 'action')
@@ -469,6 +488,7 @@ export class RecipientsService extends BaseService {
         'user.id',
         'user.identityId',
         'role.id',
+        'role.role',
         'support.id',
         'unit.id',
         'unit.name',
@@ -501,6 +521,7 @@ export class RecipientsService extends BaseService {
         id: dbAction.createdByUser.id,
         identityId: dbAction.createdByUser.identityId,
         roleId: dbAction.createdByUserRole.id,
+        role: dbAction.createdByUserRole.role,
       },
     };
   }
@@ -698,6 +719,13 @@ export class RecipientsService extends BaseService {
           }
         : {}),
     };
+  }
+
+  async innovationActiveCollaboratorUsers(innovationId: string): Promise<InnovatorRecipientType[]> {
+    return (await this.innovationInfoWithCollaborators(innovationId)).collaborators
+      .filter((c) => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
+      .map((c) => c.user)
+      .filter((item): item is InnovatorRecipientType => item !== undefined); //filter undefined items
   }
 
   async needsAssessmentUsers(): Promise<{ id: string; identityId: string; roleId: string }[]> {

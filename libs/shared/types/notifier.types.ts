@@ -54,14 +54,10 @@ export type NotifierTemplatesType = {
   };
 
   [NotifierTypeEnum.ACTION_UPDATE]: {
-    innovationId: string;
-    action: {
-      id: string;
-      section: CurrentCatalogTypes.InnovationSections;
-      status: InnovationActionStatusEnum;
-    };
-    comment?: string;
-  };
+    innovationId: string,
+    action: { id: string, section: CurrentCatalogTypes.InnovationSections, status: InnovationActionStatusEnum, previouslyUpdatedByUserRole?: { id: string, role: ServiceRoleEnum }}
+    comment?: string
+  },
 
   [NotifierTypeEnum.THREAD_CREATION]: {
     innovationId: string;

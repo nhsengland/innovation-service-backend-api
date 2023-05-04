@@ -557,11 +557,14 @@ export class InnovationActionsService extends BaseService {
       .innerJoinAndSelect('is.innovation', 'i')
       .innerJoinAndSelect('isup.organisationUnit', 'ou')
       .innerJoinAndSelect('ou.organisation', 'o')
+      .leftJoinAndSelect('ia.updatedByUserRole', 'updatedByUserRole')
       .where('ia.id = :actionId', { actionId })
       .getOne();
     if (!dbAction) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
     }
+
+    const actionLastUpdatedByUserRole = { id: dbAction.updatedByUserRole.id, role: dbAction.updatedByUserRole.role };
 
     // Actions can only be updated from users from the same org unit
     if (
@@ -615,7 +618,8 @@ export class InnovationActionsService extends BaseService {
           id: dbAction.id,
           section: dbAction.innovationSection.section,
           status: result.status,
-        },
+          previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
+        }
       },
       domainContext
     );
