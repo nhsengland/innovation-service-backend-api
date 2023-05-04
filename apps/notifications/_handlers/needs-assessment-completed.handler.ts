@@ -35,13 +35,17 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
       this.inputData.innovationId
     );
 
-    if (innovation.owner.isActive) {
-      // Prepare email for innovator.
+    const innovatorRecipients = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
+
+    innovatorRecipients.push(innovation.owner);
+
+    for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
+      // Prepare email for all innovators (owner + collaborators).
       this.emails.push({
         templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
         to: {
           type: 'identityId',
-          value: innovation.owner.identityId,
+          value: innovator.identityId,
           displayNameParam: 'display_name',
         },
         params: {

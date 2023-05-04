@@ -1,7 +1,7 @@
 export enum EmailTypeEnum {
   ACCOUNT_CREATION_TO_INNOVATOR = '62486954-b235-4aa6-8b8d-960191fc6e69',
-
-  INNOVATION_SUBMITED_TO_INNOVATOR = 'f34dd5fd-815b-4cc5-841d-46623ee85ad6',
+  INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR = 'f34dd5fd-815b-4cc5-841d-46623ee85ad6',
+  INNOVATION_SUBMITTED_TO_ALL_INNOVATORS = '028d4946-3461-43eb-bc02-183162e7b8b1',
   INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS = '20555202-3ee0-4d98-8434-fb86b6f59e26',
   NEEDS_ASSESSMENT_STARTED_TO_INNOVATOR = '69b6e5ee-7427-4765-ad3a-ee72cafa2663',
   NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR = 'cb032a3a-ff63-4794-97fe-c951a54c31dc',
@@ -82,7 +82,11 @@ export type EmailTemplatesType = {
     display_name?: string;
     innovation_service_url: string;
   };
-  [EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR]: {
+  [EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS]: {
     display_name?: string;
     innovation_name: string;
   };

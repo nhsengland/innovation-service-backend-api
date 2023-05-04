@@ -10,14 +10,16 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
+import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 
 export class InnovationSubmitedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITED,
-  | EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR
-  | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
+  | EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS |
+  EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
   Record<string, never>
 > {
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
+  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -33,12 +35,17 @@ export class InnovationSubmitedHandler extends BaseHandler<
     );
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
-    if (innovation.owner.isActive) {
+    const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
+
+    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
+
+    // confirmation email
+    if (requestUserInfo.isActive) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR,
+        templateId: EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR,
         to: {
           type: 'identityId',
-          value: innovation.owner.identityId,
+          value: this.requestUser.identityId,
           displayNameParam: 'display_name',
         },
         params: {
@@ -46,6 +53,22 @@ export class InnovationSubmitedHandler extends BaseHandler<
           innovation_name: innovation.name,
         },
       });
+    }
+
+    // email to all innovators (owner + collaborators) except request user
+    for (const collaborator of collaborators.filter(c => c.isActive && c.id !== requestUserInfo.id)) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
+        to: {
+          type: 'identityId',
+          value: collaborator.identityId,
+          displayNameParam: 'display_name',
+        },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: innovation.name,
+        }
+      })
     }
 
     for (const assessmentUser of assessmentUsers) {
@@ -67,6 +90,7 @@ export class InnovationSubmitedHandler extends BaseHandler<
       });
     }
 
+    // in app notification to assessment users
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -75,6 +99,18 @@ export class InnovationSubmitedHandler extends BaseHandler<
         id: this.inputData.innovationId,
       },
       userRoleIds: assessmentUsers.map((user) => user.roleId),
+      params: {},
+    });
+
+    // in app notification to innovators users
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.INNOVATION,
+        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
+        id: this.inputData.innovationId,
+      },
+      userRoleIds: collaborators.map(c => c.userRole.id),
       params: {},
     });
 

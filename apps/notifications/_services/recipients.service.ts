@@ -254,6 +254,7 @@ export class RecipientsService extends BaseService {
       user?: {
         id: string;
         identityId: string;
+        isActive: boolean;
         userRole: UserRoleEntity | undefined;
         emailNotificationPreferences: {
           type: EmailNotificationTypeEnum;
