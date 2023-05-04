@@ -41,24 +41,24 @@ import {
   isAccessorDomainContextType,
 } from '@innovations/shared/types';
 
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
-
 import {
   CurrentCatalogTypes,
   CurrentDocumentConfig,
 } from '@innovations/shared/schemas/innovation-record';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
+import type { InnovationThreadsService } from './innovation-threads.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class InnovationActionsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(InnovationThreadsServiceSymbol)
-    private innovationThreadsService: InnovationThreadsServiceType,
     @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType
+    private identityProviderService: IdentityProviderServiceType,
+    @inject(SYMBOLS.InnovationThreadsService)
+    private innovationThreadsService: InnovationThreadsService
   ) {
     super();
   }

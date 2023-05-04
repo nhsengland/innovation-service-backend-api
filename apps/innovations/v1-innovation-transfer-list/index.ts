@@ -7,11 +7,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import {
-  InnovationTransferServiceSymbol,
-  InnovationTransferServiceType,
-} from '../_services/interfaces';
 
+import type { InnovationTransferService } from '../_services/innovation-transfer.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
@@ -21,8 +19,8 @@ class V1InnovationTransferList {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationTransferService = container.get<InnovationTransferServiceType>(
-      InnovationTransferServiceSymbol
+    const innovationTransferService = container.get<InnovationTransferService>(
+      SYMBOLS.InnovationTransferService
     );
 
     try {

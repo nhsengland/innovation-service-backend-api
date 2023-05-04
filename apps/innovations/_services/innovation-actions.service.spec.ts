@@ -31,17 +31,18 @@ import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
+import type { InnovationActionsService } from './innovation-actions.service';
 import { InnovationThreadsService } from './innovation-threads.service';
-import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from './interfaces';
+import SYMBOLS from './symbols';
 
 describe('Innovation Actions Suite', () => {
-  let sut: InnovationActionsServiceType;
+  let sut: InnovationActionsService;
 
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
-    sut = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
+    sut = container.get<InnovationActionsService>(SYMBOLS.InnovationActionsService);
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
   });
@@ -224,14 +225,12 @@ describe('Innovation Actions Suite', () => {
         .build(em);
 
       // Change UserInfo for NA
-      jest
-        .spyOn(IdentityProviderService.prototype, 'getUsersList')
-        .mockResolvedValue([
-          {
-            displayName: 'na name',
-            identityId: testData.baseUsers.assessmentUser.identityId,
-          } as any,
-        ]);
+      jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+        {
+          displayName: 'na name',
+          identityId: testData.baseUsers.assessmentUser.identityId,
+        } as any,
+      ]);
 
       // Create one as NA
       const naAction = await TestsHelper.TestDataBuilder.createAction(
@@ -643,14 +642,12 @@ describe('Innovation Actions Suite', () => {
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
-      jest
-        .spyOn(IdentityProviderService.prototype, 'getUsersList')
-        .mockResolvedValue([
-          {
-            displayName: 'first name',
-            identityId: testData.baseUsers.assessmentUser.identityId,
-          } as any,
-        ]);
+      jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+        {
+          displayName: 'first name',
+          identityId: testData.baseUsers.assessmentUser.identityId,
+        } as any,
+      ]);
 
       const action = await sut.getActionInfo(newAction.id, em);
 
@@ -703,14 +700,12 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      jest
-        .spyOn(IdentityProviderService.prototype, 'getUsersList')
-        .mockResolvedValue([
-          {
-            displayName: 'first name',
-            identityId: testData.baseUsers.assessmentUser.identityId,
-          } as any,
-        ]);
+      jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+        {
+          displayName: 'first name',
+          identityId: testData.baseUsers.assessmentUser.identityId,
+        } as any,
+      ]);
 
       const action = await sut.getActionInfo(newAction.id, em);
 

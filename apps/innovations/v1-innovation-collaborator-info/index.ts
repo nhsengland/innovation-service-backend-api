@@ -6,11 +6,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import {
-  InnovationCollaboratorsServiceSymbol,
-  InnovationCollaboratorsServiceType,
-} from '../_services/interfaces';
 
+import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -20,8 +18,8 @@ class V1InnovationCollaboratorInfo {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationCollaboratorsService = container.get<InnovationCollaboratorsServiceType>(
-      InnovationCollaboratorsServiceSymbol
+    const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
+      SYMBOLS.InnovationCollaboratorsService
     );
 
     try {

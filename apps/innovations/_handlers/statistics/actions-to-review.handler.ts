@@ -5,7 +5,8 @@ import type {
   InnovationStatisticsTemplateType,
 } from '../../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
-import { StatisticsServiceSymbol, type StatisticsServiceType } from '../../_services/interfaces';
+import type { StatisticsService } from '../../_services/statistics.service';
+import SYMBOLS from '../../_services/symbols';
 import { InnovationsStatisticsHandler } from '../../_types/statistics-handlers.types';
 
 export class ActionsToReviewStatisticsHandler extends InnovationsStatisticsHandler {
@@ -20,7 +21,7 @@ export class ActionsToReviewStatisticsHandler extends InnovationsStatisticsHandl
   async run(): Promise<
     InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]
   > {
-    const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
+    const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
     const supports = await statisticsService.actionsToReview(
       this.data.innovationId,

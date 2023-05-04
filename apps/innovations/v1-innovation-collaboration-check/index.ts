@@ -4,18 +4,16 @@ import type { AzureFunction, Context, HttpRequest } from '@azure/functions';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 
 import { container } from '../_config';
-import {
-  InnovationCollaboratorsServiceSymbol,
-  InnovationCollaboratorsServiceType,
-} from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 
+import type { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
+import SYMBOLS from '../_services/symbols';
 import { ParamsSchema, ParamsType } from './validations.schema';
 
 class V1InnovationCollaboratorCheck {
   static async httpTrigger(context: Context, request: HttpRequest): Promise<void> {
-    const innovationCollaboratorsService = container.get<InnovationCollaboratorsServiceType>(
-      InnovationCollaboratorsServiceSymbol
+    const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
+      SYMBOLS.InnovationCollaboratorsService
     );
 
     try {

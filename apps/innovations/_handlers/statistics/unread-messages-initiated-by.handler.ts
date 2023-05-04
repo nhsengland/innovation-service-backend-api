@@ -5,7 +5,8 @@ import type {
   InnovationStatisticsTemplateType,
 } from '../../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
-import { StatisticsServiceSymbol, type StatisticsServiceType } from '../../_services/interfaces';
+import type { StatisticsService } from '../../_services/statistics.service';
+import SYMBOLS from '../../_services/symbols';
 import { InnovationsStatisticsHandler } from '../../_types/statistics-handlers.types';
 
 export class UnreadMessagesThreadsInitiatedByStatisticsHandler extends InnovationsStatisticsHandler {
@@ -20,7 +21,7 @@ export class UnreadMessagesThreadsInitiatedByStatisticsHandler extends Innovatio
   async run(): Promise<
     InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]
   > {
-    const statisticsService = container.get<StatisticsServiceType>(StatisticsServiceSymbol);
+    const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
     const actions = await statisticsService.getUnreadMessagesInitiatedBy(
       this.data.innovationId,

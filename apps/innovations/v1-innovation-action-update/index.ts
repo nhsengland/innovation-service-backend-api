@@ -12,11 +12,9 @@ import {
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import {
-  InnovationActionsServiceSymbol,
-  InnovationActionsServiceType,
-} from '../_services/interfaces';
 
+import type { InnovationActionsService } from '../_services/innovation-actions.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -26,8 +24,8 @@ class V1InnovationActionUpdate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationActionsService = container.get<InnovationActionsServiceType>(
-      InnovationActionsServiceSymbol
+    const innovationActionsService = container.get<InnovationActionsService>(
+      SYMBOLS.InnovationActionsService
     );
 
     try {

@@ -33,6 +33,7 @@ type UpdateCollaboratorStatusType =
   | InnovationCollaboratorStatusEnum.DECLINED
   | InnovationCollaboratorStatusEnum.LEFT
   | InnovationCollaboratorStatusEnum.REMOVED;
+
 @injectable()
 export class InnovationCollaboratorsService extends BaseService {
   constructor(

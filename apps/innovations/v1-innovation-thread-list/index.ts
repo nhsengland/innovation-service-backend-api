@@ -7,11 +7,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import {
-  InnovationThreadsServiceSymbol,
-  InnovationThreadsServiceType,
-} from '../_services/interfaces';
 
+import type { InnovationThreadsService } from '../_services/innovation-threads.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
@@ -21,8 +19,8 @@ class V1InnovationThreadCreate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const threadsService = container.get<InnovationThreadsServiceType>(
-      InnovationThreadsServiceSymbol
+    const threadsService = container.get<InnovationThreadsService>(
+      SYMBOLS.InnovationThreadsService
     );
 
     try {

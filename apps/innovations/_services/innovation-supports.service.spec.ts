@@ -24,7 +24,7 @@ import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
-import { InnovationSupportsServiceSymbol, InnovationSupportsServiceType } from './interfaces';
+import SYMBOLS from './symbols';
 
 describe('Innovation supports service test suite', () => {
   let sut: InnovationSupportsService;
@@ -33,7 +33,7 @@ describe('Innovation supports service test suite', () => {
 
   beforeAll(async () => {
     await TestsHelper.init();
-    sut = container.get<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol);
+    sut = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
     testData = TestsHelper.sampleData;
   });
 

@@ -9,17 +9,18 @@ import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-reco
 import { DomainUsersService } from '@innovations/shared/services';
 import { rand, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from './interfaces';
+import type { InnovationSectionsService } from './innovation-sections.service';
+import SYMBOLS from './symbols';
 
 describe('Innovation Sections Suite', () => {
-  let sut: InnovationSectionsServiceType;
+  let sut: InnovationSectionsService;
 
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
     await TestsHelper.init();
-    sut = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
+    sut = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
     testData = TestsHelper.sampleData;
   });
 

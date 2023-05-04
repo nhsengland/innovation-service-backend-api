@@ -8,11 +8,9 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import {
-  InnovationAssessmentsServiceSymbol,
-  InnovationAssessmentsServiceType,
-} from '../_services/interfaces';
 
+import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
 
@@ -22,8 +20,8 @@ class V1InnovationReassessmentRequestCreate {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationAssessmentsService = container.get<InnovationAssessmentsServiceType>(
-      InnovationAssessmentsServiceSymbol
+    const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
+      SYMBOLS.InnovationAssessmentsService
     );
 
     try {

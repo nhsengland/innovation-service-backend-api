@@ -21,11 +21,11 @@ import {
 } from '@innovations/shared/services';
 import { randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationAssessmentsServiceSymbol, InnovationAssessmentsServiceType } from './interfaces';
-// import type { InnovationAssessmentType } from '../_types/innovation.types';
+import type { InnovationAssessmentsService } from './innovation-assessments.service';
+import SYMBOLS from './symbols';
 
 describe('Innovation Assessments Suite', () => {
-  let sut: InnovationAssessmentsServiceType;
+  let sut: InnovationAssessmentsService;
 
   let testData: TestDataType;
   let em: EntityManager;
@@ -34,7 +34,7 @@ describe('Innovation Assessments Suite', () => {
   let innovationWithoutAssessment: InnovationEntity;
 
   beforeAll(async () => {
-    sut = container.get<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol);
+    sut = container.get<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService);
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
   });

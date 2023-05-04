@@ -1,30 +1,5 @@
 import { container } from '@innovations/shared/config/inversify.config';
 
-import {
-  InnovationActionsServiceSymbol,
-  InnovationActionsServiceType,
-  InnovationAssessmentsServiceSymbol,
-  InnovationAssessmentsServiceType,
-  InnovationCollaboratorsServiceSymbol,
-  InnovationCollaboratorsServiceType,
-  InnovationFileServiceSymbol,
-  InnovationFileServiceType,
-  InnovationSectionsServiceSymbol,
-  InnovationSectionsServiceType,
-  InnovationsServiceSymbol,
-  InnovationsServiceType,
-  InnovationSupportsServiceSymbol,
-  InnovationSupportsServiceType,
-  InnovationThreadsServiceSymbol,
-  InnovationThreadsServiceType,
-  InnovationTransferServiceSymbol,
-  InnovationTransferServiceType,
-  PDFServiceSymbol,
-  PDFServiceType,
-  StatisticsServiceSymbol,
-  StatisticsServiceType,
-} from '../_services/interfaces';
-
 import { InnovationActionsService } from '../_services/innovation-actions.service';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
@@ -36,47 +11,48 @@ import { InnovationTransferService } from '../_services/innovation-transfer.serv
 import { InnovationsService } from '../_services/innovations.service';
 import { PDFService } from '../_services/pdf.service';
 import { StatisticsService } from '../_services/statistics.service';
+import SYMBOLS from '../_services/symbols';
 
 // Specific inversify container configuration.
 container
-  .bind<InnovationActionsServiceType>(InnovationActionsServiceSymbol)
+  .bind<InnovationActionsService>(SYMBOLS.InnovationActionsService)
   .to(InnovationActionsService)
   .inSingletonScope();
 container
-  .bind<InnovationAssessmentsServiceType>(InnovationAssessmentsServiceSymbol)
+  .bind<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService)
   .to(InnovationAssessmentsService)
   .inSingletonScope();
 container
-  .bind<InnovationFileServiceType>(InnovationFileServiceSymbol)
+  .bind<InnovationFileService>(SYMBOLS.InnovationFileService)
   .to(InnovationFileService)
   .inSingletonScope();
 container
-  .bind<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol)
+  .bind<InnovationSectionsService>(SYMBOLS.InnovationSectionsService)
   .to(InnovationSectionsService)
   .inSingletonScope();
 container
-  .bind<InnovationSupportsServiceType>(InnovationSupportsServiceSymbol)
+  .bind<InnovationSupportsService>(SYMBOLS.InnovationSupportsService)
   .to(InnovationSupportsService)
   .inSingletonScope();
 container
-  .bind<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol)
+  .bind<InnovationThreadsService>(SYMBOLS.InnovationThreadsService)
   .to(InnovationThreadsService)
   .inSingletonScope();
 container
-  .bind<InnovationTransferServiceType>(InnovationTransferServiceSymbol)
+  .bind<InnovationTransferService>(SYMBOLS.InnovationTransferService)
   .to(InnovationTransferService)
   .inSingletonScope();
 container
-  .bind<InnovationCollaboratorsServiceType>(InnovationCollaboratorsServiceSymbol)
+  .bind<InnovationCollaboratorsService>(SYMBOLS.InnovationCollaboratorsService)
   .to(InnovationCollaboratorsService)
   .inSingletonScope();
 container
-  .bind<InnovationsServiceType>(InnovationsServiceSymbol)
+  .bind<InnovationsService>(SYMBOLS.InnovationsService)
   .to(InnovationsService)
   .inSingletonScope();
-container.bind<PDFServiceType>(PDFServiceSymbol).to(PDFService).inSingletonScope();
+container.bind<PDFService>(SYMBOLS.PDFService).to(PDFService).inSingletonScope();
 container
-  .bind<StatisticsServiceType>(StatisticsServiceSymbol)
+  .bind<StatisticsService>(SYMBOLS.StatisticsService)
   .to(StatisticsService)
   .inSingletonScope();
 

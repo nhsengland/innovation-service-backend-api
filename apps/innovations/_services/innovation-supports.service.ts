@@ -40,15 +40,16 @@ import type {
 } from '../_types/innovation.types';
 
 import { BaseService } from './base.service';
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
+import type { InnovationThreadsService } from './innovation-threads.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class InnovationSupportsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(InnovationThreadsServiceSymbol)
-    private innovationThreadsService: InnovationThreadsServiceType
+    @inject(SYMBOLS.InnovationThreadsService)
+    private innovationThreadsService: InnovationThreadsService
   ) {
     super();
   }

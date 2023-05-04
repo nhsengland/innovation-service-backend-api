@@ -51,16 +51,16 @@ import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/inno
 import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
 import { InnovationFileService } from './innovation-file.service';
-import { InnovationFileServiceSymbol } from './interfaces';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(IdentityProviderServiceSymbol) private identityService: IdentityProviderServiceType,
-    @inject(InnovationFileServiceSymbol) private innovationFileService: InnovationFileService,
     @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
   }
@@ -360,11 +360,11 @@ export class InnovationSectionsService extends BaseService {
         innovation,
         section: sectionKey,
         status: InnovationSectionStatusEnum.DRAFT,
-        
+
         createdBy: user.id,
         updatedAt: updatedAt,
         updatedBy: user.id,
-        
+
         files:
           CurrentDocumentConfig.allowFileUploads.has(sectionKey) && dataToUpdate['files']
             ? dataToUpdate['files'].map((id: string) => ({ id }))
@@ -616,7 +616,7 @@ export class InnovationSectionsService extends BaseService {
 
       await transaction.query(
         `
-        UPDATE innovation_document 
+        UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
         [`append $.evidences`, JSON.stringify(evidence), user.id, updatedAt, innovationId]
       );
@@ -680,7 +680,7 @@ export class InnovationSectionsService extends BaseService {
 
       await transaction.query(
         `
-        UPDATE innovation_document 
+        UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
         [`$.evidences[${evidenceOffset}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
       );
@@ -725,7 +725,7 @@ export class InnovationSectionsService extends BaseService {
       // save the new evidences
       await transaction.query(
         `
-        UPDATE innovation_document 
+        UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
         [`$.evidences`, JSON.stringify(evidences), user.id, updatedAt, innovationId]
       );

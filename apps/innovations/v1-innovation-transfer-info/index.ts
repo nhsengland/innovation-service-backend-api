@@ -7,10 +7,8 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
-import {
-  InnovationTransferServiceSymbol,
-  InnovationTransferServiceType,
-} from '../_services/interfaces';
+import type { InnovationTransferService } from '../_services/innovation-transfer.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -20,8 +18,8 @@ class GetInnovationTransfer {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationTransferService = container.get<InnovationTransferServiceType>(
-      InnovationTransferServiceSymbol
+    const innovationTransferService = container.get<InnovationTransferService>(
+      SYMBOLS.InnovationTransferService
     );
 
     try {

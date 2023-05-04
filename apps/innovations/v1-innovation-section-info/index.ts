@@ -6,10 +6,8 @@ import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
-import {
-  InnovationSectionsServiceSymbol,
-  InnovationSectionsServiceType,
-} from '../_services/interfaces';
+import type { InnovationSectionsService } from '../_services/innovation-sections.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
@@ -19,8 +17,8 @@ class GetInnovationSectionInfo {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationSectionsService = container.get<InnovationSectionsServiceType>(
-      InnovationSectionsServiceSymbol
+    const innovationSectionsService = container.get<InnovationSectionsService>(
+      SYMBOLS.InnovationSectionsService
     );
 
     try {

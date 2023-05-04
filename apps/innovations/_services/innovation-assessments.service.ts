@@ -38,14 +38,15 @@ import type { InnovationAssessmentType } from '../_types/innovation.types';
 
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from './interfaces';
+import type { InnovationThreadsService } from './innovation-threads.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(InnovationThreadsServiceSymbol) private threadService: InnovationThreadsServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService
   ) {
     super();
   }

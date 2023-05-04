@@ -11,7 +11,8 @@ import {
 } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
-import { PDFServiceSymbol, PDFServiceType } from '../_services/interfaces';
+import type { PDFService } from '../_services/pdf.service';
+import SYMBOLS from '../_services/symbols';
 import { BodySchema, ParamsSchema, ParamsType, type BodyType } from './validation.schemas';
 class PostInnovationPDFExport {
   @JwtDecoder()
@@ -21,7 +22,7 @@ class PostInnovationPDFExport {
         AuthorizationServiceSymbol
       );
       const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-      const pdfService = container.get<PDFServiceType>(PDFServiceSymbol);
+      const pdfService = container.get<PDFService>(SYMBOLS.PDFService);
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);

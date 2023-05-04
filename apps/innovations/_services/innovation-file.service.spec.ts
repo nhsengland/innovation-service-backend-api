@@ -4,7 +4,7 @@ import { container } from '../_config';
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
-import { InnovationFileServiceSymbol, InnovationFileServiceType } from './interfaces';
+import SYMBOLS from './symbols';
 
 describe('Innovation supports service test suite', () => {
   let sut: InnovationFileService;
@@ -12,7 +12,7 @@ describe('Innovation supports service test suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-    sut = container.get<InnovationFileServiceType>(InnovationFileServiceSymbol);
+    sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
   });

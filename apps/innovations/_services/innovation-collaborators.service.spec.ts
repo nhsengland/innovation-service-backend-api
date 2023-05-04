@@ -18,19 +18,16 @@ import type { DomainContextType } from '@innovations/shared/types';
 import { randEmail, randRole, randUserName, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
-import {
-  InnovationCollaboratorsServiceSymbol,
-  InnovationCollaboratorsServiceType,
-} from './interfaces';
+import SYMBOLS from './symbols';
 
 describe('Innovation Collaborators Suite', () => {
-  let sut: InnovationCollaboratorsServiceType;
+  let sut: InnovationCollaboratorsService;
 
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
-    sut = container.get<InnovationCollaboratorsService>(InnovationCollaboratorsServiceSymbol);
+    sut = container.get<InnovationCollaboratorsService>(SYMBOLS.InnovationCollaboratorsService);
     await TestsHelper.init();
     testData = TestsHelper.sampleData;
   });
@@ -51,14 +48,12 @@ describe('Innovation Collaborators Suite', () => {
     });
 
     it('create a collaborator for an existing user', async () => {
-      jest
-        .spyOn(DomainUsersService.prototype, 'getUserByEmail')
-        .mockResolvedValue([
-          {
-            id: testData.baseUsers.innovator2.id,
-            roles: [{ role: ServiceRoleEnum.INNOVATOR }],
-          } as any,
-        ]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([
+        {
+          id: testData.baseUsers.innovator2.id,
+          roles: [{ role: ServiceRoleEnum.INNOVATOR }],
+        } as any,
+      ]);
 
       const expected = {
         email: randEmail(),
@@ -132,15 +127,13 @@ describe('Innovation Collaborators Suite', () => {
 
     it('invite again for a user that is valid to invite again', async () => {
       // Innovator 2 has an EXPIRED collaborator invitation
-      jest
-        .spyOn(DomainUsersService.prototype, 'getUserByEmail')
-        .mockResolvedValue([
-          {
-            id: testData.baseUsers.innovator2.id,
-            email: 'innovator2@gmail.com',
-            roles: [{ role: ServiceRoleEnum.INNOVATOR }],
-          } as any,
-        ]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([
+        {
+          id: testData.baseUsers.innovator2.id,
+          email: 'innovator2@gmail.com',
+          roles: [{ role: ServiceRoleEnum.INNOVATOR }],
+        } as any,
+      ]);
 
       const expected = {
         email: 'innovator2@gmail.com',
@@ -211,15 +204,13 @@ describe('Innovation Collaborators Suite', () => {
     });
 
     it('return a error if the owner is trying to create a invite for himself', async () => {
-      jest
-        .spyOn(DomainUsersService.prototype, 'getUserByEmail')
-        .mockResolvedValue([
-          {
-            id: testData.baseUsers.innovator.id,
-            email: 'innovator@gmail.com',
-            roles: [{ role: ServiceRoleEnum.INNOVATOR }],
-          } as any,
-        ]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([
+        {
+          id: testData.baseUsers.innovator.id,
+          email: 'innovator@gmail.com',
+          roles: [{ role: ServiceRoleEnum.INNOVATOR }],
+        } as any,
+      ]);
 
       let err: UnprocessableEntityError | null = null;
       try {
@@ -241,15 +232,13 @@ describe('Innovation Collaborators Suite', () => {
     });
 
     it('return a error if he is trying to invite a QA', async () => {
-      jest
-        .spyOn(DomainUsersService.prototype, 'getUserByEmail')
-        .mockResolvedValue([
-          {
-            id: testData.baseUsers.qualifyingAccessor.id,
-            email: 'qa@gmail.com',
-            roles: [{ role: ServiceRoleEnum.QUALIFYING_ACCESSOR }],
-          } as any,
-        ]);
+      jest.spyOn(DomainUsersService.prototype, 'getUserByEmail').mockResolvedValue([
+        {
+          id: testData.baseUsers.qualifyingAccessor.id,
+          email: 'qa@gmail.com',
+          roles: [{ role: ServiceRoleEnum.QUALIFYING_ACCESSOR }],
+        } as any,
+      ]);
 
       let err: UnprocessableEntityError | null = null;
       try {
@@ -385,18 +374,16 @@ describe('Innovation Collaborators Suite', () => {
 
     describe('asOwner', () => {
       it('for a new user it should return info for a new collaborator without the name', async () => {
-        jest
-          .spyOn(IdentityProviderService.prototype, 'getUsersList')
-          .mockResolvedValue([
-            {
-              identityId: testData.domainContexts.innovator.identityId,
-              displayName: 'Innovator 1 name',
-            } as any,
-            {
-              identityId: testData.domainContexts.innovator2.identityId,
-              displayName: 'Innovator 2 name',
-            } as any,
-          ]);
+        jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
+          {
+            identityId: testData.domainContexts.innovator.identityId,
+            displayName: 'Innovator 1 name',
+          } as any,
+          {
+            identityId: testData.domainContexts.innovator2.identityId,
+            displayName: 'Innovator 2 name',
+          } as any,
+        ]);
 
         const expected = {
           id: collaboratorPendingWithoutUser.id,
@@ -506,14 +493,12 @@ describe('Innovation Collaborators Suite', () => {
 
       it('should return error if the collaborator invite is not for him', async () => {
         const randomUserId = randUuid();
-        jest
-          .spyOn(IdentityProviderService.prototype, 'getUserInfo')
-          .mockResolvedValue({
-            id: randomUserId,
-            identityId: randomUserId,
-            displayName: 'randomUserId',
-            email: 'randomUserId@gmail.com',
-          } as any);
+        jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue({
+          id: randomUserId,
+          identityId: randomUserId,
+          displayName: 'randomUserId',
+          email: 'randomUserId@gmail.com',
+        } as any);
 
         let err: NotFoundError | null = null;
         try {

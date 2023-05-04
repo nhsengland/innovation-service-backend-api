@@ -30,10 +30,8 @@ import {
 
 import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
-import {
-  InnovationCollaboratorsServiceSymbol,
-  type InnovationCollaboratorsServiceType,
-} from './interfaces';
+import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
+import SYMBOLS from './symbols';
 
 type TransferQueryFilterType = {
   id?: string;
@@ -50,8 +48,8 @@ export class InnovationTransferService extends BaseService {
     private identityProviderService: IdentityProviderServiceType,
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(InnovationCollaboratorsServiceSymbol)
-    private collaboratorsService: InnovationCollaboratorsServiceType
+    @inject(SYMBOLS.InnovationCollaboratorsService)
+    private collaboratorsService: InnovationCollaboratorsService
   ) {
     super();
   }

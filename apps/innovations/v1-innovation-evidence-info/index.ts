@@ -7,10 +7,8 @@ import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/he
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
-import {
-  InnovationSectionsServiceSymbol,
-  InnovationSectionsServiceType,
-} from '../_services/interfaces';
+import type { InnovationSectionsService } from '../_services/innovation-sections.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -20,8 +18,8 @@ class GetInnovationEvidenceInfo {
     const authorizationService = container.get<AuthorizationServiceType>(
       AuthorizationServiceSymbol
     );
-    const innovationSectionsService = container.get<InnovationSectionsServiceType>(
-      InnovationSectionsServiceSymbol
+    const innovationSectionsService = container.get<InnovationSectionsService>(
+      SYMBOLS.InnovationSectionsService
     );
 
     try {
