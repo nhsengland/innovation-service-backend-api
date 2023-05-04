@@ -16,6 +16,10 @@ export const ORGANISATIONS_LENGTH_LIMITS = {
   registrationNumber: 8,
 };
 
+export const THIRTY_DAYS_IN_MSEC = 1000 * 60 * 60 * 24 * 30;
+
 export const EXPIRATION_DATES = {
-  transfers: 1000 * 60 * 60 * 24 * 30,
+  exportRequests: THIRTY_DAYS_IN_MSEC,
+  transfers: THIRTY_DAYS_IN_MSEC,
+  transfersDays: 30,
 };

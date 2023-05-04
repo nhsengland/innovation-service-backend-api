@@ -38,6 +38,9 @@ export enum EmailTypeEnum {
   INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER = 'b8814f94-f067-4549-aba0-4f0ff435ca38',
   INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER = '27c73742-5f29-4229-b113-36df187bfdd0',
   INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER = '03192d09-40fb-48b8-a438-7a6887b33fd5',
+  INNOVATION_TRANSFER_REMINDER_EXISTING_USER = '6c704f8b-a991-4b41-95ae-3399ab9c2f2f',
+  INNOVATION_TRANSFER_REMINDER_NEW_USER = '594b3cc0-8aa8-4bfa-955e-0f4cd2409cad',
+  INNOVATION_TRANSFER_EXPIRED = '24c454fa-039c-4ff0-a268-cc5ba550ea93',
   LOCK_USER_TO_LOCKED_USER = '1ad73192-dc28-4606-a4f3-9dd73aedfd42',
 
   ACCESSOR_UNIT_CHANGE_TO_USER_MOVED = '29d6e362-5ecd-4bac-8707-a4d92e9e6762',
@@ -252,6 +255,18 @@ export type EmailTemplatesType = {
     innovator_name?: string;
     new_innovator_name: string;
     innovation_name: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_NEW_USER]: {
+    innovation_name: string;
+    transfer_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_EXISTING_USER]: {
+    innovation_name: string;
+    transfer_url: string;
+  };
+  [EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED]: {
+    innovation_name: string;
+    innovation_url: string;
   };
   [EmailTypeEnum.LOCK_USER_TO_LOCKED_USER]: { display_name?: string };
   [EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED]: {

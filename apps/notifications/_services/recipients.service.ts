@@ -39,6 +39,8 @@ import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
+import { roleEntity2RoleType } from '@notifications/shared/entities/user/user-role.entity';
+import type { RoleType } from '@notifications/shared/types';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
 
@@ -195,7 +197,16 @@ export class RecipientsService extends BaseService {
     return await this.identityProviderService.getUsersList(dbUsers.map((u) => u.identityId));
   }
 
-  async innovationInfoWithOwner(innovationId: string): Promise<{
+  /**
+   * retrieves the innovation with information about the owner and their email preferences.
+   * @param innovationId the innovation id
+   * @param withDeleted optionally include deleted records (default: false)
+   * @returns innovation info with owner
+   */
+  async innovationInfoWithOwner(
+    innovationId: string,
+    withDeleted = false
+  ): Promise<{
     name: string;
     owner: {
       id: string;
@@ -208,13 +219,19 @@ export class RecipientsService extends BaseService {
       }[];
     };
   }> {
-    const dbInnovation = await this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'innovation')
+    let query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation');
+
+    if (withDeleted) {
+      query = query.withDeleted();
+    }
+
+    query = query
       .innerJoinAndSelect('innovation.owner', 'owner')
       .innerJoinAndSelect('owner.serviceRoles', 'serviceRoles')
       .leftJoinAndSelect('owner.notificationPreferences', 'notificationPreferences')
-      .where('innovation.id = :innovationId', { innovationId })
-      .getOne();
+      .where('innovation.id = :innovationId', { innovationId });
+
+    const dbInnovation = await query.getOne();
 
     if (!dbInnovation) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
@@ -1020,46 +1037,42 @@ export class RecipientsService extends BaseService {
       }[];
     }[]
   > {
-    try {
-      const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
+    const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
 
-      return _.reduce(
-        _.groupBy(idleSupports, 'innovationId'),
-        (
-          res: {
+    return _.reduce(
+      _.groupBy(idleSupports, 'innovationId'),
+      (
+        res: {
+          innovationId: string;
+          values: {
+            identityId: string;
             innovationId: string;
-            values: {
-              identityId: string;
-              innovationId: string;
-              ownerId: string;
-              ownerIdentityId: string;
-              unitId: string;
-              unitName: string;
-              innovationName: string;
-            }[];
-          }[],
-          val,
-          key
-        ) => {
-          res.push({
-            innovationId: key,
-            values: val.map((v) => ({
-              identityId: v.identityId,
-              innovationName: v.innovationName,
-              innovationId: v.innovationId,
-              ownerId: v.ownerId,
-              ownerIdentityId: v.ownerIdentityId,
-              unitId: v.organisationUnitId,
-              unitName: v.organisationUnitName,
-            })),
-          });
-          return res;
-        },
-        []
-      );
-    } catch (error) {
-      throw error;
-    }
+            ownerId: string;
+            ownerIdentityId: string;
+            unitId: string;
+            unitName: string;
+            innovationName: string;
+          }[];
+        }[],
+        val,
+        key
+      ) => {
+        res.push({
+          innovationId: key,
+          values: val.map((v) => ({
+            identityId: v.identityId,
+            innovationName: v.innovationName,
+            innovationId: v.innovationId,
+            ownerId: v.ownerId,
+            ownerIdentityId: v.ownerIdentityId,
+            unitId: v.organisationUnitId,
+            unitName: v.organisationUnitName,
+          })),
+        });
+        return res;
+      },
+      []
+    );
   }
 
   async getExportRequestWithRelations(requestId: string): Promise<{
@@ -1096,5 +1109,68 @@ export class RecipientsService extends BaseService {
         isActive: createdByUser.isActive,
       },
     };
+  }
+
+  /**
+   * retrieves a user role
+   * @param userId the user id
+   * @param role the role
+   * @param extraFilters optional additional filters
+   *  - organisation: the organisation id
+   *  - organisationUnit: the organisation unit id
+   *  - active: the role is active
+   * @returns the role
+   */
+  async getUserRole(
+    userId: string,
+    role: ServiceRoleEnum,
+    extraFilters?: {
+      organisation?: string;
+      organisationUnit?: string;
+      active?: boolean;
+    }
+  ): Promise<RoleType> {
+    const query = this.sqlConnection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.user_id = :userId', { userId })
+      .andWhere('userRole.role = :role', { role });
+    if (extraFilters?.organisation) {
+      query.andWhere('userRole.organisation_id = :organisation', {
+        organisation: extraFilters.organisation,
+      });
+    }
+    if (extraFilters?.organisationUnit) {
+      query.andWhere('userRole.organisation_unit_id = :organisationUnit', {
+        organisationUnit: extraFilters.organisationUnit,
+      });
+    }
+    if (extraFilters?.active !== undefined) {
+      query.andWhere(
+        extraFilters.active ? 'userRole.locked_at IS NULL' : 'userRole.locked_at IS NOT NULL'
+      );
+    }
+
+    const userRole = await query.getOne();
+    if (!userRole) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+
+    return roleEntity2RoleType(userRole);
+  }
+
+  /**
+   * convert from identityId to userId including the deleted users
+   * @param identityId the user identityId
+   * @returns the user id
+   */
+  async identityId2UserId(identityId: string): Promise<string | null> {
+    const user = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .withDeleted()
+      .select('user.id')
+      .where('user.identityId = :identityId', { identityId })
+      .getOne();
+
+    return user?.id ?? null;
   }
 }

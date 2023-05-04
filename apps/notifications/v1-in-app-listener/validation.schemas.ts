@@ -4,7 +4,6 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
 } from '@notifications/shared/enums';
-import { DomainContextSchema, DomainContextType } from '@notifications/shared/types';
 
 export type MessageType = {
   data: {
@@ -17,7 +16,6 @@ export type MessageType = {
     };
     userRoleIds: string[];
     params: { [key: string]: string | number | string[] };
-    domainContext: DomainContextType;
   };
 };
 
@@ -42,7 +40,5 @@ export const MessageSchema = Joi.object<MessageType>({
     userRoleIds: Joi.array().items(Joi.string().guid()).required(),
 
     params: Joi.object().required(),
-
-    domainContext: DomainContextSchema.required(),
   }).required(),
 }).required();

@@ -64,7 +64,6 @@ class V1NotificationsListener {
             context: { type: item.context.type, detail: item.context.detail, id: item.context.id },
             userRoleIds: item.userRoleIds,
             params: item.params,
-            domainContext: message.data.domainContext,
           },
         });
       }

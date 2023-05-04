@@ -44,6 +44,8 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler,
 } from '../_handlers';
+import { InnovationTransferOwnershipExpirationHandler } from '../_handlers/innovation-transfer-ownership-exipraton.handler';
+import { InnovationTransferOwnershipReminderHandler } from '../_handlers/innovation-transfer-ownership-reminder.handler';
 import type { EmailTypeEnum } from './emails.config';
 
 export const NOTIFICATIONS_CONFIG: {
@@ -209,6 +211,28 @@ export const NOTIFICATIONS_CONFIG: {
     >({
       innovationId: Joi.string().guid().required(),
       transferId: Joi.string().guid().required(),
+    }).required(),
+  },
+
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
+    handler: InnovationTransferOwnershipExpirationHandler,
+    joiDefinition: Joi.object<
+      NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]
+    >({
+      innovationId: Joi.string().guid().required(),
+      transferId: Joi.string().guid().required(),
+    }).required(),
+  },
+
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
+    handler: InnovationTransferOwnershipReminderHandler,
+    joiDefinition: Joi.object<
+      NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]
+    >({
+      innovationId: Joi.string().guid().required(),
+      innovationName: Joi.string().required(),
+      transferId: Joi.string().guid().required(),
+      recipientEmail: Joi.string().required(),
     }).required(),
   },
 

@@ -1,9 +1,9 @@
+import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { UrlModel } from '@notifications/shared/models';
 import {
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
 } from '@notifications/shared/services';
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
-import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';

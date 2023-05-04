@@ -33,11 +33,13 @@ import {
   InnovationSupportStatusEnum,
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
+  NotifierTypeEnum,
   ServiceRoleEnum,
 } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
+import type { NotifierService } from '../integrations/notifier.service';
 import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
 export class DomainInnovationsService {
@@ -48,7 +50,8 @@ export class DomainInnovationsService {
   constructor(
     private sqlConnection: DataSource,
     private fileStorageService: FileStorageServiceType,
-    private identityProviderService: IdentityProviderServiceType
+    private identityProviderService: IdentityProviderServiceType,
+    private notifierService: NotifierService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
     this.innovationSupportRepository = this.sqlConnection.getRepository(InnovationSupportEntity);
@@ -78,17 +81,89 @@ export class DomainInnovationsService {
   async withdrawExpiredInnovationsTransfers(entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbTransfers = await em
+    const transfersToExpire = await em
       .createQueryBuilder(InnovationTransferEntity, 'transfers')
-      .where('DATEDIFF(day, transfers.created_at, GETDATE()) > 30')
+      .select(['transfers.id', 'innovation.id'])
+      .innerJoin('transfers.innovation', 'innovation')
+      .where('DATEDIFF(day, transfers.created_at, GETDATE()) > :date', {
+        date: EXPIRATION_DATES.transfersDays,
+      })
+      .andWhere('transfers.status = :status', { status: InnovationTransferStatusEnum.PENDING })
       .getMany();
 
-    for (const dbTransfer of dbTransfers) {
-      await em.save(InnovationTransferEntity, {
-        ...dbTransfer,
-        status: InnovationTransferStatusEnum.EXPIRED,
-        finishedAt: new Date().toISOString(),
-      });
+    if (transfersToExpire.length) {
+      const transferIds = transfersToExpire.map((item) => ({ id: item.id }));
+
+      await em
+        .createQueryBuilder(InnovationTransferEntity, 'transfers')
+        .update()
+        .set({
+          finishedAt: new Date(),
+          status: InnovationTransferStatusEnum.EXPIRED,
+        })
+        .where('transfers.id IN (:...ids)', { ids: transferIds })
+        .execute();
+
+      for (const dbTransfer of transfersToExpire) {
+        // Send the notifications
+        await this.notifierService.sendSystemNotification(
+          NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
+          {
+            innovationId: dbTransfer.innovation.id,
+            transferId: dbTransfer.id,
+          }
+        );
+      }
+    }
+  }
+
+  /**
+   * remind  all innovations that are about to expire.
+   * - this enforces the emailCount to be the same to avoid sending double emails.
+   * @param days number of days before expiration (default: 7)
+   * @param emailCount number of email previously sent (default: 0)
+   * @param entityManager optional entityManager
+   */
+  async remindInnovationsTransfers(
+    days = 7,
+    emailCount = 0,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const transfersToExpire = await em
+      .createQueryBuilder(InnovationTransferEntity, 'transfers')
+      .select(['transfers.id', 'transfers.email', 'innovation.name'])
+      .innerJoin('transfers.innovation', 'innovation')
+      .where('DATEDIFF(day, transfers.created_at, GETDATE()) = :date', {
+        date: days,
+      })
+      .andWhere('transfers.status = :status', { status: InnovationTransferStatusEnum.PENDING })
+      .andWhere('transfers.emailCount = :emailCount', { emailCount })
+      .getMany();
+
+    if (transfersToExpire.length) {
+      const transferIds = transfersToExpire.map((item) => ({ id: item.id }));
+
+      await em
+        .createQueryBuilder(InnovationTransferEntity, 'transfers')
+        .update()
+        .set({ emailCount: emailCount + 1 })
+        .where('transfers.id IN (:...ids)', { ids: transferIds })
+        .execute();
+
+      for (const dbTransfer of transfersToExpire) {
+        // Send the notifications
+        await this.notifierService.sendSystemNotification(
+          NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER,
+          {
+            innovationId: dbTransfer.innovation.id,
+            innovationName: dbTransfer.innovation.name,
+            transferId: dbTransfer.id,
+            recipientEmail: dbTransfer.email,
+          }
+        );
+      }
     }
   }
 
@@ -189,17 +264,17 @@ export class DomainInnovationsService {
           .createQueryBuilder()
           .update(InnovationExportRequestEntity)
           .set({
-            status: InnovationExportRequestStatusEnum.REJECTED,
             rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
+            status: InnovationExportRequestStatusEnum.REJECTED,
             updatedBy: userId,
           })
           .where(
             'innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
             {
+              approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
+              expiredAt: new Date(Date.now() - EXPIRATION_DATES.exportRequests).toISOString(),
               innovationId: dbInnovation.id,
               pendingStatus: InnovationExportRequestStatusEnum.PENDING,
-              approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
-              expiredAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString(),
             }
           )
           .execute();
@@ -211,9 +286,9 @@ export class DomainInnovationsService {
             status: InnovationTransferStatusEnum.PENDING,
           },
           {
+            finishedAt: new Date().toISOString(),
             status: InnovationTransferStatusEnum.CANCELED,
             updatedBy: userId,
-            finishedAt: new Date().toISOString(),
           }
         );
 

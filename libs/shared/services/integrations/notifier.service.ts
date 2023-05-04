@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import type { NotifierTypeEnum } from '../../enums';
-import type { DomainContextType, NotifierTemplatesType } from '../../types';
+import { NotifierTypeEnum, ServiceRoleEnum } from '../../enums';
+import type { AdminDomainContextType, DomainContextType, NotifierTemplatesType } from '../../types';
 
 import {
   LoggerServiceSymbol,
@@ -11,6 +11,17 @@ import {
 } from '../interfaces';
 import { QueuesEnum } from './storage-queue.service';
 
+// TechDebt: Remove the requestUser from notifications keeping only domainContext
+// TechDebt: Allow for system domain_context (this might be a breaking change and require notifications typing). Keeping the 00000000-0000-0000-0000-000000000000 for now.
+//           It used to be F4D75573-47CF-EC11-B656-0050F25A2AF6
+
+// This should be reviewed in the future, notifications currently require a sender (additionally it used to be F4D75573-47CF-EC11-B656-0050F25A2AF6)
+const SYSTEM_CRON_SENDER: AdminDomainContextType = {
+  currentRole: { id: '00000000-0000-0000-0000-000000000000', role: ServiceRoleEnum.ADMIN },
+  id: '00000000-0000-0000-0000-000000000000',
+  identityId: '00000000-0000-0000-0000-000000000000',
+};
+
 @injectable()
 export class NotifierService {
   constructor(
@@ -18,7 +29,7 @@ export class NotifierService {
     @inject(StorageQueueServiceSymbol) private storageQueueService: StorageQueueServiceType
   ) {}
 
-  async send<T extends NotifierTypeEnum>( // This typing strategy, validades the correct properties for the supplied notifierType.
+  async send<T extends NotifierTypeEnum>( // This typing strategy, validates the correct properties for the supplied notifierType.
     requestUser: { id: string; identityId: string },
     notifierType: T,
     params: NotifierTemplatesType[T],
@@ -41,5 +52,23 @@ export class NotifierService {
     }
 
     return true;
+  }
+
+  /**
+   * envelope function for sending system notifications. Currently it uses the SYSTEM_CRON_SENDER but this should be reviewd
+   * @param notifierType the notifier type
+   * @param params the notification parameters
+   * @returns true if the notification was sent
+   */
+  async sendSystemNotification<T extends NotifierTypeEnum>(
+    notifierType: T,
+    params: NotifierTemplatesType[T]
+  ): Promise<boolean> {
+    return this.send(
+      { id: SYSTEM_CRON_SENDER.id, identityId: SYSTEM_CRON_SENDER.identityId },
+      notifierType,
+      params,
+      SYSTEM_CRON_SENDER
+    );
   }
 }

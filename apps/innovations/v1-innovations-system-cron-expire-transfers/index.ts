@@ -13,7 +13,27 @@ class V1InnovationsSystemScheduleExpireTransfer {
     const logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
     logger.log('Running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer');
-    await domainService.innovations.withdrawExpiredInnovationsTransfers();
+
+    logger.log('Expire Innovations Transfer');
+    try {
+      await domainService.innovations.withdrawExpiredInnovationsTransfers();
+    } catch (e) {
+      logger.error(
+        'Error running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer',
+        e
+      );
+    }
+
+    logger.log('Remind pending Innovations Transfer 7 days before expiry');
+    try {
+      await domainService.innovations.remindInnovationsTransfers(7, 0);
+    } catch (e) {
+      logger.error(
+        'Error running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer',
+        e
+      );
+    }
+
     logger.log('Finished cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer');
   }
 }

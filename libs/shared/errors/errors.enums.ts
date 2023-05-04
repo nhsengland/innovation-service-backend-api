@@ -28,6 +28,7 @@ export enum UserErrorsEnum {
   USER_INVALID_ACCESSOR_PARAMETERS = 'U.0009',
   USER_MODEL_INVALID = 'U.0010',
   USER_ANNOUNCEMENT_NOT_FOUND = 'U.0011',
+  USER_ROLE_NOT_FOUND = 'U.0012'
 }
 
 export enum OrganisationErrorsEnum {

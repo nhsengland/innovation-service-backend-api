@@ -5,12 +5,14 @@ import {
   FileStorageServiceType,
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
+  NotifierServiceSymbol,
   SQLProviderSymbol,
   SQLProviderType,
 } from '../interfaces';
 
 import type { DataSource } from 'typeorm';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
+import { NotifierService } from '../integrations/notifier.service';
 import { DomainInnovationsService } from './domain-innovations.service';
 import { DomainUsersService } from './domain-users.service';
 
@@ -39,14 +41,16 @@ export class DomainService {
     @inject(IdentityProviderServiceSymbol)
     private identityProviderService: IdentityProviderServiceType,
     @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
-    @inject(SQLProviderSymbol) public sqlProvider: SQLProviderType
+    @inject(SQLProviderSymbol) public sqlProvider: SQLProviderType,
+    @inject(NotifierServiceSymbol) public notifierService: NotifierService
   ) {}
 
   setConnection(connection: DataSource): void {
     this._innovations = new DomainInnovationsService(
       connection,
       this.fileStorageService,
-      this.identityProviderService
+      this.identityProviderService,
+      this.notifierService
     );
     this._users = new DomainUsersService(
       connection,

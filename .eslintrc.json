@@ -14,9 +14,6 @@
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": ["warn", { "vars": "all", "args": "none", "ignoreRestSiblings": false }],
-    "@typescript-eslint/no-floating-promises": "error",
-
-    "sort-keys": ["warn", "asc", {"natural": true, "allowLineSeparatedGroups": true, "minKeys": 2}]
-    // "sort-imports": ["warn", {"allowSeparatedGroups": true}]
+    "@typescript-eslint/no-floating-promises": "error"
   }
 }

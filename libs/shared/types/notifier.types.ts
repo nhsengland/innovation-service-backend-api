@@ -85,6 +85,18 @@ export type NotifierTemplatesType = {
     transferId: string;
   };
 
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION]: {
+    innovationId: string;
+    transferId: string;
+  };
+
+  [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER]: {
+    innovationId: string;
+    innovationName: string;
+    transferId: string;
+    recipientEmail: string;
+  };
+
   [NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST]: {
     innovationId: string;
     requestId: string;
