@@ -213,17 +213,19 @@ export class InnovationTransferService extends BaseService {
       );
     }
 
-    // Check if target user is an Innovator
-    const isTargetUserInnovator = await this.sqlConnection
-      .createQueryBuilder(UserEntity, 'user')
-      .innerJoin('user.serviceRoles', 'userRoles')
-      .where('user.identityId = :identityId', { identityId: targetUser?.identityId })
-      .andWhere('userRoles.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
-      .getCount();
-    if (!isTargetUserInnovator) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR
-      );
+    if (targetUser) {
+      // Check if target user is an Innovator
+      const isTargetUserInnovator = await this.sqlConnection
+        .createQueryBuilder(UserEntity, 'user')
+        .innerJoin('user.serviceRoles', 'userRoles')
+        .where('user.identityId = :identityId', { identityId: targetUser?.identityId })
+        .andWhere('userRoles.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+        .getCount();
+      if (!isTargetUserInnovator) {
+        throw new UnprocessableEntityError(
+          InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR
+        );
+      }
     }
 
     // If all checks pass, create a new transfer request.
