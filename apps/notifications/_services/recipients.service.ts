@@ -39,8 +39,6 @@ import { inject, injectable } from 'inversify';
 import { BaseService } from './base.service';
 
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
-import { roleEntity2RoleType } from '@notifications/shared/entities/user/user-role.entity';
-import type { RoleType } from '@notifications/shared/types';
 import * as _ from 'lodash';
 import type { EntityManager } from 'typeorm';
 
@@ -1129,7 +1127,7 @@ export class RecipientsService extends BaseService {
       organisationUnit?: string;
       active?: boolean;
     }
-  ): Promise<RoleType> {
+  ): Promise<null | { id: string; lockedAt: Date | null }> {
     const query = this.sqlConnection
       .createQueryBuilder(UserRoleEntity, 'userRole')
       .where('userRole.user_id = :userId', { userId })
@@ -1152,10 +1150,13 @@ export class RecipientsService extends BaseService {
 
     const userRole = await query.getOne();
     if (!userRole) {
-      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+      return null;
     }
 
-    return roleEntity2RoleType(userRole);
+    return {
+      id: userRole.id,
+      lockedAt: userRole.lockedAt,
+    };
   }
 
   /**

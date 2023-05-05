@@ -187,10 +187,7 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.status', 'innovations_status')
       .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
       .addSelect('innovations.postcode', 'innovations_postcode')
-      .addSelect(
-        'innovations.otherCategoryDescription',
-        'innovations_other_category_description'
-      );
+      .addSelect('innovations.otherCategoryDescription', 'innovations_other_category_description');
 
     // Assessment relations.
     if (
@@ -1170,12 +1167,12 @@ export class InnovationsService extends BaseService {
           name: data.name,
 
           countryName: data.countryName,
-          description: data.description,          
+          description: data.description,
           owner: UserEntity.new({ id: domainContext.id }),
           postcode: data.postcode,
           status: InnovationStatusEnum.CREATED,
           statusUpdatedAt: new Date(),
-          
+
           createdAt: now,
           createdBy: domainContext.id,
           updatedAt: now,
@@ -1199,7 +1196,7 @@ export class InnovationsService extends BaseService {
             innovation: savedInnovation,
             section: CurrentCatalogTypes.InnovationSections.find((s) => s === sectionKey),
             status: InnovationSectionStatusEnum.DRAFT,
-            
+
             createdBy: savedInnovation.createdBy,
             updatedBy: savedInnovation.updatedBy,
           })
@@ -1430,7 +1427,7 @@ export class InnovationsService extends BaseService {
           innovation: {
             id: savedInnovation.id,
             name: savedInnovation.name,
-            assignedUserIds: savedInnovation.supportingUserIds,
+            affectedUsers: savedInnovation.affectedUsers,
           },
         },
         context
@@ -1476,22 +1473,17 @@ export class InnovationsService extends BaseService {
         .getMany();
 
       // Decline all actions for all innovation supports.
-      await transaction
-        .getRepository(InnovationActionEntity)
-        .update(
-          {
-            innovationSection: In(sections.map((section) => section.id)),
-            status: In([
-              InnovationActionStatusEnum.REQUESTED,
-              InnovationActionStatusEnum.SUBMITTED,
-            ]),
-          },
-          {
-            status: InnovationActionStatusEnum.DECLINED,
-            updatedBy: user.id,
-            updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
-          }
-        );
+      await transaction.getRepository(InnovationActionEntity).update(
+        {
+          innovationSection: In(sections.map((section) => section.id)),
+          status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]),
+        },
+        {
+          status: InnovationActionStatusEnum.DECLINED,
+          updatedBy: user.id,
+          updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
+        }
+      );
 
       // Update all support to UNASSIGNED.
       for (const innovationSupport of dbSupports) {

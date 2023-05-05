@@ -551,8 +551,11 @@ paths:
                             - SUPPORT_STATUS_UPDATE
                             - INNOVATION_REASSESSMENT_REQUEST
                             - INNOVATION_STOP_SHARING
+                            - INNOVATION_WITHDRAWN
                             - COLLABORATOR_INVITE
                             - COLLABORATOR_UPDATE
+                            - TRANSFER_EXPIRED
+                            - TRANSFER_REMINDER
                           description: The notification context detail
                         contextId:
                           type: string

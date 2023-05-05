@@ -4,6 +4,7 @@ import { EXPIRATION_DATES } from '../../constants';
 import {
   ActivityLogEntity,
   InnovationActionEntity,
+  InnovationAssessmentEntity,
   InnovationCollaboratorEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
@@ -171,13 +172,33 @@ export class DomainInnovationsService {
     user: { id: string; roleId: string },
     innovations: { id: string; reason: null | string }[],
     entityManager?: EntityManager
-  ): Promise<{ id: string; name: string; supportingUserIds: string[] }[]> {
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      affectedUsers: {
+        userId: string;
+        userType: ServiceRoleEnum;
+        organisationId?: string;
+        organisationUnitId?: string;
+      }[];
+    }[]
+  > {
     if (!innovations.length) {
       return [];
     }
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const toReturn: { id: string; name: string; supportingUserIds: string[] }[] = [];
+    const toReturn: {
+      id: string;
+      name: string;
+      affectedUsers: {
+        userId: string;
+        userType: ServiceRoleEnum;
+        organisationId?: string;
+        organisationUnitId?: string;
+      }[];
+    }[] = [];
 
     const dbInnovations = await this.innovationRepository
       .createQueryBuilder('innovations')
@@ -186,6 +207,7 @@ export class DomainInnovationsService {
       .leftJoinAndSelect('owner.serviceRoles', 'roles')
       .leftJoinAndSelect('innovations.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
+      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.user', 'users')
       .where('innovations.id IN (:...innovationIds)', {
@@ -203,6 +225,50 @@ export class DomainInnovationsService {
 
         if (innovationOwnerRole && user.roleId === '') {
           roleId = innovationOwnerRole.id;
+        }
+
+        const affectedUsers: {
+          userId: string;
+          userType: ServiceRoleEnum;
+          organisationId?: string;
+          organisationUnitId?: string;
+        }[] = [];
+
+        if (dbInnovation.status === InnovationStatusEnum.NEEDS_ASSESSMENT) {
+          const assignedNa = await em
+            .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+            .select(['assessment.id', 'assignedUser.id'])
+            .innerJoin('assessment.assignTo', 'assignedUser')
+            .where('assessment.innovation_id = :innovationId', { innovationId: dbInnovation.id })
+            .andWhere('assessment.finished_at IS NULL')
+            .getOne();
+
+          if (assignedNa) {
+            affectedUsers.push({
+              userId: assignedNa.assignTo.id,
+              userType: ServiceRoleEnum.ASSESSMENT,
+            });
+          }
+        }
+
+        // This is needed to send activeCollaborator notification
+        const activeCollaborators = await em
+          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .select(['collaborator.id', 'collaborator.innovation_id', 'user.id'])
+          .innerJoin('collaborator.user', 'user')
+          .where('collaborator.innovation_id = :innovationId', { innovationId: dbInnovation.id })
+          .andWhere('collaborator.status = :collaboratorActiveStatus', {
+            collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE,
+          })
+          .getMany();
+
+        if (activeCollaborators.length > 0) {
+          affectedUsers.push(
+            ...activeCollaborators.map((c) => ({
+              userId: c.user?.id ?? '',
+              userType: ServiceRoleEnum.INNOVATOR,
+            }))
+          );
         }
 
         // Update innovation collaborators status
@@ -306,14 +372,16 @@ export class DomainInnovationsService {
           id: In(unopenedNotificationsIds.map((c) => c.id)),
         });
 
-        // supporting users (without duplicates) for notifications.
-        const supportingUserIds = [
-          ...new Set(
-            dbInnovation.innovationSupports.flatMap((item) =>
-              item.organisationUnitUsers.map((su) => su.organisationUser.user.id)
-            )
-          ),
-        ];
+        affectedUsers.push(
+          ...dbInnovation.innovationSupports.flatMap((item) =>
+            item.organisationUnitUsers.map((su) => ({
+              userId: su.organisationUser.user.id,
+              userType: su.organisationUser.role as unknown as ServiceRoleEnum,
+              organisationId: item.organisationUnit.organisationId,
+              organisationUnitId: item.organisationUnit.id,
+            }))
+          )
+        );
 
         // Update all supports to UNASSIGNED AND delete them.
         for (const innovationSupport of dbInnovation.innovationSupports) {
@@ -336,7 +404,7 @@ export class DomainInnovationsService {
         toReturn.push({
           id: dbInnovation.id,
           name: dbInnovation.name,
-          supportingUserIds,
+          affectedUsers: [...new Map(affectedUsers.map((item) => [item['userId'], item])).values()], // remove duplicates
         });
       }
     } catch (error) {

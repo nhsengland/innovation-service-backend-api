@@ -72,7 +72,11 @@ export type NotifierTemplatesType = {
   };
 
   [NotifierTypeEnum.INNOVATION_WITHDRAWN]: {
-    innovation: { id: string; name: string; assignedUserIds: string[] };
+    innovation: {
+      id: string;
+      name: string;
+      affectedUsers: { userId: string; userType: ServiceRoleEnum, organisationId?: string, organisationUnitId?: string }[];
+    };
   };
 
   [NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION]: {

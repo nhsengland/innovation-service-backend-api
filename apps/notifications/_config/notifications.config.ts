@@ -189,7 +189,18 @@ export const NOTIFICATIONS_CONFIG: {
       >({
         id: Joi.string().guid().required(),
         name: Joi.string().required(),
-        assignedUserIds: Joi.array().items(Joi.string().guid()).required(),
+        affectedUsers: Joi.array()
+          .items(
+            Joi.object({
+              userId: Joi.string().guid().required(),
+              userType: Joi.string()
+                .valid(...Object.values(ServiceRoleEnum))
+                .required(),
+              organisationId: Joi.string().guid(),
+              organisationUnitId: Joi.string().guid(),
+            })
+          )
+          .required(),
       }).required(),
     }).required(),
   },

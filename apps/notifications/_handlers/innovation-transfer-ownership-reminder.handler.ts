@@ -71,16 +71,18 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
           ServiceRoleEnum.INNOVATOR
         );
 
-        this.inApp.push({
-          innovationId: this.inputData.innovationId,
-          context: {
-            type: NotificationContextTypeEnum.INNOVATION,
-            detail: NotificationContextDetailEnum.TRANSFER_EXPIRED,
-            id: this.inputData.transferId,
-          },
-          userRoleIds: [userRole.id],
-          params: {},
-        });
+        if (userRole) {
+          this.inApp.push({
+            innovationId: this.inputData.innovationId,
+            context: {
+              type: NotificationContextTypeEnum.INNOVATION,
+              detail: NotificationContextDetailEnum.TRANSFER_EXPIRED,
+              id: this.inputData.transferId,
+            },
+            userRoleIds: [userRole.id],
+            params: {},
+          });
+        }
       }
     }
 
