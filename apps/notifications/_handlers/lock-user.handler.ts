@@ -40,7 +40,12 @@ export class LockUserHandler extends BaseHandler<
       },
     });
 
-    if (userInfo.userRoles.includes(ServiceRoleEnum.INNOVATOR)) {
+    const userInnovatorRole = await this.recipientsService.getUserRole(
+      this.inputData.user.id,
+      ServiceRoleEnum.INNOVATOR
+    );
+
+    if (userInnovatorRole) {
       // InApp to all assigned users of locked user innovations.
       const userInnovations = await this.recipientsService.userInnovationsWithAssignedUsers(
         this.inputData.user.id

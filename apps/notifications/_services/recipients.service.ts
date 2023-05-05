@@ -62,17 +62,6 @@ export class RecipientsService extends BaseService {
     super();
   }
 
-  /*
-   * TODO - I (MS) think most of the times the roles will either be irrelevant as a response here or they will be required more as filters than anything
-   * else so I think we should remove them from the response and add them as filters to the queries.
-   * This will help with the performance of the queries and avoid double checking after in the returns.
-   *
-   * It will become apparent when we start using the service in the notifications service.
-   *
-   * Example usersInfo will now return multiple times the same user if he has more than one role, this might have impact at the presentation
-   * layer and force filtering afterwards (probably without the required context information)
-   */
-
   /**
    * Fetch users information with notification preferences.
    */
@@ -80,7 +69,6 @@ export class RecipientsService extends BaseService {
     {
       id: string;
       identityId: string;
-      userRole: ServiceRoleEnum;
       emailNotificationPreferences: {
         type: EmailNotificationTypeEnum;
         preference: EmailNotificationPreferenceEnum;
@@ -100,26 +88,17 @@ export class RecipientsService extends BaseService {
         .andWhere('user.locked_at IS NULL')
         .getMany()) || [];
 
-    const users = await Promise.all(
+    return Promise.all(
       dbUsers.map(async (item) => ({
         id: item.id,
         identityId: item.identityId,
         roles: item.serviceRoles.map((r) => r.role),
-        emailNotificationPreferences: (
-          await item.notificationPreferences
-        ).map((emailPreference) => ({
-          type: emailPreference.notification_id,
-          preference: emailPreference.preference,
-        })),
-      }))
-    );
-
-    return users.flatMap((user) =>
-      user.roles.map((role) => ({
-        id: user.id,
-        identityId: user.identityId,
-        userRole: role,
-        emailNotificationPreferences: user.emailNotificationPreferences,
+        emailNotificationPreferences: (await item.notificationPreferences).map(
+          (emailPreference) => ({
+            type: emailPreference.notification_id,
+            preference: emailPreference.preference,
+          })
+        ),
       }))
     );
   }
@@ -135,7 +114,6 @@ export class RecipientsService extends BaseService {
     identityId: string;
     name: string;
     email: string;
-    userRoles: ServiceRoleEnum[];
     isActive: boolean;
     emailNotificationPreferences: {
       type: EmailNotificationTypeEnum;
@@ -165,7 +143,6 @@ export class RecipientsService extends BaseService {
       identityId: dbUser.identityId,
       email: authUser.email,
       name: authUser.displayName,
-      userRoles: dbUser.serviceRoles.map((r) => r.role),
       isActive: !dbUser.lockedAt,
       emailNotificationPreferences: (await dbUser.notificationPreferences).map((item) => ({
         type: item.notification_id,
