@@ -1,10 +1,10 @@
 import { NotificationLogTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
-import { UserErrorsEnum } from '@notifications/shared/errors';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import { BaseHandler } from './base.handler';
 
 export class IdleSupportHandler extends BaseHandler<
@@ -13,6 +13,7 @@ export class IdleSupportHandler extends BaseHandler<
   Record<string, never>
 > {
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
+  private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -44,7 +45,8 @@ export class IdleSupportHandler extends BaseHandler<
       const ownerId = innovation.values.find((_) => true)?.ownerId;
 
       if (!ownerId) {
-        throw new Error(UserErrorsEnum.USER_SQL_NOT_FOUND);
+        this.logger.error(`Innovation owner not found for innovation: ${innovation.innovationId}`);
+        continue;
       }
 
       for (const details of innovation.values) {
