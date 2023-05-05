@@ -92,7 +92,7 @@ export class DomainInnovationsService {
       .getMany();
 
     if (transfersToExpire.length) {
-      const transferIds = transfersToExpire.map((item) => ({ id: item.id }));
+      const transferIds = transfersToExpire.map((item) => item.id);
 
       await em
         .createQueryBuilder(InnovationTransferEntity, 'transfers')
@@ -101,7 +101,7 @@ export class DomainInnovationsService {
           finishedAt: new Date(),
           status: InnovationTransferStatusEnum.EXPIRED,
         })
-        .where('transfers.id IN (:...ids)', { ids: transferIds })
+        .where('id IN (:...ids)', { ids: transferIds })
         .execute();
 
       for (const dbTransfer of transfersToExpire) {
@@ -121,19 +121,19 @@ export class DomainInnovationsService {
    * remind  all innovations that are about to expire.
    * - this enforces the emailCount to be the same to avoid sending double emails.
    * @param days number of days before expiration (default: 7)
-   * @param emailCount number of email previously sent (default: 0)
+   * @param emailCount number of email previously sent (default: 1)
    * @param entityManager optional entityManager
    */
   async remindInnovationsTransfers(
     days = 7,
-    emailCount = 0,
+    emailCount = 1,
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const transfersToExpire = await em
       .createQueryBuilder(InnovationTransferEntity, 'transfers')
-      .select(['transfers.id', 'transfers.email', 'innovation.name'])
+      .select(['transfers.id', 'transfers.email', 'innovation.id', 'innovation.name'])
       .innerJoin('transfers.innovation', 'innovation')
       .where('DATEDIFF(day, transfers.created_at, GETDATE()) = :date', {
         date: days,
@@ -143,13 +143,13 @@ export class DomainInnovationsService {
       .getMany();
 
     if (transfersToExpire.length) {
-      const transferIds = transfersToExpire.map((item) => ({ id: item.id }));
+      const transferIds = transfersToExpire.map((item) => item.id);
 
       await em
         .createQueryBuilder(InnovationTransferEntity, 'transfers')
         .update()
         .set({ emailCount: emailCount + 1 })
-        .where('transfers.id IN (:...ids)', { ids: transferIds })
+        .where('id IN (:...ids)', { ids: transferIds })
         .execute();
 
       for (const dbTransfer of transfersToExpire) {

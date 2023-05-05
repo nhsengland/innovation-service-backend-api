@@ -26,7 +26,7 @@ class V1InnovationsSystemScheduleExpireTransfer {
 
     logger.log('Remind pending Innovations Transfer 7 days before expiry');
     try {
-      await domainService.innovations.remindInnovationsTransfers(7, 0);
+      await domainService.innovations.remindInnovationsTransfers(7, 1);
     } catch (e) {
       logger.error(
         'Error running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer',
