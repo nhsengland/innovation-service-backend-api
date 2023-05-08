@@ -29,7 +29,7 @@ class V1InnovationsSystemScheduleExpireTransfer {
       await domainService.innovations.remindInnovationsTransfers(7, 1);
     } catch (e) {
       logger.error(
-        'Error running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer',
+        'Error running cron job: V1InnovationsSystemSchedule - Innovations Transfer Reminder',
         e
       );
     }
