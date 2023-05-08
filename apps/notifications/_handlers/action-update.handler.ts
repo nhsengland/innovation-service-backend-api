@@ -100,15 +100,15 @@ export class ActionUpdateHandler extends BaseHandler<
         break;
 
       case ServiceRoleEnum.ACCESSOR:
-      case ServiceRoleEnum.ASSESSMENT:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+      case ServiceRoleEnum.ASSESSMENT:
         if (
           [
             InnovationActionStatusEnum.COMPLETED,
             InnovationActionStatusEnum.REQUESTED,
             InnovationActionStatusEnum.CANCELLED,
             InnovationActionStatusEnum.DELETED
-          ]
+          ].includes(this.inputData.action.status)
         ) {
           await this.prepareEmailForInnovationOwner();
           await this.prepareInAppForInnovationOwner();
@@ -150,6 +150,11 @@ export class ActionUpdateHandler extends BaseHandler<
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
+    const path =
+      this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
+        ? 'accessor/innovations/:innovationId/action-tracker/:actionId'
+        : 'assessment/innovations/:innovationId/action-tracker/:actionId';
+
     this.emails.push({
       templateId: templateId,
       to: {
@@ -165,7 +170,7 @@ export class ActionUpdateHandler extends BaseHandler<
           declined_action_reason: this.inputData.comment ?? ''
         }),
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('accessor/innovations/:innovationId/action-tracker/:actionId')
+          .addPath(path)
           .setPathParams({
             innovationId: this.inputData.innovationId,
             actionId: this.inputData.action.id
