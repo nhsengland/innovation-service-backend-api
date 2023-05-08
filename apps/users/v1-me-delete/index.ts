@@ -29,8 +29,9 @@ class V1MeDelete {
 
       const auth = await authorizationService.validate(context).checkInnovatorType().verify();
       const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-      const result = await domainService.users.deleteUser(requestUser.id, { reason: body.reason });
+      const result = await domainService.users.deleteUser(domainContext, requestUser.id, { reason: body.reason });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

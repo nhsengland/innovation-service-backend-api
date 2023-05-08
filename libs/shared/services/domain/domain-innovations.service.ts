@@ -711,7 +711,7 @@ export class DomainInnovationsService {
     return new Map(groupedStatus.map((cur) => [cur.innovationId, cur.groupedStatus]));
   }
 
-  async getInnovationsByOwnerId(userId: string): Promise<
+  async getInnovationsByOwnerId(userId: string, entityManager?: EntityManager): Promise<
     {
       id: string;
       name: string;
@@ -719,7 +719,10 @@ export class DomainInnovationsService {
       expirationTransferDate: Date | null;
     }[]
   > {
-    const query = await this.sqlConnection
+
+    const connection = entityManager ?? this.sqlConnection;
+
+    const query = await connection 
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'innovations.name', 'collaborator.id', 'transfer.createdAt'])
       .leftJoin(

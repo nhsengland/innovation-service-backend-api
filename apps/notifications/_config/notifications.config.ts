@@ -47,6 +47,7 @@ import {
 import { InnovationTransferOwnershipExpirationHandler } from '../_handlers/innovation-transfer-ownership-exipraton.handler';
 import { InnovationTransferOwnershipReminderHandler } from '../_handlers/innovation-transfer-ownership-reminder.handler';
 import type { EmailTypeEnum } from './emails.config';
+import { InnovatorAccountDeletionHandler } from '../_handlers/innovation-owner-delete-account.handler';
 
 export const NOTIFICATIONS_CONFIG: {
   [key in NotifierTypeEnum]: {
@@ -61,6 +62,17 @@ export const NOTIFICATIONS_CONFIG: {
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]>(
       {}
     ),
+  },
+
+  [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
+    handler: InnovatorAccountDeletionHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]>({
+      innovations: Joi.array().items(Joi.object({
+        id: Joi.string().guid().required(),
+        name: Joi.string().required(),
+        transferExpireDate: Joi.date().required()
+      })).required()
+    }).required(),
   },
 
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {

@@ -554,6 +554,7 @@ paths:
                             - INNOVATION_WITHDRAWN
                             - COLLABORATOR_INVITE
                             - COLLABORATOR_UPDATE
+                            - TRANSFER_PENDING
                             - TRANSFER_EXPIRED
                             - TRANSFER_REMINDER
                           description: The notification context detail

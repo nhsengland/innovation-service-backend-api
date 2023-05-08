@@ -4,13 +4,14 @@ import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } fr
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import {
   InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
 } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DomainUserInfoType, RoleType } from '../../types';
+import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
 
-import type { IdentityProviderServiceType } from '../interfaces';
+import type { IdentityProviderServiceType, NotifierServiceType } from '../interfaces';
 
 import type { DomainInnovationsService } from './domain-innovations.service';
 
@@ -20,7 +21,8 @@ export class DomainUsersService {
   constructor(
     private sqlConnection: DataSource,
     private identityProviderService: IdentityProviderServiceType,
-    private domainInnovationsService: DomainInnovationsService
+    private domainInnovationsService: DomainInnovationsService,
+    private notifierService: NotifierServiceType
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
@@ -246,7 +248,7 @@ export class DomainUsersService {
     }
   }
 
-  async deleteUser(userId: string, data: { reason: null | string }): Promise<{ id: string }> {
+  async deleteUser(domainContext: DomainContextType, userId: string, data: { reason: null | string }): Promise<{ id: string }> {
     const dbUser = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
       .innerJoinAndSelect('user.serviceRoles', 'roles')
@@ -263,7 +265,10 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    return this.sqlConnection.transaction(async (transaction) => {
+    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: Date }[] =
+      [];
+
+    const result = this.sqlConnection.transaction(async (transaction) => {
       // If user has innovator role, deals with it's innovations.
       const userInnovatorRole = dbUser.serviceRoles.find(
         (item) => item.role === ServiceRoleEnum.INNOVATOR
@@ -271,7 +276,8 @@ export class DomainUsersService {
 
       if (userInnovatorRole) {
         const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(
-          dbUser.id
+          dbUser.id,
+          transaction
         );
 
         await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
@@ -301,6 +307,12 @@ export class DomainUsersService {
         );
 
         for (const dbInnovation of dbInnovations.filter((i) => i.expirationTransferDate !== null)) {
+          innovationsWithPendingTransfer.push({
+            id: dbInnovation.id,
+            name: dbInnovation.name,
+            transferExpireDate: dbInnovation.expirationTransferDate as Date,
+          });
+
           await this.sqlConnection.getRepository(InnovationEntity).update(
             {
               id: dbInnovation.id,
@@ -309,6 +321,18 @@ export class DomainUsersService {
               updatedBy: dbUser.id,
               expires_at: dbInnovation.expirationTransferDate,
             }
+          );
+        }
+
+        // Send notification to collaborators if there are innovations with pending transfer
+        if (innovationsWithPendingTransfer.length > 0) {
+          await this.notifierService.send(
+            { id: domainContext.id, identityId: domainContext.identityId },
+            NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER,
+            {
+              innovations: innovationsWithPendingTransfer,
+            },
+            domainContext
           );
         }
       }
@@ -335,6 +359,8 @@ export class DomainUsersService {
 
       return { id: dbUser.id };
     });
+
+    return result;
   }
 
   /**

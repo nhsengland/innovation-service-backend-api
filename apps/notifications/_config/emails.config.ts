@@ -1,5 +1,7 @@
 export enum EmailTypeEnum {
   ACCOUNT_CREATION_TO_INNOVATOR = '62486954-b235-4aa6-8b8d-960191fc6e69',
+  ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR = 'd09b5182-d995-4db7-b3ba-99fef085bb22',
+
   INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR = 'f34dd5fd-815b-4cc5-841d-46623ee85ad6',
   INNOVATION_SUBMITTED_TO_ALL_INNOVATORS = '028d4946-3461-43eb-bc02-183162e7b8b1',
   INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS = '20555202-3ee0-4d98-8434-fb86b6f59e26',
@@ -84,6 +86,11 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR]: {
     display_name?: string;
     innovation_service_url: string;
+  };
+  [EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    transfer_expiry_date: Date 
   };
   [EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR]: {
     display_name?: string;

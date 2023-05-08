@@ -27,9 +27,10 @@ class V1AdminDelete {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context).checkAdminType().verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
+      const domainContext = auth.getContext();
 
-      const result = await domainService.users.deleteUser(params.userId, { reason: null });
+      const result = await domainService.users.deleteUser(domainContext, params.userId, { reason: null });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
