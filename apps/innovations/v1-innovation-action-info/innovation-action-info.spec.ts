@@ -1,5 +1,5 @@
-import type { TestDataType } from '@innovations/shared/tests/tests.helper';
-import { TestsHelper } from '@innovations/shared/tests/tests.helper';
+import type { TestDataType } from '@innovations/shared/tests/tests-legacy.helper';
+import { TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -41,17 +41,17 @@ describe('v1-innovation-action-info Suite', () => {
   };
 
   beforeAll(async () => {
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.resetAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('200', () => {
@@ -197,7 +197,7 @@ describe('v1-innovation-action-info Suite', () => {
       [ServiceRoleEnum.ASSESSMENT, 200],
       [ServiceRoleEnum.INNOVATOR, 200],
     ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
-      const [user, context] = TestsHelper.getUser(userType);
+      const [user, context] = TestsLegacyHelper.getUser(userType);
 
       const httpTestBuilder = new HttpTestBuilder();
 

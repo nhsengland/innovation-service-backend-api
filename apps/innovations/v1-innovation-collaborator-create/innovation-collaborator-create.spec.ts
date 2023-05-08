@@ -1,4 +1,4 @@
-import { TestDataType, TestsHelper } from '@innovations/shared/tests';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -24,16 +24,16 @@ describe('v1-innovation-collaborator-create Suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('200', () => {
@@ -97,7 +97,7 @@ describe('v1-innovation-collaborator-create Suite', () => {
       [ServiceRoleEnum.ASSESSMENT, 403],
       [ServiceRoleEnum.INNOVATOR, 200],
     ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
-      const [user, context] = TestsHelper.getUser(userType);
+      const [user, context] = TestsLegacyHelper.getUser(userType);
 
       const httpTestBuilder = new HttpTestBuilder();
 

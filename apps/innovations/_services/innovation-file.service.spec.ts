@@ -1,4 +1,4 @@
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import { randText } from '@ngneat/falso';
@@ -13,17 +13,17 @@ describe('Innovation supports service test suite', () => {
 
   beforeAll(async () => {
     sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('uploadInnovationFile', () => {

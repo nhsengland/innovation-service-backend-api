@@ -1,32 +1,32 @@
-import { TestDataType, TestsHelper } from '@users/shared/tests/tests.helper';
-import { container } from '../_config';
-
-import { randUuid } from '@ngneat/falso';
-import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import type { EntityManager } from 'typeorm';
+import { randUuid } from '@ngneat/falso';
+
+import { TestDataType, TestsLegacyHelper } from '@users/shared/tests/tests-legacy.helper';
+import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+
+import { container } from '../_config';
 
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
 
 describe('Innovation Assessments Suite', () => {
   let sut: OrganisationsService;
-
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
     sut = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('getOrganisationInfo', () => {

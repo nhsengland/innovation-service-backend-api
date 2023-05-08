@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import {
@@ -35,26 +35,26 @@ describe('Innovation Assessments Suite', () => {
 
   beforeAll(async () => {
     sut = container.get<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService);
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
 
-    innovationWithAssessment = await TestsHelper.TestDataBuilder.createInnovation()
+    innovationWithAssessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
       .setOwner(testData.baseUsers.innovator)
       .withAssessments(testData.baseUsers.assessmentUser)
       .build(em);
 
-    innovationWithoutAssessment = await TestsHelper.TestDataBuilder.createInnovation()
+    innovationWithoutAssessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
       .setOwner(testData.baseUsers.innovator)
       .build(em);
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('getInnovationAssssmentInfo', () => {
@@ -243,7 +243,7 @@ describe('Innovation Assessments Suite', () => {
       jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
       jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
-      const innovationWithReassessment = await TestsHelper.TestDataBuilder.createInnovation()
+      const innovationWithReassessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
         .setOwner(testData.baseUsers.innovator)
         .withAssessments(testData.baseUsers.assessmentUser)
         .withReassessment()
@@ -270,7 +270,7 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should submit a reassessment', async () => {
-      const innovationWithReassessment = await TestsHelper.TestDataBuilder.createInnovation()
+      const innovationWithReassessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
         .setOwner(testData.baseUsers.innovator)
         .withAssessments(testData.baseUsers.assessmentUser)
         .withReassessment()
@@ -343,7 +343,7 @@ describe('Innovation Assessments Suite', () => {
       let err: UnprocessableEntityError | null = null;
 
       // not working due to datetime problems
-      // const innovationWithSupport = await TestsHelper.TestDataBuilder.createInnovation()
+      // const innovationWithSupport = await TestsLegacyHelper.TestDataBuilder.createInnovation()
       //   .setOwner(testData.baseUsers.innovator)
       //   .withSupportsAndAccessors(testData.organisationUnit.accessor, [testData.organisationUnitUsers.accessor])
       //   .withAssessments(testData.baseUsers.assessmentUser)

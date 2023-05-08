@@ -1,10 +1,10 @@
 import { injectable } from 'inversify';
+import type { EntityManager } from 'typeorm';
 
 import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum } from '@users/shared/enums';
-
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
-import type { EntityManager } from 'typeorm';
+
 import { BaseService } from './base.service';
 
 @injectable()

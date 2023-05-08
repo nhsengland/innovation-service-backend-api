@@ -3,14 +3,10 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 if (
-  !process.env['STORAGE_CONTAINER'] ||
-  !process.env['STORAGE_ACCOUNT'] ||
-  !process.env['STORAGE_KEY'] ||
-  !process.env['STORAGE_BASE_URL']
+  process.env['NODE_ENV'] !== 'test'
+  && (!process.env['STORAGE_CONTAINER'] || !process.env['STORAGE_ACCOUNT'] || !process.env['STORAGE_KEY'] || !process.env['STORAGE_BASE_URL'])
 ) {
-  console.error(
-    'File storage configurations undefined. Please, make sure environment variables are in place!'
-  );
+  console.error('File storage configurations undefined. Please, make sure environment variables are in place!');
 }
 
 export const FILE_STORAGE_CONFIG = Object.freeze({

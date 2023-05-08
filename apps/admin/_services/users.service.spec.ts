@@ -1,6 +1,6 @@
 import type { EntityManager } from 'typeorm';
 
-import { TestDataType, TestsHelper } from '@admin/shared/tests';
+import { TestDataType, TestsLegacyHelper } from '@admin/shared/tests';
 
 import { UserEntity } from '@admin/shared/entities';
 // import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
@@ -21,16 +21,16 @@ describe('Admin / Services / Users Service', () => {
 
     usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    entityManager = await TestsHelper.getQueryRunnerEntityManager();
+    entityManager = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await TestsHelper.releaseQueryRunnerEntityManager(entityManager);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(entityManager);
   });
 
   it('should lock a user', async () => {

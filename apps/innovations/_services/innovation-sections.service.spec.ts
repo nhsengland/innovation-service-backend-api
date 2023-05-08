@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import { InnovationSectionBuilder } from '@innovations/shared/builders/innovation-section.builder';
@@ -19,28 +19,28 @@ describe('Innovation Sections Suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-    await TestsHelper.init();
     sut = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
       displayName: randText(),
     } as any);
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   it('should list all sections as an innovator for his innovation', async () => {
     // arrange
     const innovation = testData.innovation;
 
-    await TestsHelper.TestDataBuilder.createAction(
+    await TestsLegacyHelper.TestDataBuilder.createAction(
       testData.domainContexts.accessor,
       (
         await innovation.sections
@@ -66,7 +66,7 @@ describe('Innovation Sections Suite', () => {
     // arrange
     const innovation = testData.innovation;
 
-    await TestsHelper.TestDataBuilder.createAction(
+    await TestsLegacyHelper.TestDataBuilder.createAction(
       testData.domainContexts.accessor,
       (
         await innovation.sections
@@ -176,7 +176,7 @@ describe('Innovation Sections Suite', () => {
 
     const innovator = testData.baseUsers.innovator;
     const innovation = testData.innovation;
-    const file = await TestsHelper.TestDataBuilder.addFileToInnovation(innovation, em);
+    const file = await TestsLegacyHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
     await sut.createInnovationEvidence(
       { id: innovator.id },
@@ -200,7 +200,7 @@ describe('Innovation Sections Suite', () => {
 
     const innovator = testData.baseUsers.innovator;
     const innovation = testData.innovation;
-    const file = await TestsHelper.TestDataBuilder.addFileToInnovation(innovation, em);
+    const file = await TestsLegacyHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
     const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(
       (et) => et !== 'CLINICAL_OR_CARE'

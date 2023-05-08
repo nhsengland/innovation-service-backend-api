@@ -137,7 +137,9 @@ export class InnovationEntity extends BaseEntity {
   @JoinColumn({ name: 'id' })
   document: InnovationDocumentEntity;
 
-  @OneToMany(() => InnovationTransferEntity, (record) => record.innovation)
+  @OneToMany(() => InnovationTransferEntity, (record) => record.innovation, {
+    cascade: ['insert', 'update'],
+  })
   transfers: InnovationTransferEntity[];
 
   static new(data: Partial<InnovationEntity>): InnovationEntity {

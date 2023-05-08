@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import {
@@ -43,17 +43,17 @@ describe('Innovation Actions Suite', () => {
 
   beforeAll(async () => {
     sut = container.get<InnovationActionsService>(SYMBOLS.InnovationActionsService);
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('createAction', () => {
@@ -214,7 +214,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       // Create other as QA/A
-      await TestsHelper.TestDataBuilder.createAction(
+      await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -233,7 +233,7 @@ describe('Innovation Actions Suite', () => {
       ]);
 
       // Create one as NA
-      const naAction = await TestsHelper.TestDataBuilder.createAction(
+      const naAction = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -276,7 +276,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       // Create one as NA
-      await TestsHelper.TestDataBuilder.createAction(
+      await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -308,7 +308,7 @@ describe('Innovation Actions Suite', () => {
         .getOne();
 
       // Create one as NA
-      await TestsHelper.TestDataBuilder.createAction(
+      await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -356,7 +356,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       // Create one as NA
-      await TestsHelper.TestDataBuilder.createAction(
+      await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -399,14 +399,14 @@ describe('Innovation Actions Suite', () => {
     });
 
     it('should list all actions from an innovation in status NEEDS_ASSESSMENT', async () => {
-      const innovation = await TestsHelper.TestDataBuilder.createInnovation()
+      const innovation = await TestsLegacyHelper.TestDataBuilder.createInnovation()
         .setOwner(testData.baseUsers.innovator)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
         .withSections()
         .withAssessments(testData.baseUsers.assessmentUser)
         .build(em);
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -427,7 +427,7 @@ describe('Innovation Actions Suite', () => {
     });
 
     it('should list all actions that are for section CURRENT_CARE_PATHWAY', async () => {
-      const innovation = await TestsHelper.TestDataBuilder.createInnovation()
+      const innovation = await TestsLegacyHelper.TestDataBuilder.createInnovation()
         .setOwner(testData.baseUsers.innovator)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
         .withSections()
@@ -438,7 +438,7 @@ describe('Innovation Actions Suite', () => {
         (section) => section.section === 'CURRENT_CARE_PATHWAY'
       );
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         section!
       )
@@ -460,7 +460,7 @@ describe('Innovation Actions Suite', () => {
     it('should list all actions that are in COMPLETED status', async () => {
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -484,7 +484,7 @@ describe('Innovation Actions Suite', () => {
     it('should list all actions that are created by me as a NA', async () => {
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -517,7 +517,7 @@ describe('Innovation Actions Suite', () => {
       const innovation = testData.innovation;
 
       // Create one with NA to see if filter is really just getting the ones created by him
-      await TestsHelper.TestDataBuilder.createAction(
+      await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -563,7 +563,7 @@ describe('Innovation Actions Suite', () => {
       const randomSection = await testData.innovation.sections;
       const randomSupport = testData.innovation.innovationSupports;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         randomSection[0]!,
         randomSupport[0]!
@@ -587,7 +587,7 @@ describe('Innovation Actions Suite', () => {
     it('should return information about an action created by QA/A', async () => {
       const innovation = testData.innovation;
 
-      const newAction = await TestsHelper.TestDataBuilder.createAction(
+      const newAction = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -631,7 +631,7 @@ describe('Innovation Actions Suite', () => {
     it('should return information about an action created by NA', async () => {
       const innovation = testData.innovation;
 
-      const newAction = await TestsHelper.TestDataBuilder.createAction(
+      const newAction = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -671,7 +671,7 @@ describe('Innovation Actions Suite', () => {
     it('should return declineReason of an action in status DECLINED', async () => {
       const innovation = testData.innovation;
 
-      const newAction = await TestsHelper.TestDataBuilder.createAction(
+      const newAction = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -683,7 +683,7 @@ describe('Innovation Actions Suite', () => {
         .build(em);
 
       const declineReason = randText();
-      await TestsHelper.TestDataBuilder.addActivityLog(
+      await TestsLegacyHelper.TestDataBuilder.addActivityLog(
         innovation,
         {
           userId: testData.baseUsers.assessmentUser.id,
@@ -755,7 +755,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -791,7 +791,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -827,7 +827,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -886,7 +886,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -920,7 +920,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -954,7 +954,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -1000,7 +1000,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1035,7 +1035,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1070,7 +1070,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1105,7 +1105,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser2,
         (
           await innovation.sections
@@ -1163,7 +1163,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1196,7 +1196,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1229,7 +1229,7 @@ describe('Innovation Actions Suite', () => {
       const assessmentUser = testData.baseUsers.assessmentUser;
       const innovation = testData.innovation;
 
-      const actionByAccessor = await TestsHelper.TestDataBuilder.createAction(
+      const actionByAccessor = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -1263,7 +1263,7 @@ describe('Innovation Actions Suite', () => {
       const accessor = testData.baseUsers.accessor;
       const innovation = testData.innovation;
 
-      const actionByAccessor = await TestsHelper.TestDataBuilder.createAction(
+      const actionByAccessor = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1315,7 +1315,7 @@ describe('Innovation Actions Suite', () => {
       const innovator = testData.baseUsers.innovator;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections
@@ -1352,7 +1352,7 @@ describe('Innovation Actions Suite', () => {
       const innovator = testData.baseUsers.innovator;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.accessor,
         (
           await innovation.sections
@@ -1414,7 +1414,7 @@ describe('Innovation Actions Suite', () => {
       const innovator = testData.baseUsers.innovator;
       const innovation = testData.innovation;
 
-      const action = await TestsHelper.TestDataBuilder.createAction(
+      const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
         (
           await innovation.sections

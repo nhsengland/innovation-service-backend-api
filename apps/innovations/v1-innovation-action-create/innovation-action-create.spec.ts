@@ -1,4 +1,4 @@
-import { TestDataType, TestsHelper } from '@innovations/shared/tests';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -19,16 +19,16 @@ describe('v1-innovation-action-create Suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('200', () => {

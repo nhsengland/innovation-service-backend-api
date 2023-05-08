@@ -1,4 +1,4 @@
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import {
@@ -32,18 +32,18 @@ describe('Innovation supports service test suite', () => {
   let em: EntityManager;
 
   beforeAll(async () => {
-    await TestsHelper.init();
     sut = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('getInnovationSupportsList', () => {
@@ -194,7 +194,7 @@ describe('Innovation supports service test suite', () => {
     let innovationWithoutSupports: InnovationEntity;
 
     beforeEach(async () => {
-      innovationWithoutSupports = await TestsHelper.TestDataBuilder.createInnovation()
+      innovationWithoutSupports = await TestsLegacyHelper.TestDataBuilder.createInnovation()
         .setOwner(testData.baseUsers.innovator)
         .withAssessments(testData.baseUsers.assessmentUser)
         .build(em);

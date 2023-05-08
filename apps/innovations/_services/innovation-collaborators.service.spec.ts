@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
@@ -28,18 +28,18 @@ describe('Innovation Collaborators Suite', () => {
 
   beforeAll(async () => {
     sut = container.get<InnovationCollaboratorsService>(SYMBOLS.InnovationCollaboratorsService);
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
     jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('createCollaborator', () => {
@@ -359,11 +359,11 @@ describe('Innovation Collaborators Suite', () => {
     let collaboratorPendingWithUser: InnovationCollaboratorEntity;
 
     beforeEach(async () => {
-      collaboratorPendingWithoutUser = await TestsHelper.TestDataBuilder.createCollaborator(
+      collaboratorPendingWithoutUser = await TestsLegacyHelper.TestDataBuilder.createCollaborator(
         testData.domainContexts.innovator,
         testData.innovation
       ).build(em);
-      collaboratorPendingWithUser = await TestsHelper.TestDataBuilder.createCollaborator(
+      collaboratorPendingWithUser = await TestsLegacyHelper.TestDataBuilder.createCollaborator(
         testData.domainContexts.innovator,
         testData.innovation
       )
