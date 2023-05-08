@@ -9,7 +9,7 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  supportId: Joi.string().guid().required(),
+  supportId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -35,10 +35,10 @@ export const BodySchema = Joi.object<BodyType>({
       .items(
         Joi.object({
           id: Joi.string().guid().required(),
-          organisationUnitUserId: Joi.string().guid().required(),
+          organisationUnitUserId: Joi.string().guid().required()
         })
       )
       .required(),
-    otherwise: Joi.forbidden(),
-  }),
+    otherwise: Joi.forbidden()
+  })
 }).required();

@@ -4,7 +4,7 @@ export enum NotificationContextTypeEnum {
   SUPPORT = 'SUPPORT',
   ACTION = 'ACTION',
   THREAD = 'THREAD',
-  COMMENT = 'COMMENT', // TODO: Deprecated!
+  COMMENT = 'COMMENT' // TODO: Deprecated!
 }
 
 export enum NotificationContextDetailEnum {
@@ -32,15 +32,15 @@ export enum NotificationContextDetailEnum {
 export enum EmailNotificationTypeEnum { // Subset of NotificationContextTypeEnum.
   ACTION = 'ACTION',
   MESSAGE = 'MESSAGE',
-  SUPPORT = 'SUPPORT',
+  SUPPORT = 'SUPPORT'
 }
 
 export enum EmailNotificationPreferenceEnum {
   NEVER = 'NEVER',
   INSTANTLY = 'INSTANTLY',
-  DAILY = 'DAILY',
+  DAILY = 'DAILY'
 }
 
 export enum NotificationLogTypeEnum {
-  QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT',
+  QA_A_IDLE_SUPPORT = 'QA_A_IDLE_SUPPORT'
 }

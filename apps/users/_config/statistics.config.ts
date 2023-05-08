@@ -12,23 +12,23 @@ export const USER_STATISTICS_CONFIG: Record<
   }
 > = {
   [UserStatisticsEnum.WAITING_ASSESSMENT_COUNTER]: {
-    handler: waitingAssessmentStatisticsHandler,
+    handler: waitingAssessmentStatisticsHandler
   },
   [UserStatisticsEnum.ASSIGNED_INNOVATIONS_COUNTER]: {
-    handler: assignedInnovationsStatisticsHandler,
+    handler: assignedInnovationsStatisticsHandler
   },
 
   [UserStatisticsEnum.INNOVATIONS_ASSIGNED_TO_ME_COUNTER]: {
-    handler: innovationsAssignedToMeStatisticsHandler,
+    handler: innovationsAssignedToMeStatisticsHandler
   },
 
   [UserStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: {
-    handler: actionsToReviewStatisticsHandler,
+    handler: actionsToReviewStatisticsHandler
   },
 
   [UserStatisticsEnum.INNOVATIONS_TO_REVIEW_COUNTER]: {
-    handler: innovationsToReviewStatisticsHandler,
-  },
+    handler: innovationsToReviewStatisticsHandler
+  }
 };
 
 export type UserStatisticsTemplateType = {

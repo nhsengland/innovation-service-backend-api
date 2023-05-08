@@ -11,7 +11,7 @@ const SQLDB_SEEDS_CONNECTION = new DataSource({
   ...SQLDB_DEFAULT_CONNECTION,
   name: 'seeds',
   migrations: [`${join(__dirname, '..')}/seeds/*.ts`],
-  migrationsTableName: 'Seeds',
+  migrationsTableName: 'Seeds'
 });
 
 export default SQLDB_SEEDS_CONNECTION;

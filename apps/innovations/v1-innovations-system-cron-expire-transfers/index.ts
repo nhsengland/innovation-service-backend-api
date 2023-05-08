@@ -2,7 +2,7 @@ import {
   DomainServiceSymbol,
   DomainServiceType,
   LoggerServiceSymbol,
-  LoggerServiceType,
+  LoggerServiceType
 } from '@innovations/shared/services';
 import { container } from '../_config';
 
@@ -18,20 +18,14 @@ class V1InnovationsSystemScheduleExpireTransfer {
     try {
       await domainService.innovations.withdrawExpiredInnovationsTransfers();
     } catch (e) {
-      logger.error(
-        'Error running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer',
-        e
-      );
+      logger.error('Error running cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer', e);
     }
 
     logger.log('Remind pending Innovations Transfer 7 days before expiry');
     try {
       await domainService.innovations.remindInnovationsTransfers(7, 1);
     } catch (e) {
-      logger.error(
-        'Error running cron job: V1InnovationsSystemSchedule - Innovations Transfer Reminder',
-        e
-      );
+      logger.error('Error running cron job: V1InnovationsSystemSchedule - Innovations Transfer Reminder', e);
     }
 
     logger.log('Finished cron job: V1InnovationsSystemSchedule - Expire Innovations Transfer');

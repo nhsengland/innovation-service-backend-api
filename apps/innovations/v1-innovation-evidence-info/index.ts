@@ -15,12 +15,8 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class GetInnovationEvidenceInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -44,7 +40,7 @@ class GetInnovationEvidenceInfo {
         evidenceSubmitType: result.evidenceSubmitType,
         description: result.description,
         summary: result.summary,
-        files: result.files,
+        files: result.files
       });
       return;
     } catch (error) {
@@ -74,25 +70,25 @@ export default openApi(
                 properties: {
                   id: {
                     type: 'string',
-                    description: 'Innovation evidence id.',
+                    description: 'Innovation evidence id.'
                   },
                   evidenceType: {
                     type: 'string',
                     enum: Object.values(CurrentCatalogTypes.catalogEvidenceType),
-                    description: 'Evidence type.',
+                    description: 'Evidence type.'
                   },
                   evidenceSubmitType: {
                     type: 'string',
                     enum: Object.values(CurrentCatalogTypes.catalogEvidenceSubmitType),
-                    description: 'Clinical submit type.',
+                    description: 'Clinical submit type.'
                   },
                   description: {
                     type: 'string',
-                    description: 'Evidence description.',
+                    description: 'Evidence description.'
                   },
                   summary: {
                     type: 'string',
-                    description: 'Evidence summary.',
+                    description: 'Evidence summary.'
                   },
                   files: {
                     type: 'array',
@@ -102,37 +98,37 @@ export default openApi(
                       properties: {
                         id: {
                           type: 'string',
-                          description: 'File id.',
+                          description: 'File id.'
                         },
                         displayFileName: {
                           type: 'string',
-                          description: 'File display name.',
+                          description: 'File display name.'
                         },
                         url: {
                           type: 'string',
-                          description: 'File url.',
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+                          description: 'File url.'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not found',
+          description: 'Not found'
         },
         500: {
-          description: 'Internal server error',
-        },
-      },
-    },
+          description: 'Internal server error'
+        }
+      }
+    }
   }
 );

@@ -1,8 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterTableActivityLogAddConstraintCancelAction1673106536106
-  implements MigrationInterface
-{
+export class alterTableActivityLogAddConstraintCancelAction1673106536106 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE "activity_log" DROP CONSTRAINT "CK_activity_log_activity"

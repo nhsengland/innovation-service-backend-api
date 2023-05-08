@@ -6,10 +6,7 @@ export type ParamsType = {
   organisationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  organisationId: Joi.string()
-    .guid()
-    .required()
-    .description('Id of the organisation to which the unit will belong to.'),
+  organisationId: Joi.string().guid().required().description('Id of the organisation to which the unit will belong to.')
 }).required();
 
 export type BodyType = {
@@ -24,5 +21,5 @@ export const BodySchema = Joi.object<BodyType>({
   acronym: Joi.string()
     .max(ORGANISATIONS_LENGTH_LIMITS.unit_acronym)
     .required()
-    .description('Acronym of the organisation unit.'),
+    .description('Acronym of the organisation unit.')
 }).required();

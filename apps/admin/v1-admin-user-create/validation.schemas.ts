@@ -14,7 +14,7 @@ export const BodySchema = Joi.object<BodyType>({
   name: Joi.string().required().description('Name of the user.'),
   email: Joi.string().email().required().description('Email of the user.'),
   type: Joi.string()
-    .valid(...Object.values(ServiceRoleEnum).filter((t) => t !== ServiceRoleEnum.INNOVATOR))
+    .valid(...Object.values(ServiceRoleEnum).filter(t => t !== ServiceRoleEnum.INNOVATOR))
     .required()
     .description('Type of the user.'),
   organisationAcronym: Joi.string()
@@ -31,5 +31,5 @@ export const BodySchema = Joi.object<BodyType>({
     .valid(...Object.values(AccessorOrganisationRoleEnum))
     .optional()
     .allow(null)
-    .description('Role of the user within the organisation.'),
+    .description('Role of the user within the organisation.')
 }).required();

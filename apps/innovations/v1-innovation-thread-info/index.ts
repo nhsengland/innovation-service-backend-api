@@ -19,12 +19,8 @@ class V1InnovationThreadInfo {
   @JwtDecoder()
   @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const threadsService = container.get<InnovationThreadsService>(
-      SYMBOLS.InnovationThreadsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -45,8 +41,8 @@ class V1InnovationThreadInfo {
         createdAt: result.createdAt,
         createdBy: {
           id: result.createdBy.id,
-          name: result.createdBy.name,
-        },
+          name: result.createdBy.name
+        }
       });
       return;
     } catch (error) {
@@ -56,84 +52,80 @@ class V1InnovationThreadInfo {
   }
 }
 
-export default openApi(
-  V1InnovationThreadInfo.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads/{threadId}',
-  {
-    get: {
-      summary: 'Get Innovation Thread Info',
-      description: 'Get Innovation Thread Info',
-      tags: ['Innovation Thread'],
-      operationId: 'v1-innovation-thread-info',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation Id',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-        {
-          name: 'threadId',
-          in: 'path',
-          description: 'Thread Id',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                  },
-                  subject: {
-                    type: 'string',
-                  },
-                  createdAt: {
-                    type: 'string',
-                  },
-                  createdBy: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                      },
-                      name: {
-                        type: 'string',
-                      },
-                      type: {
-                        type: 'string',
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        401: {
-          description: 'Unauthorized',
-        },
-        403: {
-          description: 'Forbidden',
-        },
-        404: {
-          description: 'Not Found',
-        },
-        500: {
-          description: 'Internal Server Error',
-        },
+export default openApi(V1InnovationThreadInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/threads/{threadId}', {
+  get: {
+    summary: 'Get Innovation Thread Info',
+    description: 'Get Innovation Thread Info',
+    tags: ['Innovation Thread'],
+    operationId: 'v1-innovation-thread-info',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation Id',
+        required: true,
+        schema: {
+          type: 'string'
+        }
       },
-    },
+      {
+        name: 'threadId',
+        in: 'path',
+        description: 'Thread Id',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string'
+                },
+                subject: {
+                  type: 'string'
+                },
+                createdAt: {
+                  type: 'string'
+                },
+                createdBy: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'string'
+                    },
+                    name: {
+                      type: 'string'
+                    },
+                    type: {
+                      type: 'string'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      401: {
+        description: 'Unauthorized'
+      },
+      403: {
+        description: 'Forbidden'
+      },
+      404: {
+        description: 'Not Found'
+      },
+      500: {
+        description: 'Internal Server Error'
+      }
+    }
   }
-);
+});

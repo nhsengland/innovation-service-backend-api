@@ -19,9 +19,7 @@ export const startup = async (container: Container): Promise<void> => {
     if (process.env['LOCAL_MODE'] ?? false) {
       console.group('Generating documentation...');
 
-      const response = await httpService
-        .getHttpInstance()
-        .get(`http://localhost:7072/api/swagger.json`);
+      const response = await httpService.getHttpInstance().get(`http://localhost:7072/api/swagger.json`);
       console.log('Saving swagger file');
       fs.writeFileSync(
         `${join(__dirname, '../../../..')}/apps/innovations/.apim/swagger.yaml`,

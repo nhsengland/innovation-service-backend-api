@@ -20,9 +20,7 @@ export class alterTableNotificationUserEntityAddRole1676476916512 implements Mig
           WHERE r.organisation_unit_id is null AND r.role IN ('ACCESSOR', 'QUALIFYING_ACCESSOR');
       `);
 
-    await queryRunner.query(
-      `ALTER TABLE "notification_user" ADD "user_role_id" uniqueidentifier NULL`
-    );
+    await queryRunner.query(`ALTER TABLE "notification_user" ADD "user_role_id" uniqueidentifier NULL`);
 
     await queryRunner.query(`
         UPDATE notification_user
@@ -37,9 +35,7 @@ export class alterTableNotificationUserEntityAddRole1676476916512 implements Mig
           WHERE user_role_id IS NULL;
       `);
 
-    await queryRunner.query(
-      `ALTER TABLE "notification_user" ALTER COLUMN "user_role_id" uniqueidentifier NOT NULL`
-    );
+    await queryRunner.query(`ALTER TABLE "notification_user" ALTER COLUMN "user_role_id" uniqueidentifier NOT NULL`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

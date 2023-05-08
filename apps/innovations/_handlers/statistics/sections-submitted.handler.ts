@@ -3,7 +3,7 @@ import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/
 import { container } from '../../_config';
 import type {
   InnovationStatisticsParamsTemplateType,
-  InnovationStatisticsTemplateType,
+  InnovationStatisticsTemplateType
 } from '../../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import type { StatisticsService } from '../../_services/statistics.service';
@@ -19,21 +19,19 @@ export class SectionsSubmittedStatisticsHandler extends InnovationsStatisticsHan
     super(requestUser, domainContext, data);
   }
 
-  async run(): Promise<
-    InnovationStatisticsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]
-  > {
+  async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]> {
     const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
     const submittedSections = await statisticsService.getSubmittedSections(this.data.innovationId);
     const totalSections = CurrentCatalogTypes.InnovationSections.length;
 
-    const lastSubmittedSection = submittedSections.find((_) => true);
+    const lastSubmittedSection = submittedSections.find(_ => true);
 
     return {
       count: submittedSections.length,
       total: totalSections,
       lastSubmittedSection: lastSubmittedSection?.section || null,
-      lastSubmittedAt: lastSubmittedSection?.updatedAt || null,
+      lastSubmittedAt: lastSubmittedSection?.updatedAt || null
     };
   }
 }

@@ -1,12 +1,7 @@
 import { randPastDate, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import {
-  OrganisationEntity,
-  OrganisationUnitEntity,
-  UserEntity,
-  UserRoleEntity,
-} from '../entities';
+import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '../entities';
 import { ServiceRoleEnum } from '../enums';
 
 import { BaseBuilder } from './base.builder';
@@ -20,7 +15,7 @@ export class UserBuilder extends BaseBuilder {
     this.user = UserEntity.new({
       firstTimeSignInAt: randPastDate(),
       identityId: randUuid(),
-      serviceRoles: [],
+      serviceRoles: []
     });
   }
 
@@ -31,13 +26,8 @@ export class UserBuilder extends BaseBuilder {
     return this.user.serviceRoles;
   }
 
-  addRole(
-    type: ServiceRoleEnum,
-    organisation?: OrganisationEntity,
-    organisationUnit?: OrganisationUnitEntity
-  ): this {
-    if (type === ServiceRoleEnum.INNOVATOR && !organisation)
-      throw new Error('Innovator role must have organisation');
+  addRole(type: ServiceRoleEnum, organisation?: OrganisationEntity, organisationUnit?: OrganisationUnitEntity): this {
+    if (type === ServiceRoleEnum.INNOVATOR && !organisation) throw new Error('Innovator role must have organisation');
     if (
       (type === ServiceRoleEnum.ACCESSOR || type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
       !organisation &&
@@ -48,7 +38,7 @@ export class UserBuilder extends BaseBuilder {
       UserRoleEntity.new({
         role: type,
         organisation: organisation ?? null,
-        organisationUnit: organisationUnit ?? null,
+        organisationUnit: organisationUnit ?? null
       })
     );
     return this;

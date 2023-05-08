@@ -16,9 +16,7 @@ import { BodySchema, BodyType } from './validation.schemas';
 class V1AdminUserCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
@@ -53,15 +51,15 @@ export default openApi(V1AdminUserCreate.httpTrigger as AzureFunction, '/v1/user
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'The user id.' },
-              },
-            },
-          },
-        },
+                id: { type: 'string', description: 'The user id.' }
+              }
+            }
+          }
+        }
       },
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to create a user.' },
-      '500': { description: 'An error occurred while creating the user.' },
-    },
-  },
+      '500': { description: 'An error occurred while creating the user.' }
+    }
+  }
 });

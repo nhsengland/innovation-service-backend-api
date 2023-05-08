@@ -13,10 +13,7 @@ export class OrganisationsService extends BaseService {
     super();
   }
 
-  async getOrganisationsList(filters: {
-    fields?: 'organisationUnits'[];
-    withInactive?: boolean;
-  }): Promise<
+  async getOrganisationsList(filters: { fields?: 'organisationUnits'[]; withInactive?: boolean }): Promise<
     {
       id: string;
       name: string;
@@ -46,7 +43,7 @@ export class OrganisationsService extends BaseService {
     const dbOrganisations = await query.getMany();
 
     return Promise.all(
-      dbOrganisations.map(async (organisation) => ({
+      dbOrganisations.map(async organisation => ({
         id: organisation.id,
         name: organisation.name,
         acronym: organisation.acronym ?? '',
@@ -55,13 +52,13 @@ export class OrganisationsService extends BaseService {
         ...(!filters.fields?.includes('organisationUnits')
           ? {}
           : {
-              organisationUnits: (await organisation.organisationUnits).map((organisationUnit) => ({
+              organisationUnits: (await organisation.organisationUnits).map(organisationUnit => ({
                 id: organisationUnit.id,
                 name: organisationUnit.name,
                 acronym: organisationUnit.acronym,
-                isActive: !organisationUnit.inactivatedAt,
-              })),
-            }),
+                isActive: !organisationUnit.inactivatedAt
+              }))
+            })
       }))
     );
   }
@@ -106,18 +103,16 @@ export class OrganisationsService extends BaseService {
     const organisationUnits = await Promise.all(
       (
         await organisation.organisationUnits
-      ).map(async (unit) => ({
+      ).map(async unit => ({
         id: unit.id,
         name: unit.name,
         acronym: unit.acronym,
         isActive: !unit.inactivatedAt,
         userCount: onlyActiveUsers
-          ? (
-              await unit.organisationUnitUsers
-            ).filter((unitUser) => !unitUser.organisationUser.user.lockedAt).length
+          ? (await unit.organisationUnitUsers).filter(unitUser => !unitUser.organisationUser.user.lockedAt).length
           : (
               await unit.organisationUnitUsers
-            ).length,
+            ).length
       }))
     );
 
@@ -126,7 +121,7 @@ export class OrganisationsService extends BaseService {
       name: organisation.name,
       acronym: organisation.acronym,
       organisationUnits,
-      isActive: !organisation.inactivatedAt,
+      isActive: !organisation.inactivatedAt
     };
   }
 
@@ -163,7 +158,7 @@ export class OrganisationsService extends BaseService {
       name: unit.name,
       acronym: unit.acronym,
       isActive: !unit.inactivatedAt,
-      canActivate: hasQualifyingAccessor,
+      canActivate: hasQualifyingAccessor
     };
   }
 }

@@ -5,7 +5,7 @@ import {
   MigrationInterface,
   ObjectType,
   QueryRunner,
-  Repository,
+  Repository
 } from 'typeorm';
 
 export abstract class BaseSeed implements MigrationInterface {

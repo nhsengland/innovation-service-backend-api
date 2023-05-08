@@ -5,7 +5,7 @@ import {
   LoggerServiceSymbol,
   LoggerServiceType,
   SQLConnectionServiceSymbol,
-  SQLConnectionServiceType,
+  SQLConnectionServiceType
 } from '@notifications/shared/services';
 
 import { container } from '../_config';
@@ -23,9 +23,7 @@ export class BaseService {
   private _sqlConnection: DataSource;
   get sqlConnection(): DataSource {
     if (!this._sqlConnection) {
-      this._sqlConnection = container
-        .get<SQLConnectionServiceType>(SQLConnectionServiceSymbol)
-        .getConnection();
+      this._sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
     }
     return this._sqlConnection;
   }

@@ -25,7 +25,7 @@ import type {
   catalogYesNoNotRelevant,
   catalogYesNoNotSure,
   catalogYesNotYet,
-  catalogYesNotYetNo,
+  catalogYesNotYetNo
 } from './catalog.types';
 
 export type DocumentType202304 = {

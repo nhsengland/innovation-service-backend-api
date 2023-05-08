@@ -16,9 +16,7 @@ import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './
 class V1OrganisationInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
@@ -27,10 +25,7 @@ class V1OrganisationInfo {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await organisationsService.getOrganisationInfo(
-        params.organisationId,
-        queryParams.onlyActiveUsers
-      );
+      const result = await organisationsService.getOrganisationInfo(params.organisationId, queryParams.onlyActiveUsers);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -41,28 +36,24 @@ class V1OrganisationInfo {
   }
 }
 
-export default openApi(
-  V1OrganisationInfo.httpTrigger as AzureFunction,
-  '/v1/organisations/{organisationId}',
-  {
-    get: {
-      description: 'Get organisation info.',
-      operationId: 'v1-organisation-info',
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      responses: {
-        '200': {
-          description: 'Success.',
-        },
-        '400': {
-          description: 'Bad request.',
-        },
-        '401': {
-          description: 'The user is not authorized to get this information.',
-        },
-        '500': {
-          description: 'An error occurred while getting this information.',
-        },
+export default openApi(V1OrganisationInfo.httpTrigger as AzureFunction, '/v1/organisations/{organisationId}', {
+  get: {
+    description: 'Get organisation info.',
+    operationId: 'v1-organisation-info',
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    responses: {
+      '200': {
+        description: 'Success.'
       },
-    },
+      '400': {
+        description: 'Bad request.'
+      },
+      '401': {
+        description: 'The user is not authorized to get this information.'
+      },
+      '500': {
+        description: 'An error occurred while getting this information.'
+      }
+    }
   }
-);
+});

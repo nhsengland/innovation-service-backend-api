@@ -14,7 +14,7 @@ export const BodySchema = Joi.array()
         .required(),
       preference: Joi.string()
         .valid(...Object.values(EmailNotificationPreferenceEnum))
-        .required(),
+        .required()
     })
   )
   .min(1)

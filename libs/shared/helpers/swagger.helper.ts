@@ -8,22 +8,17 @@ export class SwaggerHelper {
    * @param data object with path and/or query joi schemas
    * @returns swagger parameter objects
    */
-  static paramJ2S = (data: {
-    path?: ObjectSchema;
-    query?: ObjectSchema;
-  }): OpenAPIV3.ParameterObject[] => {
+  static paramJ2S = (data: { path?: ObjectSchema; query?: ObjectSchema }): OpenAPIV3.ParameterObject[] => {
     const res: OpenAPIV3.ParameterObject[] = [];
 
-    Object.keys(data).forEach((type) => {
-      const swagger = j2s(
-        data[type as keyof Parameters<typeof SwaggerHelper.paramJ2S>[0]] as ObjectSchema
-      ).swagger;
+    Object.keys(data).forEach(type => {
+      const swagger = j2s(data[type as keyof Parameters<typeof SwaggerHelper.paramJ2S>[0]] as ObjectSchema).swagger;
       Object.entries(swagger['properties']).forEach(([property, schema]) => {
         res.push({
           name: property,
           in: type,
           required: swagger['required']?.includes(property) || false,
-          schema: schema as OpenAPIV3.SchemaObject,
+          schema: schema as OpenAPIV3.SchemaObject
         });
       });
     });
@@ -49,9 +44,9 @@ export class SwaggerHelper {
       required: options?.required ?? true,
       content: {
         'application/json': {
-          schema: swaggerSchema,
-        },
-      },
+          schema: swaggerSchema
+        }
+      }
     };
   };
 }

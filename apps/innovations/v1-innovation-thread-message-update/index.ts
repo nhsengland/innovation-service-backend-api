@@ -15,12 +15,8 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationThreadMessageUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const threadsService = container.get<InnovationThreadsService>(
-      SYMBOLS.InnovationThreadsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
@@ -36,11 +32,11 @@ class V1InnovationThreadMessageUpdate {
       const requestUser = auth.getUserInfo();
 
       const result = await threadsService.updateThreadMessage(requestUser, pathParams.messageId, {
-        message: body.message,
+        message: body.message
       });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
+        id: result.id
       });
 
       return;
@@ -67,8 +63,8 @@ export default openApi(
           description: 'Innovation Id',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'threadId',
@@ -76,8 +72,8 @@ export default openApi(
           description: 'Thread Id',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'messageId',
@@ -85,9 +81,9 @@ export default openApi(
           description: 'Message Id',
           required: true,
           schema: {
-            type: 'string',
-          },
-        },
+            type: 'string'
+          }
+        }
       ],
       requestBody: {
         description: 'Message',
@@ -99,12 +95,12 @@ export default openApi(
               properties: {
                 message: {
                   type: 'string',
-                  description: 'Message',
-                },
-              },
-            },
-          },
-        },
+                  description: 'Message'
+                }
+              }
+            }
+          }
+        }
       },
       responses: {
         '200': {
@@ -116,29 +112,29 @@ export default openApi(
                 properties: {
                   id: {
                     type: 'string',
-                    description: 'Message Id',
-                  },
-                },
-              },
-            },
-          },
+                    description: 'Message Id'
+                  }
+                }
+              }
+            }
+          }
         },
         '400': {
-          description: 'Bad Request',
+          description: 'Bad Request'
         },
         '401': {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         '403': {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         '404': {
-          description: 'Not Found',
+          description: 'Not Found'
         },
         '500': {
-          description: 'Internal Server Error',
-        },
-      },
-    },
+          description: 'Internal Server Error'
+        }
+      }
+    }
   }
 );

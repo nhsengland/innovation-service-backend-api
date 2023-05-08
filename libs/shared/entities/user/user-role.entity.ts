@@ -54,14 +54,9 @@ export class UserRoleEntity extends BaseEntity {
 // Entity helpers
 export const roleEntity2RoleType = (role: UserRoleEntity): RoleType => {
   // sanity check to ensure relations are loaded
-  if (
-    !role.organisation &&
-    role.organisationId &&
-    !role.organisationUnit &&
-    role.organisationUnitId
-  ) {
+  if (!role.organisation && role.organisationId && !role.organisationUnit && role.organisationUnitId) {
     throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, {
-      message: 'role relations are not loaded',
+      message: 'role relations are not loaded'
     });
   }
 
@@ -73,15 +68,15 @@ export const roleEntity2RoleType = (role: UserRoleEntity): RoleType => {
       organisation: {
         id: role.organisation.id,
         name: role.organisation.name,
-        acronym: role.organisation.acronym,
-      },
+        acronym: role.organisation.acronym
+      }
     }),
     ...(role.organisationUnit && {
       organisationUnit: {
         id: role.organisationUnit.id,
         name: role.organisationUnit.name,
-        acronym: role.organisationUnit.acronym,
-      },
-    }),
+        acronym: role.organisationUnit.acronym
+      }
+    })
   };
 };

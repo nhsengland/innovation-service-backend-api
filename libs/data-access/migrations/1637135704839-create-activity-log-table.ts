@@ -25,9 +25,7 @@ export class createActivityLogTable1637135704839 implements MigrationInterface {
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "activity_log" DROP CONSTRAINT "fk_activity_log_innovation_innovation_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "activity_log" DROP CONSTRAINT "fk_activity_log_innovation_innovation_id"`);
 
     await queryRunner.query(`DROP TABLE "activity_log"`);
   }

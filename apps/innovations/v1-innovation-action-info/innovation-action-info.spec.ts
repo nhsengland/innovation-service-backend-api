@@ -13,11 +13,9 @@ import { InnovationActionsService } from '../_services/innovation-actions.servic
 import type { ResponseDTO } from './transformation.dtos';
 
 jest.mock('@innovations/shared/decorators', () => ({
-  JwtDecoder: jest
-    .fn()
-    .mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
-      return descriptor;
-    }),
+  JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
+    return descriptor;
+  })
 }));
 
 describe('v1-innovation-action-info Suite', () => {
@@ -36,8 +34,8 @@ describe('v1-innovation-action-info Suite', () => {
       id: randomUUID(),
       name: 'name 1',
       role: ServiceRoleEnum.ACCESSOR,
-      organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' },
-    },
+      organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
+    }
   };
 
   beforeAll(async () => {
@@ -60,9 +58,7 @@ describe('v1-innovation-action-info Suite', () => {
 
       const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.accessor).build(em);
 
-      jest
-        .spyOn(InnovationActionsService.prototype, 'getActionInfo')
-        .mockResolvedValue(exampleAction as any);
+      jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
 
       const result = await httpTestBuilder
         .setUrl('/v1/:innovationId/actions/:actionId')
@@ -96,14 +92,12 @@ describe('v1-innovation-action-info Suite', () => {
           id: randomUUID(),
           name: 'name 1',
           role: ServiceRoleEnum.ACCESSOR,
-          organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' },
+          organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
         },
-        declineReason: 'this was rejected',
+        declineReason: 'this was rejected'
       };
 
-      jest
-        .spyOn(InnovationActionsService.prototype, 'getActionInfo')
-        .mockResolvedValue(expected as any);
+      jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(expected as any);
 
       const result = await httpTestBuilder
         .setUrl('/v1/:innovationId/actions/:actionId')
@@ -159,7 +153,7 @@ describe('v1-innovation-action-info Suite', () => {
         context: {},
         key: 'innovationId',
         message: '"innovationId" is required',
-        type: 'any.required',
+        type: 'any.required'
       });
       expect(result.status).toBe(400);
     });
@@ -184,7 +178,7 @@ describe('v1-innovation-action-info Suite', () => {
         context: {},
         key: 'actionId',
         message: '"actionId" is required',
-        type: 'any.required',
+        type: 'any.required'
       });
       expect(result.status).toBe(400);
     });
@@ -195,7 +189,7 @@ describe('v1-innovation-action-info Suite', () => {
       [ServiceRoleEnum.ADMIN, 200],
       [ServiceRoleEnum.ACCESSOR, 200],
       [ServiceRoleEnum.ASSESSMENT, 200],
-      [ServiceRoleEnum.INNOVATOR, 200],
+      [ServiceRoleEnum.INNOVATOR, 200]
     ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
       const [user, context] = TestsLegacyHelper.getUser(userType);
 
@@ -203,9 +197,7 @@ describe('v1-innovation-action-info Suite', () => {
 
       const mocks = await new MockBuilder().mockDomainUser(user!).build(em);
 
-      jest
-        .spyOn(InnovationActionsService.prototype, 'getActionInfo')
-        .mockResolvedValue(exampleAction as any);
+      jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
 
       const result = await httpTestBuilder
         .setUrl('/v1/:innovationId/actions/:actionId')

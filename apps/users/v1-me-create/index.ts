@@ -61,11 +61,11 @@ export default openApi(V1MeCreate.httpTrigger as AzureFunction, '/v1/me', {
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string' },
-              },
-            },
-          },
-        },
+                id: { type: 'string' }
+              }
+            }
+          }
+        }
       },
       400: {
         description: 'Bad request',
@@ -75,12 +75,12 @@ export default openApi(V1MeCreate.httpTrigger as AzureFunction, '/v1/me', {
               type: 'object',
               properties: {
                 code: { type: 'string' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                message: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

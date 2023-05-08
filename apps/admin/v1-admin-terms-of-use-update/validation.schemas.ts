@@ -6,7 +6,7 @@ export type ParamsType = {
   touId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  touId: Joi.string().guid().required().description('The terms of use id.'),
+  touId: Joi.string().guid().required().description('The terms of use id.')
 }).required();
 
 export type BodyType = {
@@ -22,5 +22,5 @@ export const BodySchema = Joi.object<BodyType>({
     .required()
     .description('Type of the terms of use.'),
   summary: Joi.string().optional().description('Brief summary of the terms of use.'),
-  releasedAt: Joi.string().optional().description('Relase date of the terms of use.'),
+  releasedAt: Joi.string().optional().description('Relase date of the terms of use.')
 }).required();

@@ -10,5 +10,5 @@ export const QuerySchema = Joi.object<QueryType>({
   statistics: JoiHelper.AppCustomJoi()
     .stringArray()
     .items(Joi.string().valid(...Object.values(UserStatisticsEnum)))
-    .required(),
+    .required()
 }).required();

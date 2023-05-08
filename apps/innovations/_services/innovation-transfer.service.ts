@@ -1,23 +1,19 @@
 import { inject, injectable } from 'inversify';
 import type { SelectQueryBuilder } from 'typeorm';
 
-import {
-  InnovationEntity,
-  InnovationTransferEntity,
-  UserEntity,
-} from '@innovations/shared/entities';
+import { InnovationEntity, InnovationTransferEntity, UserEntity } from '@innovations/shared/entities';
 import {
   ActivityEnum,
   InnovationCollaboratorStatusEnum,
   InnovationTransferStatusEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
-  UnprocessableEntityError,
+  UnprocessableEntityError
 } from '@innovations/shared/errors';
 import {
   DomainServiceSymbol,
@@ -25,7 +21,7 @@ import {
   NotifierServiceSymbol,
   type DomainServiceType,
   type IdentityProviderServiceType,
-  type NotifierServiceType,
+  type NotifierServiceType
 } from '@innovations/shared/services';
 
 import type { DomainContextType } from '@innovations/shared/types';
@@ -54,9 +50,7 @@ export class InnovationTransferService extends BaseService {
     super();
   }
 
-  private buildTransferQuery(
-    filter: TransferQueryFilterType
-  ): SelectQueryBuilder<InnovationTransferEntity> {
+  private buildTransferQuery(filter: TransferQueryFilterType): SelectQueryBuilder<InnovationTransferEntity> {
     const query = this.sqlConnection
       .createQueryBuilder(InnovationTransferEntity, 'innovationTransfer')
       .innerJoinAndSelect('innovationTransfer.innovation', 'innovation')
@@ -67,7 +61,7 @@ export class InnovationTransferService extends BaseService {
     }
     if (filter.innovationId) {
       query.andWhere('innovationTransfer.innovation_id = :innovationId', {
-        innovationId: filter.innovationId,
+        innovationId: filter.innovationId
       });
     }
     if (filter.status) {
@@ -104,10 +98,10 @@ export class InnovationTransferService extends BaseService {
     const transfers = await this.buildTransferQuery(filter).getMany();
 
     return Promise.all(
-      transfers.map(async (transfer) => {
+      transfers.map(async transfer => {
         try {
           const createdBy = await this.domainService.users.getUserInfo({
-            userId: transfer.createdBy,
+            userId: transfer.createdBy
           });
 
           return {
@@ -116,8 +110,8 @@ export class InnovationTransferService extends BaseService {
             innovation: {
               id: transfer.innovation.id,
               name: transfer.innovation.name,
-              owner: createdBy.displayName,
-            },
+              owner: createdBy.displayName
+            }
           };
         } catch (_) {
           return {
@@ -125,8 +119,8 @@ export class InnovationTransferService extends BaseService {
             email: transfer.email,
             innovation: {
               id: transfer.innovation.id,
-              name: transfer.innovation.name,
-            },
+              name: transfer.innovation.name
+            }
           };
         }
       })
@@ -136,7 +130,7 @@ export class InnovationTransferService extends BaseService {
   async getPendingInnovationTransferInfo(id: string): Promise<{ userExists: boolean }> {
     const dbTranfer = await this.buildTransferQuery({
       id,
-      status: InnovationTransferStatusEnum.PENDING,
+      status: InnovationTransferStatusEnum.PENDING
     }).getOne();
     if (!dbTranfer) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND);
@@ -158,14 +152,14 @@ export class InnovationTransferService extends BaseService {
   }> {
     const transfer = await this.buildTransferQuery({
       id,
-      status: InnovationTransferStatusEnum.PENDING,
+      status: InnovationTransferStatusEnum.PENDING
     }).getOne();
     if (!transfer) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND);
     }
 
     const transferOwner = await this.domainService.users.getUserInfo({
-      userId: transfer.createdBy,
+      userId: transfer.createdBy
     });
 
     return {
@@ -174,8 +168,8 @@ export class InnovationTransferService extends BaseService {
       innovation: {
         id: transfer.innovation.id,
         name: transfer.innovation.name,
-        owner: { name: transferOwner.displayName },
-      },
+        owner: { name: transferOwner.displayName }
+      }
     };
   }
 
@@ -199,7 +193,7 @@ export class InnovationTransferService extends BaseService {
     // Check if a transfer request if already raised.
     const transfer = await this.buildTransferQuery({
       innovationId,
-      status: InnovationTransferStatusEnum.PENDING,
+      status: InnovationTransferStatusEnum.PENDING
     }).getOne();
     if (transfer) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_ALREADY_EXISTS);
@@ -208,9 +202,7 @@ export class InnovationTransferService extends BaseService {
     // Request user cannot transfer the innovation to himself.
     const targetUser = await this.identityProviderService.getUserInfoByEmail(targetUserEmail);
     if (targetUser && targetUser.identityId === requestUser.identityId) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_TRANSFER_REQUESTED_FOR_SELF
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_REQUESTED_FOR_SELF);
     }
 
     if (targetUser) {
@@ -222,14 +214,12 @@ export class InnovationTransferService extends BaseService {
         .andWhere('userRoles.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
         .getCount();
       if (!isTargetUserInnovator) {
-        throw new UnprocessableEntityError(
-          InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR
-        );
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TRANSFER_TARGET_USER_MUST_BE_INNOVATOR);
       }
     }
 
     // If all checks pass, create a new transfer request.
-    const result = await this.sqlConnection.transaction(async (transactionManager) => {
+    const result = await this.sqlConnection.transaction(async transactionManager => {
       const transferObj = InnovationTransferEntity.new({
         email: targetUserEmail,
         emailCount: 1,
@@ -237,7 +227,7 @@ export class InnovationTransferService extends BaseService {
         innovation: InnovationEntity.new({ id: innovationId }),
         createdBy: requestUser.id,
         updatedBy: requestUser.id,
-        ownerToCollaborator: ownerToCollaborator,
+        ownerToCollaborator: ownerToCollaborator
       });
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
@@ -246,7 +236,7 @@ export class InnovationTransferService extends BaseService {
         NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION,
         {
           innovationId: innovation.id,
-          transferId: transfer.id,
+          transferId: transfer.id
         },
         domainContext
       );
@@ -268,7 +258,7 @@ export class InnovationTransferService extends BaseService {
   ): Promise<{ id: string }> {
     const filter: TransferQueryFilterType = {
       id: transferId,
-      status: InnovationTransferStatusEnum.PENDING,
+      status: InnovationTransferStatusEnum.PENDING
     };
 
     switch (status) {
@@ -277,9 +267,7 @@ export class InnovationTransferService extends BaseService {
         break;
       case InnovationTransferStatusEnum.COMPLETED:
       case InnovationTransferStatusEnum.DECLINED:
-        filter.email = (
-          await this.identityProviderService.getUserInfo(requestUser.identityId)
-        ).email;
+        filter.email = (await this.identityProviderService.getUserInfo(requestUser.identityId)).email;
         break;
       default:
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
@@ -291,31 +279,27 @@ export class InnovationTransferService extends BaseService {
     }
 
     // Update the transfer with new status & innovation with new owner if status is complete
-    return this.sqlConnection.transaction(async (transactionManager) => {
+    return this.sqlConnection.transaction(async transactionManager => {
       const savedTransfer = await transactionManager.save(InnovationTransferEntity, {
         ...transfer,
         status,
         updatedBy: requestUser.id,
-        finishedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString()
       });
 
       // COMPLETED transfer flow
       if (status === InnovationTransferStatusEnum.COMPLETED) {
-        const innovation = await this.domainService.innovations.getInnovationInfo(
-          transfer.innovation.id
-        );
+        const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
 
         // It should run if we have an owner and update its status as collaborator
         if (innovation && innovation.owner) {
           await this.collaboratorsService.upsertCollaborator(domainContext, {
             innovationId: transfer.innovation.id,
-            email: (
-              await this.identityProviderService.getUserInfo(innovation.owner.identityId)
-            ).email,
+            email: (await this.identityProviderService.getUserInfo(innovation.owner.identityId)).email,
             userId: innovation.owner.id,
             status: transfer.ownerToCollaborator
               ? InnovationCollaboratorStatusEnum.ACTIVE
-              : InnovationCollaboratorStatusEnum.LEFT,
+              : InnovationCollaboratorStatusEnum.LEFT
           });
         }
 
@@ -325,7 +309,7 @@ export class InnovationTransferService extends BaseService {
           {
             owner: { id: requestUser.id },
             updatedBy: requestUser.id,
-            expires_at: null,
+            expires_at: null
           }
         );
 
@@ -336,19 +320,17 @@ export class InnovationTransferService extends BaseService {
           {
             innovationId: transfer.innovation.id,
             activity: ActivityEnum.OWNERSHIP_TRANSFER,
-            domainContext,
+            domainContext
           },
           {
-            interveningUserId: innovation?.owner?.id ?? null,
+            interveningUserId: innovation?.owner?.id ?? null
           }
         );
       }
 
       // DECLINED transfer flow
       if (status === InnovationTransferStatusEnum.DECLINED) {
-        const innovation = await this.domainService.innovations.getInnovationInfo(
-          transfer.innovation.id
-        );
+        const innovation = await this.domainService.innovations.getInnovationInfo(transfer.innovation.id);
 
         // It should run if there is no innovation owner
         if (innovation && !innovation.owner) {

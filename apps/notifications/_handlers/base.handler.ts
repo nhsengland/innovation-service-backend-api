@@ -5,7 +5,7 @@ import {
   NotificationContextTypeEnum,
   NotificationLogTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
@@ -58,8 +58,8 @@ export abstract class BaseHandler<
     data: { type: EmailNotificationTypeEnum; preference: EmailNotificationPreferenceEnum }[]
   ): boolean {
     return (
-      (data.find((item) => item.type === type)?.preference ||
-        EmailNotificationPreferenceEnum.INSTANTLY) === EmailNotificationPreferenceEnum.INSTANTLY
+      (data.find(item => item.type === type)?.preference || EmailNotificationPreferenceEnum.INSTANTLY) ===
+      EmailNotificationPreferenceEnum.INSTANTLY
     );
   }
 

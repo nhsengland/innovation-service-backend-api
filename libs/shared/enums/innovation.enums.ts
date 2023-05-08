@@ -6,7 +6,7 @@ export enum InnovationStatusEnum {
   // NEEDS_ASSESSMENT_REVIEW = 'NEEDS_ASSESSMENT_REVIEW', // Not it use nowadays.
   WITHDRAWN = 'WITHDRAWN',
   COMPLETE = 'COMPLETE',
-  PAUSED = 'PAUSED',
+  PAUSED = 'PAUSED'
 }
 
 export enum InnovationGroupedStatusEnum {
@@ -17,7 +17,7 @@ export enum InnovationGroupedStatusEnum {
   RECEIVING_SUPPORT = 'RECEIVING_SUPPORT',
   NO_ACTIVE_SUPPORT = 'NO_ACTIVE_SUPPORT',
   AWAITING_NEEDS_REASSESSMENT = 'AWAITING_NEEDS_REASSESSMENT',
-  WITHDRAWN = 'WITHDRAWN',
+  WITHDRAWN = 'WITHDRAWN'
 }
 
 export enum InnovationActionStatusEnum {
@@ -28,13 +28,13 @@ export enum InnovationActionStatusEnum {
   DELETED = 'DELETED',
   DECLINED = 'DECLINED',
   COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED',
+  CANCELLED = 'CANCELLED'
 }
 
 export enum InnovationSectionStatusEnum {
   NOT_STARTED = 'NOT_STARTED',
   DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED',
+  SUBMITTED = 'SUBMITTED'
 }
 
 export enum InnovationSupportStatusEnum {
@@ -45,7 +45,7 @@ export enum InnovationSupportStatusEnum {
   ENGAGING = 'ENGAGING',
   UNSUITABLE = 'UNSUITABLE',
   WITHDRAWN = 'WITHDRAWN',
-  COMPLETE = 'COMPLETE',
+  COMPLETE = 'COMPLETE'
 }
 
 export enum InnovationTransferStatusEnum {
@@ -53,18 +53,18 @@ export enum InnovationTransferStatusEnum {
   COMPLETED = 'COMPLETED',
   DECLINED = 'DECLINED',
   CANCELED = 'CANCELED',
-  EXPIRED = 'EXPIRED',
+  EXPIRED = 'EXPIRED'
 }
 
 export enum InnovationSupportLogTypeEnum {
   STATUS_UPDATE = 'STATUS_UPDATE',
-  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION',
+  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION'
 }
 
 export enum ThreadContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   SUPPORT = 'SUPPORT',
-  ACTION = 'ACTION',
+  ACTION = 'ACTION'
 }
 
 export enum InnovationExportRequestStatusEnum {
@@ -72,7 +72,7 @@ export enum InnovationExportRequestStatusEnum {
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED',
-  EXPIRED = 'EXPIRED',
+  EXPIRED = 'EXPIRED'
 }
 
 export enum InnovationCollaboratorStatusEnum {
@@ -82,5 +82,5 @@ export enum InnovationCollaboratorStatusEnum {
   CANCELLED = 'CANCELLED',
   REMOVED = 'REMOVED',
   LEFT = 'LEFT',
-  EXPIRED = 'EXPIRED',
+  EXPIRED = 'EXPIRED'
 }

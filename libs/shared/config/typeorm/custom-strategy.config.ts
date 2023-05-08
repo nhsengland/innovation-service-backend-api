@@ -1,14 +1,7 @@
 import { DefaultNamingStrategy, Table, NamingStrategyInterface } from 'typeorm';
 
-export class TypeORMCustomStrategy
-  extends DefaultNamingStrategy
-  implements NamingStrategyInterface
-{
-  override foreignKeyName(
-    tableOrName: Table | string,
-    columnNames: string[],
-    referencedTablePath?: string
-  ): string {
+export class TypeORMCustomStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
+  override foreignKeyName(tableOrName: Table | string, columnNames: string[], referencedTablePath?: string): string {
     tableOrName = typeof tableOrName === 'string' ? tableOrName : tableOrName.name;
 
     const n = columnNames.reduce((name, column) => `${name}_${column}`, `${referencedTablePath}`);

@@ -49,12 +49,11 @@ describe('Services / Users service suite', () => {
         innovations: [
           {
             id: scenario.users.johnInnovator.innovations?.[0]?.id,
-            name: scenario.users.johnInnovator.innovations?.[0]?.name,
+            name: scenario.users.johnInnovator.innovations?.[0]?.name
           }
         ]
       });
     });
-
   });
 
   describe('getUserPendingInnovationTransfers method suite', () => {
@@ -68,14 +67,12 @@ describe('Services / Users service suite', () => {
         throw new Error(`No email found`);
       }
 
-      const result = await usersService.getUserPendingInnovationTransfers(
-        innovation.transfers[0].email
-      );
+      const result = await usersService.getUserPendingInnovationTransfers(innovation.transfers[0].email);
 
       expect(result).toMatchObject(
-        innovation.transfers.map((t) => ({
+        innovation.transfers.map(t => ({
           id: t.id,
-          innovation: { id: innovation.id, name: innovation.name },
+          innovation: { id: innovation.id, name: innovation.name }
         }))
       );
     });

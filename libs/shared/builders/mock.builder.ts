@@ -38,7 +38,7 @@ export class MockBuilder {
       phone: randPhoneNumber(),
       // roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })], // Was like this before, not needed
       roles: user.serviceRoles,
-      organisations: [],
+      organisations: []
     } as DomainUserInfoType;
 
     return new DomainUserInfoBuilder(data, this);
@@ -65,13 +65,13 @@ class DomainUserInfoBuilder {
       .getOne();
 
     const userOrganisations = await user?.userOrganisations;
-    const organisationUser = userOrganisations?.find((_) => true);
+    const organisationUser = userOrganisations?.find(_ => true);
     const organisation = organisationUser?.organisation;
 
     // this.user.roles = user?.serviceRoles ?? []; // Was like this before, not needed
 
     if (organisation) {
-      const organisationUnitUser = organisationUser.userOrganisationUnits.find((_) => true);
+      const organisationUnitUser = organisationUser.userOrganisationUnits.find(_ => true);
       const organisationUnit = organisationUnitUser?.organisationUnit;
 
       this.user.organisations = [
@@ -91,18 +91,16 @@ class DomainUserInfoBuilder {
                   name: organisationUnit.name,
                   acronym: organisationUnit.acronym,
                   organisationUnitUser: {
-                    id: organisationUnitUser.id,
-                  },
-                },
+                    id: organisationUnitUser.id
+                  }
+                }
               ]
-            : [],
-        },
+            : []
+        }
       ];
     }
 
-    this.builder.addSpy(
-      jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user)
-    );
+    this.builder.addSpy(jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue(this.user));
     return this.builder;
   }
 }

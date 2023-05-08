@@ -8,7 +8,7 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity,
+  OrganisationUnitUserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -16,19 +16,19 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
-  ThreadContextTypeEnum,
+  ThreadContextTypeEnum
 } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
-  UnprocessableEntityError,
+  UnprocessableEntityError
 } from '@innovations/shared/errors';
 import {
   DomainServiceSymbol,
   NotifierServiceSymbol,
   NotifierServiceType,
-  type DomainServiceType,
+  type DomainServiceType
 } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
@@ -36,7 +36,7 @@ import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationSuggestionAccessor,
   InnovationSuggestionsType,
-  InnovationSupportsLogType,
+  InnovationSupportsLogType
 } from '../_types/innovation.types';
 
 import { BaseService } from './base.service';
@@ -104,29 +104,23 @@ export class InnovationSupportsService extends BaseService {
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
-        .filter((support) => support.status === InnovationSupportStatusEnum.ENGAGING)
-        .flatMap((support) =>
-          support.organisationUnitUsers.map((item) => item.organisationUser.user.id)
-        );
+        .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
+        .flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id));
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
     }
 
-    return innovationSupports.map((support) => {
-      let engagingAccessors:
-        | { id: string; organisationUnitUserId: string; name: string }[]
-        | undefined = undefined;
+    return innovationSupports.map(support => {
+      let engagingAccessors: { id: string; organisationUnitUserId: string; name: string }[] | undefined = undefined;
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.organisationUnitUsers
-          .map((su) => ({
+          .map(su => ({
             id: su.organisationUser.user.id,
             organisationUnitUserId: su.id,
-            name:
-              usersInfo.find((item) => item.id === su.organisationUser.user.id && item.isActive)
-                ?.displayName || '',
+            name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
           }))
-          .filter((authUser) => authUser.name);
+          .filter(authUser => authUser.name);
       }
 
       return {
@@ -139,10 +133,10 @@ export class InnovationSupportsService extends BaseService {
           unit: {
             id: support.organisationUnit.id,
             name: support.organisationUnit.name,
-            acronym: support.organisationUnit.acronym,
-          },
+            acronym: support.organisationUnit.acronym
+          }
         },
-        ...(engagingAccessors === undefined ? {} : { engagingAccessors }),
+        ...(engagingAccessors === undefined ? {} : { engagingAccessors })
       };
     });
   }
@@ -150,17 +144,14 @@ export class InnovationSupportsService extends BaseService {
   async getInnovationSupportLogs(innovationId: string): Promise<InnovationSupportsLogType[]> {
     const supportLogs = await this.fetchSupportLogs(innovationId);
 
-    const usersIds = supportLogs.map((item) => item.createdBy);
+    const usersIds = supportLogs.map(item => item.createdBy);
     const usersInfo = await this.domainService.users.getUsersList({ userIds: [...usersIds] });
-    const userNames: { [key: string]: string } = usersInfo.reduce(
-      (map: { [key: string]: string }, obj) => {
-        map[obj.id] = obj.displayName;
-        return map;
-      },
-      {}
-    );
+    const userNames: { [key: string]: string } = usersInfo.reduce((map: { [key: string]: string }, obj) => {
+      map[obj.id] = obj.displayName;
+      return map;
+    }, {});
 
-    const response: InnovationSupportsLogType[] = supportLogs.map((log) => {
+    const response: InnovationSupportsLogType[] = supportLogs.map(log => {
       const rec: InnovationSupportsLogType = {
         id: log.id,
         type: log.type,
@@ -176,25 +167,23 @@ export class InnovationSupportsService extends BaseService {
               organisation: {
                 id: log.organisationUnit.organisation.id,
                 name: log.organisationUnit.organisation.name,
-                acronym: log.organisationUnit.organisation.acronym,
-              },
+                acronym: log.organisationUnit.organisation.acronym
+              }
             }
-          : null,
+          : null
       };
 
       if (log.suggestedOrganisationUnits && log.suggestedOrganisationUnits.length > 0) {
-        rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map(
-          (orgUnit: OrganisationUnitEntity) => ({
-            id: orgUnit.id,
-            name: orgUnit.name,
-            acronym: orgUnit.acronym,
-            organisation: {
-              id: orgUnit.organisation.id,
-              name: orgUnit.organisation.name,
-              acronym: orgUnit.organisation.acronym,
-            },
-          })
-        );
+        rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
+          id: orgUnit.id,
+          name: orgUnit.name,
+          acronym: orgUnit.acronym,
+          organisation: {
+            id: orgUnit.organisation.id,
+            name: orgUnit.organisation.name,
+            acronym: orgUnit.organisation.acronym
+          }
+        }));
       }
 
       return rec;
@@ -204,10 +193,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async getInnovationSuggestions(innovationId: string): Promise<InnovationSuggestionsType> {
-    const supportLogs = await this.fetchSupportLogs(
-      innovationId,
-      InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-    );
+    const supportLogs = await this.fetchSupportLogs(innovationId, InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION);
 
     const assessmentQuery = this.sqlConnection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
@@ -220,7 +206,7 @@ export class InnovationSupportsService extends BaseService {
 
     const result: InnovationSuggestionsType = {
       assessment: {},
-      accessors: [],
+      accessors: []
     };
 
     if (innovationAssessment) {
@@ -237,15 +223,15 @@ export class InnovationSupportsService extends BaseService {
                 organisation: {
                   id: orgUnit.organisation.id,
                   name: orgUnit.organisation.name,
-                  acronym: orgUnit.organisation.acronym,
-                },
+                  acronym: orgUnit.organisation.acronym
+                }
               }))
-            : [],
+            : []
       };
     }
 
     if (supportLogs && supportLogs.length > 0) {
-      result.accessors = supportLogs.map((log) => {
+      result.accessors = supportLogs.map(log => {
         const rec: InnovationSuggestionAccessor = {
           organisationUnit: log.organisationUnit
             ? {
@@ -255,25 +241,23 @@ export class InnovationSupportsService extends BaseService {
                 organisation: {
                   id: log.organisationUnit.organisation.id,
                   name: log.organisationUnit.organisation.name,
-                  acronym: log.organisationUnit.organisation.acronym,
-                },
+                  acronym: log.organisationUnit.organisation.acronym
+                }
               }
-            : null,
+            : null
         };
 
         if (log.suggestedOrganisationUnits && log.suggestedOrganisationUnits.length > 0) {
-          rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map(
-            (orgUnit: OrganisationUnitEntity) => ({
-              id: orgUnit.id,
-              name: orgUnit.name,
-              acronym: orgUnit.acronym,
-              organisation: {
-                id: orgUnit.organisation.id,
-                name: orgUnit.organisation.name,
-                acronym: orgUnit.organisation.acronym,
-              },
-            })
-          );
+          rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
+            id: orgUnit.id,
+            name: orgUnit.name,
+            acronym: orgUnit.acronym,
+            organisation: {
+              id: orgUnit.organisation.id,
+              name: orgUnit.organisation.name,
+              acronym: orgUnit.organisation.acronym
+            }
+          }));
         }
 
         return rec;
@@ -310,25 +294,21 @@ export class InnovationSupportsService extends BaseService {
 
     // Fetch users names.
 
-    const assignedAccessorsIds = innovationSupport.organisationUnitUsers.map(
-      (item) => item.organisationUser.user.id
-    );
+    const assignedAccessorsIds = innovationSupport.organisationUnitUsers.map(item => item.organisationUser.user.id);
     const usersInfo = await this.domainService.users.getUsersList({
-      userIds: assignedAccessorsIds,
+      userIds: assignedAccessorsIds
     });
 
     return {
       id: innovationSupport.id,
       status: innovationSupport.status,
       engagingAccessors: innovationSupport.organisationUnitUsers
-        .map((su) => ({
+        .map(su => ({
           id: su.organisationUser.user.id,
           organisationUnitUserId: su.id,
-          name:
-            usersInfo.find((item) => item.id === su.organisationUser.user.id && item.isActive)
-              ?.displayName || '',
+          name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
         }))
-        .filter((authUser) => authUser.name),
+        .filter(authUser => authUser.name)
     };
   }
 
@@ -348,9 +328,7 @@ export class InnovationSupportsService extends BaseService {
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
 
     if (!organisationUnitId) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
     }
 
     const organisationUnit = await connection
@@ -371,16 +349,16 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
-    const result = await connection.transaction(async (transaction) => {
+    const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
         status: data.status,
         createdBy: user.id,
         updatedBy: user.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
-        organisationUnitUsers: (data.accessors || []).map((item) =>
+        organisationUnitUsers: (data.accessors || []).map(item =>
           OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId })
-        ),
+        )
       });
 
       const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
@@ -403,7 +381,7 @@ export class InnovationSupportsService extends BaseService {
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: organisationUnit.name,
-          comment: { id: thread.message?.id ?? '', value: thread.message?.message ?? '' },
+          comment: { id: thread.message?.id ?? '', value: thread.message?.message ?? '' }
         }
       );
 
@@ -415,7 +393,7 @@ export class InnovationSupportsService extends BaseService {
         {
           type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
           description: thread.message?.message ?? '',
-          suggestedOrganisationUnits: [],
+          suggestedOrganisationUnits: []
         }
       );
 
@@ -434,9 +412,9 @@ export class InnovationSupportsService extends BaseService {
           message: data.message,
           newAssignedAccessors:
             data.status === InnovationSupportStatusEnum.ENGAGING
-              ? (data.accessors ?? []).map((item) => ({ id: item.id }))
-              : [],
-        },
+              ? (data.accessors ?? []).map(item => ({ id: item.id }))
+              : []
+        }
       },
       domainContext
     );
@@ -456,9 +434,7 @@ export class InnovationSupportsService extends BaseService {
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
 
     if (!organisationUnitId) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
     }
 
     const innovation = await connection
@@ -474,11 +450,9 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const innovationSupport = innovation.innovationSupports.find(
-      (sup) => sup.organisationUnit.id === organisationUnitId
-    );
+    const innovationSupport = innovation.innovationSupports.find(sup => sup.organisationUnit.id === organisationUnitId);
 
-    const result = await connection.transaction(async (transaction) => {
+    const result = await connection.transaction(async transaction => {
       const supportLogObj = InnovationSupportLogEntity.new({
         createdBy: user.id,
         updatedBy: user.id,
@@ -491,12 +465,12 @@ export class InnovationSupportsService extends BaseService {
         description: data.description,
         ...(domainContext.organisation?.organisationUnit?.id && {
           organisationUnit: OrganisationUnitEntity.new({
-            id: domainContext.organisation.organisationUnit.id,
-          }),
+            id: domainContext.organisation.organisationUnit.id
+          })
         }),
         suggestedOrganisationUnits: (data.organisationUnits || []).map((id: string) =>
           OrganisationUnitEntity.new({ id })
-        ),
+        )
       });
 
       const savedSupportLog = await transaction.save(InnovationSupportLogEntity, supportLogObj);
@@ -509,7 +483,7 @@ export class InnovationSupportsService extends BaseService {
         const units = await connection
           .createQueryBuilder(OrganisationUnitEntity, 'unit')
           .where('unit.id IN (:...organisationUnits)', {
-            organisationUnits: data?.organisationUnits,
+            organisationUnits: data?.organisationUnits
           })
           .getRawMany();
 
@@ -518,10 +492,10 @@ export class InnovationSupportsService extends BaseService {
           {
             innovationId,
             activity: ActivityEnum.ORGANISATION_SUGGESTION,
-            domainContext,
+            domainContext
           },
           {
-            organisations: units.map((unit) => unit.unit_name),
+            organisations: units.map(unit => unit.unit_name)
           }
         );
       }
@@ -539,7 +513,7 @@ export class InnovationSupportsService extends BaseService {
         NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
         {
           innovationId,
-          organisationUnitIds: data.organisationUnits,
+          organisationUnitIds: data.organisationUnits
         },
         domainContext
       );
@@ -572,14 +546,12 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    const previousUsersOrganisationUnitUsersIds = new Set(
-      dbSupport.organisationUnitUsers.map((item) => item.id)
-    );
+    const previousUsersOrganisationUnitUsersIds = new Set(dbSupport.organisationUnitUsers.map(item => item.id));
     const previousStatus = dbSupport.status;
 
-    const result = await connection.transaction(async (transaction) => {
+    const result = await connection.transaction(async transaction => {
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
-        dbSupport.organisationUnitUsers = (data.accessors || []).map((item) =>
+        dbSupport.organisationUnitUsers = (data.accessors || []).map(item =>
           OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId })
         );
       } else {
@@ -595,10 +567,7 @@ export class InnovationSupportsService extends BaseService {
             .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: user.id })
             .where({
               innovationSupport: dbSupport.id,
-              status: In([
-                InnovationActionStatusEnum.REQUESTED,
-                InnovationActionStatusEnum.SUBMITTED,
-              ]),
+              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
             })
             .execute();
         }
@@ -631,7 +600,7 @@ export class InnovationSupportsService extends BaseService {
         {
           innovationSupportStatus: savedSupport.status,
           organisationUnit: savedSupport.organisationUnit.name,
-          comment: { id: thread.message.id, value: thread.message.message },
+          comment: { id: thread.message.id, value: thread.message.message }
         }
       );
 
@@ -643,7 +612,7 @@ export class InnovationSupportsService extends BaseService {
         {
           type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
           description: thread.message.message,
-          suggestedOrganisationUnits: [],
+          suggestedOrganisationUnits: []
         }
       );
 
@@ -663,13 +632,10 @@ export class InnovationSupportsService extends BaseService {
           newAssignedAccessors:
             data.status === InnovationSupportStatusEnum.ENGAGING
               ? (data.accessors ?? [])
-                  .filter(
-                    (item) =>
-                      !previousUsersOrganisationUnitUsersIds.has(item.organisationUnitUserId)
-                  )
-                  .map((item) => ({ id: item.id }))
-              : [],
-        },
+                  .filter(item => !previousUsersOrganisationUnitUsersIds.has(item.organisationUnitUserId))
+                  .map(item => ({ id: item.id }))
+              : []
+        }
       },
       domainContext
     );
@@ -692,7 +658,7 @@ export class InnovationSupportsService extends BaseService {
         innovationId,
         supportId,
         proposedStatus: status,
-        requestStatusUpdateComment: requestReason,
+        requestStatusUpdateComment: requestReason
       },
       domainContext
     );

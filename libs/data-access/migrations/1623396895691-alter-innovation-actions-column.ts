@@ -3,9 +3,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 export class alterInnovationActionsColumn1623396895691 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     // Remove AssignTo Column
-    await queryRunner.query(
-      `ALTER TABLE "innovation_action" DROP CONSTRAINT "fk_innovation_action_user_assign_to_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_action" DROP CONSTRAINT "fk_innovation_action_user_assign_to_id"`);
 
     await queryRunner.query(`ALTER TABLE "innovation_action" DROP COLUMN "assign_to_id"`);
 

@@ -2,9 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class migrations1671465460754 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`);
 
     await queryRunner.query(
       `ALTER TABLE "notification" ADD CONSTRAINT "CK_notification_context_detail"
@@ -20,9 +18,7 @@ export class migrations1671465460754 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`);
 
     await queryRunner.query(
       `ALTER TABLE "notification" ADD CONSTRAINT "CK_notification_context_detail"

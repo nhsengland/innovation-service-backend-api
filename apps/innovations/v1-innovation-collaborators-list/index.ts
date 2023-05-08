@@ -16,9 +16,7 @@ import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './
 class V1InnovationCollaboratorsList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
       SYMBOLS.InnovationCollaboratorsService
     );
@@ -40,25 +38,23 @@ class V1InnovationCollaboratorsList {
 
       const domainContext = auth.getContext();
 
-      const result = await innovationCollaboratorsService.getCollaboratorsList(
-        params.innovationId,
-        filters,
-        { skip, take, order }
-      );
+      const result = await innovationCollaboratorsService.getCollaboratorsList(params.innovationId, filters, {
+        skip,
+        take,
+        order
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
-        data: result.data.map((collaborator) => ({
+        data: result.data.map(collaborator => ({
           id: collaborator.id,
           status: collaborator.status,
-          ...([
-            ServiceRoleEnum.ADMIN,
-            ServiceRoleEnum.ASSESSMENT,
-            ServiceRoleEnum.INNOVATOR,
-          ].includes(domainContext.currentRole.role) && { email: collaborator.email }),
+          ...([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.INNOVATOR].includes(
+            domainContext.currentRole.role
+          ) && { email: collaborator.email }),
           ...(collaborator.role && { role: collaborator.role }),
-          ...(collaborator.name && { name: collaborator.name }),
-        })),
+          ...(collaborator.name && { name: collaborator.name })
+        }))
       });
       return;
     } catch (error) {
@@ -68,68 +64,64 @@ class V1InnovationCollaboratorsList {
   }
 }
 
-export default openApi(
-  V1InnovationCollaboratorsList.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/collaborators',
-  {
-    get: {
-      description: 'Get a list of innovation collaborators.',
-      operationId: 'v1-innovation-collaborators-list',
-      tags: ['[v1] Innovation Collaborators'],
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      responses: {
-        200: {
-          description: 'The list of innovation collaborators.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  count: {
-                    type: 'integer',
-                    description: 'The total number of records.',
-                  },
-                  data: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string',
-                        },
-                        name: {
-                          type: 'string',
-                        },
-                        role: {
-                          type: 'string',
-                        },
-                        email: {
-                          type: 'string',
-                        },
-                        status: {
-                          type: 'string',
-                        },
-                      },
-                    },
-                  },
+export default openApi(V1InnovationCollaboratorsList.httpTrigger as AzureFunction, '/v1/{innovationId}/collaborators', {
+  get: {
+    description: 'Get a list of innovation collaborators.',
+    operationId: 'v1-innovation-collaborators-list',
+    tags: ['[v1] Innovation Collaborators'],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    responses: {
+      200: {
+        description: 'The list of innovation collaborators.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                count: {
+                  type: 'integer',
+                  description: 'The total number of records.'
                 },
-              },
-            },
-          },
-        },
-        400: {
-          description: 'The request is invalid.',
-        },
-        401: {
-          description: 'The user is not authenticated.',
-        },
-        403: {
-          description: 'The user is not authorized to access this resource.',
-        },
-        500: {
-          description: 'An error occurred while processing the request.',
-        },
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: {
+                        type: 'string'
+                      },
+                      name: {
+                        type: 'string'
+                      },
+                      role: {
+                        type: 'string'
+                      },
+                      email: {
+                        type: 'string'
+                      },
+                      status: {
+                        type: 'string'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
-    },
+      400: {
+        description: 'The request is invalid.'
+      },
+      401: {
+        description: 'The user is not authenticated.'
+      },
+      403: {
+        description: 'The user is not authorized to access this resource.'
+      },
+      500: {
+        description: 'An error occurred while processing the request.'
+      }
+    }
   }
-);
+});

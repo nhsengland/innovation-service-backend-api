@@ -32,28 +32,28 @@ class V1OrganisationsList {
       const domainContext = auth.getContext();
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, {
-        userType: domainContext.currentRole.role,
+        userType: domainContext.currentRole.role
       });
 
       const result = await organisationsService.getOrganisationsList(queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>(
-        result.map((item) => ({
+        result.map(item => ({
           id: item.id,
           name: item.name,
           acronym: item.acronym,
           ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN && {
-            isActive: item.isActive,
+            isActive: item.isActive
           }), // admin only
           ...(item.organisationUnits && {
-            organisationUnits: item.organisationUnits.map((ou) => ({
+            organisationUnits: item.organisationUnits.map(ou => ({
               id: ou.id,
               name: ou.name,
               acronym: ou.acronym,
               ...(domainContext.currentRole.role === ServiceRoleEnum.ADMIN && {
-                isActive: ou.isActive,
-              }), // admin only
-            })),
-          }),
+                isActive: ou.isActive
+              }) // admin only
+            }))
+          })
         }))
       );
       return;
@@ -78,12 +78,12 @@ export default openApi(V1OrganisationsList.httpTrigger as AzureFunction, '/v1/or
             schema: {
               type: 'array',
               items: {
-                type: 'object',
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                type: 'object'
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

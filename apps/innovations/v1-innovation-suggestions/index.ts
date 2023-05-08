@@ -16,21 +16,13 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationsSuggestionList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSupportsService = container.get<InnovationSupportsService>(
-      SYMBOLS.InnovationSupportsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
-        .validate(context)
-        .setInnovation(params.innovationId)
-        .checkInnovatorType()
-        .verify();
+      await authorizationService.validate(context).setInnovation(params.innovationId).checkInnovatorType().verify();
 
       const result = await innovationSupportsService.getInnovationSuggestions(params.innovationId);
 
@@ -43,35 +35,31 @@ class V1InnovationsSuggestionList {
   }
 }
 
-export default openApi(
-  V1InnovationsSuggestionList.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/suggestions',
-  {
-    get: {
-      description: 'Get suggestions list of an Innovation',
-      operationId: 'v1-innovation-suggestions',
-      tags: ['Innovation Suggestions'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'OK',
-        },
-        400: {
-          description: 'Bad Request',
-        },
-        404: {
-          description: 'Not Found',
-        },
+export default openApi(V1InnovationsSuggestionList.httpTrigger as AzureFunction, '/v1/{innovationId}/suggestions', {
+  get: {
+    description: 'Get suggestions list of an Innovation',
+    operationId: 'v1-innovation-suggestions',
+    tags: ['Innovation Suggestions'],
+    parameters: [
+      {
+        in: 'path',
+        name: 'innovationId',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    responses: {
+      200: {
+        description: 'OK'
       },
-    },
+      400: {
+        description: 'Bad Request'
+      },
+      404: {
+        description: 'Not Found'
+      }
+    }
   }
-);
+});

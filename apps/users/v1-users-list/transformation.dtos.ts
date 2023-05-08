@@ -1,8 +1,5 @@
 import type { UserRoleEntity } from '@users/shared/entities';
-import type {
-  AccessorOrganisationRoleEnum,
-  InnovatorOrganisationRoleEnum,
-} from '@users/shared/enums';
+import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '@users/shared/enums';
 import type { RoleType } from '@users/shared/types';
 
 type AdminPortalResponseDTO = {

@@ -22,9 +22,7 @@ export class alterInnovationSupportTypeCheck1638433118911 implements MigrationIn
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "innovation_support_type" DROP CONSTRAINT "CK_innovation_support_type"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_support_type" DROP CONSTRAINT "CK_innovation_support_type"`);
     await queryRunner.query(
       `ALTER TABLE "innovation_support_type" ADD CONSTRAINT "CK_innovation_support_type" CHECK (([type]='ASSESSMENT' OR [type]='PRODUCT_MIGRATION' OR [type]='CLINICAL_TESTS' OR [type]='COMMERCIAL' OR [type]='PROCUREMENT' OR [type]='DEVELOPMENT' OR [type]='EVIDENCE_EVALUATION' OR [type]='FUNDING' OR [type]='INFORMATION'))`
     );

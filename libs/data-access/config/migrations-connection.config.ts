@@ -11,7 +11,7 @@ const SQLDB_MIGRATIONS_CONNECTION = new DataSource({
   ...SQLDB_DEFAULT_CONNECTION,
   name: 'migrations',
   migrations: [`${join(__dirname, '..')}/migrations/*.ts`],
-  migrationsTableName: 'Migrations',
+  migrationsTableName: 'Migrations'
 });
 
 export default SQLDB_MIGRATIONS_CONNECTION;

@@ -6,12 +6,12 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
   message: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
 }).required();

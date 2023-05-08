@@ -6,5 +6,5 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   organisationId: Joi.string().guid().required(),
-  organisationUnitId: Joi.string().guid().required(),
+  organisationUnitId: Joi.string().guid().required()
 }).required();

@@ -27,16 +27,12 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const requestUserInfo = await this.domainService.users.getUserInfo({
-      userId: this.requestUser.id,
+      userId: this.requestUser.id
     });
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
     const organisationUnit = this.domainContext?.organisation?.organisationUnit?.id || '';
-    const qualifyingAccessors = await this.recipientsService.organisationUnitsQualifyingAccessors([
-      organisationUnit,
-    ]);
+    const qualifyingAccessors = await this.recipientsService.organisationUnitsQualifyingAccessors([organisationUnit]);
 
     // does not check email preferences. QA will always receive this email.
     for (const qualifyingAccessor of qualifyingAccessors) {
@@ -45,23 +41,21 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: qualifyingAccessor.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           innovation_name: innovation.name,
           accessor_name: requestUserInfo.displayName,
-          proposed_status: TranslationHelper.translate(
-            `SUPPORT_STATUS.${this.inputData.proposedStatus}`
-          ).toLowerCase(),
+          proposed_status: TranslationHelper.translate(`SUPPORT_STATUS.${this.inputData.proposedStatus}`).toLowerCase(),
           request_status_update_comment: this.inputData.requestStatusUpdateComment,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId/support/:supportId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
-              supportId: this.inputData.supportId,
+              supportId: this.inputData.supportId
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
 

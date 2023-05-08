@@ -27,7 +27,7 @@ export class InnovationAssessmentBuilder {
       maturityLevel: 'READY',
       maturityLevelComment: randText(),
       summary: randText(),
-      updatedAt: randPastDate(),
+      updatedAt: randPastDate()
     });
 
     this.innovation = innovation;

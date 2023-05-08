@@ -5,7 +5,7 @@ import type {
   GenericErrorsEnum,
   InnovationErrorsEnum,
   OrganisationErrorsEnum,
-  UserErrorsEnum,
+  UserErrorsEnum
 } from '../errors/errors.enums';
 import type { AuthErrorsEnum } from '../services/auth/authorization-validation.model';
 import type { AppResponse } from './request.types';

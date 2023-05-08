@@ -6,7 +6,7 @@ export type ParamsType = {
   userId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  userId: Joi.string().guid().required().description('Id of the user to lock.'),
+  userId: Joi.string().guid().required().description('Id of the user to lock.')
 }).required();
 
 export type BodyType = {
@@ -21,6 +21,6 @@ export const BodySchema = Joi.object<BodyType>({
       .valid(...Object.values(AccessorOrganisationRoleEnum))
       .required()
       .description('Name of the role.'),
-    organisationId: Joi.string().guid().required().description('Id of the organisation.'),
-  }),
+    organisationId: Joi.string().guid().required().description('Id of the organisation.')
+  })
 }).required();

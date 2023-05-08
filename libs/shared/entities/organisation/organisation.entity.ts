@@ -36,10 +36,10 @@ export class OrganisationEntity extends BaseEntity {
   @Column({ name: 'inactivated_at', type: 'datetime2', nullable: true, default: null })
   inactivatedAt: null | Date;
 
-  @ManyToMany(() => InnovationEntity, (record) => record.organisationShares)
+  @ManyToMany(() => InnovationEntity, record => record.organisationShares)
   innovationShares: InnovationEntity[];
 
-  @OneToMany(() => OrganisationUnitEntity, (record) => record.organisation, { lazy: true })
+  @OneToMany(() => OrganisationUnitEntity, record => record.organisation, { lazy: true })
   organisationUnits: Promise<OrganisationUnitEntity[]>;
 
   static new(data: Partial<OrganisationEntity>): OrganisationEntity {

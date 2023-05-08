@@ -1,8 +1,4 @@
-import type {
-  AccessorOrganisationRoleEnum,
-  InnovatorOrganisationRoleEnum,
-  ServiceRoleEnum,
-} from '@users/shared/enums';
+import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum, ServiceRoleEnum } from '@users/shared/enums';
 
 export type MinimalInfoDTO = {
   id: string;

@@ -18,7 +18,7 @@ import {
   InnovationTransferEntity,
   NotificationEntity,
   NotificationUserEntity,
-  OrganisationUnitEntity,
+  OrganisationUnitEntity
 } from '../../entities';
 import {
   ActivityEnum,
@@ -35,7 +35,7 @@ import {
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
@@ -75,7 +75,7 @@ export class DomainInnovationsService {
 
     await this.withdrawInnovations(
       { id: '', roleId: '' },
-      dbInnovations.map((item) => ({ id: item.id, reason: null }))
+      dbInnovations.map(item => ({ id: item.id, reason: null }))
     );
   }
 
@@ -87,33 +87,30 @@ export class DomainInnovationsService {
       .select(['transfers.id', 'innovation.id'])
       .innerJoin('transfers.innovation', 'innovation')
       .where('DATEDIFF(day, transfers.created_at, GETDATE()) > :date', {
-        date: EXPIRATION_DATES.transfersDays,
+        date: EXPIRATION_DATES.transfersDays
       })
       .andWhere('transfers.status = :status', { status: InnovationTransferStatusEnum.PENDING })
       .getMany();
 
     if (transfersToExpire.length) {
-      const transferIds = transfersToExpire.map((item) => item.id);
+      const transferIds = transfersToExpire.map(item => item.id);
 
       await em
         .createQueryBuilder(InnovationTransferEntity, 'transfers')
         .update()
         .set({
           finishedAt: new Date(),
-          status: InnovationTransferStatusEnum.EXPIRED,
+          status: InnovationTransferStatusEnum.EXPIRED
         })
         .where('id IN (:...ids)', { ids: transferIds })
         .execute();
 
       for (const dbTransfer of transfersToExpire) {
         // Send the notifications
-        await this.notifierService.sendSystemNotification(
-          NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
-          {
-            innovationId: dbTransfer.innovation.id,
-            transferId: dbTransfer.id,
-          }
-        );
+        await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION, {
+          innovationId: dbTransfer.innovation.id,
+          transferId: dbTransfer.id
+        });
       }
     }
   }
@@ -125,11 +122,7 @@ export class DomainInnovationsService {
    * @param emailCount number of email previously sent (default: 1)
    * @param entityManager optional entityManager
    */
-  async remindInnovationsTransfers(
-    days = 7,
-    emailCount = 1,
-    entityManager?: EntityManager
-  ): Promise<void> {
+  async remindInnovationsTransfers(days = 7, emailCount = 1, entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const transfersToExpire = await em
@@ -137,14 +130,14 @@ export class DomainInnovationsService {
       .select(['transfers.id', 'transfers.email', 'innovation.id', 'innovation.name'])
       .innerJoin('transfers.innovation', 'innovation')
       .where('DATEDIFF(day, transfers.created_at, GETDATE()) = :date', {
-        date: days,
+        date: days
       })
       .andWhere('transfers.status = :status', { status: InnovationTransferStatusEnum.PENDING })
       .andWhere('transfers.emailCount = :emailCount', { emailCount })
       .getMany();
 
     if (transfersToExpire.length) {
-      const transferIds = transfersToExpire.map((item) => item.id);
+      const transferIds = transfersToExpire.map(item => item.id);
 
       await em
         .createQueryBuilder(InnovationTransferEntity, 'transfers')
@@ -155,15 +148,12 @@ export class DomainInnovationsService {
 
       for (const dbTransfer of transfersToExpire) {
         // Send the notifications
-        await this.notifierService.sendSystemNotification(
-          NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER,
-          {
-            innovationId: dbTransfer.innovation.id,
-            innovationName: dbTransfer.innovation.name,
-            transferId: dbTransfer.id,
-            recipientEmail: dbTransfer.email,
-          }
-        );
+        await this.notifierService.sendSystemNotification(NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER, {
+          innovationId: dbTransfer.innovation.id,
+          innovationName: dbTransfer.innovation.name,
+          transferId: dbTransfer.id,
+          recipientEmail: dbTransfer.email
+        });
       }
     }
   }
@@ -211,16 +201,14 @@ export class DomainInnovationsService {
       .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.user', 'users')
       .where('innovations.id IN (:...innovationIds)', {
-        innovationIds: innovations.map((item) => item.id),
+        innovationIds: innovations.map(item => item.id)
       })
       .getMany();
 
     try {
       for (const dbInnovation of dbInnovations) {
         const userId = user.id === '' ? dbInnovation.owner.id : user.id;
-        const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(
-          (r) => r.role === ServiceRoleEnum.INNOVATOR
-        );
+        const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(r => r.role === ServiceRoleEnum.INNOVATOR);
         let roleId = user.roleId;
 
         if (innovationOwnerRole && user.roleId === '') {
@@ -246,7 +234,7 @@ export class DomainInnovationsService {
           if (assignedNa) {
             affectedUsers.push({
               userId: assignedNa.assignTo.id,
-              userType: ServiceRoleEnum.ASSESSMENT,
+              userType: ServiceRoleEnum.ASSESSMENT
             });
           }
         }
@@ -258,15 +246,15 @@ export class DomainInnovationsService {
           .innerJoin('collaborator.user', 'user')
           .where('collaborator.innovation_id = :innovationId', { innovationId: dbInnovation.id })
           .andWhere('collaborator.status = :collaboratorActiveStatus', {
-            collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE,
+            collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
           })
           .getMany();
 
         if (activeCollaborators.length > 0) {
           affectedUsers.push(
-            ...activeCollaborators.map((c) => ({
+            ...activeCollaborators.map(c => ({
               userId: c.user?.id ?? '',
-              userType: ServiceRoleEnum.INNOVATOR,
+              userType: ServiceRoleEnum.INNOVATOR
             }))
           );
         }
@@ -277,7 +265,7 @@ export class DomainInnovationsService {
           { id: userId },
           {
             current: InnovationCollaboratorStatusEnum.ACTIVE,
-            next: InnovationCollaboratorStatusEnum.REMOVED,
+            next: InnovationCollaboratorStatusEnum.REMOVED
           },
           dbInnovation.id
         );
@@ -286,12 +274,12 @@ export class DomainInnovationsService {
           { id: userId },
           {
             current: InnovationCollaboratorStatusEnum.PENDING,
-            next: InnovationCollaboratorStatusEnum.CANCELLED,
+            next: InnovationCollaboratorStatusEnum.CANCELLED
           },
           dbInnovation.id
         );
 
-        const reason = innovations.find((item) => item.id === dbInnovation.id)?.reason || null;
+        const reason = innovations.find(item => item.id === dbInnovation.id)?.reason || null;
 
         // Get all sections id's.
         const sections = await em
@@ -299,23 +287,17 @@ export class DomainInnovationsService {
           .select(['section.id'])
           .where('section.innovation_id = :innovationId', { innovationId: dbInnovation.id })
           .getMany();
-        const sectionsIds = sections.map((section) => section.id);
+        const sectionsIds = sections.map(section => section.id);
 
         // Close opened actions, and deleted them all afterwards, hence 2 querys needed for both operations.
         await em
           .createQueryBuilder()
           .update(InnovationActionEntity)
           .set({ status: InnovationActionStatusEnum.DECLINED })
-          .where(
-            'innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)',
-            {
-              sectionsIds,
-              innovationActionStatus: [
-                InnovationActionStatusEnum.REQUESTED,
-                InnovationActionStatusEnum.SUBMITTED,
-              ],
-            }
-          )
+          .where('innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)', {
+            sectionsIds,
+            innovationActionStatus: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+          })
           .execute();
 
         await em
@@ -332,7 +314,7 @@ export class DomainInnovationsService {
           .set({
             rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.WITHDRAW'),
             status: InnovationExportRequestStatusEnum.REJECTED,
-            updatedBy: userId,
+            updatedBy: userId
           })
           .where(
             'innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
@@ -340,7 +322,7 @@ export class DomainInnovationsService {
               approvedStatus: InnovationExportRequestStatusEnum.APPROVED,
               expiredAt: new Date(Date.now() - EXPIRATION_DATES.exportRequests).toISOString(),
               innovationId: dbInnovation.id,
-              pendingStatus: InnovationExportRequestStatusEnum.PENDING,
+              pendingStatus: InnovationExportRequestStatusEnum.PENDING
             }
           )
           .execute();
@@ -349,12 +331,12 @@ export class DomainInnovationsService {
         await em.getRepository(InnovationTransferEntity).update(
           {
             innovation: { id: dbInnovation.id },
-            status: InnovationTransferStatusEnum.PENDING,
+            status: InnovationTransferStatusEnum.PENDING
           },
           {
             finishedAt: new Date().toISOString(),
             status: InnovationTransferStatusEnum.CANCELED,
-            updatedBy: userId,
+            updatedBy: userId
           }
         );
 
@@ -369,16 +351,16 @@ export class DomainInnovationsService {
           .getMany();
 
         await em.softDelete(NotificationUserEntity, {
-          id: In(unopenedNotificationsIds.map((c) => c.id)),
+          id: In(unopenedNotificationsIds.map(c => c.id))
         });
 
         affectedUsers.push(
-          ...dbInnovation.innovationSupports.flatMap((item) =>
-            item.organisationUnitUsers.map((su) => ({
+          ...dbInnovation.innovationSupports.flatMap(item =>
+            item.organisationUnitUsers.map(su => ({
               userId: su.organisationUser.user.id,
               userType: su.organisationUser.role as unknown as ServiceRoleEnum,
               organisationId: item.organisationUnit.organisationId,
-              organisationUnitId: item.organisationUnit.id,
+              organisationUnitId: item.organisationUnit.id
             }))
           )
         );
@@ -404,7 +386,7 @@ export class DomainInnovationsService {
         toReturn.push({
           id: dbInnovation.id,
           name: dbInnovation.name,
-          affectedUsers: [...new Map(affectedUsers.map((item) => [item['userId'], item])).values()], // remove duplicates
+          affectedUsers: [...new Map(affectedUsers.map(item => [item['userId'], item])).values()] // remove duplicates
         });
       }
     } catch (error) {
@@ -422,11 +404,11 @@ export class DomainInnovationsService {
     await entityManager.getRepository(InnovationCollaboratorEntity).update(
       {
         email: user.email,
-        status: status.current,
+        status: status.current
       },
       {
         updatedBy: user.id,
-        status: status.next,
+        status: status.next
       }
     );
   }
@@ -454,18 +436,13 @@ export class DomainInnovationsService {
       innovationSupportStatus: supportStatus,
       description: supportLog.description,
       type: supportLog.type,
-      suggestedOrganisationUnits: supportLog.suggestedOrganisationUnits?.map((id) =>
-        OrganisationUnitEntity.new({ id })
-      ),
+      suggestedOrganisationUnits: supportLog.suggestedOrganisationUnits?.map(id => OrganisationUnitEntity.new({ id })),
       createdBy: user.id,
-      updatedBy: user.id,
+      updatedBy: user.id
     });
 
     try {
-      const savedSupportLog = await transactionManager.save(
-        InnovationSupportLogEntity,
-        supportLogData
-      );
+      const savedSupportLog = await transactionManager.save(InnovationSupportLogEntity, supportLogData);
       return { id: savedSupportLog.id };
     } catch (error) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_LOG_ERROR);
@@ -484,14 +461,14 @@ export class DomainInnovationsService {
       createdBy: configuration.domainContext.id,
       updatedBy: configuration.domainContext.id,
       userRole: {
-        id: configuration.domainContext.currentRole.id,
+        id: configuration.domainContext.currentRole.id
       },
       param: {
         actionUserId: configuration.domainContext.id,
         actionUserRole: configuration.domainContext.currentRole.role,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
-        ...params,
-      },
+        ...params
+      }
     });
 
     try {
@@ -517,31 +494,23 @@ export class DomainInnovationsService {
 
     const notifications = await em
       .createQueryBuilder(NotificationEntity, 'notification')
-      .select([
-        'notification.id',
-        'notification.contextType',
-        'notification.contextId',
-        'notification.params',
-      ])
+      .select(['notification.id', 'notification.contextType', 'notification.contextId', 'notification.params'])
       .innerJoin('notification.notificationUsers', 'notificationUsers')
       .where('notification.context_id IN (:...contextIds)', { contextIds })
       .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
       .andWhere('notificationUsers.read_at IS NULL')
       .getMany();
 
-    return notifications.map((item) => ({
+    return notifications.map(item => ({
       id: item.id,
       contextType: item.contextType,
       contextId: item.contextId,
-      params: item.params,
+      params: item.params
     }));
   }
 
   async deleteInnovationFiles(transactionManager: EntityManager, files: string[]): Promise<void>;
-  async deleteInnovationFiles(
-    transactionManager: EntityManager,
-    files: InnovationFileEntity[]
-  ): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void>;
   async deleteInnovationFiles(
     transactionManager: EntityManager,
     files: InnovationFileEntity[] | string[]
@@ -634,7 +603,7 @@ export class DomainInnovationsService {
         'organisationUnit.id',
         'organisationUnit.acronym',
         'notificationPreferences.notification_id',
-        'notificationPreferences.preference',
+        'notificationPreferences.preference'
       ])
       .innerJoin('threadMessage.author', 'author')
       .innerJoin('threadMessage.authorUserRole', 'authorRole')
@@ -648,7 +617,7 @@ export class DomainInnovationsService {
     const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
     const duplicateSet = new Set<string>();
 
-    const authorIds = messages.map((m) => m.author.identityId);
+    const authorIds = messages.map(m => m.author.identityId);
 
     const usersInfo = await this.identityProviderService.getUsersMap(authorIds);
 
@@ -664,20 +633,18 @@ export class DomainInnovationsService {
           locked: !!message.author.lockedAt,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
           ...(message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {
-            isOwner: message.author.id === thread.innovation.owner?.id,
+            isOwner: message.author.id === thread.innovation.owner?.id
           }),
           organisationUnit: message.authorUserRole.organisationUnit
             ? {
                 id: message.authorUserRole.organisationUnit.id,
-                acronym: message.authorUserRole.organisationUnit.acronym,
+                acronym: message.authorUserRole.organisationUnit.acronym
               }
             : null,
-          emailNotificationPreferences: (await message.author.notificationPreferences).map(
-            (emailPreference) => ({
-              type: emailPreference.notification_id,
-              preference: emailPreference.preference,
-            })
-          ),
+          emailNotificationPreferences: (await message.author.notificationPreferences).map(emailPreference => ({
+            type: emailPreference.notification_id,
+            preference: emailPreference.preference
+          }))
         });
       }
     }
@@ -689,29 +656,29 @@ export class DomainInnovationsService {
     innovationIds?: string[];
     status?: InnovationGroupedStatusEnum;
   }): Promise<Map<string, InnovationGroupedStatusEnum>> {
-    const query = this.sqlConnection.createQueryBuilder(
-      InnovationGroupedStatusViewEntity,
-      'innovationGroupedStatus'
-    );
+    const query = this.sqlConnection.createQueryBuilder(InnovationGroupedStatusViewEntity, 'innovationGroupedStatus');
 
     if (filters.innovationIds && filters.innovationIds.length) {
       query.andWhere('innovationGroupedStatus.innovationId IN (:...innovationIds)', {
-        innovationIds: filters.innovationIds,
+        innovationIds: filters.innovationIds
       });
     }
 
     if (filters.status && filters.status.length) {
       query.andWhere('innovationGroupedStatus.groupedStatus IN (:...status)', {
-        status: filters.status,
+        status: filters.status
       });
     }
 
     const groupedStatus = await query.getMany();
 
-    return new Map(groupedStatus.map((cur) => [cur.innovationId, cur.groupedStatus]));
+    return new Map(groupedStatus.map(cur => [cur.innovationId, cur.groupedStatus]));
   }
 
-  async getInnovationsByOwnerId(userId: string, entityManager?: EntityManager): Promise<
+  async getInnovationsByOwnerId(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<
     {
       id: string;
       name: string;
@@ -719,31 +686,27 @@ export class DomainInnovationsService {
       expirationTransferDate: Date | null;
     }[]
   > {
-
     const connection = entityManager ?? this.sqlConnection;
 
-    const query = await connection 
+    const query = await connection
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'innovations.name', 'collaborator.id', 'transfer.createdAt'])
-      .leftJoin(
-        'innovations.collaborators',
-        'collaborator',
-        'collaborator.status = :collaboratorStatus',
-        { collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE }
-      )
+      .leftJoin('innovations.collaborators', 'collaborator', 'collaborator.status = :collaboratorStatus', {
+        collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE
+      })
       .leftJoin('innovations.transfers', 'transfer', 'transfer.status = :transferStatus', {
-        transferStatus: InnovationTransferStatusEnum.PENDING,
+        transferStatus: InnovationTransferStatusEnum.PENDING
       })
       .where('innovations.owner_id = :userId', { userId })
       .getMany();
 
-    const data = query.map((innovation) => ({
+    const data = query.map(innovation => ({
       id: innovation.id,
       name: innovation.name,
       collaboratorsCount: innovation.collaborators.length,
       expirationTransferDate: innovation.transfers[0]
         ? new Date(innovation.transfers[0].createdAt.getTime() + EXPIRATION_DATES.transfers)
-        : null,
+        : null
     }));
 
     return data;
@@ -808,9 +771,7 @@ export class DomainInnovationsService {
         return ActivityTypeEnum.ACTIONS;
 
       default:
-        throw new UnprocessableEntityError(
-          InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_INVALID_ITEM
-        );
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_INVALID_ITEM);
     }
   }
 
@@ -823,12 +784,12 @@ export class DomainInnovationsService {
     await entityManager.getRepository(InnovationCollaboratorEntity).update(
       {
         innovation: { id: innovationId },
-        status: status.current,
+        status: status.current
       },
       {
         updatedBy: user.id,
         status: status.next,
-        deletedAt: new Date().toISOString(),
+        deletedAt: new Date().toISOString()
       }
     );
   }

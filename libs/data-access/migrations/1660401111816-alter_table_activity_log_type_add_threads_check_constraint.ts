@@ -1,8 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterTableActivityLogTypeAddThreadsCheckConstraint1660401111816
-  implements MigrationInterface
-{
+export class alterTableActivityLogTypeAddThreadsCheckConstraint1660401111816 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       declare @Command nvarchar(max) = '';

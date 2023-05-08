@@ -4,7 +4,7 @@ import type { RedisClientOptions } from 'redis';
 // Currently only using the url, ssl and password
 const [url, ...parameters] = (process.env['REDIS_CACHE_CONNECTIONSTRING'] || '').split(',');
 const dict = parameters
-  .map((s) => s.match('([^=]+)=(.*)'))
+  .map(s => s.match('([^=]+)=(.*)'))
   .reduce((acc, m) => {
     if (m && m[1] && m[2]) {
       acc[m[1]] = m[2];
@@ -16,5 +16,5 @@ export const REDIS_DEFAULT_CONNECTION: RedisClientOptions = Object.freeze<RedisC
   url: `redis${dict['ssl'] === 'True' ? 's' : ''}://${url}`,
   ...(dict['password'] && { password: dict['password'] }),
   pingInterval: 30000, // Azure Redis closes the connection after 10m of inactivity
-  disableOfflineQueue: true, // This is to avoid the client to queue commands while offline
+  disableOfflineQueue: true // This is to avoid the client to queue commands while offline
 });

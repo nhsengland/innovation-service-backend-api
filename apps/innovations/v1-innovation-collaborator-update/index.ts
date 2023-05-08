@@ -16,9 +16,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationCollaboratorUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
       SYMBOLS.InnovationCollaboratorsService
     );
@@ -65,7 +63,7 @@ export default openApi(
       tags: ['[v1] Innovation Collaborators'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'The information to update collaborator invite.',
+        description: 'The information to update collaborator invite.'
       }),
       responses: {
         200: {
@@ -78,30 +76,30 @@ export default openApi(
                   id: {
                     type: 'string',
                     description: 'The collaborator id.',
-                    example: 'c0a80121-7ac0-464e-b8f6-27b88b0cda7f',
-                  },
+                    example: 'c0a80121-7ac0-464e-b8f6-27b88b0cda7f'
+                  }
                 },
-                required: ['id'],
-              },
-            },
-          },
+                required: ['id']
+              }
+            }
+          }
         },
         400: {
-          description: 'The collaborator could not be updated.',
+          description: 'The collaborator could not be updated.'
         },
         401: {
-          description: 'The user is not authorized to update an collaborator.',
+          description: 'The user is not authorized to update an collaborator.'
         },
         403: {
-          description: 'The user is not allowed to update an collaborator.',
+          description: 'The user is not allowed to update an collaborator.'
         },
         404: {
-          description: 'The innovation could not be found.',
+          description: 'The innovation could not be found.'
         },
         500: {
-          description: 'An unexpected error occurred while updating the collaborator.',
-        },
-      },
-    },
+          description: 'An unexpected error occurred while updating the collaborator.'
+        }
+      }
+    }
   }
 );

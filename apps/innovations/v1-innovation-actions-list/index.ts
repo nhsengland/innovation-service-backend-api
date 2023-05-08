@@ -16,12 +16,8 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1InnovationActionsList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationActionsService = container.get<InnovationActionsService>(
-      SYMBOLS.InnovationActionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationActionsService = container.get<InnovationActionsService>(SYMBOLS.InnovationActionsService);
 
     try {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
@@ -39,12 +35,12 @@ class V1InnovationActionsList {
       const result = await innovationActionsService.getActionsList(domainContext, filters, {
         skip,
         take,
-        order,
+        order
       });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
-        data: result.data.map((item) => ({
+        data: result.data.map(item => ({
           id: item.id,
           displayId: item.displayId,
           status: item.status,
@@ -55,11 +51,11 @@ class V1InnovationActionsList {
           updatedAt: item.updatedAt,
           updatedBy: {
             name: item.updatedBy.name,
-            role: item.updatedBy.role,
+            role: item.updatedBy.role
           },
           createdBy: { ...item.createdBy },
-          ...(item.notifications === undefined ? {} : { notifications: item.notifications }),
-        })),
+          ...(item.notifications === undefined ? {} : { notifications: item.notifications })
+        }))
       });
       return;
     } catch (error) {
@@ -82,8 +78,8 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         description: 'The number of records to skip.',
         schema: {
           type: 'integer',
-          minimum: 0,
-        },
+          minimum: 0
+        }
       },
       {
         name: 'take',
@@ -93,8 +89,8 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         schema: {
           type: 'integer',
           minimum: 1,
-          maximum: 100,
-        },
+          maximum: 100
+        }
       },
       {
         name: 'order',
@@ -102,8 +98,8 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The order of the records.',
         schema: {
-          type: 'string',
-        },
+          type: 'string'
+        }
       },
       {
         name: 'status',
@@ -111,8 +107,8 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The status of the action.',
         schema: {
-          type: 'string',
-        },
+          type: 'string'
+        }
       },
       {
         name: 'section',
@@ -120,8 +116,8 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The section of the action.',
         schema: {
-          type: 'string',
-        },
+          type: 'string'
+        }
       },
       {
         name: 'innovationId',
@@ -129,8 +125,8 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The innovation id of the action.',
         schema: {
-          type: 'string',
-        },
+          type: 'string'
+        }
       },
       {
         name: 'innovationName',
@@ -138,9 +134,9 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The innovation name of the action.',
         schema: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     ],
     responses: {
       200: {
@@ -152,7 +148,7 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
               properties: {
                 count: {
                   type: 'integer',
-                  description: 'The total number of records.',
+                  description: 'The total number of records.'
                 },
                 data: {
                   type: 'array',
@@ -161,74 +157,74 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
                     properties: {
                       id: {
                         type: 'string',
-                        description: 'The id of the action.',
+                        description: 'The id of the action.'
                       },
                       displayId: {
                         type: 'string',
-                        description: 'The display id of the action.',
+                        description: 'The display id of the action.'
                       },
                       status: {
                         type: 'string',
-                        description: 'The status of the action.',
+                        description: 'The status of the action.'
                       },
                       description: {
                         type: 'string',
-                        description: 'The description of the action.',
+                        description: 'The description of the action.'
                       },
                       section: {
                         type: 'string',
-                        description: 'The section of the action.',
+                        description: 'The section of the action.'
                       },
                       createdAt: {
                         type: 'string',
-                        description: 'The date the action was created.',
+                        description: 'The date the action was created.'
                       },
                       updatedAt: {
                         type: 'string',
-                        description: 'The date the action was last updated.',
+                        description: 'The date the action was last updated.'
                       },
                       innovation: {
                         type: 'object',
                         properties: {
                           id: {
                             type: 'string',
-                            description: 'The id of the innovation.',
+                            description: 'The id of the innovation.'
                           },
                           name: {
                             type: 'string',
-                            description: 'The name of the innovation.',
-                          },
-                        },
+                            description: 'The name of the innovation.'
+                          }
+                        }
                       },
                       notifications: {
                         type: 'object',
                         properties: {
                           count: {
                             type: 'integer',
-                            description: 'The number of notifications for the action.',
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                            description: 'The number of notifications for the action.'
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       400: {
-        description: 'The request is invalid.',
+        description: 'The request is invalid.'
       },
       401: {
-        description: 'The user is not authenticated.',
+        description: 'The user is not authenticated.'
       },
       403: {
-        description: 'The user is not authorized to access this resource.',
+        description: 'The user is not authorized to access this resource.'
       },
       500: {
-        description: 'An error occurred while processing the request.',
-      },
-    },
-  },
+        description: 'An error occurred while processing the request.'
+      }
+    }
+  }
 });

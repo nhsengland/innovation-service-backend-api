@@ -10,7 +10,7 @@ enum orderFields {
   innovationName = 'innovationName',
   createdAt = 'createdAt',
   updatedAt = 'updatedAt',
-  status = 'status',
+  status = 'status'
 }
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -24,7 +24,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   fields: 'notifications'[];
 };
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.keys(orderFields),
+  orderKeys: Object.keys(orderFields)
 })
   .append<QueryParamsType>({
     innovationId: Joi.string().guid().optional(),
@@ -43,9 +43,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .optional(),
     createdByMe: Joi.boolean().optional(),
     allActions: Joi.boolean().optional(),
-    fields: JoiHelper.AppCustomJoi()
-      .stringArray()
-      .items(Joi.string().valid('notifications'))
-      .optional(),
+    fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('notifications')).optional()
   })
   .required();

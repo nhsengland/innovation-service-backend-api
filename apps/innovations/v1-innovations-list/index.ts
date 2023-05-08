@@ -16,9 +16,7 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1InnovationsList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -33,14 +31,14 @@ class V1InnovationsList {
       const domainContext = authInstance.getContext();
 
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, {
-        userType: domainContext.currentRole.role,
+        userType: domainContext.currentRole.role
       });
 
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationsList(
         {
-          id: requestUser.id,
+          id: requestUser.id
         },
         domainContext,
         filters,
@@ -49,7 +47,7 @@ class V1InnovationsList {
 
       const response = {
         count: result.count,
-        data: result.data.map((item) => ({
+        data: result.data.map(item => ({
           id: item.id,
           name: item.name,
           description: item.description,
@@ -62,23 +60,21 @@ class V1InnovationsList {
           postCode: item.postCode,
           mainCategory: item.mainCategory,
           otherMainCategoryDescription: item.otherMainCategoryDescription,
-          ...(item.isAssessmentOverdue === undefined
-            ? {}
-            : { isAssessmentOverdue: item.isAssessmentOverdue }),
+          ...(item.isAssessmentOverdue === undefined ? {} : { isAssessmentOverdue: item.isAssessmentOverdue }),
           ...(item.assessment === undefined ? {} : { assessment: item.assessment }),
           ...(item.supports === undefined
             ? {}
             : {
-                supports: item.supports.map((s) => ({
+                supports: item.supports.map(s => ({
                   id: s.id,
                   status: s.status,
                   updatedAt: s.updatedAt,
-                  organisation: s.organisation,
-                })),
+                  organisation: s.organisation
+                }))
               }),
           ...(item.notifications === undefined ? {} : { notifications: item.notifications }),
-          ...(item.statistics === undefined ? {} : { statistics: item.statistics }),
-        })),
+          ...(item.statistics === undefined ? {} : { statistics: item.statistics })
+        }))
       };
       context.res = ResponseHelper.Ok<ResponseDTO>(response);
       return;
@@ -102,13 +98,13 @@ export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for innovation object' },
-              },
-            },
-          },
-        },
+                id: { type: 'string', description: 'Unique identifier for innovation object' }
+              }
+            }
+          }
+        }
       },
-      400: { description: 'Invalid innovation payload' },
-    },
-  },
+      400: { description: 'Invalid innovation payload' }
+    }
+  }
 });

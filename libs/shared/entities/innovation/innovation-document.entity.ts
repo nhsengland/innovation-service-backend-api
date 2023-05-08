@@ -2,11 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import {
-  CurrentDocumentConfig,
-  CurrentDocumentType,
-  DocumentType,
-} from '../../schemas/innovation-record/index';
+import { CurrentDocumentConfig, CurrentDocumentType, DocumentType } from '../../schemas/innovation-record/index';
 import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
@@ -47,7 +43,7 @@ export const createDocumentFromInnovation = (
       description: innovation.description ?? undefined,
       countryName: innovation.countryName,
       postcode: innovation.postcode ?? undefined,
-      website: customFields?.website,
+      website: customFields?.website
     },
     UNDERSTANDING_OF_NEEDS: {},
     EVIDENCE_OF_EFFECTIVENESS: {},
@@ -58,7 +54,7 @@ export const createDocumentFromInnovation = (
     MARKET_RESEARCH: {},
     REGULATIONS_AND_STANDARDS: {},
     REVENUE_MODEL: {},
-    TESTING_WITH_USERS: {},
+    TESTING_WITH_USERS: {}
   };
 
   return {
@@ -72,6 +68,6 @@ export const createDocumentFromInnovation = (
     createdBy: innovation.createdBy,
     updatedAt: innovation.updatedAt,
     updatedBy: innovation.updatedBy,
-    deletedAt: innovation.deletedAt,
+    deletedAt: innovation.deletedAt
   };
 };

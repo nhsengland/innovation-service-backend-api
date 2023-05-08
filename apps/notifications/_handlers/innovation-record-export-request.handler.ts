@@ -21,12 +21,8 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const request = await this.recipientsService.getExportRequestWithRelations(
-      this.inputData.requestId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
 
     if (innovation.owner.isActive) {
       this.emails.push({
@@ -34,7 +30,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: innovation.owner.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -45,8 +41,8 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/export/list')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl(), // TODO: Check what exactly is this URL.
-        },
+            .buildUrl() // TODO: Check what exactly is this URL.
+        }
       });
     }
 

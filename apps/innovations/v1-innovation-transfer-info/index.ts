@@ -15,12 +15,8 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class GetInnovationTransfer {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationTransferService = container.get<InnovationTransferService>(
-      SYMBOLS.InnovationTransferService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationTransferService = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -34,8 +30,8 @@ class GetInnovationTransfer {
         innovation: {
           id: result.innovation.id,
           name: result.innovation.name,
-          owner: { name: result.innovation.owner.name },
-        },
+          owner: { name: result.innovation.owner.name }
+        }
       });
       return;
     } catch (error) {
@@ -45,45 +41,41 @@ class GetInnovationTransfer {
   }
 }
 
-export default openApi(
-  GetInnovationTransfer.httpTrigger as AzureFunction,
-  '/v1/transfers/{transferId}',
-  {
-    get: {
-      description: 'Get an innovation transfer',
-      operationId: 'getInnovationTransfer',
-      parameters: [
-        {
-          name: 'transferId',
-          in: 'path',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-              },
-            },
-          },
-        },
-        404: {
-          description: 'Not Found',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-              },
-            },
-          },
-        },
+export default openApi(GetInnovationTransfer.httpTrigger as AzureFunction, '/v1/transfers/{transferId}', {
+  get: {
+    description: 'Get an innovation transfer',
+    operationId: 'getInnovationTransfer',
+    parameters: [
+      {
+        name: 'transferId',
+        in: 'path',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object'
+            }
+          }
+        }
       },
-    },
+      404: {
+        description: 'Not Found',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object'
+            }
+          }
+        }
+      }
+    }
   }
-);
+});

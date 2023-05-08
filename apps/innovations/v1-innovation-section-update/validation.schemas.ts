@@ -9,5 +9,5 @@ export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
   sectionKey: Joi.string()
     .valid(...CurrentCatalogTypes.InnovationSections)
-    .required(),
+    .required()
 }).required();

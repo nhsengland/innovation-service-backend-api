@@ -16,12 +16,8 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationEvidenceDelete {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -68,27 +64,27 @@ export default openApi(
             'application/json': {
               schema: {
                 type: 'object',
-                properties: {},
-              },
-            },
-          },
+                properties: {}
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad Request',
+          description: 'Bad Request'
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not found',
+          description: 'Not found'
         },
         500: {
-          description: 'Internal server error',
-        },
-      },
-    },
+          description: 'Internal server error'
+        }
+      }
+    }
   }
 );

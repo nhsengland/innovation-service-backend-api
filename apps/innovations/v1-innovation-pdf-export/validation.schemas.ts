@@ -8,7 +8,7 @@ export type ParamsType = {
 export type BodyType = InnovationAllSectionsType;
 
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export const BodySchema = Joi.array()
@@ -21,13 +21,13 @@ export const BodySchema = Joi.array()
             .items(
               Joi.object({
                 label: Joi.string().required(),
-                value: Joi.string().allow(null, '').required(),
+                value: Joi.string().allow(null, '').required()
               })
             )
-            .required(),
+            .required()
         })
       )
       .required(),
-    title: Joi.string().required(),
+    title: Joi.string().required()
   })
   .required();

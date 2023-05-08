@@ -1,12 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -37,19 +29,19 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
-  @ManyToMany(() => OrganisationUnitEntity, (record) => record.innovationSupportLogs, {
-    nullable: true,
+  @ManyToMany(() => OrganisationUnitEntity, record => record.innovationSupportLogs, {
+    nullable: true
   })
   @JoinTable({
     name: 'innovation_support_log_organisation_unit',
     joinColumn: {
       name: 'innovation_support_log_id',
-      referencedColumnName: 'id',
+      referencedColumnName: 'id'
     },
     inverseJoinColumn: {
       name: 'organisation_unit_id',
-      referencedColumnName: 'id',
-    },
+      referencedColumnName: 'id'
+    }
   })
   suggestedOrganisationUnits: OrganisationUnitEntity[];
 

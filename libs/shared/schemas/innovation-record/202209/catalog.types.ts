@@ -13,7 +13,7 @@ export const InnovationSections = [
   'COST_OF_INNOVATION',
   'COMPARATIVE_COST_BENEFIT',
   'REVENUE_MODEL',
-  'IMPLEMENTATION_PLAN',
+  'IMPLEMENTATION_PLAN'
 ] as const;
 export type InnovationSections = (typeof InnovationSections)[number];
 
@@ -45,7 +45,7 @@ export const catalogCategory = [
   'AI',
   'EDUCATION',
   'PPE',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogCategory = (typeof catalogCategory)[number];
 
@@ -77,7 +77,7 @@ export const catalogAreas = [
   'OPERATIONAL_EXCELLENCE',
   'PATIENT_ACTIVATION_AND_SELF_CARE',
   'PATIENT_SAFETY',
-  'GREATER_SUPPORT_AND_RESOURCE_PRIMARY_CARE',
+  'GREATER_SUPPORT_AND_RESOURCE_PRIMARY_CARE'
 ] as const;
 export type catalogAreas = (typeof catalogAreas)[number];
 
@@ -96,7 +96,7 @@ export const catalogCareSettings = [
   'DOMICILIARY_CARE',
   'PHARMACY',
   'URGENT_AND_EMERGENCY',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogCareSettings = (typeof catalogCareSettings)[number];
 
@@ -107,7 +107,7 @@ export const catalogMainPurpose = [
   'MONITOR_CONDITION',
   'PROVIDE_TREATMENT',
   'MANAGE_CONDITION',
-  'ENABLING_CARE',
+  'ENABLING_CARE'
 ] as const;
 export type catalogMainPurpose = (typeof catalogMainPurpose)[number];
 
@@ -121,7 +121,7 @@ export const catalogsupportTypes = [
   'DEVELOPMENT',
   'EVIDENCE_EVALUATION',
   'FUNDING',
-  'INFORMATION',
+  'INFORMATION'
 ] as const;
 export type catalogsupportTypes = (typeof catalogsupportTypes)[number];
 
@@ -140,7 +140,7 @@ export const catalogPatientsCitizensBenefit = [
   'ENABLES_NON_INVASIVELY_TEST',
   'INCREASES_SELF_MANAGEMENT',
   'INCREASES_LIFE_QUALITY',
-  'ENABLES_SHARED_CARE',
+  'ENABLES_SHARED_CARE'
 ] as const;
 export type catalogPatientsCitizensBenefit = (typeof catalogPatientsCitizensBenefit)[number];
 
@@ -159,7 +159,7 @@ export const catalogGeneralBenefit = [
   'COST_SAVING',
   'INCREASES_EFFICIENCY',
   'IMPROVES_PERFORMANCE',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogGeneralBenefit = (typeof catalogGeneralBenefit)[number];
 
@@ -173,7 +173,7 @@ export const catalogEnvironmentalBenefit = [
   'LOWER_ENVIRONMENTAL_IMPACT',
   'OPTIMIZES_FINITE_RESOURCE_USE',
   'USES_RECYCLED_MATERIALS',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogEnvironmentalBenefit = (typeof catalogEnvironmentalBenefit)[number];
 
@@ -188,7 +188,7 @@ export const catalogClinicalEvidence = [
   'CONFERENCE',
   'RANDOMISED_CONTROLLED_TRIAL',
   'UNPUBLISHED_DATA',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogClinicalEvidence = (typeof catalogClinicalEvidence)[number];
 
@@ -215,17 +215,13 @@ export const catalogStandardsType = [
   'MARKETING',
   'CQC',
   'DTAC',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogStandardsType = (typeof catalogStandardsType)[number];
 
 // Section 5.
 // // Section 5.1.
-export const catalogPathwayKnowledge = [
-  'PATHWAY_EXISTS_AND_CHANGED',
-  'PATHWAY_EXISTS_AND_FITS',
-  'NO_PATHWAY',
-] as const;
+export const catalogPathwayKnowledge = ['PATHWAY_EXISTS_AND_CHANGED', 'PATHWAY_EXISTS_AND_FITS', 'NO_PATHWAY'] as const;
 export type catalogPathwayKnowledge = (typeof catalogPathwayKnowledge)[number];
 
 export const catalogCarePathway = [
@@ -233,7 +229,7 @@ export const catalogCarePathway = [
   'BETTER_OPTION',
   'EQUIVALENT_OPTION',
   'FIT_LESS_COSTS',
-  'NO_KNOWLEDGE',
+  'NO_KNOWLEDGE'
 ] as const;
 export type catalogCarePathway = (typeof catalogCarePathway)[number];
 
@@ -247,16 +243,11 @@ export const catalogPatientRange = [
   'BETWEEN_10000_500000',
   'MORE_THAN_500000',
   'NOT_SURE',
-  'NOT_RELEVANT',
+  'NOT_RELEVANT'
 ] as const;
 export type catalogPatientRange = (typeof catalogPatientRange)[number];
 
-export const catalogCostComparison = [
-  'CHEAPER',
-  'COSTS_MORE_WITH_SAVINGS',
-  'COSTS_MORE',
-  'NOT_SURE',
-] as const;
+export const catalogCostComparison = ['CHEAPER', 'COSTS_MORE_WITH_SAVINGS', 'COSTS_MORE', 'NOT_SURE'] as const;
 export type catalogCostComparison = (typeof catalogCostComparison)[number];
 
 // Section 7.
@@ -268,6 +259,6 @@ export const catalogRevenues = [
   'LEASE',
   'SALES_OF_CONSUMABLES_OR_ACCESSORIES',
   'SUBSCRIPTION',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogRevenues = (typeof catalogRevenues)[number];

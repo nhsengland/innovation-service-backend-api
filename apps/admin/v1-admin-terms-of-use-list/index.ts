@@ -19,9 +19,7 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1AdminTermsOfUseList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
@@ -55,7 +53,7 @@ export default openApi(V1AdminTermsOfUseList.httpTrigger as AzureFunction, '/v1/
               properties: {
                 count: {
                   type: 'number',
-                  description: 'The total number of terms of use.',
+                  description: 'The total number of terms of use.'
                 },
                 data: {
                   type: 'array',
@@ -67,24 +65,24 @@ export default openApi(V1AdminTermsOfUseList.httpTrigger as AzureFunction, '/v1/
                       touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
                       summary: { type: 'string' },
                       releaseAt: { type: 'string', format: 'date-time', nullable: true },
-                      createdAt: { type: 'string', format: 'date-time' },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                      createdAt: { type: 'string', format: 'date-time' }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       '400': {
-        description: 'Bad request.',
+        description: 'Bad request.'
       },
       '401': {
-        description: 'The user is not authorized to get terms of use.',
+        description: 'The user is not authorized to get terms of use.'
       },
       '500': {
-        description: 'An error occurred while listing the terms of use.',
-      },
-    },
-  },
+        description: 'An error occurred while listing the terms of use.'
+      }
+    }
+  }
 });

@@ -16,12 +16,8 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationSectionsList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -37,12 +33,9 @@ class V1InnovationSectionsList {
         .verify();
       const domainContext = auth.getContext();
 
-      const result = await innovationSectionsService.getInnovationSectionsList(
-        domainContext,
-        params.innovationId
-      );
+      const result = await innovationSectionsService.getInnovationSectionsList(domainContext, params.innovationId);
       context.res = ResponseHelper.Ok<ResponseDTO>(
-        result.map((section) => ({
+        result.map(section => ({
           id: section.id,
           section: section.section,
           status: section.status,
@@ -50,10 +43,10 @@ class V1InnovationSectionsList {
           submittedBy: section.submittedBy
             ? {
                 name: section.submittedBy.name,
-                isOwner: section.submittedBy.isOwner,
+                isOwner: section.submittedBy.isOwner
               }
             : null,
-          openActionsCount: section.openActionsCount,
+          openActionsCount: section.openActionsCount
         }))
       );
       return;
@@ -64,81 +57,75 @@ class V1InnovationSectionsList {
   }
 }
 
-export default openApi(
-  V1InnovationSectionsList.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/sections',
-  {
-    get: {
-      description: 'Get an innovation sections list.',
-      tags: ['Innovation'],
-      summary: 'Get an innovation sections list.',
-      operationId: 'v1-innovation-sections-list',
-      parameters: [
-        { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-      ],
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'Innovation id.',
-                  },
-                  name: {
-                    type: 'string',
-                    description: 'Innovation name.',
-                  },
-                  status: {
-                    type: 'string',
-                    description: 'Innovation status.',
-                  },
-                  sections: {
-                    type: 'array',
-                    description: 'Innovation sections.',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string',
-                          description: 'Innovation section id.',
-                        },
-                        section: {
-                          type: 'string',
-                          description: 'Innovation section name.',
-                        },
-                        status: {
-                          type: 'string',
-                          description: 'Innovation section status.',
-                        },
-                        submittedAt: {
-                          type: 'string',
-                          description: 'Innovation section submitted date.',
-                        },
-                      },
-                    },
-                  },
+export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, '/v1/{innovationId}/sections', {
+  get: {
+    description: 'Get an innovation sections list.',
+    tags: ['Innovation'],
+    summary: 'Get an innovation sections list.',
+    operationId: 'v1-innovation-sections-list',
+    parameters: [{ in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Innovation id.'
                 },
-              },
-            },
-          },
-        },
-        401: {
-          description: 'Unauthorized',
-        },
-        403: {
-          description: 'Forbidden',
-        },
-        404: {
-          description: 'Not Found',
-        },
-        500: {
-          description: 'Internal Server Error',
-        },
+                name: {
+                  type: 'string',
+                  description: 'Innovation name.'
+                },
+                status: {
+                  type: 'string',
+                  description: 'Innovation status.'
+                },
+                sections: {
+                  type: 'array',
+                  description: 'Innovation sections.',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: {
+                        type: 'string',
+                        description: 'Innovation section id.'
+                      },
+                      section: {
+                        type: 'string',
+                        description: 'Innovation section name.'
+                      },
+                      status: {
+                        type: 'string',
+                        description: 'Innovation section status.'
+                      },
+                      submittedAt: {
+                        type: 'string',
+                        description: 'Innovation section submitted date.'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
-    },
+      401: {
+        description: 'Unauthorized'
+      },
+      403: {
+        description: 'Forbidden'
+      },
+      404: {
+        description: 'Not Found'
+      },
+      500: {
+        description: 'Internal Server Error'
+      }
+    }
   }
-);
+});

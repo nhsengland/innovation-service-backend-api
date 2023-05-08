@@ -1,12 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -39,17 +31,17 @@ export class OrganisationUnitEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_id' })
   organisation: OrganisationEntity;
 
-  @ManyToMany(() => InnovationAssessmentEntity, (record) => record.organisationUnits, {
-    lazy: true,
+  @ManyToMany(() => InnovationAssessmentEntity, record => record.organisationUnits, {
+    lazy: true
   })
   innovationAssessments: Promise<InnovationAssessmentEntity[]>;
 
-  @ManyToMany(() => InnovationSupportLogEntity, (record) => record.suggestedOrganisationUnits, {
-    lazy: true,
+  @ManyToMany(() => InnovationSupportLogEntity, record => record.suggestedOrganisationUnits, {
+    lazy: true
   })
   innovationSupportLogs: Promise<InnovationSupportLogEntity[]>;
 
-  @OneToMany(() => OrganisationUnitUserEntity, (record) => record.organisationUnit, { lazy: true })
+  @OneToMany(() => OrganisationUnitUserEntity, record => record.organisationUnit, { lazy: true })
   organisationUnitUsers: Promise<OrganisationUnitUserEntity[]>;
 
   static new(data: Partial<OrganisationUnitEntity>): OrganisationUnitEntity {

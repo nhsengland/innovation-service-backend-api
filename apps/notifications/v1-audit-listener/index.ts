@@ -25,7 +25,7 @@ class V1AuditListener {
         ...(message.functionName && { functionName: message.functionName }),
         ...(message.innovationId && { innovationId: message.innovationId }),
         ...(message.invocationId && { invocationId: message.invocationId }),
-        ...(message.targetId && { targetId: message.targetId }),
+        ...(message.targetId && { targetId: message.targetId })
       });
 
       context.res = { done: true };

@@ -2,7 +2,7 @@ import {
   InnovationSupportEntity,
   InnovationEntity,
   OrganisationUnitEntity,
-  type OrganisationUnitUserEntity,
+  type OrganisationUnitUserEntity
 } from '../entities';
 import { InnovationSupportStatusEnum } from '../enums';
 import type { EntityManager } from 'typeorm';
@@ -14,16 +14,14 @@ export class InnovationSupportBuilder {
     this.innovationSupport = {
       innovation: InnovationEntity.new(innovation),
       organisationUnit: OrganisationUnitEntity.new(organisationUnit),
-      status: InnovationSupportStatusEnum.WAITING,
+      status: InnovationSupportStatusEnum.WAITING
     };
   }
 
   setAccessors(accessors: OrganisationUnitUserEntity[]): InnovationSupportBuilder {
     this.innovationSupport.organisationUnitUsers = accessors;
     this.innovationSupport.status =
-      accessors.length > 0
-        ? InnovationSupportStatusEnum.ENGAGING
-        : InnovationSupportStatusEnum.WAITING;
+      accessors.length > 0 ? InnovationSupportStatusEnum.ENGAGING : InnovationSupportStatusEnum.WAITING;
     return this;
   }
 
@@ -33,9 +31,7 @@ export class InnovationSupportBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<InnovationSupportEntity> {
-    const innovationSupport = await entityManager
-      .getRepository(InnovationSupportEntity)
-      .save(this.innovationSupport);
+    const innovationSupport = await entityManager.getRepository(InnovationSupportEntity).save(this.innovationSupport);
     return innovationSupport;
   }
 }

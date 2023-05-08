@@ -46,9 +46,7 @@ export class alterTablesColumnRolesAddNotNull1676459632007 implements MigrationI
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "innovation_thread" ALTER COLUMN "author_user_role_id" uniqueidentifier NULL`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_thread" ALTER COLUMN "author_user_role_id" uniqueidentifier NULL`);
     await queryRunner.query(
       `ALTER TABLE "innovation_thread_message" ALTER COLUMN "author_user_role_id" uniqueidentifier NULL`
     );

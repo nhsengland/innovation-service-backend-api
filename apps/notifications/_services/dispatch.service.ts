@@ -4,17 +4,14 @@ import {
   InnovationEntity,
   NotificationEntity,
   NotificationUserEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@notifications/shared/entities';
 import type {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotificationLogTypeEnum,
+  NotificationLogTypeEnum
 } from '@notifications/shared/enums';
-import {
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-} from '@notifications/shared/services';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
@@ -70,7 +67,7 @@ export class DispatchService extends BaseService {
     userRoleIds: string[],
     params: { [key: string]: string | number | string[] }
   ): Promise<{ id: string }> {
-    return this.sqlConnection.transaction(async (transactionManager) => {
+    return this.sqlConnection.transaction(async transactionManager => {
       const dbNotification = await transactionManager.save(
         NotificationEntity,
         NotificationEntity.new({
@@ -79,18 +76,18 @@ export class DispatchService extends BaseService {
           contextId: context.id,
           innovation: InnovationEntity.new({ id: innovationId }),
           params: params,
-          createdBy: requestUser.id,
+          createdBy: requestUser.id
         })
       );
 
       if (userRoleIds.length > 0) {
         await transactionManager.save(
           NotificationUserEntity,
-          userRoleIds.map((roleId) =>
+          userRoleIds.map(roleId =>
             NotificationUserEntity.new({
               notification: dbNotification,
               createdBy: requestUser.id,
-              userRole: UserRoleEntity.new({ id: roleId }),
+              userRole: UserRoleEntity.new({ id: roleId })
             })
           )
         );

@@ -2,7 +2,7 @@ import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/
 import { container } from '../../_config';
 import type {
   InnovationStatisticsParamsTemplateType,
-  InnovationStatisticsTemplateType,
+  InnovationStatisticsTemplateType
 } from '../../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import type { StatisticsService } from '../../_services/statistics.service';
@@ -18,20 +18,15 @@ export class ActionsToReviewStatisticsHandler extends InnovationsStatisticsHandl
     super(requestUser, domainContext, data);
   }
 
-  async run(): Promise<
-    InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]
-  > {
+  async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]> {
     const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
-    const supports = await statisticsService.actionsToReview(
-      this.data.innovationId,
-      this.domainContext
-    );
+    const supports = await statisticsService.actionsToReview(this.data.innovationId, this.domainContext);
 
     return {
       count: supports.count,
       lastSubmittedSection: supports.lastSubmittedSection,
-      lastSubmittedAt: supports.lastSubmittedAt,
+      lastSubmittedAt: supports.lastSubmittedAt
     };
   }
 }

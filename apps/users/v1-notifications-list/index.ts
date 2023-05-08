@@ -2,11 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
-import {
-  InnovationStatusEnum,
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-} from '@users/shared/enums';
+import { InnovationStatusEnum, NotificationContextDetailEnum, NotificationContextTypeEnum } from '@users/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
@@ -36,28 +32,28 @@ class V1UserNotifications {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order, ...filters } = queryParams;
 
-      const notifications = await notificationsService.getUserNotifications(
-        domainContext,
-        filters,
-        { skip, take, order }
-      );
+      const notifications = await notificationsService.getUserNotifications(domainContext, filters, {
+        skip,
+        take,
+        order
+      });
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: notifications.total,
-        data: notifications.data.map((notification) => ({
+        data: notifications.data.map(notification => ({
           id: notification.id,
           innovation: {
             id: notification.innovation.id,
             name: notification.innovation.name,
             status: notification.innovation.status,
-            ownerName: notification.innovation.ownerName,
+            ownerName: notification.innovation.ownerName
           },
           contextType: notification.contextType,
           contextDetail: notification.contextDetail,
           contextId: notification.contextId,
           createdAt: notification.createdAt,
           readAt: notification.readAt,
-          params: notification.params,
-        })),
+          params: notification.params
+        }))
       });
       return;
     } catch (error) {
@@ -83,7 +79,7 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
               properties: {
                 count: {
                   type: 'number',
-                  description: 'The total number of notifications',
+                  description: 'The total number of notifications'
                 },
                 data: {
                   type: 'array',
@@ -93,7 +89,7 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
                       id: {
                         type: 'string',
                         format: 'uuid',
-                        description: 'The notification ID',
+                        description: 'The notification ID'
                       },
                       innovation: {
                         type: 'object',
@@ -101,55 +97,55 @@ export default openApi(V1UserNotifications.httpTrigger as AzureFunction, '/v1/no
                           id: {
                             type: 'string',
                             format: 'uuid',
-                            description: 'The innovation ID',
+                            description: 'The innovation ID'
                           },
                           name: {
                             type: 'string',
-                            description: 'The innovation name',
+                            description: 'The innovation name'
                           },
                           status: {
                             type: 'string',
                             enum: Object.keys(InnovationStatusEnum),
-                            description: 'The innovation status',
-                          },
-                        },
+                            description: 'The innovation status'
+                          }
+                        }
                       },
                       contextType: {
                         type: 'string',
                         enum: Object.keys(NotificationContextTypeEnum),
-                        description: 'The notification context type',
+                        description: 'The notification context type'
                       },
                       contextDetail: {
                         type: 'string',
                         enum: Object.keys(NotificationContextDetailEnum),
-                        description: 'The notification context detail',
+                        description: 'The notification context detail'
                       },
                       contextId: {
                         type: 'string',
-                        description: 'The notification context ID',
+                        description: 'The notification context ID'
                       },
                       createdAt: {
                         type: 'string',
                         format: 'date-time',
-                        description: 'The notification creation date',
+                        description: 'The notification creation date'
                       },
                       readAt: {
                         type: 'string',
                         format: 'date-time',
-                        description: 'The notification read date',
+                        description: 'The notification read date'
                       },
                       params: {
                         type: 'object',
-                        description: 'The notification params',
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                        description: 'The notification params'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

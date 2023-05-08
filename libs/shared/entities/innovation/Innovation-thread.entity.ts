@@ -21,16 +21,16 @@ export class InnovationThreadEntity extends BaseEntity {
     type: 'simple-enum',
     name: 'context_type',
     enum: ThreadContextTypeEnum,
-    nullable: true,
+    nullable: true
   })
   contextType: ThreadContextTypeEnum | undefined;
 
   @Column({ type: 'uniqueidentifier', name: 'context_id', nullable: true })
   contextId: string | undefined;
 
-  @OneToMany(() => InnovationThreadMessageEntity, (message) => message.thread, {
+  @OneToMany(() => InnovationThreadMessageEntity, message => message.thread, {
     lazy: true,
-    cascade: ['insert'],
+    cascade: ['insert']
   })
   messages: Promise<InnovationThreadMessageEntity[]>;
 

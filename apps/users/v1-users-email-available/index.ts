@@ -15,9 +15,7 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1UserEmailAvailable {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
@@ -43,7 +41,7 @@ export default openApi(V1UserEmailAvailable.httpTrigger as AzureFunction, '/v1',
     parameters: SwaggerHelper.paramJ2S({ query: QueryParamsSchema }),
     responses: {
       200: { description: 'Email is already in use.' },
-      404: { description: 'Email is available.' },
-    },
-  },
+      404: { description: 'Email is available.' }
+    }
+  }
 });

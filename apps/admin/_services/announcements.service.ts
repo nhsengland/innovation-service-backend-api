@@ -1,11 +1,7 @@
 import { UserEntity } from '@admin/shared/entities';
 import { AnnouncementUserEntity } from '@admin/shared/entities/user/announcement-user.entity';
 import { AnnouncementEntity } from '@admin/shared/entities/user/announcement.entity';
-import type {
-  AnnouncementParamsType,
-  AnnouncementTemplateType,
-  ServiceRoleEnum,
-} from '@admin/shared/enums';
+import type { AnnouncementParamsType, AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
 import { AnnouncementErrorsEnum, BadRequestError } from '@admin/shared/errors';
 
 import { injectable } from 'inversify';
@@ -36,7 +32,7 @@ export class AnnouncementsService extends BaseService {
       throw new BadRequestError(AnnouncementErrorsEnum.ANNOUNCEMENT_NO_TARGET_ROLES);
     }
 
-    return await connection.transaction(async (transaction) => {
+    return await connection.transaction(async transaction => {
       const query = transaction
         .createQueryBuilder(UserEntity, 'user')
         .select(['user.id'])
@@ -47,7 +43,7 @@ export class AnnouncementsService extends BaseService {
 
       if (config.usersToExclude && config.usersToExclude.length > 0) {
         query.andWhere('user.id NOT IN (:...usersToExclude)', {
-          usersToExclude: config.usersToExclude,
+          usersToExclude: config.usersToExclude
         });
       }
 
@@ -66,16 +62,16 @@ export class AnnouncementsService extends BaseService {
         targetRoles,
         params: config?.params ?? null,
         startsAt: config?.startsAt,
-        expiresAt: config?.expiresAt ?? null,
+        expiresAt: config?.expiresAt ?? null
       });
 
       await transaction.save(
         AnnouncementUserEntity,
-        targetUserIds.map((user) =>
+        targetUserIds.map(user =>
           AnnouncementUserEntity.new({
             announcement: announcement,
             user: UserEntity.new({ id: user.id }),
-            targetRoles: targetRoles,
+            targetRoles: targetRoles
           })
         ),
         { chunk: 500 }

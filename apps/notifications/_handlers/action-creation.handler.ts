@@ -3,7 +3,7 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
@@ -34,40 +34,29 @@ export class ActionCreationHandler extends BaseHandler<
 
   async run(): Promise<this> {
     if (
-      ![
-        ServiceRoleEnum.ACCESSOR,
-        ServiceRoleEnum.QUALIFYING_ACCESSOR,
-        ServiceRoleEnum.ASSESSMENT,
-      ].includes(this.domainContext.currentRole.role as ServiceRoleEnum)
+      ![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(
+        this.domainContext.currentRole.role as ServiceRoleEnum
+      )
     ) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
     const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
-    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(
-      this.inputData.innovationId
-    );
+    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
 
     const innovatorRecipients = [...collaborators, innovation.owner];
 
-    for (const innovator of innovatorRecipients.filter((i) => i.isActive)) {
-      if (
-        this.isEmailPreferenceInstantly(
-          EmailNotificationTypeEnum.ACTION,
-          innovator.emailNotificationPreferences
-        )
-      ) {
+    for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
+      if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovator.emailNotificationPreferences)) {
         this.emails.push({
           templateId: EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
           to: {
             type: 'identityId',
             value: innovator.identityId || '',
-            displayNameParam: 'display_name',
+            displayNameParam: 'display_name'
           },
           params: {
             // display_name: '', // This will be filled by the email-listener function.
@@ -77,10 +66,10 @@ export class ActionCreationHandler extends BaseHandler<
               .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
               .setPathParams({
                 innovationId: this.inputData.innovationId,
-                actionId: this.inputData.action.id,
+                actionId: this.inputData.action.id
               })
-              .buildUrl(),
-          },
+              .buildUrl()
+          }
         });
       }
     }
@@ -90,12 +79,12 @@ export class ActionCreationHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.ACTION,
         detail: NotificationContextDetailEnum.ACTION_CREATION,
-        id: this.inputData.action.id,
+        id: this.inputData.action.id
       },
-      userRoleIds: innovatorRecipients.map((i) => i.userRole.id),
+      userRoleIds: innovatorRecipients.map(i => i.userRole.id),
       params: {
-        section: this.inputData.action.section,
-      },
+        section: this.inputData.action.section
+      }
     });
 
     return this;

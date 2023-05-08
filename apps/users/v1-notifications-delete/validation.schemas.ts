@@ -5,5 +5,5 @@ export type PathParamType = {
 };
 
 export const PathParamsSchema = Joi.object<PathParamType>({
-  notificationId: Joi.string().uuid().required().description('The notification ID'),
+  notificationId: Joi.string().uuid().required().description('The notification ID')
 }).required();

@@ -9,7 +9,7 @@ import type {
   OrganisationUnitEntity,
   OrganisationUnitUserEntity,
   OrganisationUserEntity,
-  UserEntity,
+  UserEntity
 } from '../entities';
 import type { InnovationCollaboratorEntity } from '../entities/innovation/innovation-collaborator.entity';
 import {
@@ -17,7 +17,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovatorOrganisationRoleEnum,
   OrganisationTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '../enums';
 import { SQLConnectionServiceSymbol, type SQLConnectionServiceType } from '../services';
 import type {
@@ -25,7 +25,7 @@ import type {
   AdminDomainContextType,
   AssessmentDomainContextType,
   DomainContextType,
-  InnovatorDomainContextType,
+  InnovatorDomainContextType
 } from '../types';
 
 export type TestDataType = {
@@ -90,7 +90,7 @@ export class TestsLegacyHelper {
     this.sqlConnection = sqlService.getConnection();
 
     while (!this.sqlConnection.isInitialized) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
     // Uncomment this if not using global setup / teardown. It also requires clearing data in the afterAll hook
     // this.sampleData = await this.createSampleData();
@@ -133,23 +133,15 @@ export class TestsLegacyHelper {
         .addToOrganisation(accessorOrganisation)
         .build(entityManager);
 
-      const admin = (
-        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ADMIN).save()
-      ).getUser();
+      const admin = (await new UserBuilder(entityManager).addRole(ServiceRoleEnum.ADMIN).save()).getUser();
       const innovator = (
-        await new UserBuilder(entityManager)
-          .addRole(ServiceRoleEnum.INNOVATOR, innovatorOrganisation)
-          .save()
+        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovatorOrganisation).save()
       ).getUser();
       const innovator2 = (
-        await new UserBuilder(entityManager)
-          .addRole(ServiceRoleEnum.INNOVATOR, innovator2Organisation)
-          .save()
+        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovator2Organisation).save()
       ).getUser();
       const innovator3 = (
-        await new UserBuilder(entityManager)
-          .addRole(ServiceRoleEnum.INNOVATOR, innovator3Organisation)
-          .save()
+        await new UserBuilder(entityManager).addRole(ServiceRoleEnum.INNOVATOR, innovator3Organisation).save()
       ).getUser();
       const accessor = (
         await new UserBuilder(entityManager)
@@ -199,11 +191,7 @@ export class TestsLegacyHelper {
         entityManager
       );
 
-      const accessorOrgUnitUser = await helper.addUserToOrganisationUnit(
-        accessorOrgU,
-        organisationUnit,
-        entityManager
-      );
+      const accessorOrgUnitUser = await helper.addUserToOrganisationUnit(accessorOrgU, organisationUnit, entityManager);
       const qaOrgUnitUser = await helper.addUserToOrganisationUnit(
         qualifyingAccessorOrgU,
         organisationUnit,
@@ -217,8 +205,8 @@ export class TestsLegacyHelper {
           identityId: admin.identityId,
           currentRole: {
             id: admin.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ADMIN,
-          },
+            role: ServiceRoleEnum.ADMIN
+          }
         },
         accessor: {
           id: accessor.id,
@@ -230,13 +218,13 @@ export class TestsLegacyHelper {
             organisationUnit: {
               id: organisationUnit.id,
               name: organisationUnit.name,
-              acronym: organisationUnit.acronym,
-            },
+              acronym: organisationUnit.acronym
+            }
           },
           currentRole: {
             id: accessor.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ACCESSOR,
-          },
+            role: ServiceRoleEnum.ACCESSOR
+          }
         },
         qualifyingAccessor: {
           id: qualifyingAccessor.id,
@@ -248,29 +236,29 @@ export class TestsLegacyHelper {
             organisationUnit: {
               id: organisationUnit.id,
               name: organisationUnit.name,
-              acronym: organisationUnit.acronym,
-            },
+              acronym: organisationUnit.acronym
+            }
           },
           currentRole: {
             id: qualifyingAccessor.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-          },
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR
+          }
         },
         assessmentUser: {
           id: assessmentUser.id,
           identityId: assessmentUser.identityId,
           currentRole: {
             id: assessmentUser.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ASSESSMENT,
-          },
+            role: ServiceRoleEnum.ASSESSMENT
+          }
         },
         assessmentUser2: {
           id: assessmentUser2.id,
           identityId: assessmentUser2.identityId,
           currentRole: {
             id: assessmentUser2.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.ASSESSMENT,
-          },
+            role: ServiceRoleEnum.ASSESSMENT
+          }
         },
         innovator: {
           id: innovator.id,
@@ -278,12 +266,12 @@ export class TestsLegacyHelper {
           organisation: {
             id: innovatorOrganisation.id,
             name: innovatorOrganisation.name,
-            acronym: innovatorOrganisation.acronym,
+            acronym: innovatorOrganisation.acronym
           },
           currentRole: {
             id: innovator.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.INNOVATOR,
-          },
+            role: ServiceRoleEnum.INNOVATOR
+          }
         },
         innovator2: {
           id: innovator2.id,
@@ -291,12 +279,12 @@ export class TestsLegacyHelper {
           organisation: {
             id: innovator2Organisation.id,
             name: innovator2Organisation.name,
-            acronym: innovator2Organisation.acronym,
+            acronym: innovator2Organisation.acronym
           },
           currentRole: {
             id: innovator2.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.INNOVATOR,
-          },
+            role: ServiceRoleEnum.INNOVATOR
+          }
         },
         innovator3: {
           id: innovator3.id,
@@ -304,13 +292,13 @@ export class TestsLegacyHelper {
           organisation: {
             id: innovator3Organisation.id,
             name: innovator3Organisation.name,
-            acronym: innovator3Organisation.acronym,
+            acronym: innovator3Organisation.acronym
           },
           currentRole: {
             id: innovator3.serviceRoles[0]!.id,
-            role: ServiceRoleEnum.INNOVATOR,
-          },
-        },
+            role: ServiceRoleEnum.INNOVATOR
+          }
+        }
       };
       //#endregion
 
@@ -323,10 +311,7 @@ export class TestsLegacyHelper {
         .withAssessments(assessmentUser)
         .build(entityManager);
 
-      const innovationWithCollaborators = await helper
-        .createInnovation()
-        .setOwner(innovator)
-        .build(entityManager);
+      const innovationWithCollaborators = await helper.createInnovation().setOwner(innovator).build(entityManager);
 
       // Pending, Active and Expired collaborator invites
       const collaboratorPending = await helper
@@ -358,7 +343,7 @@ export class TestsLegacyHelper {
           innovator,
           innovator2,
           innovator3,
-          admin,
+          admin
         },
         domainContexts: domainContexts,
         organisationUsers: {
@@ -366,26 +351,26 @@ export class TestsLegacyHelper {
           innovator2: innovator2OrgUser,
           innovator3: innovator3OrgUser,
           accessor: accessorOrgU,
-          qualifyingAccessor: qualifyingAccessorOrgU,
+          qualifyingAccessor: qualifyingAccessorOrgU
         },
         organisationUnitUsers: {
           accessor: accessorOrgUnitUser,
-          qualifyingAccessor: qaOrgUnitUser,
+          qualifyingAccessor: qaOrgUnitUser
         },
         organisation: {
           innovator: innovatorOrganisation,
           innovator2: innovator2Organisation,
           innovator3: innovator3Organisation,
-          accessor: accessorOrganisation,
+          accessor: accessorOrganisation
         },
         organisationUnit: {
-          accessor: organisationUnit,
+          accessor: organisationUnit
         },
         collaborators: {
           collaboratorPending,
           collaboratorActive,
-          collaboratorExpired,
-        },
+          collaboratorExpired
+        }
       };
     });
 

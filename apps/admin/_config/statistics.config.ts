@@ -20,16 +20,14 @@ export type ADMIN_STATISTICS_CONFIG = {
 
 // Helpers
 export type ADMIN_STATISTICS_TYPES = keyof ADMIN_STATISTICS_CONFIG;
-export type StatisticsPayload<T extends ADMIN_STATISTICS_TYPES> =
-  ADMIN_STATISTICS_CONFIG[T]['payload'];
-export type StatisticsResponse<T extends ADMIN_STATISTICS_TYPES> =
-  ADMIN_STATISTICS_CONFIG[T]['response'];
+export type StatisticsPayload<T extends ADMIN_STATISTICS_TYPES> = ADMIN_STATISTICS_CONFIG[T]['payload'];
+export type StatisticsResponse<T extends ADMIN_STATISTICS_TYPES> = ADMIN_STATISTICS_CONFIG[T]['response'];
 
 // This is user to point to the correct handlers
 export const ADMIN_STATISTICS_CONFIG: {
   [k in ADMIN_STATISTICS_TYPES]: new (data: StatisticsPayload<k>) => StatisticsHandler<k>;
 } = {
-  INNOVATIONS_PER_UNIT: InnovationsPerOrganisationUnitHandler,
+  INNOVATIONS_PER_UNIT: InnovationsPerOrganisationUnitHandler
 };
 export const ADMIN_STATISTICS_TYPES = Object.keys(ADMIN_STATISTICS_CONFIG);
 

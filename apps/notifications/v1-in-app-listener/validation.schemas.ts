@@ -1,9 +1,6 @@
 import Joi from 'joi';
 
-import {
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-} from '@notifications/shared/enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 
 export type MessageType = {
   data: {
@@ -22,7 +19,7 @@ export type MessageType = {
 export const MessageSchema = Joi.object<MessageType>({
   data: Joi.object<MessageType['data']>({
     requestUser: Joi.object<MessageType['data']['requestUser']>({
-      id: Joi.string().guid().required(),
+      id: Joi.string().guid().required()
     }).required(),
 
     innovationId: Joi.string().guid().required(),
@@ -34,11 +31,11 @@ export const MessageSchema = Joi.object<MessageType>({
       detail: Joi.string()
         .valid(...Object.values(NotificationContextDetailEnum))
         .required(),
-      id: Joi.string().guid().required(),
+      id: Joi.string().guid().required()
     }).required(),
 
     userRoleIds: Joi.array().items(Joi.string().guid()).required(),
 
-    params: Joi.object().required(),
-  }).required(),
+    params: Joi.object().required()
+  }).required()
 }).required();

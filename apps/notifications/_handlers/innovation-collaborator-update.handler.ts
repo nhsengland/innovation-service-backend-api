@@ -2,12 +2,9 @@ import {
   InnovationCollaboratorStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
-import {
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-} from '@notifications/shared/services';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
@@ -28,9 +25,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS,
   { collaboratorId: string }
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(
-    IdentityProviderServiceSymbol
-  );
+  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
@@ -46,7 +41,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       [
         InnovationCollaboratorStatusEnum.ACTIVE,
         InnovationCollaboratorStatusEnum.DECLINED,
-        InnovationCollaboratorStatusEnum.LEFT,
+        InnovationCollaboratorStatusEnum.LEFT
       ].includes(this.inputData.innovationCollaborator.status)
     ) {
       await this.prepareNotificationToOwner();
@@ -56,15 +51,13 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       [
         InnovationCollaboratorStatusEnum.CANCELLED,
         InnovationCollaboratorStatusEnum.REMOVED,
-        InnovationCollaboratorStatusEnum.LEFT,
+        InnovationCollaboratorStatusEnum.LEFT
       ].includes(this.inputData.innovationCollaborator.status)
     ) {
       await this.prepareNotificationToCollaborator();
     }
 
-    if (
-      [InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)
-    ) {
+    if ([InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)) {
       await this.prepareNotificationToOtherCollaborators();
     }
 
@@ -72,18 +65,12 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   }
 
   async prepareNotificationToOwner(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(
-      innovation.owner.identityId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
     const innovationCollaborator = await this.recipientsService.innovationCollaboratorInfo(
       this.inputData.innovationCollaborator.id
     );
-    const collaboratorInfo = await this.identityProviderService.getUserInfoByEmail(
-      innovationCollaborator.email
-    );
+    const collaboratorInfo = await this.identityProviderService.getUserInfoByEmail(innovationCollaborator.email);
 
     if (!collaboratorInfo) {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
@@ -110,7 +97,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       to: {
         type: 'identityId',
         value: innovationOwnerInfo.identityId,
-        displayNameParam: 'display_name',
+        displayNameParam: 'display_name'
       },
       params: {
         collaborator_name: collaboratorInfo.displayName,
@@ -120,20 +107,16 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
               innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
                 .addPath('innovator/innovations/:innovationId')
                 .setPathParams({ innovationId: this.inputData.innovationId })
-                .buildUrl(),
+                .buildUrl()
             }
-          : {}),
-      },
+          : {})
+      }
     });
   }
 
   async prepareNotificationToCollaborator(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(
-      innovation.owner.identityId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
     const innovationCollaborator = await this.recipientsService.innovationCollaboratorInfo(
       this.inputData.innovationCollaborator.id
     );
@@ -165,7 +148,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       recipient = {
         type: 'identityId',
         value: innovationCollaborator.user?.identityId ?? '',
-        displayNameParam: 'display_name',
+        displayNameParam: 'display_name'
       };
     } else {
       recipient = { type: 'email', value: innovationCollaborator.email };
@@ -176,13 +159,11 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       templateId,
       params: {
         innovator_name: innovationOwnerInfo.displayName,
-        innovation_name: innovation.name,
-      },
+        innovation_name: innovation.name
+      }
     });
 
-    if (
-      this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.CANCELLED
-    ) {
+    if (this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.CANCELLED) {
       if (innovationCollaborator.user) {
         // user exists in the service
         this.inApp.push({
@@ -190,24 +171,20 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
           context: {
             type: NotificationContextTypeEnum.INNOVATION,
             detail: NotificationContextDetailEnum.COLLABORATOR_UPDATE,
-            id: this.inputData.innovationCollaborator.id,
+            id: this.inputData.innovationCollaborator.id
           },
           userRoleIds: [innovationCollaborator.user.roleId],
           params: {
-            collaboratorId: innovationCollaborator.id,
-          },
+            collaboratorId: innovationCollaborator.id
+          }
         });
       }
     }
   }
 
   async prepareNotificationToOtherCollaborators(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithCollaborators(
-      this.inputData.innovationId
-    );
-    const collaboratorInfo = await this.identityProviderService.getUserInfo(
-      this.domainContext.identityId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId);
+    const collaboratorInfo = await this.identityProviderService.getUserInfo(this.domainContext.identityId);
 
     let templateId: EmailTypeEnum;
 
@@ -219,16 +196,14 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
-    const collaborators = innovation.collaborators.filter(
-      (c) => c.status === InnovationCollaboratorStatusEnum.ACTIVE
-    );
+    const collaborators = innovation.collaborators.filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE);
 
     for (const collaborator of collaborators) {
       this.emails.push({
         to: {
           type: 'identityId',
           value: collaborator.user?.identityId ?? '',
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         templateId,
         params: {
@@ -239,10 +214,10 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
                 innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
                   .addPath('innovator/innovations/:innovationId')
                   .setPathParams({ innovationId: this.inputData.innovationId })
-                  .buildUrl(),
+                  .buildUrl()
               }
-            : {}),
-        },
+            : {})
+        }
       });
     }
   }

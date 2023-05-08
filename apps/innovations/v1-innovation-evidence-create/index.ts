@@ -16,12 +16,8 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationEvidenceCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -37,11 +33,7 @@ class V1InnovationEvidenceCreate {
       const requestUser = auth.getUserInfo();
       const innovation = auth.getInnovationInfo();
 
-      await innovationSectionsService.createInnovationEvidence(
-        { id: requestUser.id },
-        innovation.id,
-        body
-      );
+      await innovationSectionsService.createInnovationEvidence({ id: requestUser.id }, innovation.id, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({});
       return;
@@ -52,47 +44,43 @@ class V1InnovationEvidenceCreate {
   }
 }
 
-export default openApi(
-  V1InnovationEvidenceCreate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidence',
-  {
-    post: {
-      description: 'Create an innovation evidence entry.',
-      tags: ['Innovation'],
-      summary: 'Create an innovation evidence entry.',
-      operationId: 'v1-innovation-evidence-create',
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'The evidence data to create.',
-      }),
-      responses: {
-        200: {
-          description: 'Innovation evidence info.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {},
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Bad Request',
-        },
-        401: {
-          description: 'Unauthorized',
-        },
-        403: {
-          description: 'Forbidden',
-        },
-        404: {
-          description: 'Not found',
-        },
-        500: {
-          description: 'Internal server error',
-        },
+export default openApi(V1InnovationEvidenceCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/evidence', {
+  post: {
+    description: 'Create an innovation evidence entry.',
+    tags: ['Innovation'],
+    summary: 'Create an innovation evidence entry.',
+    operationId: 'v1-innovation-evidence-create',
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
+      description: 'The evidence data to create.'
+    }),
+    responses: {
+      200: {
+        description: 'Innovation evidence info.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {}
+            }
+          }
+        }
       },
-    },
+      400: {
+        description: 'Bad Request'
+      },
+      401: {
+        description: 'Unauthorized'
+      },
+      403: {
+        description: 'Forbidden'
+      },
+      404: {
+        description: 'Not found'
+      },
+      500: {
+        description: 'Internal server error'
+      }
+    }
   }
-);
+});

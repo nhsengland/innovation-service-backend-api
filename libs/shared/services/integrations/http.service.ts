@@ -10,7 +10,7 @@ export class HttpService {
     this.httpRequestInstance = axios.create({
       timeout: 60000,
       httpsAgent: new https.Agent({ keepAlive: true }),
-      headers: { 'Content-Type': 'application/xml' },
+      headers: { 'Content-Type': 'application/xml' }
     });
   }
 

@@ -12,14 +12,14 @@ export class alterOrganisationUnitIsShadow1626707748930 {
       { acronym: 'NHSE-SC', isShadow: true },
       { acronym: 'LSHW', isShadow: true },
       { acronym: 'DIT', isShadow: true },
-      { acronym: 'HTW', isShadow: true },
+      { acronym: 'HTW', isShadow: true }
     ];
 
     const organisationUnitRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity);
 
     for (const organisationUnit of data) {
       const dbOrganisationUnit = await organisationUnitRepo.findOne({
-        where: { acronym: organisationUnit.acronym },
+        where: { acronym: organisationUnit.acronym }
       });
 
       if (!dbOrganisationUnit) continue;

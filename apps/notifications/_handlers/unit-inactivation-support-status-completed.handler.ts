@@ -23,9 +23,7 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovationInfo = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    const innovationInfo = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const innovatorInfo = await this.recipientsService.userInfo(innovationInfo.owner.id);
     const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
@@ -40,8 +38,8 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/support')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
 

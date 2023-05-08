@@ -28,12 +28,12 @@ class V1UserAnnouncements {
 
       const announcements = await announcementsService.getAnnouncements(authInstance.getContext());
       context.res = ResponseHelper.Ok<ResponseDTO>(
-        announcements.map((announcement) => ({
+        announcements.map(announcement => ({
           id: announcement.id,
           params: announcement.params,
           createdAt: announcement.createdAt,
           targetRoles: announcement.targetRoles,
-          template: announcement.template,
+          template: announcement.template
         }))
       );
       return;
@@ -61,32 +61,32 @@ export default openApi(V1UserAnnouncements.httpTrigger as AzureFunction, '/v1/an
                 properties: {
                   id: {
                     type: 'string',
-                    format: 'uuid',
+                    format: 'uuid'
                   },
                   template: {
                     type: 'string',
-                    enum: Object.keys(AnnouncementTemplateType),
+                    enum: Object.keys(AnnouncementTemplateType)
                   },
                   targetRoles: {
                     type: 'array',
                     items: {
                       type: 'string',
-                      enum: Object.keys(ServiceRoleEnum),
-                    },
+                      enum: Object.keys(ServiceRoleEnum)
+                    }
                   },
                   createdAt: {
                     type: 'string',
-                    format: 'date-time',
+                    format: 'date-time'
                   },
                   params: {
-                    type: 'object',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                    type: 'object'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

@@ -3,9 +3,8 @@ const TRANSLATIONS = {
     EXPORT_REQUEST: {
       STOP_SHARING:
         'Since the innovator stopped sharing his innovation, this export request was rejected automatically.',
-      WITHDRAW:
-        'Since the innovator withdrew his innovation, this export request was automatically rejected.',
-    },
+      WITHDRAW: 'Since the innovator withdrew his innovation, this export request was automatically rejected.'
+    }
   },
   SUPPORT_STATUS: {
     ENGAGING: 'Engaging',
@@ -15,8 +14,8 @@ const TRANSLATIONS = {
     NOT_YET: 'Not yet',
     UNASSIGNED: 'Unassigned',
     UNSUITABLE: 'Unsuitable',
-    WITHDRAWN: 'Withdrawn',
-  },
+    WITHDRAWN: 'Withdrawn'
+  }
 };
 
 type NestedKeyOf<ObjectType extends object> = {

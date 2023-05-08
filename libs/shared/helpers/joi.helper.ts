@@ -15,12 +15,12 @@ export class JoiHelper {
 
     if (error) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, {
-        details: error.details.map((item) => ({
+        details: error.details.map(item => ({
           key: item.path.join('.'),
           type: item.type,
           message: item.message,
-          context: (({ key, label, child, ...params }) => params)(item.context || {}), // Removes some unneeded properties from context.
-        })),
+          context: (({ key, label, child, ...params }) => params)(item.context || {}) // Removes some unneeded properties from context.
+        }))
       });
     }
 
@@ -45,9 +45,9 @@ export class JoiHelper {
                 value: value
                   .replace(/(^,+)|(,+$)/gm, '')
                   .split(',')
-                  .filter((item) => item),
+                  .filter(item => item)
               };
-        },
+        }
       },
 
       {
@@ -56,7 +56,7 @@ export class JoiHelper {
         coerce(value) {
           const match = value.match(/\{.*?\}/g); // Get all the objects inside the string
           return match ? { value: match.map((o: string) => JSON.parse(o)) } : { value };
-        },
+        }
       },
 
       {
@@ -68,7 +68,7 @@ export class JoiHelper {
           } catch (err) {
             return { value };
           }
-        },
+        }
       },
 
       {
@@ -76,7 +76,7 @@ export class JoiHelper {
         base: Joi.string().meta({ baseType: 'string' }),
         coerce(value) {
           return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value) };
-        },
+        }
       },
 
       {
@@ -84,16 +84,12 @@ export class JoiHelper {
         base: Joi.date().meta({ baseType: 'date' }),
         prepare(value, _helpers) {
           return typeof value !== 'string' ? { value } : { value: decodeURIComponent(value) };
-        },
+        }
       }
     );
   }
 
-  static PaginationJoiSchema(data: {
-    orderKeys: string[];
-    skip?: number;
-    take?: number;
-  }): Joi.ObjectSchema {
+  static PaginationJoiSchema(data: { orderKeys: string[]; skip?: number; take?: number }): Joi.ObjectSchema {
     return Joi.object({
       skip: Joi.number().default(data.skip ?? 0),
       take: Joi.number()
@@ -102,12 +98,9 @@ export class JoiHelper {
       order: this.AppCustomJoi()
         .stringObject()
         // This validates if the format is { field: 'ASC' | 'DESC' } (and uppercase 'asc' to 'ASC').
-        .pattern(
-          Joi.string().valid(...data.orderKeys),
-          Joi.string().valid('ASC', 'DESC').uppercase()
-        )
+        .pattern(Joi.string().valid(...data.orderKeys), Joi.string().valid('ASC', 'DESC').uppercase())
         .optional()
-        .default({ default: 'DESC' }),
+        .default({ default: 'DESC' })
     });
   }
 }

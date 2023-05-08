@@ -1,7 +1,7 @@
 import type {
   InnovationStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
+  NotificationContextTypeEnum
 } from '@users/shared/enums';
 
 export type ResponseDTO = {

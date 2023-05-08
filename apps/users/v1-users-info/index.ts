@@ -11,19 +11,12 @@ import { container } from '../_config';
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
-import {
-  PathParamsSchema,
-  PathParamsType,
-  QueryParamsSchema,
-  QueryParamsType,
-} from './validation.schemas';
+import { PathParamsSchema, PathParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1UsersInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
@@ -57,13 +50,13 @@ export default openApi(V1UsersInfo.httpTrigger as AzureFunction, '/v1/{userId}',
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for user object' },
-              },
-            },
-          },
-        },
+                id: { type: 'string', description: 'Unique identifier for user object' }
+              }
+            }
+          }
+        }
       },
-      403: { description: 'Forbidden' },
-    },
-  },
+      403: { description: 'Forbidden' }
+    }
+  }
 });

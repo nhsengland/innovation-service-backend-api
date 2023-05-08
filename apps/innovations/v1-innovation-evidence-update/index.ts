@@ -16,12 +16,8 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationEvidenceUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -63,7 +59,7 @@ export default openApi(
       operationId: 'v1-innovation-evidence-update',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'The evidence data to update.',
+        description: 'The evidence data to update.'
       }),
       responses: {
         200: {
@@ -72,27 +68,27 @@ export default openApi(
             'application/json': {
               schema: {
                 type: 'object',
-                properties: {},
-              },
-            },
-          },
+                properties: {}
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad Request',
+          description: 'Bad Request'
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not found',
+          description: 'Not found'
         },
         500: {
-          description: 'Internal server error',
-        },
-      },
-    },
+          description: 'Internal server error'
+        }
+      }
+    }
   }
 );

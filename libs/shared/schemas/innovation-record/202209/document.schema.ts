@@ -22,7 +22,7 @@ import {
   catalogYesNo,
   catalogYesNoNotRelevant,
   catalogYesNoNotSure,
-  catalogYesNotYetNotSure,
+  catalogYesNotYetNotSure
 } from './catalog.types';
 import type { DocumentType202209 } from './document.types';
 
@@ -52,7 +52,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
       .valid(...catalogMainPurpose)
       .allow(null),
     supportTypes: Joi.array().items(Joi.string().valid(...catalogsupportTypes)),
-    moreSupportDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
+    moreSupportDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
   })
     .required()
     .min(1),
@@ -63,7 +63,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
     problemsTackled: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null).optional(),
     problemsConsequences: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null).optional(),
     intervention: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null).optional(),
-    interventionImpact: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null).optional(),
+    interventionImpact: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null).optional()
   })
     .required()
     .min(1),
@@ -72,7 +72,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
     impactClinicians: Joi.boolean().strict(),
     subgroups: Joi.array().items(Joi.string()).allow(null),
     cliniciansImpactDetails: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
-    diseasesConditionsImpact: Joi.array().items(Joi.string()).allow(null),
+    diseasesConditionsImpact: Joi.array().items(Joi.string()).allow(null)
   })
     .required()
     .min(1),
@@ -94,18 +94,18 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
       .allow(null),
     otherEnvironmentalBenefit: Joi.string().allow(null),
     accessibilityImpactDetails: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
-    accessibilityStepsDetails: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
+    accessibilityStepsDetails: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
   })
     .required()
     .min(1),
   EVIDENCE_OF_EFFECTIVENESS: Joi.object<DocumentType202209['EVIDENCE_OF_EFFECTIVENESS']>({
-    hasEvidence: Joi.string().valid(...catalogYesInProgressNotYet),
+    hasEvidence: Joi.string().valid(...catalogYesInProgressNotYet)
   })
     .required()
     .min(1),
   MARKET_RESEARCH: Joi.object<DocumentType202209['MARKET_RESEARCH']>({
     hasMarketResearch: Joi.string().valid(...catalogYesInProgressNotYet),
-    marketResearch: Joi.string().allow(null),
+    marketResearch: Joi.string().allow(null)
   })
     .required()
     .min(1),
@@ -114,7 +114,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
     hasOtherIntellectual: Joi.string()
       .valid(...catalogYesNo)
       .allow(null),
-    otherIntellectual: Joi.string().allow(null),
+    otherIntellectual: Joi.string().allow(null)
   })
     .required()
     .min(1),
@@ -127,11 +127,11 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
           .required(),
         hasMet: Joi.string()
           .valid(...catalogYesInProgressNotYet)
-          .allow(null),
+          .allow(null)
       })
     ),
     otherRegulationDescription: Joi.string().allow(null),
-    files: Joi.array().items(Joi.string().guid()),
+    files: Joi.array().items(Joi.string().guid())
   })
     .required()
     .min(1),
@@ -143,7 +143,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
     potentialPathway: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
     carePathway: Joi.string()
       .valid(...catalogCarePathway)
-      .allow(null),
+      .allow(null)
   })
     .required()
     .min(1),
@@ -152,10 +152,10 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
     userTests: Joi.array().items(
       Joi.object({
         kind: Joi.string(),
-        feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
+        feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
       })
     ),
-    files: Joi.array().items(Joi.string().guid()),
+    files: Joi.array().items(Joi.string().guid())
   })
     .required()
     .min(1),
@@ -166,7 +166,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
       .items(Joi.string().valid(...catalogPatientRange))
       .allow(null),
     sellExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
-    usageExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
+    usageExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
   })
     .required()
     .min(1),
@@ -177,7 +177,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
       .allow(null),
     costComparison: Joi.string()
       .valid(...catalogCostComparison)
-      .allow(null),
+      .allow(null)
   })
     .required()
     .min(1),
@@ -190,7 +190,7 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
     hasFunding: Joi.string()
       .valid(...catalogYesNoNotRelevant)
       .allow(null),
-    fundingDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
+    fundingDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
   })
     .required()
     .min(1),
@@ -203,14 +203,14 @@ export const DocumentValidationSchema202209Map: DocumentValidationSchema202209Ma
       Joi.object({
         name: Joi.string().required(),
         commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
-        orgDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null),
+        orgDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).allow(null)
       })
     ),
     hasResourcesToScale: Joi.string()
       .valid(...catalogYesNoNotSure)
       .allow(null),
-    files: Joi.array().items(Joi.string().guid()),
+    files: Joi.array().items(Joi.string().guid())
   })
     .required()
-    .min(1),
+    .min(1)
 };

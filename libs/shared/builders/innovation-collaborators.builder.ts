@@ -16,7 +16,7 @@ export class InnovationCollaboratorBuilder {
       innovation: innovation,
       createdBy: domainContext.id,
       updatedBy: domainContext.id,
-      invitedAt: new Date(),
+      invitedAt: new Date()
     };
   }
 

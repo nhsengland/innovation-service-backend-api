@@ -18,12 +18,8 @@ class V1InnovationThreadMessageCreate {
   @JwtDecoder()
   @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const threadsService = container.get<InnovationThreadsService>(
-      SYMBOLS.InnovationThreadsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
@@ -53,11 +49,11 @@ class V1InnovationThreadMessageCreate {
           message: result.threadMessage.message,
           createdBy: {
             id: result.threadMessage.author.id,
-            identityId: result.threadMessage.author.identityId,
+            identityId: result.threadMessage.author.identityId
           },
           createdAt: result.threadMessage.createdAt,
-          isEditable: result.threadMessage.isEditable,
-        },
+          isEditable: result.threadMessage.isEditable
+        }
       });
 
       return;
@@ -83,8 +79,8 @@ export default openApi(
           description: 'Innovation ID',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'threadId',
@@ -92,9 +88,9 @@ export default openApi(
           description: 'Thread ID',
           required: true,
           schema: {
-            type: 'string',
-          },
-        },
+            type: 'string'
+          }
+        }
       ],
       requestBody: {
         description: 'Message to be created.',
@@ -106,12 +102,12 @@ export default openApi(
               properties: {
                 message: {
                   type: 'string',
-                  description: 'Message to be created.',
-                },
-              },
-            },
-          },
-        },
+                  description: 'Message to be created.'
+                }
+              }
+            }
+          }
+        }
       },
       responses: {
         200: {
@@ -126,56 +122,56 @@ export default openApi(
                     properties: {
                       id: {
                         type: 'string',
-                        description: 'Message ID.',
+                        description: 'Message ID.'
                       },
                       message: {
                         type: 'string',
-                        description: 'Message.',
+                        description: 'Message.'
                       },
                       createdBy: {
                         type: 'object',
                         properties: {
                           id: {
                             type: 'string',
-                            description: 'User ID.',
+                            description: 'User ID.'
                           },
                           identityId: {
                             type: 'string',
-                            description: 'User identity ID.',
-                          },
-                        },
+                            description: 'User identity ID.'
+                          }
+                        }
                       },
                       createdAt: {
                         type: 'string',
-                        description: 'Date when the message was created.',
+                        description: 'Date when the message was created.'
                       },
                       isEditable: {
                         type: 'boolean',
-                        description: 'Flag to indicate if the message can be edited.',
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+                        description: 'Flag to indicate if the message can be edited.'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad request.',
+          description: 'Bad request.'
         },
         401: {
-          description: 'Unauthorized.',
+          description: 'Unauthorized.'
         },
         403: {
-          description: 'Forbidden.',
+          description: 'Forbidden.'
         },
         404: {
-          description: 'Not found.',
+          description: 'Not found.'
         },
         500: {
-          description: 'Internal server error.',
-        },
-      },
-    },
+          description: 'Internal server error.'
+        }
+      }
+    }
   }
 );

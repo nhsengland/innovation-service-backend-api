@@ -25,9 +25,7 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_assessment_id' })
   assessment: InnovationAssessmentEntity;
 
-  static new(
-    data: Partial<InnovationReassessmentRequestEntity>
-  ): InnovationReassessmentRequestEntity {
+  static new(data: Partial<InnovationReassessmentRequestEntity>): InnovationReassessmentRequestEntity {
     const instance = new InnovationReassessmentRequestEntity();
     Object.assign(instance, data);
     return instance;

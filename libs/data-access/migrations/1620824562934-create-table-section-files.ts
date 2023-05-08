@@ -26,9 +26,7 @@ export class createTableSectionFiles1620824562934 implements MigrationInterface 
     await queryRunner.query(
       `ALTER TABLE "innovation_section_file" DROP CONSTRAINT "fk_innovation_section_file_innovation_section_innovation_section_id"`
     );
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_section_file_innovation_file_id" ON "innovation_section_file"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_section_file_innovation_file_id" ON "innovation_section_file"`);
     await queryRunner.query(
       `DROP INDEX "idx_innovation_section_file_innovation_section_id" ON "innovation_section_file"`
     );

@@ -11,13 +11,13 @@ import {
   buildDocumentFooterDefinition,
   buildDocumentHeaderDefinition,
   buildDocumentStylesDefinition,
-  buildDocumentTOCDefinition,
+  buildDocumentTOCDefinition
 } from '../_helpers/innovation.pdf.styles';
 import type {
   InnovationAllSectionsType,
   InnovationExportSectionAnswerType,
   InnovationExportSectionItemType,
-  InnovationExportSectionType,
+  InnovationExportSectionType
 } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 
@@ -41,7 +41,7 @@ export class PDFService extends BaseService {
         .innerJoinAndSelect('request.innovation', 'innovation')
         .where('innovation.id = :innovationId', { innovationId })
         .andWhere('request.organisation_unit_id = :organisationUnitId', {
-          organisationUnitId: domainContext.organisation?.organisationUnit?.id,
+          organisationUnitId: domainContext.organisation?.organisationUnit?.id
         })
         .andWhere('request.status = :status', { status: 'APPROVED' })
         .orderBy('request.updated_at', 'DESC')
@@ -63,16 +63,16 @@ export class PDFService extends BaseService {
         normal: '_fonts/Frutiger-LT-Std-55-Roman.ttf',
         bold: '_fonts/Frutiger-LT-Std-65-Bold.ttf',
         italics: '_fonts/Frutiger-LT-Std-55-Roman.ttf',
-        bolditalics: '_fonts/Frutiger-LT-Std-65-Bold.ttf',
-      },
+        bolditalics: '_fonts/Frutiger-LT-Std-65-Bold.ttf'
+      }
     };
     const printer = new PdfPrinter(fontDescriptors);
     const doc = printer.createPdfKitDocument(docDefinition);
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const chunks: any[] = [];
       doc.end();
-      doc.on('data', (chunk) => {
+      doc.on('data', chunk => {
         chunks.push(chunk);
       });
       doc.on('end', () => {
@@ -81,15 +81,12 @@ export class PDFService extends BaseService {
     });
   }
 
-  buildDocumentHeaderDefinition(
-    innovationName: string,
-    body: InnovationAllSectionsType
-  ): TDocumentDefinitions {
+  buildDocumentHeaderDefinition(innovationName: string, body: InnovationAllSectionsType): TDocumentDefinitions {
     const documentDefinition = {
       header: buildDocumentHeaderDefinition(),
       footer: buildDocumentFooterDefinition(),
       content: buildDocumentTOCDefinition(innovationName),
-      styles: buildDocumentStylesDefinition(),
+      styles: buildDocumentStylesDefinition()
     };
 
     let sectionNumber = 1;
@@ -101,7 +98,7 @@ export class PDFService extends BaseService {
         tocStyle: { italics: true },
         tocMargin: [0, 10, 0, 0],
         tocNumberStyle: { italics: true, decoration: 'underline' },
-        pageBreak: 'before',
+        pageBreak: 'before'
       } as any);
 
       let subSectionNumber = 1;
@@ -110,7 +107,7 @@ export class PDFService extends BaseService {
         documentDefinition.content.push({
           text: `${sectionNumber}.${subSectionNumber} ${section.section}`,
           style: 'subheader',
-          margin: [5, 20],
+          margin: [5, 20]
         } as any);
 
         let questionNumber = 1;
@@ -118,7 +115,7 @@ export class PDFService extends BaseService {
           documentDefinition.content.push({
             text: `${sectionNumber}.${subSectionNumber}.${questionNumber} ${answer.label}`,
             style: 'question',
-            margin: [10, 10],
+            margin: [10, 10]
           } as any);
 
           const answers = answer.value.split('\n');
@@ -127,13 +124,13 @@ export class PDFService extends BaseService {
             documentDefinition.content.push({
               ul: answers,
               style: 'answer',
-              margin: [15, 2],
+              margin: [15, 2]
             } as any);
           } else {
             documentDefinition.content.push({
               text: answers[0] === 'undefined' ? '-' : answers[0] === '' ? '-' : answers[0],
               style: 'answer',
-              margin: [15, 2],
+              margin: [15, 2]
             } as any);
           }
 

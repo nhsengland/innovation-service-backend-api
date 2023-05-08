@@ -6,7 +6,7 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
@@ -14,7 +14,7 @@ import {
   DomainServiceSymbol,
   DomainServiceType,
   IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
+  IdentityProviderServiceType
 } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -42,9 +42,7 @@ export class ActionUpdateHandler extends BaseHandler<
 > {
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private identityProviderService = container.get<IdentityProviderServiceType>(
-    IdentityProviderServiceSymbol
-  );
+  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
   private data: {
     innovation?: {
@@ -79,12 +77,8 @@ export class ActionUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(
-      this.inputData.action.id
-    );
+    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
     switch (this.domainContext.currentRole.role) {
       case ServiceRoleEnum.INNOVATOR:
@@ -113,15 +107,14 @@ export class ActionUpdateHandler extends BaseHandler<
             InnovationActionStatusEnum.COMPLETED,
             InnovationActionStatusEnum.REQUESTED,
             InnovationActionStatusEnum.CANCELLED,
-            InnovationActionStatusEnum.DELETED,
+            InnovationActionStatusEnum.DELETED
           ]
         ) {
           await this.prepareEmailForInnovationOwner();
           await this.prepareInAppForInnovationOwner();
           if (
             this.inputData.action.previouslyUpdatedByUserRole &&
-            this.inputData.action.previouslyUpdatedByUserRole.id !==
-              this.data.innovation.owner.userRole.id
+            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.userRole.id
           ) {
             await this.prepareInAppForCollaborator();
           }
@@ -162,23 +155,23 @@ export class ActionUpdateHandler extends BaseHandler<
       to: {
         type: 'identityId',
         value: this.data.actionInfo.owner.identityId,
-        displayNameParam: 'display_name',
+        displayNameParam: 'display_name'
       },
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
         innovation_name: this.data.innovation?.name ?? '',
         ...(templateId === EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR_OR_ASSESSMENT && {
-          declined_action_reason: this.inputData.comment ?? '',
+          declined_action_reason: this.inputData.comment ?? ''
         }),
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('accessor/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({
             innovationId: this.inputData.innovationId,
-            actionId: this.inputData.action.id,
+            actionId: this.inputData.action.id
           })
-          .buildUrl(),
-      },
+          .buildUrl()
+      }
     });
   }
 
@@ -210,9 +203,7 @@ export class ActionUpdateHandler extends BaseHandler<
           throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
       }
 
-      const requestInfo = await this.identityProviderService.getUserInfo(
-        this.requestUser.identityId
-      );
+      const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
       let accessor_name = requestInfo.displayName;
       let unit_name =
@@ -225,7 +216,7 @@ export class ActionUpdateHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: this.data.innovation?.owner.identityId || '',
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -235,10 +226,10 @@ export class ActionUpdateHandler extends BaseHandler<
             .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
-              actionId: this.inputData.action.id,
+              actionId: this.inputData.action.id
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
   }
@@ -266,12 +257,10 @@ export class ActionUpdateHandler extends BaseHandler<
           throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
       }
 
-      const requestInfo = await this.identityProviderService.getUserInfo(
-        this.requestUser.identityId
-      );
+      const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
       const actionOwnerInfo = await this.domainService.users.getUserInfo({
-        userId: this.data.actionInfo.owner.id,
+        userId: this.data.actionInfo.owner.id
       });
       const actionOwnerUnitName =
         this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
@@ -283,7 +272,7 @@ export class ActionUpdateHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: this.data.innovation?.owner.identityId || '',
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -294,10 +283,10 @@ export class ActionUpdateHandler extends BaseHandler<
             .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
-              actionId: this.inputData.action.id,
+              actionId: this.inputData.action.id
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
   }
@@ -311,10 +300,7 @@ export class ActionUpdateHandler extends BaseHandler<
     const requestUserInfo = await this.recipientsService.userInfo(this.requestUser.id);
 
     if (
-      this.isEmailPreferenceInstantly(
-        EmailNotificationTypeEnum.ACTION,
-        requestUserInfo.emailNotificationPreferences
-      ) &&
+      this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, requestUserInfo.emailNotificationPreferences) &&
       requestUserInfo.isActive
     ) {
       let templateId: EmailTypeEnum;
@@ -329,16 +315,14 @@ export class ActionUpdateHandler extends BaseHandler<
           throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
       }
 
-      const actionOwnerInfo = await this.identityProviderService.getUserInfo(
-        this.data.actionInfo.owner.identityId
-      );
+      const actionOwnerInfo = await this.identityProviderService.getUserInfo(this.data.actionInfo.owner.identityId);
 
       this.emails.push({
         templateId,
         to: {
           type: 'identityId',
           value: requestUserInfo.identityId || '',
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -351,10 +335,10 @@ export class ActionUpdateHandler extends BaseHandler<
             .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
-              actionId: this.inputData.action.id,
+              actionId: this.inputData.action.id
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
   }
@@ -370,14 +354,14 @@ export class ActionUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.ACTION,
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id,
+        id: this.inputData.action.id
       },
       userRoleIds: [this.data.actionInfo.owner.roleId],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section,
-      },
+        section: this.inputData.action.section
+      }
     });
   }
 
@@ -392,14 +376,14 @@ export class ActionUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.ACTION,
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id,
+        id: this.inputData.action.id
       },
       userRoleIds: [this.data.innovation.owner.userRole.id],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section,
-      },
+        section: this.inputData.action.section
+      }
     });
   }
 
@@ -414,14 +398,14 @@ export class ActionUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.ACTION,
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id,
+        id: this.inputData.action.id
       },
       userRoleIds: [this.inputData.action.previouslyUpdatedByUserRole.id],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section,
-      },
+        section: this.inputData.action.section
+      }
     });
   }
 
@@ -431,14 +415,14 @@ export class ActionUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.ACTION,
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id,
+        id: this.inputData.action.id
       },
       userRoleIds: [this.domainContext.currentRole.id],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section,
-      },
+        section: this.inputData.action.section
+      }
     });
   }
 }

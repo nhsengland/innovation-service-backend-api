@@ -1,6 +1,5 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-
 export class createTableInnovationDocumentAndMigration1680028339424 implements MigrationInterface {
   name?: string | undefined;
   public async up(queryRunner: QueryRunner): Promise<void> {

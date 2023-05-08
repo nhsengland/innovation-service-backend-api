@@ -16,17 +16,11 @@ import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './
 class V1InnovationsExportRequestList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-      const auth = await authorizationService
-        .validate(context)
-        .checkInnovatorType()
-        .checkAccessorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
 
       const domainContext = auth.getContext();
 
@@ -67,14 +61,14 @@ export default openApi(
           description: 'Innovation ID',
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       responses: {
         200: { description: 'Success' },
-        400: { description: 'Invalid innovation payload' },
-      },
-    },
+        400: { description: 'Invalid innovation payload' }
+      }
+    }
   }
 );

@@ -16,17 +16,11 @@ import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './valida
 class V1InnovationsExportRequestsUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-      const auth = await authorizationService
-        .validate(context)
-        .checkInnovatorType()
-        .checkAccessorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
 
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
@@ -34,7 +28,7 @@ class V1InnovationsExportRequestsUpdate {
       const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
-        userType: domainContext.currentRole.role,
+        userType: domainContext.currentRole.role
       });
 
       const { rejectReason, status } = body;
@@ -71,8 +65,8 @@ export default openApi(
           description: 'Innovation ID',
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
+            format: 'uuid'
+          }
         },
         {
           name: 'requestId',
@@ -81,14 +75,14 @@ export default openApi(
           description: 'Export request ID',
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       responses: {
         200: { description: 'Success' },
-        400: { description: 'Invalid innovation payload' },
-      },
-    },
+        400: { description: 'Invalid innovation payload' }
+      }
+    }
   }
 );

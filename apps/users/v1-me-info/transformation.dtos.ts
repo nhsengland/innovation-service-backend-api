@@ -1,7 +1,7 @@
 import type {
   AccessorOrganisationRoleEnum,
   InnovatorOrganisationRoleEnum,
-  PhoneUserPreferenceEnum,
+  PhoneUserPreferenceEnum
 } from '@users/shared/enums';
 import type { RoleType } from '@users/shared/types';
 

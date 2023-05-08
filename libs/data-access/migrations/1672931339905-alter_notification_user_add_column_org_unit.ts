@@ -3,9 +3,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 export class alterNotificationUserAddColumnOrgUnit1672931339905 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // MUST BE NULLABLE because not all users have units or orgs
-    await queryRunner.query(
-      `ALTER TABLE "notification_user" ADD organisation_unit_id uniqueidentifier NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "notification_user" ADD organisation_unit_id uniqueidentifier NULL;`);
     await queryRunner.query(
       `
         UPDATE notification_user 
@@ -23,9 +21,7 @@ export class alterNotificationUserAddColumnOrgUnit1672931339905 implements Migra
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP INDEX "idx_notification_user_organisation_unit_read" ON "notification_user"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_notification_user_organisation_unit_read" ON "notification_user"`);
     await queryRunner.query(`ALTER TABLE "notification_user" DROP COLUMN organisation_unit_id;`);
   }
 }

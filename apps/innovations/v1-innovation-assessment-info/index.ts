@@ -19,12 +19,10 @@ class V1InnovationAssessmentInfo {
   @Audit({
     action: ActionEnum.READ,
     target: TargetEnum.ASSESSMENT,
-    identifierParam: 'assessmentId',
+    identifierParam: 'assessmentId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
       SYMBOLS.InnovationAssessmentsService
     );
@@ -42,9 +40,7 @@ class V1InnovationAssessmentInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationAssessmentsService.getInnovationAssessmentInfo(
-        params.assessmentId
-      );
+      const result = await innovationAssessmentsService.getInnovationAssessmentInfo(params.assessmentId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
@@ -68,14 +64,14 @@ class V1InnovationAssessmentInfo {
         hasImplementationPlanComment: result.hasImplementationPlanComment,
         hasScaleResource: result.hasScaleResource,
         hasScaleResourceComment: result.hasScaleResourceComment,
-        suggestedOrganisations: result.suggestedOrganisations.map((item) => ({
+        suggestedOrganisations: result.suggestedOrganisations.map(item => ({
           id: item.id,
           name: item.name,
           acronym: item.acronym,
-          units: item.units,
+          units: item.units
         })),
         updatedAt: result.updatedAt,
-        updatedBy: result.updatedBy,
+        updatedBy: result.updatedBy
       });
       return;
     } catch (error) {
@@ -102,8 +98,8 @@ export default openApi(
           required: true,
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
+            format: 'uuid'
+          }
         },
         {
           name: 'assessmentId',
@@ -112,9 +108,9 @@ export default openApi(
           required: true,
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       responses: {
         200: {
@@ -132,8 +128,8 @@ export default openApi(
                     type: 'object',
                     properties: {
                       id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' },
-                    },
+                      name: { type: 'string' }
+                    }
                   },
                   maturityLevel: { type: 'string' },
                   maturityLevelComment: { type: 'string' },
@@ -172,44 +168,44 @@ export default openApi(
                                 properties: {
                                   id: { type: 'string', format: 'uuid' },
                                   name: { type: 'string' },
-                                  acronym: { type: 'string' },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
+                                  acronym: { type: 'string' }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
                   },
                   updatedAt: { type: 'string', format: 'date-time' },
                   updatedBy: {
                     type: 'object',
                     properties: {
                       id: { type: 'string', format: 'uuid' },
-                      name: { type: 'string' },
-                    },
-                  },
-                },
-              },
-            },
-          },
+                      name: { type: 'string' }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad Request',
+          description: 'Bad Request'
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not Found',
+          description: 'Not Found'
         },
         500: {
-          description: 'Internal Server Error',
-        },
-      },
-    },
+          description: 'Internal Server Error'
+        }
+      }
+    }
   }
 );

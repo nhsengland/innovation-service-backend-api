@@ -16,12 +16,8 @@ import { BodySchema, BodyType } from './validations.schema';
 class CreateInnovationTransfer {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationTransferService = container.get<InnovationTransferService>(
-      SYMBOLS.InnovationTransferService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationTransferService = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
 
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
@@ -38,7 +34,7 @@ class CreateInnovationTransfer {
       const result = await innovationTransferService.createInnovationTransfer(
         {
           id: requestUser.id,
-          identityId: requestUser.identityId,
+          identityId: requestUser.identityId
         },
         domainContext,
         body.innovationId,
@@ -63,10 +59,10 @@ export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/
       content: {
         'application/json': {
           schema: {
-            type: 'object',
-          },
-        },
-      },
+            type: 'object'
+          }
+        }
+      }
     },
     responses: {
       200: {
@@ -74,22 +70,22 @@ export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/
         content: {
           'application/json': {
             schema: {
-              type: 'object',
-            },
-          },
-        },
+              type: 'object'
+            }
+          }
+        }
       },
       400: {
         description: 'Bad Request',
         content: {
           'application/json': {
             schema: {
-              type: 'object',
-            },
-          },
-        },
+              type: 'object'
+            }
+          }
+        }
       },
-      422: { description: 'Unprocessable Entity' },
-    },
-  },
+      422: { description: 'Unprocessable Entity' }
+    }
+  }
 });

@@ -11,13 +11,13 @@ import {
   UserEntity,
   type InnovationEntity,
   type InnovationSectionEntity,
-  type InnovationSupportEntity,
+  type InnovationSupportEntity
 } from '../entities';
 import type {
   AccessorOrganisationRoleEnum,
   ActivityEnum,
   ActivityTypeEnum,
-  InnovatorOrganisationRoleEnum,
+  InnovatorOrganisationRoleEnum
 } from '../enums';
 import type { ActivitiesParamsType, DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
@@ -61,10 +61,7 @@ export class TestDataBuilder {
     return new InnovationAssessmentBuilder(innovation);
   }
 
-  createSupport(
-    innovation: InnovationEntity,
-    organisationUnit: OrganisationUnitEntity
-  ): InnovationSupportBuilder {
+  createSupport(innovation: InnovationEntity, organisationUnit: OrganisationUnitEntity): InnovationSupportBuilder {
     return new InnovationSupportBuilder(innovation, organisationUnit);
   }
 
@@ -76,10 +73,7 @@ export class TestDataBuilder {
     return new InnovationActionBuilder(createdBy, innovationSection, innovationSupport);
   }
 
-  createCollaborator(
-    domainContext: DomainContextType,
-    innovation: InnovationEntity
-  ): InnovationCollaboratorBuilder {
+  createCollaborator(domainContext: DomainContextType, innovation: InnovationEntity): InnovationCollaboratorBuilder {
     return new InnovationCollaboratorBuilder(domainContext, innovation);
   }
 
@@ -92,7 +86,7 @@ export class TestDataBuilder {
     const orgUser = OrganisationUserEntity.new({
       organisation: OrganisationEntity.new(b),
       user: UserEntity.new(a),
-      role: role,
+      role: role
     });
 
     return entityManager.getRepository(OrganisationUserEntity).save(orgUser);
@@ -105,19 +99,16 @@ export class TestDataBuilder {
   ): Promise<OrganisationUnitUserEntity> {
     const orgUnitUser = OrganisationUnitUserEntity.new({
       organisationUnit: OrganisationUnitEntity.new(b),
-      organisationUser: OrganisationUserEntity.new(a),
+      organisationUser: OrganisationUserEntity.new(a)
     });
 
     return entityManager.getRepository(OrganisationUnitUserEntity).save(orgUnitUser);
   }
 
-  async addFileToInnovation(
-    i: InnovationEntity,
-    entityManager: EntityManager
-  ): Promise<InnovationFileEntity> {
+  async addFileToInnovation(i: InnovationEntity, entityManager: EntityManager): Promise<InnovationFileEntity> {
     const file = InnovationFileEntity.new({
       innovation: i,
-      displayFileName: randText(),
+      displayFileName: randText()
     });
 
     return entityManager.getRepository(InnovationFileEntity).save(file);
@@ -142,14 +133,14 @@ export class TestDataBuilder {
       createdBy: configuration.userId,
       updatedBy: configuration.userId,
       userRole: {
-        id: configuration.domainContext.currentRole.id,
+        id: configuration.domainContext.currentRole.id
       },
       param: {
         actionUserId: configuration.userId,
         actionUserRole: configuration.domainContext.currentRole,
         actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
-        ...params,
-      },
+        ...params
+      }
     });
 
     return entityManager.getRepository(ActivityLogEntity).save(activityLog);

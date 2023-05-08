@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
   DomainServiceSymbol,
-  DomainServiceType,
+  DomainServiceType
 } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -22,9 +22,7 @@ class V1InnovationThreadParticipants {
   @JwtDecoder()
   @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
@@ -41,7 +39,7 @@ class V1InnovationThreadParticipants {
       const result = await domainService.innovations.threadIntervenients(pathParams.threadId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        participants: result.map((participant) => ({
+        participants: result.map(participant => ({
           id: participant.id,
           name: participant?.name ?? '',
           type: participant.userRole.role,
@@ -49,10 +47,10 @@ class V1InnovationThreadParticipants {
           organisationUnit: participant.organisationUnit
             ? {
                 id: participant.organisationUnit.id,
-                acronym: participant.organisationUnit.acronym,
+                acronym: participant.organisationUnit.acronym
               }
-            : null,
-        })),
+            : null
+        }))
       });
       return;
     } catch (error) {
@@ -86,46 +84,46 @@ export default openApi(
                       type: 'object',
                       properties: {
                         id: {
-                          type: 'string',
+                          type: 'string'
                         },
                         name: {
-                          type: 'string',
+                          type: 'string'
                         },
                         type: {
-                          type: 'string',
+                          type: 'string'
                         },
                         organisationUnit: {
                           type: 'object',
                           properties: {
                             id: {
-                              type: 'string',
+                              type: 'string'
                             },
                             acronym: {
-                              type: 'string',
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+                              type: 'string'
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not Found',
+          description: 'Not Found'
         },
         500: {
-          description: 'Internal Server Error',
-        },
-      },
-    },
+          description: 'Internal Server Error'
+        }
+      }
+    }
   }
 );

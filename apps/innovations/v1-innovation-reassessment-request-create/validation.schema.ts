@@ -7,7 +7,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -18,5 +18,5 @@ export const BodySchema = Joi.object<BodyType>({
   updatedInnovationRecord: Joi.string()
     .valid(...Object.values(YesOrNoCatalogueType))
     .required(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
 }).required();

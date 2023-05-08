@@ -13,6 +13,6 @@ export const waitingAssessmentStatisticsHandler = async (): Promise<
 
   return {
     count: actions.count,
-    overdue: actions.overdue,
+    overdue: actions.overdue
   };
 };

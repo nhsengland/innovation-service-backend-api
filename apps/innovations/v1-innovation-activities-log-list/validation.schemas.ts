@@ -3,14 +3,14 @@ import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helper
 import Joi from 'joi';
 
 enum orderFields {
-  createdAt = 'createdAt',
+  createdAt = 'createdAt'
 }
 
 export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -19,7 +19,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   endDate?: string;
 };
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.keys(orderFields),
+  orderKeys: Object.keys(orderFields)
 })
   .append<QueryParamsType>({
     activityTypes: JoiHelper.AppCustomJoi()
@@ -27,6 +27,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .items(Joi.string().valid(...Object.values(ActivityTypeEnum)))
       .optional(),
     startDate: JoiHelper.AppCustomJoi().decodeURIDate().optional(),
-    endDate: JoiHelper.AppCustomJoi().decodeURIDate().optional(),
+    endDate: JoiHelper.AppCustomJoi().decodeURIDate().optional()
   })
   .required();

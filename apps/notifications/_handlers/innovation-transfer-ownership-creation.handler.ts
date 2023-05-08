@@ -1,9 +1,6 @@
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import {
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-} from '@notifications/shared/services';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
@@ -13,13 +10,10 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION,
-  | EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER
-  | EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER,
+  EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER | EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER,
   Record<string, never>
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(
-    IdentityProviderServiceSymbol
-  );
+  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
@@ -31,15 +25,9 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(
-      innovation.owner.identityId
-    );
-    const transfer = await this.recipientsService.innovationTransferInfoWithOwner(
-      this.inputData.transferId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
+    const transfer = await this.recipientsService.innovationTransferInfoWithOwner(this.inputData.transferId);
 
     const targetUser = await this.identityProviderService.getUserInfoByEmail(transfer.email);
 
@@ -52,10 +40,8 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(`transfers/${transfer.id}`)
-            .buildUrl(),
-        },
+          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath(`transfers/${transfer.id}`).buildUrl()
+        }
       });
     } else {
       this.emails.push({
@@ -64,10 +50,8 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/dashboard')
-            .buildUrl(),
-        },
+          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
+        }
       });
     }
 

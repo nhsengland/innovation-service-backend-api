@@ -58,12 +58,14 @@ export class UserBuilder extends BaseBuilder {
   }
 
   addRole(type: ServiceRoleEnum, organisationId?: string, organisationUnitId?: string): this {
-
     // TODO: This makes sense in the future when organisations builder exists.
     // if ([ServiceRoleEnum.INNOVATOR].includes(type) && !organisationId) {
     //   throw new Error('Innovator user type need to be in an organisation (even if shadow).');
     // }
-    if ([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(type) && (!organisationId || !organisationUnitId)) {
+    if (
+      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(type) &&
+      (!organisationId || !organisationUnitId)
+    ) {
       throw new Error('Accessor user types need to be in an organisation and unit.');
     }
 

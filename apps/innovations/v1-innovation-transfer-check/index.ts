@@ -12,9 +12,7 @@ import { ParamsSchema, ParamsType } from './validations.schema';
 
 class V1InnovationTransferCheck {
   static async httpTrigger(context: Context, request: HttpRequest): Promise<void> {
-    const transferService = container.get<InnovationTransferService>(
-      SYMBOLS.InnovationTransferService
-    );
+    const transferService = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -30,32 +28,28 @@ class V1InnovationTransferCheck {
   }
 }
 
-export default openApi(
-  V1InnovationTransferCheck.httpTrigger as AzureFunction,
-  '/v1/transfers/{transferId}/check',
-  {
-    get: {
-      description: 'Get details of pending innovations transfers',
-      operationId: 'v1-innovation-transfer-check',
-      parameters: [{ in: 'path', name: 'transferId', required: true, schema: { type: 'string' } }],
-      responses: {
-        200: {
-          description: 'Ok',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  userExists: { type: 'boolean', description: 'User exists in service' },
-                },
-              },
-            },
-          },
-        },
-        404: {
-          description: 'The innovation transfer does not exist',
-        },
+export default openApi(V1InnovationTransferCheck.httpTrigger as AzureFunction, '/v1/transfers/{transferId}/check', {
+  get: {
+    description: 'Get details of pending innovations transfers',
+    operationId: 'v1-innovation-transfer-check',
+    parameters: [{ in: 'path', name: 'transferId', required: true, schema: { type: 'string' } }],
+    responses: {
+      200: {
+        description: 'Ok',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                userExists: { type: 'boolean', description: 'User exists in service' }
+              }
+            }
+          }
+        }
       },
-    },
+      404: {
+        description: 'The innovation transfer does not exist'
+      }
+    }
   }
-);
+});

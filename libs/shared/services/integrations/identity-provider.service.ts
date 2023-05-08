@@ -6,7 +6,7 @@ import {
   NotFoundError,
   ServiceUnavailableError,
   UnauthorizedError,
-  UserErrorsEnum,
+  UserErrorsEnum
 } from '../../errors';
 
 import type { IdentityUserInfo } from '../../types/domain.types';
@@ -15,7 +15,7 @@ import {
   LoggerServiceSymbol,
   LoggerServiceType,
   StorageQueueServiceSymbol,
-  StorageQueueServiceType,
+  StorageQueueServiceType
 } from '../interfaces';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
 import { QueuesEnum } from './storage-queue.service';
@@ -73,7 +73,7 @@ export class IdentityProviderService {
     scope: 'https://graph.microsoft.com/.default',
     grant_type: 'client_credentials',
     client_id: process.env['AD_CLIENT_ID'] || '',
-    client_secret: process.env['AD_CLIENT_SECRET'] || '',
+    client_secret: process.env['AD_CLIENT_SECRET'] || ''
   };
   private sessionData: { token: string; expiresAt: number } = { token: '', expiresAt: 0 };
   private cache: CacheConfigType['IdentityUserInfo'];
@@ -88,10 +88,7 @@ export class IdentityProviderService {
 
   private encodeAuthData(): string {
     return Object.entries(this.authData)
-      .reduce(
-        (acc, [key, item]) => `${acc}&${encodeURIComponent(key)}=${encodeURIComponent(item)}`,
-        ''
-      )
+      .reduce((acc, [key, item]) => `${acc}&${encodeURIComponent(key)}=${encodeURIComponent(item)}`, '')
       .substring(1);
   }
 
@@ -114,16 +111,16 @@ export class IdentityProviderService {
         this.encodeAuthData(),
         { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
       )
-      .catch((error) => {
+      .catch(error => {
         this.loggerService.error('Error generating B2C access token', error);
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: error,
+          details: error
         });
       });
 
     this.sessionData = {
       token: response.data.access_token,
-      expiresAt: Date.now() + response.data.expires_in * 1000,
+      expiresAt: Date.now() + response.data.expires_in * 1000
     }; // Conversion to miliseconds needed.
   }
 
@@ -135,7 +132,7 @@ export class IdentityProviderService {
         return new UnauthorizedError(GenericErrorsEnum.SERVICE_IDENTIY_UNAUTHORIZED);
       default:
         return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
-          details: { message },
+          details: { message }
         });
     }
   }
@@ -166,9 +163,9 @@ export class IdentityProviderService {
 
     const response = await axios
       .get<b2cGetUserInfoByEmailDTO>(`https://graph.microsoft.com/v1.0/users?${odataFilter}`, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` },
+        headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
-      .catch((error) => {
+      .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
       });
 
@@ -180,7 +177,7 @@ export class IdentityProviderService {
       identityId: response.data.value[0]?.id ?? '',
       displayName: response.data.value[0]?.displayName ?? '',
       email: email,
-      phone: response.data.value[0]?.mobilePhone ?? null,
+      phone: response.data.value[0]?.mobilePhone ?? null
     };
   }
 
@@ -195,14 +192,10 @@ export class IdentityProviderService {
 
     const res = await this.cache.getMany(uniqueUserIds);
     if (res.length !== uniqueUserIds.length) {
-      const cachedUserIds = new Set(res.map((user) => user.identityId));
-      const nonCachedUsers = await this.getUsersListFromB2C(
-        uniqueUserIds.filter((id) => !cachedUserIds.has(id))
-      );
+      const cachedUserIds = new Set(res.map(user => user.identityId));
+      const nonCachedUsers = await this.getUsersListFromB2C(uniqueUserIds.filter(id => !cachedUserIds.has(id)));
       // Add new users to cache.
-      await this.cache.setMany(
-        nonCachedUsers.map((user) => ({ key: user.identityId, value: user }))
-      );
+      await this.cache.setMany(nonCachedUsers.map(user => ({ key: user.identityId, value: user })));
       res.push(...nonCachedUsers);
     }
 
@@ -217,7 +210,7 @@ export class IdentityProviderService {
    */
   async getUsersMap(entityIds: string[]): Promise<Map<string, IdentityUserInfo>> {
     const users = await this.getUsersList(entityIds);
-    return new Map(users.map((u) => [u.identityId, u]));
+    return new Map(users.map(u => [u.identityId, u]));
   }
 
   /**
@@ -253,7 +246,7 @@ export class IdentityProviderService {
 
     // Prepare necessary requests.
     for (const userId of userIdsChunks) {
-      const userIds = userId.map((item) => `"${item}"`).join(',');
+      const userIds = userId.map(item => `"${item}"`).join(',');
       const odataFilter = `$filter=id in (${userIds})`;
 
       const fields = [
@@ -263,37 +256,31 @@ export class IdentityProviderService {
         'mobilePhone',
         'accountEnabled',
         'lastPasswordChangeDateTime',
-        'signInActivity',
+        'signInActivity'
       ];
 
-      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(
-        ','
-      )}`;
+      const url = `https://graph.microsoft.com/beta/users?${odataFilter}&$select=${fields.join(',')}`;
 
       promises.push(
         axios.get<b2cGetUsersListDTO>(url, {
-          headers: { Authorization: `Bearer ${this.sessionData.token}` },
+          headers: { Authorization: `Bearer ${this.sessionData.token}` }
         })
       );
     }
 
     // Make all calls and merge results.
-    return (await Promise.all(promises)).flatMap((response) =>
-      response.data.value.map((u) => ({
+    return (await Promise.all(promises)).flatMap(response =>
+      response.data.value.map(u => ({
         identityId: u.id,
         displayName: u.displayName,
-        email:
-          u.identities.find((identity) => identity.signInType === 'emailAddress')
-            ?.issuerAssignedId || '',
+        email: u.identities.find(identity => identity.signInType === 'emailAddress')?.issuerAssignedId || '',
         mobilePhone: u.mobilePhone,
         isActive: u.accountEnabled,
         lastLoginAt:
           u.signInActivity && u.signInActivity.lastSignInDateTime
             ? new Date(u.signInActivity.lastSignInDateTime)
             : null,
-        passwordResetAt: u.lastPasswordChangeDateTime
-          ? new Date(u.lastPasswordChangeDateTime)
-          : null,
+        passwordResetAt: u.lastPasswordChangeDateTime ? new Date(u.lastPasswordChangeDateTime) : null
       }))
     );
   }
@@ -310,23 +297,22 @@ export class IdentityProviderService {
         {
           signInType: 'emailAddress',
           issuer: `${process.env['AD_TENANT_NAME']}.onmicrosoft.com`,
-          issuerAssignedId: data.email,
-        },
+          issuerAssignedId: data.email
+        }
       ],
       [`extension_${this.tenantExtensionId}_termsOfUseConsentVersion`]: 'V1',
-      [`extension_${this.tenantExtensionId}_termsOfUseConsentChoice`]:
-        'AgreeToTermsOfUseConsentYes',
+      [`extension_${this.tenantExtensionId}_termsOfUseConsentChoice`]: 'AgreeToTermsOfUseConsentYes',
       [`extension_${this.tenantExtensionId}_termsOfUseConsentDateTime`]: new Date().toISOString(),
-      [`extension_${this.tenantExtensionId}_passwordResetOn`]: new Date().toISOString(),
+      [`extension_${this.tenantExtensionId}_passwordResetOn`]: new Date().toISOString()
     };
 
     const response = await axios
       .post<any>('https://graph.microsoft.com/v1.0/users', body, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` },
+        headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
-      .catch((error) => {
+      .catch(error => {
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_IDENTIY_UNAVAILABLE, {
-          details: error,
+          details: error
         });
       });
 
@@ -343,9 +329,9 @@ export class IdentityProviderService {
     // Response: 204 No Content, so we can return direcly.
     await axios
       .patch<undefined>(`https://graph.microsoft.com/v1.0/users/${identityId}`, body, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` },
+        headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
-      .catch((error) => {
+      .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
       });
   }
@@ -362,8 +348,8 @@ export class IdentityProviderService {
       await this.storageQueueService.sendMessage(QueuesEnum.IDENTITY, {
         data: {
           identityId,
-          body,
-        },
+          body
+        }
       });
 
       this.loggerService.log(`Identity operation sent to queue`, { identityId, body });
@@ -380,9 +366,9 @@ export class IdentityProviderService {
     // Response: 204 No Content, so we can return directly.
     await axios
       .delete<undefined>(`https://graph.microsoft.com/v1.0/users/${identityId}`, {
-        headers: { Authorization: `Bearer ${this.sessionData.token}` },
+        headers: { Authorization: `Bearer ${this.sessionData.token}` }
       })
-      .catch((error) => {
+      .catch(error => {
         throw this.getError(error.response.status, error.response.data.message);
       });
   }

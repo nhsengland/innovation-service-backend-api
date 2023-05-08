@@ -1,11 +1,4 @@
-import {
-  randBoolean,
-  randCountry,
-  randNumber,
-  randProduct,
-  randText,
-  randZipCode,
-} from '@ngneat/falso';
+import { randBoolean, randCountry, randNumber, randProduct, randText, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import {
   InnovationEntity,
@@ -13,11 +6,11 @@ import {
   type InnovationSupportEntity,
   type OrganisationUnitEntity,
   type OrganisationUnitUserEntity,
-  type UserEntity,
+  type UserEntity
 } from '../entities';
 import {
   InnovationDocumentEntity,
-  createDocumentFromInnovation,
+  createDocumentFromInnovation
 } from '../entities/innovation/innovation-document.entity';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '../enums';
 import type { DocumentType } from '../schemas/innovation-record';
@@ -52,7 +45,7 @@ export class InnovationBuilder {
       postcode: randZipCode(),
       status: InnovationStatusEnum.IN_PROGRESS,
       assessments: [],
-      createdAt: new Date(),
+      createdAt: new Date()
     };
 
     this._document = {
@@ -69,7 +62,7 @@ export class InnovationBuilder {
         mainCategory: 'MEDICAL_DEVICE',
         mainPurpose: 'MONITOR_CONDITION',
         otherCareSetting: randText(),
-        otherCategoryDescription: randText(),
+        otherCategoryDescription: randText()
       },
       UNDERSTANDING_OF_NEEDS: {
         benefitsOrImpact: [randText()],
@@ -82,37 +75,37 @@ export class InnovationBuilder {
         howInnovationWork: randText(),
         impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
         keyHealthInequalities: ['NONE'],
-        problemsTackled: randBoolean() ? 'YES' : 'NO',
+        problemsTackled: randBoolean() ? 'YES' : 'NO'
       },
       EVIDENCE_OF_EFFECTIVENESS: {
         hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
         currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
         files: [],
         needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
-        summaryOngoingEvidenceGathering: randText(),
+        summaryOngoingEvidenceGathering: randText()
       },
       MARKET_RESEARCH: {
         hasMarketResearch: randBoolean() ? 'YES' : 'NOT_YET',
-        marketResearch: randText(),
+        marketResearch: randText()
       },
       CURRENT_CARE_PATHWAY: {
         innovationPathwayKnowledge: randBoolean() ? 'PATHWAY_EXISTS_AND_FITS' : 'NO_PATHWAY',
-        potentialPathway: randText(),
+        potentialPathway: randText()
       },
       TESTING_WITH_USERS: {
         userTests: [],
-        files: [],
+        files: []
       },
       REGULATIONS_AND_STANDARDS: {
         files: [],
         hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
         otherRegulationDescription: randText(),
-        standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }],
+        standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }]
       },
       INTELLECTUAL_PROPERTY: {
         hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
         hasPatents: randBoolean() ? 'HAS_AT_LEAST_ONE' : 'HAS_NONE',
-        otherIntellectual: randText(),
+        otherIntellectual: randText()
       },
       REVENUE_MODEL: {
         benefittingOrganisations: randText(),
@@ -121,23 +114,23 @@ export class InnovationBuilder {
         hasRevenueModel: randBoolean() ? 'YES' : 'NO',
         otherRevenueDescription: randText(),
         payingOrganisations: randText(),
-        revenues: [],
+        revenues: []
       },
       COST_OF_INNOVATION: {
         costDescription: randText(),
         hasCostKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
         patientsRange: 'NOT_SURE',
         sellExpectations: randText(),
-        usageExpectations: randText(),
+        usageExpectations: randText()
       },
       DEPLOYMENT: {
         deploymentPlans: [],
         files: [],
         hasDeployPlan: randBoolean() ? 'YES' : 'NO',
         hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
-        isDeployed: randBoolean() ? 'YES' : 'NO',
+        isDeployed: randBoolean() ? 'YES' : 'NO'
       },
-      evidences: [],
+      evidences: []
     };
   }
 
@@ -181,7 +174,7 @@ export class InnovationBuilder {
   }
 
   withAssessments(assignTo: UserEntity): InnovationBuilder {
-    if (!assignTo.serviceRoles.map((s) => s.role).includes(ServiceRoleEnum.ASSESSMENT)) {
+    if (!assignTo.serviceRoles.map(s => s.role).includes(ServiceRoleEnum.ASSESSMENT)) {
       throw new Error('Cannot assign an assessment to a non-assessment user');
     }
     this._assessmentUser = assignTo;
@@ -256,9 +249,7 @@ export class InnovationBuilder {
           .build(entityManager);
       }
 
-      await new InnovationActionBuilder(this._withActionCreatedBy, section, support).build(
-        entityManager
-      );
+      await new InnovationActionBuilder(this._withActionCreatedBy, section, support).build(entityManager);
     }
 
     if (this._withAssessments) {
@@ -273,9 +264,7 @@ export class InnovationBuilder {
       if (!innovation.assessments[0]) {
         throw new Error('Cannot create reassessment without assesment');
       }
-      await new InnovationReassessmentBuilder(innovation, innovation.assessments[0]).build(
-        entityManager
-      );
+      await new InnovationReassessmentBuilder(innovation, innovation.assessments[0]).build(entityManager);
     }
 
     const ret = await entityManager

@@ -4,7 +4,7 @@ import {
   InnovationSupportStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
@@ -67,26 +67,25 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const requestUserInfo = await this.domainService.users.getUserInfo({
-      userId: this.requestUser.id,
+      userId: this.requestUser.id
     });
 
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(
+    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+
+    this.data.innovationCollaborators = await this.recipientsService.innovationActiveCollaboratorUsers(
       this.inputData.innovationId
     );
-
-    this.data.innovationCollaborators =
-      await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
 
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
       organisation: {
         id: this.domainContext.organisation?.id ?? '',
-        name: this.domainContext.organisation?.name ?? '',
+        name: this.domainContext.organisation?.name ?? ''
       },
       organisationUnit: {
         id: this.domainContext?.organisation?.organisationUnit?.id ?? '',
-        name: this.domainContext?.organisation?.organisationUnit?.name ?? '',
-      },
+        name: this.domainContext?.organisation?.organisationUnit?.name ?? ''
+      }
     };
 
     // If the innovation is not found, then we don't need to send any notification. (This could probably throw an error as it should not happen, but leaving like this.)
@@ -103,7 +102,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           InnovationSupportStatusEnum.NOT_YET,
           InnovationSupportStatusEnum.WAITING,
           InnovationSupportStatusEnum.WITHDRAWN,
-          InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
+          InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
         ].includes(this.inputData.innovationSupport.status)
       ) {
         await this.prepareInAppForAssessmentWhenWaitingStatus();
@@ -113,9 +112,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
       await this.prepareInAppForAccessorsWhenEngaging();
       await this.prepareEmailForNewAccessors(
-        this.inputData.innovationSupport.newAssignedAccessors?.filter(
-          (a) => a.id !== this.requestUser.id
-        )
+        this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id)
       );
     }
 
@@ -125,9 +122,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   // Private methods.
 
   private async prepareEmailForInnovators(): Promise<void> {
-    const innovators = this.data.innovationCollaborators
-      ? [...this.data.innovationCollaborators]
-      : [];
+    const innovators = this.data.innovationCollaborators ? [...this.data.innovationCollaborators] : [];
     if (this.data.innovation?.owner) {
       innovators.push(this.data.innovation.owner);
     }
@@ -146,7 +141,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           to: {
             type: 'identityId',
             value: innovator.identityId || '',
-            displayNameParam: 'display_name',
+            displayNameParam: 'display_name'
           },
           params: {
             // display_name: '', // This will be filled by the email-listener function.
@@ -159,15 +154,15 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
             support_url: new UrlModel(ENV.webBaseTransactionalUrl)
               .addPath('innovator/innovations/:innovationId/support')
               .setPathParams({ innovationId: this.inputData.innovationId })
-              .buildUrl(),
-          },
+              .buildUrl()
+          }
         });
       }
   }
 
   private async prepareEmailForNewAccessors(accessors?: { id: string }[]): Promise<void> {
-    const recipients = await this.recipientsService.usersInfo(accessors?.map((a) => a.id) ?? []);
-    const uniqueRecipients = [...new Map(recipients.map((item) => [item['id'], item])).values()];
+    const recipients = await this.recipientsService.usersInfo(accessors?.map(a => a.id) ?? []);
+    const uniqueRecipients = [...new Map(recipients.map(item => [item['id'], item])).values()];
 
     for (const recipient of uniqueRecipients) {
       this.emails.push({
@@ -178,8 +173,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
   }
@@ -195,19 +190,19 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.SUPPORT,
         detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-        id: this.inputData.innovationSupport.id,
+        id: this.inputData.innovationSupport.id
       },
       userRoleIds: [this.data.innovation.owner.userRole.id],
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
-        supportStatus: this.inputData.innovationSupport.status,
-      },
+        supportStatus: this.inputData.innovationSupport.status
+      }
     });
   }
 
   private async prepareInAppForAccessorsWhenEngaging(): Promise<void> {
     const assignedUsers = await this.recipientsService.innovationAssignedUsers({
-      innovationSupportId: this.inputData.innovationSupport.id,
+      innovationSupportId: this.inputData.innovationSupport.id
     });
 
     this.inApp.push({
@@ -215,15 +210,15 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.SUPPORT,
         detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-        id: this.inputData.innovationSupport.id,
+        id: this.inputData.innovationSupport.id
       },
       userRoleIds: assignedUsers
-        .filter((user) => user.userRole.id !== this.domainContext.currentRole.id)
-        .map((user) => user.userRole.id),
+        .filter(user => user.userRole.id !== this.domainContext.currentRole.id)
+        .map(user => user.userRole.id),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
-        supportStatus: this.inputData.innovationSupport.status,
-      },
+        supportStatus: this.inputData.innovationSupport.status
+      }
     });
   }
 
@@ -235,13 +230,13 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.SUPPORT,
         detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
-        id: this.inputData.innovationSupport.id,
+        id: this.inputData.innovationSupport.id
       },
-      userRoleIds: assessmentUsers.map((item) => item.roleId),
+      userRoleIds: assessmentUsers.map(item => item.roleId),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
-        supportStatus: this.inputData.innovationSupport.status,
-      },
+        supportStatus: this.inputData.innovationSupport.status
+      }
     });
   }
 }

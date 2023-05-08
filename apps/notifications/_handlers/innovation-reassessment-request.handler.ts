@@ -2,7 +2,7 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -33,9 +33,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
       return this;
     }
 
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const needAssessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
     if (innovation.owner.isActive) {
@@ -44,9 +42,9 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: innovation.owner.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
-        params: { innovation_name: innovation.name },
+        params: { innovation_name: innovation.name }
       });
     }
 
@@ -60,10 +58,10 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
             .addPath(':userBasePath/innovations/:innovationId')
             .setPathParams({
               userBasePath: this.frontendBaseUrl(ServiceRoleEnum.ASSESSMENT),
-              innovationId: this.inputData.innovationId,
+              innovationId: this.inputData.innovationId
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
 
@@ -72,10 +70,10 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST,
-        id: this.inputData.innovationId,
+        id: this.inputData.innovationId
       },
-      userRoleIds: needAssessmentUsers.map((item) => item.roleId),
-      params: {},
+      userRoleIds: needAssessmentUsers.map(item => item.roleId),
+      params: {}
     });
 
     return this;

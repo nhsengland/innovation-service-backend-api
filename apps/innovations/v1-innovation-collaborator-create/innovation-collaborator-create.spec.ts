@@ -12,11 +12,9 @@ import { InnovationCollaboratorsService } from '../_services/innovation-collabor
 import type { ResponseDTO } from './transformation.dtos';
 
 jest.mock('@innovations/shared/decorators', () => ({
-  JwtDecoder: jest
-    .fn()
-    .mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
-      return descriptor;
-    }),
+  JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
+    return descriptor;
+  })
 }));
 
 describe('v1-innovation-collaborator-create Suite', () => {
@@ -95,7 +93,7 @@ describe('v1-innovation-collaborator-create Suite', () => {
       [ServiceRoleEnum.ADMIN, 403],
       [ServiceRoleEnum.ACCESSOR, 403],
       [ServiceRoleEnum.ASSESSMENT, 403],
-      [ServiceRoleEnum.INNOVATOR, 200],
+      [ServiceRoleEnum.INNOVATOR, 200]
     ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
       const [user, context] = TestsLegacyHelper.getUser(userType);
 
@@ -103,9 +101,7 @@ describe('v1-innovation-collaborator-create Suite', () => {
 
       const mocks = await new MockBuilder().mockDomainUser(user!).build(em);
 
-      jest
-        .spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator')
-        .mockResolvedValue({ id: randUuid() });
+      jest.spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator').mockResolvedValue({ id: randUuid() });
 
       const result = await httpTestBuilder
         .setUrl('/v1/:innovationId/collaborators')

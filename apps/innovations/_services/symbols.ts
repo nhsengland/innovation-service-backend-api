@@ -9,7 +9,7 @@ export const SYMBOLS = {
   InnovationsService: Symbol.for('InnovationsService'),
   InnovationCollaboratorsService: Symbol.for('InnovationCollaboratorsService'),
   PDFService: Symbol.for('PDFService'),
-  StatisticsService: Symbol.for('StatisticsService'),
+  StatisticsService: Symbol.for('StatisticsService')
 };
 
 export default SYMBOLS;

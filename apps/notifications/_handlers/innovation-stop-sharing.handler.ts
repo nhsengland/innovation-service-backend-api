@@ -1,8 +1,4 @@
-import {
-  EmailNotificationTypeEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum,
-} from '@notifications/shared/enums';
+import { EmailNotificationTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -13,8 +9,7 @@ import { BaseHandler } from './base.handler';
 
 export class InnovationStopSharingHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_STOP_SHARING,
-  | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS
-  | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
+  EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
   Record<string, never>
 > {
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
@@ -32,11 +27,9 @@ export class InnovationStopSharingHandler extends BaseHandler<
       return this;
     }
 
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const previousAssignedUsers = await this.recipientsService.usersInfo(
-      this.inputData.previousAssignedAccessors.map((item) => item.id)
+      this.inputData.previousAssignedAccessors.map(item => item.id)
     );
     const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
@@ -46,7 +39,7 @@ export class InnovationStopSharingHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: innovation.owner.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           innovation_name: innovation.name,
@@ -54,18 +47,15 @@ export class InnovationStopSharingHandler extends BaseHandler<
             .addPath(':userBasePath/innovations/:innovationId')
             .setPathParams({
               userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR),
-              innovationId: this.inputData.innovationId,
+              innovationId: this.inputData.innovationId
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
 
-    for (const user of previousAssignedUsers.filter((item) =>
-      this.isEmailPreferenceInstantly(
-        EmailNotificationTypeEnum.SUPPORT,
-        item.emailNotificationPreferences
-      )
+    for (const user of previousAssignedUsers.filter(item =>
+      this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences)
     )) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
@@ -74,8 +64,8 @@ export class InnovationStopSharingHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
           innovator_name: owner.name,
-          stop_sharing_comment: this.inputData.message,
-        },
+          stop_sharing_comment: this.inputData.message
+        }
       });
     }
 

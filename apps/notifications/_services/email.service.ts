@@ -7,7 +7,7 @@ import {
   EmailErrorsEnum,
   GenericErrorsEnum,
   ServiceUnavailableError,
-  UnprocessableEntityError,
+  UnprocessableEntityError
 } from '@notifications/shared/errors';
 
 import type { NotificationLogTypeEnum } from '@notifications/shared/enums/notification.enums';
@@ -89,7 +89,7 @@ export class EmailService extends BaseService {
     // const templateId = NotificationTemplates[templateCode].id;
     if (!templateId) {
       throw new UnprocessableEntityError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND, {
-        details: { templateId },
+        details: { templateId }
       });
     }
 
@@ -99,7 +99,7 @@ export class EmailService extends BaseService {
       reference: uuid(),
       template_id: templateId,
       email_address: toEmail,
-      personalisation: properties,
+      personalisation: properties
     };
 
     try {
@@ -122,9 +122,7 @@ export class EmailService extends BaseService {
       const logDbQuery = this.sqlConnection
         .createQueryBuilder(NotificationLogEntity, 'notificationLog')
         .where(
-          `notificationLog.notification_type = '${
-            log.type
-          }' and notificationLog.params = '${JSON.stringify(
+          `notificationLog.notification_type = '${log.type}' and notificationLog.params = '${JSON.stringify(
             log.params
           )}' and DATEDIFF(day, notificationLog.created_at, GETDATE()) <= 30`
         );
@@ -134,7 +132,7 @@ export class EmailService extends BaseService {
       if (!logDb) {
         const notificationLogEntity = NotificationLogEntity.new({
           notificationType: log.type,
-          notificationParams: log.params,
+          notificationParams: log.params
         });
 
         try {
@@ -142,7 +140,7 @@ export class EmailService extends BaseService {
         } catch (error) {
           this.logger.error(`Failed to create Notification Log for type ${log.type}`, {
             error,
-            params: log.params,
+            params: log.params
           });
         }
       }
@@ -155,9 +153,9 @@ export class EmailService extends BaseService {
   ): Promise<void> {
     const response = await axios
       .post<apiResponseDTO>(new URL(this.apiEmailPath, this.apiBaseUrl).toString(), apiProperties, {
-        headers: { Authorization: `Bearer ${this.accessToken}` },
+        headers: { Authorization: `Bearer ${this.accessToken}` }
       })
-      .catch((error) => {
+      .catch(error => {
         const badAPIKey = error.response?.data?.errors.find(
           (e: { error: string; message: string }) =>
             e.message === 'Can’t send to this recipient using a team-only API key'
@@ -174,7 +172,7 @@ export class EmailService extends BaseService {
     this.logger.log(`Email sent`, {
       toEmail: toEmail,
       templateId: response.data.template.id,
-      response: response.data,
+      response: response.data
     });
   }
 }

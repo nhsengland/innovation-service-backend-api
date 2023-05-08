@@ -24,12 +24,8 @@ export class InnovationRecordExportRejectedHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const request = await this.recipientsService.getExportRequestWithRelations(
-      this.inputData.requestId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
 
     const innovatorName = await this.recipientsService.userInfo(innovation.owner.id);
 
@@ -39,7 +35,7 @@ export class InnovationRecordExportRejectedHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: request.createdBy.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -49,8 +45,8 @@ export class InnovationRecordExportRejectedHandler extends BaseHandler<
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
             .buildUrl(),
-          pdf_rejection_comment: request.exportRequest.rejectReason || 'reject reason not provided', // should never occur given that the request entity conditionally requires this property
-        },
+          pdf_rejection_comment: request.exportRequest.rejectReason || 'reject reason not provided' // should never occur given that the request entity conditionally requires this property
+        }
       });
     }
 

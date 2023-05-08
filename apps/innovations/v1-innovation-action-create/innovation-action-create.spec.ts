@@ -7,11 +7,9 @@ import type { EntityManager } from 'typeorm';
 import v1InnovationActionCreate from '.';
 
 jest.mock('@innovations/shared/decorators', () => ({
-  JwtDecoder: jest
-    .fn()
-    .mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
-      return descriptor;
-    }),
+  JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
+    return descriptor;
+  })
 }));
 
 describe('v1-innovation-action-create Suite', () => {
@@ -45,7 +43,7 @@ describe('v1-innovation-action-create Suite', () => {
         .setAuth(testData.domainContexts.accessor)
         .setBody({
           section: 'COST_OF_INNOVATION',
-          description: randText(),
+          description: randText()
         })
         .invoke<{ status: number }>(v1InnovationActionCreate);
 

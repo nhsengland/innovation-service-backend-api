@@ -1,8 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterTableNotificationsDropContextDetailConstraint1672335869744
-  implements MigrationInterface
-{
+export class alterTableNotificationsDropContextDetailConstraint1672335869744 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"

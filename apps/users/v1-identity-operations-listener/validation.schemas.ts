@@ -17,7 +17,7 @@ export const IdentityOperationSchema = Joi.object<IdentityOperationType>({
     body: Joi.object({
       displayName: Joi.string().optional(),
       mobilePhone: Joi.string().allow(null).optional(),
-      accountEnabled: Joi.boolean().optional(),
-    }).required(),
-  }).required(),
+      accountEnabled: Joi.boolean().optional()
+    }).required()
+  }).required()
 }).required();

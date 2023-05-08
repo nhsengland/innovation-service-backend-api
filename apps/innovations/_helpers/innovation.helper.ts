@@ -23,17 +23,15 @@ export class InnovationHelper {
       units: { id: string; name: string; acronym: string }[];
     }[] = [];
 
-    const uniqueOrganisationIds = [
-      ...new Set(organisationUnits.map((item) => item.organisation.id)),
-    ];
+    const uniqueOrganisationIds = [...new Set(organisationUnits.map(item => item.organisation.id))];
     for (const organisationId of uniqueOrganisationIds) {
-      const units = organisationUnits.filter((unit) => unit.organisation.id === organisationId);
+      const units = organisationUnits.filter(unit => unit.organisation.id === organisationId);
 
       toReturn.push({
         id: units[0]!.organisation.id,
         name: units[0]!.organisation.name,
         acronym: units[0]!.organisation.acronym,
-        units: units.map((item) => ({ id: item.id, name: item.name, acronym: item.acronym })),
+        units: units.map(item => ({ id: item.id, name: item.name, acronym: item.acronym }))
       });
     }
 

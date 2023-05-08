@@ -1,10 +1,6 @@
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import {
-  InnovationAssessmentEntity,
-  InnovationReassessmentRequestEntity,
-  type InnovationEntity,
-} from '../entities';
+import { InnovationAssessmentEntity, InnovationReassessmentRequestEntity, type InnovationEntity } from '../entities';
 
 export class InnovationReassessmentBuilder {
   innovationReassessment: InnovationReassessmentRequestEntity;
@@ -17,7 +13,7 @@ export class InnovationReassessmentBuilder {
       assessment,
       updatedInnovationRecord: 'YES',
       description: randText(),
-      createdBy: assessment.createdBy,
+      createdBy: assessment.createdBy
     });
 
     this.innovation = innovation;

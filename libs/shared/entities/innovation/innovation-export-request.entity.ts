@@ -16,7 +16,7 @@ export class InnovationExportRequestEntity extends BaseEntity {
     name: 'status',
     type: 'simple-enum',
     enum: InnovationExportRequestStatusEnum,
-    nullable: false,
+    nullable: false
   })
   status: InnovationExportRequestStatusEnum;
 
@@ -66,12 +66,7 @@ export class InnovationExportRequestEntity extends BaseEntity {
 
   @AfterLoad()
   setExportExpiresAt(): void {
-    if (
-      [
-        InnovationExportRequestStatusEnum.APPROVED,
-        InnovationExportRequestStatusEnum.EXPIRED,
-      ].includes(this.status)
-    ) {
+    if ([InnovationExportRequestStatusEnum.APPROVED, InnovationExportRequestStatusEnum.EXPIRED].includes(this.status)) {
       this.exportExpiresAt = new Date(this.updatedAt);
       const updatedAt = new Date(this.updatedAt);
       this.exportExpiresAt.setDate(updatedAt.getDate() + 30);

@@ -27,8 +27,8 @@ export class AnnouncementEntity extends BaseEntity {
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
   expiresAt: Date | null;
 
-  @OneToMany(() => AnnouncementUserEntity, (record) => record.announcement, {
-    cascade: ['insert', 'update'],
+  @OneToMany(() => AnnouncementUserEntity, record => record.announcement, {
+    cascade: ['insert', 'update']
   })
   announcementUsers: AnnouncementUserEntity[];
 

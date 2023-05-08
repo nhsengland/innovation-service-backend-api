@@ -9,7 +9,7 @@ export class OrganisationUnitBuilder {
     this.organisationUnit = {
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
-      isShadow: randBoolean(),
+      isShadow: randBoolean()
     };
   }
 
@@ -25,9 +25,7 @@ export class OrganisationUnitBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<OrganisationUnitEntity> {
-    const organisationUnit = await entityManager
-      .getRepository(OrganisationUnitEntity)
-      .save(this.organisationUnit);
+    const organisationUnit = await entityManager.getRepository(OrganisationUnitEntity).save(this.organisationUnit);
     return organisationUnit;
   }
 }

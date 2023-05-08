@@ -2,18 +2,14 @@ import { inject, injectable } from 'inversify';
 import type { DataSource } from 'typeorm';
 
 import { AuditEntity } from '../../entities';
-import {
-  SQLConnectionServiceSymbol,
-  SQLConnectionServiceType,
-  StorageQueueServiceSymbol,
-} from '../interfaces';
+import { SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueServiceSymbol } from '../interfaces';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
 export enum ActionEnum {
   CREATE = 'create',
   READ = 'read',
   UPDATE = 'update',
-  DELETE = 'delete',
+  DELETE = 'delete'
 }
 
 export enum TargetEnum {
@@ -21,7 +17,7 @@ export enum TargetEnum {
   INNOVATION = 'innovation',
   SUPPORT = 'support',
   THREAD = 'thread',
-  USER = 'user',
+  USER = 'user'
 }
 
 export type AuditEntry = {
@@ -58,7 +54,7 @@ export class AuditService {
 
     try {
       await this.storageQueueService.sendMessage(QueuesEnum.AUDIT, entry, {
-        ...(entry.invocationId && { invocationId: entry.invocationId }),
+        ...(entry.invocationId && { invocationId: entry.invocationId })
       });
     } catch (err) {
       // TODO maybe handle errors sending audit message / retry strategy

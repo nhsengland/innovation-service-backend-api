@@ -14,12 +14,8 @@ import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './
 class GetInnovationSectionInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -50,7 +46,7 @@ class GetInnovationSectionInfo {
         submittedAt: result.submittedAt,
         submittedBy: result.submittedBy,
         data: result.data,
-        ...(result.actionsIds ? { actionsIds: result.actionsIds } : {}),
+        ...(result.actionsIds ? { actionsIds: result.actionsIds } : {})
       });
       return;
     } catch (error) {
@@ -81,22 +77,22 @@ export default openApi(
                   id: {
                     type: 'string',
                     description: 'Innovation section id.',
-                    example: '1',
+                    example: '1'
                   },
                   section: {
                     type: 'string',
                     description: 'Innovation section key.',
-                    example: 'access',
+                    example: 'access'
                   },
                   status: {
                     type: 'string',
                     description: 'Innovation section status.',
-                    example: 'COMPLETED',
+                    example: 'COMPLETED'
                   },
                   submittedAt: {
                     type: 'string',
                     description: 'Innovation section submission date.',
-                    example: '2021-01-01T00:00:00.000Z',
+                    example: '2021-01-01T00:00:00.000Z'
                   },
                   data: {
                     type: 'object',
@@ -105,12 +101,12 @@ export default openApi(
                       name: {
                         type: 'string',
                         description: 'Innovation section name.',
-                        example: 'Access',
+                        example: 'Access'
                       },
                       description: {
                         type: 'string',
                         description: 'Innovation section description.',
-                        example: 'Access description',
+                        example: 'Access description'
                       },
                       questions: {
                         type: 'array',
@@ -121,43 +117,43 @@ export default openApi(
                             id: {
                               type: 'string',
                               description: 'Innovation section question id.',
-                              example: '1',
+                              example: '1'
                             },
                             text: {
                               type: 'string',
                               description: 'Innovation section question text.',
-                              example: 'Question text',
-                            },
-                          },
-                        },
-                      },
-                    },
+                              example: 'Question text'
+                            }
+                          }
+                        }
+                      }
+                    }
                   },
                   actionsIds: {
                     type: 'array',
                     items: {
                       type: 'string',
-                      description: 'The id of the action.',
-                    },
-                  },
-                },
-              },
-            },
-          },
+                      description: 'The id of the action.'
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not found',
+          description: 'Not found'
         },
         500: {
-          description: 'Internal server error',
-        },
-      },
-    },
+          description: 'Internal server error'
+        }
+      }
+    }
   }
 );

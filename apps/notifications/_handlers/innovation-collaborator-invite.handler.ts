@@ -1,13 +1,10 @@
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import {
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-} from '@notifications/shared/services';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
@@ -21,9 +18,7 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
   { collaboratorId: string }
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(
-    IdentityProviderServiceSymbol
-  );
+  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
@@ -35,12 +30,8 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(
-      innovation.owner.identityId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
     const collaborator = await this.recipientsService.innovationCollaboratorInfo(
       this.inputData.innovationCollaboratorId
     );
@@ -56,8 +47,8 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
           innovation_name: innovation.name,
           transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(`innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`)
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     } else {
       this.emails.push({
@@ -65,17 +56,15 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: collaborator.user.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
           transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(
-              `innovator/innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`
-            )
-            .buildUrl(),
-        },
+            .addPath(`innovator/innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`)
+            .buildUrl()
+        }
       });
 
       this.inApp.push({
@@ -83,12 +72,12 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
         context: {
           type: NotificationContextTypeEnum.INNOVATION,
           detail: NotificationContextDetailEnum.COLLABORATOR_INVITE,
-          id: this.inputData.innovationCollaboratorId,
+          id: this.inputData.innovationCollaboratorId
         },
         userRoleIds: [collaborator.user.roleId],
         params: {
-          collaboratorId: collaborator.id,
-        },
+          collaboratorId: collaborator.id
+        }
       });
     }
 

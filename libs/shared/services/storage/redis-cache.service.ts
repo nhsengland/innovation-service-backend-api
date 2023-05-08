@@ -30,9 +30,7 @@ export class RedisCache<T> {
       const value = await this.redis.get(`${this.name}_${key}`);
       return value === null ? undefined : (JSON.parse(value) as T);
     } catch (e) {
-      this.logger.log(
-        `Error getting key ${key} from cache ${this.name}: ${e instanceof Error && e.message}`
-      );
+      this.logger.log(`Error getting key ${key} from cache ${this.name}: ${e instanceof Error && e.message}`);
       return undefined;
     }
   }
@@ -44,13 +42,11 @@ export class RedisCache<T> {
    */
   async getMany(keys: string[]): Promise<T[]> {
     try {
-      return (await this.redis.mGet(keys.map((key) => `${this.name}_${key}`)))
+      return (await this.redis.mGet(keys.map(key => `${this.name}_${key}`)))
         .filter((item): item is string => item !== null)
-        .map((item) => JSON.parse(item) as T);
+        .map(item => JSON.parse(item) as T);
     } catch (e) {
-      this.logger.log(
-        `Error getting keys ${keys} from cache ${this.name}: ${e instanceof Error && e.message}`
-      );
+      this.logger.log(`Error getting keys ${keys} from cache ${this.name}: ${e instanceof Error && e.message}`);
       return [];
     }
   }
@@ -65,9 +61,7 @@ export class RedisCache<T> {
     try {
       await this.redis.set(`${this.name}_${key}`, JSON.stringify(value), { EX: ttl ?? this.ttl });
     } catch (e) {
-      this.logger.log(
-        `Error setting key ${key} in cache ${this.name}: ${e instanceof Error && e.message}`
-      );
+      this.logger.log(`Error setting key ${key} in cache ${this.name}: ${e instanceof Error && e.message}`);
     }
   }
 
@@ -84,14 +78,12 @@ export class RedisCache<T> {
       for (const value of values) {
         //MSET await this.redis.expire(`${this.name}_${value.key}`, _ttl ?? this.ttl);
         await this.redis.set(`${this.name}_${value.key}`, JSON.stringify(value.value), {
-          EX: _ttl ?? this.ttl,
+          EX: _ttl ?? this.ttl
         });
       }
     } catch (e) {
       this.logger.log(
-        `Error setting keys ${values.map(({ key }) => key)} in cache ${this.name}: ${
-          e instanceof Error && e.message
-        }`
+        `Error setting keys ${values.map(({ key }) => key)} in cache ${this.name}: ${e instanceof Error && e.message}`
       );
     }
   }
@@ -111,6 +103,6 @@ export class RedisCache<T> {
    * @raises an error if any of the keys fail to be deleted
    */
   async deleteMany(keys: string[]): Promise<void> {
-    await this.redis.del(keys.map((key) => `${this.name}_${key}`));
+    await this.redis.del(keys.map(key => `${this.name}_${key}`));
   }
 }

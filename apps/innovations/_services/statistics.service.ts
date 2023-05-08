@@ -5,14 +5,14 @@ import {
   InnovationSupportEntity,
   InnovationThreadMessageEntity,
   NotificationEntity,
-  NotificationUserEntity,
+  NotificationUserEntity
 } from '@innovations/shared/entities';
 import {
   InnovationActionStatusEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
+  NotificationContextTypeEnum
 } from '@innovations/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
@@ -75,13 +75,13 @@ export class StatisticsService extends BaseService {
       .addSelect('max(notification.createdAt)', 'lastSubmittedAt')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('notification.context_type = :context_type', {
-        context_type: NotificationContextTypeEnum.THREAD,
+        context_type: NotificationContextTypeEnum.THREAD
       })
       .andWhere('notification.context_detail IN (:...context_detail)', {
         context_detail: [
           NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-          NotificationContextDetailEnum.THREAD_CREATION,
-        ],
+          NotificationContextDetailEnum.THREAD_CREATION
+        ]
       })
       .andWhere('users.user_role_id = :roleId', { roleId })
       .andWhere('users.readAt IS NULL')
@@ -116,7 +116,7 @@ export class StatisticsService extends BaseService {
     return {
       count: actions.length,
       lastSubmittedSection: actions.length > 0 ? actions[0].section : null,
-      lastSubmittedAt: actions.length > 0 ? actions[0].updatedAt : null,
+      lastSubmittedAt: actions.length > 0 ? actions[0].updatedAt : null
     };
   }
 
@@ -137,10 +137,7 @@ export class StatisticsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('organisationUnit.id = :organisationUnit', { organisationUnit })
       .andWhere('innovationSupport.status IN (:...status)', {
-        status: [
-          InnovationSupportStatusEnum.ENGAGING,
-          InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-        ],
+        status: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
       })
       .getOne();
 
@@ -210,8 +207,8 @@ export class StatisticsService extends BaseService {
           contextType: NotificationContextTypeEnum.THREAD,
           contextDetail: [
             NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
-            NotificationContextDetailEnum.THREAD_CREATION,
-          ],
+            NotificationContextDetailEnum.THREAD_CREATION
+          ]
         }
       )
       .where('users.user_role_id = :roleId', { roleId: roleId })
@@ -228,7 +225,7 @@ export class StatisticsService extends BaseService {
         ? await this.sqlConnection
             .createQueryBuilder(InnovationThreadMessageEntity, 'message')
             .where('message.thread in (:...threadIds)', {
-              threadIds: [...new Set(unreadMessageThreads.map((_) => _.thread_id))],
+              threadIds: [...new Set(unreadMessageThreads.map(_ => _.thread_id))]
             })
             .orderBy('message.created_at', 'DESC')
             .limit(1)
@@ -237,7 +234,7 @@ export class StatisticsService extends BaseService {
 
     return {
       count: unreadMessages,
-      lastSubmittedAt: latestMessage?.createdAt || null,
+      lastSubmittedAt: latestMessage?.createdAt || null
     };
   }
 }

@@ -23,7 +23,7 @@ export class TermsOfUseService extends BaseService {
       releasedAt?: Date;
     }
   ): Promise<{ id: string }> {
-    return await this.sqlConnection.transaction(async (transaction) => {
+    return await this.sqlConnection.transaction(async transaction => {
       const savedToU = await transaction.save(
         TermsOfUseEntity,
         TermsOfUseEntity.new({
@@ -32,7 +32,7 @@ export class TermsOfUseService extends BaseService {
           summary: touPayload.summary || '',
           createdBy: requestUser.id,
           updatedBy: requestUser.id,
-          releasedAt: touPayload.releasedAt || null,
+          releasedAt: touPayload.releasedAt || null
         })
       );
 
@@ -50,7 +50,7 @@ export class TermsOfUseService extends BaseService {
     },
     touId: string
   ): Promise<{ id: string }> {
-    await this.sqlConnection.transaction(async (transaction) => {
+    await this.sqlConnection.transaction(async transaction => {
       await transaction.update(
         TermsOfUseEntity,
         { id: touId },
@@ -59,7 +59,7 @@ export class TermsOfUseService extends BaseService {
           touType: touPayload.touType,
           summary: touPayload.summary || '',
           updatedBy: requestUser.id,
-          releasedAt: touPayload.releasedAt || null,
+          releasedAt: touPayload.releasedAt || null
         }
       );
     });
@@ -112,14 +112,14 @@ export class TermsOfUseService extends BaseService {
 
     return {
       count: termsOfUseList[1],
-      data: termsOfUseList[0].map((t) => ({
+      data: termsOfUseList[0].map(t => ({
         id: t.id,
         name: t.name,
         touType: t.touType,
         summary: t.summary,
         releasedAt: t.releasedAt,
-        createdAt: t.createdAt,
-      })),
+        createdAt: t.createdAt
+      }))
     };
   }
 
@@ -142,10 +142,7 @@ export class TermsOfUseService extends BaseService {
   }> {
     const em = entityManager || this.sqlConnection.manager;
 
-    const tou = await em
-      .createQueryBuilder(TermsOfUseEntity, 'tou')
-      .where('tou.id = :id', { id })
-      .getOne();
+    const tou = await em.createQueryBuilder(TermsOfUseEntity, 'tou').where('tou.id = :id', { id }).getOne();
 
     if (!tou) {
       throw new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USER_NOT_FOUND);
@@ -157,7 +154,7 @@ export class TermsOfUseService extends BaseService {
       touType: tou.touType,
       summary: tou.summary,
       releasedAt: tou.releasedAt,
-      createdAt: tou.createdAt,
+      createdAt: tou.createdAt
     };
   }
 }

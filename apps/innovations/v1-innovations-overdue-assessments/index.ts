@@ -16,9 +16,7 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1InnovationsOverdueAssessments {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -29,7 +27,7 @@ class V1InnovationsOverdueAssessments {
 
       const result = await innovationsService.getNeedsAssessmentOverdueInnovations(domainContext, {
         innovationStatus: queryParams.status,
-        assignedToMe: queryParams.assignedToMe,
+        assignedToMe: queryParams.assignedToMe
       });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ overdue: result });
@@ -41,30 +39,26 @@ class V1InnovationsOverdueAssessments {
   }
 }
 
-export default openApi(
-  V1InnovationsOverdueAssessments.httpTrigger as AzureFunction,
-  '/v1/overdue-assessments',
-  {
-    get: {
-      operationId: 'v1-innovations-overdue-assessments',
-      description: 'Get assessment overdue innovations',
-      parameters: [],
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', description: 'Unique identifier for innovation object' },
-                },
-              },
-            },
-          },
-        },
-        400: { description: 'Invalid innovation payload' },
+export default openApi(V1InnovationsOverdueAssessments.httpTrigger as AzureFunction, '/v1/overdue-assessments', {
+  get: {
+    operationId: 'v1-innovations-overdue-assessments',
+    description: 'Get assessment overdue innovations',
+    parameters: [],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', description: 'Unique identifier for innovation object' }
+              }
+            }
+          }
+        }
       },
-    },
+      400: { description: 'Invalid innovation payload' }
+    }
   }
-);
+});

@@ -15,6 +15,6 @@ export const innovationsToReviewStatisticsHandler = async (
 
   return {
     count: supports.count,
-    lastSubmittedAt: supports.lastSubmittedAt,
+    lastSubmittedAt: supports.lastSubmittedAt
   };
 };

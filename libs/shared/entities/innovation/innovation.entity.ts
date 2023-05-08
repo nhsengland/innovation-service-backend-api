@@ -7,7 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   OneToOne,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
@@ -27,7 +27,6 @@ import { InnovationTransferEntity } from './innovation-transfer.entity';
 
 import { InnovationStatusEnum } from '../../enums/innovation.enums';
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
-
 
 @Entity('innovation')
 export class InnovationEntity extends BaseEntity {
@@ -71,74 +70,74 @@ export class InnovationEntity extends BaseEntity {
   @JoinColumn({ name: 'owner_id' })
   owner: UserEntity;
 
-  @ManyToMany(() => OrganisationEntity, (record) => record.innovationShares, {
+  @ManyToMany(() => OrganisationEntity, record => record.innovationShares, {
     nullable: true,
-    cascade: ['update'],
+    cascade: ['update']
   })
   @JoinTable({
     name: 'innovation_share',
     joinColumn: {
       name: 'innovation_id',
-      referencedColumnName: 'id',
+      referencedColumnName: 'id'
     },
     inverseJoinColumn: {
       name: 'organisation_id',
-      referencedColumnName: 'id',
-    },
+      referencedColumnName: 'id'
+    }
   })
   organisationShares: OrganisationEntity[];
 
-  @OneToMany(() => InnovationAssessmentEntity, (record) => record.innovation, {
-    cascade: ['insert', 'update'],
+  @OneToMany(() => InnovationAssessmentEntity, record => record.innovation, {
+    cascade: ['insert', 'update']
   })
   assessments: InnovationAssessmentEntity[];
 
-  @OneToMany(() => InnovationSectionEntity, (record) => record.innovation, {
+  @OneToMany(() => InnovationSectionEntity, record => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update'],
+    cascade: ['insert', 'update']
   })
   sections: Promise<InnovationSectionEntity[]>;
 
-  @OneToMany(() => InnovationSupportEntity, (record) => record.innovation, {
-    cascade: ['insert', 'update'],
+  @OneToMany(() => InnovationSupportEntity, record => record.innovation, {
+    cascade: ['insert', 'update']
   })
   innovationSupports: InnovationSupportEntity[];
 
-  @OneToMany(() => InnovationSupportLogEntity, (record) => record.innovation, {
-    cascade: ['insert', 'update'],
+  @OneToMany(() => InnovationSupportLogEntity, record => record.innovation, {
+    cascade: ['insert', 'update']
   })
   innovationSupportLogs: InnovationSupportLogEntity[];
 
-  @OneToMany(() => NotificationEntity, (record) => record.innovation, {
+  @OneToMany(() => NotificationEntity, record => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update'],
+    cascade: ['insert', 'update']
   })
   notifications: Promise<NotificationEntity[]>;
 
-  @OneToMany(() => InnovationReassessmentRequestEntity, (record) => record.innovation, {
+  @OneToMany(() => InnovationReassessmentRequestEntity, record => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update'],
+    cascade: ['insert', 'update']
   })
   reassessmentRequests: Promise<InnovationReassessmentRequestEntity[]>;
 
-  @OneToMany(() => InnovationExportRequestEntity, (record) => record.innovation, {
+  @OneToMany(() => InnovationExportRequestEntity, record => record.innovation, {
     lazy: true,
-    cascade: ['insert', 'update'],
+    cascade: ['insert', 'update']
   })
   exportRequests: Promise<InnovationExportRequestEntity[]>;
 
-  @OneToOne(() => InnovationGroupedStatusViewEntity, (record) => record.innovation)
+  @OneToOne(() => InnovationGroupedStatusViewEntity, record => record.innovation)
   innovationGroupedStatus: InnovationGroupedStatusViewEntity;
 
-  @OneToMany(() => InnovationCollaboratorEntity, (record) => record.innovation)
+  @OneToMany(() => InnovationCollaboratorEntity, record => record.innovation)
   collaborators: InnovationCollaboratorEntity[];
 
   @OneToOne(() => InnovationDocumentEntity)
   @JoinColumn({ name: 'id' })
   document: InnovationDocumentEntity;
 
-  @OneToMany(() => InnovationTransferEntity, (record) => record.innovation, {
-    cascade: ['insert', 'update'],
+  @OneToMany(() => InnovationTransferEntity, record => record.innovation, {
+    cascade: ['insert', 'update']
   })
   transfers: InnovationTransferEntity[];
 

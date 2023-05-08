@@ -8,7 +8,7 @@ export class ResponseHelper {
       isRaw: true,
       status,
       body: data,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' }
     };
   }
 
@@ -71,7 +71,7 @@ export class ResponseHelper {
             error: res.body.error,
             message: res.body.message,
             details: res.body.details ?? {},
-            stack: error.stack,
+            stack: error.stack
           })
         );
       } else if (res.status >= 500) {
@@ -82,7 +82,7 @@ export class ResponseHelper {
             error: res.body.error,
             message: res.body.message,
             details: res.body.details ?? {},
-            stack: error.stack,
+            stack: error.stack
           })
         );
       }
@@ -95,7 +95,7 @@ export class ResponseHelper {
           error: 'UNKNOWN_ERROR',
           message: 'messsage' in error ? error.message : 'Unknown error',
           details: 'details' in error ? error.details : {},
-          stack: 'stack' in error ? error.stack : 'No stack trace',
+          stack: 'stack' in error ? error.stack : 'No stack trace'
         })
       );
       return this.Internal({ error: GenericErrorsEnum.UNKNOWN_ERROR, message: 'Unknown error.' });

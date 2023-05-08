@@ -19,9 +19,7 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1AdminTermsOfUse {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
@@ -58,16 +56,16 @@ export default openApi(V1AdminTermsOfUse.httpTrigger as AzureFunction, '/v1/tou/
                 touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
                 summary: { type: 'string' },
                 releaseAt: { type: 'string', format: 'date-time', nullable: true },
-                createdAt: { type: 'string', format: 'date-time' },
-              },
-            },
-          },
-        },
+                createdAt: { type: 'string', format: 'date-time' }
+              }
+            }
+          }
+        }
       },
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to get terms of use.' },
       '404': { description: 'The terms of use was not found.' },
-      '500': { description: 'An error occurred while listing the terms of use.' },
-    },
-  },
+      '500': { description: 'An error occurred while listing the terms of use.' }
+    }
+  }
 });

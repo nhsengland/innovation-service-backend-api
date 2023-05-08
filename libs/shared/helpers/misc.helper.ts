@@ -31,7 +31,7 @@ export const resolveNestedPromises = async <T extends Record<string, any>>(
 
     if (value instanceof Array) {
       (plain as any)[myKey] = await Promise.all(
-        value.map(async (item) => {
+        value.map(async item => {
           if (item instanceof Object) {
             return await resolveNestedPromises(item);
           } else {

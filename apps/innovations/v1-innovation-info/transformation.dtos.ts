@@ -2,7 +2,7 @@ import type {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
-  PhoneUserPreferenceEnum,
+  PhoneUserPreferenceEnum
 } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 
@@ -40,9 +40,7 @@ export type ResponseDTO = {
     assignedTo: { id: string; name: string };
     reassessmentCount: number;
   };
-  supports?:
-    | null
-    | { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
+  supports?: null | { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
   collaboratorId?: string;
   createdAt: Date;
 };

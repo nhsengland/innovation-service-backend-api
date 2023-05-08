@@ -3,14 +3,14 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import {
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
   LoggerServiceSymbol,
-  LoggerServiceType,
+  LoggerServiceType
 } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -22,9 +22,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
   Record<string, never> // Validate
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(
-    IdentityProviderServiceSymbol
-  );
+  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
   private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
@@ -38,10 +36,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId,
-      true
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId, true);
 
     // This should never happen since we include deleted innovations.
     if (!innovation) {
@@ -61,8 +56,8 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(`/innovator/innovations/${this.inputData.innovationId}/overview`)
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
 
       this.inApp.push({
@@ -70,10 +65,10 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
         context: {
           type: NotificationContextTypeEnum.INNOVATION,
           detail: NotificationContextDetailEnum.TRANSFER_EXPIRED,
-          id: this.inputData.transferId,
+          id: this.inputData.transferId
         },
         userRoleIds: [innovation.owner.userRole.id],
-        params: {},
+        params: {}
       });
     }
 

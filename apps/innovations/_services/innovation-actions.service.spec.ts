@@ -5,7 +5,7 @@ import { container } from '../_config';
 import {
   InnovationActionEntity,
   InnovationThreadEntity,
-  InnovationThreadMessageEntity,
+  InnovationThreadMessageEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -13,19 +13,11 @@ import {
   InnovationActionStatusEnum,
   InnovationStatusEnum,
   NotificationContextTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
-import type {
-  ForbiddenError,
-  NotFoundError,
-  UnprocessableEntityError,
-} from '@innovations/shared/errors';
+import type { ForbiddenError, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import {
-  DomainInnovationsService,
-  IdentityProviderService,
-  NotifierService,
-} from '@innovations/shared/services';
+import { DomainInnovationsService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
@@ -74,7 +66,7 @@ describe('Innovation Actions Suite', () => {
           section:
             CurrentCatalogTypes.InnovationSections[
               randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
-            ]!,
+            ]!
         },
         em
       );
@@ -104,7 +96,7 @@ describe('Innovation Actions Suite', () => {
             section:
               CurrentCatalogTypes.InnovationSections[
                 randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
-              ]!,
+              ]!
           },
           em
         );
@@ -135,7 +127,7 @@ describe('Innovation Actions Suite', () => {
             section:
               CurrentCatalogTypes.InnovationSections[
                 randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
-              ]!,
+              ]!
           },
           em
         );
@@ -163,7 +155,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           {
             description: randText(),
-            section: randText() as CurrentCatalogTypes.InnovationSections,
+            section: randText() as CurrentCatalogTypes.InnovationSections
           },
           em
         );
@@ -183,20 +175,18 @@ describe('Innovation Actions Suite', () => {
         .spyOn(DomainInnovationsService.prototype, 'getUnreadNotifications')
         .mockImplementation((_userId, contextIds) => {
           return Promise.resolve(
-            contextIds.map((contextId) => ({
+            contextIds.map(contextId => ({
               contextId,
               contextType: NotificationContextTypeEnum.ACTION,
               id: randUuid(),
-              params: {},
+              params: {}
             }))
           );
         });
 
       jest
         .spyOn(IdentityProviderService.prototype, 'getUsersList')
-        .mockResolvedValue([
-          { displayName: 'a name', identityId: testData.baseUsers.accessor.identityId } as any,
-        ]);
+        .mockResolvedValue([{ displayName: 'a name', identityId: testData.baseUsers.accessor.identityId } as any]);
     });
 
     it('should list all actions as an innovator for his innovation', async () => {
@@ -228,8 +218,8 @@ describe('Innovation Actions Suite', () => {
       jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
         {
           displayName: 'na name',
-          identityId: testData.baseUsers.assessmentUser.identityId,
-        } as any,
+          identityId: testData.baseUsers.assessmentUser.identityId
+        } as any
       ]);
 
       // Create one as NA
@@ -257,8 +247,8 @@ describe('Innovation Actions Suite', () => {
         createdBy: {
           id: testData.baseUsers.assessmentUser.id,
           name: 'na name',
-          role: ServiceRoleEnum.ASSESSMENT,
-        },
+          role: ServiceRoleEnum.ASSESSMENT
+        }
       };
 
       const actions = await sut.getActionsList(
@@ -336,9 +326,9 @@ describe('Innovation Actions Suite', () => {
           organisationUnit: {
             id: innovation.innovationSupports[0]?.organisationUnit.id,
             acronym: innovation.innovationSupports[0]?.organisationUnit.acronym,
-            name: innovation.innovationSupports[0]?.organisationUnit.name,
-          },
-        },
+            name: innovation.innovationSupports[0]?.organisationUnit.name
+          }
+        }
       };
 
       const actions = await sut.getActionsList(
@@ -434,9 +424,7 @@ describe('Innovation Actions Suite', () => {
         .withAssessments(testData.baseUsers.assessmentUser)
         .build(em);
 
-      const section = (await innovation.sections).find(
-        (section) => section.section === 'CURRENT_CARE_PATHWAY'
-      );
+      const section = (await innovation.sections).find(section => section.section === 'CURRENT_CARE_PATHWAY');
 
       const action = await TestsLegacyHelper.TestDataBuilder.createAction(
         testData.domainContexts.assessmentUser,
@@ -503,10 +491,7 @@ describe('Innovation Actions Suite', () => {
 
       expect(actions.count).toBe(1);
       expect(actions.data[0]).toHaveProperty('id', action!.id);
-      expect(actions.data[0]).toHaveProperty(
-        ['createdBy', 'id'],
-        testData.baseUsers.assessmentUser.id
-      );
+      expect(actions.data[0]).toHaveProperty(['createdBy', 'id'], testData.baseUsers.assessmentUser.id);
       expect(actions.data[0]).toHaveProperty(
         ['createdBy', 'role'],
         testData.baseUsers.assessmentUser.serviceRoles[0]!.role
@@ -576,7 +561,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      const actual = actions.data.find((a) => a.id === action.id);
+      const actual = actions.data.find(a => a.id === action.id);
 
       expect(actual).toBeDefined();
       expect(actual?.notifications).toBe(1);
@@ -601,9 +586,7 @@ describe('Innovation Actions Suite', () => {
 
       jest
         .spyOn(IdentityProviderService.prototype, 'getUsersList')
-        .mockResolvedValue([
-          { displayName: 'first name', identityId: testData.baseUsers.accessor.identityId } as any,
-        ]);
+        .mockResolvedValue([{ displayName: 'first name', identityId: testData.baseUsers.accessor.identityId } as any]);
 
       const action = await sut.getActionInfo(newAction.id, em);
 
@@ -622,9 +605,9 @@ describe('Innovation Actions Suite', () => {
           organisationUnit: {
             id: newAction.innovationSupport?.organisationUnit.id,
             name: newAction.innovationSupport?.organisationUnit.name,
-            acronym: newAction.innovationSupport?.organisationUnit.acronym,
-          },
-        },
+            acronym: newAction.innovationSupport?.organisationUnit.acronym
+          }
+        }
       });
     });
 
@@ -645,8 +628,8 @@ describe('Innovation Actions Suite', () => {
       jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
         {
           displayName: 'first name',
-          identityId: testData.baseUsers.assessmentUser.identityId,
-        } as any,
+          identityId: testData.baseUsers.assessmentUser.identityId
+        } as any
       ]);
 
       const action = await sut.getActionInfo(newAction.id, em);
@@ -663,8 +646,8 @@ describe('Innovation Actions Suite', () => {
         createdBy: {
           id: testData.baseUsers.assessmentUser.id,
           name: 'first name',
-          role: ServiceRoleEnum.ASSESSMENT,
-        },
+          role: ServiceRoleEnum.ASSESSMENT
+        }
       });
     });
 
@@ -690,12 +673,12 @@ describe('Innovation Actions Suite', () => {
           innovationId: innovation.id,
           domainContext: testData.domainContexts.assessmentUser,
           activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE,
-          activityType: ActivityTypeEnum.ACTIONS,
+          activityType: ActivityTypeEnum.ACTIONS
         },
         {
           actionId: newAction.id,
           interveningUserId: newAction.createdBy || '',
-          comment: { id: randomUUID(), value: declineReason },
+          comment: { id: randomUUID(), value: declineReason }
         },
         em
       );
@@ -703,8 +686,8 @@ describe('Innovation Actions Suite', () => {
       jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockResolvedValue([
         {
           displayName: 'first name',
-          identityId: testData.baseUsers.assessmentUser.identityId,
-        } as any,
+          identityId: testData.baseUsers.assessmentUser.identityId
+        } as any
       ]);
 
       const action = await sut.getActionInfo(newAction.id, em);
@@ -721,9 +704,9 @@ describe('Innovation Actions Suite', () => {
         createdBy: {
           id: testData.baseUsers.assessmentUser.id,
           name: 'first name',
-          role: ServiceRoleEnum.ASSESSMENT,
+          role: ServiceRoleEnum.ASSESSMENT
         },
-        declineReason,
+        declineReason
       });
     });
 
@@ -745,9 +728,7 @@ describe('Innovation Actions Suite', () => {
     let notifierSendSpy: jest.SpyInstance<unknown>;
 
     beforeEach(async () => {
-      actitivityLogSpy = jest
-        .spyOn(DomainInnovationsService.prototype, 'addActivityLog')
-        .mockResolvedValue();
+      actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
       notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
     });
 
@@ -771,7 +752,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.CANCELLED,
+          status: InnovationActionStatusEnum.CANCELLED
         },
         em
       );
@@ -807,7 +788,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.COMPLETED,
+          status: InnovationActionStatusEnum.COMPLETED
         },
         em
       );
@@ -843,7 +824,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.REQUESTED,
+          status: InnovationActionStatusEnum.REQUESTED
         },
         em
       );
@@ -870,7 +851,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           randUuid(),
           {
-            status: InnovationActionStatusEnum.REQUESTED,
+            status: InnovationActionStatusEnum.REQUESTED
           },
           em
         );
@@ -904,7 +885,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           action.id,
           {
-            status: InnovationActionStatusEnum.REQUESTED,
+            status: InnovationActionStatusEnum.REQUESTED
           },
           em
         );
@@ -938,7 +919,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           action.id,
           {
-            status: InnovationActionStatusEnum.CANCELLED,
+            status: InnovationActionStatusEnum.CANCELLED
           },
           em
         );
@@ -972,7 +953,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           action.id,
           {
-            status: InnovationActionStatusEnum.COMPLETED,
+            status: InnovationActionStatusEnum.COMPLETED
           },
           em
         );
@@ -990,9 +971,7 @@ describe('Innovation Actions Suite', () => {
     let notifierSendSpy: jest.SpyInstance<unknown>;
 
     beforeEach(async () => {
-      actitivityLogSpy = jest
-        .spyOn(DomainInnovationsService.prototype, 'addActivityLog')
-        .mockResolvedValue();
+      actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
       notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
     });
 
@@ -1015,7 +994,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.CANCELLED,
+          status: InnovationActionStatusEnum.CANCELLED
         },
         em
       );
@@ -1050,7 +1029,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.COMPLETED,
+          status: InnovationActionStatusEnum.COMPLETED
         },
         em
       );
@@ -1085,7 +1064,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.REQUESTED,
+          status: InnovationActionStatusEnum.REQUESTED
         },
         em
       );
@@ -1120,7 +1099,7 @@ describe('Innovation Actions Suite', () => {
         innovation.id,
         action.id,
         {
-          status: InnovationActionStatusEnum.REQUESTED,
+          status: InnovationActionStatusEnum.REQUESTED
         },
         em
       );
@@ -1147,7 +1126,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           randUuid(),
           {
-            status: InnovationActionStatusEnum.REQUESTED,
+            status: InnovationActionStatusEnum.REQUESTED
           },
           em
         );
@@ -1180,7 +1159,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           action.id,
           {
-            status: InnovationActionStatusEnum.REQUESTED,
+            status: InnovationActionStatusEnum.REQUESTED
           },
           em
         );
@@ -1213,7 +1192,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           action.id,
           {
-            status: InnovationActionStatusEnum.CANCELLED,
+            status: InnovationActionStatusEnum.CANCELLED
           },
           em
         );
@@ -1247,7 +1226,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           actionByAccessor.id,
           {
-            status: InnovationActionStatusEnum.REQUESTED,
+            status: InnovationActionStatusEnum.REQUESTED
           },
           em
         );
@@ -1280,7 +1259,7 @@ describe('Innovation Actions Suite', () => {
           testData.innovation.id,
           actionByAccessor.id,
           {
-            status: InnovationActionStatusEnum.REQUESTED,
+            status: InnovationActionStatusEnum.REQUESTED
           },
           em
         );
@@ -1299,15 +1278,13 @@ describe('Innovation Actions Suite', () => {
     let createThreadOrMessageSpy: jest.SpyInstance<unknown>;
 
     beforeEach(async () => {
-      actitivityLogSpy = jest
-        .spyOn(DomainInnovationsService.prototype, 'addActivityLog')
-        .mockResolvedValue();
+      actitivityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
       notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
       createThreadOrMessageSpy = jest
         .spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage')
         .mockResolvedValue({
           thread: new InnovationThreadEntity(),
-          message: new InnovationThreadMessageEntity(),
+          message: new InnovationThreadMessageEntity()
         });
     });
 
@@ -1331,7 +1308,7 @@ describe('Innovation Actions Suite', () => {
         action.id,
         {
           status: InnovationActionStatusEnum.DECLINED,
-          message: randText(),
+          message: randText()
         },
         em
       );
@@ -1369,7 +1346,7 @@ describe('Innovation Actions Suite', () => {
         action.id,
         {
           status: InnovationActionStatusEnum.DECLINED,
-          message: randText(),
+          message: randText()
         },
         em
       );
@@ -1398,7 +1375,7 @@ describe('Innovation Actions Suite', () => {
           randUuid(),
           {
             status: InnovationActionStatusEnum.DECLINED,
-            message: randText(),
+            message: randText()
           },
           em
         );
@@ -1432,7 +1409,7 @@ describe('Innovation Actions Suite', () => {
           action.id,
           {
             status: InnovationActionStatusEnum.DECLINED,
-            message: randText(),
+            message: randText()
           },
           em
         );

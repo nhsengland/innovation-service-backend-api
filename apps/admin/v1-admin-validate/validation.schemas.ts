@@ -6,7 +6,7 @@ export type ParamsType = {
   userId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  userId: Joi.string().guid().required().description('Id of the user.'),
+  userId: Joi.string().guid().required().description('Id of the user.')
 }).required();
 
 export type QueryParamsType = {
@@ -16,5 +16,5 @@ export const QueryParamsSchema = Joi.object<QueryParamsType>({
   operation: Joi.string()
     .valid(...Object.values(AdminOperationType))
     .required()
-    .description('Type of the operation to validate.'),
+    .description('Type of the operation to validate.')
 }).required();

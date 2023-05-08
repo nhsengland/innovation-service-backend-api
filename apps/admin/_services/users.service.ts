@@ -7,19 +7,15 @@ import {
   OrganisationUnitUserEntity,
   OrganisationUserEntity,
   UserEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@admin/shared/entities';
-import {
-  AccessorOrganisationRoleEnum,
-  NotifierTypeEnum,
-  ServiceRoleEnum,
-} from '@admin/shared/enums';
+import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   NotFoundError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
-  UserErrorsEnum,
+  UserErrorsEnum
 } from '@admin/shared/errors';
 import {
   CacheConfigType,
@@ -28,7 +24,7 @@ import {
   IdentityProviderService,
   IdentityProviderServiceSymbol,
   NotifierService,
-  NotifierServiceSymbol,
+  NotifierServiceSymbol
 } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
 
@@ -77,18 +73,18 @@ export class UsersService extends BaseService {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
-    return await sqlConnection.transaction(async (transaction) => {
+    return await sqlConnection.transaction(async transaction => {
       if (data.accountEnabled != undefined) {
         await transaction.update(
           UserEntity,
           { id: userId },
           {
-            lockedAt: data.accountEnabled === false ? new Date().toISOString() : null,
+            lockedAt: data.accountEnabled === false ? new Date().toISOString() : null
           }
         );
 
         await this.identityProviderService.updateUserAsync(dbUser.identityId, {
-          accountEnabled: data.accountEnabled,
+          accountEnabled: data.accountEnabled
         });
       }
 
@@ -96,7 +92,7 @@ export class UsersService extends BaseService {
         const organisationUser = await transaction
           .createQueryBuilder(OrganisationUserEntity, 'organisationUser')
           .where('organisationUser.organisation_id = :organisationId', {
-            organisationId: data.role.organisationId,
+            organisationId: data.role.organisationId
           })
           .andWhere('organisationUser.user_id = :userId', { userId })
           .getOne();
@@ -105,11 +101,7 @@ export class UsersService extends BaseService {
           throw new NotFoundError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
         }
 
-        await transaction.update(
-          OrganisationUserEntity,
-          { id: organisationUser.id },
-          { role: data.role.name }
-        );
+        await transaction.update(OrganisationUserEntity, { id: organisationUser.id }, { role: data.role.name });
 
         // TODO: IMPROVE THE SERVICE ROLE INFERENCE
         await transaction.update(
@@ -148,8 +140,7 @@ export class UsersService extends BaseService {
     }
   ): Promise<{ id: string }> {
     if (
-      (data.type === ServiceRoleEnum.ACCESSOR ||
-        data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
+      (data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
       (!data.organisationAcronym || !data.organisationUnitAcronym || !data.role)
     ) {
       throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
@@ -205,34 +196,30 @@ export class UsersService extends BaseService {
       const iId = await this.identityProviderService.createUser({
         name: data.name,
         email: data.email,
-        password: password,
+        password: password
       });
 
       identityId = iId;
     }
 
-    return await this.sqlConnection.transaction(async (transaction) => {
+    return await this.sqlConnection.transaction(async transaction => {
       const user = await transaction.save(
         UserEntity,
         UserEntity.new({
           identityId: identityId,
           createdBy: requestUser.id,
-          updatedBy: requestUser.id,
+          updatedBy: requestUser.id
         })
       );
 
       // admin type
       if (data.type === ServiceRoleEnum.ADMIN) {
-        await transaction.save(
-          UserRoleEntity,
-          UserRoleEntity.new({ user, role: ServiceRoleEnum.ADMIN })
-        );
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum.ADMIN }));
       }
 
       // accessor type
       if (
-        (data.type === ServiceRoleEnum.ACCESSOR ||
-          data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
+        (data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
         organisation &&
         unit &&
         data.role
@@ -244,7 +231,7 @@ export class UsersService extends BaseService {
             user,
             role: data.role,
             createdBy: requestUser.id,
-            updatedBy: requestUser.id,
+            updatedBy: requestUser.id
           })
         );
 
@@ -254,7 +241,7 @@ export class UsersService extends BaseService {
             organisationUnit: unit,
             organisationUser: orgUser,
             createdBy: requestUser.id,
-            updatedBy: requestUser.id,
+            updatedBy: requestUser.id
           })
         );
 
@@ -266,17 +253,14 @@ export class UsersService extends BaseService {
             organisation: organisation,
             organisationUnit: unit,
             createdBy: requestUser.id,
-            lockedAt: organisation.inactivatedAt || unit.inactivatedAt ? new Date() : null,
+            lockedAt: organisation.inactivatedAt || unit.inactivatedAt ? new Date() : null
           })
         );
       }
 
       // needs assessor type
       if (data.type === ServiceRoleEnum.ASSESSMENT) {
-        await transaction.save(
-          UserRoleEntity,
-          UserRoleEntity.new({ user, role: ServiceRoleEnum.ASSESSMENT })
-        );
+        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum.ASSESSMENT }));
       }
 
       return { id: user.id };

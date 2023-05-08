@@ -21,10 +21,10 @@ export class InnovationFileEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationEvidenceEntity, (record) => record.files)
+  @ManyToMany(() => InnovationEvidenceEntity, record => record.files)
   evidence: InnovationEvidenceEntity[];
 
-  @ManyToMany(() => InnovationSectionEntity, (record) => record.files)
+  @ManyToMany(() => InnovationSectionEntity, record => record.files)
   sections: InnovationSectionEntity[];
 
   static new(data: Partial<InnovationFileEntity>): InnovationFileEntity {

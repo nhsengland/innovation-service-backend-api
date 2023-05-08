@@ -9,7 +9,7 @@ import {
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@admin/shared/entities';
 import {
   InnovationActionStatusEnum,
@@ -17,13 +17,9 @@ import {
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@admin/shared/enums';
-import {
-  NotFoundError,
-  OrganisationErrorsEnum,
-  UnprocessableEntityError,
-} from '@admin/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DatesHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import {
@@ -32,7 +28,7 @@ import {
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
   NotifierServiceSymbol,
-  NotifierServiceType,
+  NotifierServiceType
 } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
@@ -83,13 +79,10 @@ export class OrganisationsService extends BaseService {
         .groupBy('ur.user_id, u.external_id')
         .having('count(*) = 1')
         .getRawMany()
-    ).map((ur) => ({ id: ur.userId as string, identityId: ur.identityId as string }));
+    ).map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }));
 
     // only want to clear actions with these statuses
-    const actionStatusToClear = [
-      InnovationActionStatusEnum.REQUESTED,
-      InnovationActionStatusEnum.SUBMITTED,
-    ];
+    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
@@ -100,12 +93,12 @@ export class OrganisationsService extends BaseService {
         .where('unit.id = :unitId', { unitId })
         .andWhere('action.status IN (:...actionStatusToClear)', { actionStatusToClear })
         .getMany()
-    ).map((a) => a.id);
+    ).map(a => a.id);
 
     //only want to complete the support of innovations with these statuses
     const supportStatusToComplete = [
       InnovationSupportStatusEnum.ENGAGING,
-      InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
+      InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
     ];
 
     //get supports to complete
@@ -118,7 +111,7 @@ export class OrganisationsService extends BaseService {
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
       .getMany();
 
-    const contexts = [...actionsToClear, ...supportsToComplete.map((s) => s.id)];
+    const contexts = [...actionsToClear, ...supportsToComplete.map(s => s.id)];
 
     let notificationsToMarkAsRead: NotificationEntity[] = [];
 
@@ -131,7 +124,7 @@ export class OrganisationsService extends BaseService {
         .getMany();
     }
 
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const result = await this.sqlConnection.transaction(async transaction => {
       const now = new Date();
 
       // Inactivate unit
@@ -148,13 +141,13 @@ export class OrganisationsService extends BaseService {
 
       // Complete supports of unit
       if (supportsToComplete.length > 0) {
-        const supportIds = supportsToComplete.map((s) => s.id);
+        const supportIds = supportsToComplete.map(s => s.id);
 
         await transaction.update(
           InnovationSupportEntity,
           { id: In(supportIds) },
           {
-            status: InnovationSupportStatusEnum.COMPLETE,
+            status: InnovationSupportStatusEnum.COMPLETE
           }
         );
 
@@ -170,7 +163,7 @@ export class OrganisationsService extends BaseService {
       if (notificationsToMarkAsRead.length > 0) {
         await transaction.update(
           NotificationUserEntity,
-          { notification: In(notificationsToMarkAsRead.map((n) => n.id)) },
+          { notification: In(notificationsToMarkAsRead.map(n => n.id)) },
           { readAt: now }
         );
       }
@@ -179,7 +172,7 @@ export class OrganisationsService extends BaseService {
       if (usersToLock.length > 0) {
         await transaction.update(
           UserEntity,
-          { id: In(usersToLock.map((ur) => ur.id)) },
+          { id: In(usersToLock.map(ur => ur.id)) },
           { lockedAt: now, updatedAt: now }
         );
       }
@@ -202,11 +195,7 @@ export class OrganisationsService extends BaseService {
 
       // inactivate organisation if it has no active units
       if (activeUnitsCounter === 0) {
-        await transaction.update(
-          OrganisationEntity,
-          { id: organisationId },
-          { inactivatedAt: now }
-        );
+        await transaction.update(OrganisationEntity, { id: organisationId }, { inactivatedAt: now });
       }
 
       for (const support of supportsToComplete) {
@@ -218,7 +207,7 @@ export class OrganisationsService extends BaseService {
           {
             type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
             description: '',
-            suggestedOrganisationUnits: [],
+            suggestedOrganisationUnits: []
           }
         );
 
@@ -237,7 +226,7 @@ export class OrganisationsService extends BaseService {
     if (usersToLock.length > 0) {
       for (const user of usersToLock) {
         await this.identityProviderService.updateUserAsync(user.identityId, {
-          accountEnabled: false,
+          accountEnabled: false
         });
       }
     }
@@ -282,14 +271,14 @@ export class OrganisationsService extends BaseService {
 
     //check if at least 1 user is QA
     const canActivate =
-      usersToUnlock.some((ur) => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) ||
-      rolesToUnlock.some((ur) => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR);
+      usersToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) ||
+      rolesToUnlock.some(ur => ur.role === ServiceRoleEnum.QUALIFYING_ACCESSOR);
 
     if (!canActivate) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
     }
 
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const result = await this.sqlConnection.transaction(async transaction => {
       const now = new Date();
 
       // Activate unit
@@ -309,16 +298,12 @@ export class OrganisationsService extends BaseService {
 
         // Just send the announcement if this is the first time the organization has been activated.
         if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
-          await this.createOrganisationAnnouncement(
-            unit.organisation.id,
-            unit.organisation.name,
-            transaction
-          );
+          await this.createOrganisationAnnouncement(unit.organisation.id, unit.organisation.name, transaction);
         }
       }
 
       // Activate users of unit and roles
-      const usersToUnlockId = usersToUnlock.map((u) => u.user.id);
+      const usersToUnlockId = usersToUnlock.map(u => u.user.id);
 
       await transaction.update(
         UserEntity,
@@ -328,7 +313,7 @@ export class OrganisationsService extends BaseService {
 
       await transaction.update(
         UserRoleEntity,
-        { id: In(rolesToUnlock.map((r) => r.id)), organisationUnit: unitId },
+        { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
         { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
       );
 
@@ -339,7 +324,7 @@ export class OrganisationsService extends BaseService {
     // using identity-ops-queue
     for (const userRole of usersToUnlock) {
       await this.identityProviderService.updateUserAsync(userRole.user.identityId, {
-        accountEnabled: true,
+        accountEnabled: true
       });
     }
 
@@ -353,7 +338,7 @@ export class OrganisationsService extends BaseService {
   ): Promise<{
     id: string;
   }> {
-    return this.sqlConnection.transaction(async (transaction) => {
+    return this.sqlConnection.transaction(async transaction => {
       const unit = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
         .where('org_unit.id = :unitId', { unitId })
@@ -365,10 +350,11 @@ export class OrganisationsService extends BaseService {
 
       const unitNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-        .where(
-          '(org_unit.name = :name OR org_unit.acronym = :acronym) AND (org_unit.id != :unitId)',
-          { name, acronym, unitId }
-        )
+        .where('(org_unit.name = :name OR org_unit.acronym = :acronym) AND (org_unit.id != :unitId)', {
+          name,
+          acronym,
+          unitId
+        })
         .getOne();
 
       if (unitNameOrAcronymAlreadyExists) {
@@ -380,7 +366,7 @@ export class OrganisationsService extends BaseService {
         { id: unit.id },
         {
           name: name,
-          acronym: acronym,
+          acronym: acronym
         }
       );
 
@@ -395,7 +381,7 @@ export class OrganisationsService extends BaseService {
   ): Promise<{
     id: string;
   }> {
-    return this.sqlConnection.transaction(async (transaction) => {
+    return this.sqlConnection.transaction(async transaction => {
       const organisation = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .innerJoinAndSelect('org.organisationUnits', 'organisationUnits')
@@ -411,7 +397,7 @@ export class OrganisationsService extends BaseService {
         .where('(org.name = :name OR org.acronym = :acronym) AND (org.id != :organisationId)', {
           name,
           acronym,
-          organisationId,
+          organisationId
         })
         .getOne();
 
@@ -424,7 +410,7 @@ export class OrganisationsService extends BaseService {
         { id: organisation.id },
         {
           name: name,
-          acronym: acronym,
+          acronym: acronym
         }
       );
 
@@ -432,14 +418,14 @@ export class OrganisationsService extends BaseService {
         // if organisation only has one unit (shadow), the name and acronym
         // of this unit must also be changed
 
-        const unitIds = (await organisation.organisationUnits).map((u) => u.id);
+        const unitIds = (await organisation.organisationUnits).map(u => u.id);
 
         await transaction.update(
           OrganisationUnitEntity,
           { id: unitIds[0] },
           {
             name: name,
-            acronym: acronym,
+            acronym: acronym
           }
         );
       }
@@ -459,12 +445,12 @@ export class OrganisationsService extends BaseService {
     id: string;
     units: string[];
   }> {
-    const result = await this.sqlConnection.transaction(async (transaction) => {
+    const result = await this.sqlConnection.transaction(async transaction => {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .where('org.name = :name OR org.acronym = :acronym', {
           name: data.name,
-          acronym: data.acronym,
+          acronym: data.acronym
         })
         .getOne();
 
@@ -482,7 +468,7 @@ export class OrganisationsService extends BaseService {
         updatedAt: now,
         updatedBy: domainContext.id,
         type: OrganisationTypeEnum.ACCESSOR,
-        isShadow: false,
+        isShadow: false
       });
 
       const savedOrganisation = await transaction.save(OrganisationEntity, org);
@@ -507,24 +493,18 @@ export class OrganisationsService extends BaseService {
         }
       } else {
         //create shadow unit
-        const shadowUnit = await this.createOrganisationUnit(
-          org.id,
-          data.name,
-          data.acronym,
-          true,
-          transaction
-        );
+        const shadowUnit = await this.createOrganisationUnit(org.id, data.name, data.acronym, true, transaction);
         savedUnits.push(shadowUnit);
       }
 
       return { id: savedOrganisation.id, units: savedUnits };
     });
 
-    return { id: result.id, units: result.units.map((u) => u.id) };
+    return { id: result.id, units: result.units.map(u => u.id) };
   }
 
   async createUnit(organisationId: string, name: string, acronym: string): Promise<{ id: string }> {
-    const unit = await this.sqlConnection.transaction(async (transaction) => {
+    const unit = await this.sqlConnection.transaction(async transaction => {
       return this.createOrganisationUnit(organisationId, name, acronym, false, transaction);
     });
 
@@ -565,7 +545,7 @@ export class OrganisationsService extends BaseService {
         acronym: acronym,
         inactivatedAt: new Date(),
         isShadow: isShadow,
-        organisation: org,
+        organisation: org
       })
     );
 
@@ -581,7 +561,7 @@ export class OrganisationsService extends BaseService {
       .createQueryBuilder(UserRoleEntity, 'userRole')
       .where('userRole.organisation_id = :organisationId', { organisationId })
       .getMany();
-    const usersToExclude = orgUsers.map((u) => u.userId);
+    const usersToExclude = orgUsers.map(u => u.userId);
 
     const announcementParams = {
       title: 'A new support organisation has been added',
@@ -589,9 +569,9 @@ export class OrganisationsService extends BaseService {
         title: `${orgName} has been added to the Innovation Service`,
         link: {
           label: 'What does this organisation do? (open in a new window)',
-          url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl(),
-        },
-      },
+          url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
+        }
+      }
     };
 
     await this.announcementsService.createAnnouncement(
@@ -601,9 +581,9 @@ export class OrganisationsService extends BaseService {
         params: {
           ...announcementParams,
           description: [
-            'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.',
-          ],
-        },
+            'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'
+          ]
+        }
       },
       transaction
     );
@@ -615,10 +595,10 @@ export class OrganisationsService extends BaseService {
         params: {
           ...announcementParams,
           description: [
-            'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.',
-          ],
+            'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'
+          ]
         },
-        usersToExclude,
+        usersToExclude
       },
       transaction
     );
@@ -628,7 +608,7 @@ export class OrganisationsService extends BaseService {
       {
         template: 'GENERIC',
         params: { ...announcementParams },
-        usersToExclude,
+        usersToExclude
       },
       transaction
     );

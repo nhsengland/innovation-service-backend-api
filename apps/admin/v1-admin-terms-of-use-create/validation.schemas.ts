@@ -15,5 +15,5 @@ export const BodySchema = Joi.object<BodyType>({
     .required()
     .description('Type of the terms of use.'),
   summary: Joi.string().optional().description('Brief summary of the terms of use.'),
-  releasedAt: Joi.string().optional().description('Relase date of the terms of use.'),
+  releasedAt: Joi.string().optional().description('Relase date of the terms of use.')
 }).required();

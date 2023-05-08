@@ -7,7 +7,7 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
@@ -44,17 +44,17 @@ export class InnovationSectionEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, (record) => record.evidence, { nullable: true })
+  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_section_file',
     joinColumn: { name: 'innovation_section_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
   })
   files: InnovationFileEntity[];
 
-  @OneToMany(() => InnovationActionEntity, (record) => record.innovationSection, {
+  @OneToMany(() => InnovationActionEntity, record => record.innovationSection, {
     lazy: true,
-    cascade: ['insert', 'update'],
+    cascade: ['insert', 'update']
   })
   actions: Promise<InnovationActionEntity[]>;
 

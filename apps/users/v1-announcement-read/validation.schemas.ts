@@ -4,5 +4,5 @@ export type ParamsType = {
   announcementId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  announcementId: Joi.string().guid().required(),
+  announcementId: Joi.string().guid().required()
 }).required();

@@ -16,9 +16,7 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1OrganisationUnitInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
@@ -47,18 +45,18 @@ export default openApi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         '200': {
-          description: 'Success.',
+          description: 'Success.'
         },
         '400': {
-          description: 'Bad request.',
+          description: 'Bad request.'
         },
         '401': {
-          description: 'The user is not authorized to get this information.',
+          description: 'The user is not authorized to get this information.'
         },
         '500': {
-          description: 'An error occurred while getting this information.',
-        },
-      },
-    },
+          description: 'An error occurred while getting this information.'
+        }
+      }
+    }
   }
 );

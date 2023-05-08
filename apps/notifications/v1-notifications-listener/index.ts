@@ -29,10 +29,7 @@ class V1NotificationsListener {
 
     try {
       const message = JoiHelper.Validate<MessageType>(MessageSchema, requestMessage);
-      JoiHelper.Validate(
-        HandlersHelper.handlerJoiDefinition(message.data.action),
-        message.data.params
-      );
+      JoiHelper.Validate(HandlersHelper.handlerJoiDefinition(message.data.action), message.data.params);
 
       const notificationsInstance = await HandlersHelper.runHandler(
         message.data.requestUser,
@@ -51,8 +48,8 @@ class V1NotificationsListener {
             to: item.to,
             params: item.params,
             log: item.log,
-            domainContext: message.data.domainContext,
-          },
+            domainContext: message.data.domainContext
+          }
         });
       }
 
@@ -63,8 +60,8 @@ class V1NotificationsListener {
             innovationId: item.innovationId,
             context: { type: item.context.type, detail: item.context.detail, id: item.context.id },
             userRoleIds: item.userRoleIds,
-            params: item.params,
-          },
+            params: item.params
+          }
         });
       }
 

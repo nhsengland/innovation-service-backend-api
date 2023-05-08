@@ -17,12 +17,8 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationsSupportLogCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSupportsService = container.get<InnovationSupportsService>(
-      SYMBOLS.InnovationSupportsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -53,36 +49,32 @@ class V1InnovationsSupportLogCreate {
   }
 }
 
-export default openApi(
-  V1InnovationsSupportLogCreate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/support-logs',
-  {
-    post: {
-      description: 'Create support logs for an Innovation',
-      operationId: 'v1-innovation-support-logs-create',
-      tags: ['Create Innovation Support Logs'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      responses: {
-        201: {
-          description:
-            'Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.',
-        },
-        401: {
-          description: 'Unauthorised',
-        },
-        404: {
-          description: 'Not Found',
-        },
+export default openApi(V1InnovationsSupportLogCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/support-logs', {
+  post: {
+    description: 'Create support logs for an Innovation',
+    operationId: 'v1-innovation-support-logs-create',
+    tags: ['Create Innovation Support Logs'],
+    parameters: [
+      {
+        in: 'path',
+        name: 'innovationId',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    responses: {
+      201: {
+        description:
+          'Creates a new innovation support logs for the innovation identified by the supplied Innovation ID.'
       },
-    },
+      401: {
+        description: 'Unauthorised'
+      },
+      404: {
+        description: 'Not Found'
+      }
+    }
   }
-);
+});

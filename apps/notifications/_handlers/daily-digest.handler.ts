@@ -41,8 +41,8 @@ export class DailyDigestHandler extends BaseHandler<
           // display_name: '', // This will be filled by the email-listener function.
           messages_count: user.messagesCount.toString(),
           actions_count: user.actionsCount.toString(),
-          supports_count: user.supportsCount.toString(),
-        },
+          supports_count: user.supportsCount.toString()
+        }
       });
     }
   }

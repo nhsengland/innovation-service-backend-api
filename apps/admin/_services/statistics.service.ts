@@ -27,15 +27,12 @@ export class StatisticsService extends BaseService {
       .leftJoin('innovation.innovationSupports', 'supports')
       .leftJoin('supports.organisationUnit', 'organisationUnit')
       .where('organisationUnit.id = :organisationUnitId', {
-        organisationUnitId,
+        organisationUnitId
       });
 
     if (onlyOpen) {
       query.andWhere('supports.status IN (:...statuses)', {
-        statuses: [
-          InnovationSupportStatusEnum.ENGAGING,
-          InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-        ],
+        statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
       });
     }
 

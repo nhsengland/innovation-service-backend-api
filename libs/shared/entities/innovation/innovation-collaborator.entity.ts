@@ -6,7 +6,7 @@ import {
   ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
-  RelationId,
+  RelationId
 } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';

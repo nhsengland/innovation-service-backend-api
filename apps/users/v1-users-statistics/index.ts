@@ -14,9 +14,7 @@ import { QuerySchema, QueryType } from './validation.schemas';
 class GetUserStatistics {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
 
     try {
       const query = JoiHelper.Validate<QueryType>(QuerySchema, request.query);
@@ -31,11 +29,7 @@ class GetUserStatistics {
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const stats = await StatisticsHandlersHelper.runHandler(
-        requestUser,
-        domainContext,
-        query.statistics
-      );
+      const stats = await StatisticsHandlersHelper.runHandler(requestUser, domainContext, query.statistics);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(stats);
       return;
@@ -56,8 +50,8 @@ export default openApi(GetUserStatistics.httpTrigger as AzureFunction, '/v1/stat
         in: 'query',
         name: 'statistics',
         required: false,
-        schema: { type: 'string', enum: Object.keys(UserStatisticsEnum) },
-      },
+        schema: { type: 'string', enum: Object.keys(UserStatisticsEnum) }
+      }
     ],
     responses: {
       200: {
@@ -65,11 +59,11 @@ export default openApi(GetUserStatistics.httpTrigger as AzureFunction, '/v1/stat
         content: {
           'application/json': {
             schema: {
-              type: 'object',
-            },
-          },
-        },
-      },
-    },
-  },
+              type: 'object'
+            }
+          }
+        }
+      }
+    }
+  }
 });

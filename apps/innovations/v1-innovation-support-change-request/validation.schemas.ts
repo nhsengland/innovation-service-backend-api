@@ -9,7 +9,7 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  supportId: Joi.string().guid().required(),
+  supportId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -22,5 +22,5 @@ export const BodySchema = Joi.object<BodyType>({
     .valid(...Object.values(InnovationSupportStatusEnum))
     .disallow(InnovationSupportStatusEnum.UNASSIGNED, InnovationSupportStatusEnum.WITHDRAWN)
     .required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required()
 }).required();

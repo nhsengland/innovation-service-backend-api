@@ -16,12 +16,8 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1InnovationTransferList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationTransferService = container.get<InnovationTransferService>(
-      SYMBOLS.InnovationTransferService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationTransferService = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
 
     try {
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
@@ -55,12 +51,12 @@ export default openApi(V1InnovationTransferList.httpTrigger as AzureFunction, '/
             schema: {
               type: 'array',
               items: {
-                type: 'object',
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                type: 'object'
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

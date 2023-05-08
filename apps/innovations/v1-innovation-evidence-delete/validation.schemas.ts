@@ -6,5 +6,5 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  evidenceOffset: Joi.number().integer().min(0).required(),
+  evidenceOffset: Joi.number().integer().min(0).required()
 });

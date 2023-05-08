@@ -6,7 +6,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -16,16 +16,8 @@ export type BodyType = {
 };
 export const BodySchema = Joi.object<BodyType>({
   type: Joi.string()
-    .valid(
-      InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
-      InnovationSupportLogTypeEnum.STATUS_UPDATE
-    )
+    .valid(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION, InnovationSupportLogTypeEnum.STATUS_UPDATE)
     .required(),
-  description: Joi.string()
-    .max(TEXTAREA_LENGTH_LIMIT.large)
-    .allow(null)
-    .allow('')
-    .trim()
-    .required(),
-  organisationUnits: Joi.array().items(Joi.string()).optional(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null).allow('').trim().required(),
+  organisationUnits: Joi.array().items(Joi.string()).optional()
 }).required();

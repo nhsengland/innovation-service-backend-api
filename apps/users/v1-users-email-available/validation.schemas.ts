@@ -7,10 +7,5 @@ export type QueryParamsType = {
 };
 
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
-  email: JoiHelper.AppCustomJoi()
-    .decodeURIString()
-    .email()
-    .lowercase()
-    .required()
-    .description('Email of a user.'),
+  email: JoiHelper.AppCustomJoi().decodeURIString().email().lowercase().required().description('Email of a user.')
 }).required();

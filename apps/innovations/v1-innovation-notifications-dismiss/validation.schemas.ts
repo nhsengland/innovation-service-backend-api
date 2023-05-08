@@ -6,7 +6,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -19,5 +19,5 @@ export const BodySchema = Joi.object<BodyType>({
   contextTypes: Joi.array()
     .items(Joi.string().valid(...Object.values(NotificationContextTypeEnum)))
     .default([]),
-  contextIds: Joi.array().items(Joi.string().guid()).default([]),
+  contextIds: Joi.array().items(Joi.string().guid()).default([])
 }).required();

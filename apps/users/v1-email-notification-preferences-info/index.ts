@@ -30,9 +30,9 @@ class V1UserEmailNotificationsInfo {
 
       const emailPreferences = await notificationsService.getUserEmailPreferences(userInfo.id);
       context.res = ResponseHelper.Ok<ResponseDTO>(
-        emailPreferences.map((p) => ({
+        emailPreferences.map(p => ({
           notificationType: p.notificationType,
-          preference: p.preference,
+          preference: p.preference
         }))
       );
       return;
@@ -43,41 +43,37 @@ class V1UserEmailNotificationsInfo {
   }
 }
 
-export default openApi(
-  V1UserEmailNotificationsInfo.httpTrigger as AzureFunction,
-  '/v1/email-preferences',
-  {
-    get: {
-      description: 'Returns the user email notifications preferences',
-      operationId: 'v1-email-notification-preferences-info',
-      tags: ['[v1] Email Preferences'],
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    notificationType: {
-                      type: 'string',
-                      description: 'The type of notification',
-                      enum: Object.values(EmailNotificationTypeEnum),
-                    },
-                    preference: {
-                      type: 'string',
-                      description: 'The preference of the notification',
-                      enum: Object.values(EmailNotificationPreferenceEnum),
-                    },
+export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction, '/v1/email-preferences', {
+  get: {
+    description: 'Returns the user email notifications preferences',
+    operationId: 'v1-email-notification-preferences-info',
+    tags: ['[v1] Email Preferences'],
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  notificationType: {
+                    type: 'string',
+                    description: 'The type of notification',
+                    enum: Object.values(EmailNotificationTypeEnum)
                   },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+                  preference: {
+                    type: 'string',
+                    description: 'The preference of the notification',
+                    enum: Object.values(EmailNotificationPreferenceEnum)
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
-);
+});

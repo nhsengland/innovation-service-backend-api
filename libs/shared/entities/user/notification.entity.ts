@@ -5,10 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { InnovationEntity } from '../innovation/innovation.entity';
 import { NotificationUserEntity } from './notification-user.entity';
 
-import {
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-} from '../../enums/notification.enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 
 @Entity('notification')
 export class NotificationEntity extends BaseEntity {
@@ -34,9 +31,9 @@ export class NotificationEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @OneToMany(() => NotificationUserEntity, (record) => record.notification, {
+  @OneToMany(() => NotificationUserEntity, record => record.notification, {
     lazy: true,
-    cascade: ['insert', 'update'],
+    cascade: ['insert', 'update']
   })
   notificationUsers: Promise<NotificationUserEntity[]>;
 

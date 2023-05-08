@@ -10,9 +10,7 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationFileService extends BaseService {
-  constructor(
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType
-  ) {
+  constructor(@inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType) {
     super();
   }
 
@@ -40,13 +38,13 @@ export class InnovationFileService extends BaseService {
       createdBy: userId,
       displayFileName: filenameWithoutExtension.substring(0, 99 - extension.length) + extension, // failsafe to avoid filename too long (100 chars max)
       innovation: { id: innovationId },
-      context,
+      context
     });
 
     return {
       id: file.id,
       displayFileName: file.displayFileName,
-      url: this.fileStorageService.getUploadUrl(file.id, filename),
+      url: this.fileStorageService.getUploadUrl(file.id, filename)
     };
   }
 
@@ -56,19 +54,13 @@ export class InnovationFileService extends BaseService {
    * @param entityManager optional entity manager to use for the transaction
    * @returns the files
    */
-  async getFilesByIds(
-    ids: undefined | string[],
-    entityManager?: EntityManager
-  ): Promise<InnovationFileEntity[]> {
-    if(!ids?.length) {
+  async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileEntity[]> {
+    if (!ids?.length) {
       return [];
     }
 
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    return connection
-      .createQueryBuilder(InnovationFileEntity, 'file')
-      .where('file.id IN (:...ids)', { ids })
-      .getMany();
+    return connection.createQueryBuilder(InnovationFileEntity, 'file').where('file.id IN (:...ids)', { ids }).getMany();
   }
 }

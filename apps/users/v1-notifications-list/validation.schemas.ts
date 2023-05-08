@@ -4,7 +4,7 @@ import { NotificationContextTypeEnum } from '@users/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@users/shared/helpers';
 
 enum orderFields {
-  createdAt = 'createdAt',
+  createdAt = 'createdAt'
 }
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -13,7 +13,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.keys(orderFields),
+  orderKeys: Object.keys(orderFields)
 })
   .append<QueryParamsType>({
     contextTypes: JoiHelper.AppCustomJoi()
@@ -26,9 +26,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       .optional()
       .default([])
       .description('The context types to filter by'),
-    unreadOnly: Joi.boolean()
-      .optional()
-      .default(false)
-      .description('If true, only returns the unread notifications'),
+    unreadOnly: Joi.boolean().optional().default(false).description('If true, only returns the unread notifications')
   })
   .required();

@@ -19,28 +19,22 @@ class V1InnovationSubmissionStates {
   @Audit({
     action: ActionEnum.READ,
     target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId',
+    identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
-        .validate(context)
-        .setInnovation(params.innovationId)
-        .checkInnovation()
-        .verify();
+      await authorizationService.validate(context).setInnovation(params.innovationId).checkInnovation().verify();
 
       const result = await innovationsService.getInnovationSubmissionsState(params.innovationId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         submittedAllSections: result.submittedAllSections,
-        submittedForNeedsAssessment: result.submittedForNeedsAssessment,
+        submittedForNeedsAssessment: result.submittedForNeedsAssessment
       });
       return;
     } catch (error) {
@@ -50,29 +44,25 @@ class V1InnovationSubmissionStates {
   }
 }
 
-export default openApi(
-  V1InnovationSubmissionStates.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/submissions',
-  {
-    get: {
-      operationId: 'v1-innovation-submission-states',
-      description: 'Get innovation submission states.',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          required: true,
-          description: 'Innovation ID',
-          schema: {
-            type: 'string',
-            format: 'uuid',
-          },
-        },
-      ],
-      responses: {
-        200: { description: 'Success' },
-        400: { description: 'Invalid innovation payload' },
-      },
-    },
+export default openApi(V1InnovationSubmissionStates.httpTrigger as AzureFunction, '/v1/{innovationId}/submissions', {
+  get: {
+    operationId: 'v1-innovation-submission-states',
+    description: 'Get innovation submission states.',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        required: true,
+        description: 'Innovation ID',
+        schema: {
+          type: 'string',
+          format: 'uuid'
+        }
+      }
+    ],
+    responses: {
+      200: { description: 'Success' },
+      400: { description: 'Invalid innovation payload' }
+    }
   }
-);
+});

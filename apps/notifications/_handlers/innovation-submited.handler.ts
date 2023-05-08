@@ -1,7 +1,7 @@
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -14,8 +14,9 @@ import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/se
 
 export class InnovationSubmitedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITED,
-  | EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS |
-  EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
+  | EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR
+  | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS
+  | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
   Record<string, never>
 > {
   private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
@@ -30,9 +31,7 @@ export class InnovationSubmitedHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
@@ -46,12 +45,12 @@ export class InnovationSubmitedHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: this.requestUser.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name,
-        },
+          innovation_name: innovation.name
+        }
       });
     }
 
@@ -62,13 +61,13 @@ export class InnovationSubmitedHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: collaborator.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name,
+          innovation_name: innovation.name
         }
-      })
+      });
     }
 
     for (const assessmentUser of assessmentUsers) {
@@ -77,7 +76,7 @@ export class InnovationSubmitedHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: assessmentUser.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -85,8 +84,8 @@ export class InnovationSubmitedHandler extends BaseHandler<
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('assessment/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
 
@@ -96,10 +95,10 @@ export class InnovationSubmitedHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
-        id: this.inputData.innovationId,
+        id: this.inputData.innovationId
       },
-      userRoleIds: assessmentUsers.map((user) => user.roleId),
-      params: {},
+      userRoleIds: assessmentUsers.map(user => user.roleId),
+      params: {}
     });
 
     // in app notification to innovators users
@@ -108,10 +107,10 @@ export class InnovationSubmitedHandler extends BaseHandler<
       context: {
         type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
-        id: this.inputData.innovationId,
+        id: this.inputData.innovationId
       },
       userRoleIds: collaborators.map(c => c.userRole.id),
-      params: {},
+      params: {}
     });
 
     return this;

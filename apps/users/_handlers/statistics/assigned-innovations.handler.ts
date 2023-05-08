@@ -15,6 +15,6 @@ export const assignedInnovationsStatisticsHandler = async (
   return {
     count: actions.count,
     total: actions.total,
-    overdue: actions.overdue,
+    overdue: actions.overdue
   };
 };

@@ -17,15 +17,13 @@ import {
   DefaultUserBodySchema,
   DefaultUserBodyType,
   InnovatorBodySchema,
-  InnovatorBodyType,
+  InnovatorBodyType
 } from './validation.schemas';
 
 class V1MeUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
@@ -38,13 +36,10 @@ class V1MeUpdate {
           ServiceRoleEnum.ADMIN,
           ServiceRoleEnum.ASSESSMENT,
           ServiceRoleEnum.ACCESSOR,
-          ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          ServiceRoleEnum.QUALIFYING_ACCESSOR
         ].includes(domainContext.currentRole.role)
       ) {
-        const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(
-          DefaultUserBodySchema,
-          request.body
-        );
+        const accessorBody = JoiHelper.Validate<DefaultUserBodyType>(DefaultUserBodySchema, request.body);
 
         await authInstance.checkAdminType().checkAssessmentType().checkAccessorType().verify();
 
@@ -57,20 +52,15 @@ class V1MeUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
         return;
       } else if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-        const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(
-          InnovatorBodySchema,
-          request.body
-        );
+        const innovatorBody = JoiHelper.Validate<InnovatorBodyType>(InnovatorBodySchema, request.body);
 
-        await authInstance
-          .checkInnovatorType({ organisationId: innovatorBody.organisation.id })
-          .verify();
+        await authInstance.checkInnovatorType({ organisationId: innovatorBody.organisation.id }).verify();
 
         const innovatorResult = await usersService.updateUserInfo(
           {
             id: requestUser.id,
             identityId: requestUser.identityId,
-            firstTimeSignInAt: requestUser.firstTimeSignInAt,
+            firstTimeSignInAt: requestUser.firstTimeSignInAt
           },
           domainContext.currentRole.role,
           {
@@ -79,10 +69,8 @@ class V1MeUpdate {
             contactByPhone: innovatorBody.contactByPhone,
             contactByPhoneTimeframe: innovatorBody.contactByPhoneTimeframe,
             contactDetails: innovatorBody.contactDetails,
-            ...(innovatorBody.mobilePhone !== undefined
-              ? { mobilePhone: innovatorBody.mobilePhone }
-              : {}),
-            organisation: innovatorBody.organisation,
+            ...(innovatorBody.mobilePhone !== undefined ? { mobilePhone: innovatorBody.mobilePhone } : {}),
+            organisation: innovatorBody.organisation
           }
         );
 
@@ -114,12 +102,12 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
               displayName: {
                 type: 'string',
                 description: 'The display name of the user',
-                example: 'John Doe',
+                example: 'John Doe'
               },
               mobilePhone: {
                 type: 'string',
                 description: 'The mobile phone number of the user',
-                example: '07777777777',
+                example: '07777777777'
               },
               organisation: {
                 type: 'object',
@@ -127,29 +115,29 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
                   id: {
                     type: 'string',
                     description: 'The ID of the organisation',
-                    example: '12345678-1234-1234-1234-123456789012',
+                    example: '12345678-1234-1234-1234-123456789012'
                   },
                   name: {
                     type: 'string',
                     description: 'The name of the organisation',
-                    example: 'Example Organisation',
+                    example: 'Example Organisation'
                   },
                   isShadow: {
                     type: 'boolean',
                     description: 'Whether the organisation is a shadow organisation',
-                    example: false,
+                    example: false
                   },
                   size: {
                     type: 'string',
                     description: 'The size of the organisation',
-                    example: 'small',
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                    example: 'small'
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     responses: {
       200: {
@@ -159,11 +147,11 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string' },
-              },
-            },
-          },
-        },
+                id: { type: 'string' }
+              }
+            }
+          }
+        }
       },
       400: {
         description: 'Bad request',
@@ -173,12 +161,12 @@ export default openApi(V1MeUpdate.httpTrigger as AzureFunction, '/v1/me', {
               type: 'object',
               properties: {
                 code: { type: 'string' },
-                message: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                message: { type: 'string' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

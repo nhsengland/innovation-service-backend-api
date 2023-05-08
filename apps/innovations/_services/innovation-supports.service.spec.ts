@@ -5,20 +5,16 @@ import {
   InnovationEntity,
   InnovationSupportEntity,
   InnovationThreadEntity,
-  InnovationThreadMessageEntity,
+  InnovationThreadMessageEntity
 } from '@innovations/shared/entities';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
-  UnprocessableEntityError,
+  UnprocessableEntityError
 } from '@innovations/shared/errors';
-import {
-  DomainInnovationsService,
-  DomainUsersService,
-  NotifierService,
-} from '@innovations/shared/services';
+import { DomainInnovationsService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import { randText, randUuid } from '@ngneat/falso';
 import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
@@ -52,29 +48,25 @@ describe('Innovation supports service test suite', () => {
         {
           id: testData.baseUsers.accessor.id,
           displayName: 'accessor name',
-          isActive: true,
-        },
+          isActive: true
+        }
       ] as any);
     });
 
     it('should list the innovation supports', async () => {
-      const innovationSupports = await sut.getInnovationSupportsList(
-        testData.innovation.id,
-        { fields: [] },
-        em
-      );
+      const innovationSupports = await sut.getInnovationSupportsList(testData.innovation.id, { fields: [] }, em);
 
       const dbSupports = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
         .leftJoinAndSelect('support.organisationUnit', 'orgUnit')
         .leftJoinAndSelect('orgUnit.organisation', 'org')
         .where('support.id IN (:...supportIds)', {
-          supportIds: innovationSupports.map((iS) => iS.id),
+          supportIds: innovationSupports.map(iS => iS.id)
         })
         .getMany();
 
       expect(innovationSupports).toStrictEqual(
-        dbSupports.map((support) => ({
+        dbSupports.map(support => ({
           id: support.id,
           status: support.status,
           organisation: {
@@ -84,9 +76,9 @@ describe('Innovation supports service test suite', () => {
             unit: {
               id: support.organisationUnit.id,
               name: support.organisationUnit.name,
-              acronym: support.organisationUnit.acronym,
-            },
-          },
+              acronym: support.organisationUnit.acronym
+            }
+          }
         }))
       );
     });
@@ -103,12 +95,12 @@ describe('Innovation supports service test suite', () => {
         .leftJoinAndSelect('support.organisationUnit', 'orgUnit')
         .leftJoinAndSelect('orgUnit.organisation', 'org')
         .where('support.id IN (:...supportIds)', {
-          supportIds: innovationSupports.map((iS) => iS.id),
+          supportIds: innovationSupports.map(iS => iS.id)
         })
         .getMany();
 
       expect(innovationSupports).toStrictEqual(
-        dbSupports.map((support) => ({
+        dbSupports.map(support => ({
           id: support.id,
           status: support.status,
           organisation: {
@@ -118,16 +110,16 @@ describe('Innovation supports service test suite', () => {
             unit: {
               id: support.organisationUnit.id,
               name: support.organisationUnit.name,
-              acronym: support.organisationUnit.acronym,
-            },
+              acronym: support.organisationUnit.acronym
+            }
           },
           engagingAccessors: [
             {
               id: testData.baseUsers.accessor.id,
               organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
-              name: 'accessor name',
-            },
-          ],
+              name: 'accessor name'
+            }
+          ]
         }))
       );
     });
@@ -152,16 +144,13 @@ describe('Innovation supports service test suite', () => {
         {
           id: testData.baseUsers.accessor.id,
           displayName: 'accessor name',
-          isActive: true,
-        },
+          isActive: true
+        }
       ] as any);
     });
 
     it('should get innovation support info', async () => {
-      const support = await sut.getInnovationSupportInfo(
-        testData.innovation.innovationSupports[0]!.id,
-        em
-      );
+      const support = await sut.getInnovationSupportInfo(testData.innovation.innovationSupports[0]!.id, em);
 
       expect(support).toStrictEqual({
         id: testData.innovation.innovationSupports[0]?.id,
@@ -170,9 +159,9 @@ describe('Innovation supports service test suite', () => {
           {
             id: testData.baseUsers.accessor.id,
             organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
-            name: 'accessor name',
-          },
-        ],
+            name: 'accessor name'
+          }
+        ]
       });
     });
 
@@ -202,9 +191,7 @@ describe('Innovation supports service test suite', () => {
 
     it('should create an innovation support', async () => {
       jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      jest
-        .spyOn(DomainInnovationsService.prototype, 'addSupportLog')
-        .mockResolvedValue({ id: randUuid() });
+      jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
       jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
       const support = await sut.createInnovationSupport(
@@ -217,21 +204,21 @@ describe('Innovation supports service test suite', () => {
           accessors: [
             {
               id: testData.baseUsers.accessor.id,
-              organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
-            },
-          ],
+              organisationUnitUserId: testData.organisationUnitUsers.accessor.id
+            }
+          ]
         },
         em
       );
 
       const thread = InnovationThreadEntity.new({
         innovation: innovationWithoutSupports,
-        author: testData.baseUsers.accessor,
+        author: testData.baseUsers.accessor
       });
 
       jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
         thread,
-        message: InnovationThreadMessageEntity.new({ thread, author: thread.author }),
+        message: InnovationThreadMessageEntity.new({ thread, author: thread.author })
       });
 
       const dbSupportIds = (
@@ -240,7 +227,7 @@ describe('Innovation supports service test suite', () => {
           .innerJoin('support.innovation', 'innovation')
           .where('innovation.id = :innovationId', { innovationId: innovationWithoutSupports.id })
           .getMany()
-      ).map((s) => s.id);
+      ).map(s => s.id);
 
       expect(dbSupportIds).toContain(support.id);
     });
@@ -259,9 +246,9 @@ describe('Innovation supports service test suite', () => {
             accessors: [
               {
                 id: testData.baseUsers.accessor.id,
-                organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
-              },
-            ],
+                organisationUnitUserId: testData.organisationUnitUsers.accessor.id
+              }
+            ]
           },
           em
         );
@@ -270,9 +257,7 @@ describe('Innovation supports service test suite', () => {
       }
 
       expect(err).toBeDefined();
-      expect(err?.name).toBe(
-        InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT
-      );
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
     });
 
     it('should not create innovation support with invalid organisation unit in domain context', async () => {
@@ -292,9 +277,9 @@ describe('Innovation supports service test suite', () => {
             accessors: [
               {
                 id: testData.baseUsers.accessor.id,
-                organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
-              },
-            ],
+                organisationUnitUserId: testData.organisationUnitUsers.accessor.id
+              }
+            ]
           },
           em
         );
@@ -320,9 +305,9 @@ describe('Innovation supports service test suite', () => {
             accessors: [
               {
                 id: testData.baseUsers.accessor.id,
-                organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
-              },
-            ],
+                organisationUnitUserId: testData.organisationUnitUsers.accessor.id
+              }
+            ]
           },
           em
         );
@@ -338,18 +323,16 @@ describe('Innovation supports service test suite', () => {
   describe('updateInnovationSupport', () => {
     it('should update the innovation support', async () => {
       jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      jest
-        .spyOn(DomainInnovationsService.prototype, 'addSupportLog')
-        .mockResolvedValue({ id: randUuid() });
+      jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
       jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
       const thread = InnovationThreadEntity.new({
         innovation: testData.innovation,
-        author: testData.baseUsers.accessor,
+        author: testData.baseUsers.accessor
       });
       jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
         thread,
-        message: InnovationThreadMessageEntity.new({ thread, author: thread.author }),
+        message: InnovationThreadMessageEntity.new({ thread, author: thread.author })
       });
 
       const updatedSupport = await sut.updateInnovationSupport(

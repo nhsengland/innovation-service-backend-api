@@ -8,7 +8,7 @@ export class alterOrganisationsName1644393900245 {
   async up(): Promise<void> {
     const data = [
       { acronym: 'NOCRI/NIHR', name: 'National Institute for Health Research' },
-      { acronym: 'SHTG', name: 'Scottish Health Technologies Group' },
+      { acronym: 'SHTG', name: 'Scottish Health Technologies Group' }
     ];
 
     const orgRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationEntity);
@@ -28,7 +28,7 @@ export class alterOrganisationsName1644393900245 {
   async down(): Promise<void> {
     const data = [
       { acronym: 'NOCRI/NIHR', name: 'NOCRI/NIHR' },
-      { acronym: 'SHTG', name: 'Scottish Heath Technologies Group' },
+      { acronym: 'SHTG', name: 'Scottish Heath Technologies Group' }
     ];
 
     const orgRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationEntity);

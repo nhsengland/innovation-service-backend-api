@@ -21,12 +21,10 @@ class CreateInnovationAssessment {
   @Audit({
     action: ActionEnum.CREATE,
     target: TargetEnum.ASSESSMENT,
-    identifierResponseField: 'id',
+    identifierResponseField: 'id'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
       SYMBOLS.InnovationAssessmentsService
     );
@@ -58,80 +56,76 @@ class CreateInnovationAssessment {
   }
 }
 
-export default openApi(
-  CreateInnovationAssessment.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/assessments',
-  {
-    post: {
-      summary: 'Create an innovation assessment',
-      description: 'Create an innovation assessment.',
-      operationId: 'v1-innovation-assessment-create',
-      tags: ['Innovation Assessment'],
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'The innovation id.',
-          required: true,
-          schema: {
-            type: 'string',
-            format: 'uuid',
-          },
-        },
-      ],
-      requestBody: {
-        description: 'The innovation assessment data.',
+export default openApi(CreateInnovationAssessment.httpTrigger as AzureFunction, '/v1/{innovationId}/assessments', {
+  post: {
+    summary: 'Create an innovation assessment',
+    description: 'Create an innovation assessment.',
+    operationId: 'v1-innovation-assessment-create',
+    tags: ['Innovation Assessment'],
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'The innovation id.',
         required: true,
+        schema: {
+          type: 'string',
+          format: 'uuid'
+        }
+      }
+    ],
+    requestBody: {
+      description: 'The innovation assessment data.',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              comment: {
+                type: 'string',
+                description: 'The comment for the assessment.'
+              }
+            },
+            required: ['comment']
+          }
+        }
+      }
+    },
+    responses: {
+      200: {
+        description: 'The innovation assessment has been created.',
         content: {
           'application/json': {
             schema: {
               type: 'object',
               properties: {
-                comment: {
+                id: {
                   type: 'string',
-                  description: 'The comment for the assessment.',
-                },
+                  format: 'uuid',
+                  description: 'The innovation assessment id.'
+                }
               },
-              required: ['comment'],
-            },
-          },
-        },
+              required: ['id']
+            }
+          }
+        }
       },
-      responses: {
-        200: {
-          description: 'The innovation assessment has been created.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    format: 'uuid',
-                    description: 'The innovation assessment id.',
-                  },
-                },
-                required: ['id'],
-              },
-            },
-          },
-        },
-        400: {
-          description: 'The innovation assessment has not been created.',
-        },
-        401: {
-          description: 'The user is not authenticated.',
-        },
-        403: {
-          description: 'The user is not authorized to create an innovation assessment.',
-        },
-        404: {
-          description: 'The innovation does not exist.',
-        },
-        500: {
-          description: 'An error occurred while creating the innovation assessment.',
-        },
+      400: {
+        description: 'The innovation assessment has not been created.'
       },
-    },
+      401: {
+        description: 'The user is not authenticated.'
+      },
+      403: {
+        description: 'The user is not authorized to create an innovation assessment.'
+      },
+      404: {
+        description: 'The innovation does not exist.'
+      },
+      500: {
+        description: 'An error occurred while creating the innovation assessment.'
+      }
+    }
   }
-);
+});

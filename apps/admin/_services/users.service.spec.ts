@@ -37,12 +37,7 @@ describe('Admin / Services / Users Service', () => {
     const userAdminContext = testData.domainContexts.admin;
     const userInnovator = testData.baseUsers.innovator;
 
-    await usersService.updateUser(
-      userAdminContext,
-      userInnovator.id,
-      { accountEnabled: false },
-      entityManager
-    );
+    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, entityManager);
 
     const updatedUser = await entityManager
       .createQueryBuilder(UserEntity, 'user')
@@ -56,12 +51,7 @@ describe('Admin / Services / Users Service', () => {
     const userAdminContext = testData.domainContexts.admin;
     const userInnovator = testData.baseUsers.innovator;
 
-    await usersService.updateUser(
-      userAdminContext,
-      userInnovator.id,
-      { accountEnabled: true },
-      entityManager
-    );
+    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: true }, entityManager);
 
     const updatedUser = await entityManager
       .createQueryBuilder(UserEntity, 'user')

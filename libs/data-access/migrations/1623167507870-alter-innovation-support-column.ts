@@ -6,9 +6,7 @@ export class alterInnovationSupportColumn1623167507870 implements MigrationInter
     await queryRunner.query(
       `ALTER TABLE "innovation_support" DROP CONSTRAINT "fk_innovation_support_organisation_unit_organisation_user_id"`
     );
-    await queryRunner.query(
-      `sp_rename 'innovation_support.organisation_user_id', 'organisation_unit_id', 'COLUMN';`
-    );
+    await queryRunner.query(`sp_rename 'innovation_support.organisation_user_id', 'organisation_unit_id', 'COLUMN';`);
     // ADD Constraint
     await queryRunner.query(
       `ALTER TABLE "innovation_support" ADD CONSTRAINT "fk_innovation_support_organisation_unit_id" FOREIGN KEY ("organisation_unit_id") REFERENCES "organisation_unit"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`
@@ -20,9 +18,7 @@ export class alterInnovationSupportColumn1623167507870 implements MigrationInter
     await queryRunner.query(
       `ALTER TABLE "innovation_support" DROP CONSTRAINT "fk_innovation_support_organisation_unit_id"`
     );
-    await queryRunner.query(
-      `sp_rename 'innovation_support.organisation_unit_id', 'organisation_user_id', 'COLUMN';`
-    );
+    await queryRunner.query(`sp_rename 'innovation_support.organisation_unit_id', 'organisation_user_id', 'COLUMN';`);
     // ADD Constraint
     await queryRunner.query(
       `ALTER TABLE "innovation_support" ADD CONSTRAINT "fk_innovation_support_organisation_unit_organisation_user_id" FOREIGN KEY ("organisation_user_id") REFERENCES "organisation_unit"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`

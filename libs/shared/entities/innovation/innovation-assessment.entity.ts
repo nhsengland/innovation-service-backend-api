@@ -6,7 +6,7 @@ import {
   ManyToMany,
   ManyToOne,
   OneToOne,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
@@ -16,10 +16,7 @@ import { UserEntity } from '../user/user.entity';
 import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 import { InnovationEntity } from './innovation.entity';
 
-import type {
-  MaturityLevelCatalogueType,
-  YesPartiallyNoCatalogueType,
-} from '../../../shared/enums';
+import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../../shared/enums';
 
 @Entity('innovation_assessment')
 export class InnovationAssessmentEntity extends BaseEntity {
@@ -48,7 +45,7 @@ export class InnovationAssessmentEntity extends BaseEntity {
     name: 'has_regulatory_approvals_comment',
     type: 'nvarchar',
     nullable: true,
-    length: 200,
+    length: 200
   })
   hasRegulatoryApprovalsComment: null | string;
 
@@ -77,7 +74,7 @@ export class InnovationAssessmentEntity extends BaseEntity {
     name: 'has_competition_knowledge_comment',
     type: 'nvarchar',
     nullable: true,
-    length: 200,
+    length: 200
   })
   hasCompetitionKnowledgeComment: null | string;
 
@@ -88,7 +85,7 @@ export class InnovationAssessmentEntity extends BaseEntity {
     name: 'has_implementation_plan_comment',
     type: 'nvarchar',
     nullable: true,
-    length: 200,
+    length: 200
   })
   hasImplementationPlanComment: null | string;
 
@@ -98,8 +95,8 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @Column({ name: 'has_scale_resource_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasScaleResourceComment: null | string;
 
-  @OneToOne(() => InnovationReassessmentRequestEntity, (record) => record.assessment, {
-    nullable: true,
+  @OneToOne(() => InnovationReassessmentRequestEntity, record => record.assessment, {
+    nullable: true
   })
   reassessmentRequest: null | InnovationReassessmentRequestEntity;
 
@@ -111,19 +108,19 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @JoinColumn({ name: 'assign_to_id' })
   assignTo: UserEntity;
 
-  @ManyToMany(() => OrganisationUnitEntity, (record) => record.innovationAssessments, {
-    nullable: true,
+  @ManyToMany(() => OrganisationUnitEntity, record => record.innovationAssessments, {
+    nullable: true
   })
   @JoinTable({
     name: 'innovation_assessment_organisation_unit',
     joinColumn: {
       name: 'innovation_assessment_id',
-      referencedColumnName: 'id',
+      referencedColumnName: 'id'
     },
     inverseJoinColumn: {
       name: 'organisation_unit_id',
-      referencedColumnName: 'id',
-    },
+      referencedColumnName: 'id'
+    }
   })
   organisationUnits: OrganisationUnitEntity[];
 

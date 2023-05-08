@@ -16,6 +16,6 @@ export const innovationsAssignedToMeStatisticsHandler = async (
   return {
     count: innovations.count,
     total: innovations.total,
-    lastSubmittedAt: innovations.lastSubmittedAt,
+    lastSubmittedAt: innovations.lastSubmittedAt
   };
 };

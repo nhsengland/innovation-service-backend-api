@@ -8,7 +8,7 @@ import {
   ValidationResult,
   AdminOperationsRulesMapper,
   AdminOperationType,
-  AdminRuleType,
+  AdminRuleType
 } from '../_config/admin-operations.config';
 
 import { BaseService } from './base.service';
@@ -28,7 +28,7 @@ export class ValidationService extends BaseService {
       .getMany();
 
     const result: ValidationResult[] = [];
-    const roles = [...new Set(dbUserRoles.map((item) => item.role))]; // Removes duplicated.
+    const roles = [...new Set(dbUserRoles.map(item => item.role))]; // Removes duplicated.
 
     for (const role of roles) {
       const rules = AdminOperationsRulesMapper[operation][role] || [];
@@ -54,7 +54,7 @@ export class ValidationService extends BaseService {
           default: // This will never happens in runtime, but will NOT compile when missing items exists.
             const unknownType: never = rule;
             throw new UnprocessableEntityError(GenericErrorsEnum.INTERNAL_TYPING_ERROR, {
-              details: { type: unknownType },
+              details: { type: unknownType }
             });
         }
       }
@@ -81,31 +81,26 @@ export class ValidationService extends BaseService {
   /**
    * Is VALID if there's any other active qualifying accessors on the user organisation units, excluding the user being checked.
    */
-  private async checkIfLastQualifyingAccessorUserOnOrganisationUnit(
-    userId: string
-  ): Promise<ValidationResult> {
+  private async checkIfLastQualifyingAccessorUserOnOrganisationUnit(userId: string): Promise<ValidationResult> {
     let dbResult: { organisationUnitId: string; numberOfUsers: number }[] = [];
 
     dbResult = await this.sqlConnection
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select([
-        'userRole.organisation_unit_id AS organisationUnitId',
-        'COUNT(userRole.id) AS numberOfUsers',
-      ])
+      .select(['userRole.organisation_unit_id AS organisationUnitId', 'COUNT(userRole.id) AS numberOfUsers'])
       .innerJoin('userRole.user', 'user')
       .innerJoin(
-        (subQuery) =>
+        subQuery =>
           subQuery
             .from(UserRoleEntity, 'subQ_UserRole')
-            .where(
-              'subQ_UserRole.user_id = :userId AND subQ_UserRole.role IN (:...subQUserRoles)',
-              { userId, subQUserRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR] }
-            ),
+            .where('subQ_UserRole.user_id = :userId AND subQ_UserRole.role IN (:...subQUserRoles)', {
+              userId,
+              subQUserRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR]
+            }),
         'userOrganisationUnits',
         'userOrganisationUnits.organisation_unit_id = userRole.organisation_unit_id'
       )
       .where('userRole.role IN (:...userRoles) ', {
-        userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR]
       })
       .andWhere('user.locked_at IS NULL')
       .groupBy('userRole.organisation_unit_id')
@@ -113,7 +108,7 @@ export class ValidationService extends BaseService {
 
     return {
       rule: 'LastQualifyingAccessorUserOnOrganisationUnit',
-      valid: dbResult.every((item) => item.numberOfUsers > 1),
+      valid: dbResult.every(item => item.numberOfUsers > 1)
     };
   }
 
@@ -125,18 +120,15 @@ export class ValidationService extends BaseService {
 
     dbResult = await this.sqlConnection
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select([
-        'userRole.organisation_unit_id AS organisationUnitId',
-        'COUNT(userRole.id) AS numberOfUsers',
-      ])
+      .select(['userRole.organisation_unit_id AS organisationUnitId', 'COUNT(userRole.id) AS numberOfUsers'])
       .innerJoin('userRole.user', 'user')
       .innerJoin(
-        (subQuery) =>
+        subQuery =>
           subQuery
             .from(UserRoleEntity, 'subQ_UserRole')
             .where('subQ_UserRole.user_id = :userId AND subQ_UserRole.role IN (:...userRoles)', {
               userId,
-              userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR],
+              userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR]
             }),
         'userOrganisationUnits',
         'userOrganisationUnits.organisation_unit_id = userRole.organisation_unit_id'
@@ -147,16 +139,14 @@ export class ValidationService extends BaseService {
 
     return {
       rule: 'LastUserOnOrganisationUnit',
-      valid: dbResult.every((item) => item.numberOfUsers > 1),
+      valid: dbResult.every(item => item.numberOfUsers > 1)
     };
   }
 
   /**
    * Returns VALID if there's NO innovations being supported only by this (accessor) user.
    */
-  private async checkIfNoInnovationsSupportedOnlyByThisUser(
-    userId: string
-  ): Promise<ValidationResult> {
+  private async checkIfNoInnovationsSupportedOnlyByThisUser(userId: string): Promise<ValidationResult> {
     const innovationSupportedOnlyByUser = await this.sqlConnection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'innovation.name'])
@@ -185,12 +175,12 @@ export class ValidationService extends BaseService {
       data: {
         supports: {
           count: innovationSupportedOnlyByUser.length,
-          innovations: innovationSupportedOnlyByUser.map((item) => ({
+          innovations: innovationSupportedOnlyByUser.map(item => ({
             id: item.id,
-            name: item.name,
-          })),
-        },
-      },
+            name: item.name
+          }))
+        }
+      }
     };
   }
 }

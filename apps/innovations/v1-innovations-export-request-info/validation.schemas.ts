@@ -7,5 +7,5 @@ export type PathParamsType = {
 
 export const PathParamsSchema = Joi.object<PathParamsType>({
   innovationId: Joi.string().uuid().required(),
-  requestId: Joi.string().uuid().required(),
+  requestId: Joi.string().uuid().required()
 }).required();

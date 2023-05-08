@@ -29,9 +29,7 @@ export class alterInnovationConstraints1624376863517 implements MigrationInterfa
 
   async down(queryRunner: QueryRunner): Promise<void> {
     // innovation_support table
-    await queryRunner.query(
-      `ALTER TABLE "innovation_support" DROP CONSTRAINT "CK_innovation_support_status"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_support" DROP CONSTRAINT "CK_innovation_support_status"`);
     await queryRunner.query(
       `ALTER TABLE "innovation_support" ADD CONSTRAINT "CK_innovation_support_status" CHECK (([status] in ('UNNASSIGNED','FURTHER_INFO_REQUIRED','WAITING','NOT_YET','ENGAGING','UNSUITABLE','WITHDRAWN','COMPLETE')))`
     );

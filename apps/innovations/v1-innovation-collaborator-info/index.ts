@@ -15,9 +15,7 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationCollaboratorInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
       SYMBOLS.InnovationCollaboratorsService
     );
@@ -45,10 +43,10 @@ class V1InnovationCollaboratorInfo {
           description: collaborator.innovation.description,
           owner: {
             id: collaborator.innovation.owner.id,
-            name: collaborator.innovation.owner.name,
-          },
+            name: collaborator.innovation.owner.name
+          }
         },
-        invitedAt: collaborator.invitedAt,
+        invitedAt: collaborator.invitedAt
       });
       return;
     } catch (error) {
@@ -77,75 +75,67 @@ export default openApi(
                 properties: {
                   id: {
                     type: 'string',
-                    format: 'uuid',
+                    format: 'uuid'
                   },
                   name: {
-                    type: 'string',
+                    type: 'string'
                   },
                   role: {
-                    type: 'string',
+                    type: 'string'
                   },
                   email: {
-                    type: 'string',
+                    type: 'string'
                   },
                   status: {
                     type: 'string',
-                    enum: [
-                      'PENDING',
-                      'ACTIVE',
-                      'DECLINED',
-                      'CANCELLED',
-                      'REMOVED',
-                      'LEFT',
-                      'EXPIRED',
-                    ],
+                    enum: ['PENDING', 'ACTIVE', 'DECLINED', 'CANCELLED', 'REMOVED', 'LEFT', 'EXPIRED']
                   },
                   invitedAt: {
                     type: 'string',
-                    format: 'date-time',
+                    format: 'date-time'
                   },
                   innovation: {
                     type: 'object',
                     properties: {
                       id: {
                         type: 'string',
-                        format: 'uuid',
+                        format: 'uuid'
                       },
                       name: {
-                        type: 'string',
+                        type: 'string'
                       },
                       description: {
-                        type: 'string',
+                        type: 'string'
                       },
                       owner: {
                         type: 'object',
                         properties: {
                           id: {
                             type: 'string',
-                            format: 'uuid',
+                            format: 'uuid'
                           },
                           name: {
-                            type: 'string',
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+                            type: 'string'
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not Found',
-        },
-      },
-    },
+          description: 'Not Found'
+        }
+      }
+    }
   }
 );

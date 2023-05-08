@@ -1,7 +1,7 @@
 import type {
   EmailNotificationPreferenceEnum,
   EmailNotificationTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
@@ -40,9 +40,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
+    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
     await this.prepareEmailForInnovator();
 
@@ -56,7 +54,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: this.data.innovation?.owner.identityId || '',
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
@@ -65,10 +63,10 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
             .addPath('innovator/innovations/:innovationId/threads/:threadId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
-              threadId: this.inputData.threadId,
+              threadId: this.inputData.threadId
             })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
   }

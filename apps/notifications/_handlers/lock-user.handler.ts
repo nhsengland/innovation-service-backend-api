@@ -2,7 +2,7 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -28,7 +28,7 @@ export class LockUserHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const userInfo = await this.recipientsService.userInfo(this.inputData.user.id, {
-      withDeleted: true,
+      withDeleted: true
     });
 
     // E-mail to the user who is being locked.
@@ -37,7 +37,7 @@ export class LockUserHandler extends BaseHandler<
       to: { type: 'identityId', value: userInfo.identityId, displayNameParam: 'display_name' },
       params: {
         // display_name: '', // This will be filled by the email-listener function.
-      },
+      }
     });
 
     const userInnovatorRole = await this.recipientsService.getUserRole(
@@ -47,16 +47,12 @@ export class LockUserHandler extends BaseHandler<
 
     if (userInnovatorRole) {
       // InApp to all assigned users of locked user innovations.
-      const userInnovations = await this.recipientsService.userInnovationsWithAssignedUsers(
-        this.inputData.user.id
-      );
+      const userInnovations = await this.recipientsService.userInnovationsWithAssignedUsers(this.inputData.user.id);
 
       for (const innovation of userInnovations) {
         // Filter duplicated ids..
         const uniqueUsers = [
-          ...new Map(
-            innovation.assignedUsers.map((item) => [`${item.id}_${item.organisationUnitId}`, item])
-          ).values(),
+          ...new Map(innovation.assignedUsers.map(item => [`${item.id}_${item.organisationUnitId}`, item])).values()
         ];
 
         this.inApp.push({
@@ -64,10 +60,10 @@ export class LockUserHandler extends BaseHandler<
           context: {
             type: NotificationContextTypeEnum.INNOVATION,
             detail: NotificationContextDetailEnum.LOCK_USER,
-            id: innovation.id,
+            id: innovation.id
           },
-          userRoleIds: uniqueUsers.map((user) => user.roleId),
-          params: {},
+          userRoleIds: uniqueUsers.map(user => user.roleId),
+          params: {}
         });
       }
     }

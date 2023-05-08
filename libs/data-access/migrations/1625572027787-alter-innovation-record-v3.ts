@@ -11,23 +11,13 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
     await queryRunner.query(`ALTER TABLE "innovation" ADD sell_expectations nvarchar(255) NULL;`);
     await queryRunner.query(`ALTER TABLE "innovation" ADD usage_expectations nvarchar(255) NULL;`);
     await queryRunner.query(`ALTER TABLE "innovation" ADD cost_comparison nvarchar(255) NULL;`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD clinicians_impact_details nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD clinicians_impact_details nvarchar(255) NULL;`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD accessibility_impact_details nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD accessibility_steps_details nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD accessibility_impact_details nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD accessibility_steps_details nvarchar(255) NULL;`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD other_general_benefit nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD other_environmental_benefit nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD other_general_benefit nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation" ADD other_environmental_benefit nvarchar(255) NULL;`);
 
     await queryRunner.query(`ALTER TABLE "innovation" ADD impact_patients bit NULL;`);
     await queryRunner.query(`ALTER TABLE "innovation" ADD impact_clinicians bit NULL;`);
@@ -76,12 +66,8 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
 
     // innovation_subgroup table
     await queryRunner.query(`ALTER TABLE "innovation_subgroup" DROP COLUMN "benefits"`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" ADD other_benefit nvarchar(255) NULL;`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" ADD other_condition nvarchar(255) NULL;`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" ADD other_benefit nvarchar(255) NULL;`);
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" ADD other_condition nvarchar(255) NULL;`);
 
     // innovation_subgroup_benefit table
     await queryRunner.query(`CREATE TABLE "innovation_subgroup_benefit" (
@@ -131,9 +117,7 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
     await queryRunner.query(
       `DROP INDEX "idx_innovation_general_benefit_type_innovation_id" ON "innovation_general_benefit"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_general_benefit" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_general_benefit" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_general_benefit"`);
     await queryRunner.query(`DROP TABLE "innovation_general_benefit_history"`);
 
@@ -144,9 +128,7 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
     await queryRunner.query(
       `DROP INDEX "idx_innovation_environmental_benefit_type_innovation_id" ON "innovation_environmental_benefit"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_environmental_benefit" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_environmental_benefit" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_environmental_benefit"`);
     await queryRunner.query(`DROP TABLE "innovation_environmental_benefit_history"`);
 
@@ -162,9 +144,7 @@ export class alterInnovationRecordV31625572027787 implements MigrationInterface 
     await queryRunner.query(
       `DROP INDEX "idx_innovation_subgroup_benefit_type_innovation_subgroup_id" ON "innovation_subgroup_benefit"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup_benefit" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup_benefit" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_subgroup_benefit"`);
     await queryRunner.query(`DROP TABLE "innovation_subgroup_benefit_history"`);
   }

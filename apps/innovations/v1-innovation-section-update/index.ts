@@ -18,20 +18,13 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationSectionUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const key = params.sectionKey;
-      const body = JoiHelper.Validate<{ [key: string]: any }>(
-        CurrentDocumentSchemaMap[key],
-        request.body
-      );
+      const body = JoiHelper.Validate<{ [key: string]: any }>(CurrentDocumentSchemaMap[key], request.body);
 
       const authInstance = await authorizationService
         .validate(context)
@@ -69,7 +62,7 @@ export default openApi(
       operationId: 'v1-innovation-section-update',
       parameters: [
         { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-        { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } },
+        { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } }
       ],
       requestBody: {
         description: 'Innovation section info update request body.',
@@ -80,11 +73,11 @@ export default openApi(
               properties: {
                 name: { type: 'string' },
                 description: { type: 'string' },
-                status: { type: 'string' },
-              },
-            },
-          },
-        },
+                status: { type: 'string' }
+              }
+            }
+          }
+        }
       },
       responses: {
         200: {
@@ -94,28 +87,28 @@ export default openApi(
               schema: {
                 type: 'object',
                 properties: {
-                  id: { type: 'string' },
-                },
-              },
-            },
-          },
+                  id: { type: 'string' }
+                }
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad request.',
+          description: 'Bad request.'
         },
         401: {
-          description: 'Unauthorized.',
+          description: 'Unauthorized.'
         },
         403: {
-          description: 'Forbidden.',
+          description: 'Forbidden.'
         },
         404: {
-          description: 'Not found.',
+          description: 'Not found.'
         },
         500: {
-          description: 'Internal server error.',
-        },
-      },
-    },
+          description: 'Internal server error.'
+        }
+      }
+    }
   }
 );

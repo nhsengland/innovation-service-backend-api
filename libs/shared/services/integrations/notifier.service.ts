@@ -7,7 +7,7 @@ import {
   LoggerServiceSymbol,
   LoggerServiceType,
   StorageQueueServiceSymbol,
-  StorageQueueServiceType,
+  StorageQueueServiceType
 } from '../interfaces';
 import { QueuesEnum } from './storage-queue.service';
 
@@ -19,7 +19,7 @@ import { QueuesEnum } from './storage-queue.service';
 const SYSTEM_CRON_SENDER: AdminDomainContextType = {
   currentRole: { id: '00000000-0000-0000-0000-000000000000', role: ServiceRoleEnum.ADMIN },
   id: '00000000-0000-0000-0000-000000000000',
-  identityId: '00000000-0000-0000-0000-000000000000',
+  identityId: '00000000-0000-0000-0000-000000000000'
 };
 
 @injectable()
@@ -41,8 +41,8 @@ export class NotifierService {
           requestUser: { id: requestUser.id, identityId: requestUser.identityId },
           action: notifierType,
           params,
-          domainContext,
-        },
+          domainContext
+        }
       });
 
       this.loggerService.log(`Notification sent`, { type: notifierType, params });

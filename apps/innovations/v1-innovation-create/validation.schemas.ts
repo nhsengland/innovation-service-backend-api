@@ -13,5 +13,5 @@ export const BodySchema = Joi.object<BodyType>({
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
   countryName: Joi.string().max(100).required(),
   postcode: Joi.string().max(8),
-  website: Joi.string().max(100), // TODO not validating URL format atm
+  website: Joi.string().max(100) // TODO not validating URL format atm
 }).required();

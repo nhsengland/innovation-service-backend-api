@@ -24,7 +24,7 @@ export class TermsOfUseEntity extends BaseEntity {
   @Column({ type: 'datetime2', name: 'released_at', nullable: true })
   releasedAt: null | Date;
 
-  @OneToMany(() => TermsOfUseUserEntity, (record) => record.termsOfUse, { lazy: true })
+  @OneToMany(() => TermsOfUseUserEntity, record => record.termsOfUse, { lazy: true })
   termsOfUseUsers: TermsOfUseUserEntity[];
 
   static new(data: Partial<TermsOfUseEntity>): TermsOfUseEntity {

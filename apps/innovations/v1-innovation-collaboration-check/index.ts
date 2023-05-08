@@ -22,7 +22,7 @@ class V1InnovationCollaboratorCheck {
       const result = await innovationCollaboratorsService.checkCollaborator(params.collaboratorId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         userExists: result.userExists,
-        collaboratorStatus: result.collaboratorStatus,
+        collaboratorStatus: result.collaboratorStatus
       });
       return;
     } catch (error) {
@@ -52,17 +52,17 @@ export default openApi(
                   userExists: { type: 'boolean', description: 'User exists in service' },
                   collaboratorStatus: {
                     type: 'string',
-                    description: 'Status of the collaborator invite',
-                  },
-                },
-              },
-            },
-          },
+                    description: 'Status of the collaborator invite'
+                  }
+                }
+              }
+            }
+          }
         },
         404: {
-          description: 'Not Found',
-        },
-      },
-    },
+          description: 'Not Found'
+        }
+      }
+    }
   }
 );

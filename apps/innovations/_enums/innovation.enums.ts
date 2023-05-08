@@ -3,7 +3,7 @@ export enum InnovationLocationEnum {
   'Scotland' = 'Scotland',
   'Wales' = 'Wales',
   'Northern Ireland' = 'Northern Ireland',
-  'Based outside UK' = 'Based outside UK',
+  'Based outside UK' = 'Based outside UK'
 }
 
 export enum InnovationFileUploadContextEnum {
@@ -11,13 +11,13 @@ export enum InnovationFileUploadContextEnum {
   EVIDENCE_OF_EFFECTIVENESS = 'EVIDENCE_OF_EFFECTIVENESS',
   TESTING_WITH_USERS = 'TESTING_WITH_USERS',
   REGULATIONS_AND_STANDARDS = 'REGULATIONS_AND_STANDARDS',
-  IMPLEMENTATION_PLAN = 'IMPLEMENTATION_PLAN',
+  IMPLEMENTATION_PLAN = 'IMPLEMENTATION_PLAN'
 }
 
 export enum InnovationThreadSubjectEnum {
   NEEDS_ASSESSMENT_START = 'Needs assessment process started',
   NEEDS_ASSESSMENT_COMPLETE = 'Needs assessment process completed',
-  INNOVATION_SUPPORT_UPDATE = 'Innovation support updated',
+  INNOVATION_SUPPORT_UPDATE = 'Innovation support updated'
 }
 
 export enum InnovationStatisticsEnum {
@@ -27,5 +27,5 @@ export enum InnovationStatisticsEnum {
   ACTIONS_TO_REVIEW_COUNTER = 'ACTIONS_TO_REVIEW_COUNTER',
   SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER = 'SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER',
   SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER = 'SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER',
-  UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER = 'UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER',
+  UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER = 'UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER'
 }

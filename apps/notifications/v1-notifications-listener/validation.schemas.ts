@@ -16,7 +16,7 @@ export const MessageSchema = Joi.object<MessageType>({
   data: Joi.object<MessageType['data']>({
     requestUser: Joi.object<MessageType['data']['requestUser']>({
       id: Joi.string().guid().required(),
-      identityId: Joi.string().guid().required(),
+      identityId: Joi.string().guid().required()
     }).required(),
 
     action: Joi.string()
@@ -24,6 +24,6 @@ export const MessageSchema = Joi.object<MessageType>({
       .required(),
 
     params: Joi.object().required(),
-    domainContext: DomainContextSchema.optional(),
-  }).required(),
+    domainContext: DomainContextSchema.optional()
+  }).required()
 }).required();

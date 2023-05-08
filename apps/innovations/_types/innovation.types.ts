@@ -5,7 +5,7 @@ import type {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   MaturityLevelCatalogueType,
-  YesPartiallyNoCatalogueType,
+  YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { OrganisationWithUnitsType } from '@innovations/shared/types';

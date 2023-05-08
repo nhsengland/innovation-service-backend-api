@@ -18,9 +18,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationAssessmentAssessorUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
       SYMBOLS.InnovationAssessmentsService
     );
@@ -66,7 +64,7 @@ export default openApi(
       operationId: 'v1-innovation-assessment-assessor-update',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-        description: 'The new assessor to be assigned.',
+        description: 'The new assessor to be assigned.'
       }),
       responses: {
         200: {
@@ -78,33 +76,33 @@ export default openApi(
                 properties: {
                   assessmentId: {
                     type: 'string',
-                    format: 'uuid',
+                    format: 'uuid'
                   },
                   assessorId: {
                     type: 'string',
-                    format: 'uuid',
-                  },
-                },
-              },
-            },
-          },
+                    format: 'uuid'
+                  }
+                }
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad request. Validation error.',
+          description: 'Bad request. Validation error.'
         },
         401: {
-          description: 'Unauthorized. Invalid authentication credentials.',
+          description: 'Unauthorized. Invalid authentication credentials.'
         },
         403: {
-          description: 'Forbidden. User does not have permission to assign a new assessor.',
+          description: 'Forbidden. User does not have permission to assign a new assessor.'
         },
         404: {
-          description: 'Not found. Innovation or assessment not found.',
+          description: 'Not found. Innovation or assessment not found.'
         },
         500: {
-          description: 'Internal server error.',
-        },
-      },
-    },
+          description: 'Internal server error.'
+        }
+      }
+    }
   }
 );

@@ -3,9 +3,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 export class alterInnovationAndInnovationSubgroup1654609594630 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Innovation table changes.
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD other_patients_citizens_benefit nvarchar(255) NULL`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD other_patients_citizens_benefit nvarchar(255) NULL`);
 
     await queryRunner.query(`ALTER TABLE "innovation" ADD care_pathway nvarchar(255) NULL`);
 
@@ -48,9 +46,7 @@ export class alterInnovationAndInnovationSubgroup1654609594630 implements Migrat
     await queryRunner.query(
       `DROP INDEX "idx_innovation_patients_citizens_benefit_type_innovation_id" ON "innovation_general_benefit"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_patients_citizens_benefit" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_patients_citizens_benefit" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_general_benefit"`);
     await queryRunner.query(`DROP TABLE "innovation_general_benefit_history"`);
   }

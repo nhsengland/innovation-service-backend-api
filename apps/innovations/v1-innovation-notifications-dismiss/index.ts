@@ -16,9 +16,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationNotificationsDismiss {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -57,9 +55,9 @@ export default openApi(
           description: 'Innovation ID',
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       requestBody: {
         description: 'Dismiss innovation notifications request body.',
@@ -73,31 +71,31 @@ export default openApi(
                   type: 'array',
                   items: {
                     type: 'string',
-                    format: 'uuid',
-                  },
+                    format: 'uuid'
+                  }
                 },
                 notificationContext: {
                   type: 'object',
                   properties: {
                     id: {
                       type: 'string',
-                      format: 'uuid',
+                      format: 'uuid'
                     },
                     type: {
                       type: 'string',
-                      enum: [Object.values(NotificationContextTypeEnum)],
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                      enum: [Object.values(NotificationContextTypeEnum)]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       responses: {
         204: { description: 'Success' },
-        400: { description: 'Invalid payload' },
-      },
-    },
+        400: { description: 'Invalid payload' }
+      }
+    }
   }
 );

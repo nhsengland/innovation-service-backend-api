@@ -18,9 +18,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1AdminTermsOfUseUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
@@ -49,7 +47,7 @@ export default openApi(V1AdminTermsOfUseUpdate.httpTrigger as AzureFunction, '/v
     operationId: 'v1-admin-terms-of-use-update',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
-      description: 'The terms of use to be updated.',
+      description: 'The terms of use to be updated.'
     }),
     responses: {
       '200': {
@@ -61,22 +59,22 @@ export default openApi(V1AdminTermsOfUseUpdate.httpTrigger as AzureFunction, '/v
               properties: {
                 unitId: {
                   type: 'string',
-                  description: 'Id of the updated terms of use.',
-                },
-              },
-            },
-          },
-        },
+                  description: 'Id of the updated terms of use.'
+                }
+              }
+            }
+          }
+        }
       },
       '400': {
-        description: 'Bad request.',
+        description: 'Bad request.'
       },
       '401': {
-        description: 'The user is not authorized to update terms of use.',
+        description: 'The user is not authorized to update terms of use.'
       },
       '500': {
-        description: 'An error occurred while updating the terms of use.',
-      },
-    },
-  },
+        description: 'An error occurred while updating the terms of use.'
+      }
+    }
+  }
 });

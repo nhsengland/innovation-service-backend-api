@@ -7,7 +7,7 @@ import {
   InnovationFileEntity,
   InnovationSectionEntity,
   UserEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -15,14 +15,9 @@ import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
-import {
-  ConflictError,
-  InnovationErrorsEnum,
-  InternalServerError,
-  NotFoundError,
-} from '@innovations/shared/errors';
+import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import {
   DomainServiceSymbol,
   DomainServiceType,
@@ -31,21 +26,18 @@ import {
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
   NotifierServiceSymbol,
-  NotifierServiceType,
+  NotifierServiceType
 } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
 import { NotImplementedError } from '@innovations/shared/errors/errors.config';
-import type {
-  DocumentType,
-  DocumentTypeFromVersion,
-} from '@innovations/shared/schemas/innovation-record';
+import type { DocumentType, DocumentTypeFromVersion } from '@innovations/shared/schemas/innovation-record';
 import {
   CurrentCatalogTypes,
   CurrentDocumentConfig,
   CurrentDocumentType,
-  CurrentEvidenceType,
+  CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
 import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import type { DomainContextType } from '@innovations/shared/types';
@@ -94,7 +86,7 @@ export class InnovationSectionsService extends BaseService {
         'sections.status',
         'sections.submittedAt',
         'submittedBy.id',
-        'submittedBy.identityId',
+        'submittedBy.identityId'
       ])
       .leftJoin('innovation.owner', 'owner')
       .innerJoin('innovation.sections', 'sections')
@@ -113,7 +105,7 @@ export class InnovationSectionsService extends BaseService {
       const actionStatus = [
         ServiceRoleEnum.ACCESSOR,
         ServiceRoleEnum.QUALIFYING_ACCESSOR,
-        ServiceRoleEnum.ASSESSMENT,
+        ServiceRoleEnum.ASSESSMENT
       ].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
@@ -125,7 +117,7 @@ export class InnovationSectionsService extends BaseService {
         .innerJoin('actions.innovationSection', 'sections')
         .where('sections.innovation_id = :innovationId', { innovationId })
         .andWhere(`sections.id IN (:...sectionIds)`, {
-          sectionIds: sections.map((item) => item.id),
+          sectionIds: sections.map(item => item.id)
         })
         .andWhere('actions.status = :actionStatus', { actionStatus })
         .groupBy('sections.section');
@@ -135,7 +127,7 @@ export class InnovationSectionsService extends BaseService {
         case ServiceRoleEnum.QUALIFYING_ACCESSOR:
           query.innerJoin('actions.innovationSupport', 'supports');
           query.andWhere('supports.organisationUnit = :orgUnitId', {
-            orgUnitId: domainContext.organisation?.organisationUnit?.id,
+            orgUnitId: domainContext.organisation?.organisationUnit?.id
           });
           break;
         case ServiceRoleEnum.ASSESSMENT:
@@ -147,17 +139,14 @@ export class InnovationSectionsService extends BaseService {
       openActions = await query.getRawMany();
     }
 
-    const innovators = sections
-      .map((s) => s.submittedBy?.identityId)
-      .filter((u): u is string => !!u);
+    const innovators = sections.map(s => s.submittedBy?.identityId).filter((u): u is string => !!u);
     const innovatorNames = await this.identityService.getUsersMap(innovators);
 
-    return CurrentCatalogTypes.InnovationSections.map((sectionKey) => {
-      const section = sections.find((item) => item.section === sectionKey);
+    return CurrentCatalogTypes.InnovationSections.map(sectionKey => {
+      const section = sections.find(item => item.section === sectionKey);
 
       if (section) {
-        const openActionsCount =
-          openActions.find((item) => item.section === sectionKey)?.actionsCount ?? 0;
+        const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
 
         return {
           id: section.id,
@@ -166,12 +155,11 @@ export class InnovationSectionsService extends BaseService {
           submittedAt: section.submittedAt,
           submittedBy: section.submittedBy
             ? {
-                name:
-                  innovatorNames.get(section.submittedBy.identityId)?.displayName ?? 'unknown user',
-                isOwner: section.submittedBy.id === innovation.owner?.id ?? false,
+                name: innovatorNames.get(section.submittedBy.identityId)?.displayName ?? 'unknown user',
+                isOwner: section.submittedBy.id === innovation.owner?.id ?? false
               }
             : null,
-          openActionsCount,
+          openActionsCount
         };
       } else {
         return {
@@ -180,7 +168,7 @@ export class InnovationSectionsService extends BaseService {
           status: InnovationSectionStatusEnum.NOT_STARTED,
           submittedAt: null,
           submittedBy: null,
-          openActionsCount: 0,
+          openActionsCount: 0
         };
       }
     });
@@ -206,9 +194,7 @@ export class InnovationSectionsService extends BaseService {
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const sectionExists = CurrentCatalogTypes.InnovationSections.find(
-      (item) => item === sectionKey
-    );
+    const sectionExists = CurrentCatalogTypes.InnovationSections.find(item => item === sectionKey);
     if (!sectionExists) {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
@@ -239,7 +225,7 @@ export class InnovationSectionsService extends BaseService {
         'section.status',
         'section.submittedAt',
         'submittedBy.id',
-        'submittedBy.identityId',
+        'submittedBy.identityId'
       ])
       .leftJoin('section.submittedBy', 'submittedBy')
       .where('section.innovation_id = :innovationId', { innovationId })
@@ -251,7 +237,7 @@ export class InnovationSectionsService extends BaseService {
       const requestedStatus = [
         ServiceRoleEnum.ACCESSOR,
         ServiceRoleEnum.QUALIFYING_ACCESSOR,
-        ServiceRoleEnum.ASSESSMENT,
+        ServiceRoleEnum.ASSESSMENT
       ].includes(domainContext.currentRole.role as ServiceRoleEnum)
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
@@ -287,9 +273,8 @@ export class InnovationSectionsService extends BaseService {
     // Business Rule A/QAs can only see submitted sections
     // TODO: this can use history table to retrieve the last submitted section from the document if we choose to present them something they could previously see.
     const sectionHidden =
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(
-        domainContext.currentRole.role
-      ) && dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR].includes(domainContext.currentRole.role) &&
+      dbSection?.status !== InnovationSectionStatusEnum.SUBMITTED;
     const sectionData = await this.getSectionData(document, sectionKey);
 
     return {
@@ -300,13 +285,11 @@ export class InnovationSectionsService extends BaseService {
       submittedBy: dbSection?.submittedBy
         ? {
             name: submittedBy ?? 'unknown user',
-            isOwner: dbSection.submittedBy.id === innovation.owner.id,
+            isOwner: dbSection.submittedBy.id === innovation.owner.id
           }
         : null,
       data: !sectionHidden ? sectionData : null,
-      ...(filters.fields?.includes('actions') && actions
-        ? { actionsIds: actions?.map((action) => action.id) }
-        : {}),
+      ...(filters.fields?.includes('actions') && actions ? { actionsIds: actions?.map(action => action.id) } : {})
     };
   }
 
@@ -317,9 +300,7 @@ export class InnovationSectionsService extends BaseService {
     sectionKey: CurrentCatalogTypes.InnovationSections,
     dataToUpdate: { [key: string]: any }
   ): Promise<{ id: string | undefined }> {
-    const sectionExists = CurrentCatalogTypes.InnovationSections.find(
-      (item) => item === sectionKey
-    );
+    const sectionExists = CurrentCatalogTypes.InnovationSections.find(item => item === sectionKey);
     if (!sectionExists) {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
@@ -368,7 +349,7 @@ export class InnovationSectionsService extends BaseService {
         files:
           CurrentDocumentConfig.allowFileUploads.has(sectionKey) && dataToUpdate['files']
             ? dataToUpdate['files'].map((id: string) => ({ id }))
-            : [],
+            : []
       });
     } else {
       section.updatedBy = user.id;
@@ -376,35 +357,26 @@ export class InnovationSectionsService extends BaseService {
       section.status = InnovationSectionStatusEnum.DRAFT;
 
       if (CurrentDocumentConfig.allowFileUploads.has(sectionKey)) {
-        sectionDeletedFiles = section.files.filter(
-          (file) => !dataToUpdate['files']?.includes(file.id)
-        );
+        sectionDeletedFiles = section.files.filter(file => !dataToUpdate['files']?.includes(file.id));
         section.files = (dataToUpdate['files'] ?? []).map((id: string) => ({ id }));
       }
     }
 
     let updateInnovation = false;
     if (sectionKey === 'INNOVATION_DESCRIPTION') {
-      (
-        [
-          'name',
-          'description',
-          'countryName',
-          'postcode',
-          'mainCategory',
-          'otherCategoryDescription',
-        ] as const
-      ).forEach((key) => {
-        if (dataToUpdate[key] !== undefined) {
-          innovation[key] = dataToUpdate[key];
-          updateInnovation = true;
+      (['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherCategoryDescription'] as const).forEach(
+        key => {
+          if (dataToUpdate[key] !== undefined) {
+            innovation[key] = dataToUpdate[key];
+            updateInnovation = true;
+          }
         }
-      });
+      );
     }
 
     const sectionToBeSaved = section;
 
-    return this.sqlConnection.transaction(async (transaction) => {
+    return this.sqlConnection.transaction(async transaction => {
       // Special case to clear evidences (dataToUpdate type is correct since it was previously validated by joi)
       if (
         sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' &&
@@ -431,7 +403,7 @@ export class InnovationSectionsService extends BaseService {
           countryName: innovation.countryName,
           postcode: innovation.postcode,
           updatedBy: innovation.updatedBy,
-          updatedAt: updatedAt,
+          updatedAt: updatedAt
         });
       }
 
@@ -447,7 +419,7 @@ export class InnovationSectionsService extends BaseService {
           {
             innovationId: innovation.id,
             activity: ActivityEnum.SECTION_DRAFT_UPDATE,
-            domainContext,
+            domainContext
           },
           { sectionId: sectionKey }
         );
@@ -486,7 +458,7 @@ export class InnovationSectionsService extends BaseService {
       return { id: dbSection.id };
     }
 
-    return connection.transaction(async (transaction) => {
+    return connection.transaction(async transaction => {
       const now = new Date();
 
       // Update section.
@@ -498,7 +470,7 @@ export class InnovationSectionsService extends BaseService {
 
       // Update section actions.
       const requestedStatusActions = (await dbSection.actions).filter(
-        (action) => action.status === InnovationActionStatusEnum.REQUESTED
+        action => action.status === InnovationActionStatusEnum.REQUESTED
       );
       for (const action of requestedStatusActions) {
         action.status = InnovationActionStatusEnum.SUBMITTED;
@@ -514,7 +486,7 @@ export class InnovationSectionsService extends BaseService {
         isSnapshot: true,
         description: `SECTION_SUBMITTED-${sectionKey}`,
         updatedAt: now,
-        updatedBy: domainContext.id,
+        updatedBy: domainContext.id
       });
 
       // Add activity logs.
@@ -525,7 +497,7 @@ export class InnovationSectionsService extends BaseService {
           {
             innovationId: dbInnovation.id,
             activity: ActivityEnum.SECTION_SUBMISSION,
-            domainContext,
+            domainContext
           },
           { sectionId: savedSection.section }
         );
@@ -537,7 +509,7 @@ export class InnovationSectionsService extends BaseService {
           {
             innovationId: dbInnovation.id,
             activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE,
-            domainContext,
+            domainContext
           },
           { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
         );
@@ -551,8 +523,8 @@ export class InnovationSectionsService extends BaseService {
               action: {
                 id: action.id,
                 section: savedSection.section,
-                status: InnovationActionStatusEnum.SUBMITTED,
-              },
+                status: InnovationActionStatusEnum.SUBMITTED
+              }
             },
             domainContext
           );
@@ -567,14 +539,11 @@ export class InnovationSectionsService extends BaseService {
     innovationId: string,
     version?: DocumentType['version']
   ): Promise<{ section: { section: string }; data: Record<string, any> }[]> {
-    const document = await this.getInnovationDocument(
-      innovationId,
-      version ?? CurrentDocumentConfig.version
-    );
+    const document = await this.getInnovationDocument(innovationId, version ?? CurrentDocumentConfig.version);
     const innovationSections = await Promise.all(
-      this.getDocumentSections(document).map(async (section) => ({
+      this.getDocumentSections(document).map(async section => ({
         section: { section: section },
-        data: await this.getSectionData(document, section),
+        data: await this.getSectionData(document, section)
       }))
     );
 
@@ -603,7 +572,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    return connection.transaction(async (transaction) => {
+    return connection.transaction(async transaction => {
       const updatedAt = new Date();
 
       const evidence: CurrentEvidenceType = {
@@ -611,7 +580,7 @@ export class InnovationSectionsService extends BaseService {
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
         summary: evidenceData.summary,
-        files: evidenceData.files,
+        files: evidenceData.files
       };
 
       await transaction.query(
@@ -627,7 +596,7 @@ export class InnovationSectionsService extends BaseService {
         {
           status: InnovationSectionStatusEnum.DRAFT,
           updatedAt: updatedAt,
-          updatedBy: user.id,
+          updatedBy: user.id
         }
       );
     });
@@ -658,12 +627,10 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    const existingFiles = (await this.innovationFileService.getFilesByIds(evidence.files)).map(
-      (f) => f.id
-    );
-    const filesToDelete = existingFiles.filter((f) => !evidenceData.files?.includes(f));
+    const existingFiles = (await this.innovationFileService.getFilesByIds(evidence.files)).map(f => f.id);
+    const filesToDelete = existingFiles.filter(f => !evidenceData.files?.includes(f));
 
-    return this.sqlConnection.transaction(async (transaction) => {
+    return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
 
       if (filesToDelete.length > 0) {
@@ -675,7 +642,7 @@ export class InnovationSectionsService extends BaseService {
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
         summary: evidenceData.summary,
-        files: evidenceData.files,
+        files: evidenceData.files
       };
 
       await transaction.query(
@@ -691,17 +658,13 @@ export class InnovationSectionsService extends BaseService {
         {
           status: InnovationSectionStatusEnum.DRAFT,
           updatedAt: updatedAt,
-          updatedBy: user.id,
+          updatedBy: user.id
         }
       );
     });
   }
 
-  async deleteInnovationEvidence(
-    user: { id: string },
-    innovationId: string,
-    evidenceOffset: number
-  ): Promise<void> {
+  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceOffset: number): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     let evidences = document.evidences;
@@ -714,7 +677,7 @@ export class InnovationSectionsService extends BaseService {
     delete evidences[evidenceOffset];
     evidences = evidences.filter(Boolean);
 
-    return this.sqlConnection.transaction(async (transaction) => {
+    return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
 
       if (evidence.files && evidence.files.length > 0) {
@@ -737,7 +700,7 @@ export class InnovationSectionsService extends BaseService {
         {
           updatedAt: updatedAt,
           updatedBy: user.id,
-          status: InnovationSectionStatusEnum.DRAFT,
+          status: InnovationSectionStatusEnum.DRAFT
         }
       );
     });
@@ -766,11 +729,11 @@ export class InnovationSectionsService extends BaseService {
       evidenceSubmitType: evidence.evidenceSubmitType,
       description: evidence.description,
       summary: evidence.summary,
-      files: files.map((file) => ({
+      files: files.map(file => ({
         id: file.id,
         name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName),
-      })),
+        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
+      }))
     };
   }
 
@@ -781,10 +744,11 @@ export class InnovationSectionsService extends BaseService {
    * @param entityManager optional entity manager for running inside transaction
    * @returns the document
    */
-  private async getInnovationDocument<
-    V extends DocumentType['version'],
-    T extends DocumentTypeFromVersion<V>
-  >(innovationId: string, version: V, entityManager?: EntityManager): Promise<T> {
+  private async getInnovationDocument<V extends DocumentType['version'], T extends DocumentTypeFromVersion<V>>(
+    innovationId: string,
+    version: V,
+    entityManager?: EntityManager
+  ): Promise<T> {
     const connection = entityManager ?? this.sqlConnection.manager;
     let document: DocumentType | undefined;
 
@@ -830,10 +794,7 @@ export class InnovationSectionsService extends BaseService {
    * @param sectionKey the section key
    * @returns section data with extra information
    */
-  private async getSectionData<
-    T extends object & DocumentType,
-    K extends Exclude<keyof T, 'version' | 'evidences'>
-  >(
+  private async getSectionData<T extends object & DocumentType, K extends Exclude<keyof T, 'version' | 'evidences'>>(
     document: T,
     sectionKey: K
   ): Promise<
@@ -852,9 +813,9 @@ export class InnovationSectionsService extends BaseService {
       evidenceData =
         sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS'
           ? undefined
-          : document.evidences?.map((evidence) => ({
+          : document.evidences?.map(evidence => ({
               evidenceSubmitType: evidence.evidenceSubmitType,
-              description: evidence.description,
+              description: evidence.description
             }));
     }
     const sectionData = document[sectionKey];
@@ -864,26 +825,25 @@ export class InnovationSectionsService extends BaseService {
 
     // Add file URLs if needed
     if (sectionFiles.length) {
-      files = (await this.innovationFileService.getFilesByIds(sectionFiles)).map((file) => ({
+      files = (await this.innovationFileService.getFilesByIds(sectionFiles)).map(file => ({
         id: file.id,
         name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName),
+        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
       }));
     }
 
     return {
       ...sectionData,
       ...(evidenceData && { evidences: evidenceData }),
-      ...(files && { files: files }),
+      ...(files && { files: files })
     };
   }
 
-  private getDocumentSections<T extends DocumentType>(
-    document: T
-  ): Exclude<keyof T, 'version' | 'evidences'>[] {
+  private getDocumentSections<T extends DocumentType>(document: T): Exclude<keyof T, 'version' | 'evidences'>[] {
     const sections = Object.keys(document) as (keyof T)[];
-    return sections.filter(
-      (section) => section !== 'version' && section !== 'evidences'
-    ) as Exclude<keyof T, 'version' | 'evidences'>[];
+    return sections.filter(section => section !== 'version' && section !== 'evidences') as Exclude<
+      keyof T,
+      'version' | 'evidences'
+    >[];
   }
 }

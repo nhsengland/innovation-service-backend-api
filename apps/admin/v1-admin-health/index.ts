@@ -14,12 +14,10 @@ class V1Health {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<any> {
     try {
-      const authorizationService = container.get<AuthorizationServiceType>(
-        AuthorizationServiceSymbol
-      );
+      const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
       await authorizationService.validate(context).checkAdminType().verify();
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        status: 'OK',
+        status: 'OK'
       });
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -41,18 +39,18 @@ export default openApi(V1Health.httpTrigger as AzureFunction, '/v1/health', {
             schema: {
               type: 'object',
               properties: {
-                status: { type: 'string', enum: ['OK', 'WARN'] },
-              },
-            },
-          },
-        },
+                status: { type: 'string', enum: ['OK', 'WARN'] }
+              }
+            }
+          }
+        }
       },
       401: {
-        description: 'Unauthorized',
+        description: 'Unauthorized'
       },
       403: {
-        description: 'Forbidden',
-      },
-    },
-  },
+        description: 'Forbidden'
+      }
+    }
+  }
 });

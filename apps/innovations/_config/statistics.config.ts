@@ -15,26 +15,26 @@ export const INNOVATION_STATISTICS_CONFIG: Record<
   }
 > = {
   [InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]: {
-    handler: ActionsToSubmitStatisticsHandler,
+    handler: ActionsToSubmitStatisticsHandler
   },
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]: {
-    handler: SectionsSubmittedStatisticsHandler,
+    handler: SectionsSubmittedStatisticsHandler
   },
   [InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]: {
-    handler: UnreadMessagesStatisticsHandler,
+    handler: UnreadMessagesStatisticsHandler
   },
   [InnovationStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: {
-    handler: ActionsToReviewStatisticsHandler,
+    handler: ActionsToReviewStatisticsHandler
   },
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER]: {
-    handler: SectionsSubmittedSinceSupportStartStatisticsHandler,
+    handler: SectionsSubmittedSinceSupportStartStatisticsHandler
   },
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER]: {
-    handler: SectionsSubmittedSinceAssessmentStartStatisticsHandler,
+    handler: SectionsSubmittedSinceAssessmentStartStatisticsHandler
   },
   [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: {
-    handler: UnreadMessagesThreadsInitiatedByStatisticsHandler,
-  },
+    handler: UnreadMessagesThreadsInitiatedByStatisticsHandler
+  }
 };
 
 export type InnovationStatisticsTemplateType = {

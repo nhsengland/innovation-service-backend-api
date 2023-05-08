@@ -12,7 +12,7 @@ export class InnovationGroupedStatusViewEntity {
   @ViewColumn({ name: 'grouped_status' })
   groupedStatus: InnovationGroupedStatusEnum;
 
-  @OneToOne(() => InnovationEntity, (record) => record.id)
+  @OneToOne(() => InnovationEntity, record => record.id)
   @JoinColumn({ name: 'id' })
   innovation: InnovationEntity;
 }

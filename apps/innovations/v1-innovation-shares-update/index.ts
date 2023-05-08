@@ -16,9 +16,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationSharesUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -32,13 +30,9 @@ class V1InnovationSharesUpdate {
         .checkInnovation()
         .verify();
 
-      await innovationsService.updateInnovationShares(
-        auth.getContext(),
-        params.innovationId,
-        body.organisations
-      );
+      await innovationsService.updateInnovationShares(auth.getContext(), params.innovationId, body.organisations);
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: params.innovationId,
+        id: params.innovationId
       });
       return;
     } catch (error) {
@@ -48,47 +42,43 @@ class V1InnovationSharesUpdate {
   }
 }
 
-export default openApi(
-  V1InnovationSharesUpdate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/shares',
-  {
-    put: {
-      description: 'Update the shares for an innovation.',
-      tags: ['Innovation'],
-      summary: 'Update all the shares for an innovation.',
-      operationId: 'v1-innovation-shares-update',
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
-      responses: {
-        200: {
-          description: 'OK',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'The unique identifier of the innovation.',
-                  },
-                },
-              },
-            },
-          },
-        },
-        401: {
-          description: 'Unauthorized',
-        },
-        403: {
-          description: 'Forbidden',
-        },
-        404: {
-          description: 'Not Found',
-        },
-        500: {
-          description: 'Internal Server Error',
-        },
+export default openApi(V1InnovationSharesUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/shares', {
+  put: {
+    description: 'Update the shares for an innovation.',
+    tags: ['Innovation'],
+    summary: 'Update all the shares for an innovation.',
+    operationId: 'v1-innovation-shares-update',
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
+    responses: {
+      200: {
+        description: 'OK',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'The unique identifier of the innovation.'
+                }
+              }
+            }
+          }
+        }
       },
-    },
+      401: {
+        description: 'Unauthorized'
+      },
+      403: {
+        description: 'Forbidden'
+      },
+      404: {
+        description: 'Not Found'
+      },
+      500: {
+        description: 'Internal Server Error'
+      }
+    }
   }
-);
+});

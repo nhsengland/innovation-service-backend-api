@@ -16,12 +16,8 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationSectionSubmit {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSectionsService = container.get<InnovationSectionsService>(
-      SYMBOLS.InnovationSectionsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -59,7 +55,7 @@ export default openApi(
       operationId: 'v1-innovation-section-submit',
       parameters: [
         { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-        { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } },
+        { in: 'path', name: 'sectionKey', required: true, schema: { type: 'string' } }
       ],
       requestBody: {
         description: 'Innovation section submit request body.',
@@ -71,18 +67,18 @@ export default openApi(
                 id: {
                   type: 'string',
                   description: 'Innovation section id.',
-                  example: '1',
-                },
-              },
-            },
-          },
-        },
+                  example: '1'
+                }
+              }
+            }
+          }
+        }
       },
       responses: {
         200: {
-          description: 'Innovation section submit response.',
-        },
-      },
-    },
+          description: 'Innovation section submit response.'
+        }
+      }
+    }
   }
 );

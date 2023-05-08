@@ -25,15 +25,15 @@ export const MessageSchema = Joi.object<MessageType>({
     to: Joi.object<MessageType['data']['to']>({
       type: Joi.string().valid('email', 'identityId').required(),
       value: Joi.string().required(),
-      displayNameParam: Joi.string().optional(),
+      displayNameParam: Joi.string().optional()
     }).required(),
     params: Joi.object().required(),
     log: Joi.object({
       type: Joi.string()
         .valid(...Object.values(NotificationLogTypeEnum))
         .required(),
-      params: Joi.object().required(),
+      params: Joi.object().required()
     }).optional(),
-    domainContext: DomainContextSchema.optional(),
-  }).required(),
+    domainContext: DomainContextSchema.optional()
+  }).required()
 }).required();

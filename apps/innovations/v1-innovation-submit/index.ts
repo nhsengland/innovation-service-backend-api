@@ -19,12 +19,10 @@ class V1InnovationSubmit {
   @Audit({
     action: ActionEnum.UPDATE,
     target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId',
+    identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -46,7 +44,7 @@ class V1InnovationSubmit {
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
-        status: result.status,
+        status: result.status
       });
       return;
     } catch (error) {
@@ -56,63 +54,59 @@ class V1InnovationSubmit {
   }
 }
 
-export default openApi(
-  V1InnovationSubmit.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/submit',
-  {
-    patch: {
-      summary: 'Submit an innovation',
-      description: 'Submit an innovation for assessment.',
-      operationId: 'v1-innovation-submit',
-      tags: ['Innovation'],
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation ID',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      responses: {
-        200: {
-          description: 'Innovation submitted successfully.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: {
-                    type: 'string',
-                    description: 'Innovation ID',
-                  },
-                  status: {
-                    type: 'string',
-                    description: 'Innovation status',
-                  },
+export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, '/v1/{innovationId}/submit', {
+  patch: {
+    summary: 'Submit an innovation',
+    description: 'Submit an innovation for assessment.',
+    operationId: 'v1-innovation-submit',
+    tags: ['Innovation'],
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'Innovation ID',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    responses: {
+      200: {
+        description: 'Innovation submitted successfully.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: {
+                  type: 'string',
+                  description: 'Innovation ID'
                 },
-              },
-            },
-          },
-        },
-        400: {
-          description: 'Bad request.',
-        },
-        401: {
-          description: 'Unauthorized.',
-        },
-        403: {
-          description: 'Forbidden.',
-        },
-        404: {
-          description: 'Not found.',
-        },
-        500: {
-          description: 'Internal server error.',
-        },
+                status: {
+                  type: 'string',
+                  description: 'Innovation status'
+                }
+              }
+            }
+          }
+        }
       },
-    },
+      400: {
+        description: 'Bad request.'
+      },
+      401: {
+        description: 'Unauthorized.'
+      },
+      403: {
+        description: 'Forbidden.'
+      },
+      404: {
+        description: 'Not found.'
+      },
+      500: {
+        description: 'Internal server error.'
+      }
+    }
   }
-);
+});

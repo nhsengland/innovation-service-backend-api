@@ -1,8 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterTableNotificationUserDropDeprecatedColumns1678469659023
-  implements MigrationInterface
-{
+export class alterTableNotificationUserDropDeprecatedColumns1678469659023 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE INDEX "idx_notification_user_role_read" ON "notification_user" ("user_role_id", "read_at") WHERE deleted_at IS NULL;

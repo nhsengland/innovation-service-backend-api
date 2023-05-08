@@ -4,7 +4,7 @@ export type BodyType = {
   message: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  message: Joi.string().max(2000).required(),
+  message: Joi.string().max(2000).required()
 }).required();
 
 export type ParamsType = {
@@ -13,5 +13,5 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  threadId: Joi.string().guid().required(),
+  threadId: Joi.string().guid().required()
 });

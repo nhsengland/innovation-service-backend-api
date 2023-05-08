@@ -5,7 +5,7 @@ import {
   BlobSASSignatureValues,
   generateBlobSASQueryParameters,
   SASProtocol,
-  StorageSharedKeyCredential,
+  StorageSharedKeyCredential
 } from '@azure/storage-blob';
 import { injectable } from 'inversify';
 import { extname } from 'path';
@@ -19,7 +19,7 @@ enum StoragePermissionsEnum {
   WRITE = 'w',
   ADD = 'a',
   DELETE = 'd',
-  CREATE = 'c',
+  CREATE = 'c'
 }
 
 @injectable()
@@ -45,7 +45,7 @@ export class FileStorageService {
       permissions: BlobSASPermissions.parse(permissions),
       containerName: FILE_STORAGE_CONFIG.storageContainer,
       blobName: filename,
-      contentDisposition: `filename=${displayName}`,
+      contentDisposition: `filename=${displayName}`
     };
 
     const storageSharedKeyCredential = new StorageSharedKeyCredential(
@@ -56,9 +56,7 @@ export class FileStorageService {
     try {
       const query = generateBlobSASQueryParameters(signature, storageSharedKeyCredential);
       return (
-        [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, filename]
-          .filter(Boolean)
-          .join('/') +
+        [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, filename].filter(Boolean).join('/') +
         '?' +
         query.toString()
       );
@@ -85,7 +83,7 @@ export class FileStorageService {
       const url = [
         FILE_STORAGE_CONFIG.storageBaseUrl,
         FILE_STORAGE_CONFIG.storageContainer,
-        `${id}${extname(filename)}`,
+        `${id}${extname(filename)}`
       ]
         .filter(Boolean)
         .join('/');
@@ -98,9 +96,7 @@ export class FileStorageService {
 
       if (response.errorCode && response.errorCode !== 'BlobNotFound') {
         // TODO: throw known error!
-        throw new Error(
-          `Failed to delete the file ${filename} with errorCode: ${response.errorCode}`
-        );
+        throw new Error(`Failed to delete the file ${filename} with errorCode: ${response.errorCode}`);
       }
 
       return response;

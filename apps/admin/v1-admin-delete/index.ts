@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
   DomainServiceSymbol,
-  DomainServiceType,
+  DomainServiceType
 } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
@@ -19,9 +19,7 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1AdminDelete {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
@@ -54,15 +52,15 @@ export default openApi(V1AdminDelete.httpTrigger as AzureFunction, '/v1/users/{u
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'The user id.' },
-              },
-            },
-          },
-        },
+                id: { type: 'string', description: 'The user id.' }
+              }
+            }
+          }
+        }
       },
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to delete an admin account.' },
-      '500': { description: 'An error occurred while deleting the admin account.' },
-    },
-  },
+      '500': { description: 'An error occurred while deleting the admin account.' }
+    }
+  }
 });

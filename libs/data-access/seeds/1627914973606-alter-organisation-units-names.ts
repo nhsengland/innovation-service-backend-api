@@ -19,7 +19,7 @@ export class alterOrganisationUnitsNames1627914973606 {
       { acronym: 'KSS', name: 'Kent Surrey Sussex AHSN' },
       { acronym: 'Wessex', name: 'Wessex AHSN' },
       { acronym: 'ICHP', name: 'Imperial College Health Partners' },
-      { acronym: 'SWAHSN', name: 'South West AHSN' },
+      { acronym: 'SWAHSN', name: 'South West AHSN' }
     ];
 
     const organisationUnitRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity);
@@ -27,7 +27,7 @@ export class alterOrganisationUnitsNames1627914973606 {
     // UPDATE Organisation Units Names
     for (const organisationUnit of organisationUnits) {
       const orgUnit = await organisationUnitRepo.findOne({
-        where: { acronym: organisationUnit.acronym },
+        where: { acronym: organisationUnit.acronym }
       });
 
       if (!orgUnit) {

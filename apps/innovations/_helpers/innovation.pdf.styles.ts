@@ -8,9 +8,9 @@ export const buildDocumentHeaderDefinition = (): any => {
             style: 'dimmed',
             margin: [10, 10, 10, 10],
             alignment: 'right',
-            italic: true,
-          },
-        ],
+            italic: true
+          }
+        ]
       };
     } else return;
   };
@@ -25,9 +25,9 @@ export const buildDocumentFooterDefinition = (): any => {
             text: `${current} of ${total}`,
             style: 'footer',
             alignment: 'right',
-            margin: [0, 0, 10, 10],
-          },
-        ],
+            margin: [0, 0, 10, 10]
+          }
+        ]
       };
     } else return;
   };
@@ -39,33 +39,33 @@ export const buildDocumentTOCDefinition = (innovationName: string): any => {
       text: 'Innovation Record Export',
       style: 'hero',
       margin: [0, 80, 0, 0],
-      alignment: 'center',
+      alignment: 'center'
     },
     {
       text: innovationName,
       style: 'documentTitle',
       margin: [20, 90, 0, 0],
-      alignment: 'left',
+      alignment: 'left'
     },
     {
       text: 'NHS Innovation service',
       style: 'documentInfo',
       margin: [0, 440, 0, 0],
-      alignment: 'right',
+      alignment: 'right'
     },
     {
       text: `Exported at: ${new Date().toDateString()}`,
       style: 'documentInfo',
       margin: [0, 0, 0, 0],
       alignment: 'right',
-      pageBreak: 'after',
+      pageBreak: 'after'
     },
     {
       toc: {
         title: { text: 'INDEX', style: 'header' },
-        numberStyle: { bold: true },
-      },
-    },
+        numberStyle: { bold: true }
+      }
+    }
   ];
 };
 
@@ -74,56 +74,56 @@ export const buildDocumentStylesDefinition = (): any => {
     hero: {
       fontSize: 44,
       bold: true,
-      color: '#1874a5',
+      color: '#1874a5'
     },
     sectionTitle: {
       fontSize: 28,
       bold: true,
       color: '#1874a5',
-      decoration: 'underline',
+      decoration: 'underline'
     },
     dimmed: {
       fontSize: 10,
       color: '#999999',
-      italic: true,
+      italic: true
     },
     documentTitle: {
       fontSize: 26,
       bold: true,
-      color: '#333333',
+      color: '#333333'
     },
     documentInfo: {
       fontSize: 16,
       italics: true,
-      color: '#333333',
+      color: '#333333'
     },
     header: {
       fontSize: 20,
-      bold: true,
+      bold: true
     },
     subheader: {
       fontSize: 18,
       bold: true,
-      italics: true,
+      italics: true
     },
     quote: {
-      italics: true,
+      italics: true
     },
     small: {
-      fontSize: 10,
+      fontSize: 10
     },
     answer: {
       fontSize: 12,
-      italics: true,
+      italics: true
     },
     question: {
       fontSize: 16,
-      bold: true,
+      bold: true
     },
     footer: {
       fontSize: 10,
       color: '#999999',
-      italics: true,
-    },
+      italics: true
+    }
   };
 };

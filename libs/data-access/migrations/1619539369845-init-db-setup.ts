@@ -429,12 +429,8 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "innovation_support_user" DROP CONSTRAINT "fk_innovation_support_user_innovation_support_innovation_support_id"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "fk_notification_user_user_id"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP CONSTRAINT "fk_innovation_user_owner_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "fk_notification_user_user_id"`);
+    await queryRunner.query(`ALTER TABLE "innovation" DROP CONSTRAINT "fk_innovation_user_owner_id"`);
     await queryRunner.query(
       `ALTER TABLE "innovation_user_test" DROP CONSTRAINT "fk_innovation_user_test_innovation_innovation_id"`
     );
@@ -465,19 +461,13 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "innovation_subgroup" DROP CONSTRAINT "fk_innovation_subgroup_innovation_innovation_id"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "comment" DROP CONSTRAINT "fk_comment_comment_reply_to_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "comment" DROP CONSTRAINT "fk_comment_comment_reply_to_id"`);
     await queryRunner.query(
       `ALTER TABLE "comment" DROP CONSTRAINT "fk_comment_innovation_action_innovation_action_id"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "comment" DROP CONSTRAINT "fk_comment_innovation_innovation_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "comment" DROP CONSTRAINT "fk_comment_innovation_innovation_id"`);
     await queryRunner.query(`ALTER TABLE "comment" DROP CONSTRAINT "fk_comment_user_user_id"`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_action" DROP CONSTRAINT "fk_innovation_action_user_assign_to_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_action" DROP CONSTRAINT "fk_innovation_action_user_assign_to_id"`);
     await queryRunner.query(
       `ALTER TABLE "innovation_action" DROP CONSTRAINT "fk_innovation_action_innovation_support_innovation_support_id"`
     );
@@ -496,9 +486,7 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "organisation_unit_user" DROP CONSTRAINT "fk_organisation_unit_user_organisation_unit_organisation_unit_id"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "organisation_user" DROP CONSTRAINT "fk_organisation_user_user_user_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "organisation_user" DROP CONSTRAINT "fk_organisation_user_user_user_id"`);
     await queryRunner.query(
       `ALTER TABLE "organisation_user" DROP CONSTRAINT "fk_organisation_user_organisation_organisation_id"`
     );
@@ -508,12 +496,8 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(
       `ALTER TABLE "innovation_section" DROP CONSTRAINT "fk_innovation_section_innovation_innovation_id"`
     );
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_share_organisation_id" ON "innovation_share"`
-    );
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_share_innovation_id" ON "innovation_share"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_share_organisation_id" ON "innovation_share"`);
+    await queryRunner.query(`DROP INDEX "idx_innovation_share_innovation_id" ON "innovation_share"`);
     await queryRunner.query(`DROP TABLE "innovation_share"`);
     await queryRunner.query(
       `DROP INDEX "idx_innovation_support_user_organisation_unit_user_id" ON "innovation_support_user"`
@@ -532,9 +516,7 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "innovation_user_test"`);
     await queryRunner.query(`DROP TABLE "innovation_user_test_history"`);
 
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_revenue_type_innovation_id" ON "innovation_revenue"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_revenue_type_innovation_id" ON "innovation_revenue"`);
 
     await queryRunner.query(`ALTER TABLE "innovation_revenue" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_revenue"`);
@@ -544,9 +526,7 @@ export class initDbSetup1619539369845 implements MigrationInterface {
       `DROP INDEX "idx_innovation_regulation_standard_type_innovation_id" ON "innovation_regulation_standard"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_regulation_standard" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_regulation_standard" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_regulation_standard"`);
     await queryRunner.query(`DROP TABLE "innovation_regulation_standard_history"`);
 
@@ -554,9 +534,7 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "innovation_evidence"`);
     await queryRunner.query(`DROP TABLE "innovation_evidence_history"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_deployment_plan" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_deployment_plan" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_deployment_plan"`);
     await queryRunner.query(`DROP TABLE "innovation_deployment_plan_history"`);
 
@@ -564,33 +542,23 @@ export class initDbSetup1619539369845 implements MigrationInterface {
       `DROP INDEX "idx_innovation_clinical_area_type_innovation_id" ON "innovation_clinical_area"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_clinical_area" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_clinical_area" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_clinical_area"`);
     await queryRunner.query(`DROP TABLE "innovation_clinical_area_history"`);
 
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_category_type_innovation_id" ON "innovation_category"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_category_type_innovation_id" ON "innovation_category"`);
 
     await queryRunner.query(`ALTER TABLE "innovation_category" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_category"`);
     await queryRunner.query(`DROP TABLE "innovation_category_history"`);
 
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_care_setting_type_innovation_id" ON "innovation_care_setting"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_care_setting_type_innovation_id" ON "innovation_care_setting"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_care_setting" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_care_setting" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_care_setting"`);
     await queryRunner.query(`DROP TABLE "innovation_care_setting_history"`);
 
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_area_type_innovation_id" ON "innovation_area"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_area_type_innovation_id" ON "innovation_area"`);
 
     await queryRunner.query(`ALTER TABLE "innovation_area" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_area"`);
@@ -614,9 +582,7 @@ export class initDbSetup1619539369845 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE "organisation_user"`);
     await queryRunner.query(`DROP TABLE "organisation_unit"`);
     await queryRunner.query(`DROP TABLE "organisation"`);
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_section_section_innovation_id" ON "innovation_section"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_section_section_innovation_id" ON "innovation_section"`);
 
     await queryRunner.query(`ALTER TABLE "innovation_section" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_section"`);

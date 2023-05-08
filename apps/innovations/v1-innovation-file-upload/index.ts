@@ -19,15 +19,11 @@ class V1InnovationFileUpload {
   @Audit({
     action: ActionEnum.UPDATE,
     target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId',
+    identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationFileService = container.get<InnovationFileService>(
-      SYMBOLS.InnovationFileService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationFileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -57,35 +53,31 @@ class V1InnovationFileUpload {
   }
 }
 
-export default openApi(
-  V1InnovationFileUpload.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/upload',
-  {
-    post: {
-      operationId: 'v1-innovation-file-upload',
-      description: 'Upload an innovation file.',
-      tags: ['[v1] Innovation'],
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string' },
-                  displayFileName: { type: 'string' },
-                  url: { type: 'string', description: 'url for file upload' },
-                },
-              },
-            },
-          },
-        },
-        400: { description: 'Invalid payload' },
-        404: { description: 'Innovation not found' },
+export default openApi(V1InnovationFileUpload.httpTrigger as AzureFunction, '/v1/{innovationId}/upload', {
+  post: {
+    operationId: 'v1-innovation-file-upload',
+    description: 'Upload an innovation file.',
+    tags: ['[v1] Innovation'],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                displayFileName: { type: 'string' },
+                url: { type: 'string', description: 'url for file upload' }
+              }
+            }
+          }
+        }
       },
-    },
+      400: { description: 'Invalid payload' },
+      404: { description: 'Innovation not found' }
+    }
   }
-);
+});

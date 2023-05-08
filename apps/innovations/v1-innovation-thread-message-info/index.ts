@@ -17,12 +17,8 @@ import { ParamsSchema } from './validation.schemas';
 class V1InnovationThreadMessageInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const threadsService = container.get<InnovationThreadsService>(
-      SYMBOLS.InnovationThreadsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -39,7 +35,7 @@ class V1InnovationThreadMessageInfo {
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         message: result.message,
-        createdAt: result.createdAt,
+        createdAt: result.createdAt
       });
       return;
     } catch (error) {
@@ -64,8 +60,8 @@ export default openApi(
           description: 'Innovation ID',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'threadId',
@@ -73,8 +69,8 @@ export default openApi(
           description: 'Thread ID',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'messageId',
@@ -82,9 +78,9 @@ export default openApi(
           description: 'Message ID',
           required: true,
           schema: {
-            type: 'string',
-          },
-        },
+            type: 'string'
+          }
+        }
       ],
       responses: {
         200: {
@@ -96,34 +92,34 @@ export default openApi(
                 properties: {
                   id: {
                     type: 'string',
-                    description: 'Message ID',
+                    description: 'Message ID'
                   },
                   message: {
                     type: 'string',
-                    description: 'Message',
+                    description: 'Message'
                   },
                   createdAt: {
                     type: 'string',
-                    description: 'Message creation date',
-                  },
-                },
-              },
-            },
-          },
+                    description: 'Message creation date'
+                  }
+                }
+              }
+            }
+          }
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not Found',
+          description: 'Not Found'
         },
         500: {
-          description: 'Internal Server Error',
-        },
-      },
-    },
+          description: 'Internal Server Error'
+        }
+      }
+    }
   }
 );

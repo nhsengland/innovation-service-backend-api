@@ -17,12 +17,8 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationSupportCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSupportsService = container.get<InnovationSupportsService>(
-      SYMBOLS.InnovationSupportsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -53,33 +49,29 @@ class V1InnovationSupportCreate {
   }
 }
 
-export default openApi(
-  V1InnovationSupportCreate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/supports',
-  {
-    post: {
-      description: 'Create support in innovation.',
-      operationId: 'v1-innovation-support-create',
-      tags: ['[v1] Innovation Support'],
-      parameters: [
-        {
-          in: 'path',
-          name: 'innovationId',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      responses: {
-        201: {
-          description:
-            'Creates a new innovation support request for the innovation identified by the supplied Innovation ID.',
-        },
-        401: {
-          description: 'Unauthorised.',
-        },
+export default openApi(V1InnovationSupportCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/supports', {
+  post: {
+    description: 'Create support in innovation.',
+    operationId: 'v1-innovation-support-create',
+    tags: ['[v1] Innovation Support'],
+    parameters: [
+      {
+        in: 'path',
+        name: 'innovationId',
+        required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    responses: {
+      201: {
+        description:
+          'Creates a new innovation support request for the innovation identified by the supplied Innovation ID.'
       },
-    },
+      401: {
+        description: 'Unauthorised.'
+      }
+    }
   }
-);
+});

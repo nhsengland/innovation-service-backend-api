@@ -1,13 +1,4 @@
-import {
-  Check,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Unique,
-} from 'typeorm';
+import { Check, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, Unique } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -15,15 +6,10 @@ import { UserEntity } from '../user/user.entity';
 import { OrganisationEntity } from './organisation.entity';
 import { OrganisationUnitUserEntity } from './organisation-unit-user.entity';
 
-import {
-  AccessorOrganisationRoleEnum,
-  InnovatorOrganisationRoleEnum,
-} from '../../enums/organisation.enums';
+import { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../../enums/organisation.enums';
 
 const roles =
-  Object.values(AccessorOrganisationRoleEnum).join(',') +
-  ',' +
-  Object.values(InnovatorOrganisationRoleEnum).join(',');
+  Object.values(AccessorOrganisationRoleEnum).join(',') + ',' + Object.values(InnovatorOrganisationRoleEnum).join(',');
 
 @Entity('organisation_user')
 @Unique('uc_organisation_user_idx', ['organisation', 'user'])
@@ -43,7 +29,7 @@ export class OrganisationUserEntity extends BaseEntity {
   @JoinColumn({ name: 'user_id' })
   user: UserEntity;
 
-  @OneToMany(() => OrganisationUnitUserEntity, (record) => record.organisationUser)
+  @OneToMany(() => OrganisationUnitUserEntity, record => record.organisationUser)
   userOrganisationUnits: OrganisationUnitUserEntity[];
 
   static new(data: Partial<OrganisationUserEntity>): OrganisationUserEntity {

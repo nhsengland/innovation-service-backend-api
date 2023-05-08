@@ -7,7 +7,7 @@ const status = [
   InnovationCollaboratorStatusEnum.CANCELLED,
   InnovationCollaboratorStatusEnum.DECLINED,
   InnovationCollaboratorStatusEnum.LEFT,
-  InnovationCollaboratorStatusEnum.REMOVED,
+  InnovationCollaboratorStatusEnum.REMOVED
 ] as const;
 
 export type ParamsType = {
@@ -16,7 +16,7 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  collaboratorId: Joi.string().guid().required(),
+  collaboratorId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -28,7 +28,7 @@ export const BodySchema = Joi.object<BodyType>({
     is: 'OWNER',
     then: Joi.string()
       .valid(InnovationCollaboratorStatusEnum.CANCELLED, InnovationCollaboratorStatusEnum.REMOVED)
-      .optional(),
+      .optional()
   }).when('$collaboratorType', {
     is: 'COLLABORATOR',
     then: Joi.string()
@@ -37,11 +37,11 @@ export const BodySchema = Joi.object<BodyType>({
         InnovationCollaboratorStatusEnum.DECLINED,
         InnovationCollaboratorStatusEnum.LEFT
       )
-      .optional(),
+      .optional()
   }),
   role: Joi.when('$collaboratorType', {
     is: 'OWNER',
     then: Joi.string().max(25).allow(null).optional(),
-    otherwise: Joi.forbidden(),
-  }),
+    otherwise: Joi.forbidden()
+  })
 }).required();

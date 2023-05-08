@@ -2,12 +2,7 @@ import { injectable } from 'inversify';
 
 import { TermsOfUseEntity, TermsOfUseUserEntity, UserEntity } from '@users/shared/entities';
 import { ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
-import {
-  BadRequestError,
-  NotFoundError,
-  UnprocessableEntityError,
-  UserErrorsEnum,
-} from '@users/shared/errors';
+import { BadRequestError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 
 import { BaseService } from './base.service';
 
@@ -50,7 +45,7 @@ export class TermsOfUseService extends BaseService {
       .addSelect('termsOfUse.released_at', 'releasedAt')
       .addSelect('termsOfUseUsers.accepted_at', 'acceptedAt')
       .innerJoin(
-        (subQuery) =>
+        subQuery =>
           subQuery
             .select('MAX(subQ_TermsOfUse.released_at)', 'maxReleasedAt')
             .from(TermsOfUseEntity, 'subQ_TermsOfUse')
@@ -58,12 +53,9 @@ export class TermsOfUseService extends BaseService {
         'maxTermsOfUse',
         'maxTermsOfUse.maxReleasedAt = termsOfUse.releasedAt'
       )
-      .leftJoin(
-        'termsOfUse.termsOfUseUsers',
-        'termsOfUseUsers',
-        'termsOfUseUsers.user_id = :userId',
-        { userId: user.id }
-      )
+      .leftJoin('termsOfUse.termsOfUseUsers', 'termsOfUseUsers', 'termsOfUseUsers.user_id = :userId', {
+        userId: user.id
+      })
       .getRawOne();
 
     if (!dbTermsOfUse) {
@@ -75,7 +67,7 @@ export class TermsOfUseService extends BaseService {
       name: dbTermsOfUse.name,
       summary: dbTermsOfUse.summary,
       releasedAt: dbTermsOfUse.releasedAt,
-      isAccepted: !!dbTermsOfUse.acceptedAt,
+      isAccepted: !!dbTermsOfUse.acceptedAt
     };
   }
 
@@ -87,13 +79,13 @@ export class TermsOfUseService extends BaseService {
 
     if (!dbTermsOfUse.releasedAt) {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_TERMS_OF_USE_INVALID, {
-        message: 'Unreleased terms of use',
+        message: 'Unreleased terms of use'
       });
     }
 
     if (dbTermsOfUse.isAccepted) {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_TERMS_OF_USE_INVALID, {
-        message: 'Already accepted',
+        message: 'Already accepted'
       });
     }
 
@@ -101,12 +93,12 @@ export class TermsOfUseService extends BaseService {
       TermsOfUseUserEntity.new({
         termsOfUse: TermsOfUseEntity.new({ id: dbTermsOfUse.id }),
         user: UserEntity.new({ id: requestUser.id }),
-        acceptedAt: new Date(),
+        acceptedAt: new Date()
       })
     );
 
     return {
-      id: dbTermsOfUse.id,
+      id: dbTermsOfUse.id
     };
   }
 }

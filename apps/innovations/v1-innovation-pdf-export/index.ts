@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
   DomainServiceSymbol,
-  DomainServiceType,
+  DomainServiceType
 } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 import { container } from '../_config';
@@ -18,20 +18,14 @@ class PostInnovationPDFExport {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     try {
-      const authorizationService = container.get<AuthorizationServiceType>(
-        AuthorizationServiceSymbol
-      );
+      const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
       const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
       const pdfService = container.get<PDFService>(SYMBOLS.PDFService);
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService
-        .validate(context)
-        .checkInnovatorType()
-        .checkAccessorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
 
       const domainContext = auth.getContext();
 
@@ -43,17 +37,13 @@ class PostInnovationPDFExport {
 
       const documentDefinition = pdfService.buildDocumentHeaderDefinition(innovation.name, body);
 
-      const pdf = await pdfService.generatePDF(
-        domainContext,
-        params.innovationId,
-        documentDefinition
-      );
+      const pdf = await pdfService.generatePDF(domainContext, params.innovationId, documentDefinition);
 
       context.res = {
         body: pdf,
         headers: {
-          'Content-Type': 'application/pdf',
-        },
+          'Content-Type': 'application/pdf'
+        }
       };
 
       return;
@@ -64,32 +54,26 @@ class PostInnovationPDFExport {
   }
 }
 
-export default openapi(
-  PostInnovationPDFExport.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/pdf',
-  {
-    post: {
-      description: 'Generate PDF for an innovation',
-      tags: ['[v1] Innovations'],
-      operationId: 'v1-innovation-pdf',
-      parameters: [
-        { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-      ],
-      requestBody: {
-        description: 'The thread details',
-        required: true,
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-            },
-          },
-        },
-      },
-      responses: {
-        200: { description: 'Ok.' },
-        400: { description: 'Bad request.' },
-      },
+export default openapi(PostInnovationPDFExport.httpTrigger as AzureFunction, '/v1/{innovationId}/pdf', {
+  post: {
+    description: 'Generate PDF for an innovation',
+    tags: ['[v1] Innovations'],
+    operationId: 'v1-innovation-pdf',
+    parameters: [{ in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      description: 'The thread details',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object'
+          }
+        }
+      }
     },
+    responses: {
+      200: { description: 'Ok.' },
+      400: { description: 'Bad request.' }
+    }
   }
-);
+});

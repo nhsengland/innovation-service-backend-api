@@ -15,27 +15,12 @@ import { UsersService } from '../_services/users.service';
 import { ValidationService } from '../_services/validation.service';
 
 // Specific inversify container configuration.
-container
-  .bind<OrganisationsService>(SYMBOLS.OrganisationsService)
-  .to(OrganisationsService)
-  .inSingletonScope();
-container
-  .bind<StatisticsService>(SYMBOLS.StatisticsService)
-  .to(StatisticsService)
-  .inSingletonScope();
-container
-  .bind<TermsOfUseService>(SYMBOLS.TermsOfUseService)
-  .to(TermsOfUseService)
-  .inSingletonScope();
+container.bind<OrganisationsService>(SYMBOLS.OrganisationsService).to(OrganisationsService).inSingletonScope();
+container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
+container.bind<TermsOfUseService>(SYMBOLS.TermsOfUseService).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();
-container
-  .bind<ValidationService>(SYMBOLS.ValidationService)
-  .to(ValidationService)
-  .inSingletonScope();
-container
-  .bind<AnnouncementsService>(SYMBOLS.AnnouncementsService)
-  .to(AnnouncementsService)
-  .inSingletonScope();
+container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationService).inSingletonScope();
+container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
   console.log('Initializing Admin app function');
@@ -51,9 +36,7 @@ export const startup = async (): Promise<void> => {
     if (process.env['LOCAL_MODE'] ?? false) {
       console.group('Generating documentation...');
 
-      const response = await httpService
-        .getHttpInstance()
-        .get(`http://localhost:7071/api/swagger.json`);
+      const response = await httpService.getHttpInstance().get(`http://localhost:7071/api/swagger.json`);
       console.log('Saving swagger file');
       fs.writeFileSync(
         `${join(__dirname, '../../../..')}/apps/admin/.apim/swagger.yaml`,

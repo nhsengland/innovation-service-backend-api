@@ -15,9 +15,7 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1MeTermsOfUseInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
@@ -40,7 +38,7 @@ class V1MeTermsOfUseInfo {
         name: result.name,
         summary: result.summary,
         releasedAt: result.releasedAt,
-        isAccepted: result.isAccepted,
+        isAccepted: result.isAccepted
       });
       return;
     } catch (error) {
@@ -59,7 +57,7 @@ export default openApi(V1MeTermsOfUseInfo.httpTrigger as AzureFunction, '/v1/me/
     parameters: [],
     responses: {
       200: { description: 'Successful operation' },
-      404: { description: 'Terms of use not found' },
-    },
-  },
+      404: { description: 'Terms of use not found' }
+    }
+  }
 });

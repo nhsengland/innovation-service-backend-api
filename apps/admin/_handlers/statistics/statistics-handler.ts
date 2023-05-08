@@ -3,7 +3,7 @@ import { container } from '../../_config';
 import type {
   ADMIN_STATISTICS_CONFIG,
   ADMIN_STATISTICS_TYPES,
-  StatisticsResponse,
+  StatisticsResponse
 } from '../../_config/statistics.config';
 import type { StatisticsService } from '../../_services/statistics.service';
 import { SYMBOLS } from '../../_services/symbols';

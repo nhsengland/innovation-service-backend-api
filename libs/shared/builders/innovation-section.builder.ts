@@ -12,7 +12,7 @@ export class InnovationSectionBuilder {
     this.innovationSection = {
       section: 'COST_OF_INNOVATION',
       status: InnovationSectionStatusEnum.NOT_STARTED,
-      innovation: innovation,
+      innovation: innovation
     };
 
     this.innovation = innovation;
@@ -35,9 +35,7 @@ export class InnovationSectionBuilder {
 
   async build(entityManager: EntityManager): Promise<InnovationSectionEntity[]> {
     if (!this.generateAll) {
-      const innovationSection = await entityManager
-        .getRepository(InnovationSectionEntity)
-        .save(this.innovationSection);
+      const innovationSection = await entityManager.getRepository(InnovationSectionEntity).save(this.innovationSection);
       return [innovationSection];
     }
 
@@ -47,7 +45,7 @@ export class InnovationSectionBuilder {
       const sectionData = InnovationSectionEntity.new({
         innovation: this.innovation,
         section,
-        status: InnovationSectionStatusEnum.SUBMITTED,
+        status: InnovationSectionStatusEnum.SUBMITTED
       });
 
       sections.push(await entityManager.getRepository(InnovationSectionEntity).save(sectionData));

@@ -26,7 +26,7 @@ describe('Innovation Sections Suite', () => {
 
   beforeEach(async () => {
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
-      displayName: randText(),
+      displayName: randText()
     } as any);
     em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
@@ -50,13 +50,9 @@ describe('Innovation Sections Suite', () => {
       .setStatus(InnovationActionStatusEnum.REQUESTED)
       .build(em);
 
-    const sectionsList = await sut.getInnovationSectionsList(
-      testData.domainContexts.innovator,
-      innovation.id,
-      em
-    );
+    const sectionsList = await sut.getInnovationSectionsList(testData.domainContexts.innovator, innovation.id, em);
 
-    const actionCount = sectionsList.map((s) => s.openActionsCount).reduce((a, b) => a + b, 0);
+    const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
 
     expect(sectionsList).toBeDefined();
     expect(actionCount).toEqual(2); // one from the database plus the one we added
@@ -77,13 +73,9 @@ describe('Innovation Sections Suite', () => {
       .setStatus(InnovationActionStatusEnum.SUBMITTED)
       .build(em);
 
-    const sectionsList = await sut.getInnovationSectionsList(
-      testData.domainContexts.accessor,
-      innovation.id,
-      em
-    );
+    const sectionsList = await sut.getInnovationSectionsList(testData.domainContexts.accessor, innovation.id, em);
 
-    const actionCount = sectionsList.map((s) => s.openActionsCount).reduce((a, b) => a + b, 0);
+    const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
 
     expect(sectionsList).toBeDefined();
     expect(actionCount).toEqual(1); // The DB has no record in submitted status and we added one
@@ -108,9 +100,7 @@ describe('Innovation Sections Suite', () => {
   it('should not get draft section info as accessor', async () => {
     // arrange
 
-    const innovation = await new InnovationBuilder()
-      .setOwner(testData.baseUsers.innovator)
-      .build(em);
+    const innovation = await new InnovationBuilder().setOwner(testData.baseUsers.innovator).build(em);
 
     const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
     await new InnovationSectionBuilder(innovation)
@@ -150,9 +140,7 @@ describe('Innovation Sections Suite', () => {
   it('should submit a section', async () => {
     // arrange
 
-    const innovation = await new InnovationBuilder()
-      .setOwner(testData.baseUsers.innovator)
-      .build(em);
+    const innovation = await new InnovationBuilder().setOwner(testData.baseUsers.innovator).build(em);
 
     const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
     await new InnovationSectionBuilder(innovation)
@@ -160,12 +148,7 @@ describe('Innovation Sections Suite', () => {
       .setStatus(InnovationSectionStatusEnum.DRAFT)
       .build(em);
 
-    const section = await sut.submitInnovationSection(
-      testData.domainContexts.innovator,
-      innovation.id,
-      sectionKey,
-      em
-    );
+    const section = await sut.submitInnovationSection(testData.domainContexts.innovator, innovation.id, sectionKey, em);
 
     // assert
     expect(section.id).toBeDefined();
@@ -186,7 +169,7 @@ describe('Innovation Sections Suite', () => {
         evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
         description: randText(),
         summary: randText(),
-        files: [file.id],
+        files: [file.id]
       },
       em
     );
@@ -202,9 +185,7 @@ describe('Innovation Sections Suite', () => {
     const innovation = testData.innovation;
     const file = await TestsLegacyHelper.TestDataBuilder.addFileToInnovation(innovation, em);
 
-    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(
-      (et) => et !== 'CLINICAL_OR_CARE'
-    );
+    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(et => et !== 'CLINICAL_OR_CARE');
 
     await sut.createInnovationEvidence(
       { id: innovator.id },
@@ -214,7 +195,7 @@ describe('Innovation Sections Suite', () => {
         evidenceType: 'OTHER',
         description: randText(),
         summary: randText(),
-        files: [file.id],
+        files: [file.id]
       },
       em
     );

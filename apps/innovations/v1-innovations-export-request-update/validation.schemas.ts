@@ -16,27 +16,24 @@ export const BodySchema = Joi.object<BodyType>({
   status: Joi.when('$userType', [
     {
       is: 'ACCESSOR',
-      then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required(),
+      then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required()
     },
     {
       is: 'QUALIFYING_ACCESSOR',
       then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required(),
       otherwise: Joi.string()
-        .valid(
-          InnovationExportRequestStatusEnum.REJECTED,
-          InnovationExportRequestStatusEnum.APPROVED
-        )
-        .required(),
-    },
+        .valid(InnovationExportRequestStatusEnum.REJECTED, InnovationExportRequestStatusEnum.APPROVED)
+        .required()
+    }
   ]),
   rejectReason: Joi.when('status', {
     is: InnovationExportRequestStatusEnum.REJECTED,
     then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
-    otherwise: Joi.forbidden(),
-  }),
+    otherwise: Joi.forbidden()
+  })
 });
 
 export const PathParamsSchema = Joi.object<PathParamsType>({
   innovationId: Joi.string().uuid().required(),
-  requestId: Joi.string().uuid().required(),
+  requestId: Joi.string().uuid().required()
 }).required();

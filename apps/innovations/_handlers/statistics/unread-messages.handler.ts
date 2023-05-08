@@ -2,7 +2,7 @@ import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/
 import { container } from '../../_config';
 import type {
   InnovationStatisticsParamsTemplateType,
-  InnovationStatisticsTemplateType,
+  InnovationStatisticsTemplateType
 } from '../../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import type { StatisticsService } from '../../_services/statistics.service';
@@ -18,9 +18,7 @@ export class UnreadMessagesStatisticsHandler extends InnovationsStatisticsHandle
     super(requestUser, domainContext, data);
   }
 
-  async run(): Promise<
-    InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]
-  > {
+  async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_COUNTER]> {
     const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
     const actions = await statisticsService.getUnreadMessages(
@@ -30,7 +28,7 @@ export class UnreadMessagesStatisticsHandler extends InnovationsStatisticsHandle
 
     return {
       count: actions.count,
-      lastSubmittedAt: actions.lastSubmittedAt,
+      lastSubmittedAt: actions.lastSubmittedAt
     };
   }
 }

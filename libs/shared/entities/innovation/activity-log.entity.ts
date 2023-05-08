@@ -1,11 +1,4 @@
-import {
-  Column,
-  DeepPartial,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, DeepPartial, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 

@@ -13,9 +13,7 @@ const migrateCategory = (
   }
 };
 
-const migrateAreas = (
-  areas?: Document202209Catalog.catalogAreas
-): Document202304Catalog.catalogAreas | undefined => {
+const migrateAreas = (areas?: Document202209Catalog.catalogAreas): Document202304Catalog.catalogAreas | undefined => {
   switch (areas) {
     case 'DIGITALLY_ENABLING_PRIMARY_CARE':
       return 'DIGITALISING_SYSTEM';
@@ -92,40 +90,40 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
         .filter((u): u is Document202304Catalog.catalogCareSettings => u !== undefined),
       otherCareSetting: original.INNOVATION_DESCRIPTION?.otherCareSetting,
       mainPurpose: migrateMainPurpose(original.INNOVATION_DESCRIPTION?.mainPurpose),
-      supportDescription: original.INNOVATION_DESCRIPTION?.moreSupportDescription,
+      supportDescription: original.INNOVATION_DESCRIPTION?.moreSupportDescription
     },
     UNDERSTANDING_OF_NEEDS: {
       problemsTackled: original.VALUE_PROPOSITION?.problemsTackled,
-      diseasesConditionsImpact: original.UNDERSTANDING_OF_NEEDS?.diseasesConditionsImpact,
+      diseasesConditionsImpact: original.UNDERSTANDING_OF_NEEDS?.diseasesConditionsImpact
     },
     EVIDENCE_OF_EFFECTIVENESS: {
-      hasEvidence: original.EVIDENCE_OF_EFFECTIVENESS?.hasEvidence === 'YES' ? 'YES' : 'NOT_YET',
+      hasEvidence: original.EVIDENCE_OF_EFFECTIVENESS?.hasEvidence === 'YES' ? 'YES' : 'NOT_YET'
     },
     MARKET_RESEARCH: {
       hasMarketResearch: original.MARKET_RESEARCH?.hasMarketResearch,
-      marketResearch: original.MARKET_RESEARCH?.marketResearch,
+      marketResearch: original.MARKET_RESEARCH?.marketResearch
     },
     CURRENT_CARE_PATHWAY: {
       innovationPathwayKnowledge: original.CURRENT_CARE_PATHWAY?.innovationPathwayKnowledge,
-      potentialPathway: original.CURRENT_CARE_PATHWAY?.potentialPathway,
+      potentialPathway: original.CURRENT_CARE_PATHWAY?.potentialPathway
     },
     TESTING_WITH_USERS: {
       testedWithIntendedUsers: original.TESTING_WITH_USERS?.hasTests,
       userTests: original.TESTING_WITH_USERS?.userTests,
-      files: original.TESTING_WITH_USERS?.files,
+      files: original.TESTING_WITH_USERS?.files
     },
     REGULATIONS_AND_STANDARDS: original.REGULATIONS_AND_STANDARDS ?? {},
     INTELLECTUAL_PROPERTY: original.INTELLECTUAL_PROPERTY ?? {},
     REVENUE_MODEL: original.REVENUE_MODEL ?? {},
     COST_OF_INNOVATION: {
       ...original.COST_OF_INNOVATION,
-      costComparison: original.COMPARATIVE_COST_BENEFIT?.costComparison,
+      costComparison: original.COMPARATIVE_COST_BENEFIT?.costComparison
     },
     DEPLOYMENT: {
       ...original.IMPLEMENTATION_PLAN,
-      deploymentPlans: original.IMPLEMENTATION_PLAN?.deploymentPlans?.map((plan) => plan.name),
+      deploymentPlans: original.IMPLEMENTATION_PLAN?.deploymentPlans?.map(plan => plan.name)
     },
-    evidences: original.EVIDENCE_OF_EFFECTIVENESS?.evidences?.map((evidence) => ({
+    evidences: original.EVIDENCE_OF_EFFECTIVENESS?.evidences?.map(evidence => ({
       evidenceSubmitType:
         evidence.evidenceType === 'OTHER'
           ? 'OTHER_EFFECTIVENESS'
@@ -135,7 +133,7 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
       evidenceType: evidence.clinicalEvidenceType,
       description: evidence.description,
       summary: evidence.summary ?? '', // Don't believe this is possible but TS doesn't know that because of previous schema, if it was null then we just set it to empty string
-      files: evidence.files ?? [],
-    })),
+      files: evidence.files ?? []
+    }))
   };
 };

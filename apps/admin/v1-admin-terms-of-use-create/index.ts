@@ -16,9 +16,7 @@ import { BodySchema, BodyType } from './validation.schemas';
 class V1AdminTermsOfUseCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
@@ -51,21 +49,21 @@ export default openApi(V1AdminTermsOfUseCreate.httpTrigger as AzureFunction, '/v
             schema: {
               type: 'object',
               properties: {
-                unitId: { type: 'string', description: 'Id of the created terms of use.' },
-              },
-            },
-          },
-        },
+                unitId: { type: 'string', description: 'Id of the created terms of use.' }
+              }
+            }
+          }
+        }
       },
       '400': {
-        description: 'Bad request.',
+        description: 'Bad request.'
       },
       '401': {
-        description: 'The user is not authorized to create terms of use.',
+        description: 'The user is not authorized to create terms of use.'
       },
       '500': {
-        description: 'An error occurred while creating the terms of use.',
-      },
-    },
-  },
+        description: 'An error occurred while creating the terms of use.'
+      }
+    }
+  }
 });

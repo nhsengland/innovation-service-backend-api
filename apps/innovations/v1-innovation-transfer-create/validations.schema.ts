@@ -8,5 +8,5 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   email: Joi.string().email().required(),
   innovationId: Joi.string().guid().required(),
-  ownerToCollaborator: Joi.boolean().required(),
+  ownerToCollaborator: Joi.boolean().required()
 }).required();

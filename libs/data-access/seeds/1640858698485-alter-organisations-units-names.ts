@@ -8,7 +8,7 @@ export class alterOrganisationsUnitsNames1640858698485 {
   async up(): Promise<void> {
     const data = [
       { acronym: 'NOCRI/NIHR', name: 'National Institute for Health Research' },
-      { acronym: 'SHTG', name: 'Scottish Health Technologies Group' },
+      { acronym: 'SHTG', name: 'Scottish Health Technologies Group' }
     ];
 
     const orgUnitRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity);
@@ -16,7 +16,7 @@ export class alterOrganisationsUnitsNames1640858698485 {
     // UPDATE Organisation Units Names
     for (const orgUnitObj of data) {
       const filterOptions = {
-        where: { acronym: orgUnitObj.acronym },
+        where: { acronym: orgUnitObj.acronym }
       };
       const orgUnit = await orgUnitRepo.findOne(filterOptions);
 
@@ -31,7 +31,7 @@ export class alterOrganisationsUnitsNames1640858698485 {
   async down(): Promise<void> {
     const data = [
       { acronym: 'NOCRI/NIHR', name: 'NOCRI/NIHR' },
-      { acronym: 'SHTG', name: 'Scottish Health Technology Group' },
+      { acronym: 'SHTG', name: 'Scottish Health Technology Group' }
     ];
 
     const orgUnitRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity);

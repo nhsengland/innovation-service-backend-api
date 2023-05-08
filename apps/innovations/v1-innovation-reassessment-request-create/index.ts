@@ -17,9 +17,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1InnovationReassessmentRequestCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
       SYMBOLS.InnovationAssessmentsService
     );
@@ -33,7 +31,7 @@ class V1InnovationReassessmentRequestCreate {
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation({
-          status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.PAUSED],
+          status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.PAUSED]
         })
         .verify();
       const requestUser = auth.getUserInfo();
@@ -71,9 +69,9 @@ export default openApi(
           required: true,
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       requestBody: {
         description: 'Create a reassessment request for an innovation.',
@@ -86,42 +84,42 @@ export default openApi(
                 updatedInnovationRecord: {
                   type: 'string',
                   description: 'Updated innovation record since submitting the last assessment.',
-                  example: 'YES',
+                  example: 'YES'
                 },
                 description: {
                   type: 'string',
                   description:
-                    'Changes made to the innovation since submitting the last assessment and what support you need next',
-                },
+                    'Changes made to the innovation since submitting the last assessment and what support you need next'
+                }
               },
-              required: ['updatedInnovationRecord', 'changes'],
-            },
-          },
-        },
+              required: ['updatedInnovationRecord', 'changes']
+            }
+          }
+        }
       },
       responses: {
         200: {
-          description: 'Returns the reassessment request and the cloned assessment id',
+          description: 'Returns the reassessment request and the cloned assessment id'
         },
         400: {
-          description: 'Bad request',
+          description: 'Bad request'
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not found',
+          description: 'Not found'
         },
         422: {
-          description: 'Unprocessable entity',
+          description: 'Unprocessable entity'
         },
         500: {
-          description: 'Internal server error',
-        },
-      },
-    },
+          description: 'Internal server error'
+        }
+      }
+    }
   }
 );

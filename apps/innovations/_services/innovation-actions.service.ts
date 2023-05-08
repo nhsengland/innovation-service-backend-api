@@ -7,7 +7,7 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   UserEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -18,13 +18,13 @@ import {
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
-  ThreadContextTypeEnum,
+  ThreadContextTypeEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
-  UnprocessableEntityError,
+  UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import {
@@ -33,18 +33,11 @@ import {
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
   NotifierServiceSymbol,
-  NotifierServiceType,
+  NotifierServiceType
 } from '@innovations/shared/services';
-import {
-  ActivityLogListParamsType,
-  DomainContextType,
-  isAccessorDomainContextType,
-} from '@innovations/shared/types';
+import { ActivityLogListParamsType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
-import {
-  CurrentCatalogTypes,
-  CurrentDocumentConfig,
-} from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
@@ -75,9 +68,7 @@ export class InnovationActionsService extends BaseService {
       allActions?: boolean;
       fields: 'notifications'[];
     },
-    pagination: PaginationQueryParamsType<
-      'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'
-    >,
+    pagination: PaginationQueryParamsType<'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'>,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
@@ -122,7 +113,7 @@ export class InnovationActionsService extends BaseService {
         'createdByUserRole.role',
         'organisationUnit.id',
         'organisationUnit.acronym',
-        'organisationUnit.name',
+        'organisationUnit.name'
       ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
@@ -135,10 +126,10 @@ export class InnovationActionsService extends BaseService {
 
     if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       query.leftJoin('innovation.collaborators', 'collaborator', 'collaborator.status = :status', {
-        status: InnovationCollaboratorStatusEnum.ACTIVE,
+        status: InnovationCollaboratorStatusEnum.ACTIVE
       });
       query.andWhere(
-        new Brackets((qb) => {
+        new Brackets(qb => {
           qb.andWhere('innovation.owner_id = :ownerId', { ownerId: domainContext.id });
           qb.orWhere('collaborator.user_id = :userId', { userId: domainContext.id });
         })
@@ -153,8 +144,8 @@ export class InnovationActionsService extends BaseService {
         assessmentInnovationStatus: [
           InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           InnovationStatusEnum.NEEDS_ASSESSMENT,
-          InnovationStatusEnum.IN_PROGRESS,
-        ],
+          InnovationStatusEnum.IN_PROGRESS
+        ]
       });
     }
 
@@ -167,18 +158,18 @@ export class InnovationActionsService extends BaseService {
         { accessorSupportsOrganisationUnitId: domainContext.organisation.organisationUnit.id }
       );
       query.andWhere('innovation.status IN (:...accessorInnovationStatus)', {
-        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE],
+        accessorInnovationStatus: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.COMPLETE]
       });
       query.andWhere('shares.id = :accessorOrganisationId', {
-        accessorOrganisationId: domainContext.organisation.id,
+        accessorOrganisationId: domainContext.organisation.id
       });
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
           accessorSupportsSupportStatuses01: [
             InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.COMPLETE,
-          ],
+            InnovationSupportStatusEnum.COMPLETE
+          ]
         });
         // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }
@@ -195,7 +186,7 @@ export class InnovationActionsService extends BaseService {
 
     if (filters.innovationName) {
       query.andWhere('innovation.name LIKE :innovationName', {
-        innovationName: `%${filters.innovationName}%`,
+        innovationName: `%${filters.innovationName}%`
       });
     }
 
@@ -209,7 +200,7 @@ export class InnovationActionsService extends BaseService {
 
     if (filters.innovationStatus && filters.innovationStatus.length > 0) {
       query.andWhere('innovation.status IN (:...innovationStatuses)', {
-        innovationStatuses: filters.innovationStatus,
+        innovationStatuses: filters.innovationStatus
       });
     }
 
@@ -217,7 +208,7 @@ export class InnovationActionsService extends BaseService {
       query.andWhere('createdByUser.id = :createdBy', { createdBy: domainContext.id });
       if (isAccessorDomainContextType(domainContext)) {
         query.andWhere('innovationSupport.organisation_unit_id = :orgUnitId', {
-          orgUnitId: domainContext.organisation.organisationUnit.id,
+          orgUnitId: domainContext.organisation.organisationUnit.id
         });
       }
     }
@@ -270,26 +261,23 @@ export class InnovationActionsService extends BaseService {
     if (filters.fields?.includes('notifications')) {
       notifications = await this.domainService.innovations.getUnreadNotifications(
         domainContext.currentRole.id,
-        actions.map((action) => action.id),
+        actions.map(action => action.id),
         em
       );
     }
 
     const usersIds = actions
-      .flatMap((action) => [
-        action.createdByUser.identityId,
-        action.updatedByUserRole?.user.identityId,
-      ])
+      .flatMap(action => [action.createdByUser.identityId, action.updatedByUserRole?.user.identityId])
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
-    const data = actions.map((action) => ({
+    const data = actions.map(action => ({
       id: action.id,
       displayId: action.displayId,
       description: action.description,
       innovation: {
         id: action.innovationSection.innovation.id,
-        name: action.innovationSection.innovation.name,
+        name: action.innovationSection.innovation.name
       },
       status: action.status,
       section: action.innovationSection.section,
@@ -297,10 +285,9 @@ export class InnovationActionsService extends BaseService {
       updatedAt: action.updatedAt,
       updatedBy: {
         name:
-          (action.updatedByUserRole &&
-            usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ??
+          (action.updatedByUserRole && usersInfo.get(action.updatedByUserRole.user.identityId)?.displayName) ??
           '[deleted account]',
-        role: action.updatedByUserRole?.role,
+        role: action.updatedByUserRole?.role
       },
       createdBy: {
         id: action.createdByUser.id,
@@ -311,16 +298,16 @@ export class InnovationActionsService extends BaseService {
               organisationUnit: {
                 id: action.innovationSupport?.organisationUnit?.id,
                 name: action.innovationSupport?.organisationUnit?.name,
-                acronym: action.innovationSupport?.organisationUnit?.acronym,
-              },
+                acronym: action.innovationSupport?.organisationUnit?.acronym
+              }
             }
-          : {}),
+          : {})
       },
       ...(!filters.fields?.includes('notifications')
         ? {}
         : {
-            notifications: notifications.filter((item) => item.contextId === action.id).length,
-          }),
+            notifications: notifications.filter(item => item.contextId === action.id).length
+          })
     }));
 
     return { count, data };
@@ -373,7 +360,7 @@ export class InnovationActionsService extends BaseService {
         'updatedByUserRole.id',
         'updatedByUserRole.role',
         'updatedByUser.id',
-        'updatedByUser.identityId',
+        'updatedByUser.identityId'
       ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
@@ -394,7 +381,7 @@ export class InnovationActionsService extends BaseService {
       const activityLogDeclineReason = await em
         .createQueryBuilder(ActivityLogEntity, 'activityLog')
         .where('activityLog.innovation_id = :innovationId', {
-          innovationId: dbAction.innovationSection.innovation.id,
+          innovationId: dbAction.innovationSection.innovation.id
         })
         .andWhere('activity = :activity', { activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE })
         .andWhere("JSON_VALUE(param, '$.actionId') = :actionId", { actionId })
@@ -406,15 +393,13 @@ export class InnovationActionsService extends BaseService {
       }
     }
 
-    const createdByUser = await this.identityProviderService.getUserInfo(
-      dbAction.createdByUserRole.user.identityId
-    );
+    const createdByUser = await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId);
 
     let lastUpdatedByUserName = '[deleted user]';
     if (dbAction.updatedByUserRole) {
       lastUpdatedByUserName =
-        (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))
-          ?.displayName || 'unknown user';
+        (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))?.displayName ||
+        'unknown user';
     }
 
     return {
@@ -429,9 +414,8 @@ export class InnovationActionsService extends BaseService {
         name: lastUpdatedByUserName,
         role: dbAction.updatedByUserRole?.role,
         ...(dbAction.updatedByUserRole?.role === ServiceRoleEnum.INNOVATOR && {
-          isOwner:
-            dbAction.innovationSection.innovation.owner?.id === dbAction.updatedByUserRole.user.id,
-        }),
+          isOwner: dbAction.innovationSection.innovation.owner?.id === dbAction.updatedByUserRole.user.id
+        })
       },
       createdBy: {
         id: dbAction.createdByUserRole.user.id,
@@ -441,11 +425,11 @@ export class InnovationActionsService extends BaseService {
           organisationUnit: {
             id: dbAction.createdByUserRole.organisationUnit.id,
             name: dbAction.createdByUserRole.organisationUnit.name,
-            acronym: dbAction.createdByUserRole.organisationUnit.acronym,
-          },
-        }),
+            acronym: dbAction.createdByUserRole.organisationUnit.acronym
+          }
+        })
       },
-      ...(declineReason ? { declineReason } : {}),
+      ...(declineReason ? { declineReason } : {})
     };
   }
 
@@ -472,15 +456,13 @@ export class InnovationActionsService extends BaseService {
     }
 
     // Get section & support data.
-    const innovationSection = (await innovation.sections).find(
-      (sec) => sec.section === data.section
-    );
+    const innovationSection = (await innovation.sections).find(sec => sec.section === data.section);
     if (!innovationSection) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
     const innovationSupport = innovation.innovationSupports.find(
-      (is) => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
+      is => is.organisationUnit.id === domainContext.organisation?.organisationUnit?.id
     );
 
     let actionCounter = (await innovationSection.actions).length;
@@ -496,7 +478,7 @@ export class InnovationActionsService extends BaseService {
       createdBy: user.id,
       updatedBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
-      updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
+      updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
     });
 
     if (innovationSupport) {
@@ -510,7 +492,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     // Add new action to db and log action creation to innovation's activity log
-    const result = await connection.transaction(async (transaction) => {
+    const result = await connection.transaction(async transaction => {
       const actionResult = await transaction.save<InnovationActionEntity>(actionObj);
 
       await this.domainService.innovations.addActivityLog(
@@ -520,7 +502,7 @@ export class InnovationActionsService extends BaseService {
           sectionId: data.section,
           actionId: actionResult.id,
           comment: { value: data.description },
-          role: domainContext.currentRole.role as ServiceRoleEnum,
+          role: domainContext.currentRole.role as ServiceRoleEnum
         }
       );
 
@@ -532,7 +514,7 @@ export class InnovationActionsService extends BaseService {
       NotifierTypeEnum.ACTION_CREATION,
       {
         innovationId: innovation.id,
-        action: { id: result.id, section: data.section },
+        action: { id: result.id, section: data.section }
       },
       domainContext
     );
@@ -567,46 +549,26 @@ export class InnovationActionsService extends BaseService {
     const actionLastUpdatedByUserRole = { id: dbAction.updatedByUserRole.id, role: dbAction.updatedByUserRole.role };
 
     // Actions can only be updated from users from the same org unit
-    if (
-      dbAction.innovationSupport?.organisationUnit.id !==
-      domainContext.organisation?.organisationUnit?.id
-    ) {
+    if (dbAction.innovationSupport?.organisationUnit.id !== domainContext.organisation?.organisationUnit?.id) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_FROM_DIFFERENT_UNIT);
     }
 
-    if (
-      ![InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED].includes(
-        dbAction.status
-      )
-    ) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS
-      );
+    if (![InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED].includes(dbAction.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
     if (
       (dbAction.status === InnovationActionStatusEnum.REQUESTED &&
         data.status !== InnovationActionStatusEnum.CANCELLED) ||
       (dbAction.status === InnovationActionStatusEnum.SUBMITTED &&
-        ![InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.REQUESTED].includes(
-          data.status
-        ))
+        ![InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.REQUESTED].includes(data.status))
     ) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(
-      user,
-      domainContext,
-      innovationId,
-      dbAction,
-      data,
-      connection
-    );
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -649,39 +611,22 @@ export class InnovationActionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
     }
 
-    if (
-      ![InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED].includes(
-        dbAction.status
-      )
-    ) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS
-      );
+    if (![InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED].includes(dbAction.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
     if (
       (dbAction.status === InnovationActionStatusEnum.REQUESTED &&
         data.status !== InnovationActionStatusEnum.CANCELLED) ||
       (dbAction.status === InnovationActionStatusEnum.SUBMITTED &&
-        ![InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.REQUESTED].includes(
-          data.status
-        ))
+        ![InnovationActionStatusEnum.COMPLETED, InnovationActionStatusEnum.REQUESTED].includes(data.status))
     ) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(
-      user,
-      domainContext,
-      innovationId,
-      dbAction,
-      data,
-      connection
-    );
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(
@@ -692,8 +637,8 @@ export class InnovationActionsService extends BaseService {
         action: {
           id: dbAction.id,
           section: dbAction.innovationSection.section,
-          status: result.status,
-        },
+          status: result.status
+        }
       },
       domainContext
     );
@@ -722,21 +667,12 @@ export class InnovationActionsService extends BaseService {
     }
 
     if (dbAction.status !== InnovationActionStatusEnum.REQUESTED) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(
-      user,
-      domainContext,
-      innovationId,
-      dbAction,
-      data,
-      connection
-    );
+    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     await this.notifierService.send(
       { id: user.id, identityId: user.identityId },
@@ -746,9 +682,9 @@ export class InnovationActionsService extends BaseService {
         action: {
           id: dbAction.id,
           section: dbAction.innovationSection.section,
-          status: result.status,
+          status: result.status
         },
-        comment: data.message,
+        comment: data.message
       },
       domainContext
     );
@@ -762,10 +698,7 @@ export class InnovationActionsService extends BaseService {
    * @param status the status to get the subject from
    * @returns the action subject according to the status
    */
-  private getSaveActionSubject(
-    dbAction: InnovationActionEntity,
-    status: InnovationActionStatusEnum
-  ): string {
+  private getSaveActionSubject(dbAction: InnovationActionEntity, status: InnovationActionStatusEnum): string {
     switch (status) {
       case InnovationActionStatusEnum.DECLINED:
         return `Action ${dbAction.displayId} declined`;
@@ -785,7 +718,7 @@ export class InnovationActionsService extends BaseService {
   ): Promise<InnovationActionEntity> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    return connection.transaction(async (transaction) => {
+    return connection.transaction(async transaction => {
       let thread;
 
       if (data.message) {
@@ -814,7 +747,7 @@ export class InnovationActionsService extends BaseService {
           {
             actionId: dbAction.id,
             interveningUserId: actionCreatedBy?.id || '',
-            comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' },
+            comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
           }
         );
       }

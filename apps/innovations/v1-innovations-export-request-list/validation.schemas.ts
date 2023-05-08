@@ -4,14 +4,14 @@ import Joi from 'joi';
 
 enum orderFields {
   createdAt = 'createdAt',
-  updatedAt = 'updatedAt',
+  updatedAt = 'updatedAt'
 }
 
 export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -19,12 +19,12 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.keys(orderFields),
+  orderKeys: Object.keys(orderFields)
 })
   .append<QueryParamsType>({
     statuses: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationExportRequestStatusEnum)))
-      .optional(),
+      .optional()
   })
   .required();

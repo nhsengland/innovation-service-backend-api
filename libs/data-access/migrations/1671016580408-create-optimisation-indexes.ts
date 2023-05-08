@@ -20,8 +20,6 @@ export class CreateOptimisationIndexes1671016580408 implements MigrationInterfac
     await queryRunner.query(`DROP INDEX "idx_notification_innovation_context" ON "notification"`);
     await queryRunner.query(`DROP INDEX "idx_notification_user_read" ON "notification_user"`);
     await queryRunner.query(`DROP INDEX "idx_organisation_user_user_id" ON "organisation_user"`);
-    await queryRunner.query(
-      `DROP INDEX "idx_organisation_unit_user_organisation_user_id" ON "organisation_unit_user"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_organisation_unit_user_organisation_user_id" ON "organisation_unit_user"`);
   }
 }

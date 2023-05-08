@@ -11,7 +11,7 @@ export class OrganisationBuilder {
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
       isShadow: randBoolean(),
-      type: OrganisationTypeEnum.ACCESSOR,
+      type: OrganisationTypeEnum.ACCESSOR
     };
   }
 
@@ -26,9 +26,7 @@ export class OrganisationBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<OrganisationEntity> {
-    const organisation = await entityManager
-      .getRepository(OrganisationEntity)
-      .save(this.organisation);
+    const organisation = await entityManager.getRepository(OrganisationEntity).save(this.organisation);
     return organisation;
   }
 }

@@ -10,7 +10,7 @@ import {
   NotificationEntity,
   OrganisationEntity,
   UserEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@notifications/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
@@ -22,18 +22,15 @@ import {
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   OrganisationTypeEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import {
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
-  UserErrorsEnum,
+  UserErrorsEnum
 } from '@notifications/shared/errors';
-import {
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-} from '@notifications/shared/services';
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
@@ -89,16 +86,14 @@ export class RecipientsService extends BaseService {
         .getMany()) || [];
 
     return Promise.all(
-      dbUsers.map(async (item) => ({
+      dbUsers.map(async item => ({
         id: item.id,
         identityId: item.identityId,
-        roles: item.serviceRoles.map((r) => r.role),
-        emailNotificationPreferences: (await item.notificationPreferences).map(
-          (emailPreference) => ({
-            type: emailPreference.notification_id,
-            preference: emailPreference.preference,
-          })
-        ),
+        roles: item.serviceRoles.map(r => r.role),
+        emailNotificationPreferences: (await item.notificationPreferences).map(emailPreference => ({
+          type: emailPreference.notification_id,
+          preference: emailPreference.preference
+        }))
       }))
     );
   }
@@ -144,10 +139,10 @@ export class RecipientsService extends BaseService {
       email: authUser.email,
       name: authUser.displayName,
       isActive: !dbUser.lockedAt,
-      emailNotificationPreferences: (await dbUser.notificationPreferences).map((item) => ({
+      emailNotificationPreferences: (await dbUser.notificationPreferences).map(item => ({
         type: item.notification_id,
-        preference: item.preference,
-      })),
+        preference: item.preference
+      }))
     };
   }
 
@@ -169,7 +164,7 @@ export class RecipientsService extends BaseService {
       .andWhere(`users.locked_at IS NULL`)
       .getMany();
 
-    return await this.identityProviderService.getUsersList(dbUsers.map((u) => u.identityId));
+    return await this.identityProviderService.getUsersList(dbUsers.map(u => u.identityId));
   }
 
   /**
@@ -213,9 +208,7 @@ export class RecipientsService extends BaseService {
     }
 
     // This will not work if a innovator can have two INNOVATOR roles
-    const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(
-      (r) => r.role === ServiceRoleEnum.INNOVATOR
-    );
+    const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(r => r.role === ServiceRoleEnum.INNOVATOR);
 
     if (!innovationOwnerRole) {
       throw new NotFoundError(UserErrorsEnum.USER_TYPE_INVALID);
@@ -228,13 +221,11 @@ export class RecipientsService extends BaseService {
         identityId: dbInnovation.owner.identityId,
         userRole: innovationOwnerRole,
         isActive: !dbInnovation.owner.lockedAt,
-        emailNotificationPreferences: (await dbInnovation.owner.notificationPreferences).map(
-          (item) => ({
-            type: item.notification_id,
-            preference: item.preference,
-          })
-        ),
-      },
+        emailNotificationPreferences: (await dbInnovation.owner.notificationPreferences).map(item => ({
+          type: item.notification_id,
+          preference: item.preference
+        }))
+      }
     };
   }
 
@@ -266,7 +257,7 @@ export class RecipientsService extends BaseService {
         'serviceRole.id',
         'serviceRole.role',
         'notificationPreferences.notification_id',
-        'notificationPreferences.preference',
+        'notificationPreferences.preference'
       ])
       .leftJoin('innovation.collaborators', 'collaborator')
       .leftJoin('collaborator.user', 'collaboratorUser')
@@ -282,22 +273,22 @@ export class RecipientsService extends BaseService {
     return {
       name: dbInnovation.name,
       collaborators: await Promise.all(
-        dbInnovation.collaborators.map(async (c) => ({
+        dbInnovation.collaborators.map(async c => ({
           id: c.id,
           status: c.status,
           ...(c.user && {
             user: {
               id: c.user.id,
               identityId: c.user.identityId,
-              userRole: c.user.serviceRoles.find((sR) => sR.role === ServiceRoleEnum.INNOVATOR),
+              userRole: c.user.serviceRoles.find(sR => sR.role === ServiceRoleEnum.INNOVATOR),
               isActive: !c.user.lockedAt,
               emailNotificationPreferences: (
                 await c.user.notificationPreferences
-              ).map((item) => ({ type: item.notification_id, preference: item.preference })),
-            },
-          }),
+              ).map(item => ({ type: item.notification_id, preference: item.preference }))
+            }
+          })
         }))
-      ),
+      )
     };
   }
 
@@ -323,15 +314,15 @@ export class RecipientsService extends BaseService {
     }
 
     return Promise.all(
-      dbInnovation.organisationShares.map(async (organisation) => ({
+      dbInnovation.organisationShares.map(async organisation => ({
         id: organisation.id,
         name: organisation.name,
         acronym: organisation.acronym,
-        organisationUnits: (await organisation.organisationUnits).map((unit) => ({
+        organisationUnits: (await organisation.organisationUnits).map(unit => ({
           id: unit.id,
           name: unit.name,
-          acronym: unit.acronym,
-        })),
+          acronym: unit.acronym
+        }))
       }))
     );
   }
@@ -344,9 +335,7 @@ export class RecipientsService extends BaseService {
    * @returns a list of users with their email notification preferences
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
-  async innovationAssignedUsers(
-    data: { innovationId: string } | { innovationSupportId: string }
-  ): Promise<
+  async innovationAssignedUsers(data: { innovationId: string } | { innovationSupportId: string }): Promise<
     {
       id: string;
       identityId: string;
@@ -371,7 +360,7 @@ export class RecipientsService extends BaseService {
         'serviceRoles.role',
         'serviceRoles.organisation_unit_id',
         'notificationPreferences.notification_id',
-        'notificationPreferences.preference',
+        'notificationPreferences.preference'
       ])
       .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
       .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -386,7 +375,7 @@ export class RecipientsService extends BaseService {
       query.andWhere('support.innovation_id = :innovationId', { innovationId: data.innovationId });
     } else if ('innovationSupportId' in data) {
       query.andWhere('support.id = :innovationSupportId', {
-        innovationSupportId: data.innovationSupportId,
+        innovationSupportId: data.innovationSupportId
       });
     }
 
@@ -398,21 +387,21 @@ export class RecipientsService extends BaseService {
     }
 
     return Promise.all(
-      dbInnovationSupports.flatMap((support) =>
-        support.organisationUnitUsers.map(async (item) => ({
+      dbInnovationSupports.flatMap(support =>
+        support.organisationUnitUsers.map(async item => ({
           id: item.organisationUser.user.id,
           identityId: item.organisationUser.user.identityId,
-          userRole: item.organisationUser.user.serviceRoles.map((r) => ({
+          userRole: item.organisationUser.user.serviceRoles.map(r => ({
             id: r.id,
-            role: r.role,
+            role: r.role
           }))[0] ?? { id: '', role: '' as ServiceRoleEnum }, // this will never happen since it's an inner join
           organisationUnitId: support.organisationUnit.id,
-          emailNotificationPreferences: (
-            await item.organisationUser.user.notificationPreferences
-          ).map((emailPreference) => ({
-            type: emailPreference.notification_id,
-            preference: emailPreference.preference,
-          })),
+          emailNotificationPreferences: (await item.organisationUser.user.notificationPreferences).map(
+            emailPreference => ({
+              type: emailPreference.notification_id,
+              preference: emailPreference.preference
+            })
+          )
         }))
       )
     );
@@ -440,7 +429,7 @@ export class RecipientsService extends BaseService {
           'organisationUser.id',
           'user.id',
           'user.identityId',
-          'serviceRoles.id',
+          'serviceRoles.id'
         ])
         .innerJoin('innovation.innovationSupports', 'support')
         .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -452,16 +441,16 @@ export class RecipientsService extends BaseService {
         .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
         .getMany()) || [];
 
-    return dbInnovations.map((innovation) => ({
+    return dbInnovations.map(innovation => ({
       id: innovation.id,
-      assignedUsers: innovation.innovationSupports.flatMap((support) =>
-        support.organisationUnitUsers.map((item) => ({
+      assignedUsers: innovation.innovationSupports.flatMap(support =>
+        support.organisationUnitUsers.map(item => ({
           id: item.organisationUser.user.id,
           identityId: item.organisationUser.user.identityId,
-          roleId: item.organisationUser.user.serviceRoles.map((r) => r.id)[0] ?? '', // this will never happen since it's an inner join
-          organisationUnitId: support.organisationUnit.id,
+          roleId: item.organisationUser.user.serviceRoles.map(r => r.id)[0] ?? '', // this will never happen since it's an inner join
+          organisationUnitId: support.organisationUnit.id
         }))
-      ),
+      )
     }));
   }
 
@@ -485,7 +474,7 @@ export class RecipientsService extends BaseService {
         'support.id',
         'unit.id',
         'unit.name',
-        'unit.acronym',
+        'unit.acronym'
       ])
       .innerJoin('action.createdByUser', 'user')
       .innerJoin('action.createdByUserRole', 'role')
@@ -507,15 +496,15 @@ export class RecipientsService extends BaseService {
         organisationUnit: {
           id: dbAction.innovationSupport.organisationUnit.id,
           name: dbAction.innovationSupport.organisationUnit.name,
-          acronym: dbAction.innovationSupport.organisationUnit.acronym,
-        },
+          acronym: dbAction.innovationSupport.organisationUnit.acronym
+        }
       }),
       owner: {
         id: dbAction.createdByUser.id,
         identityId: dbAction.createdByUser.identityId,
         roleId: dbAction.createdByUserRole.id,
-        role: dbAction.createdByUserRole.role,
-      },
+        role: dbAction.createdByUserRole.role
+      }
     };
   }
 
@@ -553,13 +542,11 @@ export class RecipientsService extends BaseService {
         identityId: dbThread.author.identityId,
         locked: !!dbThread.author.lockedAt,
         userRole: dbThread.authorUserRole,
-        emailNotificationPreferences: (await dbThread.author.notificationPreferences).map(
-          (emailPreference) => ({
-            type: emailPreference.notification_id,
-            preference: emailPreference.preference,
-          })
-        ),
-      },
+        emailNotificationPreferences: (await dbThread.author.notificationPreferences).map(emailPreference => ({
+          type: emailPreference.notification_id,
+          preference: emailPreference.preference
+        }))
+      }
     };
   }
 
@@ -598,14 +585,14 @@ export class RecipientsService extends BaseService {
           .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
           .distinct()
           .getRawMany()
-      ).map((item) => [
+      ).map(item => [
         item.author_id,
         {
           context: {
             organisationUnitId: item.author_organisation_unit_id,
-            role: item.author_role_name,
-          },
-        },
+            role: item.author_role_name
+          }
+        }
       ])
     );
 
@@ -620,17 +607,15 @@ export class RecipientsService extends BaseService {
       .getMany();
 
     return Promise.all(
-      dbThreadUsers.map(async (item) => ({
+      dbThreadUsers.map(async item => ({
         id: item.id,
         identityId: item.identityId,
         userRole: authors.get(item.id)?.context.role ?? null,
         organisationUnitId: authors.get(item.id)?.context.organisationUnitId ?? null,
-        emailNotificationPreferences: (await item.notificationPreferences).map(
-          (emailPreference) => ({
-            type: emailPreference.notification_id,
-            preference: emailPreference.preference,
-          })
-        ),
+        emailNotificationPreferences: (await item.notificationPreferences).map(emailPreference => ({
+          type: emailPreference.notification_id,
+          preference: emailPreference.preference
+        }))
       }))
     );
   }
@@ -648,11 +633,7 @@ export class RecipientsService extends BaseService {
       .addSelect('innovationTransfer.status', 'status')
       .addSelect('user.id', 'userId')
       .addSelect('user.external_id', 'userIdentityId')
-      .innerJoin(
-        UserEntity,
-        'user',
-        'user.id = innovationTransfer.created_by AND user.locked_at IS NULL'
-      )
+      .innerJoin(UserEntity, 'user', 'user.id = innovationTransfer.created_by AND user.locked_at IS NULL')
       .where('innovationTransfer.id = :transferId', { transferId })
       .getRawOne();
 
@@ -664,7 +645,7 @@ export class RecipientsService extends BaseService {
       id: dbTransfer.id,
       email: dbTransfer.email,
       status: dbTransfer.status,
-      owner: { id: dbTransfer.userId, identityId: dbTransfer.userIdentityId },
+      owner: { id: dbTransfer.userId, identityId: dbTransfer.userIdentityId }
     };
   }
 
@@ -683,7 +664,7 @@ export class RecipientsService extends BaseService {
         'user.id',
         'user.identityId',
         'userRoles.id',
-        'userRoles.role',
+        'userRoles.role'
       ])
       .leftJoin('collaborator.user', 'user')
       .leftJoin('user.serviceRoles', 'userRoles')
@@ -694,9 +675,7 @@ export class RecipientsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
-    const role = dbCollaborator.user?.serviceRoles.find(
-      (sR) => sR.role === ServiceRoleEnum.INNOVATOR
-    );
+    const role = dbCollaborator.user?.serviceRoles.find(sR => sR.role === ServiceRoleEnum.INNOVATOR);
 
     return {
       id: dbCollaborator.id,
@@ -707,17 +686,17 @@ export class RecipientsService extends BaseService {
             user: {
               id: dbCollaborator.user.id,
               identityId: dbCollaborator.user.identityId,
-              roleId: role.id,
-            },
+              roleId: role.id
+            }
           }
-        : {}),
+        : {})
     };
   }
 
   async innovationActiveCollaboratorUsers(innovationId: string): Promise<InnovatorRecipientType[]> {
     return (await this.innovationInfoWithCollaborators(innovationId)).collaborators
-      .filter((c) => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
-      .map((c) => c.user)
+      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
+      .map(c => c.user)
       .filter((item): item is InnovatorRecipientType => item !== undefined); //filter undefined items
   }
 
@@ -730,10 +709,10 @@ export class RecipientsService extends BaseService {
       .andWhere('users.locked_at IS NULL')
       .getMany();
 
-    return dbUsers.map((user) => ({
+    return dbUsers.map(user => ({
       id: user.id,
       identityId: user.identityId,
-      roleId: user.serviceRoles[0]?.id ?? '',
+      roleId: user.serviceRoles[0]?.id ?? ''
     })); // It's always assigned and just one because of the innerJoin
   }
 
@@ -756,13 +735,13 @@ export class RecipientsService extends BaseService {
       organisation: {
         id: dbOrganisation.id,
         name: dbOrganisation.name,
-        acronym: dbOrganisation.acronym,
+        acronym: dbOrganisation.acronym
       },
-      organisationUnit: (await dbOrganisation.organisationUnits).map((item) => ({
+      organisationUnit: (await dbOrganisation.organisationUnits).map(item => ({
         id: item.id,
         name: item.name,
-        acronym: item.acronym,
-      }))[0] ?? { id: '', name: '', acronym: '' },
+        acronym: item.acronym
+      }))[0] ?? { id: '', name: '', acronym: '' }
     };
   }
 
@@ -784,11 +763,11 @@ export class RecipientsService extends BaseService {
       .andWhere('organisationUnit.inactivated_at IS NULL')
       .getMany();
 
-    return dbUsers.map((item) => ({
+    return dbUsers.map(item => ({
       id: item.id,
       identityId: item.identityId,
       roleId: item.serviceRoles[0]?.id ?? '',
-      organisationUnitId: item.serviceRoles[0]?.organisationUnit?.id ?? '',
+      organisationUnitId: item.serviceRoles[0]?.organisationUnit?.id ?? ''
     }));
   }
 
@@ -845,10 +824,10 @@ export class RecipientsService extends BaseService {
         .innerJoin('user.notificationPreferences', 'notificationPreferences')
         .where('notification.created_at >= :startDate AND notification.created_at < :endDate', {
           startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
+          endDate: endDate.toISOString()
         })
         .andWhere('notificationPreferences.preference = :preference', {
-          preference: EmailNotificationPreferenceEnum.DAILY,
+          preference: EmailNotificationPreferenceEnum.DAILY
         })
         .andWhere('user.locked_at IS NULL')
         .groupBy('user.id')
@@ -857,14 +836,14 @@ export class RecipientsService extends BaseService {
         .getRawMany()) || [];
 
     return dbUsers
-      .filter((item) => item.actionsCount + item.messagesCount + item.supportsCount > 0)
-      .map((item) => ({
+      .filter(item => item.actionsCount + item.messagesCount + item.supportsCount > 0)
+      .map(item => ({
         id: item.userId,
         identityId: item.userIdentityId,
         userRole: item.userRole,
         actionsCount: item.actionsCount,
         messagesCount: item.messagesCount,
-        supportsCount: item.supportsCount,
+        supportsCount: item.supportsCount
       }));
   }
 
@@ -880,11 +859,11 @@ export class RecipientsService extends BaseService {
       .andWhere('owner.lockedAt IS NULL')
       .getMany();
 
-    return dbInnovations.map((innovation) => ({
+    return dbInnovations.map(innovation => ({
       id: innovation.owner.id,
       identityId: innovation.owner.identityId,
       innovationId: innovation.id,
-      innovationName: innovation.name,
+      innovationName: innovation.name
     }));
   }
 
@@ -933,11 +912,7 @@ export class RecipientsService extends BaseService {
       .innerJoin('i.innovationSupports', 's')
       .innerJoin('s.organisationUnit', 'u')
       .innerJoin(InnovationThreadEntity, 'threads', 'threads.innovation_id = i.id')
-      .innerJoin(
-        InnovationThreadMessageEntity,
-        'messages',
-        'threads.id = messages.innovation_thread_id'
-      )
+      .innerJoin(InnovationThreadMessageEntity, 'messages', 'threads.id = messages.innovation_thread_id')
       .groupBy('u.id')
       .addGroupBy('i.id');
 
@@ -964,17 +939,17 @@ export class RecipientsService extends BaseService {
       .innerJoin('unitUsers.organisationUser', 'organisationUsers')
       .innerJoin('organisationUsers.user', 'users')
       .innerJoin(
-        (_) => latestSupportQuery,
+        _ => latestSupportQuery,
         'maxSupports',
         'maxSupports.innovationId = innovations.id and maxSupports.supportId = supports.id'
       )
       .leftJoin(
-        (_) => latestActionQuery,
+        _ => latestActionQuery,
         'maxActions',
         'maxActions.innovationId = innovations.id and maxActions.supportId = supports.id'
       )
       .leftJoin(
-        (_) => latestMessageQuery,
+        _ => latestMessageQuery,
         'maxMessages',
         'maxMessages.innovationId = innovations.id and maxMessages.supportId = supports.id'
       )
@@ -982,12 +957,8 @@ export class RecipientsService extends BaseService {
         `supports.status in ('${InnovationSupportStatusEnum.ENGAGING}','${InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED}')`
       )
       .andWhere(`DATEDIFF(day, maxSupports.latest, GETDATE()) >= ${idlePeriod}`)
-      .andWhere(
-        `(DATEDIFF(day, maxActions.latest, GETDATE()) >= ${idlePeriod} OR maxActions IS NULL)`
-      )
-      .andWhere(
-        `(DATEDIFF(day, maxMessages.latest, GETDATE()) >= ${idlePeriod} OR maxMessages IS NULL)`
-      )
+      .andWhere(`(DATEDIFF(day, maxActions.latest, GETDATE()) >= ${idlePeriod} OR maxActions IS NULL)`)
+      .andWhere(`(DATEDIFF(day, maxMessages.latest, GETDATE()) >= ${idlePeriod} OR maxMessages IS NULL)`)
       .groupBy('users.id')
       .addGroupBy('users.external_id');
 
@@ -1034,15 +1005,15 @@ export class RecipientsService extends BaseService {
       ) => {
         res.push({
           innovationId: key,
-          values: val.map((v) => ({
+          values: val.map(v => ({
             identityId: v.identityId,
             innovationName: v.innovationName,
             innovationId: v.innovationId,
             ownerId: v.ownerId,
             ownerIdentityId: v.ownerIdentityId,
             unitId: v.organisationUnitId,
-            unitName: v.organisationUnitName,
-          })),
+            unitName: v.organisationUnitName
+          }))
         });
         return res;
       },
@@ -1081,8 +1052,8 @@ export class RecipientsService extends BaseService {
         id: createdBy.id,
         identityId: createdBy.identityId,
         name: createdByUser.displayName,
-        isActive: createdByUser.isActive,
-      },
+        isActive: createdByUser.isActive
+      }
     };
   }
 
@@ -1111,18 +1082,16 @@ export class RecipientsService extends BaseService {
       .andWhere('userRole.role = :role', { role });
     if (extraFilters?.organisation) {
       query.andWhere('userRole.organisation_id = :organisation', {
-        organisation: extraFilters.organisation,
+        organisation: extraFilters.organisation
       });
     }
     if (extraFilters?.organisationUnit) {
       query.andWhere('userRole.organisation_unit_id = :organisationUnit', {
-        organisationUnit: extraFilters.organisationUnit,
+        organisationUnit: extraFilters.organisationUnit
       });
     }
     if (extraFilters?.active !== undefined) {
-      query.andWhere(
-        extraFilters.active ? 'userRole.locked_at IS NULL' : 'userRole.locked_at IS NOT NULL'
-      );
+      query.andWhere(extraFilters.active ? 'userRole.locked_at IS NULL' : 'userRole.locked_at IS NOT NULL');
     }
 
     const userRole = await query.getOne();
@@ -1132,7 +1101,7 @@ export class RecipientsService extends BaseService {
 
     return {
       id: userRole.id,
-      lockedAt: userRole.lockedAt,
+      lockedAt: userRole.lockedAt
     };
   }
 

@@ -31,11 +31,7 @@ describe('Innovation Assessments Suite', () => {
 
   describe('getOrganisationInfo', () => {
     it('should get the organisation info', async () => {
-      const organisationInfo = await sut.getOrganisationInfo(
-        testData.organisation.accessor.id,
-        true,
-        em
-      );
+      const organisationInfo = await sut.getOrganisationInfo(testData.organisation.accessor.id, true, em);
 
       const org = testData.organisation.accessor;
       const unit = testData.organisationUnit.accessor;
@@ -50,10 +46,10 @@ describe('Innovation Assessments Suite', () => {
             name: unit.name,
             acronym: unit.acronym,
             isActive: !unit.inactivatedAt,
-            userCount: 2, // unit has QA and A users
-          },
+            userCount: 2 // unit has QA and A users
+          }
         ],
-        isActive: !org.inactivatedAt,
+        isActive: !org.inactivatedAt
       });
     });
 

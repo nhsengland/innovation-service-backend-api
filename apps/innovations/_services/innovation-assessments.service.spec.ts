@@ -5,20 +5,16 @@ import { container } from '../_config';
 import {
   InnovationAssessmentEntity,
   InnovationEntity,
-  InnovationReassessmentRequestEntity,
+  InnovationReassessmentRequestEntity
 } from '@innovations/shared/entities';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError,
-  UserErrorsEnum,
+  UserErrorsEnum
 } from '@innovations/shared/errors';
-import {
-  DomainInnovationsService,
-  DomainUsersService,
-  NotifierService,
-} from '@innovations/shared/services';
+import { DomainInnovationsService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import { randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
@@ -62,8 +58,8 @@ describe('Innovation Assessments Suite', () => {
       jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue([
         {
           id: testData.baseUsers.assessmentUser.id,
-          displayName: 'assessment user name',
-        },
+          displayName: 'assessment user name'
+        }
       ] as any);
     });
 
@@ -96,7 +92,7 @@ describe('Innovation Assessments Suite', () => {
         hasScaleResourceComment: createdAssessment.hasScaleResourceComment,
         suggestedOrganisations: createdAssessment.organisationUnits,
         updatedAt: createdAssessment.updatedAt,
-        updatedBy: { id: createdAssessment.updatedBy, name: 'assessment user name' },
+        updatedBy: { id: createdAssessment.updatedBy, name: 'assessment user name' }
       });
     });
 
@@ -128,9 +124,7 @@ describe('Innovation Assessments Suite', () => {
         em
       );
 
-      const dbAssessment = await em
-        .getRepository(InnovationAssessmentEntity)
-        .findOne({ where: { id: assessment.id } });
+      const dbAssessment = await em.getRepository(InnovationAssessmentEntity).findOne({ where: { id: assessment.id } });
 
       expect(assessment.id).toBeDefined();
       expect(dbAssessment).toBeDefined();
@@ -311,13 +305,13 @@ describe('Innovation Assessments Suite', () => {
         .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessment')
         .leftJoinAndSelect('reassessment.assessment', 'assessment')
         .where('reassessment.id = :reassessmentId', {
-          reassessmentId: innovationReassessment.reassessment.id,
+          reassessmentId: innovationReassessment.reassessment.id
         })
         .getOne();
 
       expect(innovationReassessment).toEqual({
         assessment: { id: bdReassessment?.assessment.id },
-        reassessment: { id: bdReassessment?.id },
+        reassessment: { id: bdReassessment?.id }
       });
     });
 
@@ -381,7 +375,7 @@ describe('Innovation Assessments Suite', () => {
 
       expect(result).toEqual({
         assessmentId: innovationWithAssessment.assessments[0]!.id,
-        assessorId: newAssessor.id,
+        assessorId: newAssessor.id
       });
     });
 

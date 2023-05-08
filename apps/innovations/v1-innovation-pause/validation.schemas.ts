@@ -6,7 +6,7 @@ export type ParamsType = {
   innovationId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -17,5 +17,5 @@ export const BodySchema = Joi.object<BodyType>({
     .max(TEXTAREA_LENGTH_LIMIT.small)
     .trim()
     .required()
-    .description('Message provided when pausing an innovation'),
+    .description('Message provided when pausing an innovation')
 }).required();

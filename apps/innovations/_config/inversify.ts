@@ -22,10 +22,7 @@ container
   .bind<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService)
   .to(InnovationAssessmentsService)
   .inSingletonScope();
-container
-  .bind<InnovationFileService>(SYMBOLS.InnovationFileService)
-  .to(InnovationFileService)
-  .inSingletonScope();
+container.bind<InnovationFileService>(SYMBOLS.InnovationFileService).to(InnovationFileService).inSingletonScope();
 container
   .bind<InnovationSectionsService>(SYMBOLS.InnovationSectionsService)
   .to(InnovationSectionsService)
@@ -46,14 +43,8 @@ container
   .bind<InnovationCollaboratorsService>(SYMBOLS.InnovationCollaboratorsService)
   .to(InnovationCollaboratorsService)
   .inSingletonScope();
-container
-  .bind<InnovationsService>(SYMBOLS.InnovationsService)
-  .to(InnovationsService)
-  .inSingletonScope();
+container.bind<InnovationsService>(SYMBOLS.InnovationsService).to(InnovationsService).inSingletonScope();
 container.bind<PDFService>(SYMBOLS.PDFService).to(PDFService).inSingletonScope();
-container
-  .bind<StatisticsService>(SYMBOLS.StatisticsService)
-  .to(StatisticsService)
-  .inSingletonScope();
+container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
 
 export { container };

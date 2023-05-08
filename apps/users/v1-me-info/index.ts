@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
   DomainServiceSymbol,
-  DomainServiceType,
+  DomainServiceType
 } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
@@ -23,9 +23,7 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1MeInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
     const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
@@ -53,7 +51,7 @@ class V1MeInfo {
         contactByEmail: false,
         contactByPhone: false,
         contactByPhoneTimeframe: null,
-        contactDetails: null,
+        contactDetails: null
       };
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
@@ -63,15 +61,10 @@ class V1MeInfo {
         hasAnnouncements = false;
       } else {
         termsOfUseAccepted = (
-          await termsOfUseService.getActiveTermsOfUseInfo(
-            { id: requestUser.id },
-            domainContext.currentRole.role
-          )
+          await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role)
         ).isAccepted;
-        hasInnovationTransfers =
-          (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
-        hasInnovationCollaborations =
-          (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
+        hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
+        hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
         hasAnnouncements = (await announcementsService.getAnnouncements(domainContext)).length > 0;
       }
 
@@ -95,7 +88,7 @@ class V1MeInfo {
         hasInnovationTransfers,
         hasInnovationCollaborations,
         hasAnnouncements,
-        organisations: requestUser.organisations,
+        organisations: requestUser.organisations
       });
       return;
     } catch (error) {
@@ -114,7 +107,7 @@ export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {
     parameters: [],
     responses: {
       200: { description: 'Successful operation' },
-      404: { description: 'Not found' },
-    },
-  },
+      404: { description: 'Not found' }
+    }
+  }
 });

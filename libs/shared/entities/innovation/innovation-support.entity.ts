@@ -6,7 +6,7 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
-  PrimaryGeneratedColumn,
+  PrimaryGeneratedColumn
 } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
@@ -34,23 +34,23 @@ export class InnovationSupportEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
-  @ManyToMany(() => OrganisationUnitUserEntity, (record) => record.innovationSupports, {
-    nullable: true,
+  @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
+    nullable: true
   })
   @JoinTable({
     name: 'innovation_support_user',
     joinColumn: {
       name: 'innovation_support_id',
-      referencedColumnName: 'id',
+      referencedColumnName: 'id'
     },
     inverseJoinColumn: {
       name: 'organisation_unit_user_id',
-      referencedColumnName: 'id',
-    },
+      referencedColumnName: 'id'
+    }
   })
   organisationUnitUsers: OrganisationUnitUserEntity[];
 
-  @OneToMany(() => InnovationActionEntity, (record) => record.innovationSupport, { lazy: true })
+  @OneToMany(() => InnovationActionEntity, record => record.innovationSupport, { lazy: true })
   actions: Promise<InnovationActionEntity[]>;
 
   static new(data: Partial<InnovationSupportEntity>): InnovationSupportEntity {

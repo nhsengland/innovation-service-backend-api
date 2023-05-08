@@ -8,5 +8,5 @@ export type ParamsType = {
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
   threadId: Joi.string().guid().required(),
-  messageId: Joi.string().guid().required(),
+  messageId: Joi.string().guid().required()
 });

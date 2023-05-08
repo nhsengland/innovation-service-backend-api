@@ -15,9 +15,7 @@ import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.s
 class GetOrganisationUnitStatistics {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -48,8 +46,8 @@ export default openapi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QuerySchema }),
       responses: {
         200: { description: 'Ok.' },
-        400: { description: 'Bad request.' },
-      },
-    },
+        400: { description: 'Bad request.' }
+      }
+    }
   }
 );

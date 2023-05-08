@@ -28,17 +28,16 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
     const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(
       this.inputData.innovationId
     );
-    const sharedOrganisationUnitsIds = sharedOrganisations.flatMap((organisation) =>
-      organisation.organisationUnits.map((unit) => unit.id)
+    const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation =>
+      organisation.organisationUnits.map(unit => unit.id)
     );
 
-    const suggestedSharedOrganisationUnitsIds = sharedOrganisationUnitsIds.filter((id) =>
+    const suggestedSharedOrganisationUnitsIds = sharedOrganisationUnitsIds.filter(id =>
       this.inputData.organisationUnitIds.includes(id)
     );
-    const suggestedOrganisationUnitsUsers =
-      await this.recipientsService.organisationUnitsQualifyingAccessors(
-        suggestedSharedOrganisationUnitsIds
-      );
+    const suggestedOrganisationUnitsUsers = await this.recipientsService.organisationUnitsQualifyingAccessors(
+      suggestedSharedOrganisationUnitsIds
+    );
 
     for (const user of suggestedOrganisationUnitsUsers) {
       this.emails.push({
@@ -49,8 +48,8 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
-            .buildUrl(),
-        },
+            .buildUrl()
+        }
       });
     }
 

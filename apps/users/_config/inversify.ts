@@ -9,26 +9,11 @@ import { TermsOfUseService } from '../_services/terms-of-use.service';
 import { UsersService } from '../_services/users.service';
 
 // Specific inversify container configuration.
-container
-  .bind<OrganisationsService>(SYMBOLS.OrganisationsService)
-  .to(OrganisationsService)
-  .inSingletonScope();
-container
-  .bind<TermsOfUseService>(SYMBOLS.TermsOfUseService)
-  .to(TermsOfUseService)
-  .inSingletonScope();
+container.bind<OrganisationsService>(SYMBOLS.OrganisationsService).to(OrganisationsService).inSingletonScope();
+container.bind<TermsOfUseService>(SYMBOLS.TermsOfUseService).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();
-container
-  .bind<NotificationsService>(SYMBOLS.NotificationsService)
-  .to(NotificationsService)
-  .inSingletonScope();
-container
-  .bind<StatisticsService>(SYMBOLS.StatisticsService)
-  .to(StatisticsService)
-  .inSingletonScope();
-container
-  .bind<AnnouncementsService>(SYMBOLS.AnnouncementsService)
-  .to(AnnouncementsService)
-  .inSingletonScope();
+container.bind<NotificationsService>(SYMBOLS.NotificationsService).to(NotificationsService).inSingletonScope();
+container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
+container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
 
 export { container };

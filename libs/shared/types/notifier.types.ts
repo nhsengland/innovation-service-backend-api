@@ -2,7 +2,7 @@ import type { ServiceRoleEnum } from '../enums';
 import type {
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
-  InnovationSupportStatusEnum,
+  InnovationSupportStatusEnum
 } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
@@ -11,7 +11,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
-    innovations: { id: string, name: string, transferExpireDate: Date }[]
+    innovations: { id: string; name: string; transferExpireDate: Date }[];
   };
 
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
@@ -58,10 +58,15 @@ export type NotifierTemplatesType = {
   };
 
   [NotifierTypeEnum.ACTION_UPDATE]: {
-    innovationId: string,
-    action: { id: string, section: CurrentCatalogTypes.InnovationSections, status: InnovationActionStatusEnum, previouslyUpdatedByUserRole?: { id: string, role: ServiceRoleEnum }}
-    comment?: string
-  },
+    innovationId: string;
+    action: {
+      id: string;
+      section: CurrentCatalogTypes.InnovationSections;
+      status: InnovationActionStatusEnum;
+      previouslyUpdatedByUserRole?: { id: string; role: ServiceRoleEnum };
+    };
+    comment?: string;
+  };
 
   [NotifierTypeEnum.THREAD_CREATION]: {
     innovationId: string;
@@ -79,7 +84,12 @@ export type NotifierTemplatesType = {
     innovation: {
       id: string;
       name: string;
-      affectedUsers: { userId: string; userType: ServiceRoleEnum, organisationId?: string, organisationUnitId?: string }[];
+      affectedUsers: {
+        userId: string;
+        userType: ServiceRoleEnum;
+        organisationId?: string;
+        organisationUnitId?: string;
+      }[];
     };
   };
 

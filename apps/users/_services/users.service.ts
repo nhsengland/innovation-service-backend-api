@@ -11,7 +11,7 @@ import {
   TermsOfUseUserEntity,
   UserEntity,
   UserPreferenceEntity,
-  UserRoleEntity,
+  UserRoleEntity
 } from '@users/shared/entities';
 import {
   InnovationCollaboratorStatusEnum,
@@ -21,7 +21,7 @@ import {
   OrganisationTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
-  TermsOfUseTypeEnum,
+  TermsOfUseTypeEnum
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import {
@@ -32,7 +32,7 @@ import {
   IdentityProviderServiceSymbol,
   IdentityProviderServiceType,
   NotifierServiceSymbol,
-  NotifierServiceType,
+  NotifierServiceType
 } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
 
@@ -57,8 +57,7 @@ export class UsersService extends BaseService {
   ) {
     super();
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
-    this.organisationRepository =
-      this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
+    this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.cache = cacheService.get('IdentityUserInfo');
   }
 
@@ -89,7 +88,7 @@ export class UsersService extends BaseService {
       case 'minimal':
         return {
           id: user.id,
-          displayName: user.displayName,
+          displayName: user.displayName
         };
       case 'full':
         const innovations = await this.sqlConnection
@@ -106,9 +105,7 @@ export class UsersService extends BaseService {
         }
 
         const supportMap = new Map();
-        const supportUserId = user.organisations.flatMap((o) =>
-          o.organisationUnits.map((u) => u.organisationUnitUser.id)
-        );
+        const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
         if (supportUserId.length > 0) {
           const supports = await this.sqlConnection
             .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -118,7 +115,7 @@ export class UsersService extends BaseService {
             .where('organisationUnitUsers.id IN (:...supportUserId)', { supportUserId })
             .groupBy('organisationUnitUsers.id')
             .getRawMany();
-          supports.forEach((s) => supportMap.set(s.organisationUnitUsers_id, s.support_count));
+          supports.forEach(s => supportMap.set(s.organisationUnitUsers_id, s.support_count));
         }
 
         return {
@@ -129,24 +126,24 @@ export class UsersService extends BaseService {
           type: role.role, // see previous TODO
           lockedAt: user.lockedAt,
           innovations: innovations,
-          userOrganisations: user.organisations.map((o) => ({
+          userOrganisations: user.organisations.map(o => ({
             id: o.id,
             name: o.name,
             size: o.size,
             role: o.role,
             isShadow: o.isShadow,
-            units: o.organisationUnits.map((u) => ({
+            units: o.organisationUnits.map(u => ({
               id: u.id,
               name: u.name,
               acronym: u.acronym,
-              supportCount: supportMap.get(u.organisationUnitUser.id),
-            })),
-          })),
+              supportCount: supportMap.get(u.organisationUnitUser.id)
+            }))
+          }))
         };
       default:
         const unknownModel: never = model;
         throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID, {
-          details: { model: unknownModel },
+          details: { model: unknownModel }
         });
     }
   }
@@ -160,17 +157,17 @@ export class UsersService extends BaseService {
         .innerJoinAndSelect('innovationTransfer.innovation', 'innovation')
         .where('DATEDIFF(day, innovationTransfer.created_at, GETDATE()) < 31')
         .andWhere('innovationTransfer.status = :status', {
-          status: InnovationTransferStatusEnum.PENDING,
+          status: InnovationTransferStatusEnum.PENDING
         })
         .andWhere('innovationTransfer.email = :email', { email: email })
         .getMany()) || [];
 
-    return dbUserTransfers.map((item) => ({
+    return dbUserTransfers.map(item => ({
       id: item.id,
       innovation: {
         id: item.innovation.id,
-        name: item.innovation.name,
-      },
+        name: item.innovation.name
+      }
     }));
   }
 
@@ -183,10 +180,10 @@ export class UsersService extends BaseService {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
     }
 
-    return this.sqlConnection.transaction(async (transactionManager) => {
+    return this.sqlConnection.transaction(async transactionManager => {
       const dbUser = await transactionManager.save(
         UserEntity.new({
-          identityId: user.identityId,
+          identityId: user.identityId
         })
       );
 
@@ -199,7 +196,7 @@ export class UsersService extends BaseService {
           size: null,
           isShadow: true,
           createdBy: dbUser.id,
-          updatedBy: dbUser.id,
+          updatedBy: dbUser.id
         })
       );
 
@@ -209,7 +206,7 @@ export class UsersService extends BaseService {
           user: dbUser,
           role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
           createdBy: dbUser.id,
-          updatedBy: dbUser.id,
+          updatedBy: dbUser.id
         })
       );
 
@@ -219,7 +216,7 @@ export class UsersService extends BaseService {
         UserRoleEntity.new({
           user: dbUser,
           role: ServiceRoleEnum.INNOVATOR,
-          organisation: dbOrganisation,
+          organisation: dbOrganisation
         })
       );
 
@@ -237,7 +234,7 @@ export class UsersService extends BaseService {
             user: UserEntity.new({ id: dbUser.id }),
             acceptedAt: new Date(),
             createdBy: dbUser.id,
-            updatedBy: dbUser.id,
+            updatedBy: dbUser.id
           })
         );
       }
@@ -252,9 +249,9 @@ export class UsersService extends BaseService {
           organisation: {
             id: dbOrganisation.id,
             name: dbOrganisation.name,
-            acronym: dbOrganisation.acronym,
+            acronym: dbOrganisation.acronym
           },
-          currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR },
+          currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR }
         }
       );
 
@@ -284,18 +281,16 @@ export class UsersService extends BaseService {
   ): Promise<{ id: string }> {
     await this.identityProviderService.updateUser(user.identityId, {
       displayName: data.displayName,
-      ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {}),
+      ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
     });
 
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
     if (currentRole === ServiceRoleEnum.INNOVATOR) {
-      await this.sqlConnection.transaction(async (transaction) => {
+      await this.sqlConnection.transaction(async transaction => {
         // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
         // Updates the firstTimeSignInAt with the current date.
         if (!user.firstTimeSignInAt) {
-          await transaction
-            .getRepository(UserEntity)
-            .update(user.id, { firstTimeSignInAt: new Date().toISOString() });
+          await transaction.getRepository(UserEntity).update(user.id, { firstTimeSignInAt: new Date().toISOString() });
         }
 
         if (data.organisation) {
@@ -306,7 +301,7 @@ export class UsersService extends BaseService {
             description?: null | string;
             registrationNumber?: null | string;
           } = {
-            isShadow: data.organisation.isShadow,
+            isShadow: data.organisation.isShadow
           };
 
           if (organisationData.isShadow) {
@@ -327,9 +322,7 @@ export class UsersService extends BaseService {
             organisationData.registrationNumber = data.organisation.registrationNumber;
           }
 
-          await transaction
-            .getRepository(OrganisationEntity)
-            .update(data.organisation.id, organisationData);
+          await transaction.getRepository(OrganisationEntity).update(data.organisation.id, organisationData);
         }
 
         const preferences: {
@@ -341,7 +334,7 @@ export class UsersService extends BaseService {
           contactByPhone: data.contactByPhone as boolean,
           contactByEmail: data.contactByEmail as boolean,
           contactByPhoneTimeframe: data.contactByPhoneTimeframe ?? null,
-          contactDetails: data.contactDetails ?? null,
+          contactDetails: data.contactDetails ?? null
         };
 
         await this.upsertUserPreferences(user.id, preferences, transaction);
@@ -355,9 +348,9 @@ export class UsersService extends BaseService {
   }
 
   async deleteUserInfo(userId: string, reason?: string): Promise<{ id: string }> {
-    return this.sqlConnection.transaction(async (transactionManager) => {
+    return this.sqlConnection.transaction(async transactionManager => {
       const user = await this.userRepository.findOne({
-        where: { identityId: userId },
+        where: { identityId: userId }
       });
 
       if (!user) {
@@ -427,10 +420,9 @@ export class UsersService extends BaseService {
         .leftJoin('userOrganisations.organisation', 'organisation')
         .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
         .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
-        .andWhere(
-          'roleOrganisationUnit.id = :organisationUnitId AND organisationUnit.id = :organisationUnitId',
-          { organisationUnitId: filters.organisationUnitId }
-        );
+        .andWhere('roleOrganisationUnit.id = :organisationUnitId AND organisationUnit.id = :organisationUnitId', {
+          organisationUnitId: filters.organisationUnitId
+        });
     }
 
     if (filters.onlyActive) {
@@ -454,16 +446,14 @@ export class UsersService extends BaseService {
 
     // Get users from database
     const [dbUsers, count] = await query.getManyAndCount();
-    const identityUsers = await this.identityProviderService.getUsersList(
-      dbUsers.map((items) => items.identityId)
-    );
+    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
 
     const users = await Promise.all(
-      dbUsers.map(async (dbUser) => {
-        const identityUser = identityUsers.find((item) => item.identityId === dbUser.identityId);
+      dbUsers.map(async dbUser => {
+        const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
         if (!identityUser) {
           throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
-            details: { context: 'S.DU.gUL' },
+            details: { context: 'S.DU.gUL' }
           });
         }
 
@@ -476,17 +466,16 @@ export class UsersService extends BaseService {
           ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {}),
           ...(filters.organisationUnitId
             ? {
-                organisationUnitUserId:
-                  (await dbUser.userOrganisations)[0]?.userOrganisationUnits[0]?.id ?? '',
+                organisationUnitUserId: (await dbUser.userOrganisations)[0]?.userOrganisationUnits[0]?.id ?? ''
               }
-            : {}),
+            : {})
         };
       })
     );
 
     return {
       count: count,
-      data: users,
+      data: users
     };
   }
 
@@ -526,13 +515,13 @@ export class UsersService extends BaseService {
       user: { id: userId },
       createdBy: userId, // this is only for the first time as BaseEntity defines it as update: false
       updatedBy: userId,
-      ...preferences,
+      ...preferences
     };
 
     if (userPreferences) {
       preference = {
         id: userPreferences.id,
-        ...preference,
+        ...preference
       };
     }
 
@@ -561,13 +550,13 @@ export class UsersService extends BaseService {
       .andWhere('DATEDIFF(day, collaborator.invitedAt, GETDATE()) < 31')
       .getMany();
 
-    const data = invites.map((invite) => ({
+    const data = invites.map(invite => ({
       id: invite.id,
       invitedAt: invite.invitedAt,
       innovation: {
         id: invite.innovation.id,
-        name: invite.innovation.name,
-      },
+        name: invite.innovation.name
+      }
     }));
 
     return data;

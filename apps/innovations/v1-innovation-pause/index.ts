@@ -20,12 +20,10 @@ class V1InnovationPause {
   @Audit({
     action: ActionEnum.UPDATE,
     target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId',
+    identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -72,12 +70,12 @@ export default openApi(V1InnovationPause.httpTrigger as AzureFunction, '/v1/{inn
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Innovation ID' },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                id: { type: 'string', description: 'Innovation ID' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

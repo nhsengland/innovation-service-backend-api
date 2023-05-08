@@ -35,8 +35,8 @@ export class IdleInnovatorsHandler extends BaseHandler<
         templateId: EmailTypeEnum.INNOVATOR_INCOMPLETE_RECORD,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
-          innovation_name: user.innovationName,
-        },
+          innovation_name: user.innovationName
+        }
       });
     }
   }

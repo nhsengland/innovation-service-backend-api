@@ -19,12 +19,10 @@ class V1InnovationWithdraw {
   @Audit({
     action: ActionEnum.UPDATE,
     target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId',
+    identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -38,11 +36,7 @@ class V1InnovationWithdraw {
         .checkInnovation({ isOwner: true })
         .verify();
 
-      const result = await innovationsService.withdrawInnovation(
-        auth.getContext(),
-        params.innovationId,
-        body.message
-      );
+      const result = await innovationsService.withdrawInnovation(auth.getContext(), params.innovationId, body.message);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
@@ -53,32 +47,28 @@ class V1InnovationWithdraw {
   }
 }
 
-export default openApi(
-  V1InnovationWithdraw.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/withdraw',
-  {
-    patch: {
-      summary: 'Withdraw an innovation',
-      description: 'Withdraw an innovation.',
-      operationId: 'v1-innovation-withdraw',
-      tags: ['Innovation'],
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
-      responses: {
-        200: {
-          description: 'Innovation withdrawn successfully.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', description: 'Innovation ID' },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+export default openApi(V1InnovationWithdraw.httpTrigger as AzureFunction, '/v1/{innovationId}/withdraw', {
+  patch: {
+    summary: 'Withdraw an innovation',
+    description: 'Withdraw an innovation.',
+    operationId: 'v1-innovation-withdraw',
+    tags: ['Innovation'],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
+    responses: {
+      200: {
+        description: 'Innovation withdrawn successfully.',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', description: 'Innovation ID' }
+              }
+            }
+          }
+        }
+      }
+    }
   }
-);
+});

@@ -21,12 +21,10 @@ class V1InnovationAssessmentUpdate {
   @Audit({
     action: ActionEnum.UPDATE,
     target: TargetEnum.ASSESSMENT,
-    identifierParam: 'assessmentId',
+    identifierParam: 'assessmentId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
       SYMBOLS.InnovationAssessmentsService
     );
@@ -43,8 +41,8 @@ class V1InnovationAssessmentUpdate {
           status: [
             InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
             InnovationStatusEnum.NEEDS_ASSESSMENT,
-            InnovationStatusEnum.IN_PROGRESS,
-          ],
+            InnovationStatusEnum.IN_PROGRESS
+          ]
         })
         .verify();
       const requestUser = auth.getUserInfo();
@@ -81,8 +79,8 @@ export default openApi(
           required: true,
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
+            format: 'uuid'
+          }
         },
         {
           name: 'assessmentId',
@@ -91,9 +89,9 @@ export default openApi(
           required: true,
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       requestBody: {
         description: 'Innovation assessment update request body.',
@@ -105,17 +103,17 @@ export default openApi(
               properties: {
                 status: {
                   type: 'string',
-                  enum: ['APPROVED', 'REJECTED'],
+                  enum: ['APPROVED', 'REJECTED']
                 },
                 comment: {
                   type: 'string',
-                  maxLength: 1000,
-                },
+                  maxLength: 1000
+                }
               },
-              required: ['status'],
-            },
-          },
-        },
+              required: ['status']
+            }
+          }
+        }
       },
       responses: {
         200: {
@@ -127,54 +125,53 @@ export default openApi(
                 properties: {
                   id: {
                     type: 'string',
-                    format: 'uuid',
+                    format: 'uuid'
                   },
                   innovationId: {
                     type: 'string',
-                    format: 'uuid',
+                    format: 'uuid'
                   },
                   assessmentId: {
                     type: 'string',
-                    format: 'uuid',
+                    format: 'uuid'
                   },
                   status: {
                     type: 'string',
-                    enum: ['APPROVED', 'REJECTED'],
+                    enum: ['APPROVED', 'REJECTED']
                   },
                   comment: {
                     type: 'string',
-                    maxLength: 1000,
+                    maxLength: 1000
                   },
                   createdAt: {
                     type: 'string',
-                    format: 'date-time',
+                    format: 'date-time'
                   },
                   updatedAt: {
                     type: 'string',
-                    format: 'date-time',
-                  },
-                },
-              },
-            },
-          },
+                    format: 'date-time'
+                  }
+                }
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad request. Validation error.',
+          description: 'Bad request. Validation error.'
         },
         401: {
-          description: 'Unauthorized. Invalid authentication credentials.',
+          description: 'Unauthorized. Invalid authentication credentials.'
         },
         403: {
-          description:
-            'Forbidden. User does not have permission to update the innovation assessment.',
+          description: 'Forbidden. User does not have permission to update the innovation assessment.'
         },
         404: {
-          description: 'Not found. Innovation or assessment not found.',
+          description: 'Not found. Innovation or assessment not found.'
         },
         500: {
-          description: 'Internal server error.',
-        },
-      },
-    },
+          description: 'Internal server error.'
+        }
+      }
+    }
   }
 );

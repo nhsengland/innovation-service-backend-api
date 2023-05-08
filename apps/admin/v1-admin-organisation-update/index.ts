@@ -16,9 +16,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1AdminOrganisationUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
@@ -28,11 +26,7 @@ class V1AdminOrganisationUpdate {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await organisationsService.updateOrganisation(
-        params.organisationId,
-        body.name,
-        body.acronym
-      );
+      const result = await organisationsService.updateOrganisation(params.organisationId, body.name, body.acronym);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ organisationId: result.id });
       return;
@@ -43,71 +37,67 @@ class V1AdminOrganisationUpdate {
   }
 }
 
-export default openApi(
-  V1AdminOrganisationUpdate.httpTrigger as AzureFunction,
-  '/v1/organisations/{organisationId}',
-  {
-    patch: {
-      description: 'Update an organisation.',
-      operationId: 'v1-admin-organisation-update',
-      parameters: [
-        {
-          name: 'organisationId',
-          in: 'path',
-          description: 'The organisation id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      requestBody: {
-        description: 'New name and acronym for the organisation.',
+export default openApi(V1AdminOrganisationUpdate.httpTrigger as AzureFunction, '/v1/organisations/{organisationId}', {
+  patch: {
+    description: 'Update an organisation.',
+    operationId: 'v1-admin-organisation-update',
+    parameters: [
+      {
+        name: 'organisationId',
+        in: 'path',
+        description: 'The organisation id.',
         required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    requestBody: {
+      description: 'New name and acronym for the organisation.',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              userIds: {
+                type: 'string',
+                description: 'Name and acronym for the organisation.'
+              }
+            }
+          }
+        }
+      }
+    },
+    responses: {
+      '200': {
+        description: 'The organisation unit has been updated.',
         content: {
           'application/json': {
             schema: {
               type: 'object',
               properties: {
-                userIds: {
+                organisationId: {
                   type: 'string',
-                  description: 'Name and acronym for the organisation.',
-                },
-              },
-            },
-          },
-        },
+                  description: 'The organisation id.'
+                }
+              }
+            }
+          }
+        }
       },
-      responses: {
-        '200': {
-          description: 'The organisation unit has been updated.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  organisationId: {
-                    type: 'string',
-                    description: 'The organisation id.',
-                  },
-                },
-              },
-            },
-          },
-        },
-        '400': {
-          description: 'Bad request.',
-        },
-        '401': {
-          description: 'The user is not authorized to update an organisation unit.',
-        },
-        '404': {
-          description: 'The organisation unit does not exist.',
-        },
-        '500': {
-          description: 'An error occurred while updating the organisation unit.',
-        },
+      '400': {
+        description: 'Bad request.'
       },
-    },
+      '401': {
+        description: 'The user is not authorized to update an organisation unit.'
+      },
+      '404': {
+        description: 'The organisation unit does not exist.'
+      },
+      '500': {
+        description: 'An error occurred while updating the organisation unit.'
+      }
+    }
   }
-);
+});

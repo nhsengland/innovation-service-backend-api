@@ -9,7 +9,7 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  assessmentId: Joi.string().guid().required(),
+  assessmentId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -48,10 +48,7 @@ export const BodySchema = Joi.object<BodyType>({
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasRegulatoryApprovalsComment: Joi.string()
-    .max(TEXTAREA_LENGTH_LIMIT.small)
-    .allow(null)
-    .optional(),
+  hasRegulatoryApprovalsComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
   hasEvidence: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
@@ -75,19 +72,13 @@ export const BodySchema = Joi.object<BodyType>({
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasCompetitionKnowledgeComment: Joi.string()
-    .max(TEXTAREA_LENGTH_LIMIT.small)
-    .allow(null)
-    .optional(),
+  hasCompetitionKnowledgeComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
   hasImplementationPlan: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasImplementationPlanComment: Joi.string()
-    .max(TEXTAREA_LENGTH_LIMIT.small)
-    .allow(null)
-    .optional(),
+  hasImplementationPlanComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
   hasScaleResource: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
@@ -96,5 +87,5 @@ export const BodySchema = Joi.object<BodyType>({
   hasScaleResourceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
 
   suggestedOrganisationUnitsIds: Joi.array().items(Joi.string().guid()).allow(null).optional(),
-  isSubmission: Joi.boolean().strict().optional().default(false),
+  isSubmission: Joi.boolean().strict().optional().default(false)
 }).required();

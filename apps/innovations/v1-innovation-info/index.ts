@@ -20,12 +20,10 @@ class V1InnovationInfo {
   @Audit({
     action: ActionEnum.READ,
     target: TargetEnum.INNOVATION,
-    identifierParam: 'innovationId',
+    identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -40,11 +38,7 @@ class V1InnovationInfo {
 
       const domainContext = auth.getContext();
 
-      const result = await innovationsService.getInnovationInfo(
-        domainContext,
-        params.innovationId,
-        queryParams
-      );
+      const result = await innovationsService.getInnovationInfo(domainContext, params.innovationId, queryParams);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         name: result.name,
@@ -75,17 +69,14 @@ class V1InnovationInfo {
                       contactByEmail: result.owner.contactByEmail,
                       contactByPhone: result.owner.contactByPhone,
                       contactByPhoneTimeframe: result.owner.contactByPhoneTimeframe,
-                      contactDetails: result.owner.contactDetails,
+                      contactDetails: result.owner.contactDetails
                     }
                   : {}),
-                ...([ServiceRoleEnum.ADMIN].includes(
-                  domainContext.currentRole.role as ServiceRoleEnum
-                )
+                ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum)
                   ? { lastLoginAt: result.owner.lastLoginAt }
                   : {}),
-                organisations:
-                  result.owner.organisations.length > 0 ? result.owner.organisations : null,
-              },
+                organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null
+              }
             }),
         lastEndSupportAt: result.lastEndSupportAt,
         export: result.export,
@@ -93,14 +84,14 @@ class V1InnovationInfo {
         ...(result.supports === undefined
           ? {}
           : {
-              supports: result.supports.map((s) => ({
+              supports: result.supports.map(s => ({
                 id: s.id,
                 status: s.status,
-                organisationUnitId: s.organisationUnitId,
-              })),
+                organisationUnitId: s.organisationUnitId
+              }))
             }),
         collaboratorId: result.collaboratorId,
-        createdAt: result.createdAt,
+        createdAt: result.createdAt
       });
       return;
     } catch (error) {
@@ -123,13 +114,13 @@ export default openApi(V1InnovationInfo.httpTrigger as AzureFunction, '/v1/{inno
         description: 'Innovation ID',
         schema: {
           type: 'string',
-          format: 'uuid',
-        },
-      },
+          format: 'uuid'
+        }
+      }
     ],
     responses: {
       200: { description: 'Success' },
-      400: { description: 'Invalid innovation payload' },
-    },
-  },
+      400: { description: 'Invalid innovation payload' }
+    }
+  }
 });

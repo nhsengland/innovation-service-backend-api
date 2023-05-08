@@ -34,7 +34,7 @@ export class AnnouncementsService extends BaseService {
         'announcement.targetRoles',
         'announcement.params',
         'announcement.startsAt',
-        'announcementUser.id',
+        'announcementUser.id'
       ])
       .innerJoin('announcementUser.announcement', 'announcement')
       .where('announcementUser.user_id = :userId', { userId: domainContext.id })
@@ -43,7 +43,7 @@ export class AnnouncementsService extends BaseService {
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
       .getMany();
 
-    const announcements = dbAnnouncements.filter((announcementUser) =>
+    const announcements = dbAnnouncements.filter(announcementUser =>
       announcementUser.announcement.targetRoles.includes(domainContext.currentRole.role)
     );
 
@@ -56,7 +56,7 @@ export class AnnouncementsService extends BaseService {
       template: announcement.template,
       params: announcement.params,
       targetRoles: announcement.targetRoles,
-      createdAt: announcement.startsAt,
+      createdAt: announcement.startsAt
     }));
   }
 
@@ -74,10 +74,7 @@ export class AnnouncementsService extends BaseService {
       .andWhere('announcement.user_id = :userId', { userId: domainContext.id })
       .getOne();
 
-    if (
-      !userAnnouncement ||
-      !userAnnouncement.targetRoles.includes(domainContext.currentRole.role)
-    ) {
+    if (!userAnnouncement || !userAnnouncement.targetRoles.includes(domainContext.currentRole.role)) {
       throw new NotFoundError(UserErrorsEnum.USER_ANNOUNCEMENT_NOT_FOUND);
     }
 

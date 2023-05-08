@@ -30,12 +30,7 @@ class V1SendEmailListener {
     try {
       const message = JoiHelper.Validate<MessageType>(MessageSchema, requestMessage);
 
-      await dispatchService.sendEmail(
-        message.data.type,
-        message.data.to,
-        message.data.params,
-        message.data.log
-      );
+      await dispatchService.sendEmail(message.data.type, message.data.to, message.data.params, message.data.log);
 
       context.res = { done: true };
       return;

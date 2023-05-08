@@ -1,10 +1,7 @@
 import Joi from 'joi';
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSupportStatusEnum } from '../enums/innovation.enums';
-import type {
-  AccessorOrganisationRoleEnum,
-  InnovatorOrganisationRoleEnum,
-} from '../enums/organisation.enums';
+import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
@@ -111,27 +108,19 @@ export type DomainContextType =
   | InnovatorDomainContextType;
 
 // helpers for type checking
-export const isInnovatorDomainContextType = (
-  value: DomainContextType
-): value is InnovatorDomainContextType => {
+export const isInnovatorDomainContextType = (value: DomainContextType): value is InnovatorDomainContextType => {
   return value.currentRole.role === ServiceRoleEnum.INNOVATOR;
 };
-export const isAAssessmentDomainContextType = (
-  value: DomainContextType
-): value is AssessmentDomainContextType => {
+export const isAAssessmentDomainContextType = (value: DomainContextType): value is AssessmentDomainContextType => {
   return value.currentRole.role === ServiceRoleEnum.ASSESSMENT;
 };
-export const isAccessorDomainContextType = (
-  value: DomainContextType
-): value is AccessorDomainContextType => {
+export const isAccessorDomainContextType = (value: DomainContextType): value is AccessorDomainContextType => {
   return (
     value.currentRole.role === ServiceRoleEnum.ACCESSOR ||
     value.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
   );
 };
-export const isAdminDomainContextType = (
-  value: DomainContextType
-): value is AdminDomainContextType => {
+export const isAdminDomainContextType = (value: DomainContextType): value is AdminDomainContextType => {
   return value.currentRole.role === ServiceRoleEnum.ADMIN;
 };
 
@@ -147,20 +136,20 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
       acronym: Joi.string().allow(null).required(),
       role: Joi.string().required(),
       isShadow: Joi.boolean().required(),
-      size: Joi.string().allow(null).required(),
+      size: Joi.string().allow(null).required()
     })
       .allow(null)
-      .required(),
+      .required()
   })
 
     // TODO - CHECK IF JOI ALLOWS OVERRIDING THE DEFAULT OBJECT
     .when('$currentRole.role', {
       is: ServiceRoleEnum.ADMIN,
-      then: Joi.forbidden(),
+      then: Joi.forbidden()
     })
     .when('$currentRole.role', {
       is: ServiceRoleEnum.ASSESSMENT,
-      then: Joi.forbidden(),
+      then: Joi.forbidden()
     })
     .when('$currentRole.role', {
       is: ServiceRoleEnum.ACCESSOR,
@@ -176,10 +165,10 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
           name: Joi.string().required(),
           acronym: Joi.string().required(),
           organisationUnitUser: Joi.object({
-            id: Joi.string().uuid().required(),
-          }).required(),
-        }).required(),
-      }),
+            id: Joi.string().uuid().required()
+          }).required()
+        }).required()
+      })
     })
     .when('$currentRole.role', {
       is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
@@ -195,17 +184,17 @@ export const DomainContextSchema = Joi.object<DomainContextType>({
           name: Joi.string().required(),
           acronym: Joi.string().required(),
           organisationUnitUser: Joi.object({
-            id: Joi.string().uuid().required(),
-          }).required(),
-        }).required(),
-      }),
+            id: Joi.string().uuid().required()
+          }).required()
+        }).required()
+      })
     }),
   currentRole: Joi.object({
     id: Joi.string().uuid().optional(),
     role: Joi.string()
       .valid(...Object.values(ServiceRoleEnum), '')
-      .optional(),
-  }).required(),
+      .optional()
+  }).required()
 });
 
 // Organisations types.
@@ -255,9 +244,7 @@ export type ActivityLogListParamsType = ActivityLogDBParamsType & {
   interveningUserName?: string;
 };
 
-export type ActivitiesParamsType<T extends ActivityEnum> = Required<
-  ActivityLogTemplatesType[T]
->['params'];
+export type ActivitiesParamsType<T extends ActivityEnum> = Required<ActivityLogTemplatesType[T]>['params'];
 
 // TODO: TechDebt the sectionKeyEnum might not be true if different documment versions have different keys
 export type ActivityLogTemplatesType = {

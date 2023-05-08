@@ -8,7 +8,7 @@ import {
   NotifierServiceSymbol,
   NotifierServiceType,
   SQLProviderSymbol,
-  SQLProviderType,
+  SQLProviderType
 } from '../interfaces';
 
 import type { DataSource } from 'typeorm';
@@ -22,7 +22,7 @@ export class DomainService {
   get users(): DomainUsersService {
     if (!this._users) {
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
-        message: 'SQL Connection is not initialized',
+        message: 'SQL Connection is not initialized'
       });
     }
     return this._users;
@@ -31,7 +31,7 @@ export class DomainService {
   get innovations(): DomainInnovationsService {
     if (!this._innovations) {
       throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
-        message: 'SQL Connection is not initialized',
+        message: 'SQL Connection is not initialized'
       });
     }
     return this._innovations;

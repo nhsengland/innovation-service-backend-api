@@ -1,11 +1,6 @@
 import { randAlpha, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import {
-  InnovationActionEntity,
-  InnovationSectionEntity,
-  InnovationSupportEntity,
-  UserRoleEntity,
-} from '../entities';
+import { InnovationActionEntity, InnovationSectionEntity, InnovationSupportEntity, UserRoleEntity } from '../entities';
 import { InnovationActionStatusEnum } from '../enums';
 import type { DomainContextType } from '../types';
 
@@ -26,9 +21,7 @@ export class InnovationActionBuilder {
       description: randText(),
       status: InnovationActionStatusEnum.REQUESTED,
       innovationSection: InnovationSectionEntity.new(innovationSection),
-      ...(innovationSupport
-        ? { innovationSupport: InnovationSupportEntity.new(innovationSupport) }
-        : {}),
+      ...(innovationSupport ? { innovationSupport: InnovationSupportEntity.new(innovationSupport) } : {})
     };
   }
 
@@ -63,9 +56,7 @@ export class InnovationActionBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<InnovationActionEntity> {
-    const innovationAction = await entityManager
-      .getRepository(InnovationActionEntity)
-      .save(this.innovationAction);
+    const innovationAction = await entityManager.getRepository(InnovationActionEntity).save(this.innovationAction);
     return innovationAction;
   }
 }

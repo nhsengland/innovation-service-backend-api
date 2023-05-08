@@ -6,7 +6,7 @@ export type BodyType = {
 };
 export const BodySchema = Joi.object<BodyType>({
   identityId: Joi.string().guid().optional(),
-  token: Joi.string().optional(),
+  token: Joi.string().optional()
 })
   .or('identityId', 'token')
   .required();

@@ -1,8 +1,4 @@
-import {
-  ActionEnum,
-  AuditEntry,
-  TargetEnum,
-} from '@notifications/shared/services/integrations/audit.service';
+import { ActionEnum, AuditEntry, TargetEnum } from '@notifications/shared/services/integrations/audit.service';
 import Joi from 'joi';
 
 export type AuditMessageEntry = Omit<AuditEntry, 'date'> & { date: Date };
@@ -19,5 +15,5 @@ export const MessageSchema = Joi.object<AuditMessageEntry>({
     .allow(...Object.values(TargetEnum))
     .required(),
   targetId: Joi.string(),
-  user: Joi.string().required(),
+  user: Joi.string().required()
 }).required();

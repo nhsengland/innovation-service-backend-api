@@ -19,27 +19,19 @@ class V1IdentityOperationsQueueListener {
       };
     }
   ): Promise<void> {
-    const identityProviderService = container.get<IdentityProviderServiceType>(
-      IdentityProviderServiceSymbol
-    );
+    const identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
     context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
 
     try {
-      const operation = JoiHelper.Validate<IdentityOperationType>(
-        IdentityOperationSchema,
-        requestOperation
-      );
+      const operation = JoiHelper.Validate<IdentityOperationType>(IdentityOperationSchema, requestOperation);
 
       await identityProviderService.updateUser(operation.data.identityId, operation.data.body);
 
       context.res = { done: true };
       return;
     } catch (error) {
-      context.log.error(
-        'ERROR: Unexpected error parsing idendity operation: ',
-        JSON.stringify(error)
-      );
+      context.log.error('ERROR: Unexpected error parsing idendity operation: ', JSON.stringify(error));
       throw error;
     }
   }

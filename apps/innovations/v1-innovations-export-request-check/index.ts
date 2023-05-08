@@ -16,9 +16,7 @@ import { PathParamsSchema, PathParamsType } from './validation.schemas';
 class V1InnovationsExportRequestInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -28,10 +26,7 @@ class V1InnovationsExportRequestInfo {
 
       const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
-      const result = await innovationsService.checkInnovationRecordExportRequest(
-        domainContext,
-        params.requestId
-      );
+      const result = await innovationsService.checkInnovationRecordExportRequest(domainContext, params.requestId);
 
       if (!result.canExport) {
         context.res = ResponseHelper.Forbidden();
@@ -63,14 +58,14 @@ export default openApi(
           description: 'Innovation ID',
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       responses: {
         200: { description: 'Success' },
-        403: { description: 'Forbidden' },
-      },
-    },
+        403: { description: 'Forbidden' }
+      }
+    }
   }
 );

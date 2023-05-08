@@ -1,7 +1,7 @@
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -29,18 +29,18 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
     for (const innovation of this.inputData['innovations']) {
       const innovationCollaboratorUsers = (
         await this.recipientsService.innovationActiveCollaboratorUsers(innovation.id)
-      ).filter((user) => user.isActive);
+      ).filter(user => user.isActive);
 
       if (innovationCollaboratorUsers.length > 0) {
         await this.prepareEmailForCollaborators(
-          innovationCollaboratorUsers.map((user) => user.identityId),
+          innovationCollaboratorUsers.map(user => user.identityId),
           innovation.name,
           innovation.transferExpireDate
         );
       }
 
       await this.prepareInAppForCollaborators(
-        innovationCollaboratorUsers.map((user) => user.userRole.id),
+        innovationCollaboratorUsers.map(user => user.userRole.id),
         { id: innovation.id, name: innovation.name }
       );
     }
@@ -59,25 +59,22 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
         params: {
           //display_name is filled automatically
           innovation_name: innovationName,
-          transfer_expiry_date: transferExpireDate,
-        },
+          transfer_expiry_date: transferExpireDate
+        }
       });
     }
   }
 
-  async prepareInAppForCollaborators(
-    userRoleIds: string[],
-    innovation: { id: string; name: string }
-  ): Promise<void> {
+  async prepareInAppForCollaborators(userRoleIds: string[], innovation: { id: string; name: string }): Promise<void> {
     this.inApp.push({
       innovationId: innovation.id,
       context: {
         type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.TRANSFER_PENDING,
-        id: innovation.id,
+        id: innovation.id
       },
       userRoleIds,
-      params: {},
+      params: {}
     });
   }
 }

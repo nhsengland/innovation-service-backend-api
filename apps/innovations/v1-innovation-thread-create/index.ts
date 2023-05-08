@@ -19,15 +19,11 @@ class V1InnovationThreadCreate {
   @Audit({
     action: ActionEnum.CREATE,
     target: TargetEnum.THREAD,
-    identifierResponseField: 'thread.id',
+    identifierResponseField: 'thread.id'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const threadsService = container.get<InnovationThreadsService>(
-      SYMBOLS.InnovationThreadsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
@@ -57,10 +53,10 @@ class V1InnovationThreadCreate {
           id: result.thread.id,
           subject: result.thread.subject,
           createdBy: {
-            id: result.thread.createdBy,
+            id: result.thread.createdBy
           },
-          createdAt: result.thread.createdAt,
-        },
+          createdAt: result.thread.createdAt
+        }
       });
       return;
     } catch (error) {
@@ -70,109 +66,105 @@ class V1InnovationThreadCreate {
   }
 }
 
-export default openApi(
-  V1InnovationThreadCreate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads',
-  {
-    post: {
-      summary: 'Create a new editable thread',
-      description: 'Create a new editable thread.',
-      tags: ['Innovation Threads'],
-      operationId: 'v1-innovation-thread-create',
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'The innovation id.',
-          required: true,
-          schema: {
-            type: 'string',
-          },
-        },
-      ],
-      requestBody: {
-        description: 'The thread details.',
+export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads', {
+  post: {
+    summary: 'Create a new editable thread',
+    description: 'Create a new editable thread.',
+    tags: ['Innovation Threads'],
+    operationId: 'v1-innovation-thread-create',
+    parameters: [
+      {
+        name: 'innovationId',
+        in: 'path',
+        description: 'The innovation id.',
         required: true,
+        schema: {
+          type: 'string'
+        }
+      }
+    ],
+    requestBody: {
+      description: 'The thread details.',
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              subject: {
+                type: 'string',
+                description: 'The thread subject.',
+                example: 'Subject'
+              },
+              message: {
+                type: 'string',
+                description: 'The thread message.',
+                example: 'Message'
+              }
+            },
+            required: ['subject', 'message']
+          }
+        }
+      }
+    },
+    responses: {
+      '200': {
+        description: 'The thread was created successfully.',
         content: {
           'application/json': {
             schema: {
               type: 'object',
               properties: {
-                subject: {
-                  type: 'string',
-                  description: 'The thread subject.',
-                  example: 'Subject',
-                },
-                message: {
-                  type: 'string',
-                  description: 'The thread message.',
-                  example: 'Message',
-                },
-              },
-              required: ['subject', 'message'],
-            },
-          },
-        },
-      },
-      responses: {
-        '200': {
-          description: 'The thread was created successfully.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  thread: {
-                    type: 'object',
-                    properties: {
-                      id: {
-                        type: 'string',
-                        description: 'The thread id.',
-                        example: '00000000-0000-0000-0000-000000000000',
-                      },
-                      subject: {
-                        type: 'string',
-                        description: 'The thread subject.',
-                        example: 'Subject',
-                      },
-                      createdBy: {
-                        type: 'object',
-                        properties: {
-                          id: {
-                            type: 'string',
-                            description: 'The user id.',
-                            example: '00000000-0000-0000-0000-000000000000',
-                          },
-                        },
-                      },
-                      createdAt: {
-                        type: 'string',
-                        description: 'The thread creation date.',
-                        example: '2021-01-01T00:00:00.000Z',
-                      },
+                thread: {
+                  type: 'object',
+                  properties: {
+                    id: {
+                      type: 'string',
+                      description: 'The thread id.',
+                      example: '00000000-0000-0000-0000-000000000000'
                     },
-                  },
-                },
-              },
-            },
-          },
-        },
-        '400': {
-          description: 'The request was invalid.',
-        },
-        '401': {
-          description: 'The user is not authenticated.',
-        },
-        '403': {
-          description: 'The user is not authorized to create a thread.',
-        },
-        '404': {
-          description: 'The innovation does not exist.',
-        },
-        '500': {
-          description: 'An error occurred while creating the thread.',
-        },
+                    subject: {
+                      type: 'string',
+                      description: 'The thread subject.',
+                      example: 'Subject'
+                    },
+                    createdBy: {
+                      type: 'object',
+                      properties: {
+                        id: {
+                          type: 'string',
+                          description: 'The user id.',
+                          example: '00000000-0000-0000-0000-000000000000'
+                        }
+                      }
+                    },
+                    createdAt: {
+                      type: 'string',
+                      description: 'The thread creation date.',
+                      example: '2021-01-01T00:00:00.000Z'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
-    },
+      '400': {
+        description: 'The request was invalid.'
+      },
+      '401': {
+        description: 'The user is not authenticated.'
+      },
+      '403': {
+        description: 'The user is not authorized to create a thread.'
+      },
+      '404': {
+        description: 'The innovation does not exist.'
+      },
+      '500': {
+        description: 'An error occurred while creating the thread.'
+      }
+    }
   }
-);
+});

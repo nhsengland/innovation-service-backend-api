@@ -9,16 +9,12 @@ export class alterSoftDeletesColumn1621497169437 implements MigrationInterface {
 
     // InnovationAction Table
     await queryRunner.query(`ALTER TABLE "innovation_action" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_action" DROP CONSTRAINT "df_innovation_action_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_action" DROP CONSTRAINT "df_innovation_action_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_action" DROP COLUMN "is_deleted"`);
 
     // InnovationArea Table
     await queryRunner.query(`ALTER TABLE "innovation_area" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_area" DROP CONSTRAINT "df_innovation_area_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_area" DROP CONSTRAINT "df_innovation_area_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_area" DROP COLUMN "is_deleted"`);
 
     // InnovationCareSetting Table
@@ -30,9 +26,7 @@ export class alterSoftDeletesColumn1621497169437 implements MigrationInterface {
 
     // InnovationCategory Table
     await queryRunner.query(`ALTER TABLE "innovation_category" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_category" DROP CONSTRAINT "df_innovation_category_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_category" DROP CONSTRAINT "df_innovation_category_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_category" DROP COLUMN "is_deleted"`);
 
     // InnovationClinicalArea Table
@@ -51,51 +45,37 @@ export class alterSoftDeletesColumn1621497169437 implements MigrationInterface {
 
     // InnovationEvidence Table
     await queryRunner.query(`ALTER TABLE "innovation_evidence" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_evidence" DROP CONSTRAINT "df_innovation_evidence_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_evidence" DROP CONSTRAINT "df_innovation_evidence_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_evidence" DROP COLUMN "is_deleted"`);
 
     // InnovationFile Table
     await queryRunner.query(`ALTER TABLE "innovation_file" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_file" DROP CONSTRAINT "df_innovationfile_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_file" DROP CONSTRAINT "df_innovationfile_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_file" DROP COLUMN "is_deleted"`);
 
     // InnovationRevenue Table
     await queryRunner.query(`ALTER TABLE "innovation_revenue" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_revenue" DROP CONSTRAINT "df_innovation_revenue_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_revenue" DROP CONSTRAINT "df_innovation_revenue_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_revenue" DROP COLUMN "is_deleted"`);
 
     // InnovationSection Table
     await queryRunner.query(`ALTER TABLE "innovation_section" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_section" DROP CONSTRAINT "df_innovation_section_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_section" DROP CONSTRAINT "df_innovation_section_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_section" DROP COLUMN "is_deleted"`);
 
     // InnovationStandard Table
     await queryRunner.query(`ALTER TABLE "innovation_standard" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_standard" DROP CONSTRAINT "df_innovation_standard_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_standard" DROP CONSTRAINT "df_innovation_standard_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_standard" DROP COLUMN "is_deleted"`);
 
     // InnovationSubgroup Table
     await queryRunner.query(`ALTER TABLE "innovation_subgroup" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_subgroup" DROP CONSTRAINT "df_innovation_subgroup_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_subgroup" DROP CONSTRAINT "df_innovation_subgroup_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_subgroup" DROP COLUMN "is_deleted"`);
 
     // InnovationSupport Table
     await queryRunner.query(`ALTER TABLE "innovation_support" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_support" DROP CONSTRAINT "df_innovation_support_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_support" DROP CONSTRAINT "df_innovation_support_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_support" DROP COLUMN "is_deleted"`);
 
     // InnovationSupportType Table
@@ -107,9 +87,7 @@ export class alterSoftDeletesColumn1621497169437 implements MigrationInterface {
 
     // InnovationUserTest Table
     await queryRunner.query(`ALTER TABLE "innovation_user_test" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "innovation_user_test" DROP CONSTRAINT "df_innovation_user_test_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_user_test" DROP CONSTRAINT "df_innovation_user_test_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "innovation_user_test" DROP COLUMN "is_deleted"`);
 
     // User Table
@@ -124,24 +102,18 @@ export class alterSoftDeletesColumn1621497169437 implements MigrationInterface {
 
     // Notification Table
     await queryRunner.query(`ALTER TABLE "notification" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "df_notification_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "df_notification_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "notification" DROP COLUMN "is_deleted"`);
 
     // Organisation Table
     await queryRunner.query(`ALTER TABLE "organisation" ADD "deleted_at" datetime2`);
     await queryRunner.query(`ALTER TABLE "organisation" ADD "acronym" nvarchar(20)`);
-    await queryRunner.query(
-      `ALTER TABLE "organisation" DROP CONSTRAINT "df_organisation_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "organisation" DROP CONSTRAINT "df_organisation_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "organisation" DROP COLUMN "is_deleted"`);
 
     // OrganisationUnit Table
     await queryRunner.query(`ALTER TABLE "organisation_unit" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "organisation_unit" DROP CONSTRAINT "df_organisation_unit_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "organisation_unit" DROP CONSTRAINT "df_organisation_unit_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "organisation_unit" DROP COLUMN "is_deleted"`);
 
     // OrganisationUnitUser Table
@@ -153,9 +125,7 @@ export class alterSoftDeletesColumn1621497169437 implements MigrationInterface {
 
     // OrganisationUser Table
     await queryRunner.query(`ALTER TABLE "organisation_user" ADD "deleted_at" datetime2`);
-    await queryRunner.query(
-      `ALTER TABLE "organisation_user" DROP CONSTRAINT "df_organisation_user_is_deleted"`
-    );
+    await queryRunner.query(`ALTER TABLE "organisation_user" DROP CONSTRAINT "df_organisation_user_is_deleted"`);
     await queryRunner.query(`ALTER TABLE "organisation_user" DROP COLUMN "is_deleted"`);
   }
 

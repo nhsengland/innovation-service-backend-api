@@ -3,7 +3,7 @@ import type {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
-  InnovatorOrganisationRoleEnum,
+  InnovatorOrganisationRoleEnum
 } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 

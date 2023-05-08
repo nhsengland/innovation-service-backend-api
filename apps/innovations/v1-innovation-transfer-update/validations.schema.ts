@@ -6,7 +6,7 @@ export type ParamsType = {
   transferId: string;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  transferId: Joi.string().guid().required(),
+  transferId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -22,5 +22,5 @@ export const BodySchema = Joi.object<BodyType>({
       InnovationTransferStatusEnum.DECLINED,
       InnovationTransferStatusEnum.COMPLETED
     )
-    .required(),
+    .required()
 }).required();

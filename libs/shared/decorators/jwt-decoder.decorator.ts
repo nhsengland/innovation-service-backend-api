@@ -40,14 +40,11 @@ export function JwtDecoder() {
           user: {
             identityId: jwt.oid,
             name: jwt.name,
-            ...(role && { roleId: role }),
-          },
+            ...(role && { roleId: role })
+          }
         };
       } catch (error) {
-        context.res = ResponseHelper.Error(
-          context,
-          new UnauthorizedError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN)
-        );
+        context.res = ResponseHelper.Error(context, new UnauthorizedError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN));
         return;
       }
 

@@ -3,14 +3,11 @@ import Joi from 'joi';
 import {
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
-  InnovationSupportStatusEnum,
+  InnovationSupportStatusEnum
 } from '@innovations/shared/enums';
 import { JoiHelper, PaginationQueryParamsType } from '@innovations/shared/helpers';
 
-import {
-  CurrentCatalogTypes,
-  CurrentDocumentSchemaMap,
-} from '@innovations/shared/schemas/innovation-record';
+import { CurrentCatalogTypes, CurrentDocumentSchemaMap } from '@innovations/shared/schemas/innovation-record';
 import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
@@ -21,7 +18,7 @@ const FieldsKeys = [
   'supports',
   'notifications',
   'statistics',
-  'groupedStatus',
+  'groupedStatus'
 ] as const;
 const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
 
@@ -32,7 +29,7 @@ enum orderFields {
   submittedAt = 'submittedAt',
   updatedAt = 'updatedAt',
   assessmentStartedAt = 'assessmentStartedAt',
-  assessmentFinishedAt = 'assessmentFinishedAt',
+  assessmentFinishedAt = 'assessmentFinishedAt'
 }
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
@@ -58,14 +55,11 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
 };
 
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.keys(orderFields),
+  orderKeys: Object.keys(orderFields)
 })
   .append<QueryParamsType>({
     name: JoiHelper.AppCustomJoi().decodeURIString().trim().allow(null, '').optional(),
-    mainCategories: JoiHelper.AppCustomJoi()
-      .stringArray()
-      .items(CurrentDocumentSchemaMap)
-      .optional(),
+    mainCategories: JoiHelper.AppCustomJoi().stringArray().items(CurrentDocumentSchemaMap).optional(),
     locations: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...Object.values(InnovationLocationEnum)))
@@ -81,7 +75,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
             InnovationStatusEnum.IN_PROGRESS
           )
         )
-        .required(),
+        .required()
     }).when('$userType', {
       is: 'ACCESSOR',
       then: JoiHelper.AppCustomJoi()
@@ -91,24 +85,19 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       otherwise: JoiHelper.AppCustomJoi()
         .stringArray()
         .items(Joi.string().valid(...Object.values(InnovationStatusEnum)))
-        .optional(),
+        .optional()
     }),
     engagingOrganisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string()).optional(),
     supportStatuses: Joi.when('$userType', {
       is: 'ACCESSOR',
       then: JoiHelper.AppCustomJoi()
         .stringArray()
-        .items(
-          Joi.string().valid(
-            InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.COMPLETE
-          )
-        )
+        .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE))
         .optional(),
       otherwise: JoiHelper.AppCustomJoi()
         .stringArray()
         .items(Joi.string().valid(...Object.values(InnovationSupportStatusEnum)))
-        .optional(),
+        .optional()
     }),
     groupedStatuses: JoiHelper.AppCustomJoi()
       .stringArray()
@@ -122,7 +111,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       then: JoiHelper.AppCustomJoi()
         .stringArray()
         .items(Joi.string().valid(...HasAccessThroughKeys))
-        .optional(),
+        .optional()
     }),
     dateFilter: JoiHelper.AppCustomJoi()
       .stringArrayOfObjects()
@@ -132,14 +121,14 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
             .valid(...DateFilterKeys)
             .required(),
           startDate: Joi.date().optional(),
-          endDate: Joi.date().optional(),
+          endDate: Joi.date().optional()
         })
       )
       .optional(),
     fields: JoiHelper.AppCustomJoi()
       .stringArray()
       .items(Joi.string().valid(...FieldsKeys))
-      .optional(),
+      .optional()
   })
   // special admin filters
   .when('$userType', {
@@ -148,19 +137,16 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       assignedToMe: Joi.forbidden(),
       suggestedOnly: Joi.forbidden(),
       latestWorkedByMe: Joi.forbidden(),
-      engagingOrganisationUnits: JoiHelper.AppCustomJoi()
-        .stringArray()
-        .items(Joi.string().uuid())
-        .optional(),
-      withDeleted: JoiHelper.AppCustomJoi().boolean().optional().default(true),
-    }),
+      engagingOrganisationUnits: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
+      withDeleted: JoiHelper.AppCustomJoi().boolean().optional().default(true)
+    })
   })
   // make order field forbidden if latestWorkedByMe is true (this would be easier with xor but order has default value)
-  .fork('order', (schema) =>
+  .fork('order', schema =>
     Joi.when('latestWorkedByMe', {
       is: true,
       then: schema.forbidden(),
-      otherwise: schema.optional(),
+      otherwise: schema.optional()
     })
   )
   .messages({ 'any.unknown': 'order field is not allowed when latestWorkedByMe is true' })

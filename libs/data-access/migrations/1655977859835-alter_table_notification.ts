@@ -2,9 +2,7 @@ import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableNotification1655977859835 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_user_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_user_id"`);
 
     // Drop current notification table
     await queryRunner.query(`DROP TABLE "notification_user"`);
@@ -77,21 +75,11 @@ export class alterTableNotification1655977859835 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "fk_notification_innovation_innovation_id"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_type"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_notification_id"`
-    );
-    await queryRunner.query(
-      `ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_user_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "fk_notification_innovation_innovation_id"`);
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_type"`);
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`);
+    await queryRunner.query(`ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_notification_id"`);
+    await queryRunner.query(`ALTER TABLE "notification_user" DROP CONSTRAINT "fk_notification_user_user_id"`);
 
     await queryRunner.query(`DROP TABLE "notification_user"`);
     await queryRunner.query(`DROP TABLE "notification"`);

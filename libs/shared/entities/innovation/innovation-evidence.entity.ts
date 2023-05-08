@@ -1,12 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -36,11 +28,11 @@ export class InnovationEvidenceEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, (record) => record.evidence, { nullable: true })
+  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_evidence_file',
     joinColumn: { name: 'innovation_evidence_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
   })
   files: InnovationFileEntity[];
 

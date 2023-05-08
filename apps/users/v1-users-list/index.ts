@@ -9,7 +9,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
   DomainServiceSymbol,
-  DomainServiceType,
+  DomainServiceType
 } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
@@ -23,9 +23,7 @@ import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 class V1UsersList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
@@ -38,10 +36,10 @@ class V1UsersList {
         // Due to the limitations of our identity service that only allows to search by one email at a time,
         // this functions returns always a list to mimic a future search feature.
         const result = await domainService.users.getUserByEmail(queryParams.email, {
-          userRoles: queryParams.userTypes || [],
+          userRoles: queryParams.userTypes || []
         });
         context.res = ResponseHelper.Ok<ResponseDTO>(
-          result.map((item) => ({
+          result.map(item => ({
             id: item.id,
             name: item.displayName,
             email: item.email,
@@ -49,20 +47,20 @@ class V1UsersList {
             isActive: item.isActive,
             ...(item.lockedAt && { lockedAt: item.lockedAt }),
             ...(item.organisations && {
-              organisations: item.organisations.map((o) => ({
+              organisations: item.organisations.map(o => ({
                 id: o.id,
                 name: o.name,
                 acronym: o.acronym ?? '',
                 role: o.role,
                 ...(o.organisationUnits && {
-                  units: o.organisationUnits.map((u) => ({
+                  units: o.organisationUnits.map(u => ({
                     id: u.id,
                     name: u.name,
-                    acronym: u.acronym ?? '',
-                  })),
-                }),
-              })),
-            }),
+                    acronym: u.acronym ?? ''
+                  }))
+                })
+              }))
+            })
           }))
         );
         return;
@@ -74,10 +72,7 @@ class V1UsersList {
         //only admins can get user emails
         if (!('email' in queryParams.fields)) {
           // all users need to be able to list NA users for message transparency page
-          if (
-            queryParams.userTypes.length === 1 &&
-            queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT
-          ) {
+          if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT) {
             validation.checkAssessmentType();
             validation.checkAccessorType();
             validation.checkInnovatorType();
@@ -86,7 +81,7 @@ class V1UsersList {
           if (queryParams.organisationUnitId) {
             validation.checkAccessorType({
               organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
-              organisationUnitId: queryParams.organisationUnitId,
+              organisationUnitId: queryParams.organisationUnitId
             });
           }
         }
@@ -96,7 +91,7 @@ class V1UsersList {
         const users = await usersService.getUserList(queryParams, queryParams.fields, {
           skip,
           take,
-          order,
+          order
         });
 
         context.res = ResponseHelper.Ok<ResponseDTO>(users);
@@ -127,12 +122,12 @@ export default openApi(V1UsersList.httpTrigger as AzureFunction, '/v1', {
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for user object' },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                id: { type: 'string', description: 'Unique identifier for user object' }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

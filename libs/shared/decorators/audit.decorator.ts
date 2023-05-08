@@ -9,7 +9,7 @@ import {
   AuditServiceSymbol,
   AuditServiceType,
   SQLConnectionServiceSymbol,
-  SQLConnectionServiceType,
+  SQLConnectionServiceType
 } from '../services/interfaces';
 import type { CustomContextType } from '../types';
 
@@ -45,9 +45,7 @@ export function Audit(params: AuditOptions | AuditOptions[]) {
     const original = descriptor.value;
     const auditService = container.get<AuditServiceType>(AuditServiceSymbol);
     // TODO - sqlConnection is used to get the user id from the externalId. This should be removed and a cached query should be used instead once implemented
-    const sqlConnection = container
-      .get<SQLConnectionServiceType>(SQLConnectionServiceSymbol)
-      .getConnection();
+    const sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
 
     // Support either single or array of audit options
     const auditOptions = Array.isArray(params) ? params : [params];
@@ -74,8 +72,7 @@ export function Audit(params: AuditOptions | AuditOptions[]) {
         } else {
           // This is for a future need where the targetId is not in the request params but in other places
           throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, {
-            message:
-              'Audit decorator only supports identifierParam and identifierResposneField at the moment.',
+            message: 'Audit decorator only supports identifierParam and identifierResposneField at the moment.'
           });
         }
         const targetId = get(obj, label);
@@ -86,9 +83,7 @@ export function Audit(params: AuditOptions | AuditOptions[]) {
         const innovationId =
           option.target === TargetEnum.INNOVATION
             ? targetId
-            : request.params['innovationId'] ||
-              request.query['innovationId'] ||
-              request.body['innovationId'];
+            : request.params['innovationId'] || request.query['innovationId'] || request.body['innovationId'];
 
         // Get the user id from the externalId
         const user = (
@@ -107,7 +102,7 @@ export function Audit(params: AuditOptions | AuditOptions[]) {
           targetId: targetId ?? null,
           innovationId: innovationId,
           invocationId: context.invocationId,
-          functionName: context.executionContext.functionName,
+          functionName: context.executionContext.functionName
           // correlationId: string (if we use this in the future this could either be the session or some other field that marks the start of the request chain)
         });
       }

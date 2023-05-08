@@ -10,7 +10,7 @@ export const InnovationSections = [
   'INTELLECTUAL_PROPERTY',
   'REVENUE_MODEL',
   'COST_OF_INNOVATION',
-  'DEPLOYMENT', // Renamed from 'IMPLEMENTATION_PLAN'
+  'DEPLOYMENT' // Renamed from 'IMPLEMENTATION_PLAN'
 ] as const;
 export type InnovationSections = (typeof InnovationSections)[number];
 
@@ -38,13 +38,7 @@ export type catalogYesNoNotRelevant = (typeof catalogYesNoNotRelevant)[number];
 
 // Section 1.
 // Section 1.1.
-export const catalogOfficeLocation = [
-  'England',
-  'Scotland',
-  'Wales',
-  'Northern Ireland',
-  'Based outside UK',
-] as const;
+export const catalogOfficeLocation = ['England', 'Scotland', 'Wales', 'Northern Ireland', 'Based outside UK'] as const;
 export type catalogOfficeLocation = (typeof catalogOfficeLocation)[number];
 
 export const catalogCategory = [
@@ -60,7 +54,7 @@ export const catalogCategory = [
   'TRAVEL_TRANSPORT',
   'FOOD_NUTRITION',
   'DATA_MONITORING',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogCategory = (typeof catalogCategory)[number];
 
@@ -74,7 +68,7 @@ export const catalogAreas = [
   'PATIENT_ACTIVATION_AND_SELF_CARE',
   'PATIENT_SAFETY',
   'WORKFORCE_RESOURCE_OPTIMISATION',
-  'NET_ZERO_GREENER_INNOVATION',
+  'NET_ZERO_GREENER_INNOVATION'
 ] as const;
 export type catalogAreas = (typeof catalogAreas)[number];
 
@@ -94,7 +88,7 @@ export const catalogCareSettings = [
   'SOCIAL_CARE',
   'THIRD_SECTOR_ORGANISATIONS',
   'URGENT_AND_EMERGENCY',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogCareSettings = (typeof catalogCareSettings)[number];
 
@@ -106,7 +100,7 @@ export const catalogMainPurpose = [
   'PROVIDE_TREATMENT',
   'MANAGE_CONDITION',
   'ENABLING_CARE',
-  'RISKS_CLIMATE_CHANGE',
+  'RISKS_CLIMATE_CHANGE'
 ] as const;
 export type catalogMainPurpose = (typeof catalogMainPurpose)[number];
 
@@ -123,7 +117,7 @@ export const catalogInvolvedAACProgrammes = [
   'Pathway Transformation Fund',
   'Rapid Uptake Products Programme',
   'Small Business Research Initiative for Healthcare',
-  'Test beds',
+  'Test beds'
 ] as const;
 export type catalogInvolvedAACProgrammes = (typeof catalogInvolvedAACProgrammes)[number];
 
@@ -138,7 +132,7 @@ export const catalogKeyHealthInequalities = [
   'CHRONIC_RESPIRATORY_DISEASE',
   'EARLY_CANCER_DIAGNOSIS',
   'HYPERTENSION_CASE_FINDING',
-  'NONE',
+  'NONE'
 ] as const;
 export type catalogKeyHealthInequalities = (typeof catalogKeyHealthInequalities)[number];
 
@@ -147,7 +141,7 @@ export const catalogNeedsSupportAnyArea = [
   'RESEARCH_GOVERNANCE',
   'DATA_SHARING',
   'CONFIDENTIAL_PATIENT_DATA',
-  'DO_NOT_NEED_SUPPORT',
+  'DO_NOT_NEED_SUPPORT'
 ] as const;
 export type catalogNeedsSupportAnyArea = (typeof catalogNeedsSupportAnyArea)[number];
 
@@ -157,7 +151,7 @@ export const catalogEvidenceSubmitType = [
   'COST_IMPACT_OR_ECONOMIC',
   'OTHER_EFFECTIVENESS',
   'PRE_CLINICAL',
-  'REAL_WORLD',
+  'REAL_WORLD'
 ] as const;
 export type catalogEvidenceSubmitType = (typeof catalogEvidenceSubmitType)[number];
 
@@ -168,7 +162,7 @@ export const catalogEvidenceType = [
   'CONFERENCE',
   'RANDOMISED_CONTROLLED_TRIAL',
   'UNPUBLISHED_DATA',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogEvidenceType = (typeof catalogEvidenceType)[number];
 
@@ -179,10 +173,9 @@ export const catalogOptionBestDescribesInnovation = [
   'BETTER_ALTERNATIVE',
   'EQUIVALENT_ALTERNATIVE',
   'COST_EFFECT_ALTERNATIVE',
-  'NOT_SURE',
+  'NOT_SURE'
 ] as const;
-export type catalogOptionBestDescribesInnovation =
-  (typeof catalogOptionBestDescribesInnovation)[number];
+export type catalogOptionBestDescribesInnovation = (typeof catalogOptionBestDescribesInnovation)[number];
 
 // // Section 3.2.
 export const catalogPathwayKnowledge = [
@@ -190,7 +183,7 @@ export const catalogPathwayKnowledge = [
   'PATHWAY_EXISTS_AND_FITS',
   'NO_PATHWAY',
   'DONT_KNOW',
-  'NOT_PART_PATHWAY',
+  'NOT_PART_PATHWAY'
 ] as const;
 export type catalogPathwayKnowledge = (typeof catalogPathwayKnowledge)[number];
 
@@ -203,7 +196,7 @@ export const catalogIntendedUserGroupsEngaged = [
   'PATIENTS',
   'SERVICE_USERS',
   'CARERS',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogIntendedUserGroupsEngaged = (typeof catalogIntendedUserGroupsEngaged)[number];
 
@@ -225,7 +218,7 @@ export const catalogStandardsType = [
   'MARKETING',
   'CQC',
   'DTAC',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogStandardsType = (typeof catalogStandardsType)[number];
 
@@ -245,7 +238,7 @@ export const catalogRevenues = [
   'LEASE',
   'SALES_OF_CONSUMABLES_OR_ACCESSORIES',
   'SUBSCRIPTION',
-  'OTHER',
+  'OTHER'
 ] as const;
 export type catalogRevenues = (typeof catalogRevenues)[number];
 
@@ -259,14 +252,9 @@ export const catalogPatientRange = [
   'BETWEEN_10000_500000',
   'MORE_THAN_500000',
   'NOT_SURE',
-  'NOT_RELEVANT',
+  'NOT_RELEVANT'
 ] as const;
 export type catalogPatientRange = (typeof catalogPatientRange)[number];
 
-export const catalogCostComparison = [
-  'CHEAPER',
-  'COSTS_MORE_WITH_SAVINGS',
-  'COSTS_MORE',
-  'NOT_SURE',
-] as const;
+export const catalogCostComparison = ['CHEAPER', 'COSTS_MORE_WITH_SAVINGS', 'COSTS_MORE', 'NOT_SURE'] as const;
 export type catalogCostComparison = (typeof catalogCostComparison)[number];

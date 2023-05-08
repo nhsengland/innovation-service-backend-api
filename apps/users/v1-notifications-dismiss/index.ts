@@ -41,30 +41,26 @@ class V1UserNotificationsDismiss {
   }
 }
 
-export default openApi(
-  V1UserNotificationsDismiss.httpTrigger as AzureFunction,
-  '/v1/notifications/dismiss',
-  {
-    patch: {
-      description: 'Returns the number of affected notifications',
-      operationId: 'v1-notifications-dismiss',
-      tags: ['[v1] Notifications'],
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
-      responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  affected: { type: 'number', description: 'The number of affected notifications' },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+export default openApi(V1UserNotificationsDismiss.httpTrigger as AzureFunction, '/v1/notifications/dismiss', {
+  patch: {
+    description: 'Returns the number of affected notifications',
+    operationId: 'v1-notifications-dismiss',
+    tags: ['[v1] Notifications'],
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
+    responses: {
+      200: {
+        description: 'Success',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                affected: { type: 'number', description: 'The number of affected notifications' }
+              }
+            }
+          }
+        }
+      }
+    }
   }
-);
+});

@@ -7,7 +7,7 @@ import {
   AuthorizationServiceSymbol,
   AuthorizationServiceType,
   DomainServiceSymbol,
-  DomainServiceType,
+  DomainServiceType
 } from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
@@ -19,9 +19,7 @@ import { BodySchema, BodyType } from './validation.schemas';
 class V1MeDelete {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
     try {
@@ -56,12 +54,12 @@ export default openApi(V1MeDelete.httpTrigger as AzureFunction, '/v1/me/delete',
           'application/json': {
             schema: {
               type: 'object',
-              properties: { id: { type: 'string' } },
-            },
-          },
-        },
+              properties: { id: { type: 'string' } }
+            }
+          }
+        }
       },
-      '400': { description: 'Bad request.' },
-    },
-  },
+      '400': { description: 'Bad request.' }
+    }
+  }
 });

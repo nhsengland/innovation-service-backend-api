@@ -3,7 +3,7 @@ import type { DocumentType202209 } from './document.types';
 export const allowFileUploads = new Set<keyof DocumentType202209>([
   'REGULATIONS_AND_STANDARDS',
   'TESTING_WITH_USERS',
-  'IMPLEMENTATION_PLAN',
+  'IMPLEMENTATION_PLAN'
 ]);
 
 export enum InnovationSectionAliasEnum {
@@ -20,5 +20,5 @@ export enum InnovationSectionAliasEnum {
   COST_OF_INNOVATION = 'CI',
   COMPARATIVE_COST_BENEFIT = 'CB',
   REVENUE_MODEL = 'RM',
-  IMPLEMENTATION_PLAN = 'IM',
+  IMPLEMENTATION_PLAN = 'IM'
 }

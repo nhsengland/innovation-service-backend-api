@@ -27,7 +27,7 @@ import {
   catalogYesNoNotRelevant,
   catalogYesNoNotSure,
   catalogYesNotYet,
-  catalogYesNotYetNo,
+  catalogYesNotYetNo
 } from './catalog.types';
 import type { DocumentType202304 } from './document.types';
 
@@ -35,16 +35,14 @@ export type DocumentValidationSchema202304Map = {
   [k in keyof Omit<DocumentType202304, 'version'>]: Joi.Schema<DocumentType202304[k]>;
 };
 
-export const EvidenceSchema202304 = Joi.object<
-  NonNullable<DocumentType202304['evidences']>[number]
->({
+export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['evidences']>[number]>({
   evidenceSubmitType: Joi.string()
     .valid(...catalogEvidenceSubmitType)
     .required(),
   evidenceType: Joi.string().valid(...catalogEvidenceType),
   description: Joi.string().max(50),
   summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).required(),
-  files: Joi.array().items(Joi.string().guid()).min(1),
+  files: Joi.array().items(Joi.string().guid()).min(1)
 });
 
 export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Map = {
@@ -71,7 +69,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     currentlyReceivingSupport: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
     involvedAACProgrammes: Joi.array()
       .items(Joi.string().valid(...catalogInvolvedAACProgrammes))
-      .min(1),
+      .min(1)
   })
     .required()
     .min(1),
@@ -88,7 +86,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
       .items(Joi.string().valid(...catalogKeyHealthInequalities))
       .min(1),
     completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo),
-    files: Joi.array().items(Joi.string().guid()).min(1),
+    files: Joi.array().items(Joi.string().guid()).min(1)
   })
     .required()
     .min(1),
@@ -99,7 +97,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     files: Joi.array().items(Joi.string().guid()).min(1),
     needsSupportAnyArea: Joi.array()
       .items(Joi.string().valid(...catalogNeedsSupportAnyArea))
-      .min(1),
+      .min(1)
   })
     .required()
     .min(1),
@@ -107,13 +105,13 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     hasMarketResearch: Joi.string().valid(...catalogYesInProgressNotYet),
     marketResearch: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
     optionBestDescribesInnovation: Joi.string().valid(...catalogOptionBestDescribesInnovation),
-    whatCompetitorsAlternativesExist: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
+    whatCompetitorsAlternativesExist: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown)
   })
     .required()
     .min(1),
   CURRENT_CARE_PATHWAY: Joi.object<DocumentType202304['CURRENT_CARE_PATHWAY']>({
     innovationPathwayKnowledge: Joi.string().valid(...catalogPathwayKnowledge),
-    potentialPathway: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
+    potentialPathway: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp)
   })
     .required()
     .min(1),
@@ -128,11 +126,11 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
       .items(
         Joi.object({
           kind: Joi.string().max(100),
-          feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium),
+          feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium)
         })
       )
       .min(1),
-    files: Joi.array().items(Joi.string().guid()).min(1),
+    files: Joi.array().items(Joi.string().guid()).min(1)
   })
     .required()
     .min(1),
@@ -144,12 +142,12 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
           type: Joi.string()
             .valid(...catalogStandardsType)
             .required(),
-          hasMet: Joi.string().valid(...catalogYesInProgressNotYet),
+          hasMet: Joi.string().valid(...catalogYesInProgressNotYet)
         })
       )
       .min(1),
     otherRegulationDescription: Joi.string().max(100),
-    files: Joi.array().items(Joi.string().guid()).min(1),
+    files: Joi.array().items(Joi.string().guid()).min(1)
   })
     .required()
     .min(1),
@@ -157,7 +155,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     hasPatents: Joi.string().valid(...catalogHasPatents),
     patentNumbers: Joi.string().max(100),
     hasOtherIntellectual: Joi.string().valid(...catalogYesNo),
-    otherIntellectual: Joi.string().max(100),
+    otherIntellectual: Joi.string().max(100)
   })
     .required()
     .min(1),
@@ -170,7 +168,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     payingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
     benefittingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
     hasFunding: Joi.string().valid(...catalogYesNoNotRelevant),
-    fundingDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium),
+    fundingDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium)
   })
     .required()
     .min(1),
@@ -181,7 +179,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     eligibilityCriteria: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
     sellExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium),
     usageExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
-    costComparison: Joi.string().valid(...catalogCostComparison),
+    costComparison: Joi.string().valid(...catalogCostComparison)
   })
     .required()
     .min(1),
@@ -192,9 +190,9 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
     organisationDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
     hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure),
-    files: Joi.array().items(Joi.string().guid()).min(1),
+    files: Joi.array().items(Joi.string().guid()).min(1)
   })
     .required()
     .min(1),
-  evidences: Joi.array().items(EvidenceSchema202304).min(1),
+  evidences: Joi.array().items(EvidenceSchema202304).min(1)
 };

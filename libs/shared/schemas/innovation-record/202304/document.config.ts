@@ -5,7 +5,7 @@ export const allowFileUploads = new Set<keyof DocumentType202304>([
   'EVIDENCE_OF_EFFECTIVENESS',
   'REGULATIONS_AND_STANDARDS',
   'TESTING_WITH_USERS',
-  'DEPLOYMENT',
+  'DEPLOYMENT'
 ]);
 
 export const version = '202304';
@@ -21,5 +21,5 @@ export enum InnovationSectionAliasEnum {
   INTELLECTUAL_PROPERTY = 'IP',
   REVENUE_MODEL = 'RM',
   COST_OF_INNOVATION = 'CI',
-  DEPLOYMENT = 'D',
+  DEPLOYMENT = 'D'
 }

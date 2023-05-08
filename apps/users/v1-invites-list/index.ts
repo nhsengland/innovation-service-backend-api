@@ -14,16 +14,11 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1UserInvitesList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
-      const authInstance = await authorizationService
-        .validate(context)
-        .checkInnovatorType()
-        .verify();
+      const authInstance = await authorizationService.validate(context).checkInnovatorType().verify();
       const requestUser = authInstance.getUserInfo();
 
       const result = await usersService.getCollaborationsInvitesList(requestUser.email);
@@ -49,12 +44,12 @@ export default openApi(V1UserInvitesList.httpTrigger as AzureFunction, '/v1/invi
             schema: {
               type: 'array',
               items: {
-                type: 'object',
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                type: 'object'
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

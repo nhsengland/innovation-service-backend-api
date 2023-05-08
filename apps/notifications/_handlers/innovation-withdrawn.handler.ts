@@ -2,7 +2,7 @@ import {
   EmailNotificationTypeEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum,
+  NotifierTypeEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -28,25 +28,20 @@ export class InnovationWithdrawnHandler extends BaseHandler<
 
   async run(): Promise<this> {
     const assignedUsers = await this.recipientsService.usersInfo(
-      this.inputData.innovation.affectedUsers.map((u) => u.userId)
+      this.inputData.innovation.affectedUsers.map(u => u.userId)
     );
-    const uniqueAssignedUsers = [
-      ...new Map(assignedUsers.map((item) => [item['id'], item])).values(),
-    ];
+    const uniqueAssignedUsers = [...new Map(assignedUsers.map(item => [item['id'], item])).values()];
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const user of uniqueAssignedUsers.filter((user) =>
-      this.isEmailPreferenceInstantly(
-        EmailNotificationTypeEnum.SUPPORT,
-        user.emailNotificationPreferences
-      )
+    for (const user of uniqueAssignedUsers.filter(user =>
+      this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, user.emailNotificationPreferences)
     )) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
         to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
         params: {
-          innovation_name: this.inputData.innovation.name,
-        },
+          innovation_name: this.inputData.innovation.name
+        }
       });
     }
 
@@ -54,7 +49,7 @@ export class InnovationWithdrawnHandler extends BaseHandler<
     for (const user of this.inputData.innovation.affectedUsers) {
       const userRole = await this.recipientsService.getUserRole(user.userId, user.userType, {
         organisation: user.organisationId,
-        organisationUnit: user.organisationUnitId,
+        organisationUnit: user.organisationUnitId
       });
 
       if (userRole) {
@@ -68,12 +63,12 @@ export class InnovationWithdrawnHandler extends BaseHandler<
         context: {
           type: NotificationContextTypeEnum.INNOVATION,
           detail: NotificationContextDetailEnum.INNOVATION_WITHDRAWN,
-          id: this.inputData.innovation.id,
+          id: this.inputData.innovation.id
         },
         userRoleIds,
         params: {
-          innovationName: this.inputData.innovation.name,
-        },
+          innovationName: this.inputData.innovation.name
+        }
       });
     }
 

@@ -19,7 +19,7 @@ export const sqlProvider = (_context: interfaces.Context) => {
       } catch (error: any) {
         console.log(error);
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
-          details: error,
+          details: error
         });
       }
     }

@@ -21,8 +21,6 @@ export class alterTableThreadMessagesAddUnit1674139237444 implements MigrationIn
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `UPDATE innovation_thread_message SET author_organisation_unit_id=NULL;`
-    );
+    await queryRunner.query(`UPDATE innovation_thread_message SET author_organisation_unit_id=NULL;`);
   }
 }

@@ -3,10 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  type AuthorizationServiceType,
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
@@ -19,27 +16,19 @@ import { ParamsSchema, type ParamsType } from './validation.schemas';
 class V1InnovationSupportInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSupportsService = container.get<InnovationSupportsService>(
-      SYMBOLS.InnovationSupportsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
-        .validate(context)
-        .setInnovation(params.innovationId)
-        .checkAccessorType()
-        .verify();
+      await authorizationService.validate(context).setInnovation(params.innovationId).checkAccessorType().verify();
 
       const result = await innovationSupportsService.getInnovationSupportInfo(params.supportId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         status: result.status,
-        engagingAccessors: result.engagingAccessors,
+        engagingAccessors: result.engagingAccessors
       });
       return;
     } catch (error) {
@@ -63,29 +52,29 @@ export default openApi(
           name: 'innovationId',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           in: 'path',
           name: 'supportId',
           required: true,
           schema: {
-            type: 'string',
-          },
-        },
+            type: 'string'
+          }
+        }
       ],
       responses: {
         200: {
-          description: 'OK',
+          description: 'OK'
         },
         400: {
-          description: 'Bad Request',
+          description: 'Bad Request'
         },
         404: {
-          description: 'Not Found',
-        },
-      },
-    },
+          description: 'Not Found'
+        }
+      }
+    }
   }
 );

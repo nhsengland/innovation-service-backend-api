@@ -8,7 +8,7 @@ export type ParamsType = {
 };
 export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required(),
-  actionId: Joi.string().guid().required(),
+  actionId: Joi.string().guid().required()
 }).required();
 
 export type BodyType = {
@@ -27,7 +27,7 @@ export const BodySchema = Joi.object<BodyType>({
         InnovationActionStatusEnum.COMPLETED,
         InnovationActionStatusEnum.CANCELLED
       )
-      .required(),
+      .required()
   })
     .when('$userRole', {
       is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
@@ -37,23 +37,23 @@ export const BodySchema = Joi.object<BodyType>({
           InnovationActionStatusEnum.COMPLETED,
           InnovationActionStatusEnum.CANCELLED
         )
-        .required(),
+        .required()
     })
     .when('$userRole', {
       is: ServiceRoleEnum.INNOVATOR,
-      then: Joi.string().valid(InnovationActionStatusEnum.DECLINED).required(),
+      then: Joi.string().valid(InnovationActionStatusEnum.DECLINED).required()
     }),
 
   message: Joi.when('$userRole', {
     is: ServiceRoleEnum.ACCESSOR,
-    then: Joi.forbidden(),
+    then: Joi.forbidden()
   })
     .when('$userRole', {
       is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      then: Joi.forbidden(),
+      then: Joi.forbidden()
     })
     .when('$userRole', {
       is: ServiceRoleEnum.INNOVATOR,
-      then: Joi.string().max(500).required(),
-    }),
+      then: Joi.string().max(500).required()
+    })
 }).required();

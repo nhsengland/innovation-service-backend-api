@@ -6,7 +6,7 @@ import {
   InnovationCollaboratorStatusEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
-  ServiceRoleEnum,
+  ServiceRoleEnum
 } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
@@ -63,7 +63,7 @@ export class DomainUsersService {
         'roleOrganisation.acronym',
         'roleOrganisationUnit.id',
         'roleOrganisationUnit.name',
-        'roleOrganisationUnit.acronym',
+        'roleOrganisationUnit.acronym'
       ])
       .leftJoin('user.userOrganisations', 'userOrganisations')
       .leftJoin('userOrganisations.organisation', 'organisation')
@@ -98,7 +98,7 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      organisations: (await dbUser.userOrganisations).map((userOrganisation) => {
+      organisations: (await dbUser.userOrganisations).map(userOrganisation => {
         const organisation = userOrganisation.organisation;
         const organisationUnits = userOrganisation.userOrganisationUnits;
 
@@ -111,16 +111,16 @@ export class DomainUsersService {
           isShadow: organisation.isShadow,
           description: organisation.description,
           registrationNumber: organisation.registrationNumber,
-          organisationUnits: organisationUnits.map((item) => ({
+          organisationUnits: organisationUnits.map(item => ({
             id: item.organisationUnit.id,
             acronym: item.organisationUnit.acronym,
             name: item.organisationUnit.name,
             organisationUnitUser: {
-              id: item.id,
-            },
-          })),
+              id: item.id
+            }
+          }))
         };
-      }),
+      })
     };
   }
 
@@ -147,10 +147,7 @@ export class DomainUsersService {
     }
 
     // If provided information is empty, nothing to do here!
-    if (
-      (data.userIds && data.userIds.length === 0) ||
-      (data.identityIds && data.identityIds.length === 0)
-    ) {
+    if ((data.userIds && data.userIds.length === 0) || (data.identityIds && data.identityIds.length === 0)) {
       return [];
     }
 
@@ -164,15 +161,13 @@ export class DomainUsersService {
     }
 
     const dbUsers = await query.getMany();
-    const identityUsers = await this.identityProviderService.getUsersList(
-      dbUsers.map((items) => items.identityId)
-    );
+    const identityUsers = await this.identityProviderService.getUsersList(dbUsers.map(items => items.identityId));
 
-    return dbUsers.map((dbUser) => {
-      const identityUser = identityUsers.find((item) => item.identityId === dbUser.identityId);
+    return dbUsers.map(dbUser => {
+      const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
       if (!identityUser) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
-          details: { context: 'S.DU.gUL' },
+          details: { context: 'S.DU.gUL' }
         });
       }
 
@@ -184,7 +179,7 @@ export class DomainUsersService {
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
         isActive: !dbUser.lockedAt,
-        lastLoginAt: identityUser.lastLoginAt,
+        lastLoginAt: identityUser.lastLoginAt
       };
     });
   }
@@ -204,7 +199,7 @@ export class DomainUsersService {
       contactByPhone: userPreferences?.contactByPhone ?? false,
       contactByEmail: userPreferences?.contactByEmail ?? false,
       contactByPhoneTimeframe: userPreferences?.contactByPhoneTimeframe ?? null,
-      contactDetails: userPreferences?.contactDetails ?? null,
+      contactDetails: userPreferences?.contactDetails ?? null
     };
   }
 
@@ -215,10 +210,7 @@ export class DomainUsersService {
    *  - userRoles: the user roles to filter by.
    * @returns the user as an array.
    */
-  async getUserByEmail(
-    email: string,
-    filters?: { userRoles: ServiceRoleEnum[] }
-  ): Promise<DomainUserInfoType[]> {
+  async getUserByEmail(email: string, filters?: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
     try {
       const authUser = await this.identityProviderService.getUserInfoByEmail(email);
       if (!authUser) {
@@ -231,9 +223,7 @@ export class DomainUsersService {
         if (
           filters.userRoles.length === 0 ||
           (filters.userRoles.length > 0 &&
-            filters.userRoles.some((userRole) =>
-              dbUser.roles.map((r) => r.role).includes(userRole)
-            ))
+            filters.userRoles.some(userRole => dbUser.roles.map(r => r.role).includes(userRole)))
         ) {
           return [dbUser];
         } else {
@@ -248,7 +238,11 @@ export class DomainUsersService {
     }
   }
 
-  async deleteUser(domainContext: DomainContextType, userId: string, data: { reason: null | string }): Promise<{ id: string }> {
+  async deleteUser(
+    domainContext: DomainContextType,
+    userId: string,
+    data: { reason: null | string }
+  ): Promise<{ id: string }> {
     const dbUser = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
       .innerJoinAndSelect('user.serviceRoles', 'roles')
@@ -265,27 +259,21 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: Date }[] =
-      [];
+    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: Date }[] = [];
 
-    const result = this.sqlConnection.transaction(async (transaction) => {
+    const result = this.sqlConnection.transaction(async transaction => {
       // If user has innovator role, deals with it's innovations.
-      const userInnovatorRole = dbUser.serviceRoles.find(
-        (item) => item.role === ServiceRoleEnum.INNOVATOR
-      );
+      const userInnovatorRole = dbUser.serviceRoles.find(item => item.role === ServiceRoleEnum.INNOVATOR);
 
       if (userInnovatorRole) {
-        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(
-          dbUser.id,
-          transaction
-        );
+        const dbInnovations = await this.domainInnovationsService.getInnovationsByOwnerId(dbUser.id, transaction);
 
         await this.domainInnovationsService.bulkUpdateCollaboratorStatusByEmail(
           transaction,
           { id: dbUser.id, email: user.email },
           {
             current: InnovationCollaboratorStatusEnum.PENDING,
-            next: InnovationCollaboratorStatusEnum.DECLINED,
+            next: InnovationCollaboratorStatusEnum.DECLINED
           }
         );
 
@@ -294,32 +282,30 @@ export class DomainUsersService {
           { id: dbUser.id, email: user.email },
           {
             current: InnovationCollaboratorStatusEnum.ACTIVE,
-            next: InnovationCollaboratorStatusEnum.LEFT,
+            next: InnovationCollaboratorStatusEnum.LEFT
           }
         );
 
         await this.domainInnovationsService.withdrawInnovations(
           { id: dbUser.id, roleId: userInnovatorRole.id },
-          dbInnovations
-            .filter((i) => i.expirationTransferDate === null)
-            .map((item) => ({ id: item.id, reason: null })),
+          dbInnovations.filter(i => i.expirationTransferDate === null).map(item => ({ id: item.id, reason: null })),
           transaction
         );
 
-        for (const dbInnovation of dbInnovations.filter((i) => i.expirationTransferDate !== null)) {
+        for (const dbInnovation of dbInnovations.filter(i => i.expirationTransferDate !== null)) {
           innovationsWithPendingTransfer.push({
             id: dbInnovation.id,
             name: dbInnovation.name,
-            transferExpireDate: dbInnovation.expirationTransferDate as Date,
+            transferExpireDate: dbInnovation.expirationTransferDate as Date
           });
 
           await this.sqlConnection.getRepository(InnovationEntity).update(
             {
-              id: dbInnovation.id,
+              id: dbInnovation.id
             },
             {
               updatedBy: dbUser.id,
-              expires_at: dbInnovation.expirationTransferDate,
+              expires_at: dbInnovation.expirationTransferDate
             }
           );
         }
@@ -330,7 +316,7 @@ export class DomainUsersService {
             { id: domainContext.id, identityId: domainContext.identityId },
             NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER,
             {
-              innovations: innovationsWithPendingTransfer,
+              innovations: innovationsWithPendingTransfer
             },
             domainContext
           );
@@ -341,7 +327,7 @@ export class DomainUsersService {
         UserRoleEntity,
         { user: { id: dbUser.id } },
         {
-          deletedAt: new Date().toISOString(),
+          deletedAt: new Date().toISOString()
         }
       );
 
@@ -350,7 +336,7 @@ export class DomainUsersService {
         { id: dbUser.id },
         {
           deleteReason: data.reason,
-          deletedAt: new Date().toISOString(),
+          deletedAt: new Date().toISOString()
         }
       );
 
@@ -382,7 +368,7 @@ export class DomainUsersService {
         'organisation.acronym',
         'organisationUnit.id',
         'organisationUnit.name',
-        'organisationUnit.acronym',
+        'organisationUnit.acronym'
       ])
       .leftJoin('userRole.organisation', 'organisation')
       .leftJoin('userRole.organisationUnit', 'organisationUnit')

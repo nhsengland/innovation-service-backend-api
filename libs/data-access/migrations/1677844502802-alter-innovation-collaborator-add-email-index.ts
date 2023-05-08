@@ -8,8 +8,6 @@ export class alterInnovationCollaboratorAddEmailIndex1677844502802 implements Mi
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_collaborator_email" ON "innovation_collaborator"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_collaborator_email" ON "innovation_collaborator"`);
   }
 }

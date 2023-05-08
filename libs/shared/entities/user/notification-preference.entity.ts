@@ -4,10 +4,7 @@ import { BaseEntity } from '../base.entity';
 
 import { UserEntity } from './user.entity';
 
-import {
-  EmailNotificationPreferenceEnum,
-  EmailNotificationTypeEnum,
-} from '../../enums/notification.enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum } from '../../enums/notification.enums';
 
 @Entity('notification_preference')
 export class NotificationPreferenceEntity extends BaseEntity {

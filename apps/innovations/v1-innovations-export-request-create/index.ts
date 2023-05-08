@@ -16,9 +16,7 @@ import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './valida
 class V1InnovationsExportRequestsCreate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
@@ -72,14 +70,14 @@ export default openApi(
           description: 'Innovation ID',
           schema: {
             type: 'string',
-            format: 'uuid',
-          },
-        },
+            format: 'uuid'
+          }
+        }
       ],
       responses: {
         200: { description: 'Success' },
-        400: { description: 'Invalid innovation payload' },
-      },
-    },
+        400: { description: 'Invalid innovation payload' }
+      }
+    }
   }
 );

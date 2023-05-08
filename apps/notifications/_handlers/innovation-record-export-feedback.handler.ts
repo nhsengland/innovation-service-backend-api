@@ -22,12 +22,8 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(
-      this.inputData.innovationId
-    );
-    const request = await this.recipientsService.getExportRequestWithRelations(
-      this.inputData.requestId
-    );
+    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
 
     const innovatorName = await this.recipientsService.userInfo(innovation.owner.id);
 
@@ -42,7 +38,7 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
         to: {
           type: 'identityId',
           value: request.createdBy.identityId,
-          displayNameParam: 'display_name',
+          displayNameParam: 'display_name'
         },
         params: {
           innovation_name: innovation.name,
@@ -51,8 +47,8 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
             .buildUrl(),
-          pdf_rejection_comment: request.exportRequest.rejectReason,
-        },
+          pdf_rejection_comment: request.exportRequest.rejectReason
+        }
       });
     }
 

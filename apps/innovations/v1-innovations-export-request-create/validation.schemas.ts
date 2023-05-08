@@ -10,9 +10,9 @@ export type PathParamsType = {
 };
 
 export const BodySchema = Joi.object<BodyType>({
-  requestReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+  requestReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
 });
 
 export const PathParamsSchema = Joi.object<PathParamsType>({
-  innovationId: Joi.string().uuid().required(),
+  innovationId: Joi.string().uuid().required()
 }).required();

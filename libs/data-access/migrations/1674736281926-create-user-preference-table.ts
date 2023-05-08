@@ -24,9 +24,7 @@ export class createUserPreferenceTable1674736281926 implements MigrationInterfac
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "user_preference" DROP CONSTRAINT "fk_user_preference_user_user_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "user_preference" DROP CONSTRAINT "fk_user_preference_user_user_id"`);
 
     await queryRunner.query(`DROP TABLE "user_preference"`);
   }

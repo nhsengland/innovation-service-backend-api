@@ -1,9 +1,6 @@
 import type { Context } from '@azure/functions';
 
-import type {
-  NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
-} from '@notifications/shared/enums';
+import type { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container } from '../_config';

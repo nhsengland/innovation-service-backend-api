@@ -2,11 +2,8 @@ import { IdentityProviderService } from '../services';
 
 import type { TestUserType } from './builders/user.builder';
 
-
 export class MocksHelper {
-
   static mockIdentityServiceGetUserInfo(user: TestUserType): void {
-
     jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue({
       identityId: user.identityId,
       displayName: user.name,
@@ -16,7 +13,5 @@ export class MocksHelper {
       passwordResetAt: null,
       lastLoginAt: null
     });
-
   }
-
 }

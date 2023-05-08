@@ -13,6 +13,6 @@ export const QueryParamsSchema = Joi.object({
   withInactive: Joi.when('$userType', {
     is: ServiceRoleEnum.ADMIN,
     then: Joi.boolean().optional(),
-    otherwise: Joi.forbidden(),
-  }),
+    otherwise: Joi.forbidden()
+  })
 });

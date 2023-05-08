@@ -3,7 +3,7 @@ import { ServiceRoleEnum } from '@admin/shared/enums';
 export const AdminOperationType = {
   LOCK_USER: 'LOCK_USER',
   UPDATE_USER_ROLE: 'UPDATE_USER_ROLE',
-  CHANGE_UNIT: 'CHANGE_UNIT',
+  CHANGE_UNIT: 'CHANGE_UNIT'
 } as const;
 export type AdminOperationType = (typeof AdminOperationType)[keyof typeof AdminOperationType];
 
@@ -11,7 +11,7 @@ export const AdminRuleType = {
   AssessmentUserIsNotTheOnlyOne: 'AssessmentUserIsNotTheOnlyOne',
   LastQualifyingAccessorUserOnOrganisationUnit: 'LastQualifyingAccessorUserOnOrganisationUnit',
   LastUserOnOrganisationUnit: 'LastUserOnOrganisationUnit',
-  NoInnovationsSupportedOnlyByThisUser: 'NoInnovationsSupportedOnlyByThisUser',
+  NoInnovationsSupportedOnlyByThisUser: 'NoInnovationsSupportedOnlyByThisUser'
 } as const;
 export type AdminRuleType = (typeof AdminRuleType)[keyof typeof AdminRuleType];
 
@@ -32,22 +32,22 @@ export const AdminOperationsRulesMapper: Record<
     [ServiceRoleEnum.QUALIFYING_ACCESSOR]: [
       AdminRuleType.LastQualifyingAccessorUserOnOrganisationUnit,
       AdminRuleType.LastUserOnOrganisationUnit,
-      AdminRuleType.NoInnovationsSupportedOnlyByThisUser,
+      AdminRuleType.NoInnovationsSupportedOnlyByThisUser
     ],
     [ServiceRoleEnum.ACCESSOR]: [
       AdminRuleType.LastUserOnOrganisationUnit,
-      AdminRuleType.NoInnovationsSupportedOnlyByThisUser,
-    ],
+      AdminRuleType.NoInnovationsSupportedOnlyByThisUser
+    ]
   },
 
   UPDATE_USER_ROLE: {
-    [ServiceRoleEnum.ACCESSOR]: [AdminRuleType.LastUserOnOrganisationUnit],
+    [ServiceRoleEnum.ACCESSOR]: [AdminRuleType.LastUserOnOrganisationUnit]
   },
 
   CHANGE_UNIT: {
     [ServiceRoleEnum.ACCESSOR]: [
       AdminRuleType.NoInnovationsSupportedOnlyByThisUser,
-      AdminRuleType.LastUserOnOrganisationUnit,
-    ],
-  },
+      AdminRuleType.LastUserOnOrganisationUnit
+    ]
+  }
 };

@@ -8,7 +8,7 @@ export type DefaultUserBodyType = {
 };
 
 export const DefaultUserBodySchema = Joi.object<DefaultUserBodyType>({
-  displayName: Joi.string().required(),
+  displayName: Joi.string().required()
 }).required();
 
 export type InnovatorBodyType = {
@@ -43,21 +43,18 @@ export const InnovatorBodySchema = Joi.object<InnovatorBodyType>({
     name: Joi.alternatives().conditional('isShadow', {
       is: false,
       then: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.name).required(),
-      otherwise: Joi.string().optional().allow(null),
+      otherwise: Joi.string().optional().allow(null)
     }),
     size: Joi.alternatives().conditional('isShadow', {
       is: false,
       then: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.size).required(),
-      otherwise: Joi.string().optional().allow(null),
+      otherwise: Joi.string().optional().allow(null)
     }),
     description: Joi.alternatives().conditional('isShadow', {
       is: false,
       then: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.description).required(),
-      otherwise: Joi.string().optional().allow(null),
+      otherwise: Joi.string().optional().allow(null)
     }),
-    registrationNumber: Joi.string()
-      .max(ORGANISATIONS_LENGTH_LIMITS.registrationNumber)
-      .optional()
-      .allow(null),
-  }).required(),
+    registrationNumber: Joi.string().max(ORGANISATIONS_LENGTH_LIMITS.registrationNumber).optional().allow(null)
+  }).required()
 }).required();

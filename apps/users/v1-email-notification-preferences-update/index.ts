@@ -39,20 +39,16 @@ class V1UserEmailNotificationsInfo {
   }
 }
 
-export default openApi(
-  V1UserEmailNotificationsInfo.httpTrigger as AzureFunction,
-  '/v1/email-preferences',
-  {
-    put: {
-      description: 'Updates the user email preferences ',
-      operationId: 'v1-email-notification-preferences-upsert',
-      tags: ['[v1] Email Preferences'],
-      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
-      responses: {
-        204: {
-          description: 'The user email preferences were updated successfully',
-        },
-      },
-    },
+export default openApi(V1UserEmailNotificationsInfo.httpTrigger as AzureFunction, '/v1/email-preferences', {
+  put: {
+    description: 'Updates the user email preferences ',
+    operationId: 'v1-email-notification-preferences-upsert',
+    tags: ['[v1] Email Preferences'],
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema),
+    responses: {
+      204: {
+        description: 'The user email preferences were updated successfully'
+      }
+    }
   }
-);
+});

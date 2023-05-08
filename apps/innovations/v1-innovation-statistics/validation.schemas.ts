@@ -11,12 +11,12 @@ export type QueryType = {
 };
 
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export const QuerySchema = Joi.object<QueryType>({
   statistics: JoiHelper.AppCustomJoi()
     .stringArray()
     .items(Joi.string().valid(...Object.values(InnovationStatisticsEnum)))
-    .required(),
+    .required()
 }).required();

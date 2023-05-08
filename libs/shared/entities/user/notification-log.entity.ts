@@ -13,7 +13,7 @@ export class NotificationLogEntity extends BaseEntity {
     name: 'notification_type',
     type: 'simple-enum',
     enum: NotificationLogTypeEnum,
-    nullable: false,
+    nullable: false
   })
   notificationType: NotificationLogTypeEnum;
 

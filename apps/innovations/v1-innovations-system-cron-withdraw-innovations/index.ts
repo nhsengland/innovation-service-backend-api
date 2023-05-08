@@ -2,7 +2,7 @@ import {
   DomainServiceSymbol,
   DomainServiceType,
   LoggerServiceSymbol,
-  LoggerServiceType,
+  LoggerServiceType
 } from '@innovations/shared/services';
 import { container } from '../_config';
 

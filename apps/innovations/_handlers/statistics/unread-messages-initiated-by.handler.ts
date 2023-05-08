@@ -2,7 +2,7 @@ import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/
 import { container } from '../../_config';
 import type {
   InnovationStatisticsParamsTemplateType,
-  InnovationStatisticsTemplateType,
+  InnovationStatisticsTemplateType
 } from '../../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../../_enums/innovation.enums';
 import type { StatisticsService } from '../../_services/statistics.service';
@@ -30,7 +30,7 @@ export class UnreadMessagesThreadsInitiatedByStatisticsHandler extends Innovatio
 
     return {
       count: actions.count,
-      lastSubmittedAt: actions.lastSubmittedAt,
+      lastSubmittedAt: actions.lastSubmittedAt
     };
   }
 }

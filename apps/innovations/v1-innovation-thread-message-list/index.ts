@@ -16,12 +16,8 @@ import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './
 class V1InnovationThreadMessageList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const threadsService = container.get<InnovationThreadsService>(
-      SYMBOLS.InnovationThreadsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -53,7 +49,7 @@ class V1InnovationThreadMessageList {
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
-        messages: result.messages.map((message) => ({
+        messages: result.messages.map(message => ({
           id: message.id,
           createdAt: message.createdAt,
           createdBy: {
@@ -64,19 +60,19 @@ class V1InnovationThreadMessageList {
             organisationUnit: {
               id: message.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
               name: message.createdBy.organisationUnit?.name ?? '',
-              acronym: message.createdBy.organisationUnit?.acronym ?? '',
+              acronym: message.createdBy.organisationUnit?.acronym ?? ''
             },
             organisation: {
               id: message.createdBy.organisation?.id ?? '', // if the organisation exists, then all props are ensured to exist
               name: message.createdBy.organisation?.name ?? '',
-              acronym: message.createdBy.organisation?.acronym ?? '',
-            },
+              acronym: message.createdBy.organisation?.acronym ?? ''
+            }
           },
           isEditable: message.isEditable,
           isNew: message.isNew,
           message: message.message,
-          updatedAt: message.updatedAt,
-        })),
+          updatedAt: message.updatedAt
+        }))
       });
 
       return;
@@ -103,8 +99,8 @@ export default openApi(
           description: 'Innovation ID',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'threadId',
@@ -112,8 +108,8 @@ export default openApi(
           description: 'Thread ID',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'skip',
@@ -121,8 +117,8 @@ export default openApi(
           description: 'Number of records to skip',
           required: false,
           schema: {
-            type: 'number',
-          },
+            type: 'number'
+          }
         },
         {
           name: 'take',
@@ -130,8 +126,8 @@ export default openApi(
           description: 'Number of records to take',
           required: false,
           schema: {
-            type: 'number',
-          },
+            type: 'number'
+          }
         },
         {
           name: 'order',
@@ -140,9 +136,9 @@ export default openApi(
           required: false,
           schema: {
             type: 'string',
-            enum: ['ASC', 'DESC'],
-          },
-        },
+            enum: ['ASC', 'DESC']
+          }
+        }
       ],
       responses: {
         200: {
@@ -153,7 +149,7 @@ export default openApi(
                 type: 'object',
                 properties: {
                   count: {
-                    type: 'number',
+                    type: 'number'
                   },
                   messages: {
                     type: 'array',
@@ -161,90 +157,90 @@ export default openApi(
                       type: 'object',
                       properties: {
                         id: {
-                          type: 'string',
+                          type: 'string'
                         },
                         createdAt: {
-                          type: 'string',
+                          type: 'string'
                         },
                         createdBy: {
                           type: 'object',
                           properties: {
                             id: {
-                              type: 'string',
+                              type: 'string'
                             },
                             name: {
-                              type: 'string',
+                              type: 'string'
                             },
                             type: {
                               type: 'string',
-                              enum: ['INNOVATOR', 'ASSESSOR', 'ACCESSOR'],
+                              enum: ['INNOVATOR', 'ASSESSOR', 'ACCESSOR']
                             },
                             organisationUnit: {
                               type: 'object',
                               properties: {
                                 id: {
-                                  type: 'string',
+                                  type: 'string'
                                 },
                                 name: {
-                                  type: 'string',
+                                  type: 'string'
                                 },
                                 acronym: {
-                                  type: 'string',
-                                },
-                              },
+                                  type: 'string'
+                                }
+                              }
                             },
                             organisation: {
                               type: 'object',
                               properties: {
                                 id: {
-                                  type: 'string',
+                                  type: 'string'
                                 },
                                 name: {
-                                  type: 'string',
+                                  type: 'string'
                                 },
                                 acronym: {
-                                  type: 'string',
-                                },
-                              },
-                            },
-                          },
+                                  type: 'string'
+                                }
+                              }
+                            }
+                          }
                         },
                         isEditable: {
-                          type: 'boolean',
+                          type: 'boolean'
                         },
                         isNew: {
-                          type: 'boolean',
+                          type: 'boolean'
                         },
                         message: {
-                          type: 'string',
+                          type: 'string'
                         },
                         updatedAt: {
-                          type: 'string',
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
+                          type: 'string'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         400: {
-          description: 'Bad request',
+          description: 'Bad request'
         },
         401: {
-          description: 'Unauthorized',
+          description: 'Unauthorized'
         },
         403: {
-          description: 'Forbidden',
+          description: 'Forbidden'
         },
         404: {
-          description: 'Not found',
+          description: 'Not found'
         },
         500: {
-          description: 'Internal server error',
-        },
-      },
-    },
+          description: 'Internal server error'
+        }
+      }
+    }
   }
 );

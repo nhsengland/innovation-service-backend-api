@@ -16,12 +16,8 @@ import { BodySchema, ParamsSchema, type BodyType, type ParamsType } from './vali
 class V1InnovationSupportChangeRequest {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
-    const innovationSupportsService = container.get<InnovationSupportsService>(
-      SYMBOLS.InnovationSupportsService
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -69,13 +65,13 @@ export default openApi(
           in: 'path',
           name: 'innovationId',
           description: 'Unique innovation ID',
-          required: true,
+          required: true
         },
         {
           in: 'path',
           name: 'supportId',
-          required: true,
-        },
+          required: true
+        }
       ],
       requestBody: {
         description: '',
@@ -87,24 +83,17 @@ export default openApi(
               properties: {
                 status: {
                   type: 'string',
-                  enum: [
-                    'ENGAGING',
-                    'FURTHER_INFO_REQUIRED',
-                    'WAITING',
-                    'NOT_YET',
-                    'UNSUITABLE',
-                    'COMPLETE',
-                  ],
+                  enum: ['ENGAGING', 'FURTHER_INFO_REQUIRED', 'WAITING', 'NOT_YET', 'UNSUITABLE', 'COMPLETE']
                 },
                 message: {
                   type: 'string',
-                  maxLength: 400,
-                },
+                  maxLength: 400
+                }
               },
-              required: ['status', 'message'],
-            },
-          },
-        },
+              required: ['status', 'message']
+            }
+          }
+        }
       },
       responses: {
         '200': {
@@ -116,15 +105,15 @@ export default openApi(
                 properties: {
                   id: {
                     type: 'string',
-                    format: 'uuid',
-                  },
+                    format: 'uuid'
+                  }
                 },
-                required: ['id'],
-              },
-            },
-          },
-        },
-      },
-    },
+                required: ['id']
+              }
+            }
+          }
+        }
+      }
+    }
   }
 );

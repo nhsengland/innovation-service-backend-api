@@ -4,7 +4,7 @@ export {
   InnovationErrorsEnum,
   OrganisationErrorsEnum,
   EmailErrorsEnum,
-  AnnouncementErrorsEnum,
+  AnnouncementErrorsEnum
 } from './errors.enums';
 
 export {
@@ -15,5 +15,5 @@ export {
   InternalServerError,
   ServiceUnavailableError,
   ConflictError,
-  UnprocessableEntityError,
+  UnprocessableEntityError
 } from './errors.config';

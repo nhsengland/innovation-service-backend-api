@@ -6,7 +6,7 @@ import {
   InnovationReassessmentRequestEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  UserEntity,
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -17,19 +17,19 @@ import {
   ServiceRoleEnum,
   ThreadContextTypeEnum,
   YesOrNoCatalogueType,
-  YesPartiallyNoCatalogueType,
+  YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError,
-  UserErrorsEnum,
+  UserErrorsEnum
 } from '@innovations/shared/errors';
 import {
   DomainServiceSymbol,
   DomainServiceType,
   NotifierServiceSymbol,
-  NotifierServiceType,
+  NotifierServiceType
 } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 
@@ -74,7 +74,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     // Fetch users names.
     const usersInfo = await this.domainService.users.getUsersList({
-      userIds: [assessment.assignTo.id, assessment.updatedBy],
+      userIds: [assessment.assignTo.id, assessment.updatedBy]
     });
 
     return {
@@ -84,15 +84,15 @@ export class InnovationAssessmentsService extends BaseService {
         : {
             reassessment: {
               updatedInnovationRecord: assessment.reassessmentRequest.updatedInnovationRecord,
-              description: assessment.reassessmentRequest.description,
-            },
+              description: assessment.reassessmentRequest.description
+            }
           }),
       summary: assessment.summary,
       description: assessment.description,
       finishedAt: assessment.finishedAt,
       assignTo: {
         id: assessment.assignTo.id,
-        name: usersInfo.find((user) => user.id === assessment.assignTo.id)?.displayName || '',
+        name: usersInfo.find(user => user.id === assessment.assignTo.id)?.displayName || ''
       },
       maturityLevel: assessment.maturityLevel,
       maturityLevelComment: assessment.maturityLevelComment,
@@ -111,22 +111,22 @@ export class InnovationAssessmentsService extends BaseService {
       hasScaleResource: assessment.hasScaleResource,
       hasScaleResourceComment: assessment.hasScaleResourceComment,
       suggestedOrganisations: InnovationHelper.parseOrganisationUnitsToOrganisationsFormat(
-        assessment.organisationUnits.map((item) => ({
+        assessment.organisationUnits.map(item => ({
           id: item.id,
           name: item.name,
           acronym: item.acronym,
           organisation: {
             id: item.organisation.id,
             name: item.organisation.name,
-            acronym: item.organisation.acronym,
-          },
+            acronym: item.organisation.acronym
+          }
         }))
       ),
       updatedAt: assessment.updatedAt,
       updatedBy: {
         id: assessment.updatedBy,
-        name: usersInfo.find((user) => user.id === assessment.updatedBy)?.displayName || '',
-      },
+        name: usersInfo.find(user => user.id === assessment.updatedBy)?.displayName || ''
+      }
     };
   }
 
@@ -147,13 +147,13 @@ export class InnovationAssessmentsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS);
     }
 
-    return connection.transaction(async (transaction) => {
+    return connection.transaction(async transaction => {
       await transaction.update(
         InnovationEntity,
         { id: innovationId },
         {
           status: InnovationStatusEnum.NEEDS_ASSESSMENT,
-          statusUpdatedAt: new Date().toISOString(),
+          statusUpdatedAt: new Date().toISOString()
         }
       );
 
@@ -164,7 +164,7 @@ export class InnovationAssessmentsService extends BaseService {
           innovation: InnovationEntity.new({ id: innovationId }),
           assignTo: UserEntity.new({ id: user.id }),
           createdBy: user.id,
-          updatedBy: user.id,
+          updatedBy: user.id
         })
       );
 
@@ -185,7 +185,7 @@ export class InnovationAssessmentsService extends BaseService {
         {
           innovationId: innovationId,
           activity: ActivityEnum.NEEDS_ASSESSMENT_START,
-          domainContext,
+          domainContext
         },
         { comment: { id: thread.thread.id, value: data.message } }
       );
@@ -251,19 +251,14 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
-    const result = await connection.transaction(async (transaction) => {
+    const result = await connection.transaction(async transaction => {
       // Merge new data with assessment record.
-      const assessment = Object.entries(data).reduce(
-        (acc, item) => ({ ...acc, [item[0]]: item[1] }),
-        dbAssessment
-      );
+      const assessment = Object.entries(data).reduce((acc, item) => ({ ...acc, [item[0]]: item[1] }), dbAssessment);
 
       assessment.updatedBy = user.id;
 
       if (data.suggestedOrganisationUnitsIds) {
-        assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map((id) =>
-          OrganisationUnitEntity.new({ id })
-        );
+        assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
       }
 
       // Following operations are only applied when submitting the assessment.
@@ -278,7 +273,7 @@ export class InnovationAssessmentsService extends BaseService {
             {
               status: InnovationStatusEnum.IN_PROGRESS,
               statusUpdatedAt: new Date().toISOString(),
-              updatedBy: user.id,
+              updatedBy: user.id
             }
           );
 
@@ -287,7 +282,7 @@ export class InnovationAssessmentsService extends BaseService {
             {
               innovationId: innovationId,
               activity: ActivityEnum.NEEDS_ASSESSMENT_COMPLETED,
-              domainContext,
+              domainContext
             },
             { assessmentId: assessment.id }
           );
@@ -299,7 +294,7 @@ export class InnovationAssessmentsService extends BaseService {
             {
               innovationId: innovationId,
               activity: ActivityEnum.NEEDS_ASSESSMENT_EDITED,
-              domainContext,
+              domainContext
             },
             { assessmentId: assessment.id }
           );
@@ -312,7 +307,7 @@ export class InnovationAssessmentsService extends BaseService {
             .distinct()
             .innerJoin('organisation.organisationUnits', 'organisationUnits')
             .where('organisationUnits.id IN (:...ids)', {
-              ids: assessment.organisationUnits.map((ou) => ou.id),
+              ids: assessment.organisationUnits.map(ou => ou.id)
             })
             .andWhere('organisation.inactivated_at IS NULL')
             .andWhere('organisationUnits.inactivated_at IS NULL')
@@ -323,26 +318,23 @@ export class InnovationAssessmentsService extends BaseService {
             {
               innovationId: innovationId,
               activity: ActivityEnum.ORGANISATION_SUGGESTION,
-              domainContext,
+              domainContext
             },
-            { organisations: organisations.map((item) => item.name) }
+            { organisations: organisations.map(item => item.name) }
           );
         }
       } else {
         // it's draft
         // if the innovation has a reassessment request and is in state WAITING_NEEDS_ASSESSMENT
         // change innovation state to NEEDS_ASSESSMENT
-        if (
-          dbAssessment.reassessmentRequest &&
-          innovation.status === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT
-        ) {
+        if (dbAssessment.reassessmentRequest && innovation.status === InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT) {
           await transaction.update(
             InnovationEntity,
             { id: innovationId },
             {
               status: InnovationStatusEnum.NEEDS_ASSESSMENT,
               statusUpdatedAt: new Date().toISOString(),
-              updatedBy: user.id,
+              updatedBy: user.id
             }
           );
         }
@@ -360,7 +352,7 @@ export class InnovationAssessmentsService extends BaseService {
         {
           innovationId: innovationId,
           assessmentId: assessmentId,
-          organisationUnitIds: data.suggestedOrganisationUnitsIds || [],
+          organisationUnitIds: data.suggestedOrganisationUnitsIds || []
         },
         domainContext
       );
@@ -390,19 +382,14 @@ export class InnovationAssessmentsService extends BaseService {
       .innerJoin('innovation.innovationSupports', 'supports')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('innovation.status = :innovationStatus', {
-        innovationStatus: InnovationStatusEnum.IN_PROGRESS,
+        innovationStatus: InnovationStatusEnum.IN_PROGRESS
       })
       .andWhere('supports.status IN (:...supportStatus)', {
-        supportStatus: [
-          InnovationSupportStatusEnum.ENGAGING,
-          InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-        ],
+        supportStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
       })
       .getCount();
     if (hasOngoingSupports > 0) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT
-      );
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
     }
 
     // Get the latest assessment record.
@@ -418,7 +405,7 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
-    const result = await connection.transaction(async (transaction) => {
+    const result = await connection.transaction(async transaction => {
       // 1. Update the innovation status to WAITING_NEEDS_ASSESSMENT
       // 2. Create a new assessment record copied from the previous one
       // 3. Create a new reassessment record
@@ -432,7 +419,7 @@ export class InnovationAssessmentsService extends BaseService {
         {
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: new Date().toISOString(),
-          updatedBy: assessment.createdBy,
+          updatedBy: assessment.createdBy
         }
       );
 
@@ -449,7 +436,7 @@ export class InnovationAssessmentsService extends BaseService {
           updatedInnovationRecord: data.updatedInnovationRecord,
           description: data.description,
           createdBy: assessmentClone.createdBy,
-          updatedBy: assessmentClone.updatedBy,
+          updatedBy: assessmentClone.updatedBy
         })
       );
 
@@ -460,7 +447,7 @@ export class InnovationAssessmentsService extends BaseService {
         {
           innovationId: assessment.innovation.id,
           activity: ActivityEnum.NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED,
-          domainContext,
+          domainContext
         },
         { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } }
       );
@@ -477,7 +464,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     return {
       assessment: { id: result.assessment.id },
-      reassessment: { id: result.reassessment.id },
+      reassessment: { id: result.reassessment.id }
     };
   }
 
@@ -496,7 +483,7 @@ export class InnovationAssessmentsService extends BaseService {
       .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
       .where('user.id = :assessorId', { assessorId })
       .andWhere('serviceRoles.role = :serviceRoleType', {
-        serviceRoleType: ServiceRoleEnum.ASSESSMENT,
+        serviceRoleType: ServiceRoleEnum.ASSESSMENT
       })
       .getOne();
 
@@ -518,16 +505,12 @@ export class InnovationAssessmentsService extends BaseService {
 
     const previousAssessor = assessment.assignTo;
 
-    const updatedAssessment = await connection.transaction(async (transaction) => {
-      await transaction.update(
-        InnovationAssessmentEntity,
-        { id: assessment.id },
-        { assignTo: newAssessor }
-      );
+    const updatedAssessment = await connection.transaction(async transaction => {
+      await transaction.update(InnovationAssessmentEntity, { id: assessment.id }, { assignTo: newAssessor });
 
       return {
         id: assessment.id,
-        newAssessor: { id: newAssessor.id, identityId: newAssessor.identityId },
+        newAssessor: { id: newAssessor.id, identityId: newAssessor.identityId }
       };
     });
 
@@ -538,7 +521,7 @@ export class InnovationAssessmentsService extends BaseService {
         innovationId,
         assessmentId: updatedAssessment.id,
         previousAssessor: { identityId: previousAssessor.identityId },
-        newAssessor: { identityId: updatedAssessment.newAssessor.identityId },
+        newAssessor: { identityId: updatedAssessment.newAssessor.identityId }
       },
       domainContext
     );

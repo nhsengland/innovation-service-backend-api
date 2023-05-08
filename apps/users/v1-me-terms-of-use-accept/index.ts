@@ -15,9 +15,7 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1MeTermsOfUseAccept {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
@@ -45,31 +43,27 @@ class V1MeTermsOfUseAccept {
 }
 
 // TODO: Improve response
-export default openApi(
-  V1MeTermsOfUseAccept.httpTrigger as AzureFunction,
-  '/v1/me/terms-of-use/accept',
-  {
-    patch: {
-      description: 'Accept user terms of use',
-      operationId: 'v1-me-terms-of-use-accept',
-      tags: ['[v1] Terms of Use'],
-      parameters: [],
-      responses: {
-        200: {
-          description: 'Successful operation',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', description: 'Operation identifier' },
-                },
-              },
-            },
-          },
-        },
-        422: { description: 'Unprocessable Entity' },
+export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/me/terms-of-use/accept', {
+  patch: {
+    description: 'Accept user terms of use',
+    operationId: 'v1-me-terms-of-use-accept',
+    tags: ['[v1] Terms of Use'],
+    parameters: [],
+    responses: {
+      200: {
+        description: 'Successful operation',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', description: 'Operation identifier' }
+              }
+            }
+          }
+        }
       },
-    },
+      422: { description: 'Unprocessable Entity' }
+    }
   }
-);
+});

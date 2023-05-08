@@ -110,8 +110,8 @@ export class UrlModel {
     // Apply queryParams.
     let queryParams = '';
     queryParams = Object.keys(this.queryParams)
-      .filter((key) => this.queryParams[key] !== undefined)
-      .map((key) => {
+      .filter(key => this.queryParams[key] !== undefined)
+      .map(key => {
         let value = `${key}=`;
 
         if (Array.isArray(this.queryParams[key])) {

@@ -24,12 +24,12 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
       to: {
         type: 'identityId',
         value: this.requestUser.identityId,
-        displayNameParam: 'display_name',
+        displayNameParam: 'display_name'
       },
       params: {
         // display_name: '', // This will be filled by the email-listener function.
-        innovation_service_url: ENV.webBaseUrl,
-      },
+        innovation_service_url: ENV.webBaseUrl
+      }
     });
 
     return this;

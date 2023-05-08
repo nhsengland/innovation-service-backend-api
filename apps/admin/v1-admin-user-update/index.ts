@@ -16,9 +16,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1AdminUserUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
@@ -54,17 +52,17 @@ export default openApi(V1AdminUserUpdate.httpTrigger as AzureFunction, '/v1/user
               properties: {
                 userId: {
                   type: 'string',
-                  description: 'Id of the user.',
-                },
-              },
-            },
-          },
-        },
+                  description: 'Id of the user.'
+                }
+              }
+            }
+          }
+        }
       },
       '400': { description: 'Bad request.' },
       '401': { description: 'The user is not authorized to lock a user.' },
       '404': { description: 'The user does not exist.' },
-      '500': { description: 'An error occurred while locking a user.' },
-    },
-  },
+      '500': { description: 'An error occurred while locking a user.' }
+    }
+  }
 });

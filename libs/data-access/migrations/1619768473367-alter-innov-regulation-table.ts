@@ -14,9 +14,7 @@ export class alterInnovRegulationTable1619768473367 implements MigrationInterfac
       `DROP INDEX "idx_innovation_regulation_standard_type_innovation_id" ON "innovation_regulation_standard"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_regulation_standard" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_regulation_standard" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_regulation_standard"`);
     await queryRunner.query(`DROP TABLE "innovation_regulation_standard_history"`);
 

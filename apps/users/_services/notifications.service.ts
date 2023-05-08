@@ -1,14 +1,10 @@
-import {
-  NotificationEntity,
-  NotificationPreferenceEntity,
-  NotificationUserEntity,
-} from '@users/shared/entities';
+import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationTypeEnum,
   InnovationStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum,
+  NotificationContextTypeEnum
 } from '@users/shared/enums';
 import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
@@ -20,9 +16,7 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-  constructor(
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
-  ) {
+  constructor(@inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService) {
     super();
   }
 
@@ -32,10 +26,7 @@ export class NotificationsService extends BaseService {
    * @param entityManager optional entity manager to run the query (for transactions)
    * @returns the total
    */
-  public async getUserActiveNotificationsCounter(
-    roleId: string,
-    entityManager?: EntityManager
-  ): Promise<number> {
+  public async getUserActiveNotificationsCounter(roleId: string, entityManager?: EntityManager): Promise<number> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const query = em
@@ -102,7 +93,7 @@ export class NotificationsService extends BaseService {
 
     if (filters.contextTypes.length > 0) {
       query.andWhere('notification.contextType IN (:...contextTypes)', {
-        contextTypes: filters.contextTypes,
+        contextTypes: filters.contextTypes
       });
     }
 
@@ -133,33 +124,32 @@ export class NotificationsService extends BaseService {
       'notification.params',
       'innovation.id',
       'innovation.status',
-      'innovation.name',
+      'innovation.name'
     ]);
 
     const [notifications, count] = await query.getManyAndCount();
 
-    const userIds = notifications.map((n) => n.notification.innovation.owner.identityId);
+    const userIds = notifications.map(n => n.notification.innovation.owner.identityId);
 
     const innovationOwners = await this.identityProviderService.getUsersMap(userIds);
 
     return {
       total: count,
-      data: notifications.map((n) => ({
+      data: notifications.map(n => ({
         id: n.notification.id,
         innovation: {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
           status: n.notification.innovation.status,
-          ownerName:
-            innovationOwners.get(n.notification.innovation.owner.identityId)?.displayName ?? '',
+          ownerName: innovationOwners.get(n.notification.innovation.owner.identityId)?.displayName ?? ''
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,
         contextId: n.notification.contextId,
         createdAt: n.notification.createdAt,
         readAt: n.readAt,
-        params: n.notification.params,
-      })),
+        params: n.notification.params
+      }))
     };
   }
 
@@ -169,11 +159,7 @@ export class NotificationsService extends BaseService {
    * @param notificationId the notification id
    * @param entityManager optional entity manager to run the query (for transactions)
    */
-  async deleteUserNotification(
-    roleId: string,
-    notificationId: string,
-    entityManager?: EntityManager
-  ): Promise<void> {
+  async deleteUserNotification(roleId: string, notificationId: string, entityManager?: EntityManager): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     await em.update(
@@ -214,7 +200,7 @@ export class NotificationsService extends BaseService {
     ) {
       throw new UnprocessableEntityError(GenericErrorsEnum.INVALID_PAYLOAD, {
         message:
-          'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds',
+          'Either dismissAll is true or at least one of the following fields must have elements: notificationIds, contextTypes, contextIds'
       });
     }
 
@@ -281,28 +267,23 @@ export class NotificationsService extends BaseService {
       .createQueryBuilder(NotificationPreferenceEntity, 'preference')
       .where('preference.user = :userId', { userId: userId })
       .getMany();
-    const userPreferencesMap = new Map(
-      userPreferences.map((p) => [p.notification_id, p.preference])
-    );
+    const userPreferencesMap = new Map(userPreferences.map(p => [p.notification_id, p.preference]));
     return [
       {
         notificationType: EmailNotificationTypeEnum.ACTION,
         preference:
-          userPreferencesMap.get(EmailNotificationTypeEnum.ACTION) ??
-          EmailNotificationPreferenceEnum.INSTANTLY,
+          userPreferencesMap.get(EmailNotificationTypeEnum.ACTION) ?? EmailNotificationPreferenceEnum.INSTANTLY
       },
       {
         notificationType: EmailNotificationTypeEnum.SUPPORT,
         preference:
-          userPreferencesMap.get(EmailNotificationTypeEnum.SUPPORT) ??
-          EmailNotificationPreferenceEnum.INSTANTLY,
+          userPreferencesMap.get(EmailNotificationTypeEnum.SUPPORT) ?? EmailNotificationPreferenceEnum.INSTANTLY
       },
       {
         notificationType: EmailNotificationTypeEnum.MESSAGE,
         preference:
-          userPreferencesMap.get(EmailNotificationTypeEnum.MESSAGE) ??
-          EmailNotificationPreferenceEnum.INSTANTLY,
-      },
+          userPreferencesMap.get(EmailNotificationTypeEnum.MESSAGE) ?? EmailNotificationPreferenceEnum.INSTANTLY
+      }
     ];
   }
 
@@ -321,13 +302,13 @@ export class NotificationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
-    const saveData = preferences.map((p) => ({
+    const saveData = preferences.map(p => ({
       user: { id: userId },
       notification_id: p.notificationType,
       preference: p.preference,
       createdBy: userId, // this is only for the first time as BaseEntity defines it as update: false
       updatedBy: userId,
-      updatedAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }));
     await em.save(NotificationPreferenceEntity, saveData);
   }

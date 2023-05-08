@@ -4,9 +4,7 @@ export class userRolesTableRefactor1674051779936 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`ALTER TABLE "user_role" DROP CONSTRAINT "fk_user_role_role_role_id"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "user_role" DROP CONSTRAINT "idx_user_role_user_id_role_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "user_role" DROP CONSTRAINT "idx_user_role_user_id_role_id"`);
 
     await queryRunner.query(`
         ALTER TABLE user_role ADD role varchar(50) NULL;
