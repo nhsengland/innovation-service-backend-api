@@ -1,15 +1,19 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
-import { OrganisationTypeEnum } from '@users/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
+import { OrganisationTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { ConflictError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 
+import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
 import { BaseService } from './base.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
-  constructor() {
+  constructor(
+    @inject(IdentityProviderServiceSymbol)
+    private identityProviderService: IdentityProviderServiceType
+  ) {
     super();
   }
 
@@ -159,6 +163,51 @@ export class OrganisationsService extends BaseService {
       acronym: unit.acronym,
       isActive: !unit.inactivatedAt,
       canActivate: hasQualifyingAccessor
+    };
+  }
+
+  async getOrganisationUser(
+    organisationId: string,
+    filters: { email: string },
+    entityManager?: EntityManager
+  ): Promise<{ id: string; name: string; role: ServiceRoleEnum }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const b2cUser = await this.identityProviderService.getUserInfoByEmail(filters.email);
+    if (!b2cUser) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    }
+
+    // Get user and roles
+    const user = await connection
+      .createQueryBuilder(UserEntity, 'user')
+      .select(['user.id', 'userRoles.id', 'userRoles.role', 'roleOrganisation.id'])
+      .innerJoin('user.serviceRoles', 'userRoles')
+      .innerJoin('userRoles.organisation', 'roleOrganisation')
+      .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
+      .getOne();
+
+    if (!user) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    }
+
+    const userOrganisation = user.serviceRoles.find(
+      role => role.organisation !== null && role.organisation.id === organisationId
+    );
+
+    // Check if user is in other org
+    if (user.serviceRoles.length > 0 && !userOrganisation) {
+      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
+    }
+
+    if (!userOrganisation) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    }
+
+    return {
+      id: user.id,
+      name: b2cUser.displayName,
+      role: userOrganisation.role
     };
   }
 }

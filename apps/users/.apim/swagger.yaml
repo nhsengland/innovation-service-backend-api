@@ -545,6 +545,7 @@ paths:
                             - COMMENT_REPLY
                             - ACTION_CREATION
                             - ACTION_UPDATE
+                            - NEEDS_ASSESSMENT_STARTED
                             - NEEDS_ASSESSMENT_COMPLETED
                             - NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION
                             - INNOVATION_SUBMISSION
@@ -616,6 +617,30 @@ paths:
           description: Bad request.
         "401":
           description: The user is not authorized to get this information.
+        "500":
+          description: An error occurred while getting this information.
+  "/v1/organisations/{organisationId}/user":
+    get:
+      description: Get organisation user info.
+      operationId: v1-organisation-user
+      parameters:
+        - name: organisationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "404":
+          description: The user doesn't exist on the IS.
+        "409":
+          description: The user is from other other organisation.
         "500":
           description: An error occurred while getting this information.
   /v1/organisations:
