@@ -221,12 +221,16 @@ export class OrganisationsService extends BaseService {
       }
     }
 
+    if (!role) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    }
+
     // If it reaches this point we are sure that role exists
     return {
-      id: role!.user.id,
+      id: role.user.id,
       name: b2cUser.displayName,
       email: b2cUser.email,
-      role: role!.role !== ServiceRoleEnum.ASSESSMENT ? role!.role : null
+      role: role.role !== ServiceRoleEnum.ASSESSMENT ? role.role : null
     };
   }
 }
