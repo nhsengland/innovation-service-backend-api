@@ -171,7 +171,7 @@ export class OrganisationsService extends BaseService {
     organisationUnitId: string,
     email: string,
     entityManager?: EntityManager
-  ): Promise<{ id: string; name: string; role: ServiceRoleEnum }> {
+  ): Promise<{ id: string; name: string; email: string; role: null | ServiceRoleEnum }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const b2cUser = await this.identityProviderService.getUserInfoByEmail(email);
@@ -192,30 +192,41 @@ export class OrganisationsService extends BaseService {
     // Get user and roles
     const roles = await connection
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['user.id', 'userRole.id', 'userRole.role', 'unit.id'])
+      .select(['user.id', 'userRole.id', 'userRole.role', 'organisation.id', 'unit.id'])
       .innerJoin('userRole.user', 'user')
-      .innerJoin('userRole.organisationUnit', 'unit')
+      .leftJoin('userRole.organisation', 'organisation')
+      .leftJoin('userRole.organisationUnit', 'unit')
       .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
-      .andWhere('userRole.organisation_id = :organisationId', { organisationId: organisation.id })
       .getMany();
 
-    // Check if user is in other org
     if (!roles.length) {
-      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
     }
 
-    // Check if the user is already on the unit
-    const userAlreadyOnUnit = roles.find(role => role.organisationUnit?.id === organisationUnitId);
-    if (userAlreadyOnUnit) {
-      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_ALREADY_EXISTS);
+    let role = roles[0]; // this default will make sure we have access to the user_id
+
+    for (const userRole of roles) {
+      if (userRole.role === ServiceRoleEnum.INNOVATOR) {
+        throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_CANT_BE_INNOVATOR);
+      }
+
+      if (userRole.organisation !== null && userRole.organisation.id !== organisation.id) {
+        throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
+      } else {
+        role = userRole;
+      }
+
+      if (userRole.organisationUnit !== null && userRole.organisationUnit.id === organisationUnitId) {
+        throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_ALREADY_EXISTS);
+      }
     }
 
-    // If it reaches this step it has atleast one role
-    const [role] = roles;
+    // If it reaches this point we are sure that role exists
     return {
       id: role!.user.id,
       name: b2cUser.displayName,
-      role: role!.role
+      email: b2cUser.email,
+      role: role!.role !== ServiceRoleEnum.ASSESSMENT ? role!.role : null
     };
   }
 }
