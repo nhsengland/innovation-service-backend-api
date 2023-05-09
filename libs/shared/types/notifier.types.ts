@@ -30,6 +30,12 @@ export type NotifierTemplatesType = {
     organisationUnitIds: string[]; // Suggested organisation units.
   };
 
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
+    innovationId: string;
+    assessmentId: string;
+    organisationUnitIds: string[]; // Suggested organisation units.
+  };
+
   [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
     innovationId: string;
     assessmentId: string;
