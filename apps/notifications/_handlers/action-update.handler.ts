@@ -152,8 +152,8 @@ export class ActionUpdateHandler extends BaseHandler<
 
     const path =
       this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
-        ? 'accessor/innovations/:innovationId/action-tracker/:actionId'
-        : 'assessment/innovations/:innovationId/action-tracker/:actionId';
+        ? 'assessment/innovations/:innovationId/action-tracker/:actionId'
+        : 'accessor/innovations/:innovationId/action-tracker/:actionId';
 
     this.emails.push({
       templateId: templateId,
