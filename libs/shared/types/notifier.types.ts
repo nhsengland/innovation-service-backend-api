@@ -20,6 +20,7 @@ export type NotifierTemplatesType = {
 
   [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
     innovationId: string;
+    assessmentId: string;
     threadId: string;
   };
 

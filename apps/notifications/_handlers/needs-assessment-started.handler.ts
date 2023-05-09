@@ -1,6 +1,8 @@
-import type {
+import {
   EmailNotificationPreferenceEnum,
   EmailNotificationTypeEnum,
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum,
   NotifierTypeEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
@@ -8,6 +10,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { container, EmailTypeEnum, ENV } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
+import type { UserRoleEntity } from '@notifications/shared/entities';
 
 export class NeedsAssessmentStartedHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
@@ -23,6 +26,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
         id: string;
         identityId: string;
         isActive: boolean;
+        userRole: UserRoleEntity;
         emailNotificationPreferences: {
           type: EmailNotificationTypeEnum;
           preference: EmailNotificationPreferenceEnum;
@@ -43,6 +47,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
     this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
     await this.prepareEmailForInnovator();
+    await this.prepareInAppForInnovator();
 
     return this;
   }
@@ -69,5 +74,23 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
         }
       });
     }
+  }
+
+  async prepareInAppForInnovator(): Promise<void> {
+    //this never happens
+    if (!this.data.innovation) {
+      return;
+    }
+
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.NEEDS_ASSESSMENT,
+        detail: NotificationContextDetailEnum.NEEDS_ASSESSMENT_STARTED,
+        id: this.inputData.assessmentId
+      },
+      userRoleIds: [this.data.innovation?.owner.userRole.id],
+      params: {}
+    });
   }
 }

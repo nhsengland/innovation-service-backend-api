@@ -86,20 +86,21 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
-    handler: NeedsAssessmentStartedHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
-      innovationId: Joi.string().guid().required(),
-      threadId: Joi.string().guid().required()
-    }).required()
-  },
-
   [NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]: {
     handler: NeedsAssessmentCompletedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED]>({
       innovationId: Joi.string().guid().required(),
       assessmentId: Joi.string().guid().required(),
       organisationUnitIds: Joi.array().items(Joi.string().guid()).required()
+    }).required()
+  },
+
+  [NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]: {
+    handler: NeedsAssessmentStartedHandler,
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED]>({
+      innovationId: Joi.string().guid().required(),
+      assessmentId: Joi.string().guid().required(),
+      threadId: Joi.string().guid().required()
     }).required()
   },
 
