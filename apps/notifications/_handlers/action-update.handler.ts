@@ -112,9 +112,11 @@ export class ActionUpdateHandler extends BaseHandler<
         ) {
           await this.prepareEmailForInnovationOwner();
           await this.prepareInAppForInnovationOwner();
+          // check if action was submitted by a collaborator
           if (
             this.inputData.action.previouslyUpdatedByUserRole &&
-            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.userRole.id
+            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.userRole.id &&
+            this.inputData.action.previouslyUpdatedByUserRole.role === ServiceRoleEnum.INNOVATOR
           ) {
             await this.prepareInAppForCollaborator();
           }

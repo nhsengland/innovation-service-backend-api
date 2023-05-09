@@ -168,7 +168,13 @@ export const NOTIFICATIONS_CONFIG: {
           .required(),
         status: Joi.string()
           .valid(...Object.values(InnovationActionStatusEnum))
-          .required()
+          .required(),
+        previouslyUpdatedByUserRole: Joi.object({
+          id: Joi.string().guid().required(),
+          role: Joi.string()
+            .valid(...Object.values(ServiceRoleEnum))
+            .required()
+        }).required()
       }).required(),
       comment: Joi.string().optional()
     }).required()
