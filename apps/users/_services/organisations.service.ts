@@ -234,7 +234,6 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
     }
 
-    // If it reaches this point we are sure that role exists
     return {
       id: userId,
       name: b2cUser.displayName,
