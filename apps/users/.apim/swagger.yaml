@@ -619,12 +619,12 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
-  "/v1/organisations/{organisationId}/user":
+  "/v1/units/{organisationId}/user":
     get:
-      description: Get organisation user info.
-      operationId: v1-organisation-user
+      description: Get organisation unit user info.
+      operationId: v1-organisation-unit-user
       parameters:
-        - name: organisationId
+        - name: organisationUnitId
           in: path
           required: true
           schema:
@@ -640,7 +640,8 @@ paths:
         "404":
           description: The user doesn't exist on the IS.
         "409":
-          description: The user is from other other organisation.
+          description: The user is from other other organisation or already exists in the
+            unit.
         "500":
           description: An error occurred while getting this information.
   /v1/organisations:

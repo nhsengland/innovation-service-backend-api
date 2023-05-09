@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
+import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { ConflictError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 
@@ -166,48 +166,56 @@ export class OrganisationsService extends BaseService {
     };
   }
 
-  async getOrganisationUser(
-    organisationId: string,
-    filters: { email: string },
+  // Change to email
+  async getOrganisationUnitUserByEmail(
+    organisationUnitId: string,
+    email: string,
     entityManager?: EntityManager
   ): Promise<{ id: string; name: string; role: ServiceRoleEnum }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const b2cUser = await this.identityProviderService.getUserInfoByEmail(filters.email);
+    const b2cUser = await this.identityProviderService.getUserInfoByEmail(email);
     if (!b2cUser) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
     }
 
-    // Get user and roles
-    const user = await connection
-      .createQueryBuilder(UserEntity, 'user')
-      .select(['user.id', 'userRoles.id', 'userRoles.role', 'roleOrganisation.id'])
-      .innerJoin('user.serviceRoles', 'userRoles')
-      .innerJoin('userRoles.organisation', 'roleOrganisation')
-      .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
+    const organisation = await connection
+      .createQueryBuilder(OrganisationEntity, 'organisation')
+      .select(['organisation.id'])
+      .innerJoin('organisation.organisationUnits', 'organisationUnits')
+      .where('organisationUnits.id = :organisationUnitId', { organisationUnitId })
       .getOne();
-
-    if (!user) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    if (!organisation) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
 
-    const userOrganisation = user.serviceRoles.find(
-      role => role.organisation !== null && role.organisation.id === organisationId
-    );
+    // Get user and roles
+    const roles = await connection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .select(['user.id', 'userRole.id', 'userRole.role', 'unit.id'])
+      .innerJoin('userRole.user', 'user')
+      .innerJoin('userRole.organisationUnit', 'unit')
+      .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
+      .andWhere('userRole.organisation_id = :organisationId', { organisationId: organisation.id })
+      .getMany();
 
     // Check if user is in other org
-    if (user.serviceRoles.length > 0 && !userOrganisation) {
+    if (!roles.length) {
       throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
     }
 
-    if (!userOrganisation) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    // Check if the user is already on the unit
+    const userAlreadyOnUnit = roles.find(role => role.organisationUnit?.id === organisationUnitId);
+    if (userAlreadyOnUnit) {
+      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_ALREADY_EXISTS);
     }
 
+    // If it reaches this step it has atleast one role
+    const [role] = roles;
     return {
-      id: user.id,
+      id: role!.user.id,
       name: b2cUser.displayName,
-      role: userOrganisation.role
+      role: role!.role
     };
   }
 }

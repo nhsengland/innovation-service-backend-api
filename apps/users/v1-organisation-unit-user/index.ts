@@ -13,7 +13,7 @@ import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-class V1OrganisationUser {
+class V1OrganisationUnitUser {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
@@ -25,7 +25,10 @@ class V1OrganisationUser {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await organisationsService.getOrganisationUser(params.organisationId, queryParams);
+      const result = await organisationsService.getOrganisationUnitUserByEmail(
+        params.organisationUnitId,
+        queryParams.email
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -36,10 +39,10 @@ class V1OrganisationUser {
   }
 }
 
-export default openApi(V1OrganisationUser.httpTrigger as AzureFunction, '/v1/organisations/{organisationId}/user', {
+export default openApi(V1OrganisationUnitUser.httpTrigger as AzureFunction, '/v1/units/{organisationId}/user', {
   get: {
-    description: 'Get organisation user info.',
-    operationId: 'v1-organisation-user',
+    description: 'Get organisation unit user info.',
+    operationId: 'v1-organisation-unit-user',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       '200': {
@@ -55,7 +58,7 @@ export default openApi(V1OrganisationUser.httpTrigger as AzureFunction, '/v1/org
         description: "The user doesn't exist on the IS."
       },
       '409': {
-        description: 'The user is from other other organisation.'
+        description: 'The user is from other other organisation or already exists in the unit.'
       },
       '500': {
         description: 'An error occurred while getting this information.'

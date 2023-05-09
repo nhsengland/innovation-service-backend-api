@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/organisations/{organisationId}/user"
+      "route": "v1/units/{organisationUnitId}/user"
     },
     { "type": "http", "direction": "out", "name": "res" }
   ]
