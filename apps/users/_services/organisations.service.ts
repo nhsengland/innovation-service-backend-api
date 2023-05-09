@@ -203,7 +203,8 @@ export class OrganisationsService extends BaseService {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
     }
 
-    let role = roles[0]; // this default will make sure we have access to the user_id
+    let userId: string | undefined;
+    let role: ServiceRoleEnum | undefined;
 
     for (const userRole of roles) {
       if (userRole.role === ServiceRoleEnum.INNOVATOR) {
@@ -212,25 +213,33 @@ export class OrganisationsService extends BaseService {
 
       if (userRole.organisation !== null && userRole.organisation.id !== organisation.id) {
         throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
-      } else {
-        role = userRole;
       }
 
       if (userRole.organisationUnit !== null && userRole.organisationUnit.id === organisationUnitId) {
         throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_ALREADY_EXISTS);
       }
+
+      // Variable assignment
+      if (!userId) {
+        userId = userRole.user.id;
+      }
+
+      if (!role && userRole.organisation?.id === organisation.id) {
+        role = userRole.role;
+      }
     }
 
-    if (!role) {
+    // Not required
+    if (!userId) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
     }
 
     // If it reaches this point we are sure that role exists
     return {
-      id: role.user.id,
+      id: userId,
       name: b2cUser.displayName,
       email: b2cUser.email,
-      role: role.role !== ServiceRoleEnum.ASSESSMENT ? role.role : null
+      role: role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR ? role : null
     };
   }
 }
