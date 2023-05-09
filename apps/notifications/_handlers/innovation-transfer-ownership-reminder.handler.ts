@@ -63,7 +63,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
             innovationId: this.inputData.innovationId,
             context: {
               type: NotificationContextTypeEnum.INNOVATION,
-              detail: NotificationContextDetailEnum.TRANSFER_EXPIRED,
+              detail: NotificationContextDetailEnum.TRANSFER_REMINDER,
               id: this.inputData.transferId
             },
             userRoleIds: [userRole.id],
