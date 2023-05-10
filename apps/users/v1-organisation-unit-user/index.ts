@@ -39,7 +39,7 @@ class V1OrganisationUnitUser {
   }
 }
 
-export default openApi(V1OrganisationUnitUser.httpTrigger as AzureFunction, '/v1/units/{organisationId}/user', {
+export default openApi(V1OrganisationUnitUser.httpTrigger as AzureFunction, '/v1/units/{organisationUnitId}/user', {
   get: {
     description: 'Get organisation unit user info.',
     operationId: 'v1-organisation-unit-user',

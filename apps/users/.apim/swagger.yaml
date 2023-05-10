@@ -547,8 +547,11 @@ paths:
                             - ACTION_UPDATE
                             - NEEDS_ASSESSMENT_STARTED
                             - NEEDS_ASSESSMENT_COMPLETED
+                            - NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
                             - NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION
                             - INNOVATION_SUBMISSION
+                            - INNOVATION_SUBMISSION_TO_INNOVATORS
+                            - INNOVATION_SUBMISSION_REASSESSMENT
                             - SUPPORT_STATUS_UPDATE
                             - INNOVATION_REASSESSMENT_REQUEST
                             - INNOVATION_STOP_SHARING
@@ -619,7 +622,7 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
-  "/v1/units/{organisationId}/user":
+  "/v1/units/{organisationUnitId}/user":
     get:
       description: Get organisation unit user info.
       operationId: v1-organisation-unit-user
