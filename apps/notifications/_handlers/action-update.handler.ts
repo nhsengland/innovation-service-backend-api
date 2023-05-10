@@ -212,8 +212,8 @@ export class ActionUpdateHandler extends BaseHandler<
 
       const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
-      let accessor_name = requestInfo.displayName;
-      let unit_name =
+      const accessor_name = requestInfo.displayName;
+      const unit_name =
         this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
           ? 'needs assessment'
           : this.domainContext?.organisation?.organisationUnit?.name ?? '';

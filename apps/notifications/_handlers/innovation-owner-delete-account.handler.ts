@@ -37,12 +37,12 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
           innovation.name,
           innovation.transferExpireDate
         );
-      }
 
-      await this.prepareInAppForCollaborators(
-        innovationCollaboratorUsers.map(user => user.userRole.id),
-        { id: innovation.id, name: innovation.name }
-      );
+        await this.prepareInAppForCollaborators(
+          innovationCollaboratorUsers.map(user => user.userRole.id),
+          innovation.id
+        );
+      }
     }
     return this;
   }
@@ -59,19 +59,19 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
         params: {
           //display_name is filled automatically
           innovation_name: innovationName,
-          transfer_expiry_date: transferExpireDate
+          transfer_expiry_date: transferExpireDate.toLocaleDateString()
         }
       });
     }
   }
 
-  async prepareInAppForCollaborators(userRoleIds: string[], innovation: { id: string; name: string }): Promise<void> {
+  async prepareInAppForCollaborators(userRoleIds: string[], innovationId: string): Promise<void> {
     this.inApp.push({
-      innovationId: innovation.id,
+      innovationId: innovationId,
       context: {
         type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.TRANSFER_PENDING,
-        id: innovation.id
+        id: innovationId
       },
       userRoleIds,
       params: {}

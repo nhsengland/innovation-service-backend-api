@@ -174,7 +174,7 @@ export const NOTIFICATIONS_CONFIG: {
           role: Joi.string()
             .valid(...Object.values(ServiceRoleEnum))
             .required()
-        }).required()
+        }).optional()
       }).required(),
       comment: Joi.string().optional()
     }).required()

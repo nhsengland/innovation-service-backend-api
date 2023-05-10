@@ -546,8 +546,6 @@ export class InnovationActionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
     }
 
-    const actionLastUpdatedByUserRole = { id: dbAction.updatedByUserRole.id, role: dbAction.updatedByUserRole.role };
-
     // Actions can only be updated from users from the same org unit
     if (dbAction.innovationSupport?.organisationUnit.id !== domainContext.organisation?.organisationUnit?.id) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_FROM_DIFFERENT_UNIT);
@@ -565,6 +563,8 @@ export class InnovationActionsService extends BaseService {
     ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
+
+    const actionLastUpdatedByUserRole = { id: dbAction.updatedByUserRole.id, role: dbAction.updatedByUserRole.role };
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
@@ -604,6 +604,7 @@ export class InnovationActionsService extends BaseService {
       .innerJoinAndSelect('ia.innovationSection', 'is')
       .innerJoinAndSelect('is.innovation', 'i')
       .leftJoinAndSelect('ia.innovationSupport', 'isup')
+      .leftJoinAndSelect('ia.updatedByUserRole', 'updatedByUserRole')
       .where('ia.id = :actionId', { actionId })
       .andWhere('ia.innovationSupport.id IS NULL')
       .getOne();
@@ -624,6 +625,8 @@ export class InnovationActionsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS);
     }
 
+    const actionLastUpdatedByUserRole = { id: dbAction.updatedByUserRole.id, role: dbAction.updatedByUserRole.role };
+
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
@@ -637,7 +640,8 @@ export class InnovationActionsService extends BaseService {
         action: {
           id: dbAction.id,
           section: dbAction.innovationSection.section,
-          status: result.status
+          status: result.status,
+          previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
         }
       },
       domainContext

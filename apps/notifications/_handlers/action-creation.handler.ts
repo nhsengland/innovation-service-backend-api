@@ -49,6 +49,11 @@ export class ActionCreationHandler extends BaseHandler<
 
     const innovatorRecipients = [...collaborators, innovation.owner];
 
+    const unitName =
+      this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
+        ? 'needs assessment'
+        : actionInfo.organisationUnit?.name ?? '';
+
     for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
       if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovator.emailNotificationPreferences)) {
         this.emails.push({
@@ -61,7 +66,7 @@ export class ActionCreationHandler extends BaseHandler<
           params: {
             // display_name: '', // This will be filled by the email-listener function.
             accessor_name: requestInfo.displayName,
-            unit_name: actionInfo.organisationUnit?.name ?? '',
+            unit_name: unitName,
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
               .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
               .setPathParams({

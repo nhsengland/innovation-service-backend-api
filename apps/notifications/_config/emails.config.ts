@@ -91,7 +91,7 @@ export type EmailTemplatesType = {
   [EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR]: {
     display_name?: string;
     innovation_name: string;
-    transfer_expiry_date: Date;
+    transfer_expiry_date: string;
   };
   [EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR]: {
     display_name?: string;
