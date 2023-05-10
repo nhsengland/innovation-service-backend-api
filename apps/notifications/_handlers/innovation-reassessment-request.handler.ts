@@ -81,7 +81,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationContextTypeEnum.NEEDS_ASSESSMENT,
+        type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION_REASSESSMENT,
         id: this.inputData.innovationId
       },
@@ -106,7 +106,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationContextTypeEnum.NEEDS_ASSESSMENT,
+        type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION_REASSESSMENT,
         id: this.inputData.innovationId
       },
@@ -137,7 +137,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationContextTypeEnum.NEEDS_ASSESSMENT,
+        type: NotificationContextTypeEnum.INNOVATION,
         detail: NotificationContextDetailEnum.INNOVATION_REASSESSMENT_REQUEST,
         id: this.inputData.innovationId
       },
