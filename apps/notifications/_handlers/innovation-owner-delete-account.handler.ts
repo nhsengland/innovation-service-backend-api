@@ -50,7 +50,7 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
   async prepareEmailForCollaborators(
     userIdentityIds: string[],
     innovationName: string,
-    transferExpireDate: Date
+    transferExpireDate: string 
   ): Promise<void> {
     for (const identityId of userIdentityIds) {
       this.emails.push({
@@ -59,7 +59,7 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
         params: {
           //display_name is filled automatically
           innovation_name: innovationName,
-          transfer_expiry_date: transferExpireDate.toLocaleDateString()
+          transfer_expiry_date: transferExpireDate
         }
       });
     }

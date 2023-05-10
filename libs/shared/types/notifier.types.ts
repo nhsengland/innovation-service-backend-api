@@ -11,7 +11,7 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION]: Record<string, never>;
 
   [NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER]: {
-    innovations: { id: string; name: string; transferExpireDate: Date }[];
+    innovations: { id: string; name: string; transferExpireDate: string }[];
   };
 
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {

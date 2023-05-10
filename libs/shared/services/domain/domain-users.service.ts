@@ -259,7 +259,7 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
     }
 
-    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: Date }[] = [];
+    const innovationsWithPendingTransfer: { id: string; name: string; transferExpireDate: string }[] = [];
 
     const result = this.sqlConnection.transaction(async transaction => {
       // If user has innovator role, deals with it's innovations.
@@ -296,7 +296,7 @@ export class DomainUsersService {
           innovationsWithPendingTransfer.push({
             id: dbInnovation.id,
             name: dbInnovation.name,
-            transferExpireDate: dbInnovation.expirationTransferDate as Date
+            transferExpireDate: dbInnovation.expirationTransferDate ? dbInnovation.expirationTransferDate.toDateString() : ''
           });
 
           await this.sqlConnection.getRepository(InnovationEntity).update(
