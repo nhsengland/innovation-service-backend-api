@@ -40,16 +40,6 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         }[];
       };
     };
-    innovationCollaborators?: {
-      id: string;
-      identityId: string;
-      userRole: UserRoleEntity;
-      isActive: boolean;
-      emailNotificationPreferences: {
-        type: EmailNotificationTypeEnum;
-        preference: EmailNotificationPreferenceEnum;
-      }[];
-    }[];
     requestUserAdditionalInfo?: {
       displayName?: string;
       organisation: { id: string; name: string };
@@ -72,9 +62,14 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
 
-    this.data.innovationCollaborators = await this.recipientsService.innovationActiveCollaboratorUsers(
-      this.inputData.innovationId
-    );
+    const collaborators = (
+      await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId)
+    ).filter(c => c.isActive);
+    const innovatorRecipients = [...collaborators];
+
+    if (this.data.innovation.owner.isActive) {
+      innovatorRecipients.push(this.data.innovation.owner);
+    }
 
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
@@ -94,8 +89,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
 
     if (this.inputData.innovationSupport.statusChanged) {
-      await this.prepareEmailForInnovators();
-      await this.prepareInAppForInnovator();
+      await this.prepareEmailForInnovators(innovatorRecipients.map(i => i.identityId));
+      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.userRole.id));
 
       if (
         [
@@ -121,43 +116,31 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
   // Private methods.
 
-  private async prepareEmailForInnovators(): Promise<void> {
-    const innovators = this.data.innovationCollaborators ? [...this.data.innovationCollaborators] : [];
-    if (this.data.innovation?.owner) {
-      innovators.push(this.data.innovation.owner);
+  private async prepareEmailForInnovators(identityIds: string[]): Promise<void> {
+    // Send email only to user if email preference INSTANTLY (NotifierTypeEnum.SUPPORT).
+    for (const identityId of identityIds) {
+      this.emails.push({
+        templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
+        to: {
+          type: 'identityId',
+          value: identityId,
+          displayNameParam: 'display_name'
+        },
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: this.data.innovation?.name || '',
+          organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
+          support_status: TranslationHelper.translate(
+            `SUPPORT_STATUS.${this.inputData.innovationSupport.status}`
+          ).toLowerCase(),
+          support_status_change_comment: this.inputData.innovationSupport.message,
+          support_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/support')
+            .setPathParams({ innovationId: this.inputData.innovationId })
+            .buildUrl()
+        }
+      });
     }
-
-    // Send email only to user if email preference INSTANTLY.
-    for (const innovator of innovators)
-      if (
-        this.isEmailPreferenceInstantly(
-          EmailNotificationTypeEnum.SUPPORT,
-          innovator.emailNotificationPreferences || []
-        ) &&
-        innovator.isActive
-      ) {
-        this.emails.push({
-          templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
-          to: {
-            type: 'identityId',
-            value: innovator.identityId || '',
-            displayNameParam: 'display_name'
-          },
-          params: {
-            // display_name: '', // This will be filled by the email-listener function.
-            innovation_name: this.data.innovation?.name || '',
-            organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
-            support_status: TranslationHelper.translate(
-              `SUPPORT_STATUS.${this.inputData.innovationSupport.status}`
-            ).toLowerCase(),
-            support_status_change_comment: this.inputData.innovationSupport.message,
-            support_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/support')
-              .setPathParams({ innovationId: this.inputData.innovationId })
-              .buildUrl()
-          }
-        });
-      }
   }
 
   private async prepareEmailForNewAccessors(accessors?: { id: string }[]): Promise<void> {
@@ -179,7 +162,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
   }
 
-  private async prepareInAppForInnovator(): Promise<void> {
+  private async prepareInAppForInnovators(roleIds: string[]): Promise<void> {
     // This never happens
     if (!this.data.innovation) {
       return;
@@ -192,7 +175,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
         id: this.inputData.innovationSupport.id
       },
-      userRoleIds: [this.data.innovation.owner.userRole.id],
+      userRoleIds: roleIds,
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
