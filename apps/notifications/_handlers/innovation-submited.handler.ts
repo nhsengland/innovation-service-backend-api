@@ -36,51 +36,105 @@ export class InnovationSubmitedHandler extends BaseHandler<
 
     const requestUserInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
 
-    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
+    const collaborators = (
+      await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId)
+    ).filter(c => c.isActive && c.id !== this.requestUser.id);
 
-    // confirmation email
-    if (requestUserInfo.isActive) {
-      this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR,
-        to: {
-          type: 'identityId',
-          value: this.requestUser.identityId,
-          displayNameParam: 'display_name'
-        },
-        params: {
-          // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name
-        }
-      });
+    const innovatorRecipients = [...collaborators];
+    if (this.requestUser.id !== innovation.owner.id) {
+      innovatorRecipients.push(innovation.owner);
     }
 
-    // email to all innovators (owner + collaborators) except request user
-    for (const collaborator of collaborators.filter(c => c.isActive && c.id !== requestUserInfo.id)) {
+    if (requestUserInfo.isActive) {
+      await this.prepareConfirmationEmail(innovation.name);
+      await this.prepareConfirmationInApp();
+    }
+
+    await this.prepareEmailToInnovators(
+      innovatorRecipients.map(i => i.identityId),
+      innovation.name
+    );
+    await this.prepareInAppToInnovators(innovatorRecipients.map(i => i.userRole.id));
+
+    await this.prepareEmailToAssessmentUsers(
+      assessmentUsers.map(na => na.identityId),
+      innovation.name
+    );
+    await this.prepareInAppToAssessmentUsers(assessmentUsers.map(na => na.roleId));
+
+    return this;
+  }
+
+  async prepareConfirmationEmail(innovationName: string): Promise<void> {
+    this.emails.push({
+      templateId: EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR,
+      to: {
+        type: 'identityId',
+        value: this.requestUser.identityId,
+        displayNameParam: 'display_name'
+      },
+      params: {
+        // display_name: '', // This will be filled by the email-listener function.
+        innovation_name: innovationName
+      }
+    });
+  }
+
+  async prepareConfirmationInApp(): Promise<void> {
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.INNOVATION,
+        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION_TO_INNOVATORS,
+        id: this.inputData.innovationId
+      },
+      userRoleIds: [this.domainContext.currentRole.id],
+      params: {}
+    });
+  }
+
+  async prepareEmailToInnovators(identityIds: string[], innovationName: string): Promise<void> {
+    for (const identityId of identityIds) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
         to: {
           type: 'identityId',
-          value: collaborator.identityId,
+          value: identityId,
           displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name
+          innovation_name: innovationName
         }
       });
     }
+  }
 
-    for (const assessmentUser of assessmentUsers) {
+  async prepareInAppToInnovators(roleIds: string[]): Promise<void> {
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.INNOVATION,
+        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION_TO_INNOVATORS,
+        id: this.inputData.innovationId
+      },
+      userRoleIds: roleIds,
+      params: {}
+    });
+  }
+
+  async prepareEmailToAssessmentUsers(identityIds: string[], innovationName: string): Promise<void> {
+    for (const identityId of identityIds) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
         to: {
           type: 'identityId',
-          value: assessmentUser.identityId,
+          value: identityId,
           displayNameParam: 'display_name'
         },
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name,
+          innovation_name: innovationName,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('assessment/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
@@ -88,8 +142,9 @@ export class InnovationSubmitedHandler extends BaseHandler<
         }
       });
     }
+  }
 
-    // in app notification to assessment users
+  async prepareInAppToAssessmentUsers(roleIds: string[]): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -97,22 +152,8 @@ export class InnovationSubmitedHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
         id: this.inputData.innovationId
       },
-      userRoleIds: assessmentUsers.map(user => user.roleId),
+      userRoleIds: roleIds,
       params: {}
     });
-
-    // in app notification to innovators users
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.INNOVATION,
-        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
-        id: this.inputData.innovationId
-      },
-      userRoleIds: collaborators.map(c => c.userRole.id),
-      params: {}
-    });
-
-    return this;
   }
 }
