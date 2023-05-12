@@ -84,68 +84,64 @@ export class UsersService extends BaseService {
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
     const user = await this.domainService.users.getUserInfo({ userId });
     const model = params.model;
-    switch (model) {
-      case 'minimal':
-        return {
-          id: user.id,
-          displayName: user.displayName
-        };
-      case 'full':
-        const innovations = await this.sqlConnection
-          .createQueryBuilder(InnovationEntity, 'innovation')
-          .select('innovation.id', 'innovation_id')
-          .addSelect('innovation.name', 'innovation_name')
-          .where('innovation.owner_id = :userId', { userId: user.id })
-          .getMany();
-
-        // TODO this is picking only the first for now and will be changed when admin supports more than one role
-        const role = user.roles[0];
-        if (!role) {
-          throw new UnprocessableEntityError(UserErrorsEnum.USER_TYPE_INVALID);
-        }
-
-        const supportMap = new Map();
-        const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
-        if (supportUserId.length > 0) {
-          const supports = await this.sqlConnection
-            .createQueryBuilder(InnovationSupportEntity, 'support')
-            .select('organisationUnitUsers.id', 'organisationUnitUsers_id')
-            .addSelect('COUNT(support.id)', 'support_count')
-            .innerJoin('support.organisationUnitUsers', 'organisationUnitUsers')
-            .where('organisationUnitUsers.id IN (:...supportUserId)', { supportUserId })
-            .groupBy('organisationUnitUsers.id')
-            .getRawMany();
-          supports.forEach(s => supportMap.set(s.organisationUnitUsers_id, s.support_count));
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          phone: user.phone,
-          displayName: user.displayName,
-          type: role.role, // see previous TODO
-          lockedAt: user.lockedAt,
-          innovations: innovations,
-          userOrganisations: user.organisations.map(o => ({
-            id: o.id,
-            name: o.name,
-            size: o.size,
-            role: o.role,
-            isShadow: o.isShadow,
-            units: o.organisationUnits.map(u => ({
-              id: u.id,
-              name: u.name,
-              acronym: u.acronym,
-              supportCount: supportMap.get(u.organisationUnitUser.id)
-            }))
-          }))
-        };
-      default:
-        const unknownModel: never = model;
-        throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID, {
-          details: { model: unknownModel }
-        });
+    if (model === 'minimal') {
+      return {
+        id: user.id,
+        displayName: user.displayName
+      };
     }
+    if (model === 'full') {
+      const innovations = await this.sqlConnection
+        .createQueryBuilder(InnovationEntity, 'innovation')
+        .select('innovation.id', 'innovation_id')
+        .addSelect('innovation.name', 'innovation_name')
+        .where('innovation.owner_id = :userId', { userId: user.id })
+        .getMany();
+
+      // TODO this is picking only the first for now and will be changed when admin supports more than one role
+      const role = user.roles[0];
+      if (!role) {
+        throw new UnprocessableEntityError(UserErrorsEnum.USER_TYPE_INVALID);
+      }
+
+      const supportMap = new Map();
+      const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
+      if (supportUserId.length > 0) {
+        const supports = await this.sqlConnection
+          .createQueryBuilder(InnovationSupportEntity, 'support')
+          .select('organisationUnitUsers.id', 'organisationUnitUsers_id')
+          .addSelect('COUNT(support.id)', 'support_count')
+          .innerJoin('support.organisationUnitUsers', 'organisationUnitUsers')
+          .where('organisationUnitUsers.id IN (:...supportUserId)', { supportUserId })
+          .groupBy('organisationUnitUsers.id')
+          .getRawMany();
+        supports.forEach(s => supportMap.set(s.organisationUnitUsers_id, s.support_count));
+      }
+
+      return {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        displayName: user.displayName,
+        type: role.role, // see previous TODO
+        lockedAt: user.lockedAt,
+        innovations: innovations,
+        userOrganisations: user.organisations.map(o => ({
+          id: o.id,
+          name: o.name,
+          size: o.size,
+          role: o.role,
+          isShadow: o.isShadow,
+          units: o.organisationUnits.map(u => ({
+            id: u.id,
+            name: u.name,
+            acronym: u.acronym,
+            supportCount: supportMap.get(u.organisationUnitUser.id)
+          }))
+        }))
+      };
+    }
+    throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID);
   }
 
   async getUserPendingInnovationTransfers(
