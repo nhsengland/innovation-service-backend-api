@@ -560,6 +560,52 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
+  "/v1/units/{organisationUnitId}/users/{userId}":
+    post:
+      description: Create unit user.
+      operationId: v1-admin-unit-user-create
+      parameters:
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - ACCESSOR
+                    - QUALIFYING_ACCESSOR
+              required:
+                - role
+              additionalProperties: false
+      responses:
+        "204":
+          description: The user as been added to the unit.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create an organisation unit.
+        "404":
+          description: The user doesn't exist on the service.
+        "409":
+          description: The user is from other other organisation or already exists in the
+            unit.
+        "500":
+          description: An error occurred while creating the organisation unit.
   /v1/users:
     post:
       description: Create a user.

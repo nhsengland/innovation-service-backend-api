@@ -3,8 +3,9 @@ import type { EntityManager } from 'typeorm';
 
 import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
-import { ConflictError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 
+import { ValidationsHelper } from '@users/shared/helpers';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
 import { BaseService } from './base.service';
 
@@ -166,7 +167,6 @@ export class OrganisationsService extends BaseService {
     };
   }
 
-  // Change to email
   async getOrganisationUnitUserByEmail(
     organisationUnitId: string,
     email: string,
@@ -198,36 +198,11 @@ export class OrganisationsService extends BaseService {
       .leftJoin('userRole.organisationUnit', 'unit')
       .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
       .getMany();
-
     if (!roles.length) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
     }
 
-    let userId: string | undefined;
-    let role: ServiceRoleEnum | undefined;
-
-    for (const userRole of roles) {
-      if (userRole.role === ServiceRoleEnum.INNOVATOR) {
-        throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_CANT_BE_INNOVATOR);
-      }
-
-      if (userRole.organisation !== null && userRole.organisation.id !== organisation.id) {
-        throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG);
-      }
-
-      if (userRole.organisationUnit !== null && userRole.organisationUnit.id === organisationUnitId) {
-        throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_ALREADY_EXISTS);
-      }
-
-      // Variable assignment
-      if (!userId) {
-        userId = userRole.user.id;
-      }
-
-      if (!role && userRole.organisation?.id === organisation.id) {
-        role = userRole.role;
-      }
-    }
+    const { userId, userRole } = ValidationsHelper.canAddUserToUnit(roles, organisation.id, organisationUnitId);
 
     // Not required
     if (!userId) {
@@ -238,7 +213,7 @@ export class OrganisationsService extends BaseService {
       id: userId,
       name: b2cUser.displayName,
       email: b2cUser.email,
-      role: role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR ? role : null
+      role: userRole === ServiceRoleEnum.ACCESSOR || userRole === ServiceRoleEnum.QUALIFYING_ACCESSOR ? userRole : null
     };
   }
 }

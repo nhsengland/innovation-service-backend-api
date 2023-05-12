@@ -8,6 +8,8 @@ import {
   NotificationUserEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
+  OrganisationUnitUserEntity,
+  OrganisationUserEntity,
   UserEntity,
   UserRoleEntity
 } from '@admin/shared/entities';
@@ -19,8 +21,8 @@ import {
   OrganisationTypeEnum,
   ServiceRoleEnum
 } from '@admin/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
-import { DatesHelper } from '@admin/shared/helpers';
+import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import {
   DomainServiceSymbol,
@@ -511,6 +513,77 @@ export class OrganisationsService extends BaseService {
     return { id: unit.id };
   }
 
+  async createUnitUser(
+    domainContext: DomainContextType,
+    organisationUnitId: string,
+    userId: string,
+    data: { role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    // Start Validations
+    const unit = await connection
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .select(['organisation.id', 'organisation.inactivatedAt', 'unit.id', 'unit.inactivatedAt'])
+      .innerJoin('unit.organisation', 'organisation')
+      .where('unit.id = :organisationUnitId', { organisationUnitId })
+      .getOne();
+    if (!unit) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND);
+    }
+
+    const roles = await connection
+      .createQueryBuilder(UserRoleEntity, 'role')
+      .select(['role.id', 'role.role', 'organisation.id', 'unit.id'])
+      .leftJoin('role.organisation', 'organisation')
+      .leftJoin('role.organisationUnit', 'unit')
+      .where('role.user_id = :userId', { userId })
+      .getMany();
+    if (!roles.length) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
+    }
+
+    const { userRole } = ValidationsHelper.canAddUserToUnit(roles, unit.organisation.id, organisationUnitId);
+    if (userRole && userRole !== data.role) {
+      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_MISMATCH_ROLE);
+    }
+    // End Validations
+
+    await connection.transaction(async transaction => {
+      const organisationUser = await this.getOrCreateOrganisationUser(
+        unit.organisation.id,
+        userId,
+        data.role,
+        domainContext.id,
+        transaction
+      );
+
+      await transaction.save(
+        OrganisationUnitUserEntity,
+        OrganisationUnitUserEntity.new({
+          organisationUnit: unit,
+          organisationUser: organisationUser,
+          createdBy: domainContext.id,
+          updatedBy: domainContext.id
+        })
+      );
+
+      await transaction.save(
+        UserRoleEntity,
+        UserRoleEntity.new({
+          user: UserEntity.new({ id: userId }),
+          role: data.role,
+          organisation: unit.organisation,
+          organisationUnit: unit,
+          createdBy: domainContext.id,
+          updatedBy: domainContext.id,
+          lockedAt: new Date()
+        })
+      );
+    });
+  }
+
   private async createOrganisationUnit(
     organisationId: string,
     name: string,
@@ -550,6 +623,37 @@ export class OrganisationsService extends BaseService {
     );
 
     return savedUnit;
+  }
+
+  private async getOrCreateOrganisationUser(
+    organisationId: string,
+    userId: string,
+    role: ServiceRoleEnum,
+    requestUserId: string,
+    entityManager?: EntityManager
+  ) {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const organisationUser = await connection
+      .createQueryBuilder(OrganisationUserEntity, 'orgUser')
+      .where('orgUser.user_id = :userId', { userId })
+      .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
+      .getOne();
+
+    if (organisationUser) {
+      return organisationUser;
+    }
+
+    return await connection.save(
+      OrganisationUserEntity,
+      OrganisationUserEntity.new({
+        organisation: OrganisationEntity.new({ id: organisationId }),
+        user: UserEntity.new({ id: userId }),
+        role: role as any,
+        createdBy: requestUserId,
+        updatedBy: requestUserId
+      })
+    );
   }
 
   private async createOrganisationAnnouncement(
