@@ -32,7 +32,6 @@ export class NotificationsService extends BaseService {
     const query = em
       .createQueryBuilder(NotificationUserEntity, 'notificationUser')
       .innerJoin('notificationUser.notification', 'notification')
-      .innerJoin('notification.innovation', 'innovation')
       .where('notificationUser.user_role_id = :id', { id: roleId })
       .andWhere('notificationUser.readAt IS NULL');
 
