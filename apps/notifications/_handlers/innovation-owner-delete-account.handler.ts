@@ -1,13 +1,14 @@
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum } from '../_config';
 
+import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
 export class InnovatorAccountDeletionHandler extends BaseHandler<
@@ -15,8 +16,6 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
   EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER],
@@ -27,19 +26,21 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
 
   async run(): Promise<this> {
     for (const innovation of this.inputData['innovations']) {
-      const innovationCollaboratorUsers = (
-        await this.recipientsService.innovationActiveCollaboratorUsers(innovation.id)
-      ).filter(user => user.isActive);
+      const innovationCollaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(innovation.id);
+      const innovationCollaborators = await this.recipientsService.getUsersRecipient(
+        innovationCollaboratorIds,
+        ServiceRoleEnum.INNOVATOR
+      );
 
-      if (innovationCollaboratorUsers.length > 0) {
+      if (innovationCollaborators.length > 0) {
         await this.prepareEmailForCollaborators(
-          innovationCollaboratorUsers.map(user => user.identityId),
+          innovationCollaborators,
           innovation.name,
           innovation.transferExpireDate
         );
 
         await this.prepareInAppForCollaborators(
-          innovationCollaboratorUsers.map(user => user.userRole.id),
+          innovationCollaborators.map(user => user.roleId),
           innovation.id
         );
       }
@@ -48,14 +49,15 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
   }
 
   async prepareEmailForCollaborators(
-    userIdentityIds: string[],
+    recipients: RecipientType[],
     innovationName: string,
-    transferExpireDate: string 
+    transferExpireDate: string
   ): Promise<void> {
-    for (const identityId of userIdentityIds) {
+    for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.ACCOUNT_DELETION_WITH_TRANSFER_TO_COLLABORATOR,
-        to: { type: 'identityId', value: identityId, displayNameParam: 'display_name' },
+        to: recipient,
+        notificationPreferenceType: null,
         params: {
           //display_name is filled automatically
           innovation_name: innovationName,

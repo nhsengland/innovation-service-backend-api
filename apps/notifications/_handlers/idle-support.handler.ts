@@ -2,7 +2,6 @@ import { NotificationLogTypeEnum, NotifierTypeEnum } from '@notifications/shared
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import { BaseHandler } from './base.handler';
@@ -12,7 +11,6 @@ export class IdleSupportHandler extends BaseHandler<
   EmailTypeEnum.QA_A_IDLE_SUPPORT,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
   private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
@@ -50,7 +48,8 @@ export class IdleSupportHandler extends BaseHandler<
       for (const details of innovation.values) {
         this.emails.push({
           templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
-          to: { type: 'identityId', value: details.identityId, displayNameParam: 'display_name' },
+          to: details.recipient,
+          notificationPreferenceType: null,
           params: {
             innovation_name: innovation.values.find(_ => true)?.innovationName || '',
             innovator_name: ownerIdentities.find(i => i.identityId === details.ownerIdentityId)?.displayName || ''

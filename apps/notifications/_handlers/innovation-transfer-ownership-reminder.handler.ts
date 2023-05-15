@@ -10,7 +10,6 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
@@ -19,7 +18,6 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   Record<string, never>
 > {
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -36,7 +34,8 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
       // This means that the user is NOT registered in the service.
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_NEW_USER,
-        to: { type: 'email', value: this.inputData.recipientEmail },
+        to: { email: this.inputData.recipientEmail },
+        notificationPreferenceType: null,
         params: {
           innovation_name: this.inputData.innovationName,
           transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -45,20 +44,21 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
         }
       });
     } else {
-      this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_EXISTING_USER,
-        to: { type: 'identityId', value: targetUser.identityId },
-        params: {
-          innovation_name: this.inputData.innovationName,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
-        }
-      });
-
       const userId = await this.recipientsService.identityId2UserId(targetUser.identityId);
       if (userId) {
-        const userRole = await this.recipientsService.getUserRole(userId, ServiceRoleEnum.INNOVATOR);
+        const recipient = await this.recipientsService.getUsersRecipient(userId, ServiceRoleEnum.INNOVATOR);
 
-        if (userRole) {
+        if (recipient) {
+          this.emails.push({
+            templateId: EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_EXISTING_USER,
+            to: recipient,
+            notificationPreferenceType: null,
+            params: {
+              innovation_name: this.inputData.innovationName,
+              transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
+            }
+          });
+
           this.inApp.push({
             innovationId: this.inputData.innovationId,
             context: {
@@ -66,7 +66,7 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
               detail: NotificationContextDetailEnum.TRANSFER_REMINDER,
               id: this.inputData.transferId
             },
-            userRoleIds: [userRole.id],
+            userRoleIds: [recipient.roleId],
             params: {}
           });
         }

@@ -29,9 +29,9 @@ export class StorageQueueService {
     return queueClient;
   }
 
-  async sendMessage(
+  async sendMessage<T = any>(
     queueName: QueuesEnum,
-    message: { [key: string]: any },
+    message: T,
     options?: QueueSendMessageOptions
   ): Promise<QueueSendMessageResponse> {
     const queueClient = await this.init(queueName);

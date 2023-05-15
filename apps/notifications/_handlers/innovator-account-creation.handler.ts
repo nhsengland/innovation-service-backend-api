@@ -1,4 +1,4 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { EmailTypeEnum, ENV } from '../_config';
@@ -19,18 +19,18 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    this.emails.push({
-      templateId: EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR,
-      to: {
-        type: 'identityId',
-        value: this.requestUser.identityId,
-        displayNameParam: 'display_name'
-      },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-        innovation_service_url: ENV.webBaseUrl
-      }
-    });
+    const recipient = await this.recipientsService.getUsersRecipient(this.requestUser.id, ServiceRoleEnum.INNOVATOR);
+    if (recipient) {
+      this.emails.push({
+        templateId: EmailTypeEnum.ACCOUNT_CREATION_TO_INNOVATOR,
+        to: recipient,
+        notificationPreferenceType: null,
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_service_url: ENV.webBaseUrl
+        }
+      });
+    }
 
     return this;
   }

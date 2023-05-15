@@ -1,7 +1,7 @@
 import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
-  EmailNotificationTypeEnum,
+  EmailNotificationType,
   InnovationStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
@@ -256,7 +256,7 @@ export class NotificationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<
     {
-      notificationType: EmailNotificationTypeEnum;
+      notificationType: EmailNotificationType;
       preference: EmailNotificationPreferenceEnum;
     }[]
   > {
@@ -269,19 +269,16 @@ export class NotificationsService extends BaseService {
     const userPreferencesMap = new Map(userPreferences.map(p => [p.notification_id, p.preference]));
     return [
       {
-        notificationType: EmailNotificationTypeEnum.ACTION,
-        preference:
-          userPreferencesMap.get(EmailNotificationTypeEnum.ACTION) ?? EmailNotificationPreferenceEnum.INSTANTLY
+        notificationType: 'ACTION',
+        preference: userPreferencesMap.get('ACTION') ?? EmailNotificationPreferenceEnum.INSTANTLY
       },
       {
-        notificationType: EmailNotificationTypeEnum.SUPPORT,
-        preference:
-          userPreferencesMap.get(EmailNotificationTypeEnum.SUPPORT) ?? EmailNotificationPreferenceEnum.INSTANTLY
+        notificationType: 'SUPPORT',
+        preference: userPreferencesMap.get('SUPPORT') ?? EmailNotificationPreferenceEnum.INSTANTLY
       },
       {
-        notificationType: EmailNotificationTypeEnum.MESSAGE,
-        preference:
-          userPreferencesMap.get(EmailNotificationTypeEnum.MESSAGE) ?? EmailNotificationPreferenceEnum.INSTANTLY
+        notificationType: 'MESSAGE',
+        preference: userPreferencesMap.get('MESSAGE') ?? EmailNotificationPreferenceEnum.INSTANTLY
       }
     ];
   }
@@ -295,7 +292,7 @@ export class NotificationsService extends BaseService {
   async upsertUserEmailPreferences(
     userId: string,
     preferences: {
-      notificationType: EmailNotificationTypeEnum;
+      notificationType: EmailNotificationType;
       preference: EmailNotificationPreferenceEnum;
     }[],
     entityManager?: EntityManager

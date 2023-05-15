@@ -1,20 +1,15 @@
 import {
-  EmailNotificationPreferenceEnum,
-  EmailNotificationTypeEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
-import type { UserRoleEntity } from '@notifications/shared/entities';
 
 export class ThreadCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_CREATION,
@@ -23,25 +18,6 @@ export class ThreadCreationHandler extends BaseHandler<
   | EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
   { subject: string; messageId: string }
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
-  private data: {
-    innovation?: {
-      name: string;
-      owner: {
-        id: string;
-        identityId: string;
-        userRole: UserRoleEntity;
-        isActive: boolean;
-        emailNotificationPreferences: {
-          type: EmailNotificationTypeEnum;
-          preference: EmailNotificationPreferenceEnum;
-        }[];
-      };
-    };
-  } = {};
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
@@ -51,20 +27,20 @@ export class ThreadCreationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-
     switch (this.domainContext.currentRole.role) {
       case ServiceRoleEnum.ASSESSMENT:
       case ServiceRoleEnum.ACCESSOR:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        await this.prepareNotificationForInnovationOwnerFromAssignedUser();
-        await this.prepareNotificationForCollaboratorsFromAssignedUser();
+        await this.prepareNotificationForInnovationOwnerAndCollaboratorsFromAssignedUser();
         break;
 
-      case ServiceRoleEnum.INNOVATOR:
-        await this.prepareNotificationForAssignedUsers();
-        await this.prepareNotificationForOwnerAndCollaboratorsFromInnovator();
+      case ServiceRoleEnum.INNOVATOR: {
+        const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+        const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
+        await this.prepareNotificationForAssignedUsers(innovation.name, thread);
+        await this.prepareNotificationForOwnerAndCollaboratorsFromInnovator(innovation, thread);
         break;
+      }
 
       default:
         break;
@@ -74,38 +50,83 @@ export class ThreadCreationHandler extends BaseHandler<
   }
 
   // Private methods.
-
-  private async prepareNotificationForInnovationOwnerFromAssignedUser(): Promise<void> {
-    const requestUserInfo = await this.domainService.users.getUserInfo({
-      userId: this.requestUser.id
-    });
+  private async prepareNotificationForInnovationOwnerAndCollaboratorsFromAssignedUser(): Promise<void> {
+    const requestUserInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
     const requestUserUnitName =
       this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
         : this.domainContext?.organisation?.organisationUnit?.name ?? '';
 
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
-    // Send email only to user if email preference INSTANTLY.
-    if (
-      this.isEmailPreferenceInstantly(
-        EmailNotificationTypeEnum.MESSAGE,
-        innovation.owner.emailNotificationPreferences
-      ) &&
-      innovation.owner.isActive
-    ) {
-      this.emails.push({
-        templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
-        to: {
-          type: 'identityId',
-          value: innovation.owner.identityId,
-          displayNameParam: 'display_name'
+    const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
+    const recipients = await this.recipientsService.getUsersRecipient(
+      [innovation.ownerId, ...collaboratorIds],
+      ServiceRoleEnum.INNOVATOR
+    );
+
+    if (recipients.length) {
+      const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
+
+      for (const recipient of recipients) {
+        this.emails.push({
+          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
+          notificationPreferenceType: 'MESSAGE',
+          to: recipient,
+          params: {
+            // display_name: '', // This will be filled by the email-listener function.
+            accessor_name: requestUserInfo?.displayName ?? 'user', //Review what should happen if user is not found
+            unit_name: requestUserUnitName,
+            thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
+              .setPathParams({
+                userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR),
+                innovationId: this.inputData.innovationId,
+                threadId: this.inputData.threadId
+              })
+              .buildUrl()
+          }
+        });
+      }
+
+      this.inApp.push({
+        innovationId: this.inputData.innovationId,
+        context: {
+          type: NotificationContextTypeEnum.THREAD,
+          detail: NotificationContextDetailEnum.THREAD_CREATION,
+          id: this.inputData.threadId
         },
+        userRoleIds: recipients.map(c => c.roleId),
+        params: { subject: thread.subject, messageId: this.inputData.messageId }
+      });
+    }
+  }
+
+  private async prepareNotificationForOwnerAndCollaboratorsFromInnovator(
+    innovation: { name: string; ownerId: string },
+    thread: { id: string; subject: string }
+  ): Promise<void> {
+    const recipientIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
+
+    // Add owner if not the same as the request user.
+    if (this.domainContext.id !== innovation.ownerId) {
+      recipientIds.push(this.domainContext.id);
+    }
+
+    const recipients = (await this.recipientsService.getUsersRecipient(recipientIds, ServiceRoleEnum.INNOVATOR)).filter(
+      // filter request user
+      r => r.roleId !== this.domainContext.currentRole.id
+    );
+
+    for (const recipient of recipients) {
+      this.emails.push({
+        templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
+        notificationPreferenceType: 'MESSAGE',
+        to: recipient,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          accessor_name: requestUserInfo.displayName,
-          unit_name: requestUserUnitName,
+          subject: thread.subject,
+          innovation_name: innovation.name,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
             .setPathParams({
@@ -125,138 +146,32 @@ export class ThreadCreationHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.THREAD_CREATION,
         id: this.inputData.threadId
       },
-      userRoleIds: [innovation.owner.userRole.id],
+      userRoleIds: recipients.map(r => r.roleId),
       params: { subject: thread.subject, messageId: this.inputData.messageId }
     });
   }
 
-  private async prepareNotificationForCollaboratorsFromAssignedUser(): Promise<void> {
-    const requestUserInfo = await this.domainService.users.getUserInfo({
-      userId: this.requestUser.id
-    });
-    const requestUserUnitName =
-      this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
-        ? 'needs assessment'
-        : this.domainContext?.organisation?.organisationUnit?.name ?? '';
-
-    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
-
-    const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-
-    for (const collaborator of collaborators.filter(c => c.isActive)) {
-      // Send email only to user if email preference INSTANTLY.
-      if (
-        this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.MESSAGE, collaborator.emailNotificationPreferences)
-      ) {
-        this.emails.push({
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER,
-          to: {
-            type: 'identityId',
-            value: collaborator.identityId,
-            displayNameParam: 'display_name'
-          },
-          params: {
-            // display_name: '', // This will be filled by the email-listener function.
-            accessor_name: requestUserInfo.displayName,
-            unit_name: requestUserUnitName,
-            thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-              .setPathParams({
-                userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR),
-                innovationId: this.inputData.innovationId,
-                threadId: this.inputData.threadId
-              })
-              .buildUrl()
-          }
-        });
-      }
-    }
-
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.THREAD,
-        detail: NotificationContextDetailEnum.THREAD_CREATION,
-        id: this.inputData.threadId
-      },
-      userRoleIds: collaborators.map(c => c.userRole.id),
-      params: { subject: thread.subject, messageId: this.inputData.messageId }
-    });
-  }
-
-  private async prepareNotificationForOwnerAndCollaboratorsFromInnovator(): Promise<void> {
-    const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-
-    const collaborators = (
-      await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId)
-    ).filter(item => item.userRole !== undefined && item.userRole.id !== this.domainContext.currentRole.id); //filter undefined items and request user
-
-    if (this.data.innovation?.owner && this.domainContext.currentRole.id !== this.data.innovation?.owner.userRole.id) {
-      collaborators.push(this.data.innovation?.owner);
-    }
-
-    for (const collaborator of collaborators.filter(c => c.isActive)) {
-      // Send email only to user if email preference INSTANTLY.
-      if (
-        this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.MESSAGE, collaborator.emailNotificationPreferences)
-      ) {
-        this.emails.push({
-          templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
-          to: {
-            type: 'identityId',
-            value: collaborator.identityId,
-            displayNameParam: 'display_name'
-          },
-          params: {
-            // display_name: '', // This will be filled by the email-listener function.
-            subject: thread.subject,
-            innovation_name: this.data.innovation?.name || '',
-            thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
-              .setPathParams({
-                userBasePath: this.frontendBaseUrl(ServiceRoleEnum.INNOVATOR),
-                innovationId: this.inputData.innovationId,
-                threadId: this.inputData.threadId
-              })
-              .buildUrl()
-          }
-        });
-      }
-    }
-
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.THREAD,
-        detail: NotificationContextDetailEnum.THREAD_CREATION,
-        id: this.inputData.threadId
-      },
-      userRoleIds: collaborators.map(c => c.userRole.id),
-      params: { subject: thread.subject, messageId: this.inputData.messageId }
-    });
-  }
-
-  private async prepareNotificationForAssignedUsers(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
-    const assignedUsers = await this.recipientsService.innovationAssignedUsers({
+  private async prepareNotificationForAssignedUsers(
+    innovationName: string,
+    thread: { id: string; subject: string }
+  ): Promise<void> {
+    const assignedUsers = await this.recipientsService.innovationAssignedRecipients({
       innovationId: this.inputData.innovationId
     });
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const user of assignedUsers.filter(item =>
-      this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.MESSAGE, item.emailNotificationPreferences)
-    )) {
+    for (const user of assignedUsers) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        notificationPreferenceType: 'MESSAGE',
+        to: user,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name,
+          innovation_name: innovationName,
           thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath(':userBasePath/innovations/:innovationId/threads/:threadId')
             .setPathParams({
-              userBasePath: this.frontendBaseUrl(user.userRole.role),
+              userBasePath: this.frontendBaseUrl(user.role),
               innovationId: this.inputData.innovationId,
               threadId: this.inputData.threadId
             })
@@ -265,7 +180,7 @@ export class ThreadCreationHandler extends BaseHandler<
       });
     }
 
-    if (assignedUsers.length > 0) {
+    if (assignedUsers.length) {
       this.inApp.push({
         innovationId: this.inputData.innovationId,
         context: {
@@ -273,7 +188,7 @@ export class ThreadCreationHandler extends BaseHandler<
           detail: NotificationContextDetailEnum.THREAD_CREATION,
           id: this.inputData.threadId
         },
-        userRoleIds: assignedUsers.map(item => item.userRole.id),
+        userRoleIds: assignedUsers.map(item => item.roleId),
         params: { subject: thread.subject, messageId: this.inputData.messageId }
       });
     }

@@ -12,7 +12,7 @@ export type MessageType = {
       id: string;
     };
     userRoleIds: string[];
-    params: { [key: string]: string | number | string[] };
+    params: Record<string, unknown>;
   };
 };
 

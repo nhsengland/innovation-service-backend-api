@@ -1,5 +1,4 @@
 import {
-  EmailNotificationTypeEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -12,7 +11,6 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { container, ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
 
@@ -22,7 +20,6 @@ export class ActionCreationHandler extends BaseHandler<
   { section: string }
 > {
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -42,12 +39,15 @@ export class ActionCreationHandler extends BaseHandler<
     }
 
     const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
-    const collaborators = await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId);
+    const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
 
-    const innovatorRecipients = [...collaborators, innovation.owner];
+    const innovatorRecipients = await this.recipientsService.getUsersRecipient(
+      [...collaborators, innovation.ownerId],
+      ServiceRoleEnum.INNOVATOR
+    );
 
     const unitName =
       this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
@@ -55,28 +55,23 @@ export class ActionCreationHandler extends BaseHandler<
         : actionInfo.organisationUnit?.name ?? '';
 
     for (const innovator of innovatorRecipients.filter(i => i.isActive)) {
-      if (this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, innovator.emailNotificationPreferences)) {
-        this.emails.push({
-          templateId: EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
-          to: {
-            type: 'identityId',
-            value: innovator.identityId || '',
-            displayNameParam: 'display_name'
-          },
-          params: {
-            // display_name: '', // This will be filled by the email-listener function.
-            accessor_name: requestInfo.displayName,
-            unit_name: unitName,
-            action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
-              .setPathParams({
-                innovationId: this.inputData.innovationId,
-                actionId: this.inputData.action.id
-              })
-              .buildUrl()
-          }
-        });
-      }
+      this.emails.push({
+        templateId: EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
+        notificationPreferenceType: 'ACTION',
+        to: innovator,
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+          accessor_name: requestInfo.displayName,
+          unit_name: unitName,
+          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+            .setPathParams({
+              innovationId: this.inputData.innovationId,
+              actionId: this.inputData.action.id
+            })
+            .buildUrl()
+        }
+      });
     }
 
     this.inApp.push({
@@ -86,7 +81,7 @@ export class ActionCreationHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.ACTION_CREATION,
         id: this.inputData.action.id
       },
-      userRoleIds: innovatorRecipients.map(i => i.userRole.id),
+      userRoleIds: innovatorRecipients.map(i => i.roleId),
       params: {
         section: this.inputData.action.section
       }

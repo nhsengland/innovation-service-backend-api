@@ -1,10 +1,9 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
 
@@ -14,7 +13,6 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
   Record<string, never>
 > {
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -25,8 +23,8 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
     const transfer = await this.recipientsService.innovationTransferInfoWithOwner(this.inputData.transferId);
 
     const targetUser = await this.identityProviderService.getUserInfoByEmail(transfer.email);
@@ -36,23 +34,31 @@ export class InnovationTransferOwnershipCreationHandler extends BaseHandler<
 
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_NEW_USER,
-        to: { type: 'email', value: transfer.email },
+        to: { email: transfer.email },
+        notificationPreferenceType: null,
         params: {
-          innovator_name: innovationOwnerInfo.displayName,
+          innovator_name: innovationOwnerInfo?.displayName ?? 'user', //Review what should happen if user is not found
           innovation_name: innovation.name,
           transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath(`transfers/${transfer.id}`).buildUrl()
         }
       });
     } else {
-      this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER,
-        to: { type: 'identityId', value: targetUser.identityId },
-        params: {
-          innovator_name: innovationOwnerInfo.displayName,
-          innovation_name: innovation.name,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
+      const recipientId = await this.recipientsService.identityId2UserId(targetUser.identityId);
+      if (recipientId) {
+        const recipient = await this.recipientsService.getUsersRecipient(recipientId, ServiceRoleEnum.INNOVATOR);
+        if (recipient) {
+          this.emails.push({
+            templateId: EmailTypeEnum.INNOVATION_TRANSFER_TO_EXISTING_USER,
+            to: recipient,
+            notificationPreferenceType: null,
+            params: {
+              innovator_name: innovationOwnerInfo?.displayName ?? 'user', //Review what should happen if user is not found
+              innovation_name: innovation.name,
+              transfer_url: new UrlModel(ENV.webBaseTransactionalUrl).addPath('innovator/dashboard').buildUrl()
+            }
+          });
         }
-      });
+      }
     }
 
     return this;

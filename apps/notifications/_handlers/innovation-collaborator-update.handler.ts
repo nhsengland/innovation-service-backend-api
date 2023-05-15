@@ -2,16 +2,17 @@ import {
   InnovationCollaboratorStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
+import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { EmailErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
+import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
@@ -25,8 +26,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS,
   { collaboratorId: string }
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
+  private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -65,12 +65,16 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   }
 
   async prepareNotificationToOwner(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
-    const innovationCollaborator = await this.recipientsService.innovationCollaboratorInfo(
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    if (!owner) {
+      this.logger.log(`Innovation owner not found for ${innovation.name}`);
+      return;
+    }
+    const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
       this.inputData.innovationCollaborator.id
     );
-    const collaboratorInfo = await this.identityProviderService.getUserInfoByEmail(innovationCollaborator.email);
+    const collaboratorInfo = await this.recipientsService.usersIdentityInfo(innovationCollaborator.email);
 
     if (!collaboratorInfo) {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
@@ -94,11 +98,8 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
 
     this.emails.push({
       templateId,
-      to: {
-        type: 'identityId',
-        value: innovationOwnerInfo.identityId,
-        displayNameParam: 'display_name'
-      },
+      to: owner,
+      notificationPreferenceType: null,
       params: {
         collaborator_name: collaboratorInfo.displayName,
         innovation_name: innovation.name,
@@ -115,9 +116,9 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   }
 
   async prepareNotificationToCollaborator(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
-    const innovationCollaborator = await this.recipientsService.innovationCollaboratorInfo(
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+    const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
       this.inputData.innovationCollaborator.id
     );
 
@@ -137,34 +138,31 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
-    let recipient: { type: 'email' | 'identityId'; value: string; displayNameParam?: string };
+    let recipient: { email: string } | RecipientType | null = null;
 
-    if (
-      [InnovationCollaboratorStatusEnum.REMOVED, InnovationCollaboratorStatusEnum.LEFT].includes(
-        this.inputData.innovationCollaborator.status
-      )
-    ) {
-      //identityId is used here for display_name to work
-      recipient = {
-        type: 'identityId',
-        value: innovationCollaborator.user?.identityId ?? '',
-        displayNameParam: 'display_name'
-      };
+    if (innovationCollaborator.userId) {
+      recipient = await this.recipientsService.getUsersRecipient(
+        innovationCollaborator.userId,
+        ServiceRoleEnum.INNOVATOR
+      );
     } else {
-      recipient = { type: 'email', value: innovationCollaborator.email };
+      recipient = { email: innovationCollaborator.email };
     }
 
-    this.emails.push({
-      to: recipient,
-      templateId,
-      params: {
-        innovator_name: innovationOwnerInfo.displayName,
-        innovation_name: innovation.name
-      }
-    });
+    if (recipient) {
+      this.emails.push({
+        to: recipient,
+        notificationPreferenceType: null,
+        templateId,
+        params: {
+          innovator_name: innovationOwnerInfo?.displayName ?? 'user ', //Review what should happen if the owner is not found
+          innovation_name: innovation.name
+        }
+      });
+    }
 
     if (this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.CANCELLED) {
-      if (innovationCollaborator.user) {
+      if (recipient && 'roleId' in recipient) {
         // user exists in the service
         this.inApp.push({
           innovationId: this.inputData.innovationId,
@@ -173,9 +171,9 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
             detail: NotificationContextDetailEnum.COLLABORATOR_UPDATE,
             id: this.inputData.innovationCollaborator.id
           },
-          userRoleIds: [innovationCollaborator.user.roleId],
+          userRoleIds: [recipient.roleId],
           params: {
-            collaboratorId: innovationCollaborator.id
+            collaboratorId: innovationCollaborator.collaboratorId
           }
         });
       }
@@ -183,8 +181,9 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   }
 
   async prepareNotificationToOtherCollaborators(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfoWithCollaborators(this.inputData.innovationId);
-    const collaboratorInfo = await this.identityProviderService.getUserInfo(this.domainContext.identityId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
+    const collaboratorInfo = await this.recipientsService.usersIdentityInfo(this.domainContext.identityId);
 
     let templateId: EmailTypeEnum;
 
@@ -196,18 +195,15 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
-    const collaborators = innovation.collaborators.filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE);
+    const collaborators = await this.recipientsService.getUsersRecipient(collaboratorIds, ServiceRoleEnum.INNOVATOR);
 
     for (const collaborator of collaborators) {
       this.emails.push({
-        to: {
-          type: 'identityId',
-          value: collaborator.user?.identityId ?? '',
-          displayNameParam: 'display_name'
-        },
+        to: collaborator,
+        notificationPreferenceType: null,
         templateId,
         params: {
-          collaborator_name: collaboratorInfo.displayName,
+          collaborator_name: collaboratorInfo?.displayName ?? 'user ', //Review what should happen if user is not found
           innovation_name: innovation.name,
           ...(this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.LEFT
             ? {

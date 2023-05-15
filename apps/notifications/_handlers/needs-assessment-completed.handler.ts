@@ -1,14 +1,15 @@
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum, ENV } from '../_config';
 
+import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
 export class NeedsAssessmentCompletedHandler extends BaseHandler<
@@ -18,8 +19,6 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
   | EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED],
@@ -29,25 +28,25 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
     const sharedOrganisations = await this.recipientsService.innovationSharedOrganisationsWithUnits(
       this.inputData.innovationId
     );
 
-    const innovatorRecipients = (
-      await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId)
-    ).filter(c => c.isActive);
+    const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
+    const innovatorRecipients = await this.recipientsService.getUsersRecipient(
+      collaborators,
+      ServiceRoleEnum.INNOVATOR
+    );
 
-    if (innovation.owner.isActive) {
-      innovatorRecipients.push(innovation.owner);
+    if (owner?.isActive) {
+      innovatorRecipients.push(owner);
     }
 
     // Assessment completed notifications for innovators (owner + collaborators)
-    await this.prepareAssessmentCompletedEmailToInnovators(
-      innovatorRecipients.map(i => i.identityId),
-      innovation.name
-    );
-    await this.prepareAssessmentCompletedInAppToInnovators(innovatorRecipients.map(i => i.userRole.id));
+    await this.prepareAssessmentCompletedEmailToInnovators(innovatorRecipients, innovation.name);
+    await this.prepareAssessmentCompletedInAppToInnovators(innovatorRecipients.map(i => i.roleId));
 
     // Notifications for innovators (owner + collaborators) when there are suggested orgs not shared with
     const sharedOrganisationUnitsIds = sharedOrganisations.flatMap(organisation =>
@@ -57,11 +56,8 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
       item => !sharedOrganisationUnitsIds.includes(item)
     );
     if (organisationUnitsSuggestedNotSharedIds.length > 0) {
-      await this.prepareOrganisationSuggestedNotSharedEmailToInnovators(
-        innovatorRecipients.map(i => i.identityId),
-        innovation.name
-      );
-      await this.prepareOrganisationSuggestedNotSharedInAppToInnovators(innovatorRecipients.map(i => i.userRole.id));
+      await this.prepareOrganisationSuggestedNotSharedEmailToInnovators(innovatorRecipients, innovation.name);
+      await this.prepareOrganisationSuggestedNotSharedInAppToInnovators(innovatorRecipients.map(i => i.roleId));
     }
 
     // Notifications for Qualifying Accessors
@@ -72,9 +68,9 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
       organisationUnitsSuggestedAndSharedIds
     );
 
-    // TODO: Duplicated emails without reference to unit Id. Filtering unique for now, maybe use unit in the future
+    // TODO: Duplicated emails without reference to unit Id. Filtering unique users for now, maybe use unit in the future
     const emailRecipientQAIdentityIds = [
-      ...new Set(organisationUnitsSuggestedAndSharedQAs.map(item => item.identityId))
+      ...new Map(organisationUnitsSuggestedAndSharedQAs.map(item => [item.identityId, item])).values()
     ];
 
     await this.prepareSuggestedAndSharedOrganisationEmailToQAs(emailRecipientQAIdentityIds);
@@ -85,16 +81,16 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     return this;
   }
 
-  async prepareAssessmentCompletedEmailToInnovators(identityIds: string[], innovationName: string): Promise<void> {
-    for (const identityId of identityIds) {
+  async prepareAssessmentCompletedEmailToInnovators(
+    recipients: RecipientType[],
+    innovationName: string
+  ): Promise<void> {
+    for (const recipient of recipients) {
       // Prepare email for all innovators (owner + collaborators).
       this.emails.push({
         templateId: EmailTypeEnum.NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR,
-        to: {
-          type: 'identityId',
-          value: identityId,
-          displayNameParam: 'display_name'
-        },
+        to: recipient,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovationName,
@@ -110,7 +106,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     }
   }
 
-  async prepareAssessmentCompletedInAppToInnovators(userRoleIds: string[]) {
+  async prepareAssessmentCompletedInAppToInnovators(userRoleIds: string[]): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -123,16 +119,16 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     });
   }
 
-  async prepareOrganisationSuggestedNotSharedEmailToInnovators(identityIds: string[], innovationName: string) {
-    for (const identityId of identityIds) {
+  async prepareOrganisationSuggestedNotSharedEmailToInnovators(
+    recipients: RecipientType[],
+    innovationName: string
+  ): Promise<void> {
+    for (const recipient of recipients) {
       // Prepare email for all innovators (owner + collaborators).
       this.emails.push({
         templateId: EmailTypeEnum.NEEDS_ASSESSMENT_SUGGESTED_ORG_NOT_SHARED_TO_INNOVATOR,
-        to: {
-          type: 'identityId',
-          value: identityId,
-          displayNameParam: 'display_name'
-        },
+        to: recipient,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovationName,
@@ -147,7 +143,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     }
   }
 
-  async prepareOrganisationSuggestedNotSharedInAppToInnovators(userRoleIds: string[]) {
+  async prepareOrganisationSuggestedNotSharedInAppToInnovators(userRoleIds: string[]): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -160,11 +156,12 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     });
   }
 
-  async prepareSuggestedAndSharedOrganisationEmailToQAs(identityIds: string[]) {
-    for (const identityId of identityIds) {
+  async prepareSuggestedAndSharedOrganisationEmailToQAs(recipients: RecipientType[]): Promise<void> {
+    for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
-        to: { type: 'identityId', value: identityId, displayNameParam: 'display_name' },
+        to: recipient,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -176,7 +173,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     }
   }
 
-  async prepareSuggestedAndSharedOrganidationInAppToQAs(userRoleIds: string[]) {
+  async prepareSuggestedAndSharedOrganidationInAppToQAs(userRoleIds: string[]): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {

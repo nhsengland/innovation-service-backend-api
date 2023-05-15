@@ -6,8 +6,7 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum } from '../_config';
 
 import { BaseHandler } from './base.handler';
 
@@ -16,8 +15,6 @@ export class LockUserHandler extends BaseHandler<
   EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
@@ -27,33 +24,37 @@ export class LockUserHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id, {
+    const userId = await this.recipientsService.identityId2UserId(this.inputData.user.identityId);
+    const identityInfo = await this.recipientsService.usersIdentityInfo(this.inputData.user.identityId);
+
+    if (!userId) {
+      // this will never happen, query includes deleted, but if it did we wouldn't be able to handle it anyway
+      return this;
+    }
+
+    if (identityInfo) {
+      // E-mail to the user who is being locked.
+      this.emails.push({
+        templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
+        to: { email: identityInfo.email, displayname: identityInfo.displayName },
+        notificationPreferenceType: null,
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+        }
+      });
+    }
+
+    const userInnovatorRole = await this.recipientsService.getUsersRecipient(userId, ServiceRoleEnum.INNOVATOR, {
       withDeleted: true
     });
 
-    // E-mail to the user who is being locked.
-    this.emails.push({
-      templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
-      to: { type: 'identityId', value: userInfo.identityId, displayNameParam: 'display_name' },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-      }
-    });
-
-    const userInnovatorRole = await this.recipientsService.getUserRole(
-      this.inputData.user.id,
-      ServiceRoleEnum.INNOVATOR
-    );
-
     if (userInnovatorRole) {
       // InApp to all assigned users of locked user innovations.
-      const userInnovations = await this.recipientsService.userInnovationsWithAssignedUsers(this.inputData.user.id);
+      const userInnovations = await this.recipientsService.userInnovationsWithAssignedRecipients(userId);
 
       for (const innovation of userInnovations) {
         // Filter duplicated ids..
-        const uniqueUsers = [
-          ...new Map(innovation.assignedUsers.map(item => [`${item.id}_${item.organisationUnitId}`, item])).values()
-        ];
+        const uniqueUsers = [...new Set(innovation.assignedUsers.map(user => user.roleId))];
 
         this.inApp.push({
           innovationId: innovation.id,
@@ -62,7 +63,7 @@ export class LockUserHandler extends BaseHandler<
             detail: NotificationContextDetailEnum.LOCK_USER,
             id: innovation.id
           },
-          userRoleIds: uniqueUsers.map(user => user.roleId),
+          userRoleIds: uniqueUsers,
           params: {}
         });
       }

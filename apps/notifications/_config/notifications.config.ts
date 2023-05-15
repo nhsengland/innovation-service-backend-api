@@ -24,9 +24,7 @@ import {
   InnovationCollaboratorUpdateHandler,
   InnovationOrganisationUnitsSuggestionHandler,
   InnovationReassessmentRequestHandler,
-  // InnovationRecordExportApprovedHandler,
   InnovationRecordExportFeedbackHandler,
-  // InnovationRecordExportRejectedHandler,
   InnovationRecordExportRequestHandler,
   InnovationStopSharingHandler,
   InnovationSubmitedHandler,
@@ -34,8 +32,11 @@ import {
   InnovationSupportStatusUpdateHandler,
   InnovationTransferOwnershipCompletedHandler,
   InnovationTransferOwnershipCreationHandler,
+  InnovationTransferOwnershipExpirationHandler,
+  InnovationTransferOwnershipReminderHandler,
   InnovationWithdrawnHandler,
   InnovatorAccountCreationHandler,
+  InnovatorAccountDeletionHandler,
   LockUserHandler,
   NeedsAssessmentAssessorUpdateHandler,
   NeedsAssessmentCompletedHandler,
@@ -44,10 +45,7 @@ import {
   ThreadMessageCreationHandler,
   UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
-import { InnovationTransferOwnershipExpirationHandler } from '../_handlers/innovation-transfer-ownership-exipraton.handler';
-import { InnovationTransferOwnershipReminderHandler } from '../_handlers/innovation-transfer-ownership-reminder.handler';
 import type { EmailTypeEnum } from './emails.config';
-import { InnovatorAccountDeletionHandler } from '../_handlers/innovation-owner-delete-account.handler';
 
 export const NOTIFICATIONS_CONFIG: {
   [key in NotifierTypeEnum]: {
@@ -110,10 +108,10 @@ export const NOTIFICATIONS_CONFIG: {
       innovationId: Joi.string().guid().required(),
       assessmentId: Joi.string().guid().required(),
       previousAssessor: Joi.object({
-        identityId: Joi.string().guid().required()
+        id: Joi.string().guid().required()
       }).required(),
       newAssessor: Joi.object({
-        identityId: Joi.string().guid().required()
+        id: Joi.string().guid().required()
       }).required()
     }).required()
   },
@@ -130,6 +128,7 @@ export const NOTIFICATIONS_CONFIG: {
           .valid(...Object.values(InnovationSupportStatusEnum))
           .required(),
         statusChanged: Joi.boolean().strict().required(),
+        organisationUnitId: Joi.string().guid().required(),
         newAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required() })),
         message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required()
       }).required()
@@ -335,7 +334,7 @@ export const NOTIFICATIONS_CONFIG: {
     handler: LockUserHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]>({
       user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.LOCK_USER]['user']>({
-        id: Joi.string().guid().required()
+        identityId: Joi.string().guid().required()
       }).required()
     }).required()
   },

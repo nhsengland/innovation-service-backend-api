@@ -116,7 +116,7 @@ export class UsersService extends BaseService {
         await this.notifierService.send(
           { id: context.id, identityId: context.identityId },
           NotifierTypeEnum.LOCK_USER,
-          { user: { id: dbUser.id } },
+          { user: { identityId: dbUser.identityId } },
           context
         );
       }

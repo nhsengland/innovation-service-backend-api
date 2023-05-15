@@ -33,11 +33,9 @@ export enum NotificationContextDetailEnum {
   TRANSFER_REMINDER = 'TRANSFER_REMINDER'
 }
 
-export enum EmailNotificationTypeEnum { // Subset of NotificationContextTypeEnum.
-  ACTION = 'ACTION',
-  MESSAGE = 'MESSAGE',
-  SUPPORT = 'SUPPORT'
-}
+// TODO MJS this is no longer a enum so move it out of here
+export const EmailNotificationType = ['ACTION', 'MESSAGE', 'SUPPORT'] as const;
+export type EmailNotificationType = typeof EmailNotificationType[number];
 
 export enum EmailNotificationPreferenceEnum {
   NEVER = 'NEVER',

@@ -2,9 +2,8 @@ import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, ENV } from '../_config';
+import { ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
 
@@ -13,8 +12,6 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION],
@@ -42,7 +39,8 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
     for (const user of suggestedOrganisationUnitsUsers) {
       this.emails.push({
         templateId: EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        to: user,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)

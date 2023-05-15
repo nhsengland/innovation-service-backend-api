@@ -520,8 +520,8 @@ export class InnovationAssessmentsService extends BaseService {
       {
         innovationId,
         assessmentId: updatedAssessment.id,
-        previousAssessor: { identityId: previousAssessor.identityId },
-        newAssessor: { identityId: updatedAssessment.newAssessor.identityId }
+        previousAssessor: { id: previousAssessor.id },
+        newAssessor: { id: newAssessor.id }
       },
       domainContext
     );

@@ -1,8 +1,7 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { ENV, EmailTypeEnum } from '../_config';
 import { BaseHandler } from './base.handler';
 
 export class InnovationRecordExportFeedbackHandler extends BaseHandler<
@@ -11,8 +10,6 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
@@ -22,32 +19,34 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const request = await this.recipientsService.getExportRequestInfo(this.inputData.requestId);
+    const accessor = await this.recipientsService.getUsersRecipient(
+      request.createdBy.id,
+      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+      { organisationUnit: request.createdBy.unitId }
+    );
 
-    const innovatorName = await this.recipientsService.userInfo(innovation.owner.id);
+    const ownerIdentity = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
 
     const templateId =
-      request.exportRequest.status === 'APPROVED'
+      request.status === 'APPROVED'
         ? EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR
         : EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR;
 
-    if (request.createdBy.isActive) {
+    if (accessor?.isActive) {
       this.emails.push({
         templateId,
-        to: {
-          type: 'identityId',
-          value: request.createdBy.identityId,
-          displayNameParam: 'display_name'
-        },
+        to: accessor,
+        notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
-          innovator_name: innovatorName.name,
+          innovator_name: ownerIdentity?.displayName ?? 'user', //Review what should happen if user is not found
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
             .buildUrl(),
-          pdf_rejection_comment: request.exportRequest.rejectReason
+          pdf_rejection_comment: request.rejectReason
         }
       });
     }

@@ -5,7 +5,6 @@ import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/se
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import { BaseHandler } from './base.handler';
 
@@ -15,7 +14,6 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   Record<string, never>
 > {
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
     requestUser: { id: string; identityId: string },
@@ -29,7 +27,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
     const requestUserInfo = await this.domainService.users.getUserInfo({
       userId: this.requestUser.id
     });
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
     const organisationUnit = this.domainContext?.organisation?.organisationUnit?.id || '';
     const qualifyingAccessors = await this.recipientsService.organisationUnitsQualifyingAccessors([organisationUnit]);
@@ -38,11 +36,8 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
     for (const qualifyingAccessor of qualifyingAccessors) {
       this.emails.push({
         templateId: EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
-        to: {
-          type: 'identityId',
-          value: qualifyingAccessor.identityId,
-          displayNameParam: 'display_name'
-        },
+        to: qualifyingAccessor,
+        notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
           accessor_name: requestUserInfo.displayName,

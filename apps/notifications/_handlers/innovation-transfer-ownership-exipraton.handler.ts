@@ -3,18 +3,13 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import {
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  LoggerServiceSymbol,
-  LoggerServiceType
-} from '@notifications/shared/services';
+import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
@@ -22,9 +17,6 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
   Record<string, never> // Validate
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
   private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
@@ -36,7 +28,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId, true);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId, true);
 
     // This should never happen since we include deleted innovations.
     if (!innovation) {
@@ -46,12 +38,13 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
       return this;
     }
 
-    const targetUser = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
+    const targetUser = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
     if (targetUser) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
-        to: { type: 'email', value: targetUser.email },
+        to: targetUser,
+        notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -67,7 +60,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
           detail: NotificationContextDetailEnum.TRANSFER_EXPIRED,
           id: this.inputData.transferId
         },
-        userRoleIds: [innovation.owner.userRole.id],
+        userRoleIds: [targetUser.roleId],
         params: {}
       });
     }

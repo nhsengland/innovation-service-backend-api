@@ -23,8 +23,6 @@ import {
 import {
   ActivityEnum,
   ActivityTypeEnum,
-  EmailNotificationPreferenceEnum,
-  EmailNotificationTypeEnum,
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -561,6 +559,7 @@ export class DomainInnovationsService {
    */
   async threadIntervenients(
     threadId: string,
+    withUserNames = true,
     entityManager?: EntityManager
   ): Promise<
     {
@@ -571,10 +570,6 @@ export class DomainInnovationsService {
       isOwner?: boolean;
       userRole: { id: string; role: ServiceRoleEnum };
       organisationUnit: { id: string; acronym: string } | null;
-      emailNotificationPreferences: {
-        type: EmailNotificationTypeEnum;
-        preference: EmailNotificationPreferenceEnum;
-      }[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -600,15 +595,13 @@ export class DomainInnovationsService {
         'author.lockedAt',
         'authorRole.id',
         'authorRole.role',
+        'authorRole.lockedAt',
         'organisationUnit.id',
-        'organisationUnit.acronym',
-        'notificationPreferences.notification_id',
-        'notificationPreferences.preference'
+        'organisationUnit.acronym'
       ])
       .innerJoin('threadMessage.author', 'author')
       .innerJoin('threadMessage.authorUserRole', 'authorRole')
       .leftJoin('authorRole.organisationUnit', 'organisationUnit')
-      .leftJoin('author.notificationPreferences', 'notificationPreferences')
       .where('threadMessage.innovation_thread_id = :threadId', { threadId })
       .andWhere('threadMessage.deleted_at IS NULL')
       .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
@@ -619,7 +612,7 @@ export class DomainInnovationsService {
 
     const authorIds = messages.map(m => m.author.identityId);
 
-    const usersInfo = await this.identityProviderService.getUsersMap(authorIds);
+    const usersInfo = withUserNames ? await this.identityProviderService.getUsersMap(authorIds) : new Map();
 
     for (const message of messages) {
       // filter duplicates based on roleId
@@ -629,8 +622,8 @@ export class DomainInnovationsService {
         participants.push({
           id: message.author.id,
           identityId: message.author.identityId,
-          name: usersInfo.get(message.author.identityId)?.displayName ?? '',
-          locked: !!message.author.lockedAt,
+          name: usersInfo.get(message.author.identityId)?.displayName,
+          locked: !!(message.author.lockedAt || message.authorUserRole.lockedAt),
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
           ...(message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: message.author.id === thread.innovation.owner?.id
@@ -640,11 +633,7 @@ export class DomainInnovationsService {
                 id: message.authorUserRole.organisationUnit.id,
                 acronym: message.authorUserRole.organisationUnit.acronym
               }
-            : null,
-          emailNotificationPreferences: (await message.author.notificationPreferences).map(emailPreference => ({
-            type: emailPreference.notification_id,
-            preference: emailPreference.preference
-          }))
+            : null
         });
       }
     }

@@ -4,12 +4,12 @@ import { BaseEntity } from '../base.entity';
 
 import { UserEntity } from './user.entity';
 
-import { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum } from '../../enums/notification.enums';
+import { EmailNotificationPreferenceEnum, EmailNotificationType } from '../../enums/notification.enums';
 
 @Entity('notification_preference')
 export class NotificationPreferenceEntity extends BaseEntity {
-  @PrimaryColumn({ type: 'simple-enum', enum: EmailNotificationTypeEnum })
-  notification_id: EmailNotificationTypeEnum;
+  @PrimaryColumn({ type: 'simple-enum', enum: EmailNotificationType })
+  notification_id: EmailNotificationType;
 
   @Column({ type: 'simple-enum', enum: EmailNotificationPreferenceEnum, nullable: false })
   preference: EmailNotificationPreferenceEnum;

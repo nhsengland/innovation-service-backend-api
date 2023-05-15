@@ -1,10 +1,9 @@
 import {
-  EmailNotificationPreferenceEnum,
-  EmailNotificationTypeEnum,
   InnovationSupportStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
@@ -12,10 +11,9 @@ import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/se
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { UserRoleEntity } from '@notifications/shared/entities';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
@@ -24,21 +22,11 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   private data: {
     innovation?: {
       name: string;
-      owner: {
-        id: string;
-        identityId: string;
-        userRole: UserRoleEntity;
-        isActive: boolean;
-        emailNotificationPreferences: {
-          type: EmailNotificationTypeEnum;
-          preference: EmailNotificationPreferenceEnum;
-        }[];
-      };
+      owner: RecipientType | null;
     };
     requestUserAdditionalInfo?: {
       displayName?: string;
@@ -60,15 +48,21 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       userId: this.requestUser.id
     });
 
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    this.data.innovation = {
+      name: innovation.name,
+      owner: owner
+    };
 
-    const collaborators = (
-      await this.recipientsService.innovationActiveCollaboratorUsers(this.inputData.innovationId)
-    ).filter(c => c.isActive);
-    const innovatorRecipients = [...collaborators];
+    const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
+    const innovatorRecipients = await this.recipientsService.getUsersRecipient(
+      collaborators,
+      ServiceRoleEnum.INNOVATOR
+    );
 
-    if (this.data.innovation.owner.isActive) {
-      innovatorRecipients.push(this.data.innovation.owner);
+    if (owner?.isActive) {
+      innovatorRecipients.push(owner);
     }
 
     this.data.requestUserAdditionalInfo = {
@@ -89,8 +83,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
 
     if (this.inputData.innovationSupport.statusChanged) {
-      await this.prepareEmailForInnovators(innovatorRecipients.map(i => i.identityId));
-      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.userRole.id));
+      await this.prepareEmailForInnovators(innovatorRecipients);
+      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.roleId));
 
       if (
         [
@@ -106,26 +100,20 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
       await this.prepareInAppForAccessorsWhenEngaging();
-      await this.prepareEmailForNewAccessors(
-        this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id)
-      );
+      await this.prepareEmailForNewAccessors();
     }
 
     return this;
   }
 
   // Private methods.
-
-  private async prepareEmailForInnovators(identityIds: string[]): Promise<void> {
+  private async prepareEmailForInnovators(recipients: RecipientType[]): Promise<void> {
     // Send email only to user if email preference INSTANTLY (NotifierTypeEnum.SUPPORT).
-    for (const identityId of identityIds) {
+    for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR,
-        to: {
-          type: 'identityId',
-          value: identityId,
-          displayNameParam: 'display_name'
-        },
+        notificationPreferenceType: 'SUPPORT',
+        to: recipient,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: this.data.innovation?.name || '',
@@ -143,14 +131,24 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
   }
 
-  private async prepareEmailForNewAccessors(accessors?: { id: string }[]): Promise<void> {
-    const recipients = await this.recipientsService.usersInfo(accessors?.map(a => a.id) ?? []);
-    const uniqueRecipients = [...new Map(recipients.map(item => [item['id'], item])).values()];
+  private async prepareEmailForNewAccessors(): Promise<void> {
+    const newAssignedAccessors = (
+      this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id) ?? []
+    ).map(a => a.id);
 
-    for (const recipient of uniqueRecipients) {
+    const recipients = await this.recipientsService.getUsersRecipient(
+      newAssignedAccessors,
+      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+      {
+        organisationUnit: this.inputData.innovationSupport.organisationUnitId
+      }
+    );
+
+    for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
-        to: { type: 'identityId', value: recipient.identityId, displayNameParam: 'display_name' },
+        notificationPreferenceType: 'SUPPORT',
+        to: recipient,
         params: {
           qa_name: this.data.requestUserAdditionalInfo?.displayName ?? 'qualified accessor', // what should the default be, believe it will never happen
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -163,11 +161,6 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareInAppForInnovators(roleIds: string[]): Promise<void> {
-    // This never happens
-    if (!this.data.innovation) {
-      return;
-    }
-
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -184,7 +177,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   private async prepareInAppForAccessorsWhenEngaging(): Promise<void> {
-    const assignedUsers = await this.recipientsService.innovationAssignedUsers({
+    const assignedUsers = await this.recipientsService.innovationAssignedRecipients({
       innovationSupportId: this.inputData.innovationSupport.id
     });
 
@@ -196,8 +189,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         id: this.inputData.innovationSupport.id
       },
       userRoleIds: assignedUsers
-        .filter(user => user.userRole.id !== this.domainContext.currentRole.id)
-        .map(user => user.userRole.id),
+        .filter(user => user.roleId !== this.domainContext.currentRole.id)
+        .map(user => user.roleId),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status

@@ -1,15 +1,15 @@
 import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
-  NotifierTypeEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum, ENV } from '../_config';
 
+import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { BaseHandler } from './base.handler';
 
 export class InnovationCollaboratorInviteHandler extends BaseHandler<
@@ -18,9 +18,6 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
   { collaboratorId: string }
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE],
@@ -30,55 +27,63 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
-    const collaborator = await this.recipientsService.innovationCollaboratorInfo(
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+
+    if (!innovationOwnerInfo) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_OWNER_NOT_FOUND);
+    }
+
+    const collaborator = await this.recipientsService.innovationCollaborationInfo(
       this.inputData.innovationCollaboratorId
     );
 
-    if (!collaborator.user) {
+    if (!collaborator.userId) {
       // This means that the user is NOT registered in the service.
 
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_NEW_USER,
-        to: { type: 'email', value: collaborator.email },
+        to: { email: collaborator.email },
+        notificationPreferenceType: null,
         params: {
           innovator_name: innovationOwnerInfo.displayName,
           innovation_name: innovation.name,
           transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(`innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`)
+            .addPath(`innovations/${this.inputData.innovationId}/collaborations/${collaborator.collaboratorId}`)
             .buildUrl()
         }
       });
     } else {
-      this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER,
-        to: {
-          type: 'identityId',
-          value: collaborator.user.identityId,
-          displayNameParam: 'display_name'
-        },
-        params: {
-          innovator_name: innovationOwnerInfo.displayName,
-          innovation_name: innovation.name,
-          transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(`innovator/innovations/${this.inputData.innovationId}/collaborations/${collaborator.id}`)
-            .buildUrl()
-        }
-      });
+      const recipient = await this.recipientsService.getUsersRecipient(collaborator.userId, ServiceRoleEnum.INNOVATOR);
+      if (recipient) {
+        this.emails.push({
+          templateId: EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_TO_EXISTING_USER,
+          to: recipient,
+          notificationPreferenceType: null,
+          params: {
+            innovator_name: innovationOwnerInfo.displayName,
+            innovation_name: innovation.name,
+            transfer_url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath(
+                `innovator/innovations/${this.inputData.innovationId}/collaborations/${collaborator.collaboratorId}`
+              )
+              .buildUrl()
+          }
+        });
 
-      this.inApp.push({
-        innovationId: this.inputData.innovationId,
-        context: {
-          type: NotificationContextTypeEnum.INNOVATION,
-          detail: NotificationContextDetailEnum.COLLABORATOR_INVITE,
-          id: this.inputData.innovationCollaboratorId
-        },
-        userRoleIds: [collaborator.user.roleId],
-        params: {
-          collaboratorId: collaborator.id
-        }
-      });
+        this.inApp.push({
+          innovationId: this.inputData.innovationId,
+          context: {
+            type: NotificationContextTypeEnum.INNOVATION,
+            detail: NotificationContextDetailEnum.COLLABORATOR_INVITE,
+            id: this.inputData.innovationCollaboratorId
+          },
+          userRoleIds: [recipient.roleId],
+          params: {
+            collaboratorId: collaborator.collaboratorId
+          }
+        });
+      }
     }
 
     return this;

@@ -410,6 +410,7 @@ export class InnovationSupportsService extends BaseService {
           status: data.status,
           statusChanged: true,
           message: data.message,
+          organisationUnitId: organisationUnitId,
           newAssignedAccessors:
             data.status === InnovationSupportStatusEnum.ENGAGING
               ? (data.accessors ?? []).map(item => ({ id: item.id }))
@@ -629,6 +630,7 @@ export class InnovationSupportsService extends BaseService {
           status: data.status,
           statusChanged: previousStatus !== data.status,
           message: data.message,
+          organisationUnitId: dbSupport.organisationUnit.id,
           newAssignedAccessors:
             data.status === InnovationSupportStatusEnum.ENGAGING
               ? (data.accessors ?? [])

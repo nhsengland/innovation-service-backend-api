@@ -1,9 +1,8 @@
-import { EmailNotificationTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
 
@@ -12,8 +11,6 @@ export class InnovationStopSharingHandler extends BaseHandler<
   EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS | EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
   Record<string, never>
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
     requestUser: { id: string; identityId: string },
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING],
@@ -27,20 +24,19 @@ export class InnovationStopSharingHandler extends BaseHandler<
       return this;
     }
 
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const previousAssignedUsers = await this.recipientsService.usersInfo(
-      this.inputData.previousAssignedAccessors.map(item => item.id)
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const previousAssignedAccessors = await this.recipientsService.usersBagToRecipients(
+      this.inputData.previousAssignedAccessors
     );
-    const owner = await this.recipientsService.userInfo(innovation.owner.id);
 
-    if (innovation.owner.isActive) {
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    const ownerIdentity = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+
+    if (owner?.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_INNOVATOR,
-        to: {
-          type: 'identityId',
-          value: innovation.owner.identityId,
-          displayNameParam: 'display_name'
-        },
+        to: owner,
+        notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
@@ -54,16 +50,15 @@ export class InnovationStopSharingHandler extends BaseHandler<
       });
     }
 
-    for (const user of previousAssignedUsers.filter(item =>
-      this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences)
-    )) {
+    for (const user of previousAssignedAccessors) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_STOP_SHARING_TO_ENGAGING_ACCESSORS,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        notificationPreferenceType: 'SUPPORT',
+        to: user,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
-          innovator_name: owner.name,
+          innovator_name: ownerIdentity?.displayName ?? 'user', // Review what should happen if user is not found
           stop_sharing_comment: this.inputData.message
         }
       });

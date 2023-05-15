@@ -11,12 +11,15 @@ import { HandlersHelper } from '../_helpers/handlers.helper';
 
 import { MessageSchema, MessageType } from './validation.schemas';
 
+import type { MessageType as EmailMessageType } from '../v1-emails-listener/validation.schemas';
+import type { MessageType as InAppMessageType } from '../v1-in-app-listener/validation.schemas';
+
 class V1NotificationsListener {
   static async queueTrigger(
     context: Context,
     requestMessage: {
       data: {
-        requestUser: { id: string; identityId: string };
+        requestUser: { id: string; identityId: string }; // TODO REMOVE
         action: NotifierTypeEnum;
         params: { [key: string]: any };
         domainContext?: DomainContextType;
@@ -41,20 +44,19 @@ class V1NotificationsListener {
       context.log.info('RESULT::Emails', JSON.stringify(notificationsInstance.getEmails()));
       context.log.info('RESULT::InApp', JSON.stringify(notificationsInstance.getInApp()));
 
-      for (const item of notificationsInstance.getEmails()) {
-        await storageQueueService.sendMessage(QueuesEnum.EMAIL, {
+      for (const item of await notificationsInstance.getEmails()) {
+        await storageQueueService.sendMessage<EmailMessageType>(QueuesEnum.EMAIL, {
           data: {
             type: item.templateId,
             to: item.to,
             params: item.params,
-            log: item.log,
-            domainContext: message.data.domainContext
+            log: item.log
           }
         });
       }
 
       for (const item of notificationsInstance.getInApp()) {
-        await storageQueueService.sendMessage(QueuesEnum.IN_APP, {
+        await storageQueueService.sendMessage<InAppMessageType>(QueuesEnum.IN_APP, {
           data: {
             requestUser: { id: message.data.requestUser.id },
             innovationId: item.innovationId,

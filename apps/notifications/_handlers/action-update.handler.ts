@@ -1,14 +1,11 @@
-import type { UserRoleEntity } from '@notifications/shared/entities';
 import {
-  EmailNotificationPreferenceEnum,
-  EmailNotificationTypeEnum,
   InnovationActionStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
+import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import {
   DomainServiceSymbol,
@@ -19,9 +16,9 @@ import {
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
+import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
 export class ActionUpdateHandler extends BaseHandler<
@@ -40,30 +37,20 @@ export class ActionUpdateHandler extends BaseHandler<
     section: CurrentCatalogTypes.InnovationSections;
   }
 > {
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
   private data: {
     innovation?: {
       name: string;
-      owner: {
-        id: string;
-        identityId: string;
-        userRole: UserRoleEntity;
-        isActive: boolean;
-        emailNotificationPreferences: {
-          type: EmailNotificationTypeEnum;
-          preference: EmailNotificationPreferenceEnum;
-        }[];
-      };
+      owner: RecipientType;
     };
     actionInfo?: {
       id: string;
       displayId: string;
       status: InnovationActionStatusEnum;
       organisationUnit?: { id: string; name: string };
-      owner: { id: string; identityId: string; roleId: string; role: ServiceRoleEnum };
+      owner: RecipientType;
     };
     comment?: string;
   } = {};
@@ -77,7 +64,11 @@ export class ActionUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    this.data.innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    if (!owner) throw new NotFoundError(InnovationErrorsEnum.INNOVATION_OWNER_NOT_FOUND);
+
+    this.data.innovation = { name: innovation.name, owner: owner };
     this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
     switch (this.domainContext.currentRole.role) {
@@ -87,18 +78,23 @@ export class ActionUpdateHandler extends BaseHandler<
             this.inputData.action.status
           )
         ) {
+          const requestUser = await this.recipientsService.getUsersRecipient(
+            this.domainContext.id,
+            this.domainContext.currentRole.role
+          );
           await this.prepareEmailForAccessorOrAssessment();
           await this.prepareInAppForAccessorOrAssessment();
-          await this.prepareConfirmationEmail();
-          await this.prepareConfirmationInApp();
+          if (requestUser) {
+            await this.prepareConfirmationEmail(requestUser);
+            await this.prepareConfirmationInApp();
+          }
           // if action was submitted or declined by a collaborator notify owner
-          if (this.domainContext.currentRole.id !== this.data.innovation.owner.userRole.id) {
+          if (this.domainContext.currentRole.id !== this.data.innovation.owner.roleId) {
             await this.prepareEmailForInnovationOwnerFromCollaborator();
             await this.prepareInAppForInnovationOwner();
           }
         }
         break;
-
       case ServiceRoleEnum.ACCESSOR:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
       case ServiceRoleEnum.ASSESSMENT:
@@ -115,7 +111,7 @@ export class ActionUpdateHandler extends BaseHandler<
           // check if action was submitted by a collaborator
           if (
             this.inputData.action.previouslyUpdatedByUserRole &&
-            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.userRole.id &&
+            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.roleId &&
             this.inputData.action.previouslyUpdatedByUserRole.role === ServiceRoleEnum.INNOVATOR
           ) {
             await this.prepareInAppForCollaborator();
@@ -159,11 +155,8 @@ export class ActionUpdateHandler extends BaseHandler<
 
     this.emails.push({
       templateId: templateId,
-      to: {
-        type: 'identityId',
-        value: this.data.actionInfo.owner.identityId,
-        displayNameParam: 'display_name'
-      },
+      to: this.data.actionInfo.owner,
+      notificationPreferenceType: 'ACTION',
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
@@ -188,57 +181,46 @@ export class ActionUpdateHandler extends BaseHandler<
       return;
     }
 
-    if (
-      this.isEmailPreferenceInstantly(
-        EmailNotificationTypeEnum.ACTION,
-        this.data.innovation.owner.emailNotificationPreferences
-      ) &&
-      this.data.innovation.owner.isActive
-    ) {
-      let templateId: EmailTypeEnum;
-      switch (this.data.actionInfo?.status) {
-        case InnovationActionStatusEnum.REQUESTED:
-          templateId = EmailTypeEnum.ACTION_REQUESTED_TO_INNOVATOR;
-          break;
-        case InnovationActionStatusEnum.COMPLETED:
-          templateId = EmailTypeEnum.ACTION_COMPLETED_TO_INNOVATOR;
-          break;
-        case InnovationActionStatusEnum.CANCELLED:
-          templateId = EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR;
-          break;
-        default:
-          throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
-      }
-
-      const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
-
-      const accessor_name = requestInfo.displayName;
-      const unit_name =
-        this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
-          ? 'needs assessment'
-          : this.domainContext?.organisation?.organisationUnit?.name ?? '';
-
-      this.emails.push({
-        templateId,
-        to: {
-          type: 'identityId',
-          value: this.data.innovation?.owner.identityId || '',
-          displayNameParam: 'display_name'
-        },
-        params: {
-          // display_name: '', // This will be filled by the email-listener function.
-          accessor_name: accessor_name,
-          unit_name: unit_name,
-          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
-            .setPathParams({
-              innovationId: this.inputData.innovationId,
-              actionId: this.inputData.action.id
-            })
-            .buildUrl()
-        }
-      });
+    let templateId: EmailTypeEnum;
+    switch (this.data.actionInfo?.status) {
+      case InnovationActionStatusEnum.REQUESTED:
+        templateId = EmailTypeEnum.ACTION_REQUESTED_TO_INNOVATOR;
+        break;
+      case InnovationActionStatusEnum.COMPLETED:
+        templateId = EmailTypeEnum.ACTION_COMPLETED_TO_INNOVATOR;
+        break;
+      case InnovationActionStatusEnum.CANCELLED:
+        templateId = EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR;
+        break;
+      default:
+        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
+
+    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
+
+    const accessor_name = requestInfo.displayName;
+    const unit_name =
+      this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
+        ? 'needs assessment'
+        : this.domainContext?.organisation?.organisationUnit?.name ?? '';
+
+    this.emails.push({
+      templateId,
+      notificationPreferenceType: 'ACTION',
+      to: this.data.innovation.owner,
+      params: {
+        // display_name: '', // This will be filled by the email-listener function.
+        accessor_name: accessor_name,
+        unit_name: unit_name,
+        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+          .setPathParams({
+            innovationId: this.inputData.innovationId,
+            actionId: this.inputData.action.id
+          })
+          .buildUrl()
+      }
+    });
   }
 
   private async prepareEmailForInnovationOwnerFromCollaborator(): Promise<void> {
@@ -247,107 +229,79 @@ export class ActionUpdateHandler extends BaseHandler<
       return;
     }
 
-    if (
-      this.isEmailPreferenceInstantly(
-        EmailNotificationTypeEnum.ACTION,
-        this.data.innovation.owner.emailNotificationPreferences
-      ) &&
-      this.data.innovation.owner.isActive
-    ) {
-      let templateId: EmailTypeEnum;
-      switch (this.data.actionInfo?.status) {
-        case InnovationActionStatusEnum.SUBMITTED:
-        case InnovationActionStatusEnum.DECLINED:
-          templateId = EmailTypeEnum.ACTION_RESPONDED_BY_COLLABORATOR_TO_OWNER;
-          break;
-        default:
-          throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
-      }
-
-      const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
-
-      const actionOwnerInfo = await this.domainService.users.getUserInfo({
-        userId: this.data.actionInfo.owner.id
-      });
-      const actionOwnerUnitName =
-        this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
-          ? 'needs assessment'
-          : this.data.actionInfo.organisationUnit?.name || '';
-
-      this.emails.push({
-        templateId,
-        to: {
-          type: 'identityId',
-          value: this.data.innovation?.owner.identityId || '',
-          displayNameParam: 'display_name'
-        },
-        params: {
-          // display_name: '', // This will be filled by the email-listener function.
-          collaborator_name: requestInfo.displayName,
-          accessor_name: actionOwnerInfo.displayName,
-          unit_name: actionOwnerUnitName,
-          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
-            .setPathParams({
-              innovationId: this.inputData.innovationId,
-              actionId: this.inputData.action.id
-            })
-            .buildUrl()
-        }
-      });
+    let templateId: EmailTypeEnum;
+    switch (this.data.actionInfo?.status) {
+      case InnovationActionStatusEnum.SUBMITTED:
+      case InnovationActionStatusEnum.DECLINED:
+        templateId = EmailTypeEnum.ACTION_RESPONDED_BY_COLLABORATOR_TO_OWNER;
+        break;
+      default:
+        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
+
+    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
+
+    const actionOwnerInfo = await this.recipientsService.usersIdentityInfo(this.data.actionInfo.owner.userId);
+    const actionOwnerUnitName =
+      this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
+        ? 'needs assessment'
+        : this.data.actionInfo.organisationUnit?.name || '';
+
+    this.emails.push({
+      templateId,
+      notificationPreferenceType: 'ACTION',
+      to: this.data.innovation.owner,
+      params: {
+        // display_name: '', // This will be filled by the email-listener function.
+        collaborator_name: requestInfo.displayName,
+        accessor_name: actionOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
+        unit_name: actionOwnerUnitName,
+        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+          .setPathParams({
+            innovationId: this.inputData.innovationId,
+            actionId: this.inputData.action.id
+          })
+          .buildUrl()
+      }
+    });
   }
 
-  private async prepareConfirmationEmail(): Promise<void> {
-    // This never happens
-    if (!this.data.innovation) {
-      return;
+  private async prepareConfirmationEmail(innovator: RecipientType): Promise<void> {
+    let templateId: EmailTypeEnum;
+    switch (this.data.actionInfo?.status) {
+      case InnovationActionStatusEnum.SUBMITTED:
+        templateId = EmailTypeEnum.ACTION_SUBMITTED_CONFIRMATION;
+        break;
+      case InnovationActionStatusEnum.DECLINED:
+        templateId = EmailTypeEnum.ACTION_DECLINED_CONFIRMATION;
+        break;
+      default:
+        throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
-    const requestUserInfo = await this.recipientsService.userInfo(this.requestUser.id);
+    const actionOwnerInfo = await this.identityProviderService.getUserInfo(this.data.actionInfo.owner.identityId);
 
-    if (
-      this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.ACTION, requestUserInfo.emailNotificationPreferences) &&
-      requestUserInfo.isActive
-    ) {
-      let templateId: EmailTypeEnum;
-      switch (this.data.actionInfo?.status) {
-        case InnovationActionStatusEnum.SUBMITTED:
-          templateId = EmailTypeEnum.ACTION_SUBMITTED_CONFIRMATION;
-          break;
-        case InnovationActionStatusEnum.DECLINED:
-          templateId = EmailTypeEnum.ACTION_DECLINED_CONFIRMATION;
-          break;
-        default:
-          throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
+    this.emails.push({
+      templateId,
+      notificationPreferenceType: 'ACTION',
+      to: innovator,
+      params: {
+        // display_name: '', // This will be filled by the email-listener function.
+        accessor_name: actionOwnerInfo.displayName,
+        unit_name:
+          this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
+            ? 'needs assessment'
+            : this.data.actionInfo.organisationUnit?.name || '',
+        action_url: new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
+          .setPathParams({
+            innovationId: this.inputData.innovationId,
+            actionId: this.inputData.action.id
+          })
+          .buildUrl()
       }
-
-      const actionOwnerInfo = await this.identityProviderService.getUserInfo(this.data.actionInfo.owner.identityId);
-
-      this.emails.push({
-        templateId,
-        to: {
-          type: 'identityId',
-          value: requestUserInfo.identityId || '',
-          displayNameParam: 'display_name'
-        },
-        params: {
-          // display_name: '', // This will be filled by the email-listener function.
-          accessor_name: actionOwnerInfo.displayName,
-          unit_name:
-            this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
-              ? 'needs assessment'
-              : this.data.actionInfo.organisationUnit?.name || '',
-          action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
-            .setPathParams({
-              innovationId: this.inputData.innovationId,
-              actionId: this.inputData.action.id
-            })
-            .buildUrl()
-        }
-      });
-    }
+    });
   }
 
   private async prepareInAppForAccessorOrAssessment(): Promise<void> {
@@ -385,7 +339,7 @@ export class ActionUpdateHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
         id: this.inputData.action.id
       },
-      userRoleIds: [this.data.innovation.owner.userRole.id],
+      userRoleIds: [this.data.innovation.owner.roleId],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.

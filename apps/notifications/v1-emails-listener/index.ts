@@ -14,7 +14,7 @@ class V1SendEmailListener {
     requestMessage: {
       data: {
         type: EmailTypeEnum;
-        to: { type: 'email' | 'identityId'; value: string; displayNameParam?: string };
+        to: string;
         params: { [key: string]: string | number };
         log: {
           type: NotificationLogTypeEnum;

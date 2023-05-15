@@ -39,8 +39,8 @@ export type NotifierTemplatesType = {
   [NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE]: {
     innovationId: string;
     assessmentId: string;
-    previousAssessor: { identityId: string };
-    newAssessor: { identityId: string };
+    previousAssessor: { id: string };
+    newAssessor: { id: string };
   };
 
   [NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE]: {
@@ -50,6 +50,7 @@ export type NotifierTemplatesType = {
       status: InnovationSupportStatusEnum;
       statusChanged: boolean;
       message: string;
+      organisationUnitId: string;
       newAssignedAccessors?: { id: string }[]; // Newly assigned accessors
     };
   };
@@ -165,7 +166,7 @@ export type NotifierTemplatesType = {
 
   // Admin module.
   [NotifierTypeEnum.LOCK_USER]: {
-    user: { id: string };
+    user: { identityId: string };
   };
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
