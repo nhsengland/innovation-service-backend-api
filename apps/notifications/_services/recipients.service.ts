@@ -1025,7 +1025,7 @@ export class RecipientsService extends BaseService {
     }
 
     if (organisationUnits?.length) {
-      query.andWhere('userRole.organisation_unit_id IN (:...organisationUnit)', { organisationUnits });
+      query.andWhere('userRole.organisation_unit_id IN (:...organisationUnits)', { organisationUnits });
     }
 
     if (includeLocked) {
