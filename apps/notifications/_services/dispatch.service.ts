@@ -11,7 +11,6 @@ import type {
   NotificationContextTypeEnum,
   NotificationLogTypeEnum
 } from '@notifications/shared/enums';
-import { IdentityProviderServiceSymbol } from '@notifications/shared/services';
 
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
@@ -21,7 +20,6 @@ import { EmailServiceSymbol, EmailServiceType } from './interfaces';
 @injectable()
 export class DispatchService extends BaseService {
   constructor(
-    @inject(IdentityProviderServiceSymbol)
     @inject(EmailServiceSymbol)
     private emailService: EmailServiceType
   ) {
