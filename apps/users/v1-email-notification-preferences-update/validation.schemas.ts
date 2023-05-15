@@ -9,7 +9,7 @@ export type BodyType = {
 export const BodySchema = Joi.array()
   .items(
     Joi.object<BodyType[0]>({
-      notificationType: Joi.string().valid(EmailNotificationType).required(),
+      notificationType: Joi.string().valid(...EmailNotificationType).required(),
       preference: Joi.string()
         .valid(...Object.values(EmailNotificationPreferenceEnum))
         .required()
