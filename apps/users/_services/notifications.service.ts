@@ -302,20 +302,23 @@ export class NotificationsService extends BaseService {
 
     const dbUser = await em.createQueryBuilder(UserEntity, 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
-      .where('serviceRole.id = :userRoleId')
+      .where('serviceRoles.id = :userRoleId', { userRoleId })
       .getOne();
 
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
+    const now = new Date();
+
     const saveData = preferences.map(p => ({
       userRole: { id: userRoleId},
-      notification_id: p.notificationType,
+      notification_type: p.notificationType,
       preference: p.preference,
       createdBy: dbUser.id, // this is only for the first time as BaseEntity defines it as update: false
+      createdAt: now,
       updatedBy: dbUser.id,
-      updatedAt: new Date().toISOString()
+      updatedAt: now 
     }));
     await em.save(NotificationPreferenceEntity, saveData);
   }
