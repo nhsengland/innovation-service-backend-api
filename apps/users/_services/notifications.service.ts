@@ -1,4 +1,4 @@
-import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
+import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity, UserEntity } from '@users/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationType,
@@ -6,7 +6,7 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@users/shared/enums';
-import { GenericErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
+import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import { IdentityProviderService, IdentityProviderServiceSymbol } from '@users/shared/services';
 import type { DomainContextType } from '@users/shared/types';
@@ -246,13 +246,13 @@ export class NotificationsService extends BaseService {
   }
 
   /**
-   * returns the user email notification preferences
-   * @param userId the user id
+   * returns the user role email notification preferences
+   * @param userRoleId the user role id
    * @param entityManager optional entity manager to run the query (for transactions)
    * @returns array of notification types and preferences
    */
-  async getUserEmailPreferences(
-    userId: string,
+  async getUserRoleEmailPreferences(
+    userRoleId: string,
     entityManager?: EntityManager
   ): Promise<
     {
@@ -264,9 +264,10 @@ export class NotificationsService extends BaseService {
 
     const userPreferences = await em
       .createQueryBuilder(NotificationPreferenceEntity, 'preference')
-      .where('preference.user = :userId', { userId: userId })
+      .where('preference.user_role_id = :userRoleId', { userRoleId })
       .getMany();
-    const userPreferencesMap = new Map(userPreferences.map(p => [p.notification_id, p.preference]));
+
+    const userPreferencesMap = new Map(userPreferences.map(p => [p.notification_type, p.preference]));
     return [
       {
         notificationType: 'ACTION',
@@ -290,7 +291,7 @@ export class NotificationsService extends BaseService {
    * @param entityManager optional entity manager to run the query (for transactions)
    */
   async upsertUserEmailPreferences(
-    userId: string,
+    userRoleId: string,
     preferences: {
       notificationType: EmailNotificationType;
       preference: EmailNotificationPreferenceEnum;
@@ -298,12 +299,22 @@ export class NotificationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbUser = await em.createQueryBuilder(UserEntity, 'user')
+      .innerJoin('user.serviceRoles', 'serviceRoles')
+      .where('serviceRole.id = :userRoleId')
+      .getOne();
+
+    if (!dbUser) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
+
     const saveData = preferences.map(p => ({
-      user: { id: userId },
+      userRole: { id: userRoleId},
       notification_id: p.notificationType,
       preference: p.preference,
-      createdBy: userId, // this is only for the first time as BaseEntity defines it as update: false
-      updatedBy: userId,
+      createdBy: dbUser.id, // this is only for the first time as BaseEntity defines it as update: false
+      updatedBy: dbUser.id,
       updatedAt: new Date().toISOString()
     }));
     await em.save(NotificationPreferenceEntity, saveData);

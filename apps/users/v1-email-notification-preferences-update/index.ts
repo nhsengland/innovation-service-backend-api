@@ -19,16 +19,16 @@ class V1UserEmailNotificationsInfo {
     const notificationsService = container.get<NotificationsService>(SYMBOLS.NotificationsService);
 
     try {
-      const authInstance = await authService
+      const auth = await authService
         .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
-      const userInfo = authInstance.getUserInfo();
+
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      await notificationsService.upsertUserEmailPreferences(userInfo.id, body);
+      await notificationsService.upsertUserEmailPreferences(auth.getContext().currentRole.id, body);
 
       context.res = ResponseHelper.NoContent();
       return;

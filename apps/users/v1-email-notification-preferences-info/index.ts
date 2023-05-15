@@ -20,15 +20,14 @@ class V1UserEmailNotificationsInfo {
     const notificationsService = container.get<NotificationsService>(SYMBOLS.NotificationsService);
 
     try {
-      const authInstance = await authService
+      const auth = await authService
         .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
-      const userInfo = authInstance.getUserInfo();
 
-      const emailPreferences = await notificationsService.getUserEmailPreferences(userInfo.id);
+      const emailPreferences = await notificationsService.getUserRoleEmailPreferences(auth.getContext().currentRole.id);
       context.res = ResponseHelper.Ok<ResponseDTO>(
         emailPreferences.map(p => ({
           notificationType: p.notificationType,
