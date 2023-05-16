@@ -1,9 +1,10 @@
-import { AnnouncementUserEntity } from '@users/shared/entities/user/announcement-user.entity';
-import type { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
-import { NotFoundError, UserErrorsEnum } from '@users/shared/errors';
-import type { DomainContextType } from '@users/shared/types';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
+
+import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@users/shared/entities';
+import type { AnnouncementTemplateType } from '@users/shared/enums';
+import type { DomainContextType } from '@users/shared/types';
+
 import { BaseService } from './base.service';
 
 @injectable()
@@ -12,77 +13,71 @@ export class AnnouncementsService extends BaseService {
     super();
   }
 
-  async getAnnouncements(
-    domainContext: DomainContextType,
-    entityManager?: EntityManager
-  ): Promise<
+  async getUserAnnouncements(requestUser: DomainContextType): Promise<
     {
       id: string;
+      title: string;
       template: AnnouncementTemplateType;
-      targetRoles: ServiceRoleEnum[];
-      params: Record<string, unknown> | null;
-      createdAt: Date;
+      startsAt: Date;
+      expiresAt: null | Date;
+      params: null | Record<string, unknown>;
     }[]
   > {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const dbAnnouncements = await connection
-      .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
+    const announcements = await this.sqlConnection.manager
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
+        'announcement.title',
         'announcement.template',
-        'announcement.targetRoles',
-        'announcement.params',
         'announcement.startsAt',
-        'announcementUser.id'
+        'announcement.expiresAt',
+        'announcement.params'
       ])
-      .innerJoin('announcementUser.announcement', 'announcement')
-      .where('announcementUser.user_id = :userId', { userId: domainContext.id })
-      .andWhere('announcementUser.read_at IS NULL')
+      .leftJoin('announcement.announcementUsers', 'announcementUsers', 'announcementUsers.user_id = :userId', {
+        userId: requestUser.id
+      })
+      .where('announcement.user_roles IN (:...userRoles)', { userRoles: [requestUser.currentRole.role] })
       .andWhere('GETDATE() > announcement.starts_at')
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
+      .andWhere('announcementUsers.read_at IS NULL')
       .getMany();
 
-    const announcements = dbAnnouncements.filter(announcementUser =>
-      announcementUser.announcement.targetRoles.includes(domainContext.currentRole.role)
-    );
-
-    if (!announcements.length) {
-      return [];
-    }
-
-    return announcements.map(({ announcement }) => ({
+    return announcements.map(announcement => ({
       id: announcement.id,
+      title: announcement.title,
       template: announcement.template,
       params: announcement.params,
-      targetRoles: announcement.targetRoles,
-      createdAt: announcement.startsAt
+      startsAt: announcement.startsAt,
+      expiresAt: announcement.expiresAt
     }));
   }
 
-  async readAnnouncement(
-    domainContext: DomainContextType,
+  async readUserAnnouncement(
+    requestUser: DomainContextType,
     announcementId: string,
     entityManager?: EntityManager
   ): Promise<void> {
-    const connection = entityManager ?? this.sqlConnection.manager;
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const userAnnouncement = await connection
-      .createQueryBuilder(AnnouncementUserEntity, 'announcement')
-      .select(['announcement.id', 'announcement.targetRoles'])
-      .where('announcement.announcement_id = :announcementId', { announcementId })
-      .andWhere('announcement.user_id = :userId', { userId: domainContext.id })
+    const announcementUser = await em
+      .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
+      .select(['announcementUser.id'])
+      .where('announcementUser.announcement_id = :announcementId', { announcementId })
+      .andWhere('announcementUser.user_id = :userId', { userId: requestUser.id })
+      .andWhere('announcementUser.read_at IS NOT NULL') // This is not needed, but just making sure
       .getOne();
 
-    if (!userAnnouncement || !userAnnouncement.targetRoles.includes(domainContext.currentRole.role)) {
-      throw new NotFoundError(UserErrorsEnum.USER_ANNOUNCEMENT_NOT_FOUND);
+    if (!announcementUser) {
+      await em.save(
+        AnnouncementUserEntity,
+        AnnouncementUserEntity.new({
+          announcement: AnnouncementEntity.new({ id: announcementId }),
+          user: UserEntity.new({ id: requestUser.id }),
+          readAt: new Date(),
+          createdBy: requestUser.id,
+          updatedBy: requestUser.id,
+        })
+      );
     }
-
-    await connection
-      .createQueryBuilder()
-      .update(AnnouncementUserEntity)
-      .set({ readAt: new Date().toISOString() })
-      .where('id = :announcementId', { announcementId: userAnnouncement.id })
-      .execute();
   }
 }

@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["patch"],
-      "route": "v1/announcements/{announcementId}/read"
+      "methods": ["put"],
+      "route": "v1/announcements/{announcementId}"
     },
     {
       "type": "http",

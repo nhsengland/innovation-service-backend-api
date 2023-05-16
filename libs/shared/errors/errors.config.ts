@@ -24,11 +24,7 @@ export class ForbiddenError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.Forbidden({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.Forbidden({ error: this.name, message: this.message, details: this.details });
   }
 }
 
@@ -40,11 +36,7 @@ export class NotFoundError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.NotFound({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.NotFound({ error: this.name, message: this.message, details: this.details });
   }
 }
 
@@ -56,11 +48,7 @@ export class BadRequestError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.BadRequest({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.BadRequest({ error: this.name, message: this.message, details: this.details });
   }
 }
 
@@ -84,11 +72,7 @@ export class NotImplementedError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.NotImplemented({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.NotImplemented({ error: this.name, message: this.message, details: this.details });
   }
 }
 
@@ -100,11 +84,7 @@ export class ServiceUnavailableError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.ServiceUnavailable({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.ServiceUnavailable({ error: this.name, message: this.message, details: this.details });
   }
 }
 
@@ -116,11 +96,7 @@ export class ConflictError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.Conflict({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.Conflict({ error: this.name, message: this.message, details: this.details });
   }
 }
 
@@ -132,10 +108,6 @@ export class UnprocessableEntityError extends Error implements BaseErrorType {
     this.details = data?.details;
   }
   errorResponse(): AppResponse {
-    return ResponseHelper.UnprocessableEntity({
-      error: this.name,
-      message: this.message,
-      details: this.details
-    });
+    return ResponseHelper.UnprocessableEntity({ error: this.name, message: this.message, details: this.details });
   }
 }

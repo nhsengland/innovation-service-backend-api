@@ -5,8 +5,6 @@ import { TermsOfUseEntity } from './general/terms-of-use.entity';
 export { AuditEntity } from './general/audit.entity';
 export { TermsOfUseUserEntity } from './general/terms-of-use-user.entity';
 export { TermsOfUseEntity } from './general/terms-of-use.entity';
-import { AnnouncementEntity } from './user/announcement.entity';
-import { AnnouncementUserEntity } from './user/announcement-user.entity';
 
 // Innovation.
 import { ActivityLogEntity } from './innovation/activity-log.entity';
@@ -32,6 +30,7 @@ export { InnovationAssessmentEntity } from './innovation/innovation-assessment.e
 export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
+export { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
 export { InnovationFileEntity } from './innovation/innovation-file.entity';
 export { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 export { InnovationSectionEntity } from './innovation/innovation-section.entity';
@@ -42,7 +41,6 @@ export { InnovationThreadEntity } from './innovation/Innovation-thread.entity';
 export { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
-export { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
 
 // Organisation.
 import { OrganisationUnitUserEntity } from './organisation/organisation-unit-user.entity';
@@ -55,6 +53,8 @@ export { OrganisationUserEntity } from './organisation/organisation-user.entity'
 export { OrganisationEntity } from './organisation/organisation.entity';
 
 // User.
+import { AnnouncementEntity } from './user/announcement.entity';
+import { AnnouncementUserEntity } from './user/announcement-user.entity';
 import { NotificationLogEntity } from './user/notification-log.entity';
 import { NotificationPreferenceEntity } from './user/notification-preference.entity';
 import { NotificationUserEntity } from './user/notification-user.entity';
@@ -62,13 +62,15 @@ import { NotificationEntity } from './user/notification.entity';
 import { UserPreferenceEntity } from './user/user-preference.entity';
 import { UserRoleEntity } from './user/user-role.entity';
 import { UserEntity } from './user/user.entity';
+export { AnnouncementEntity } from './user/announcement.entity';
+export { AnnouncementUserEntity } from './user/announcement-user.entity';
+export { NotificationLogEntity } from './user/notification-log.entity';
 export { NotificationPreferenceEntity } from './user/notification-preference.entity';
 export { NotificationUserEntity } from './user/notification-user.entity';
 export { NotificationEntity } from './user/notification.entity';
-
+export { UserPreferenceEntity } from './user/user-preference.entity';
 export { UserRoleEntity } from './user/user-role.entity';
 export { UserEntity } from './user/user.entity';
-export { UserPreferenceEntity } from './user/user-preference.entity';
 
 // Views
 import { IdleSupportViewEntity } from './views/idle-support.view.entity';
@@ -78,19 +80,13 @@ export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 
-export const GENERAL_ENTITIES = [
-  AuditEntity,
-  TermsOfUseEntity,
-  TermsOfUseUserEntity,
-  AnnouncementEntity,
-  AnnouncementUserEntity
-];
-
+// Entities lists.
+export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
 export const INNOVATION_ENTITIES = [
   ActivityLogEntity,
   InnovationActionEntity,
-  InnovationCollaboratorEntity,
   InnovationAssessmentEntity,
+  InnovationCollaboratorEntity,
   InnovationDocumentEntity,
   InnovationEvidenceEntity,
   InnovationExportRequestEntity,
@@ -105,22 +101,21 @@ export const INNOVATION_ENTITIES = [
   InnovationUserTestEntity,
   InnovationEntity
 ];
-
 export const ORGANISATION_ENTITIES = [
   OrganisationUnitUserEntity,
   OrganisationUnitEntity,
   OrganisationUserEntity,
   OrganisationEntity
 ];
-
 export const USER_ENTITIES = [
+  AnnouncementEntity,
+  AnnouncementUserEntity,
   NotificationLogEntity,
   NotificationPreferenceEntity,
   NotificationUserEntity,
   NotificationEntity,
+  UserPreferenceEntity,
   UserRoleEntity,
-  UserEntity,
-  UserPreferenceEntity
+  UserEntity
 ];
-
 export const VIEW_ENTITIES = [IdleSupportViewEntity, InnovationGroupedStatusViewEntity, LastSupportStatusViewEntity];

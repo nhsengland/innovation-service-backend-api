@@ -65,7 +65,7 @@ class V1MeInfo {
         ).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
         hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
-        hasAnnouncements = (await announcementsService.getAnnouncements(domainContext)).length > 0;
+        hasAnnouncements = (await announcementsService.getUserAnnouncements(domainContext)).length > 0;
       }
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {

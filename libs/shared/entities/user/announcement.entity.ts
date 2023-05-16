@@ -2,7 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
-import type { ServiceRoleEnum } from '../../enums';
+import type { ServiceRoleEnum } from '../../enums/user.enums';
 import { AnnouncementTemplateType } from '../../enums/announcement.enums';
 
 import { AnnouncementUserEntity } from './announcement-user.entity';
@@ -12,24 +12,25 @@ export class AnnouncementEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'template', type: 'simple-enum', enum: AnnouncementTemplateType })
+  @Column({ name: 'title', type: 'nvarchar', length: 100 })
+  title: string;
+
+  @Column({ name: 'template', type: 'simple-enum', length: 100, enum: AnnouncementTemplateType })
   template: AnnouncementTemplateType;
 
-  @Column({ name: 'target_roles', type: 'simple-array' })
-  targetRoles: ServiceRoleEnum[];
-
-  @Column({ name: 'params', type: 'simple-json', nullable: true })
-  params: Record<string, unknown> | null;
+  @Column({ name: 'user_roles', type: 'simple-array' })
+  userRoles: ServiceRoleEnum[];
 
   @Column({ name: 'starts_at', type: 'datetime2' })
   startsAt: Date;
 
   @Column({ name: 'expires_at', type: 'datetime2', nullable: true })
-  expiresAt: Date | null;
+  expiresAt: null | Date;
 
-  @OneToMany(() => AnnouncementUserEntity, record => record.announcement, {
-    cascade: ['insert', 'update']
-  })
+  @Column({ name: 'params', type: 'simple-json', nullable: true })
+  params: null | Record<string, unknown>;
+
+  @OneToMany(() => AnnouncementUserEntity, record => record.announcement, { cascade: ['insert', 'update'] })
   announcementUsers: AnnouncementUserEntity[];
 
   static new(data: Partial<AnnouncementEntity>): AnnouncementEntity {
