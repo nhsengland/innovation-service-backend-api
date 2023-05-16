@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { AnnouncementTemplateType, ServiceRoleEnum } from '@admin/shared/enums';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
@@ -48,6 +48,7 @@ export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/an
   get: {
     description: 'Get an announcement info.',
     operationId: 'v1-announcement-info',
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       '200': {
         description: 'Announcement created.',

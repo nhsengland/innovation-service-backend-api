@@ -38,6 +38,7 @@ export default openApi(V1AnnouncementsUpdate.httpTrigger as AzureFunction, '/v1/
   put: {
     description: 'Update an announcement.',
     operationId: 'v1-announcement-update',
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
     responses: {
       '200': {

@@ -897,6 +897,13 @@ paths:
     get:
       description: Get an announcement info.
       operationId: v1-announcement-info
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Announcement created.
@@ -939,6 +946,13 @@ paths:
     put:
       description: Update an announcement.
       operationId: v1-announcement-update
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
