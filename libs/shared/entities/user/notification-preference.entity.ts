@@ -7,8 +7,8 @@ import { UserRoleEntity } from './user-role.entity';
 
 @Entity('notification_preference')
 export class NotificationPreferenceEntity extends BaseEntity {
-  @PrimaryColumn({ type: 'simple-enum', enum: EmailNotificationType })
-  notification_type: EmailNotificationType;
+  @PrimaryColumn({ type: 'simple-enum', enum: EmailNotificationType, name: 'notification_type' })
+  notificationType: EmailNotificationType;
 
   @Column({ type: 'simple-enum', enum: EmailNotificationPreferenceEnum, nullable: false })
   preference: EmailNotificationPreferenceEnum;

@@ -1,4 +1,9 @@
-import { NotificationEntity, NotificationPreferenceEntity, NotificationUserEntity, UserEntity } from '@users/shared/entities';
+import {
+  NotificationEntity,
+  NotificationPreferenceEntity,
+  NotificationUserEntity,
+  UserEntity
+} from '@users/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationType,
@@ -267,7 +272,7 @@ export class NotificationsService extends BaseService {
       .where('preference.user_role_id = :userRoleId', { userRoleId })
       .getMany();
 
-    const userPreferencesMap = new Map(userPreferences.map(p => [p.notification_type, p.preference]));
+    const userPreferencesMap = new Map(userPreferences.map(p => [p.notificationType, p.preference]));
     return [
       {
         notificationType: 'ACTION',
@@ -300,7 +305,8 @@ export class NotificationsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbUser = await em.createQueryBuilder(UserEntity, 'user')
+    const dbUser = await em
+      .createQueryBuilder(UserEntity, 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .where('serviceRoles.id = :userRoleId', { userRoleId })
       .getOne();
@@ -312,13 +318,13 @@ export class NotificationsService extends BaseService {
     const now = new Date();
 
     const saveData = preferences.map(p => ({
-      userRole: { id: userRoleId},
+      userRole: { id: userRoleId },
       notification_type: p.notificationType,
       preference: p.preference,
       createdBy: dbUser.id, // this is only for the first time as BaseEntity defines it as update: false
       createdAt: now,
       updatedBy: dbUser.id,
-      updatedAt: now 
+      updatedAt: now
     }));
     await em.save(NotificationPreferenceEntity, saveData);
   }

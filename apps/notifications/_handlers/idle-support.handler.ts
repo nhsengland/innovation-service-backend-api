@@ -52,7 +52,7 @@ export class IdleSupportHandler extends BaseHandler<
           notificationPreferenceType: null,
           params: {
             innovation_name: innovation.values.find(_ => true)?.innovationName || '',
-            innovator_name: ownerIdentities.find(i => i.identityId === details.ownerIdentityId)?.displayName || ''
+            innovator_name: ownerIdentities.get(details.ownerIdentityId)?.displayName || ''
           },
           log: {
             type: NotificationLogTypeEnum.QA_A_IDLE_SUPPORT,

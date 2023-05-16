@@ -78,12 +78,9 @@ export abstract class BaseHandler<
    */
   protected isEmailPreferenceInstantly(
     type: EmailNotificationType,
-    data: { type: EmailNotificationType; preference: EmailNotificationPreferenceEnum }[]
+    data?: Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>
   ): boolean {
-    return (
-      (data.find(item => item.type === type)?.preference || EmailNotificationPreferenceEnum.INSTANTLY) ===
-      EmailNotificationPreferenceEnum.INSTANTLY
-    );
+    return !data || !data[type] || data[type] === EmailNotificationPreferenceEnum.INSTANTLY;
   }
 
   protected frontendBaseUrl(userRole: ServiceRoleEnum): string {
@@ -107,6 +104,23 @@ export abstract class BaseHandler<
     const res: HandlerEmailOutboundType<EmailTemplatesType[EmailResponseType]>[] = [];
     // TODO: create sets of recipients
 
+    // Optimize preference and email fetching by fetching only once
+    const uniqueRoles = new Set<string>();
+    const uniqueIdentities = new Set<string>();
+    this.emails.forEach(recipient => {
+      if ('roleId' in recipient.to) {
+        if (!uniqueRoles.has(recipient.to.roleId)) {
+          uniqueRoles.add(recipient.to.roleId);
+        }
+        if (!uniqueIdentities.has(recipient.to.identityId)) {
+          uniqueIdentities.add(recipient.to.identityId);
+        }
+      }
+    });
+
+    const identities = await this.recipientsService.usersIdentityInfo([...uniqueIdentities]);
+    const emailPreferences = await this.recipientsService.getEmailPreferences([...uniqueRoles]);
+
     for (const recipient of this.emails) {
       if ('email' in recipient.to) {
         res.push({
@@ -120,8 +134,21 @@ export abstract class BaseHandler<
         if (!recipient.options?.includeLocked && recipient.to.isActive === false) {
           continue;
         }
-        // TODO fetch preferences according to type / filter
-        const user = await this.recipientsService.usersIdentityInfo(recipient.to.identityId);
+
+        // skip if notification has preference, user preference is not instant and ignore preference is not set
+        if (
+          recipient.notificationPreferenceType && // if preference is set
+          !recipient.options?.ignorePreferences && // and ignore is not set
+          // and preference is not instant
+          !this.isEmailPreferenceInstantly(
+            recipient.notificationPreferenceType,
+            emailPreferences.get(recipient.to.roleId)
+          )
+        ) {
+          continue;
+        }
+
+        const user = identities.get(recipient.to.identityId);
         if (user) {
           res.push({
             templateId: recipient.templateId,

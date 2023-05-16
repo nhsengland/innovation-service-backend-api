@@ -8,6 +8,7 @@ import {
   InnovationThreadMessageEntity,
   InnovationTransferEntity,
   NotificationEntity,
+  NotificationPreferenceEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
@@ -15,6 +16,7 @@ import {
 } from '@notifications/shared/entities';
 import {
   EmailNotificationPreferenceEnum,
+  EmailNotificationType,
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -75,12 +77,14 @@ export class RecipientsService extends BaseService {
    * @param includeLocked wether to include locked users (default: false)
    * @returns list of users identity info
    */
-  async usersIdentityInfo(userIdentityIds: string[]): Promise<IdentityUserInfo[]>;
-  async usersIdentityInfo(userIdentityIds: string | string[]): Promise<null | IdentityUserInfo | IdentityUserInfo[]> {
+  async usersIdentityInfo(userIdentityIds: string[]): Promise<Map<string, IdentityUserInfo>>;
+  async usersIdentityInfo(
+    userIdentityIds: string | string[]
+  ): Promise<null | IdentityUserInfo | Map<string, IdentityUserInfo>> {
     if (typeof userIdentityIds === 'string') {
       return (await this.identityProviderService.getUsersList([userIdentityIds]))[0] ?? null;
     } else {
-      return this.identityProviderService.getUsersList(userIdentityIds);
+      return this.identityProviderService.getUsersMap(userIdentityIds);
     }
   }
 
@@ -1107,5 +1111,35 @@ export class RecipientsService extends BaseService {
     }
 
     return result;
+  }
+
+  /**
+   * returns a map of user roles and their preferences
+   * @param roleIds
+   */
+  async getEmailPreferences(
+    roleIds: string[]
+  ): Promise<Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>> {
+    if (!roleIds.length) {
+      return new Map();
+    }
+
+    const res = new Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>();
+
+    const preferences = await this.sqlConnection
+      .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
+      .innerJoin('notificationPreference.userRole', 'userRole')
+      .where('notificationPreference.userRoleId IN (:...roleIds)', { roleIds })
+      .getMany();
+
+    for (const preference of preferences) {
+      if (!res.has(preference.userRole.id)) {
+        res.set(preference.userRole.id, {});
+      }
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      res.get(preference.userRole.id)![preference.notificationType] = preference.preference;
+    }
+
+    return res;
   }
 }
