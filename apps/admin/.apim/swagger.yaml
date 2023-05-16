@@ -894,6 +894,25 @@ paths:
                       type: string
                       format: date-time
   "/v1/announcements/{announcementId}":
+    delete:
+      description: Delete an announcement.
+      operationId: v1-announcement-delete
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: The announcement has been deleted.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to delete an announcement.
+        "500":
+          description: An error occurred while deleting the announcement.
     get:
       description: Get an announcement info.
       operationId: v1-announcement-info

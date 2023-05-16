@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import type { EntityManager } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
 import { AnnouncementParamsType, AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
@@ -193,6 +193,30 @@ export class AnnouncementsService extends BaseService {
         updatedAt: new Date()
       }
     );
+  }
+
+  async deleteAnnouncement(announcementId: string, entityManager?: EntityManager): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const announcement = await this.getAnnouncementInfo(announcementId);
+
+    if (announcement.status === AnnouncementStatusEnum.DONE) {
+      throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_DELETED_IN_DONE_STATUS);
+    }
+
+    const announcementUsers = await connection
+      .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
+      .select(['announcementUser.id'])
+      .where('announcementUser.announcement_id = :announcementId', { announcementId })
+      .getMany();
+
+    return await connection.transaction(async transaction => {
+      await transaction.softDelete(AnnouncementEntity, { id: announcementId });
+
+      if (announcementUsers.length > 0) {
+        await transaction.softDelete(AnnouncementUserEntity, { id: In(announcementUsers.map(u => u.id)) });
+      }
+    });
   }
 
   private validateAnnouncementBody(status: AnnouncementStatusEnum, body: unknown, curAnnouncement: { startsAt: Date }) {

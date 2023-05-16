@@ -42,8 +42,8 @@ export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledB
 
 // Announcement Schema for active status
 export type AnnouncementActiveBodyType = {
-  expiresAt: Date;
+  expiresAt?: Date;
 };
 export const AnnouncementActiveBodySchema = Joi.object<AnnouncementActiveBodyType>({
-  expiresAt: Joi.date().greater(Joi.ref('$startsAt')).required()
+  expiresAt: Joi.date().greater(Joi.ref('$startsAt')).default(null).optional()
 }).required();

@@ -36,7 +36,9 @@ export class AnnouncementsService extends BaseService {
       .leftJoin('announcement.announcementUsers', 'announcementUsers', 'announcementUsers.user_id = :userId', {
         userId: requestUser.id
       })
-      .where('announcement.user_roles IN (:...userRoles)', { userRoles: [requestUser.currentRole.role] })
+      .where("CONCAT(',', announcement.user_roles, ',') LIKE :userRole", {
+        userRole: `%,${requestUser.currentRole.role},%`
+      })
       .andWhere('GETDATE() > announcement.starts_at')
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
       .andWhere('announcementUsers.read_at IS NULL')
@@ -75,7 +77,7 @@ export class AnnouncementsService extends BaseService {
           user: UserEntity.new({ id: requestUser.id }),
           readAt: new Date(),
           createdBy: requestUser.id,
-          updatedBy: requestUser.id,
+          updatedBy: requestUser.id
         })
       );
     }
