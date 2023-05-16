@@ -2,6 +2,7 @@ import type { AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enum
 
 export type ResponseDTO = {
   id: string;
+  title: string;
   userRoles: ServiceRoleEnum[];
   params: null | Record<string, unknown>;
   startsAt: Date;

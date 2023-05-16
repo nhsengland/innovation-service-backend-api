@@ -1,6 +1,12 @@
 import Joi from 'joi';
 
-import { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+import type { AnnouncementParamsType, ServiceRoleEnum } from '@admin/shared/enums';
+
+// Helpers
+const JoiLinkValidation = Joi.object({
+  label: Joi.string(),
+  url: Joi.string()
+});
 
 export type ParamsType = {
   announcementId: string;
@@ -17,33 +23,20 @@ export type BodyType = {
   expiresAt?: Date;
 };
 export const BodySchema = Joi.object<BodyType>({
-  title: Joi.string().max(100).required().description('Title of the announcement'),
+  title: Joi.string().max(100).optional(),
 
-  userRoles: Joi.array()
-    .items(
-      Joi.string()
-        .valid(...Object.values(ServiceRoleEnum).filter(t => t !== ServiceRoleEnum.ADMIN))
-        .required()
-        .description('User roles that will see the announcement.')
-    )
-    .min(1),
+  userRoles: Joi.array().optional(),
 
   params: Joi.object<BodyType['params']>({
     inset: Joi.object<BodyType['params']['inset']>({
-      title: Joi.string().required(),
+      title: Joi.string().optional(),
       content: Joi.string().optional(),
-      link: Joi.object({
-        label: Joi.string(),
-        url: Joi.string()
-      }).optional()
+      link: JoiLinkValidation.optional()
     }).optional(),
     content: Joi.string().optional(),
-    actionLink: Joi.object<BodyType['params']['actionLink']>({
-      label: Joi.string(),
-      url: Joi.string()
-    }).optional()
+    actionLink: JoiLinkValidation.optional()
   }),
 
-  startsAt: Joi.date().required(),
+  startsAt: Joi.date().optional(),
   expiresAt: Joi.date().optional()
 }).required();

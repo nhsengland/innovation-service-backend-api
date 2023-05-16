@@ -3,56 +3,17 @@ import type { EntityManager } from 'typeorm';
 
 import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@admin/shared/entities';
 import { AnnouncementParamsType, AnnouncementStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
-import { AnnouncementErrorsEnum, BadRequestError, NotFoundError } from '@admin/shared/errors';
+import { AnnouncementErrorsEnum, BadRequestError, NotFoundError, UnprocessableEntityError } from '@admin/shared/errors';
 import { JoiHelper, PaginationQueryParamsType } from '@admin/shared/helpers';
 import type { DomainContextType } from '@admin/shared/types';
 
-import Joi from 'joi';
+import {
+  AnnouncementActiveBodySchema,
+  AnnouncementActiveBodyType,
+  AnnouncementScheduledBodySchema,
+  AnnouncementScheduledBodyType
+} from './announcements.schemas';
 import { BaseService } from './base.service';
-
-/** TODO: This is for update */
-export type AnnouncementScheduledBodyType = {
-  title: string;
-  userRoles: ServiceRoleEnum[];
-  params: AnnouncementParamsType['GENERIC'];
-  startsAt: Date;
-  expiresAt?: Date;
-};
-export const AnnouncementScheduledBodySchema = Joi.object<AnnouncementScheduledBodyType>({
-  title: Joi.string().max(100).required().description('Title of the announcement'),
-  userRoles: Joi.array()
-    .items(
-      Joi.string()
-        .valid(...Object.values(ServiceRoleEnum).filter(t => t !== ServiceRoleEnum.ADMIN))
-        .required()
-        .description('User roles that will see the announcement.')
-    )
-    .min(1),
-  params: Joi.object<AnnouncementScheduledBodyType['params']>({
-    inset: Joi.object<AnnouncementScheduledBodyType['params']['inset']>({
-      title: Joi.string().required(),
-      content: Joi.string().optional(),
-      link: Joi.object({
-        label: Joi.string(),
-        url: Joi.string()
-      }).optional()
-    }).optional(),
-    content: Joi.string().optional(),
-    actionLink: Joi.object<AnnouncementScheduledBodyType['params']['actionLink']>({
-      label: Joi.string(),
-      url: Joi.string()
-    }).optional()
-  }),
-  startsAt: Joi.date().required(),
-  expiresAt: Joi.date().optional()
-}).required();
-
-export type AnnouncementActiveBodyType = {
-  expiresAt: Date;
-};
-export const AnnouncementActiveBodySchema = Joi.object<AnnouncementActiveBodyType>({
-  expiresAt: Joi.date().required()
-}).required();
 
 @injectable()
 export class AnnouncementsService extends BaseService {
@@ -188,16 +149,15 @@ export class AnnouncementsService extends BaseService {
     });
   }
 
-  /** TODO: WIP */
   async updateAnnouncement(
     requestContext: DomainContextType,
     announcementId: string,
     data: {
-      title: string;
-      userRoles: ServiceRoleEnum[];
+      title?: string;
+      userRoles?: ServiceRoleEnum[];
       // template: T;
-      params: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
-      startsAt: Date;
+      params?: AnnouncementParamsType['GENERIC']; // For now, only the generic template is possible to create.
+      startsAt?: Date;
       expiresAt?: Date;
     },
     entityManager?: EntityManager
@@ -222,33 +182,38 @@ export class AnnouncementsService extends BaseService {
 
     const announcementStatus = this.getAnnouncementStatus(dbAnnouncement.startsAt, dbAnnouncement.expiresAt);
 
-    this.validateAnnouncementBody(announcementStatus, data);
+    const body = this.validateAnnouncementBody(announcementStatus, data, { startsAt: dbAnnouncement.startsAt });
 
     await em.update(
       AnnouncementEntity,
       { id: announcementId },
       {
-        // userRoles: data.userRoles,
-        params: data.params ?? null,
-        startsAt: data.startsAt,
-        expiresAt: data.expiresAt ?? null,
+        ...body,
         updatedBy: requestContext.id,
         updatedAt: new Date()
       }
     );
   }
 
-  /** TODO: WIP */
-  private validateAnnouncementBody(status: AnnouncementStatusEnum, body: any) {
-    if (status === AnnouncementStatusEnum.SCHEDULED) {
-      return JoiHelper.Validate<AnnouncementScheduledBodyType>(AnnouncementScheduledBodySchema, body);
+  private validateAnnouncementBody(status: AnnouncementStatusEnum, body: unknown, curAnnouncement: { startsAt: Date }) {
+    try {
+      if (status === AnnouncementStatusEnum.SCHEDULED) {
+        return JoiHelper.Validate<AnnouncementScheduledBodyType>(AnnouncementScheduledBodySchema, body);
+      }
+
+      if (status === AnnouncementStatusEnum.ACTIVE) {
+        return JoiHelper.Validate<AnnouncementActiveBodyType>(AnnouncementActiveBodySchema, body, {
+          startsAt: curAnnouncement.startsAt
+        });
+      }
+    } catch (err: any) {
+      throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_INVALID_PAYLOAD_FOR_THE_CUR_STATUS, {
+        details: err.details
+      });
     }
 
-    if (status === AnnouncementStatusEnum.ACTIVE) {
-      return JoiHelper.Validate<AnnouncementActiveBodyType>(AnnouncementActiveBodySchema, body);
-    }
-
-    return null;
+    // Means that is in DONE status
+    throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_UPDATED_IN_DONE_STATUS);
   }
 
   private getAnnouncementStatus(startsAt: Date, expiresAt: null | Date): AnnouncementStatusEnum {

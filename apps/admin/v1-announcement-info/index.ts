@@ -28,6 +28,7 @@ class V1AnnouncementsInfo {
       const result = await announcementsService.getAnnouncementInfo(params.announcementId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
+        title: result.title,
         userRoles: result.userRoles,
         params: result.params,
         startsAt: result.startsAt,
@@ -43,7 +44,7 @@ class V1AnnouncementsInfo {
   }
 }
 
-export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/announcements', {
+export default openApi(V1AnnouncementsInfo.httpTrigger as AzureFunction, '/v1/announcements/{announcementId}', {
   get: {
     description: 'Get an announcement info.',
     operationId: 'v1-announcement-info',

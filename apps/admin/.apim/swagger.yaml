@@ -773,8 +773,8 @@ paths:
           description: An error occurred while fetching the validation data.
   /v1/announcements:
     post:
-      description: Update an announcement.
-      operationId: v1-announcement-update
+      description: Create an announcement.
+      operationId: v1-announcement-create
       requestBody:
         required: true
         content:
@@ -815,8 +815,6 @@ paths:
                             url:
                               type: string
                           additionalProperties: false
-                      required:
-                        - title
                       additionalProperties: false
                     content:
                       type: string
@@ -841,7 +839,7 @@ paths:
               additionalProperties: false
       responses:
         "200":
-          description: Announcement updated.
+          description: Announcement created.
           content:
             application/json:
               schema:
@@ -895,6 +893,118 @@ paths:
                     expiresAt:
                       type: string
                       format: date-time
+  "/v1/announcements/{announcementId}":
+    get:
+      description: Get an announcement info.
+      operationId: v1-announcement-info
+      responses:
+        "200":
+          description: Announcement created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  template:
+                    type: string
+                    enum:
+                      - "0"
+                  userRoles:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - ADMIN
+                        - INNOVATOR
+                        - ACCESSOR
+                        - ASSESSMENT
+                        - QUALIFYING_ACCESSOR
+                  params:
+                    type: object
+                  createdAt:
+                    type: string
+                    format: date-time
+                  expiresAt:
+                    type: string
+                    format: date-time
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "500":
+          description: An error occurred
+    put:
+      description: Update an announcement.
+      operationId: v1-announcement-update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 100
+                userRoles:
+                  type: array
+                  items: {}
+                params:
+                  type: object
+                  properties:
+                    inset:
+                      type: object
+                      properties:
+                        title:
+                          type: string
+                        content:
+                          type: string
+                        link:
+                          type: object
+                          properties:
+                            label:
+                              type: string
+                            url:
+                              type: string
+                          additionalProperties: false
+                      additionalProperties: false
+                    content:
+                      type: string
+                    actionLink:
+                      type: object
+                      properties:
+                        label:
+                          type: string
+                        url:
+                          type: string
+                      additionalProperties: false
+                  additionalProperties: false
+                startsAt:
+                  type: string
+                  format: date-time
+                expiresAt:
+                  type: string
+                  format: date-time
+              additionalProperties: false
+      responses:
+        "200":
+          description: Announcement updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+        "400":
+          description: Bad request
+        "401":
+          description: Not authorized
+        "500":
+          description: An error occurred
   "/v1/organisation-unit/{unit}/statistics":
     get:
       description: Get an organisation unit statistics

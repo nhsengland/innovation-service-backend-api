@@ -7,8 +7,8 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/sha
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
-import SYMBOLS from '../_services/symbols';
 import type { AnnouncementsService } from '../_services/announcements.service';
+import SYMBOLS from '../_services/symbols';
 
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
@@ -34,8 +34,8 @@ class V1AnnouncementsUpdate {
   }
 }
 
-export default openApi(V1AnnouncementsUpdate.httpTrigger as AzureFunction, '/v1/announcements', {
-  post: {
+export default openApi(V1AnnouncementsUpdate.httpTrigger as AzureFunction, '/v1/announcements/{announcementId}', {
+  put: {
     description: 'Update an announcement.',
     operationId: 'v1-announcement-update',
     requestBody: SwaggerHelper.bodyJ2S(BodySchema),
