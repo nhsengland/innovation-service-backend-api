@@ -22,8 +22,8 @@ import {
   ServiceRoleEnum
 } from '@admin/shared/enums';
 import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
-// import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
-// import { UrlModel } from '@admin/shared/models';
+import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
+import { UrlModel } from '@admin/shared/models';
 import {
   DomainServiceSymbol,
   DomainServiceType,
@@ -34,20 +34,19 @@ import {
 } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
-// import { ENV } from '../_config';
-// import type { AnnouncementsService } from './announcements.service';
+import { ENV } from '../_config';
+import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
-import { ValidationsHelper } from '@admin/shared/helpers';
-// import SYMBOLS from './symbols';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class OrganisationsService extends BaseService {
   constructor(
     @inject(DomainServiceSymbol) private domainService: DomainServiceType,
     @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType
-  ) // @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
-  {
+    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
+    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
+  ) {
     super();
   }
 
@@ -237,7 +236,7 @@ export class OrganisationsService extends BaseService {
   }
 
   async activateUnit(
-    requestUser: DomainUserInfoType,
+    requestUser: DomainContextType,
     organisationId: string,
     unitId: string,
     userIds: string[]
@@ -299,9 +298,14 @@ export class OrganisationsService extends BaseService {
         );
 
         // Just send the announcement if this is the first time the organization has been activated.
-        // if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
-        //   await this.createOrganisationAnnouncement(unit.organisation.id, unit.organisation.name, transaction);
-        // }
+        if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
+          await this.createOrganisationAnnouncement(
+            requestUser,
+            unit.organisation.id,
+            unit.organisation.name,
+            transaction
+          );
+        }
       }
 
       // Activate users of unit and roles
@@ -656,65 +660,75 @@ export class OrganisationsService extends BaseService {
     );
   }
 
-  // private async createOrganisationAnnouncement(
-  //   organisationId: string,
-  //   orgName: string,
-  //   transaction: EntityManager
-  // ): Promise<void> {
-  //   const orgUsers = await transaction
-  //     .createQueryBuilder(UserRoleEntity, 'userRole')
-  //     .where('userRole.organisation_id = :organisationId', { organisationId })
-  //     .getMany();
-  //   const usersToExclude = orgUsers.map(u => u.userId);
+  private async createOrganisationAnnouncement(
+    requestUser: DomainContextType,
+    _organisationId: string,
+    orgName: string,
+    transaction: EntityManager
+  ): Promise<void> {
+    // If we need to exclude users again
+    // const orgUsers = await transaction
+    //   .createQueryBuilder(UserRoleEntity, 'userRole')
+    //   .where('userRole.organisation_id = :organisationId', { organisationId })
+    //   .getMany();
+    // const usersToExclude = orgUsers.map(u => u.userId);
 
-  //   const announcementParams = {
-  //     title: 'A new support organisation has been added',
-  //     inset: {
-  //       title: `${orgName} has been added to the Innovation Service`,
-  //       link: {
-  //         label: 'What does this organisation do? (open in a new window)',
-  //         url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
-  //       }
-  //     }
-  //   };
+    const reusableAnnouncementInfo = {
+      title: 'A new support organisation has been added',
+      inset: {
+        title: `${orgName} has been added to the Innovation Service`,
+        link: {
+          label: 'What does this organisation do? (open in a new window)',
+          url: new UrlModel(ENV.webBaseUrl).addPath('about-the-service/who-we-are').buildUrl()
+        }
+      },
+      startsAt: new Date()
+    };
 
-  //   await this.announcementsService.createAnnouncement(
-  //     [ServiceRoleEnum.INNOVATOR],
-  //     {
-  //       template: 'GENERIC',
-  //       params: {
-  //         ...announcementParams,
-  //         description: [
-  //           'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'
-  //         ]
-  //       }
-  //     },
-  //     transaction
-  //   );
+    await this.announcementsService.createAnnouncement(
+      requestUser,
+      {
+        userRoles: [ServiceRoleEnum.INNOVATOR],
+        title: reusableAnnouncementInfo.title,
+        startsAt: reusableAnnouncementInfo.startsAt,
+        params: {
+          inset: reusableAnnouncementInfo.inset,
+          content:
+            'If you think this organisation will be able to support you, you can share your innovation with them in your data sharing preferences.'
+        }
+      },
+      {},
+      transaction
+    );
 
-  //   await this.announcementsService.createAnnouncement(
-  //     [ServiceRoleEnum.QUALIFYING_ACCESSOR],
-  //     {
-  //       template: 'GENERIC',
-  //       params: {
-  //         ...announcementParams,
-  //         description: [
-  //           'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'
-  //         ]
-  //       },
-  //       usersToExclude
-  //     },
-  //     transaction
-  //   );
+    await this.announcementsService.createAnnouncement(
+      requestUser,
+      {
+        userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        title: reusableAnnouncementInfo.title,
+        startsAt: reusableAnnouncementInfo.startsAt,
+        params: {
+          inset: reusableAnnouncementInfo.inset,
+          content:
+            'If you think this organisation could offer suitable support to an innovation, you can suggest it to them.'
+        }
+      },
+      {},
+      transaction
+    );
 
-  //   await this.announcementsService.createAnnouncement(
-  //     [ServiceRoleEnum.ACCESSOR],
-  //     {
-  //       template: 'GENERIC',
-  //       params: { ...announcementParams },
-  //       usersToExclude
-  //     },
-  //     transaction
-  //   );
-  // }
+    await this.announcementsService.createAnnouncement(
+      requestUser,
+      {
+        userRoles: [ServiceRoleEnum.ACCESSOR],
+        title: reusableAnnouncementInfo.title,
+        startsAt: reusableAnnouncementInfo.startsAt,
+        params: {
+          inset: reusableAnnouncementInfo.inset
+        }
+      },
+      {},
+      transaction
+    );
+  }
 }

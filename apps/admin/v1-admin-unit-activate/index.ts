@@ -26,10 +26,8 @@ class V1AdminUnitActivate {
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-      const requestUser = auth.getUserInfo();
-
       const result = await organisationsService.activateUnit(
-        requestUser,
+        auth.getContext(),
         params.organisationId,
         params.organisationUnitId,
         body.userIds
