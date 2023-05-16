@@ -1129,7 +1129,7 @@ export class RecipientsService extends BaseService {
     const preferences = await this.sqlConnection
       .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
       .innerJoin('notificationPreference.userRole', 'userRole')
-      .where('notificationPreference.userRoleId IN (:...roleIds)', { roleIds })
+      .where('userRole.id IN (:...roleIds)', { roleIds })
       .getMany();
 
     for (const preference of preferences) {
