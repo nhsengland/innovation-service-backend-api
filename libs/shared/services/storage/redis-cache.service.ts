@@ -41,6 +41,10 @@ export class RedisCache<T> {
    * @returns the values founds
    */
   async getMany(keys: string[]): Promise<T[]> {
+    if (!keys.length) {
+      return [];
+    }
+
     try {
       return (await this.redis.mGet(keys.map(key => `${this.name}_${key}`)))
         .filter((item): item is string => item !== null)
