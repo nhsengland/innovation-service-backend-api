@@ -11,6 +11,7 @@ import { EmailTypeEnum, ENV } from '../_config';
 
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class ThreadMessageCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_MESSAGE_CREATION,
@@ -20,8 +21,9 @@ export class ThreadMessageCreationHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

@@ -1,24 +1,24 @@
 import { NotificationLogTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import { UrlModel } from '@notifications/shared/models';
-import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class IdleSupportHandler extends BaseHandler<
   NotifierTypeEnum.IDLE_SUPPORT,
   EmailTypeEnum.QA_A_IDLE_SUPPORT,
   Record<string, never>
 > {
-  private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

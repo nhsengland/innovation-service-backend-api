@@ -4,6 +4,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTypeEnum } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class IdleInnovatorsHandler extends BaseHandler<
   NotifierTypeEnum.INCOMPLETE_INNOVATION_RECORD,
@@ -13,8 +14,9 @@ export class IdleInnovatorsHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

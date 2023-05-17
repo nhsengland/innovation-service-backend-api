@@ -37,6 +37,7 @@ class V1NotificationsListener {
         message.data.requestUser,
         message.data.action,
         message.data.params,
+        context
       );
 
       context.log.info('RESULT::Emails', JSON.stringify(notificationsInstance.getEmails()));

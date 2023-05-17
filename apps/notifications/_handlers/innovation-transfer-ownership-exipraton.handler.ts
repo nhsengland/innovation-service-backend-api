@@ -1,4 +1,4 @@
-import { container, EmailTypeEnum, ENV } from '../_config';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import {
   NotificationContextDetailEnum,
@@ -7,23 +7,23 @@ import {
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
   EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
   Record<string, never> // Validate
 > {
-  private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {
@@ -31,7 +31,7 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
 
     // This should never happen since we include deleted innovations.
     if (!innovation) {
-      this.logger.log(
+      this.logger(
         `InnovationTransferOwnershipExpirationHandler: Innovation not found ${this.inputData.innovationId}`
       );
       return this;

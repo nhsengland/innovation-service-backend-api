@@ -5,6 +5,7 @@ import { EmailTypeEnum } from '../_config';
 
 import { NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 // REVIEW this isn't used
 export class AccessorUnitChangeHandler extends BaseHandler<
@@ -14,8 +15,12 @@ export class AccessorUnitChangeHandler extends BaseHandler<
   | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
   Record<string, never>
 > {
-  constructor(requestUser: DomainContextType, data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]) {
-    super(requestUser, data);
+  constructor(
+    requestUser: DomainContextType,
+    data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE],
+    azureContext: Context
+  ) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

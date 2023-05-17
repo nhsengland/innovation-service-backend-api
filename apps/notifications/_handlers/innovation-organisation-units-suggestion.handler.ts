@@ -6,6 +6,7 @@ import { ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
@@ -15,8 +16,9 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

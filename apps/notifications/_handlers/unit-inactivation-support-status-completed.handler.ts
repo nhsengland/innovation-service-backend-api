@@ -5,6 +5,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
@@ -14,8 +15,9 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

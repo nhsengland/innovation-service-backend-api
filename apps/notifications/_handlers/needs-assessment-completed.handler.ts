@@ -11,6 +11,7 @@ import { EmailTypeEnum, ENV } from '../_config';
 
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class NeedsAssessmentCompletedHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
@@ -22,8 +23,9 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

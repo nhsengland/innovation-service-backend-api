@@ -3,6 +3,7 @@ import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { ENV, EmailTypeEnum } from '../_config';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationRecordExportRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
@@ -12,8 +13,9 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

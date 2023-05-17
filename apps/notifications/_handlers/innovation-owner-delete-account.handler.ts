@@ -10,6 +10,7 @@ import { EmailTypeEnum } from '../_config';
 
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovatorAccountDeletionHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER,
@@ -19,8 +20,9 @@ export class InnovatorAccountDeletionHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

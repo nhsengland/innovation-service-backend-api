@@ -11,6 +11,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { container, EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER,
@@ -22,8 +23,9 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

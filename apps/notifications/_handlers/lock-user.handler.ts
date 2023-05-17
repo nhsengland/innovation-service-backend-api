@@ -9,6 +9,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTypeEnum } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class LockUserHandler extends BaseHandler<
   NotifierTypeEnum.LOCK_USER,
@@ -18,8 +19,9 @@ export class LockUserHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

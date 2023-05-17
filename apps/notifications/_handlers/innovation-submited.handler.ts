@@ -12,6 +12,7 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationSubmitedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITED,
@@ -25,8 +26,9 @@ export class InnovationSubmitedHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

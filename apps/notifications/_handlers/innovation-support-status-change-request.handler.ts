@@ -7,6 +7,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { container, EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
@@ -18,8 +19,9 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

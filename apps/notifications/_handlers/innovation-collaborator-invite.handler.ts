@@ -11,6 +11,7 @@ import { EmailTypeEnum, ENV } from '../_config';
 
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationCollaboratorInviteHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
@@ -21,8 +22,9 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

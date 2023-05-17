@@ -10,6 +10,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class ThreadCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_CREATION,
@@ -21,8 +22,9 @@ export class ThreadCreationHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

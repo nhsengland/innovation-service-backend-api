@@ -5,6 +5,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
@@ -14,8 +15,9 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

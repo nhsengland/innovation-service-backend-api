@@ -5,15 +5,15 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
@@ -26,13 +26,12 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS,
   { collaboratorId: string }
 > {
-  private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
-
   constructor(
     requestUser: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE],
+    azureContext: Context
   ) {
-    super(requestUser, data);
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {
@@ -67,7 +66,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
     if (!owner) {
-      this.logger.log(`Innovation owner not found for ${innovation.name}`);
+      this.logger(`Innovation owner not found for ${innovation.name}`);
       return;
     }
     const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(

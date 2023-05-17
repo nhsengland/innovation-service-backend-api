@@ -11,6 +11,7 @@ import { EmailTypeEnum, ENV } from '../_config';
 
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationReassessmentRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
@@ -22,8 +23,9 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST],
-  ) {
-    super(requestUser, data);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {

@@ -20,6 +20,7 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
@@ -55,8 +56,12 @@ export class ActionUpdateHandler extends BaseHandler<
     comment?: string;
   } = {};
 
-  constructor(requestUser: DomainContextType, data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]) {
-    super(requestUser, data);
+  constructor(
+    requestUser: DomainContextType,
+    data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE],
+    azureContext: Context
+  ) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {
