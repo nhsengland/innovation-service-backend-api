@@ -500,10 +500,10 @@ export class RecipientsService extends BaseService {
     }
 
     return {
-      collaboratorId: dbCollaborator.id,
-      email: dbCollaborator.email,
-      status: dbCollaborator.status,
-      userId: dbCollaborator.user_id
+      collaboratorId: dbCollaborator.collaborator_id,
+      email: dbCollaborator.collaborator_email,
+      status: dbCollaborator.collaborator_status,
+      userId: dbCollaborator.collaborator_user_id
     };
   }
 
