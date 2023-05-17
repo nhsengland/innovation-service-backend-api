@@ -212,11 +212,10 @@ export class OrganisationsService extends BaseService {
           }
         );
 
-        await this.notifierService.send(
-          domainContext,
-          NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED, 
-          { innovationId: support.innovation.id, unitId }
-        );
+        await this.notifierService.send(domainContext, NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED, {
+          innovationId: support.innovation.id,
+          unitId
+        });
       }
       return { unitId };
     });
@@ -581,7 +580,7 @@ export class OrganisationsService extends BaseService {
           organisationUnit: unit,
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
-          lockedAt: new Date()
+          lockedAt: unit.inactivatedAt ? new Date() : null
         })
       );
     });

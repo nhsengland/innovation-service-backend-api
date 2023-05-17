@@ -76,7 +76,7 @@ class V1MeInfo {
         id: requestUser.id,
         email: requestUser.email,
         displayName: requestUser.displayName,
-        roles: requestUser.roles,
+        roles: requestUser.roles.filter(role => role.lockedAt === null),
         contactByEmail: userPreferences.contactByEmail,
         contactByPhone: userPreferences.contactByPhone,
         contactByPhoneTimeframe: userPreferences.contactByPhoneTimeframe,
