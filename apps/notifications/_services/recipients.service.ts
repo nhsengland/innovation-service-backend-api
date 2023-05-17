@@ -936,7 +936,7 @@ export class RecipientsService extends BaseService {
       query.andWhere('userRole.organisation_unit_id IN (:...organisationUnits)', { organisationUnits });
     }
 
-    if (includeLocked) {
+    if (!includeLocked) {
       query.andWhere('user.locked_at IS NULL').andWhere('userRole.locked_at IS NULL');
     }
 
