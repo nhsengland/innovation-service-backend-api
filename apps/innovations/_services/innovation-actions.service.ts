@@ -510,13 +510,12 @@ export class InnovationActionsService extends BaseService {
     });
 
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.ACTION_CREATION,
       {
         innovationId: innovation.id,
         action: { id: result.id, section: data.section }
-      },
-      domainContext
+      }
     );
 
     return result;
@@ -572,7 +571,7 @@ export class InnovationActionsService extends BaseService {
 
     // Send action status update to innovation owner
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.ACTION_UPDATE,
       {
         innovationId: dbAction.innovationSection.innovation.id,
@@ -583,7 +582,6 @@ export class InnovationActionsService extends BaseService {
           previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
         }
       },
-      domainContext
     );
 
     return { id: result.id };
@@ -633,7 +631,7 @@ export class InnovationActionsService extends BaseService {
 
     // Send action status update to innovation owner
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.ACTION_UPDATE,
       {
         innovationId: dbAction.innovationSection.innovation.id,
@@ -643,8 +641,7 @@ export class InnovationActionsService extends BaseService {
           status: result.status,
           previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
         }
-      },
-      domainContext
+      }
     );
 
     return { id: result.id };
@@ -679,7 +676,7 @@ export class InnovationActionsService extends BaseService {
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.ACTION_UPDATE,
       {
         innovationId: innovationId,
@@ -689,8 +686,7 @@ export class InnovationActionsService extends BaseService {
           status: result.status
         },
         comment: data.message
-      },
-      domainContext
+      }
     );
 
     return { id: result.id };

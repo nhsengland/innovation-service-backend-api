@@ -36,11 +36,10 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   } = {};
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
@@ -68,12 +67,12 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
       organisation: {
-        id: this.domainContext.organisation?.id ?? '',
-        name: this.domainContext.organisation?.name ?? ''
+        id: this.requestUser.organisation?.id ?? '',
+        name: this.requestUser.organisation?.name ?? ''
       },
       organisationUnit: {
-        id: this.domainContext?.organisation?.organisationUnit?.id ?? '',
-        name: this.domainContext?.organisation?.organisationUnit?.name ?? ''
+        id: this.requestUser?.organisation?.organisationUnit?.id ?? '',
+        name: this.requestUser?.organisation?.organisationUnit?.name ?? ''
       }
     };
 
@@ -189,7 +188,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         id: this.inputData.innovationSupport.id
       },
       userRoleIds: assignedUsers
-        .filter(user => user.roleId !== this.domainContext.currentRole.id)
+        .filter(user => user.roleId !== this.requestUser.currentRole.id)
         .map(user => user.roleId),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',

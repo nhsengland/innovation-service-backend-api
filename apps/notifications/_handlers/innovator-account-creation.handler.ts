@@ -11,11 +11,10 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
   Record<string, never>
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

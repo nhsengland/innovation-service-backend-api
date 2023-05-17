@@ -34,11 +34,9 @@ class V1InnovationReassessmentRequestCreate {
           status: [InnovationStatusEnum.IN_PROGRESS, InnovationStatusEnum.PAUSED]
         })
         .verify();
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const result = await innovationAssessmentsService.createInnovationReassessment(
-        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         body

@@ -29,11 +29,10 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
@@ -183,7 +182,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   async prepareNotificationToOtherCollaborators(): Promise<void> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
-    const collaboratorInfo = await this.recipientsService.usersIdentityInfo(this.domainContext.identityId);
+    const collaboratorInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
 
     let templateId: EmailTypeEnum;
 

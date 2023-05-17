@@ -10,11 +10,10 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
   Record<string, never>
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

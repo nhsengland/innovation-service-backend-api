@@ -20,11 +20,10 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

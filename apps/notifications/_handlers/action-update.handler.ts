@@ -56,11 +56,10 @@ export class ActionUpdateHandler extends BaseHandler<
   } = {};
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
@@ -71,7 +70,7 @@ export class ActionUpdateHandler extends BaseHandler<
     this.data.innovation = { name: innovation.name, owner: owner };
     this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
-    switch (this.domainContext.currentRole.role) {
+    switch (this.requestUser.currentRole.role) {
       case ServiceRoleEnum.INNOVATOR:
         if (
           [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.DECLINED].includes(
@@ -79,8 +78,8 @@ export class ActionUpdateHandler extends BaseHandler<
           )
         ) {
           const requestUser = await this.recipientsService.getUsersRecipient(
-            this.domainContext.id,
-            this.domainContext.currentRole.role
+            this.requestUser.id,
+            this.requestUser.currentRole.role
           );
           await this.prepareEmailForAccessorOrAssessment();
           await this.prepareInAppForAccessorOrAssessment();
@@ -89,7 +88,7 @@ export class ActionUpdateHandler extends BaseHandler<
             await this.prepareConfirmationInApp();
           }
           // if action was submitted or declined by a collaborator notify owner
-          if (this.domainContext.currentRole.id !== this.data.innovation.owner.roleId) {
+          if (this.requestUser.currentRole.id !== this.data.innovation.owner.roleId) {
             await this.prepareEmailForInnovationOwnerFromCollaborator();
             await this.prepareInAppForInnovationOwner();
           }
@@ -200,9 +199,9 @@ export class ActionUpdateHandler extends BaseHandler<
 
     const accessor_name = requestInfo.displayName;
     const unit_name =
-      this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
-        : this.domainContext?.organisation?.organisationUnit?.name ?? '';
+        : this.requestUser?.organisation?.organisationUnit?.name ?? '';
 
     this.emails.push({
       templateId,
@@ -378,7 +377,7 @@ export class ActionUpdateHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
         id: this.inputData.action.id
       },
-      userRoleIds: [this.domainContext.currentRole.id],
+      userRoleIds: [this.requestUser.currentRole.id],
       params: {
         actionCode: this.data.actionInfo?.displayId || '',
         actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.

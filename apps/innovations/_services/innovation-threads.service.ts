@@ -185,7 +185,7 @@ export class InnovationThreadsService extends BaseService {
         throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
       }
 
-      await this.sendThreadCreateNotification(requestUser, domainContext, firstMessage.id, result.thread);
+      await this.sendThreadCreateNotification(domainContext, firstMessage.id, result.thread);
     }
 
     return result;
@@ -260,7 +260,7 @@ export class InnovationThreadsService extends BaseService {
     );
 
     if (sendNotification) {
-      await this.sendThreadMessageCreateNotification(requestUser, domainContext, thread, threadMessage);
+      await this.sendThreadMessageCreateNotification(domainContext, thread, threadMessage);
     }
 
     return {
@@ -823,38 +823,34 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async sendThreadCreateNotification(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     messageId: string,
     thread: InnovationThreadEntity
   ): Promise<void> {
     await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId },
+      domainContext,
       NotifierTypeEnum.THREAD_CREATION,
       {
         threadId: thread.id,
         messageId,
         innovationId: thread.innovation.id
-      },
-      domainContext
+      }
     );
   }
 
   private async sendThreadMessageCreateNotification(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
   ): Promise<void> {
     await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId },
+      domainContext,
       NotifierTypeEnum.THREAD_MESSAGE_CREATION,
       {
         threadId: thread.id,
         messageId: threadMessage.id,
         innovationId: thread.innovation.id
-      },
-      domainContext
+      }
     );
   }
 }

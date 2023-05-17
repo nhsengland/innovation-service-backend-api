@@ -12,11 +12,10 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

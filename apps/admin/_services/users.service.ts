@@ -114,10 +114,9 @@ export class UsersService extends BaseService {
       // Send notification to locked user.
       if (data.accountEnabled != undefined && !data.accountEnabled) {
         await this.notifierService.send(
-          { id: context.id, identityId: context.identityId },
+          context,
           NotifierTypeEnum.LOCK_USER,
-          { user: { identityId: dbUser.identityId } },
-          context
+          { user: { identityId: dbUser.identityId } }
         );
       }
 

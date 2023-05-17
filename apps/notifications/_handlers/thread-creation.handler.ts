@@ -19,15 +19,14 @@ export class ThreadCreationHandler extends BaseHandler<
   { subject: string; messageId: string }
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
-    switch (this.domainContext.currentRole.role) {
+    switch (this.requestUser.currentRole.role) {
       case ServiceRoleEnum.ASSESSMENT:
       case ServiceRoleEnum.ACCESSOR:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
@@ -53,9 +52,9 @@ export class ThreadCreationHandler extends BaseHandler<
   private async prepareNotificationForInnovationOwnerAndCollaboratorsFromAssignedUser(): Promise<void> {
     const requestUserInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
     const requestUserUnitName =
-      this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
-        : this.domainContext?.organisation?.organisationUnit?.name ?? '';
+        : this.requestUser?.organisation?.organisationUnit?.name ?? '';
 
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
@@ -109,13 +108,13 @@ export class ThreadCreationHandler extends BaseHandler<
     const recipientIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
 
     // Add owner if not the same as the request user.
-    if (this.domainContext.id !== innovation.ownerId) {
-      recipientIds.push(this.domainContext.id);
+    if (this.requestUser.id !== innovation.ownerId) {
+      recipientIds.push(this.requestUser.id);
     }
 
     const recipients = (await this.recipientsService.getUsersRecipient(recipientIds, ServiceRoleEnum.INNOVATOR)).filter(
       // filter request user
-      r => r.roleId !== this.domainContext.currentRole.id
+      r => r.roleId !== this.requestUser.currentRole.id
     );
 
     for (const recipient of recipients) {

@@ -23,11 +23,10 @@ export class InnovationSubmitedHandler extends BaseHandler<
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

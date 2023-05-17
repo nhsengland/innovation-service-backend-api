@@ -111,13 +111,12 @@ export class InnovationCollaboratorsService extends BaseService {
     }
 
     await this.notifierService.send(
-      { id: domainContext.id, identityId: domainContext.identityId },
+      domainContext,
       NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
       {
         innovationCollaboratorId: collaboratorId,
         innovationId: innovationId
-      },
-      domainContext
+      }
     );
 
     return { id: collaboratorId };
@@ -381,7 +380,7 @@ export class InnovationCollaboratorsService extends BaseService {
 
     if (data.status) {
       await this.notifierService.send(
-        { id: domainContext.id, identityId: domainContext.identityId },
+        domainContext,
         NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
         {
           innovationId: innovationId,
@@ -389,8 +388,7 @@ export class InnovationCollaboratorsService extends BaseService {
             id: collaborator.id,
             status: data.status
           }
-        },
-        domainContext
+        }
       );
     }
 

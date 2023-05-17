@@ -18,11 +18,10 @@ export class ThreadMessageCreationHandler extends BaseHandler<
   { subject: string; messageId: string }
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
@@ -50,7 +49,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     if (
       thread.author &&
       thread.author.role === ServiceRoleEnum.ASSESSMENT &&
-      this.domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR
+      this.requestUser.currentRole.role === ServiceRoleEnum.INNOVATOR
     ) {
       recipients.push(thread.author);
     }

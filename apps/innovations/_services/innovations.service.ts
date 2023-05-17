@@ -52,7 +52,7 @@ import {
   NotifierServiceType,
   type DomainUsersService
 } from '@innovations/shared/services';
-import type { ActivityLogListParamsType, DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
@@ -1300,10 +1300,9 @@ export class InnovationsService extends BaseService {
 
     // Add notification with Innovation submited for needs assessment
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.INNOVATION_SUBMITED,
-      { innovationId },
-      domainContext
+      { innovationId }
     );
 
     return {
@@ -1332,7 +1331,7 @@ export class InnovationsService extends BaseService {
 
     for (const savedInnovation of savedInnovations) {
       await this.notifierService.send(
-        { id: context.id, identityId: context.identityId },
+        context,
         NotifierTypeEnum.INNOVATION_WITHDRAWN,
         {
           innovation: {
@@ -1340,8 +1339,7 @@ export class InnovationsService extends BaseService {
             name: savedInnovation.name,
             affectedUsers: savedInnovation.affectedUsers
           }
-        },
-        context
+        }
       );
     }
 
@@ -1444,10 +1442,9 @@ export class InnovationsService extends BaseService {
     });
 
     await this.notifierService.send(
-      user,
+      domainContext,
       NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message },
-      domainContext
+      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message }
     );
 
     return result;
@@ -1585,10 +1582,9 @@ export class InnovationsService extends BaseService {
     // Create notification
 
     await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId },
+      domainContext,
       NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-      { innovationId: innovationId, requestId: request.id },
-      domainContext
+      { innovationId: innovationId, requestId: request.id }
     );
 
     return {
@@ -1597,7 +1593,6 @@ export class InnovationsService extends BaseService {
   }
 
   async updateInnovationRecordExportRequest(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     exportRequestId: string,
     data: { status: InnovationExportRequestStatusEnum; rejectReason: null | string }
@@ -1655,10 +1650,9 @@ export class InnovationsService extends BaseService {
 
     // Create notification
     await this.notifierService.send(
-      { id: requestUser.id, identityId: requestUser.identityId },
+      domainContext,
       NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
-      { innovationId: exportRequest.innovation.id, requestId: updatedRequest.id },
-      domainContext
+      { innovationId: exportRequest.innovation.id, requestId: updatedRequest.id }
     );
 
     return {

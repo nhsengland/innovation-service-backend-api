@@ -22,17 +22,16 @@ export class ActionCreationHandler extends BaseHandler<
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
     if (
       ![ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT].includes(
-        this.domainContext.currentRole.role as ServiceRoleEnum
+        this.requestUser.currentRole.role as ServiceRoleEnum
       )
     ) {
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
@@ -50,7 +49,7 @@ export class ActionCreationHandler extends BaseHandler<
     );
 
     const unitName =
-      this.domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
+      this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
         : actionInfo.organisationUnit?.name ?? '';
 

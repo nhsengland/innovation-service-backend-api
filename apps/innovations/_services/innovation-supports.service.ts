@@ -30,7 +30,7 @@ import {
   NotifierServiceType,
   type DomainServiceType
 } from '@innovations/shared/services';
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
@@ -401,7 +401,7 @@ export class InnovationSupportsService extends BaseService {
     });
 
     await this.notifierService.send(
-      user,
+      domainContext,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
         innovationId,
@@ -416,8 +416,7 @@ export class InnovationSupportsService extends BaseService {
               ? (data.accessors ?? []).map(item => ({ id: item.id }))
               : []
         }
-      },
-      domainContext
+      }
     );
 
     return result;
@@ -510,13 +509,12 @@ export class InnovationSupportsService extends BaseService {
       data?.organisationUnits.length > 0
     ) {
       await this.notifierService.send(
-        user,
+        domainContext,
         NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
         {
           innovationId,
           organisationUnitIds: data.organisationUnits
-        },
-        domainContext
+        }
       );
     }
 
@@ -621,7 +619,7 @@ export class InnovationSupportsService extends BaseService {
     });
 
     await this.notifierService.send(
-      user,
+      domainContext,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
       {
         innovationId,
@@ -638,15 +636,13 @@ export class InnovationSupportsService extends BaseService {
                   .map(item => ({ id: item.id }))
               : []
         }
-      },
-      domainContext
+      }
     );
 
     return result;
   }
 
   async changeInnovationSupportStatusRequest(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     innovationId: string,
     supportId: string,
@@ -654,15 +650,14 @@ export class InnovationSupportsService extends BaseService {
     requestReason: string
   ): Promise<boolean> {
     await this.notifierService.send(
-      requestUser,
+      domainContext,
       NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
       {
         innovationId,
         supportId,
         proposedStatus: status,
         requestStatusUpdateComment: requestReason
-      },
-      domainContext
+      }
     );
 
     return true;

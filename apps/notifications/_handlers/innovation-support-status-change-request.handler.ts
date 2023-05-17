@@ -16,11 +16,10 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
@@ -29,7 +28,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
     });
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
-    const organisationUnit = this.domainContext?.organisation?.organisationUnit?.id || '';
+    const organisationUnit = this.requestUser?.organisation?.organisationUnit?.id || '';
     const qualifyingAccessors = await this.recipientsService.organisationUnitsQualifyingAccessors([organisationUnit]);
 
     // does not check email preferences. QA will always receive this email.

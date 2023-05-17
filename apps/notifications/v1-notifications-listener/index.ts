@@ -19,10 +19,9 @@ class V1NotificationsListener {
     context: Context,
     requestMessage: {
       data: {
-        requestUser: { id: string; identityId: string }; // TODO REMOVE
+        requestUser: DomainContextType; 
         action: NotifierTypeEnum;
         params: { [key: string]: any };
-        domainContext?: DomainContextType;
       };
     }
   ): Promise<void> {
@@ -38,7 +37,6 @@ class V1NotificationsListener {
         message.data.requestUser,
         message.data.action,
         message.data.params,
-        message.data.domainContext
       );
 
       context.log.info('RESULT::Emails', JSON.stringify(notificationsInstance.getEmails()));

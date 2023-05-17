@@ -294,7 +294,6 @@ describe('Innovation Assessments Suite', () => {
   describe('createInnovationReassessment', () => {
     it('should create a ressessment', async () => {
       const innovationReassessment = await sut.createInnovationReassessment(
-        testData.baseUsers.assessmentUser,
         testData.domainContexts.assessmentUser,
         innovationWithAssessment.id,
         { updatedInnovationRecord: 'YES', description: randText() },
@@ -319,7 +318,6 @@ describe('Innovation Assessments Suite', () => {
       let err: UnprocessableEntityError | null = null;
       try {
         await sut.createInnovationReassessment(
-          testData.baseUsers.assessmentUser,
           testData.domainContexts.assessmentUser,
           innovationWithoutAssessment.id,
           { updatedInnovationRecord: 'YES', description: randText() },
@@ -345,7 +343,6 @@ describe('Innovation Assessments Suite', () => {
 
       try {
         await sut.createInnovationReassessment(
-          testData.baseUsers.assessmentUser,
           testData.domainContexts.assessmentUser,
           testData.innovation.id,
           { updatedInnovationRecord: 'YES', description: randText() },
@@ -365,7 +362,6 @@ describe('Innovation Assessments Suite', () => {
       const newAssessor = testData.baseUsers.assessmentUser2;
 
       const result = await sut.updateAssessor(
-        testData.baseUsers.assessmentUser,
         testData.domainContexts.assessmentUser,
         innovationWithAssessment.id,
         innovationWithAssessment.assessments[0]!.id,
@@ -384,7 +380,6 @@ describe('Innovation Assessments Suite', () => {
 
       try {
         await sut.updateAssessor(
-          testData.baseUsers.assessmentUser,
           testData.domainContexts.assessmentUser,
           innovationWithAssessment.id,
           innovationWithAssessment.assessments[0]!.id,
@@ -406,7 +401,6 @@ describe('Innovation Assessments Suite', () => {
 
       try {
         await sut.updateAssessor(
-          testData.baseUsers.assessmentUser,
           testData.domainContexts.assessmentUser,
           innovationWithoutAssessment.id,
           innovationWithAssessment.assessments[0]!.id,

@@ -20,11 +20,10 @@ export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

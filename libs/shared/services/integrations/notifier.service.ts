@@ -11,7 +11,6 @@ import {
 } from '../interfaces';
 import { QueuesEnum } from './storage-queue.service';
 
-// TechDebt: Remove the requestUser from notifications keeping only domainContext
 // TechDebt: Allow for system domain_context (this might be a breaking change and require notifications typing). Keeping the 00000000-0000-0000-0000-000000000000 for now.
 //           It used to be F4D75573-47CF-EC11-B656-0050F25A2AF6
 
@@ -30,18 +29,16 @@ export class NotifierService {
   ) {}
 
   async send<T extends NotifierTypeEnum>( // This typing strategy, validates the correct properties for the supplied notifierType.
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     notifierType: T,
     params: NotifierTemplatesType[T],
-    domainContext: DomainContextType
   ): Promise<boolean> {
     try {
       await this.storageQueueService.sendMessage(QueuesEnum.NOTIFICATION, {
         data: {
-          requestUser: { id: requestUser.id, identityId: requestUser.identityId },
+          requestUser,
           action: notifierType,
-          params,
-          domainContext
+          params
         }
       });
 
@@ -65,10 +62,9 @@ export class NotifierService {
     params: NotifierTemplatesType[T]
   ): Promise<boolean> {
     return this.send(
-      { id: SYSTEM_CRON_SENDER.id, identityId: SYSTEM_CRON_SENDER.identityId },
+      SYSTEM_CRON_SENDER,
       notifierType,
       params,
-      SYSTEM_CRON_SENDER
     );
   }
 }

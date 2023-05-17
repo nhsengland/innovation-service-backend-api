@@ -20,24 +20,23 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
   Record<string, never>
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
-    if (this.domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
+    if (this.requestUser.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       return this;
     }
 
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const innovatorRecipientIds = (
       await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId)
-    ).filter(c => c !== this.domainContext.id);
+    ).filter(c => c !== this.requestUser.id);
 
-    if (this.domainContext.id !== innovation.ownerId) {
+    if (this.requestUser.id !== innovation.ownerId) {
       innovatorRecipientIds.push(innovation.ownerId);
     }
 
@@ -48,8 +47,8 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
 
     const needAssessmentUsers = await this.recipientsService.needsAssessmentUsers();
     const requestingInnovator = await this.recipientsService.getUsersRecipient(
-      this.domainContext.id,
-      this.domainContext.currentRole.role
+      this.requestUser.id,
+      this.requestUser.currentRole.role
     );
 
     await this.prepareEmailToInnovators(innovatorRecipients, innovation.name);

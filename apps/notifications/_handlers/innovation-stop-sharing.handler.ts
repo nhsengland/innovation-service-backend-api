@@ -12,15 +12,14 @@ export class InnovationStopSharingHandler extends BaseHandler<
   Record<string, never>
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_STOP_SHARING],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {
-    if (this.domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
+    if (this.requestUser.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       return this;
     }
 

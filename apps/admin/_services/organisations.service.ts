@@ -213,10 +213,9 @@ export class OrganisationsService extends BaseService {
         );
 
         await this.notifierService.send(
-          { id: requestUser.id, identityId: requestUser.identityId },
-          NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-          { innovationId: support.innovation.id, unitId },
-          domainContext
+          domainContext,
+          NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED, 
+          { innovationId: support.innovation.id, unitId }
         );
       }
       return { unitId };
@@ -635,7 +634,7 @@ export class OrganisationsService extends BaseService {
     role: ServiceRoleEnum,
     requestUserId: string,
     entityManager?: EntityManager
-  ) {
+  ): Promise<OrganisationUserEntity> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const organisationUser = await connection

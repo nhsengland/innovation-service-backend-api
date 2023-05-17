@@ -15,11 +15,10 @@ export class IdleSupportHandler extends BaseHandler<
   private logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

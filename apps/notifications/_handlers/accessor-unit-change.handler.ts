@@ -14,11 +14,10 @@ export class AccessorUnitChangeHandler extends BaseHandler<
   Record<string, never>
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
-    domainContext: DomainContextType,
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

@@ -516,7 +516,7 @@ export class InnovationSectionsService extends BaseService {
 
         for (const action of requestedStatusActions) {
           await this.notifierService.send(
-            { id: domainContext.id, identityId: domainContext.identityId },
+            domainContext,
             NotifierTypeEnum.ACTION_UPDATE,
             {
               innovationId: dbInnovation.id,
@@ -525,8 +525,7 @@ export class InnovationSectionsService extends BaseService {
                 section: savedSection.section,
                 status: InnovationActionStatusEnum.SUBMITTED
               }
-            },
-            domainContext
+            }
           );
         }
       }

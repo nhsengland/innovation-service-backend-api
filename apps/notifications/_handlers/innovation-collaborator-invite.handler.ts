@@ -19,11 +19,10 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
   { collaboratorId: string }
 > {
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE],
-    domainContext: DomainContextType
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data);
   }
 
   async run(): Promise<this> {

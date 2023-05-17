@@ -236,9 +236,6 @@ export class UsersService extends BaseService {
       }
 
       await this.notifierService.send(
-        { id: dbUser.id, identityId: dbUser.identityId },
-        NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
-        {},
         {
           id: dbUser.id,
           identityId: dbUser.identityId,
@@ -248,7 +245,9 @@ export class UsersService extends BaseService {
             acronym: dbOrganisation.acronym
           },
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR }
-        }
+        },
+        NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
+        {},
       );
 
       return { id: dbUser.id };

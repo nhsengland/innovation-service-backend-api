@@ -191,10 +191,9 @@ export class InnovationAssessmentsService extends BaseService {
       );
 
       await this.notifierService.send(
-        user,
+        domainContext,
         NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
-        { innovationId, assessmentId: assessment.id, threadId: thread.thread.id },
-        domainContext
+        { innovationId, assessmentId: assessment.id, threadId: thread.thread.id }
       );
 
       return { id: assessment['id'] };
@@ -347,14 +346,13 @@ export class InnovationAssessmentsService extends BaseService {
 
     if (data.isSubmission && !dbAssessment.finishedAt) {
       await this.notifierService.send(
-        { id: user.id, identityId: user.identityId },
+        domainContext,
         NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
         {
           innovationId: innovationId,
           assessmentId: assessmentId,
           organisationUnitIds: data.suggestedOrganisationUnitsIds || []
-        },
-        domainContext
+        }
       );
     }
 
@@ -368,7 +366,6 @@ export class InnovationAssessmentsService extends BaseService {
    * @returns - The assessment request id and the new assessment id.
    */
   async createInnovationReassessment(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { updatedInnovationRecord: YesOrNoCatalogueType; description: string },
@@ -456,10 +453,9 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
-      { innovationId: innovationId },
-      domainContext
+      { innovationId: innovationId }
     );
 
     return {
@@ -469,7 +465,6 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   async updateAssessor(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     assessmentId: string,
@@ -515,15 +510,14 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     await this.notifierService.send(
-      { id: user.id, identityId: user.identityId },
+      domainContext,
       NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
       {
         innovationId,
         assessmentId: updatedAssessment.id,
         previousAssessor: { id: previousAssessor.id },
         newAssessor: { id: newAssessor.id }
-      },
-      domainContext
+      }
     );
 
     return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id };

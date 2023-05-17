@@ -53,9 +53,8 @@ export abstract class BaseHandler<
   EmailResponseType extends EmailTypeEnum,
   InAppResponseType
 > {
-  requestUser: { id: string; identityId: string };
+  requestUser: DomainContextType;
   inputData: NotifierTemplatesType[InputDataType];
-  domainContext: DomainContextType;
 
   emails: HandlerEmailType<EmailTemplatesType[EmailResponseType]> = [];
   inApp: HandlerInAppType<InAppResponseType> = [];
@@ -63,13 +62,11 @@ export abstract class BaseHandler<
   protected recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string; identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[InputDataType],
-    domainContext: DomainContextType
   ) {
     this.requestUser = requestUser;
     this.inputData = data;
-    this.domainContext = domainContext;
   }
 
   /**

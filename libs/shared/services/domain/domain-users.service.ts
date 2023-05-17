@@ -296,7 +296,9 @@ export class DomainUsersService {
           innovationsWithPendingTransfer.push({
             id: dbInnovation.id,
             name: dbInnovation.name,
-            transferExpireDate: dbInnovation.expirationTransferDate ? dbInnovation.expirationTransferDate.toDateString() : ''
+            transferExpireDate: dbInnovation.expirationTransferDate
+              ? dbInnovation.expirationTransferDate.toDateString()
+              : ''
           });
 
           await this.sqlConnection.getRepository(InnovationEntity).update(
@@ -313,12 +315,11 @@ export class DomainUsersService {
         // Send notification to collaborators if there are innovations with pending transfer
         if (innovationsWithPendingTransfer.length > 0) {
           await this.notifierService.send(
-            { id: domainContext.id, identityId: domainContext.identityId },
+            domainContext,
             NotifierTypeEnum.INNOVATOR_ACCOUNT_DELETION_WITH_PENDING_TRANSFER,
             {
               innovations: innovationsWithPendingTransfer
-            },
-            domainContext
+            }
           );
         }
       }
