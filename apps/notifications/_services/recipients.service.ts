@@ -314,17 +314,19 @@ export class RecipientsService extends BaseService {
     for (const innovation of dbInnovations) {
       const assignedUsers: RecipientType[] = [];
       for (const support of innovation.innovationSupports) {
-        const user = support.organisationUnitUsers[0]?.organisationUser.user;
-        const role = user?.serviceRoles[0];
-        // This will always be true because of the inner join, but just in case
-        if (role) {
-          assignedUsers.push({
-            roleId: role.id,
-            role: role.role,
-            userId: user.id,
-            identityId: user.identityId,
-            isActive: !(role.lockedAt || user.lockedAt)
-          });
+        for (const unitUser of support.organisationUnitUsers) {
+          const user = unitUser.organisationUser.user;
+          const role = user.serviceRoles[0];
+          // This will always be true because of the inner join, but just in case
+          if (role) {
+            assignedUsers.push({
+              roleId: role.id,
+              role: role.role,
+              userId: user.id,
+              identityId: user.identityId,
+              isActive: !(role.lockedAt || user.lockedAt)
+            });
+          }
         }
       }
       res.push({
