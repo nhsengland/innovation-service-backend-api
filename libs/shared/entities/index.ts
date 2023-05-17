@@ -73,10 +73,8 @@ export { UserRoleEntity } from './user/user-role.entity';
 export { UserEntity } from './user/user.entity';
 
 // Views
-import { IdleSupportViewEntity } from './views/idle-support.view.entity';
 import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
-export { IdleSupportViewEntity } from './views/idle-support.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
 
@@ -118,4 +116,4 @@ export const USER_ENTITIES = [
   UserRoleEntity,
   UserEntity
 ];
-export const VIEW_ENTITIES = [IdleSupportViewEntity, InnovationGroupedStatusViewEntity, LastSupportStatusViewEntity];
+export const VIEW_ENTITIES = [InnovationGroupedStatusViewEntity, LastSupportStatusViewEntity];

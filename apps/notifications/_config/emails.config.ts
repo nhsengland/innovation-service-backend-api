@@ -322,6 +322,7 @@ export type EmailTemplatesType = {
     display_name?: string;
     innovation_name: string;
     innovator_name: string;
+    message_url: string;
   };
   [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR]: {
     display_name?: string;

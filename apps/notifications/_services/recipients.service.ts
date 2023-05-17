@@ -1,11 +1,10 @@
 import {
-  IdleSupportViewEntity,
+  ActivityLogEntity,
   InnovationActionEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
   InnovationThreadEntity,
-  InnovationThreadMessageEntity,
   InnovationTransferEntity,
   NotificationEntity,
   NotificationPreferenceEntity,
@@ -15,6 +14,7 @@ import {
   UserRoleEntity
 } from '@notifications/shared/entities';
 import {
+  ActivityTypeEnum,
   EmailNotificationPreferenceEnum,
   EmailNotificationType,
   InnovationActionStatusEnum,
@@ -40,7 +40,6 @@ import { BaseService } from './base.service';
 
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import type { IdentityUserInfo } from '@notifications/shared/types';
-import { groupBy, reduce } from 'lodash';
 
 export type RecipientType = {
   roleId: string;
@@ -700,187 +699,92 @@ export class RecipientsService extends BaseService {
     }));
   }
 
-  // REVIEW: this doesn't seem to be used anywhere
   /**
-   * @description Looks for Innovations actively supported by organisation units (ENGAGING, FURTHER INFO) whose assigned accessors have not interacted with the innovations for a given amount of time.
-   * @description Inactivity is measured by:
-   * @description - The last time an Innovation Support was updated (change the status from A to B) AND;
-   * @description - The last time an Innovation Action was completed by an Innovator (Changed its status from REQUESTED to SUBMITTED) OR no Innovation Actions are found AND;
-   * @description - The last message posted on a thread or a thread was created (which also creates a message, so checking thread messages is enough) OR no messages or threads are found.
-   * @param idlePeriod How many days are considered to be idle
-   * @returns Promise<{recipient: RecipientType, latestInteractionDate: Date}[]>
+   *
+   * @param days number of idle days to check
+   * @param daysMod split notifications by daysMod
    */
-  async idleOrganisationUnitsPerInnovation(
-    idlePeriod = 90
-  ): Promise<{ recipient: RecipientType; latestInteractionDate: Date }[]> {
-    const latestSupportQuery = this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'i')
-      .select('u.id', 'unitId')
-      .addSelect('i.id', 'innovationId')
-      .addSelect('MAX(s.id)', 'supportId')
-      .addSelect('MAX(s.updated_at)', 'latest')
-      .innerJoinAndSelect('i.innovationSupports', 's')
-      .innerJoinAndSelect('s.organisationUnit', 'u')
-      .groupBy('u.id')
-      .addGroupBy('i.id');
-
-    const latestActionQuery = this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'i')
-      .select('u.id', 'unitId')
-      .addSelect('i.id', 'innovationId')
-      .addSelect('MAX(s.id)', 'supportId')
-      .addSelect('MAX(actions.updated_at)', 'latest')
-      .innerJoin('i.innovationSupports', 's')
-      .innerJoin('s.organisationUnit', 'u')
-      .leftJoin('s.action', 'actions')
-      .where(`actions.status = '${InnovationActionStatusEnum.SUBMITTED}'`)
-      .groupBy('u.id')
-      .addGroupBy('i.id');
-
-    const latestMessageQuery = this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'i')
-      .select('u.id', 'unitId')
-      .addSelect('i.id', 'innovationId')
-      .addSelect('MAX(s.id)', 'supportId')
-      .addSelect('MAX(s.updated_at)', 'latest')
-      .innerJoin('i.innovationSupports', 's')
-      .innerJoin('s.organisationUnit', 'u')
-      .innerJoin(InnovationThreadEntity, 'threads', 'threads.innovation_id = i.id')
-      .innerJoin(InnovationThreadMessageEntity, 'messages', 'threads.id = messages.innovation_thread_id')
-      .groupBy('u.id')
-      .addGroupBy('i.id');
-
-    const mainQuery = this.sqlConnection
-      .createQueryBuilder(InnovationEntity, 'innovations')
-
-      .select('users.id', 'userId')
-      .addSelect('users.external_id', 'identityId')
-      .addSelect('roles.id', 'roleId')
-      .addSelect('roles.role', 'role')
-
-      /**
-       * maxSupports 01/01/2022 10:00:00
-       * maxActions 02/01/2022 09:00:00
-       * maxMessages 02/01/2022 09:01:00
-       *
-       * latestInteractionDate = maxMessages = 02/01/2022 09:01:00
-       */
-      .addSelect(
-        '(SELECT MAX(v) FROM (VALUES (MAX(L.latest)), (MAX(l2.latest)), (MAX(l3.latest))) as value(v))',
-        'latestInteractionDate'
-      )
-
-      .innerJoin('innovations.innovationSupports', 'supports')
-      .innerJoin('supports.organisationUnitUsers', 'unitUsers')
-      .innerJoin('unitUsers.organisationUser', 'organisationUsers')
-      .innerJoin('organisationUsers.user', 'users')
-      .innerJoin('users.serviceRoles', 'roles')
-      .innerJoin(
-        _ => latestSupportQuery,
-        'maxSupports',
-        'maxSupports.innovationId = innovations.id and maxSupports.supportId = supports.id'
-      )
-      .leftJoin(
-        _ => latestActionQuery,
-        'maxActions',
-        'maxActions.innovationId = innovations.id and maxActions.supportId = supports.id'
-      )
-      .leftJoin(
-        _ => latestMessageQuery,
-        'maxMessages',
-        'maxMessages.innovationId = innovations.id and maxMessages.supportId = supports.id'
-      )
-      .where(
-        `supports.status in ('${InnovationSupportStatusEnum.ENGAGING}','${InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED}')`
-      )
-      .andWhere(`DATEDIFF(day, maxSupports.latest, GETDATE()) >= ${idlePeriod}`)
-      .andWhere(`(DATEDIFF(day, maxActions.latest, GETDATE()) >= ${idlePeriod} OR maxActions IS NULL)`)
-      .andWhere(`(DATEDIFF(day, maxMessages.latest, GETDATE()) >= ${idlePeriod} OR maxMessages IS NULL)`)
-      // match the role to the orgUnitUser
-      .andWhere('roles.role IN (:...roles)', { roles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR] })
-      .andWhere('roles.organisation_unit_id = unitUsers.organisation_unit_id')
-      // filter locked
-      .andWhere('users.locked_at IS NULL AND roles.locked_at IS NULL AND users.deleted_at IS NULL')
-      .groupBy('roles.id')
-      .addGroupBy('roles.role')
-      .addGroupBy('users.id')
-      .addGroupBy('users.external_id');
-
-    const res = await mainQuery.getRawMany<{
-      userId: string;
-      identityId: string;
-      roleId: string;
-      role: string;
-      latestInteractionDate: Date;
-    }>();
-
-    return res.map(r => ({
-      recipient: {
-        roleId: r.roleId,
-        role: r.role as ServiceRoleEnum,
-        userId: r.userId,
-        identityId: r.identityId,
-        isActive: true
-      },
-      latestInteractionDate: r.latestInteractionDate
-    }));
-  }
-
-  // REVIEW: This method should probably be replaces (waiting DT)
-  async idleSupportsByInnovation(): Promise<
+  async idleSupports(
+    days = 90,
+    daysMod = 10
+  ): Promise<
     {
       innovationId: string;
-      values: {
-        recipient: RecipientType;
-        innovationId: string;
-        ownerId: string;
-        ownerIdentityId: string;
-        unitId: string;
-        unitName: string;
-        innovationName: string;
-      }[];
+      innovationName: string;
+      ownerIdentityId: string;
+      unitId: string;
+      recipient: RecipientType;
     }[]
   > {
-    if (1 === Number('1')) {
-      throw new Error('Not implemented - under revision');
-    }
+    const query = this.sqlConnection
+      .createQueryBuilder(ActivityLogEntity, 'activityLog')
+      .select('innovation.id', 'innovationId')
+      .addSelect('innovation.name', 'innovationName')
+      .addSelect('owner.external_id', 'ownerIdentityId')
+      .addSelect('userRole.organisation_unit_id', 'unitId')
+      .addSelect('qas.id', 'qaRoleId')
+      .addSelect('qas.role', 'qaRole')
+      .addSelect('qaUser.id', 'qaUserId')
+      .addSelect('qaUser.external_id', 'qaUserIdentityId')
 
-    const idleSupports = await this.sqlConnection.manager.find(IdleSupportViewEntity);
+      // Joins
+      .innerJoin('activityLog.userRole', 'userRole')
+      .innerJoin('activityLog.innovation', 'innovation')
+      .innerJoin(
+        'innovation.innovationSupports',
+        'supports',
+        'supports.organisation_unit_id = userRole.organisation_unit_id'
+      )
+      .innerJoin('user_role', 'qas', 'qas.organisation_unit_id = userRole.organisation_unit_id')
+      .innerJoin('user', 'qaUser', 'qaUser.id = qas.user_id')
+      .leftJoin('innovation.owner', 'owner') // currently owner can be deleted and innovation active ...
 
-    return reduce(
-      groupBy(idleSupports, 'innovationId'),
-      (
-        res: {
-          innovationId: string;
-          values: {
-            recipient: RecipientType;
-            innovationId: string;
-            ownerId: string;
-            ownerIdentityId: string;
-            unitId: string;
-            unitName: string;
-            innovationName: string;
-          }[];
-        }[],
-        val,
-        key
-      ) => {
-        res.push({
-          innovationId: key,
-          values: val.map(v => ({
-            recipient: v.identityId as any as RecipientType, // TODO this is wrong but the query will be reviewed
-            innovationName: v.innovationName,
-            innovationId: v.innovationId,
-            ownerId: v.ownerId,
-            ownerIdentityId: v.ownerIdentityId,
-            unitId: v.organisationUnitId,
-            unitName: v.organisationUnitName
-          }))
-        });
-        return res;
-      },
-      []
-    );
+      // Conditions
+      .where('activityLog.type IN (:...types)', {
+        types: [ActivityTypeEnum.ACTIONS, ActivityTypeEnum.THREADS, ActivityTypeEnum.SUPPORT]
+      })
+
+      // only active supports
+      .andWhere('supports.status IN (:...statuses)', {
+        statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
+      })
+
+      .andWhere('userRole.organisation_unit_id IS NOT NULL') // only A/QAs activity
+      .andWhere('qas.role = :role', { role: ServiceRoleEnum.QUALIFYING_ACCESSOR }) // only notify QAs
+
+      // filter locked/deleted
+      .andWhere('qas.locked_at IS NULL')
+      .andWhere('qaUser.locked_at IS NULL')
+      .andWhere('qaUser.deleted_at IS NULL')
+
+      // group by
+      .groupBy('innovation.id')
+      .addGroupBy('innovation.name')
+      .addGroupBy('owner.external_id')
+      .addGroupBy('userRole.organisation_unit_id')
+      .addGroupBy('qas.id')
+      .addGroupBy('qas.role')
+      .addGroupBy('qaUser.id')
+      .addGroupBy('qaUser.external_id')
+
+      // having
+      .having('DATEDIFF(day, MAX(activityLog.created_at), GETDATE()) > :days', { days })
+      .andHaving('(DATEDIFF(day, MAX(activityLog.created_at), GETDATE()) - :days) % :daysMod = 0', { days, daysMod });
+
+    const rows = await query.getRawMany();
+    return rows.map(row => ({
+      innovationId: row.innovationId,
+      innovationName: row.innovationName,
+      ownerIdentityId: row.ownerIdentityId,
+      unitId: row.unitId,
+      recipient: {
+        roleId: row.qaRoleId,
+        role: row.qaRole,
+        userId: row.qaUserId,
+        identityId: row.qaUserIdentityId,
+        isActive: true
+      }
+    }));
   }
 
   /**

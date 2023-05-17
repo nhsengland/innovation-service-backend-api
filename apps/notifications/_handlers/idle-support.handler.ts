@@ -1,8 +1,9 @@
 import { NotificationLogTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum } from '../_config';
+import { container, EmailTypeEnum, ENV } from '../_config';
 
+import { UrlModel } from '@notifications/shared/models';
 import { LoggerServiceSymbol, LoggerServiceType } from '@notifications/shared/services';
 import { BaseHandler } from './base.handler';
 
@@ -28,41 +29,44 @@ export class IdleSupportHandler extends BaseHandler<
   }
 
   private async notifyIdleAccessors(): Promise<void> {
-    const idleSupportsByInnovation = await this.recipientsService.idleSupportsByInnovation();
+    const idleSupports = await this.recipientsService.idleSupports();
 
-    if (!idleSupportsByInnovation.length) {
+    if (!idleSupports.length) {
       return;
     }
 
-    const ownerIds = [...new Set(idleSupportsByInnovation.flatMap(is => is.values.map(i => i.ownerId)))];
+    const ownerIds = [...new Set(idleSupports.map(i => i.ownerIdentityId))];
     const ownerIdentities = await this.recipientsService.usersIdentityInfo(ownerIds);
 
-    for (const innovation of idleSupportsByInnovation) {
-      const ownerId = innovation.values.find(_ => true)?.ownerId;
-
-      if (!ownerId) {
-        this.logger.error(`Innovation owner not found for innovation: ${innovation.innovationId}`);
+    for (const idleSupport of idleSupports) {
+      const owner = idleSupport.ownerIdentityId ? ownerIdentities.get(idleSupport.ownerIdentityId) : undefined;
+      if (!owner) {
+        this.logger.error(`Innovation owner not found for innovation: ${idleSupport.innovationId}`, {});
         continue;
       }
 
-      for (const details of innovation.values) {
-        this.emails.push({
-          templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
-          to: details.recipient,
-          notificationPreferenceType: null,
+      this.emails.push({
+        templateId: EmailTypeEnum.QA_A_IDLE_SUPPORT,
+        to: idleSupport.recipient,
+        notificationPreferenceType: null,
+        params: {
+          innovation_name: idleSupport.innovationName,
+          innovator_name: owner.displayName ?? '',
+          message_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('accessor/innovations/:innovationId/threads')
+            .setPathParams({
+              innovationId: idleSupport.innovationId
+            })
+            .buildUrl()
+        },
+        log: {
+          type: NotificationLogTypeEnum.QA_A_IDLE_SUPPORT,
           params: {
-            innovation_name: innovation.values.find(_ => true)?.innovationName || '',
-            innovator_name: ownerIdentities.get(details.ownerIdentityId)?.displayName || ''
-          },
-          log: {
-            type: NotificationLogTypeEnum.QA_A_IDLE_SUPPORT,
-            params: {
-              innovationId: details.innovationId,
-              unitId: details.unitId
-            }
+            innovationId: idleSupport.innovationId,
+            unitId: idleSupport.unitId
           }
-        });
-      }
+        }
+      });
     }
   }
 }
