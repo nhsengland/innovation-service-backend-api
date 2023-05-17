@@ -54,6 +54,10 @@ class V1NotificationsListener {
       }
 
       for (const item of notificationsInstance.getInApp()) {
+        if (!item.userRoleIds.length) {
+          continue;
+        }
+
         await storageQueueService.sendMessage<InAppMessageType>(QueuesEnum.IN_APP, {
           data: {
             requestUser: { id: message.data.requestUser.id },
