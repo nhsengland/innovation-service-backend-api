@@ -678,7 +678,7 @@ export class RecipientsService extends BaseService {
   > {
     const dbInnovations = await this.sqlConnection
       .createQueryBuilder(InnovationEntity, 'innovations')
-      .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.external_id', 'roles.id', 'roles.role'])
+      .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.identityId', 'roles.id', 'roles.role'])
       .innerJoin('innovations.owner', 'owner')
       .innerJoin('owner.serviceRoles', 'roles')
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
