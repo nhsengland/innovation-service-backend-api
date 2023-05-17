@@ -10,7 +10,7 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
-import { EmailErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
+import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
@@ -30,7 +30,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
 
   constructor(
     requestUser: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE],
+    data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE]
   ) {
     super(requestUser, data);
   }
@@ -73,7 +73,16 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
       this.inputData.innovationCollaborator.id
     );
-    const collaboratorInfo = await this.recipientsService.usersIdentityInfo(innovationCollaborator.email);
+
+    if (!innovationCollaborator?.userId) {
+      // this should never happen because the users must be registered to update the innovation collaborator status
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_INNOVATOR);
+    }
+
+    const collaboratorIdentity = await this.recipientsService.userId2IdentityId(innovationCollaborator.userId);
+    const collaboratorInfo = collaboratorIdentity
+      ? await this.recipientsService.usersIdentityInfo(collaboratorIdentity)
+      : null;
 
     if (!collaboratorInfo) {
       throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);

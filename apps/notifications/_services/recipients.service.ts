@@ -503,7 +503,7 @@ export class RecipientsService extends BaseService {
       collaboratorId: dbCollaborator.collaborator_id,
       email: dbCollaborator.collaborator_email,
       status: dbCollaborator.collaborator_status,
-      userId: dbCollaborator.collaborator_user_id
+      userId: dbCollaborator.user_id
     };
   }
 
@@ -973,6 +973,22 @@ export class RecipientsService extends BaseService {
       .getOne();
 
     return user?.id ?? null;
+  }
+
+  /**
+   * convert from userId to identityId including the deleted users
+   * @param userId the user id
+   * @returns the identityId
+   */
+  async userId2IdentityId(userId: string): Promise<string | null> {
+    const user = await this.sqlConnection
+      .createQueryBuilder(UserEntity, 'user')
+      .withDeleted()
+      .select('user.identityId')
+      .where('user.id = :userId', { userId })
+      .getOne();
+
+    return user?.identityId ?? null;
   }
 
   /**

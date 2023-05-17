@@ -6,6 +6,7 @@ import { EmailTypeEnum } from '../_config';
 import { NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { BaseHandler } from './base.handler';
 
+// REVIEW this isn't used
 export class AccessorUnitChangeHandler extends BaseHandler<
   NotifierTypeEnum.ACCESSOR_UNIT_CHANGE,
   | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED
@@ -13,10 +14,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
   | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
   Record<string, never>
 > {
-  constructor(
-    requestUser: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]
-  ) {
+  constructor(requestUser: DomainContextType, data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]) {
     super(requestUser, data);
   }
 
@@ -26,7 +24,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
       [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
       { organisationUnit: this.inputData.newOrganisationUnitId }
     );
-    const userIdentityInfo = await this.recipientsService.usersIdentityInfo(this.inputData.user.id);
+    const userIdentityInfo = await this.recipientsService.usersIdentityInfo(this.inputData.user.identityId);
 
     if (!userInfo || !userIdentityInfo) {
       throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);

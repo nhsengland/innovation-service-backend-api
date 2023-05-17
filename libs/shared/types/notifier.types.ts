@@ -170,7 +170,7 @@ export type NotifierTemplatesType = {
   };
 
   [NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]: {
-    user: { id: string };
+    user: { id: string; identityId: string };
     oldOrganisationUnitId: string;
     newOrganisationUnitId: string;
   };

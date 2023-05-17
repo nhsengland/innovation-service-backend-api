@@ -343,7 +343,8 @@ export const NOTIFICATIONS_CONFIG: {
     handler: AccessorUnitChangeHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]>({
       user: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]['user']>({
-        id: Joi.string().guid().required()
+        id: Joi.string().guid().required(),
+        identityId: Joi.string().guid().required()
       }).required(),
       oldOrganisationUnitId: Joi.string().guid().required(),
       newOrganisationUnitId: Joi.string().guid().required()

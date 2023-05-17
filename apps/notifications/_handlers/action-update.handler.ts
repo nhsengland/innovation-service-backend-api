@@ -55,10 +55,7 @@ export class ActionUpdateHandler extends BaseHandler<
     comment?: string;
   } = {};
 
-  constructor(
-    requestUser: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE],
-  ) {
+  constructor(requestUser: DomainContextType, data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]) {
     super(requestUser, data);
   }
 
@@ -240,7 +237,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
     const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
-    const actionOwnerInfo = await this.recipientsService.usersIdentityInfo(this.data.actionInfo.owner.userId);
+    const actionOwnerInfo = await this.recipientsService.usersIdentityInfo(this.data.actionInfo.owner.identityId);
     const actionOwnerUnitName =
       this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
