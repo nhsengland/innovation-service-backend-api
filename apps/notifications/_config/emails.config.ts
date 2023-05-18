@@ -268,6 +268,7 @@ export type EmailTemplatesType = {
     innovator_name?: string;
     new_innovator_name: string;
     innovation_name: string;
+    innovation_url: string;
   };
   [EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_NEW_USER]: {
     innovation_name: string;

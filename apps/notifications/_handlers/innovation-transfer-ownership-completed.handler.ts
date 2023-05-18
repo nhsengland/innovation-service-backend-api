@@ -2,11 +2,12 @@ import { InnovationTransferStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from 
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container } from '../_config';
+import { ENV, container } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { UrlModel } from '@notifications/shared/models';
+import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
@@ -21,7 +22,7 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -78,7 +79,11 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
             params: {
               innovator_name: innovationOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
               new_innovator_name: targetUser?.displayName || transfer.email,
-              innovation_name: innovation.name
+              innovation_name: innovation.name,
+              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+                .addPath('innovator/innovations/:innovationId')
+                .setPathParams({ innovationId: this.inputData.innovationId })
+                .buildUrl()
             }
           });
         }
