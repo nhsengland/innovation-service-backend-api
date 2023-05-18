@@ -319,7 +319,7 @@ export class NotificationsService extends BaseService {
 
     const saveData = preferences.map(p => ({
       userRole: { id: userRoleId },
-      notification_type: p.notificationType,
+      notificationType: p.notificationType,
       preference: p.preference,
       createdBy: dbUser.id, // this is only for the first time as BaseEntity defines it as update: false
       createdAt: now,
