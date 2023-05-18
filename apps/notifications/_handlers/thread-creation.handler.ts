@@ -9,8 +9,8 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class ThreadCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_CREATION,
@@ -23,7 +23,7 @@ export class ThreadCreationHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_CREATION],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -111,7 +111,7 @@ export class ThreadCreationHandler extends BaseHandler<
 
     // Add owner if not the same as the request user.
     if (this.requestUser.id !== innovation.ownerId) {
-      recipientIds.push(this.requestUser.id);
+      recipientIds.push(innovation.ownerId);
     }
 
     const recipients = (await this.recipientsService.getUsersRecipient(recipientIds, ServiceRoleEnum.INNOVATOR)).filter(
