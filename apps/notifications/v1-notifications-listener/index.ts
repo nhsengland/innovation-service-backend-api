@@ -41,10 +41,10 @@ class V1NotificationsListener {
         context
       );
 
-      context.log.info('RESULT::Emails', JSON.stringify(notificationsInstance.getEmails()));
-      context.log.info('RESULT::InApp', JSON.stringify(notificationsInstance.getInApp()));
+      const emails = await notificationsInstance.getEmails();
+      context.log.info('RESULT::Emails', JSON.stringify(emails));
 
-      for (const item of await notificationsInstance.getEmails()) {
+      for (const item of emails) {
         await storageQueueService.sendMessage<EmailMessageType>(QueuesEnum.EMAIL, {
           data: {
             type: item.templateId,
@@ -55,7 +55,10 @@ class V1NotificationsListener {
         });
       }
 
-      for (const item of notificationsInstance.getInApp()) {
+      const inApps = notificationsInstance.getInApp();
+      context.log.info('RESULT::InApp', JSON.stringify(inApps));
+
+      for (const item of inApps) {
         if (!item.userRoleIds.length) {
           continue;
         }

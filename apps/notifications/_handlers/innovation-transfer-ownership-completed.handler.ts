@@ -3,10 +3,11 @@ import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container } from '../_config';
+import { ENV, container } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 
 import type { Context } from '@azure/functions';
+import { UrlModel } from '@notifications/shared/models';
 import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
@@ -79,7 +80,11 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
             params: {
               innovator_name: innovationOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
               new_innovator_name: targetUser?.displayName || transfer.email,
-              innovation_name: innovation.name
+              innovation_name: innovation.name,
+              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+                .addPath('innovator/innovations/:innovationId')
+                .setPathParams({ innovationId: this.inputData.innovationId })
+                .buildUrl()
             }
           });
         }
