@@ -5,26 +5,27 @@ import {
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
+import type { IdentityProviderService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipReminderHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER,
   EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_NEW_USER | EmailTypeEnum.INNOVATION_TRANSFER_REMINDER_EXISTING_USER,
   Record<string, never>
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
+  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_REMINDER],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 

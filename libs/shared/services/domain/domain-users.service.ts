@@ -11,8 +11,7 @@ import {
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
 
-import type { IdentityProviderServiceType, NotifierServiceType } from '../interfaces';
-
+import type { IdentityProviderService, NotifierService } from '..';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
@@ -20,9 +19,9 @@ export class DomainUsersService {
 
   constructor(
     private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderServiceType,
+    private identityProviderService: IdentityProviderService,
     private domainInnovationsService: DomainInnovationsService,
-    private notifierService: NotifierServiceType
+    private notifierService: NotifierService
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }

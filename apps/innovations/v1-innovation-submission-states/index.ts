@@ -3,12 +3,13 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { AuthorizationService } from '@innovations/shared/services';
+import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -22,7 +23,7 @@ class V1InnovationSubmissionStates {
     identifierParam: 'innovationId'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {

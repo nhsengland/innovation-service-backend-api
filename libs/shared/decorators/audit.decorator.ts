@@ -4,13 +4,9 @@ import { get } from 'lodash';
 import { container } from '../config/inversify.config';
 import { GenericErrorsEnum } from '../errors';
 import { NotImplementedError } from '../errors/errors.config';
+import type { AuditService, SQLConnectionService } from '../services';
 import { ActionEnum, TargetEnum } from '../services/integrations/audit.service';
-import {
-  AuditServiceSymbol,
-  AuditServiceType,
-  SQLConnectionServiceSymbol,
-  SQLConnectionServiceType
-} from '../services/interfaces';
+import SHARED_SYMBOLS from '../services/symbols';
 import type { CustomContextType } from '../types';
 
 // Support multiple types of options in order to extract the identifier from either the requestParam, requestQyery, requestBody or responseBody
@@ -43,9 +39,9 @@ type AuditOptions = { action: ActionEnum; target: TargetEnum } & (
 export function Audit(params: AuditOptions | AuditOptions[]) {
   return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
     const original = descriptor.value;
-    const auditService = container.get<AuditServiceType>(AuditServiceSymbol);
+    const auditService = container.get<AuditService>(SHARED_SYMBOLS.AuditService);
     // TODO - sqlConnection is used to get the user id from the externalId. This should be removed and a cached query should be used instead once implemented
-    const sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
+    const sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
 
     // Support either single or array of audit options
     const auditOptions = Array.isArray(params) ? params : [params];

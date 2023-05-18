@@ -1,16 +1,16 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
-
-import type { CustomContextType } from '@innovations/shared/types';
-
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationStatusEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-
+import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import type { CustomContextType } from '@innovations/shared/types';
+
 import { container } from '../_config';
+
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -24,7 +24,7 @@ class CreateInnovationAssessment {
     identifierResponseField: 'id'
   })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationAssessmentsService = container.get<InnovationAssessmentsService>(
       SYMBOLS.InnovationAssessmentsService
     );

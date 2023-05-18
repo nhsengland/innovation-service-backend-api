@@ -15,13 +15,14 @@ import type {
 import type { EmailTemplatesType, EmailTypeEnum } from '../_config';
 
 import { BaseService } from './base.service';
-import { EmailServiceSymbol, EmailServiceType } from './interfaces';
+import type { EmailService } from './email.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class DispatchService extends BaseService {
   constructor(
-    @inject(EmailServiceSymbol)
-    private emailService: EmailServiceType
+    @inject(SYMBOLS.EmailService)
+    private emailService: EmailService
   ) {
     super();
   }

@@ -45,13 +45,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType,
-  type DomainUsersService
-} from '@innovations/shared/services';
+import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
@@ -65,13 +59,14 @@ import type {
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }
@@ -1299,11 +1294,7 @@ export class InnovationsService extends BaseService {
     });
 
     // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_SUBMITED,
-      { innovationId }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
 
     return {
       id: innovationId,
@@ -1330,17 +1321,13 @@ export class InnovationsService extends BaseService {
     });
 
     for (const savedInnovation of savedInnovations) {
-      await this.notifierService.send(
-        context,
-        NotifierTypeEnum.INNOVATION_WITHDRAWN,
-        {
-          innovation: {
-            id: savedInnovation.id,
-            name: savedInnovation.name,
-            affectedUsers: savedInnovation.affectedUsers
-          }
+      await this.notifierService.send(context, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
+        innovation: {
+          id: savedInnovation.id,
+          name: savedInnovation.name,
+          affectedUsers: savedInnovation.affectedUsers
         }
-      );
+      });
     }
 
     return { id: dbInnovation.id };
@@ -1441,11 +1428,11 @@ export class InnovationsService extends BaseService {
       return { id: innovationId };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
+      innovationId,
+      previousAssignedAccessors: previousAssignedAccessors,
+      message: data.message
+    });
 
     return result;
   }
@@ -1581,11 +1568,10 @@ export class InnovationsService extends BaseService {
 
     // Create notification
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-      { innovationId: innovationId, requestId: request.id }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+      innovationId: innovationId,
+      requestId: request.id
+    });
 
     return {
       id: request.id
@@ -1649,11 +1635,10 @@ export class InnovationsService extends BaseService {
     });
 
     // Create notification
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
-      { innovationId: exportRequest.innovation.id, requestId: updatedRequest.id }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK, {
+      innovationId: exportRequest.innovation.id,
+      requestId: updatedRequest.id
+    });
 
     return {
       id: updatedRequest.id

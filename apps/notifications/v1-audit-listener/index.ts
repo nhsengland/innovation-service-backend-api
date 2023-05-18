@@ -3,8 +3,9 @@ import { container } from '../_config';
 import type { Context } from '@azure/functions';
 
 import { JoiHelper } from '@notifications/shared/helpers';
-import { AuditServiceSymbol, AuditServiceType } from '@notifications/shared/services';
+import type { AuditService } from '@notifications/shared/services';
 import type { AuditEntry } from '@notifications/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 
 import { AuditMessageEntry, MessageSchema } from './validation.schemas';
 
@@ -13,7 +14,7 @@ class V1AuditListener {
   static async queueTrigger(context: Context, auditEntry: AuditEntry): Promise<void> {
     context.log.info('AUDIT LISTENER: ', JSON.stringify(auditEntry));
 
-    const auditService = container.get<AuditServiceType>(AuditServiceSymbol);
+    const auditService = container.get<AuditService>(SHARED_SYMBOLS.AuditService);
     try {
       const message = JoiHelper.Validate<AuditMessageEntry>(MessageSchema, auditEntry);
 

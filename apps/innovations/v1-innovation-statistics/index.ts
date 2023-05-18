@@ -3,11 +3,12 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@innovations/shared/services';
-
+import type { AuthorizationService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
+
 import { StatisticsHandlersHelper } from '../_helpers/handlers.helper';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.schemas';
@@ -15,7 +16,7 @@ import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.s
 class GetInnovationStatistics {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);

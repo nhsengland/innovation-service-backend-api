@@ -5,11 +5,12 @@ import { SwaggerHelper } from '@admin/shared/helpers/swagger.helper';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
+import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
@@ -18,7 +19,7 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 class V1AdminTermsOfUseUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {

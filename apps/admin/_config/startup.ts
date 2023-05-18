@@ -4,8 +4,9 @@ import YAML from 'yaml';
 
 import { container } from '@admin/shared/config/inversify.config';
 
-import { HttpServiceSymbol, HttpServiceType } from '@admin/shared/services';
+import type { HttpService } from '@admin/shared/services';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AnnouncementsService } from '../_services/announcements.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { StatisticsService } from '../_services/statistics.service';
@@ -25,7 +26,7 @@ container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(Announceme
 export const startup = async (): Promise<void> => {
   console.log('Initializing Admin app function');
 
-  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
 
   try {
     console.group('Initializing Admin app function:');

@@ -1,12 +1,13 @@
 import { InnovationTransferStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
+import type { IdentityProviderService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
@@ -15,13 +16,13 @@ export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
   Record<string, never>
 > {
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
+  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 

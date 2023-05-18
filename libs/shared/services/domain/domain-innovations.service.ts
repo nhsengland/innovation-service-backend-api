@@ -1,5 +1,6 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
+import type { FileStorageService, IdentityProviderService } from '..';
 import { EXPIRATION_DATES } from '../../constants';
 import {
   ActivityLogEntity,
@@ -39,7 +40,6 @@ import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '.
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
 import type { NotifierService } from '../integrations/notifier.service';
-import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -48,8 +48,8 @@ export class DomainInnovationsService {
 
   constructor(
     private sqlConnection: DataSource,
-    private fileStorageService: FileStorageServiceType,
-    private identityProviderService: IdentityProviderServiceType,
+    private fileStorageService: FileStorageService,
+    private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);

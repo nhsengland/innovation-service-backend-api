@@ -9,15 +9,10 @@ import {
   UserErrorsEnum
 } from '../../errors';
 
+import type { LoggerService, StorageQueueService } from '..';
 import type { IdentityUserInfo } from '../../types/domain.types';
-import {
-  CacheServiceSymbol,
-  LoggerServiceSymbol,
-  LoggerServiceType,
-  StorageQueueServiceSymbol,
-  StorageQueueServiceType
-} from '../interfaces';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
+import SHARED_SYMBOLS from '../symbols';
 import { QueuesEnum } from './storage-queue.service';
 
 type b2cGetUserInfoByEmailDTO = {
@@ -79,9 +74,9 @@ export class IdentityProviderService {
   private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
-    @inject(CacheServiceSymbol) cacheService: CacheService,
-    @inject(LoggerServiceSymbol) private loggerService: LoggerServiceType,
-    @inject(StorageQueueServiceSymbol) private storageQueueService: StorageQueueServiceType
+    @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
+    @inject(SHARED_SYMBOLS.LoggerService) private loggerService: LoggerService,
+    @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
   ) {
     this.cache = cacheService.get('IdentityUserInfo');
   }

@@ -5,65 +5,41 @@ import { Container } from 'inversify';
 import type { DataSource } from 'typeorm';
 import {
   AuthorizationService,
-  AuthorizationServiceType,
   DomainService,
-  DomainServiceType,
   FileStorageService,
-  FileStorageServiceType,
   HttpService,
-  HttpServiceType,
   IdentityProviderService,
-  IdentityProviderServiceType,
   LoggerService,
-  LoggerServiceType,
   NotifierService,
-  NotifierServiceType,
   SQLConnectionService,
-  SQLConnectionServiceType,
-  StorageQueueService,
-  StorageQueueServiceType
+  StorageQueueService
 } from '../services';
 import { AuditService } from '../services/integrations/audit.service';
-import {
-  AuditServiceSymbol,
-  AuditServiceType,
-  AuthorizationServiceSymbol,
-  CacheServiceSymbol,
-  CacheServiceType,
-  DomainServiceSymbol,
-  FileStorageServiceSymbol,
-  HttpServiceSymbol,
-  IdentityProviderServiceSymbol,
-  LoggerServiceSymbol,
-  NotifierServiceSymbol,
-  SQLConnectionServiceSymbol,
-  SQLProviderSymbol,
-  StorageQueueServiceSymbol
-} from '../services/interfaces';
 import { CacheService } from '../services/storage/cache.service';
 import { SqlProvider, sqlProvider } from '../services/storage/sql-connection.provider';
+import SHARED_SYMBOLS from '../services/symbols';
 
 export const container: Container = new Container();
 
-container.bind<SqlProvider>(SQLProviderSymbol).toProvider<DataSource>(sqlProvider);
+container.bind<SqlProvider>(SHARED_SYMBOLS.SqlProvider).toProvider<DataSource>(sqlProvider);
 
-container.bind<AuthorizationServiceType>(AuthorizationServiceSymbol).to(AuthorizationService).inSingletonScope();
-container.bind<DomainServiceType>(DomainServiceSymbol).to(DomainService).inSingletonScope();
-container.bind<FileStorageServiceType>(FileStorageServiceSymbol).to(FileStorageService).inSingletonScope();
-container.bind<HttpServiceType>(HttpServiceSymbol).to(HttpService).inSingletonScope();
+container.bind<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService).to(AuthorizationService).inSingletonScope();
+container.bind<DomainService>(SHARED_SYMBOLS.DomainService).to(DomainService).inSingletonScope();
+container.bind<FileStorageService>(SHARED_SYMBOLS.FileStorageService).to(FileStorageService).inSingletonScope();
+container.bind<HttpService>(SHARED_SYMBOLS.HttpService).to(HttpService).inSingletonScope();
 container
-  .bind<IdentityProviderServiceType>(IdentityProviderServiceSymbol)
+  .bind<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService)
   .to(IdentityProviderService)
   .inSingletonScope();
-container.bind<LoggerServiceType>(LoggerServiceSymbol).to(LoggerService).inSingletonScope();
-container.bind<NotifierServiceType>(NotifierServiceSymbol).to(NotifierService).inSingletonScope();
-container.bind<SQLConnectionServiceType>(SQLConnectionServiceSymbol).to(SQLConnectionService).inSingletonScope();
-container.bind<StorageQueueServiceType>(StorageQueueServiceSymbol).to(StorageQueueService).inSingletonScope();
-container.bind<AuditServiceType>(AuditServiceSymbol).to(AuditService).inSingletonScope();
-container.bind<CacheServiceType>(CacheServiceSymbol).to(CacheService).inSingletonScope();
+container.bind<LoggerService>(SHARED_SYMBOLS.LoggerService).to(LoggerService).inSingletonScope();
+container.bind<NotifierService>(SHARED_SYMBOLS.NotifierService).to(NotifierService).inSingletonScope();
+container.bind<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).to(SQLConnectionService).inSingletonScope();
+container.bind<StorageQueueService>(SHARED_SYMBOLS.StorageQueueService).to(StorageQueueService).inSingletonScope();
+container.bind<AuditService>(SHARED_SYMBOLS.AuditService).to(AuditService).inSingletonScope();
+container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSingletonScope();
 
 // Initialize the services that depend on the SQL connection
-const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 domainService
   .sqlProvider()
   .then(connection => {
@@ -74,7 +50,7 @@ domainService
     console.log('SQLConnection ERROR', error);
     process.exit(1);
   });
-const sqlService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+const sqlService = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
 sqlService
   .sqlProvider()
   .then(connection => {

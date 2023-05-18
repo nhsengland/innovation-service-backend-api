@@ -3,7 +3,8 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import type { AuthorizationService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -16,7 +17,7 @@ import { PathParamsSchema, PathParamType } from './validation.schemas';
 class V1UserNotificationsDelete {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const notificationsService = container.get<NotificationsService>(SYMBOLS.NotificationsService);
 
     try {

@@ -3,7 +3,8 @@ import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@users/shared/services';
+import type { AuthorizationService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -14,7 +15,7 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1UserInvitesList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {

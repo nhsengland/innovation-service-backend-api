@@ -1,8 +1,9 @@
 import { inject, injectable } from 'inversify';
 import type { DataSource } from 'typeorm';
 
+import type { SQLConnectionService } from '..';
 import { AuditEntity } from '../../entities';
-import { SQLConnectionServiceSymbol, SQLConnectionServiceType, StorageQueueServiceSymbol } from '../interfaces';
+import SHARED_SYMBOLS from '../symbols';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
 export enum ActionEnum {
@@ -37,9 +38,9 @@ export class AuditService {
   private sqlConnection: DataSource;
 
   constructor(
-    @inject(StorageQueueServiceSymbol) private readonly storageQueueService: StorageQueueService,
-    @inject(SQLConnectionServiceSymbol)
-    private readonly sqlConnectionService: SQLConnectionServiceType
+    @inject(SHARED_SYMBOLS.StorageQueueService) private readonly storageQueueService: StorageQueueService,
+    @inject(SHARED_SYMBOLS.SQLConnectionService)
+    private readonly sqlConnectionService: SQLConnectionService
   ) {
     this.sqlConnection = this.sqlConnectionService.getConnection();
   }

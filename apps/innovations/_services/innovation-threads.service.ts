@@ -18,24 +18,18 @@ import {
   NotFoundError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderService,
-  IdentityProviderServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationThreadsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProvider: IdentityProviderService,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProvider: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }
@@ -827,15 +821,11 @@ export class InnovationThreadsService extends BaseService {
     messageId: string,
     thread: InnovationThreadEntity
   ): Promise<void> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.THREAD_CREATION,
-      {
-        threadId: thread.id,
-        messageId,
-        innovationId: thread.innovation.id
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_CREATION, {
+      threadId: thread.id,
+      messageId,
+      innovationId: thread.innovation.id
+    });
   }
 
   private async sendThreadMessageCreateNotification(
@@ -843,14 +833,10 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
   ): Promise<void> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.THREAD_MESSAGE_CREATION,
-      {
-        threadId: thread.id,
-        messageId: threadMessage.id,
-        innovationId: thread.innovation.id
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_MESSAGE_CREATION, {
+      threadId: thread.id,
+      messageId: threadMessage.id,
+      innovationId: thread.innovation.id
+    });
   }
 }

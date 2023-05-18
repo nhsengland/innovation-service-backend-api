@@ -1,9 +1,11 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { AuthorizationService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
@@ -16,7 +18,7 @@ import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './
 class V1InnovationCollaboratorsList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
       SYMBOLS.InnovationCollaboratorsService
     );

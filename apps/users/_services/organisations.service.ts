@@ -4,16 +4,17 @@ import type { EntityManager } from 'typeorm';
 import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
 import { OrganisationTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
-
 import { ValidationsHelper } from '@users/shared/helpers';
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
+import type { IdentityProviderService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
+
 import { BaseService } from './base.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
   constructor(
-    @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService
   ) {
     super();
   }

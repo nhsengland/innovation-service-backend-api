@@ -17,17 +17,10 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@admin/shared/errors';
-import {
-  CacheConfigType,
-  CacheService,
-  CacheServiceSymbol,
-  IdentityProviderService,
-  IdentityProviderServiceSymbol,
-  NotifierService,
-  NotifierServiceSymbol
-} from '@admin/shared/services';
+import { CacheConfigType, CacheService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -35,9 +28,9 @@ export class UsersService extends BaseService {
   private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
-    @inject(CacheServiceSymbol) cacheService: CacheService,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
     this.cache = cacheService.get('IdentityUserInfo');
@@ -113,11 +106,9 @@ export class UsersService extends BaseService {
 
       // Send notification to locked user.
       if (data.accountEnabled != undefined && !data.accountEnabled) {
-        await this.notifierService.send(
-          context,
-          NotifierTypeEnum.LOCK_USER,
-          { user: { identityId: dbUser.identityId } }
-        );
+        await this.notifierService.send(context, NotifierTypeEnum.LOCK_USER, {
+          user: { identityId: dbUser.identityId }
+        });
       }
 
       // Remove cache entry.

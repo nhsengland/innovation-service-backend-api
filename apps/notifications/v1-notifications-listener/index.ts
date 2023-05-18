@@ -2,8 +2,9 @@ import type { Context } from '@azure/functions';
 
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
-import { StorageQueueServiceSymbol, StorageQueueServiceType } from '@notifications/shared/services';
+import type { StorageQueueService } from '@notifications/shared/services';
 import { QueuesEnum } from '@notifications/shared/services/integrations/storage-queue.service';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType } from '@notifications/shared/types';
 
 import { container } from '../_config';
@@ -19,13 +20,13 @@ class V1NotificationsListener {
     context: Context,
     requestMessage: {
       data: {
-        requestUser: DomainContextType; 
+        requestUser: DomainContextType;
         action: NotifierTypeEnum;
         params: { [key: string]: any };
       };
     }
   ): Promise<void> {
-    const storageQueueService = container.get<StorageQueueServiceType>(StorageQueueServiceSymbol);
+    const storageQueueService = container.get<StorageQueueService>(SHARED_SYMBOLS.StorageQueueService);
 
     context.log.info('NOTIFICATION LISTENER: ', JSON.stringify(requestMessage));
 

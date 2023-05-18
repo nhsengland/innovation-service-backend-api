@@ -1,5 +1,5 @@
 import type { createClient } from 'redis';
-import type { LoggerServiceType } from '../interfaces';
+import type { LoggerService } from '..';
 
 const DEFAULT_CACHE_TTL = Number(process.env['REDIS_CACHE_TTL']) || 24 * 3600; // This is really || since we want to use the default if the env variable is not set or NaN
 
@@ -13,7 +13,7 @@ export class RedisCache<T> {
    */
   constructor(
     private redis: ReturnType<typeof createClient>,
-    private logger: LoggerServiceType,
+    private logger: LoggerService,
     private name: string,
     private ttl = DEFAULT_CACHE_TTL
   ) {

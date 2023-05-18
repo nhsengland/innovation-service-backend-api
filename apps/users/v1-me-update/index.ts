@@ -5,7 +5,8 @@ import { JwtDecoder } from '@users/shared/decorators';
 import { ServiceRoleEnum } from '@users/shared/enums';
 import { BadRequestError, GenericErrorsEnum } from '@users/shared/errors';
 import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import type { AuthorizationService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -23,7 +24,7 @@ import {
 class V1MeUpdate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {

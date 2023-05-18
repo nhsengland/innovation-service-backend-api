@@ -28,12 +28,8 @@ import {
   ServiceRoleEnum
 } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
-import {
-  DomainService,
-  DomainServiceSymbol,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType
-} from '@notifications/shared/services';
+import type { DomainService, IdentityProviderService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import { inject, injectable } from 'inversify';
 
 import { BaseService } from './base.service';
@@ -58,8 +54,8 @@ type RoleFilter = {
 @injectable()
 export class RecipientsService extends BaseService {
   constructor(
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
-    @inject(DomainServiceSymbol) private domainService: DomainService
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService
   ) {
     super();
   }

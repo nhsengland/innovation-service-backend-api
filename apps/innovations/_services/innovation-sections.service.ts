@@ -18,15 +18,11 @@ import {
   ServiceRoleEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  FileStorageServiceSymbol,
-  FileStorageServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
+import type {
+  DomainService,
+  FileStorageService,
+  IdentityProviderService,
+  NotifierService
 } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
@@ -40,6 +36,7 @@ import {
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
 import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
 import { InnovationFileService } from './innovation-file.service';
@@ -48,10 +45,10 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationSectionsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityService: IdentityProviderServiceType,
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
@@ -515,18 +512,14 @@ export class InnovationSectionsService extends BaseService {
         );
 
         for (const action of requestedStatusActions) {
-          await this.notifierService.send(
-            domainContext,
-            NotifierTypeEnum.ACTION_UPDATE,
-            {
-              innovationId: dbInnovation.id,
-              action: {
-                id: action.id,
-                section: savedSection.section,
-                status: InnovationActionStatusEnum.SUBMITTED
-              }
+          await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
+            innovationId: dbInnovation.id,
+            action: {
+              id: action.id,
+              section: savedSection.section,
+              status: InnovationActionStatusEnum.SUBMITTED
             }
-          );
+          });
         }
       }
 

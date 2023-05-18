@@ -1,8 +1,9 @@
 import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
-import { SQLConnectionServiceSymbol, type SQLConnectionServiceType } from '../services';
+import type { SQLConnectionService } from '../services';
 
+import SHARED_SYMBOLS from '../services/symbols';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
 export class TestsHelper {
@@ -18,7 +19,7 @@ export class TestsHelper {
   }
 
   async init(): Promise<this> {
-    this.sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
+    this.sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
 
     while (!this.sqlConnection.isInitialized) {
       await new Promise(resolve => setTimeout(resolve, 100));
