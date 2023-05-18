@@ -622,7 +622,6 @@ export class RecipientsService extends BaseService {
         .createQueryBuilder(NotificationEntity, 'notification')
         .select('user.id', 'userId')
         .addSelect('user.external_id', 'userIdentityId')
-        .addSelect('user.locked_at', 'userLockedAt')
         .addSelect('userRole.role', 'userRole')
         .addSelect('userRole.id', 'userRoleId')
         .addSelect(
@@ -640,7 +639,7 @@ export class RecipientsService extends BaseService {
         .innerJoin('notification.notificationUsers', 'notificationUsers')
         .innerJoin('notificationUsers.userRole', 'userRole')
         .innerJoin('userRole.user', 'user')
-        .innerJoin('user.notificationPreferences', 'notificationPreferences')
+        .innerJoin('userRole.notificationPreferences', 'notificationPreferences')
         .where('notification.created_at >= :startDate AND notification.created_at < :endDate', {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString()
@@ -652,6 +651,7 @@ export class RecipientsService extends BaseService {
         .groupBy('user.id')
         .addGroupBy('user.external_id')
         .addGroupBy('userRole.role')
+        .addGroupBy('userRole.id')
         .getRawMany()) || [];
 
     return dbUsers
