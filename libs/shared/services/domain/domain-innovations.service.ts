@@ -128,7 +128,7 @@ export class DomainInnovationsService {
       .select(['transfers.id', 'transfers.email', 'innovation.id', 'innovation.name'])
       .innerJoin('transfers.innovation', 'innovation')
       .where('DATEDIFF(day, transfers.created_at, GETDATE()) = :date', {
-        date: days
+        date: EXPIRATION_DATES.transfersDays - days
       })
       .andWhere('transfers.status = :status', { status: InnovationTransferStatusEnum.PENDING })
       .andWhere('transfers.emailCount = :emailCount', { emailCount })
