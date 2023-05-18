@@ -9,11 +9,11 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
@@ -88,16 +88,25 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     }
 
     let templateId: EmailTypeEnum;
+    let innovationUrl: string | undefined;
 
     switch (this.inputData.innovationCollaborator.status) {
       case InnovationCollaboratorStatusEnum.ACTIVE:
         templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER;
+        innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('innovator/innovations/:innovationId/manage/innovation/collaborators')
+          .setPathParams({ innovationId: this.inputData.innovationId })
+          .buildUrl();
         break;
       case InnovationCollaboratorStatusEnum.DECLINED:
         templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER;
         break;
       case InnovationCollaboratorStatusEnum.LEFT:
         templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER;
+        innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
+          .addPath('innovator/innovations/:innovationId')
+          .setPathParams({ innovationId: this.inputData.innovationId })
+          .buildUrl();
         break;
       default:
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
@@ -110,14 +119,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       params: {
         collaborator_name: collaboratorInfo.displayName,
         innovation_name: innovation.name,
-        ...(this.inputData.innovationCollaborator.status === InnovationCollaboratorStatusEnum.LEFT
-          ? {
-              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath('innovator/innovations/:innovationId')
-                .setPathParams({ innovationId: this.inputData.innovationId })
-                .buildUrl()
-            }
-          : {})
+        ...(innovationUrl && { innovation_url: innovationUrl })
       }
     });
   }
