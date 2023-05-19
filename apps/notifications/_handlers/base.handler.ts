@@ -1,3 +1,4 @@
+import type { Context } from '@azure/functions';
 import {
   EmailNotificationPreferenceEnum,
   EmailNotificationType,
@@ -11,7 +12,6 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTemplatesType, EmailTypeEnum, container } from '../_config';
 import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 import type { RecipientType } from '../_services/recipients.service';
-import type { Context } from '@azure/functions';
 
 type EmailRecipientType = { email: string; displayname?: string };
 type IdentityRecipientType = Omit<RecipientType, 'userRole'>;
@@ -64,11 +64,7 @@ export abstract class BaseHandler<
 
   protected recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
-  constructor(
-    requestUser: DomainContextType,
-    data: NotifierTemplatesType[InputDataType],
-    azureContext: Context 
-  ) {
+  constructor(requestUser: DomainContextType, data: NotifierTemplatesType[InputDataType], azureContext: Context) {
     this.requestUser = requestUser;
     this.inputData = data;
     this.logger = azureContext.log;
@@ -161,6 +157,7 @@ export abstract class BaseHandler<
         }
       }
     }
+
     return res;
   }
 

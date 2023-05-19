@@ -1052,16 +1052,15 @@ export class RecipientsService extends BaseService {
 
     const preferences = await this.sqlConnection
       .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
-      .innerJoin('notificationPreference.userRole', 'userRole')
-      .where('userRole.id IN (:...roleIds)', { roleIds })
+      .where('notificationPreference.user_role_id IN (:...roleIds)', { roleIds })
       .getMany();
 
     for (const preference of preferences) {
-      if (!res.has(preference.userRole.id)) {
-        res.set(preference.userRole.id, {});
+      if (!res.has(preference.userRoleId)) {
+        res.set(preference.userRoleId, {});
       }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      res.get(preference.userRole.id)![preference.notificationType] = preference.preference;
+      res.get(preference.userRoleId)![preference.notificationType] = preference.preference;
     }
 
     return res;

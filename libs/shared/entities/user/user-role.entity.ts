@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
 import { GenericErrorsEnum, InternalServerError } from '../../errors';
@@ -8,7 +8,6 @@ import { BaseEntity } from '../base.entity';
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
 import { UserEntity } from './user.entity';
-import { NotificationPreferenceEntity } from './notification-preference.entity';
 
 @Entity('user_role')
 export class UserRoleEntity extends BaseEntity {
@@ -42,12 +41,8 @@ export class UserRoleEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity | null;
 
-  @OneToMany(() => NotificationPreferenceEntity, record => record.userRole, { lazy: true })
-  notificationPreferences: Promise<NotificationPreferenceEntity[]>;
-
   @RelationId('organisationUnit')
   organisationUnitId: string;
-  
 
   static new(data: Partial<UserRoleEntity>): UserRoleEntity {
     const instance = new UserRoleEntity();

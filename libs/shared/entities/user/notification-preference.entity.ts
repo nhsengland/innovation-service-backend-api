@@ -1,9 +1,8 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
 import { EmailNotificationPreferenceEnum, EmailNotificationType } from '../../enums/notification.enums';
-import { UserRoleEntity } from './user-role.entity';
 
 @Entity('notification_preference')
 export class NotificationPreferenceEntity extends BaseEntity {
@@ -14,9 +13,7 @@ export class NotificationPreferenceEntity extends BaseEntity {
   preference: EmailNotificationPreferenceEnum;
 
   @PrimaryColumn({ name: 'user_role_id', type: 'uniqueidentifier' })
-  @ManyToOne(() => UserRoleEntity)
-  @JoinColumn({ name: 'user_role_id' })
-  userRole: UserRoleEntity;
+  userRoleId: string;
 
   static new(data: Partial<NotificationPreferenceEntity>): NotificationPreferenceEntity {
     const instance = new NotificationPreferenceEntity();
