@@ -641,7 +641,11 @@ export class RecipientsService extends BaseService {
         .innerJoin('notification.notificationUsers', 'notificationUsers')
         .innerJoin('notificationUsers.userRole', 'userRole')
         .innerJoin('userRole.user', 'user')
-        .innerJoin('userRole.notificationPreferences', 'notificationPreferences')
+        .innerJoin(
+          'notification_preference',
+          'notificationPreferences',
+          'userRole.id = notificationPreferences.user_role_id'
+        )
         .where('notification.created_at >= :startDate AND notification.created_at < :endDate', {
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString()
