@@ -370,6 +370,10 @@ export class InnovationSectionsService extends BaseService {
             innovation[key] = dataToUpdate[key];
             updateInnovation = true;
           }
+          // If postcode exists it is set after countryName
+          if (key === 'countryName') {
+            innovation.postcode = null;
+          }
         }
       );
     }
@@ -515,18 +519,14 @@ export class InnovationSectionsService extends BaseService {
         );
 
         for (const action of requestedStatusActions) {
-          await this.notifierService.send(
-            domainContext,
-            NotifierTypeEnum.ACTION_UPDATE,
-            {
-              innovationId: dbInnovation.id,
-              action: {
-                id: action.id,
-                section: savedSection.section,
-                status: InnovationActionStatusEnum.SUBMITTED
-              }
+          await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
+            innovationId: dbInnovation.id,
+            action: {
+              id: action.id,
+              section: savedSection.section,
+              status: InnovationActionStatusEnum.SUBMITTED
             }
-          );
+          });
         }
       }
 
