@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class adminUserSeed1640009414158 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       IF NOT EXISTS (SELECT 1 FROM ROLE WHERE name = 'SERVICE_TEAM')
       BEGIN
@@ -36,9 +34,7 @@ export class adminUserSeed1640009414158 implements MigrationInterface {
         WHERE u.id = '${process.env['ADMIN_OID']}' and r.name = 'SERVICE_TEAM'
       END
     `);
-
   }
 
-  public async down(): Promise<void> { }
-
+  public async down(): Promise<void> {}
 }

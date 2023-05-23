@@ -1,13 +1,8 @@
-import { groupBy } from 'lodash';
-import type { DeepPartial, MigrationInterface, QueryRunner } from 'typeorm';
-
-import { InnovationAreaEntity, InnovationCareSettingEntity, InnovationCategoryEntity, InnovationDeploymentPlanEntity, InnovationDiseaseConditionEntity, InnovationDocumentEntity, InnovationEntity, InnovationEnvironmentalBenefitEntity, InnovationEvidenceEntity, InnovationFileEntity, InnovationGeneralBenefitEntity, InnovationPatientsCitizensBenefitEntity, InnovationRevenueEntity, InnovationStandardEntity, InnovationSubgroupEntity, InnovationSupportTypeEntity, InnovationUserTestEntity } from '../../shared/entities';
-import type { InnovationSections } from '../../shared/schemas/innovation-record/202209/catalog.types';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTableInnovationDocumentAndMigration1680028339424 implements MigrationInterface {
   name?: string | undefined;
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE innovation_document (
         id uniqueidentifier NOT NULL,
@@ -35,69 +30,120 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
       ALTER TABLE "innovation_document" ADD CONSTRAINT CK_snapshot_description_is_not_null CHECK (is_snapshot=0 OR (is_snapshot=1 AND description IS NOT NULL));
     `);
 
-    const innovations = await queryRunner.manager.createQueryBuilder(InnovationEntity, 'innovation').withDeleted().getMany();
-    const innovationCategories = groupBy((await queryRunner.manager.createQueryBuilder(InnovationCategoryEntity, 'category').getMany()), 'innovationId');
-    const innovationAreas = groupBy((await queryRunner.manager.createQueryBuilder(InnovationAreaEntity, 'area').getMany()), 'innovationId');
-    const innovationCareSettings = groupBy((await queryRunner.manager.createQueryBuilder(InnovationCareSettingEntity, 'careSetting').getMany()), 'innovationId');
-    const innovationSupportTypes = groupBy((await queryRunner.manager.createQueryBuilder(InnovationSupportTypeEntity, 'supportType').getMany()), 'innovationId');
+    /*
+     * Leaving this just for history purposes. This was the original migration script that was used to create the innovation document
+     * the InnovationEntity has been updated to use the InnovationDocumentEntity instead. This is now invalid.
+    const innovations = await queryRunner.manager
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .withDeleted()
+      .getMany();
+    const innovationCategories = groupBy(
+      await queryRunner.manager.createQueryBuilder(InnovationCategoryEntity, 'category').getMany(),
+      'innovationId'
+    );
+    const innovationAreas = groupBy(
+      await queryRunner.manager.createQueryBuilder(InnovationAreaEntity, 'area').getMany(),
+      'innovationId'
+    );
+    const innovationCareSettings = groupBy(
+      await queryRunner.manager
+        .createQueryBuilder(InnovationCareSettingEntity, 'careSetting')
+        .getMany(),
+      'innovationId'
+    );
+    const innovationSupportTypes = groupBy(
+      await queryRunner.manager
+        .createQueryBuilder(InnovationSupportTypeEntity, 'supportType')
+        .getMany(),
+      'innovationId'
+    );
     const innovationSubgroups = groupBy(
-      (await queryRunner.manager.createQueryBuilder(InnovationSubgroupEntity, 'subgroup')
+      await queryRunner.manager
+        .createQueryBuilder(InnovationSubgroupEntity, 'subgroup')
         .leftJoin('subgroup.innovation', 'innovation')
         .addSelect('innovation.id')
-        .getMany()), 
+        .getMany(),
       'innovation.id'
     );
-    const innovationDiseasesConditionsImpacts = groupBy((await queryRunner.manager.createQueryBuilder(InnovationDiseaseConditionEntity, 'diseases').getMany()), 'innovationId');
-    const innovationEnvironmentalBenefits = groupBy((await queryRunner.manager.createQueryBuilder(InnovationEnvironmentalBenefitEntity, 'benefits').getMany()), 'innovationId');
-    const innovationGeneralBenefits = groupBy((await queryRunner.manager.createQueryBuilder(InnovationGeneralBenefitEntity, 'benefits').getMany()), 'innovationId');
-    const innovationPatientsCitizensBenefits = groupBy((await queryRunner.manager.createQueryBuilder(InnovationPatientsCitizensBenefitEntity, 'benefits').getMany()), 'innovationId');
+    const innovationDiseasesConditionsImpacts = groupBy(
+      await queryRunner.manager
+        .createQueryBuilder(InnovationDiseaseConditionEntity, 'diseases')
+        .getMany(),
+      'innovationId'
+    );
+    const innovationEnvironmentalBenefits = groupBy(
+      await queryRunner.manager
+        .createQueryBuilder(InnovationEnvironmentalBenefitEntity, 'benefits')
+        .getMany(),
+      'innovationId'
+    );
+    const innovationGeneralBenefits = groupBy(
+      await queryRunner.manager
+        .createQueryBuilder(InnovationGeneralBenefitEntity, 'benefits')
+        .getMany(),
+      'innovationId'
+    );
+    const innovationPatientsCitizensBenefits = groupBy(
+      await queryRunner.manager
+        .createQueryBuilder(InnovationPatientsCitizensBenefitEntity, 'benefits')
+        .getMany(),
+      'innovationId'
+    );
     const innovationEvidences = groupBy(
-      (await queryRunner.manager.createQueryBuilder(InnovationEvidenceEntity, 'evidences')
+      await queryRunner.manager
+        .createQueryBuilder(InnovationEvidenceEntity, 'evidences')
         .leftJoin('evidences.innovation', 'innovation')
         .addSelect('innovation.id')
         .leftJoinAndSelect('evidences.files', 'files')
-        .getMany()),
+        .getMany(),
       'innovation.id'
     );
     const innovationStandards = groupBy(
-      (await queryRunner.manager.createQueryBuilder(InnovationStandardEntity, 'standards')
+      await queryRunner.manager
+        .createQueryBuilder(InnovationStandardEntity, 'standards')
         .leftJoin('standards.innovation', 'innovation')
         .addSelect('innovation.id')
-        .getMany()),
+        .getMany(),
       'innovation.id'
     );
     const innovationUserTests = groupBy(
-      (await queryRunner.manager.createQueryBuilder(InnovationUserTestEntity, 'tests')
+      await queryRunner.manager
+        .createQueryBuilder(InnovationUserTestEntity, 'tests')
         .leftJoin('tests.innovation', 'innovation')
         .addSelect('innovation.id')
-        .getMany()),
+        .getMany(),
       'innovation.id'
     );
-    const innovationRevenues = groupBy((await queryRunner.manager.createQueryBuilder(InnovationRevenueEntity, 'revenues').getMany()), 'innovationId');
+    const innovationRevenues = groupBy(
+      await queryRunner.manager.createQueryBuilder(InnovationRevenueEntity, 'revenues').getMany(),
+      'innovationId'
+    );
     const innovationDeploymentPlans = groupBy(
-      (await queryRunner.manager.createQueryBuilder(InnovationDeploymentPlanEntity, 'plans')
+      await queryRunner.manager
+        .createQueryBuilder(InnovationDeploymentPlanEntity, 'plans')
         .leftJoin('plans.innovation', 'innovation')
         .addSelect('innovation.id')
-        .getMany()),
+        .getMany(),
       'innovation.id'
     );
-    
+
     const filesMap = new Map<string, Map<InnovationSections, string[]>>();
-    for (const file of await queryRunner.manager.createQueryBuilder(InnovationFileEntity, 'file').getRawMany()) {
-      if(!filesMap.has(file.file_innovation_id)) {
+    for (const file of await queryRunner.manager
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .getRawMany()) {
+      if (!filesMap.has(file.file_innovation_id)) {
         filesMap.set(file.file_innovation_id, new Map<InnovationSections, string[]>());
       }
       const innovationFiles = filesMap.get(file.file_innovation_id)!;
-      if(!innovationFiles.has(file.file_context)) {
+      if (!innovationFiles.has(file.file_context)) {
         innovationFiles.set(file.file_context, []);
       }
       innovationFiles.get(file.file_context)!.push(file.file_id);
     }
-    
-    const documents : DeepPartial<InnovationDocumentEntity>[] = [];
 
-    for(const innovation of innovations) {
+    const documents: DeepPartial<InnovationDocumentEntity>[] = [];
 
+    for (const innovation of innovations) {
       documents.push({
         id: innovation.id,
         isSnapshot: true,
@@ -110,15 +156,15 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
             countryName: innovation.countryName ?? undefined,
             postcode: innovation.postcode ?? undefined,
             hasFinalProduct: innovation.hasFinalProduct ?? undefined,
-            categories: innovationCategories[innovation.id]?.map(c => c.type) ?? [],
+            categories: innovationCategories[innovation.id]?.map((c) => c.type) ?? [],
             otherCategoryDescription: innovation.otherCategoryDescription ?? undefined,
-            mainCategory: innovation.mainCategory as any ?? undefined,
+            mainCategory: (innovation.mainCategory as any) ?? undefined,
             otherMainCategoryDescription: innovation.otherMainCategoryDescription ?? undefined,
-            areas: innovationAreas[innovation.id]?.map(a => a.type) ?? [],
-            careSettings: innovationCareSettings[innovation.id]?.map(c => c.type) ?? [],
+            areas: innovationAreas[innovation.id]?.map((a) => a.type) ?? [],
+            careSettings: innovationCareSettings[innovation.id]?.map((c) => c.type) ?? [],
             otherCareSetting: innovation.otherCareSetting ?? undefined,
             mainPurpose: innovation.mainPurpose ?? undefined,
-            supportTypes: innovationSupportTypes[innovation.id]?.map(s => s.type) ?? [],
+            supportTypes: innovationSupportTypes[innovation.id]?.map((s) => s.type) ?? [],
             moreSupportDescription: innovation.moreSupportDescription ?? undefined,
           },
           VALUE_PROPOSITION: {
@@ -131,29 +177,33 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
           UNDERSTANDING_OF_NEEDS: {
             impactPatients: innovation.impactPatients ?? undefined,
             impactClinicians: innovation.impactClinicians ?? undefined,
-            subgroups: innovationSubgroups[innovation.id]?.map(s => s.name) ?? [],
+            subgroups: innovationSubgroups[innovation.id]?.map((s) => s.name) ?? [],
             cliniciansImpactDetails: innovation.cliniciansImpactDetails ?? undefined,
-            diseasesConditionsImpact: innovationDiseasesConditionsImpacts[innovation.id]?.map(d => d.type) ?? [],
+            diseasesConditionsImpact:
+              innovationDiseasesConditionsImpacts[innovation.id]?.map((d) => d.type) ?? [],
           },
           UNDERSTANDING_OF_BENEFITS: {
             accessibilityImpactDetails: innovation.accessibilityImpactDetails ?? undefined,
             accessibilityStepsDetails: innovation.accessibilityStepsDetails ?? undefined,
-            environmentalBenefits: innovationEnvironmentalBenefits[innovation.id]?.map(b => b.type) ?? [],
-            generalBenefits: innovationGeneralBenefits[innovation.id]?.map(b => b.type) ?? [],
+            environmentalBenefits:
+              innovationEnvironmentalBenefits[innovation.id]?.map((b) => b.type) ?? [],
+            generalBenefits: innovationGeneralBenefits[innovation.id]?.map((b) => b.type) ?? [],
             hasBenefits: innovation.hasBenefits ?? undefined,
             otherEnvironmentalBenefit: innovation.otherEnvironmentalBenefit ?? undefined,
             otherGeneralBenefit: innovation.otherGeneralBenefit ?? undefined,
-            patientsCitizensBenefits: innovationPatientsCitizensBenefits[innovation.id]?.map(b => b.type) ?? []
+            patientsCitizensBenefits:
+              innovationPatientsCitizensBenefits[innovation.id]?.map((b) => b.type) ?? [],
           },
           EVIDENCE_OF_EFFECTIVENESS: {
             hasEvidence: innovation.hasEvidence ?? undefined,
-            evidences: innovationEvidences[innovation.id]?.map( e => ({
-              evidenceType: e.evidenceType as any ?? undefined,
-              clinicalEvidenceType: e.clinicalEvidenceType as any ?? undefined,
-              description: e.description ?? undefined,
-              summary: e.summary ?? undefined,
-              files: e.files.map(f => f.id)
-            })) ?? []
+            evidences:
+              innovationEvidences[innovation.id]?.map((e) => ({
+                evidenceType: (e.evidenceType as any) ?? undefined,
+                clinicalEvidenceType: (e.clinicalEvidenceType as any) ?? undefined,
+                description: e.description ?? undefined,
+                summary: e.summary ?? undefined,
+                files: e.files.map((f) => f.id),
+              })) ?? [],
           },
           MARKET_RESEARCH: {
             hasMarketResearch: innovation.hasMarketResearch ?? undefined,
@@ -167,11 +217,12 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
           REGULATIONS_AND_STANDARDS: {
             hasRegulationKnowledge: innovation.hasRegulationKnowledge ?? undefined,
             otherRegulationDescription: innovation.otherRegulationDescription ?? undefined,
-            standards: innovationStandards[innovation.id]?.map(s => ({
-              hasMet: s.hasMet ?? undefined,
-              type: s.type,
-            })) ?? [],
-            files: filesMap.get(innovation.id)?.get('REGULATIONS_AND_STANDARDS') ?? []
+            standards:
+              innovationStandards[innovation.id]?.map((s) => ({
+                hasMet: s.hasMet ?? undefined,
+                type: s.type,
+              })) ?? [],
+            files: filesMap.get(innovation.id)?.get('REGULATIONS_AND_STANDARDS') ?? [],
           },
           CURRENT_CARE_PATHWAY: {
             carePathway: innovation.carePathway ?? undefined,
@@ -181,16 +232,17 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
           },
           TESTING_WITH_USERS: {
             hasTests: innovation.hasTests ?? undefined,
-            userTests: innovationUserTests[innovation.id]?.map( t => ({
-              kind: t.kind,
-              feedback: t.feedback
-            })) ?? [],
-            files: filesMap.get(innovation.id)?.get('TESTING_WITH_USERS') ?? []
+            userTests:
+              innovationUserTests[innovation.id]?.map((t) => ({
+                kind: t.kind,
+                feedback: t.feedback,
+              })) ?? [],
+            files: filesMap.get(innovation.id)?.get('TESTING_WITH_USERS') ?? [],
           },
           COST_OF_INNOVATION: {
             costDescription: innovation.costDescription ?? undefined,
             hasCostKnowledge: innovation.hasCostKnowledge ?? undefined,
-            patientsRange: innovation.patientsRange as any ?? undefined,
+            patientsRange: (innovation.patientsRange as any) ?? undefined,
             sellExpectations: innovation.sellExpectations ?? undefined,
             usageExpectations: innovation.usageExpectations ?? undefined,
           },
@@ -206,19 +258,20 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
             hasRevenueModel: innovation.hasRevenueModel ?? undefined,
             otherRevenueDescription: innovation.otherRevenueDescription ?? undefined,
             payingOrganisations: innovation.payingOrganisations ?? undefined,
-            revenues: innovationRevenues[innovation.id]?.map(r => r.type) ?? []
+            revenues: innovationRevenues[innovation.id]?.map((r) => r.type) ?? [],
           },
           IMPLEMENTATION_PLAN: {
-            deploymentPlans: innovationDeploymentPlans[innovation.id]?.map(d => ({
-              commercialBasis: d.commercialBasis ?? undefined,
-              name: d.name ?? undefined,
-              orgDeploymentAffect: d.orgDeploymentAffect ?? undefined,
-            })) ?? [],
+            deploymentPlans:
+              innovationDeploymentPlans[innovation.id]?.map((d) => ({
+                commercialBasis: d.commercialBasis ?? undefined,
+                name: d.name ?? undefined,
+                orgDeploymentAffect: d.orgDeploymentAffect ?? undefined,
+              })) ?? [],
             files: filesMap.get(innovation.id)?.get('IMPLEMENTATION_PLAN') ?? [],
             hasDeployPlan: innovation.hasDeployPlan ?? undefined,
             hasResourcesToScale: innovation.hasResourcesToScale ?? undefined,
-            isDeployed: innovation.isDeployed ?? undefined
-          }
+            isDeployed: innovation.isDeployed ?? undefined,
+          },
         },
         createdAt: innovation.createdAt,
         createdBy: innovation.createdBy,
@@ -228,10 +281,11 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
       });
     }
 
-    while(documents.length) {
+    while (documents.length) {
       const chunk = documents.splice(0, 100);
       await queryRunner.manager.getRepository(InnovationDocumentEntity).save(chunk);
     }
+    */
   }
 
   public async down(_queryRunner: QueryRunner): Promise<void> {
@@ -242,5 +296,4 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
     DROP TABLE innovation_document_history;
     `);
   }
-
 }

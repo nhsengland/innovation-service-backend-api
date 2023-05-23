@@ -15,30 +15,39 @@ export const AdminRuleType = {
 } as const;
 export type AdminRuleType = (typeof AdminRuleType)[keyof typeof AdminRuleType];
 
-
 export type ValidationResult = {
-  rule: AdminRuleType,
-  valid: boolean,
+  rule: AdminRuleType;
+  valid: boolean;
   data?: {
-    supports?: { count: number, innovations: { id: string, name: string }[] }
-  }
+    supports?: { count: number; innovations: { id: string; name: string }[] };
+  };
 };
 
-
-export const AdminOperationsRulesMapper: Record<AdminOperationType, { [userTypeKey in ServiceRoleEnum]?: AdminRuleType[] }> = {
-
-  'LOCK_USER': {
+export const AdminOperationsRulesMapper: Record<
+  AdminOperationType,
+  { [userTypeKey in ServiceRoleEnum]?: AdminRuleType[] }
+> = {
+  LOCK_USER: {
     [ServiceRoleEnum.ASSESSMENT]: [AdminRuleType.AssessmentUserIsNotTheOnlyOne],
-    [ServiceRoleEnum.QUALIFYING_ACCESSOR]: [AdminRuleType.LastQualifyingAccessorUserOnOrganisationUnit, AdminRuleType.LastUserOnOrganisationUnit, AdminRuleType.NoInnovationsSupportedOnlyByThisUser],
-    [ServiceRoleEnum.ACCESSOR]: [AdminRuleType.LastUserOnOrganisationUnit, AdminRuleType.NoInnovationsSupportedOnlyByThisUser]
+    [ServiceRoleEnum.QUALIFYING_ACCESSOR]: [
+      AdminRuleType.LastQualifyingAccessorUserOnOrganisationUnit,
+      AdminRuleType.LastUserOnOrganisationUnit,
+      AdminRuleType.NoInnovationsSupportedOnlyByThisUser
+    ],
+    [ServiceRoleEnum.ACCESSOR]: [
+      AdminRuleType.LastUserOnOrganisationUnit,
+      AdminRuleType.NoInnovationsSupportedOnlyByThisUser
+    ]
   },
 
-  'UPDATE_USER_ROLE': {
+  UPDATE_USER_ROLE: {
     [ServiceRoleEnum.ACCESSOR]: [AdminRuleType.LastUserOnOrganisationUnit]
   },
 
-  'CHANGE_UNIT': {
-    [ServiceRoleEnum.ACCESSOR]: [AdminRuleType.NoInnovationsSupportedOnlyByThisUser, AdminRuleType.LastUserOnOrganisationUnit]
+  CHANGE_UNIT: {
+    [ServiceRoleEnum.ACCESSOR]: [
+      AdminRuleType.NoInnovationsSupportedOnlyByThisUser,
+      AdminRuleType.LastUserOnOrganisationUnit
+    ]
   }
-
 };

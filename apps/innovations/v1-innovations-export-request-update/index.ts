@@ -7,41 +7,32 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
+import type { InnovationsService } from '../_services/innovations.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './validation.schemas';
 
-
 class V1InnovationsExportRequestsUpdate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
+    const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
+      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
 
-      const auth = await authorizationService.validate(context)
-        .checkInnovatorType()
-        .checkAccessorType()
-        .verify();
-
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const params = JoiHelper.Validate<PathParamsType>(
-        PathParamsSchema,
-        request.params
-      );
+      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, { userType: domainContext.currentRole.role });
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
+        userType: domainContext.currentRole.role
+      });
 
       const { rejectReason, status } = body;
 
       const result = await innovationsService.updateInnovationRecordExportRequest(
-        requestUser,
         domainContext,
         params.requestId,
         { rejectReason, status }
@@ -49,47 +40,47 @@ class V1InnovationsExportRequestsUpdate {
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
-
-export default openApi(V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction, '/v1/{innovationId}/export-requests/{requestId}/status', {
-  patch: {
-    operationId: 'v1-innovations-export-requests-update-status',
-    description: 'updates export request status',
-    tags: ['[v1] Innovations'],
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        required: true,
-        description: 'Innovation ID',
-        schema: {
-          type: 'string',
-          format: 'uuid'
+export default openApi(
+  V1InnovationsExportRequestsUpdate.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/export-requests/{requestId}/status',
+  {
+    patch: {
+      operationId: 'v1-innovations-export-requests-update-status',
+      description: 'updates export request status',
+      tags: ['[v1] Innovations'],
+      parameters: [
+        {
+          name: 'innovationId',
+          in: 'path',
+          required: true,
+          description: 'Innovation ID',
+          schema: {
+            type: 'string',
+            format: 'uuid'
+          }
+        },
+        {
+          name: 'requestId',
+          in: 'path',
+          required: true,
+          description: 'Export request ID',
+          schema: {
+            type: 'string',
+            format: 'uuid'
+          }
         }
-      },
-      {
-        name: 'requestId',
-        in: 'path',
-        required: true,
-        description: 'Export request ID',
-        schema: {
-          type: 'string',
-          format: 'uuid'
-        }
+      ],
+      responses: {
+        200: { description: 'Success' },
+        400: { description: 'Invalid innovation payload' }
       }
-    ],
-    responses: {
-      200: { description: 'Success' },
-      400: { description: 'Invalid innovation payload' },
-    },
-  },
-});
+    }
+  }
+);

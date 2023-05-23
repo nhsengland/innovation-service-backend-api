@@ -15,34 +15,19 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminUnitInactivate {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
-      const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params
-      );
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
 
       const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
-      
-      const result = await organisationsService.inactivateUnit(
-        requestUser,
-        domainContext,
-        params.organisationUnitId,
-      );
+
+      const result = await organisationsService.inactivateUnit(requestUser, domainContext, params.organisationUnitId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
       return;
@@ -67,8 +52,8 @@ export default openApi(
           description: 'The organisation id.',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'organisationUnitId',
@@ -76,9 +61,9 @@ export default openApi(
           description: 'The organisation unit id.',
           required: true,
           schema: {
-            type: 'string',
-          },
-        },
+            type: 'string'
+          }
+        }
       ],
       responses: {
         '200': {
@@ -90,26 +75,26 @@ export default openApi(
                 properties: {
                   unitId: {
                     type: 'string',
-                    description: 'The organisation unit id.',
-                  },
-                },
-              },
-            },
-          },
+                    description: 'The organisation unit id.'
+                  }
+                }
+              }
+            }
+          }
         },
         '400': {
-          description: 'Bad request.',
+          description: 'Bad request.'
         },
         '401': {
-          description: 'The user is not authorized to inactivate an organisation unit.',
+          description: 'The user is not authorized to inactivate an organisation unit.'
         },
         '404': {
-          description: 'The organisation unit does not exist.',
+          description: 'The organisation unit does not exist.'
         },
         '500': {
-          description: 'An error occurred while inactivating the organisation unit.',
-        },
-      },
-    },
+          description: 'An error occurred while inactivating the organisation unit.'
+        }
+      }
+    }
   }
 );

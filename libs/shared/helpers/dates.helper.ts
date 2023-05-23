@@ -1,8 +1,4 @@
-
-
-
 export class DatesHelper {
-
   /**
    * Returns the difference (in days) between 2 dates.
    */
@@ -13,5 +9,4 @@ export class DatesHelper {
   static isDateEqual(firstDate: Date, secondDate: Date): boolean {
     return firstDate.getTime() === secondDate.getTime();
   }
-
 }

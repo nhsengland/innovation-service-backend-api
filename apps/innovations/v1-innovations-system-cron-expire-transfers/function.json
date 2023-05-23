@@ -1,0 +1,10 @@
+{
+  "bindings": [
+    {
+      "schedule": "0 30 2 * * *",
+      "name": "myTimerExpireTransfers",
+      "type": "timerTrigger",
+      "direction": "in"
+    }
+  ]
+}

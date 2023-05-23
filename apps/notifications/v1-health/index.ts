@@ -10,16 +10,12 @@ import type { CustomContextType } from '@notifications/shared/types';
 // import { ResponseDTO } from './transformation.dtos';
 // import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1Health {
-
   //@JwtDecoder()
-  static async httpTrigger(context: CustomContextType, /*request: HttpRequest*/): Promise<void> {
-
+  static async httpTrigger(context: CustomContextType /*request: HttpRequest*/): Promise<void> {
     // const notifierService = container.get<NotifierServiceType>(NotifierServiceSymbol);
 
     try {
-
       // const requestAssessment = { id: 'DE002E03-9744-4655-82CF-94DD147F11C3', identityId: 'de002e03-9744-4655-82cf-94dd147f11c3', type: UserTypeEnum.ASSESSMENT };
       // const requestQA = { id: '829E13B3-242A-4DC5-BDB9-3F45FA0BF307', identityId: '829e13b3-242a-4dc5-bdb9-3f45fa0bf307', type: UserTypeEnum.ACCESSOR };
       // const requestInnovator = { id: '5FDE0B71-BD0D-4C88-98E6-51399BB7B4AD', identityId: '5fde0b71-bd0d-4c88-98e6-51399bb7b4ad', type: UserTypeEnum.INNOVATOR };
@@ -94,41 +90,41 @@ class V1Health {
       //       });
       //     break;
 
-        // case NotifierTypeEnum.ACTION_CREATION:
-        //   await notifierService.send(
-        //     {
-        //       'id': 'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
-        //       'identityId': 'b7e3de07-a826-4e15-adcc-e8cca874d65e',
-        //       'type': UserTypeEnum.ACCESSOR,
-        //     },
-        //     NotifierTypeEnum.ACTION_CREATION,
-        //     {
-        //       'innovationId': 'BD8DD738-9866-ED11-AC20-281878FB7B33',
-        //       'action': { 'id': 'FAD3433E-F36B-1410-8AA9-00C89B874089', 'section':  InnovationSectionEnum.INNOVATION_DESCRIPTION}
-        //     },
-        //     {
-        //       'id': 'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
-        //       'identityId': 'b7e3de07-a826-4e15-adcc-e8cca874d65e',
-        //       'organisation':{
-        //       'id':'7BD3B905-7CB6-EC11-997E-0050F25A43BD',
-        //       'name':'AHSN Network ',
-        //       'acronym':'AHSN ',
-        //       'isShadow':false,
-        //       'role':AccessorOrganisationRoleEnum.ACCESSOR,
-        //       'size':null,
-        //       'organisationUnit':{
-        //         'id':'982AB20B-7CB6-EC11-997E-0050F25A43BD',
-        //         'name':'Eastern AHSN',
-        //         'acronym':'EAST',
-        //         'organisationUnitUser':{
-        //           'id':'FEB4CF83-89B6-EC11-997E-0050F25A43BD'
-        //         }
-        //       }
-        //      },
-        //      'userType':UserTypeEnum.ACCESSOR
-        //     }
-        //   );
-        //   break;
+      // case NotifierTypeEnum.ACTION_CREATION:
+      //   await notifierService.send(
+      //     {
+      //       'id': 'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
+      //       'identityId': 'b7e3de07-a826-4e15-adcc-e8cca874d65e',
+      //       'type': UserTypeEnum.ACCESSOR,
+      //     },
+      //     NotifierTypeEnum.ACTION_CREATION,
+      //     {
+      //       'innovationId': 'BD8DD738-9866-ED11-AC20-281878FB7B33',
+      //       'action': { 'id': 'FAD3433E-F36B-1410-8AA9-00C89B874089', 'section':  InnovationSectionEnum.INNOVATION_DESCRIPTION}
+      //     },
+      //     {
+      //       'id': 'B7E3DE07-A826-4E15-ADCC-E8CCA874D65E',
+      //       'identityId': 'b7e3de07-a826-4e15-adcc-e8cca874d65e',
+      //       'organisation':{
+      //       'id':'7BD3B905-7CB6-EC11-997E-0050F25A43BD',
+      //       'name':'AHSN Network ',
+      //       'acronym':'AHSN ',
+      //       'isShadow':false,
+      //       'role':AccessorOrganisationRoleEnum.ACCESSOR,
+      //       'size':null,
+      //       'organisationUnit':{
+      //         'id':'982AB20B-7CB6-EC11-997E-0050F25A43BD',
+      //         'name':'Eastern AHSN',
+      //         'acronym':'EAST',
+      //         'organisationUnitUser':{
+      //           'id':'FEB4CF83-89B6-EC11-997E-0050F25A43BD'
+      //         }
+      //       }
+      //      },
+      //      'userType':UserTypeEnum.ACCESSOR
+      //     }
+      //   );
+      //   break;
 
       //   case NotifierTypeEnum.ACTION_UPDATE:
       //     await notifierService.send(requestQA, NotifierTypeEnum.ACTION_UPDATE,
@@ -235,14 +231,11 @@ class V1Health {
 
       context.res = ResponseHelper.Ok({ id: 'ok' });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default V1Health.httpTrigger;

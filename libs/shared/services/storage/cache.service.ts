@@ -8,22 +8,21 @@ import { RedisCache } from './redis-cache.service';
 
 /**
  * Cache configuration type
- * 
+ *
  * This type is used to define the cache configuration for the application and is responsible for
  * type checking for the different caches
  */
 export type CacheConfigType = {
   IdentityUserInfo: RedisCache<IdentityUserInfo>;
-}
+};
 
 @injectable()
 /**
  * Cache service
- * 
+ *
  * This service is used to group all application caches and return them by their global identifier
  */
 export class CacheService {
-
   private cacheConfigMap: CacheConfigType;
   private redis: ReturnType<typeof createClient>;
 
@@ -36,7 +35,7 @@ export class CacheService {
 
     // Initialize Redis
     this.logger.log('Initializing cache service');
-    this.redis.on('error', (err) => this.logger.error(err));
+    this.redis.on('error', err => this.logger.error(err));
     this.redis.on('ready', () => this.logger.log('Redis is ready'));
     void this.redis.connect();
   }

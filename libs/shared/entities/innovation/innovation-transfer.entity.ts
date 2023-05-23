@@ -5,19 +5,12 @@ import { InnovationEntity } from './innovation.entity';
 
 import { InnovationTransferStatusEnum } from '../../enums/innovation.enums';
 
-
-
 @Entity('innovation_transfer')
 export class InnovationTransferEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({
-    type: 'simple-enum',
-    enum: InnovationTransferStatusEnum,
-    nullable: false
-  })
+  @Column({ type: 'simple-enum', enum: InnovationTransferStatusEnum, nullable: false })
   status: InnovationTransferStatusEnum;
 
   @Column({ name: 'email', type: 'nvarchar', nullable: false })
@@ -41,5 +34,4 @@ export class InnovationTransferEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

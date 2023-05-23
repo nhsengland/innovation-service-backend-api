@@ -1,7 +1,17 @@
-import { randBoolean, randCountry, randNumber, randProduct, randText, randUuid, randZipCode } from '@ngneat/falso';
+import { randBoolean, randCountry, randNumber, randProduct, randText, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationEntity, type InnovationSectionEntity, type InnovationSupportEntity, type OrganisationUnitEntity, type OrganisationUnitUserEntity, type UserEntity } from '../entities';
-import { InnovationDocumentEntity, createDocumentFromInnovation } from '../entities/innovation/innovation-document.entity';
+import {
+  InnovationEntity,
+  type InnovationSectionEntity,
+  type InnovationSupportEntity,
+  type OrganisationUnitEntity,
+  type OrganisationUnitUserEntity,
+  type UserEntity
+} from '../entities';
+import {
+  InnovationDocumentEntity,
+  createDocumentFromInnovation
+} from '../entities/innovation/innovation-document.entity';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '../enums';
 import type { DocumentType } from '../schemas/innovation-record';
 import type { DomainContextType } from '../types';
@@ -12,7 +22,6 @@ import { InnovationSectionBuilder } from './innovation-section.builder';
 import { InnovationSupportBuilder } from './innovation-support.builder';
 
 export class InnovationBuilder {
-
   innovation: Partial<InnovationEntity> = {};
 
   private _withSections = false;
@@ -27,7 +36,6 @@ export class InnovationBuilder {
   private _organisationUnitUsers: OrganisationUnitUserEntity[];
   private _assessmentUser: UserEntity;
   private _document: DocumentType;
-  
 
   constructor() {
     this.innovation = {
@@ -35,7 +43,6 @@ export class InnovationBuilder {
       description: randText(),
       countryName: randCountry(),
       postcode: randZipCode(),
-      surveyId: randUuid(),
       status: InnovationStatusEnum.IN_PROGRESS,
       assessments: [],
       createdAt: new Date()
@@ -48,7 +55,7 @@ export class InnovationBuilder {
         description: this.innovation.description!,
         countryName: this.innovation.countryName,
         postcode: this.innovation.postcode!,
-        
+
         areas: ['COVID_19'],
         careSettings: ['INDUSTRY'],
         categories: ['MEDICAL_DEVICE', 'AI'],
@@ -68,22 +75,22 @@ export class InnovationBuilder {
         howInnovationWork: randText(),
         impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
         keyHealthInequalities: ['NONE'],
-        problemsTackled: randBoolean() ? 'YES' : 'NO',
+        problemsTackled: randBoolean() ? 'YES' : 'NO'
       },
       EVIDENCE_OF_EFFECTIVENESS: {
         hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
         currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
         files: [],
         needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
-        summaryOngoingEvidenceGathering: randText(),
+        summaryOngoingEvidenceGathering: randText()
       },
       MARKET_RESEARCH: {
         hasMarketResearch: randBoolean() ? 'YES' : 'NOT_YET',
-        marketResearch: randText(),
+        marketResearch: randText()
       },
       CURRENT_CARE_PATHWAY: {
         innovationPathwayKnowledge: randBoolean() ? 'PATHWAY_EXISTS_AND_FITS' : 'NO_PATHWAY',
-        potentialPathway: randText(),
+        potentialPathway: randText()
       },
       TESTING_WITH_USERS: {
         userTests: [],
@@ -93,12 +100,12 @@ export class InnovationBuilder {
         files: [],
         hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
         otherRegulationDescription: randText(),
-        standards: [{type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS'}],
+        standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }]
       },
       INTELLECTUAL_PROPERTY: {
         hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
         hasPatents: randBoolean() ? 'HAS_AT_LEAST_ONE' : 'HAS_NONE',
-        otherIntellectual: randText(),
+        otherIntellectual: randText()
       },
       REVENUE_MODEL: {
         benefittingOrganisations: randText(),
@@ -114,18 +121,17 @@ export class InnovationBuilder {
         hasCostKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
         patientsRange: 'NOT_SURE',
         sellExpectations: randText(),
-        usageExpectations: randText(),
+        usageExpectations: randText()
       },
       DEPLOYMENT: {
         deploymentPlans: [],
         files: [],
         hasDeployPlan: randBoolean() ? 'YES' : 'NO',
         hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
-        isDeployed: randBoolean() ? 'YES' : 'NO',
+        isDeployed: randBoolean() ? 'YES' : 'NO'
       },
-      evidences: [],
+      evidences: []
     };
-
   }
 
   setOwner(owner: UserEntity): InnovationBuilder {
@@ -150,7 +156,10 @@ export class InnovationBuilder {
     return this;
   }
 
-  withSupportsAndAccessors(organisationUnit: OrganisationUnitEntity, accessors?: OrganisationUnitUserEntity[]): InnovationBuilder {
+  withSupportsAndAccessors(
+    organisationUnit: OrganisationUnitEntity,
+    accessors?: OrganisationUnitUserEntity[]
+  ): InnovationBuilder {
     this._withSupportsAndAccessors = true;
     this._organisationUnit = organisationUnit;
     this._organisationUnitUsers = accessors || [];
@@ -188,7 +197,6 @@ export class InnovationBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<InnovationEntity> {
-
     const organisation = this._organisationUnit?.organisation;
 
     this.innovation.organisationShares = organisation ? [organisation] : [];
@@ -206,13 +214,13 @@ export class InnovationBuilder {
     }
 
     if (this._withSupports) {
-
       if (this._withSupportsAndAccessors) {
         throw new Error('Cannot set both withSupports and withSupportsAndAccessors');
       }
 
       support = await new InnovationSupportBuilder(innovation, this._organisationUnit)
-        .setStatus(InnovationSupportStatusEnum.WAITING).build(entityManager);
+        .setStatus(InnovationSupportStatusEnum.WAITING)
+        .build(entityManager);
     }
 
     if (this._withSupportsAndAccessors) {
@@ -226,7 +234,6 @@ export class InnovationBuilder {
     }
 
     if (this._withActions && this._withActionCreatedBy) {
-
       if (!sections) {
         sections = await new InnovationSectionBuilder(innovation).createAll().build(entityManager);
       }
@@ -238,11 +245,11 @@ export class InnovationBuilder {
 
       if (!support) {
         support = await new InnovationSupportBuilder(innovation, this._organisationUnit)
-          .setStatus(InnovationSupportStatusEnum.WAITING).build(entityManager);
+          .setStatus(InnovationSupportStatusEnum.WAITING)
+          .build(entityManager);
       }
 
-      await new InnovationActionBuilder(this._withActionCreatedBy, section, support)
-        .build(entityManager);
+      await new InnovationActionBuilder(this._withActionCreatedBy, section, support).build(entityManager);
     }
 
     if (this._withAssessments) {
@@ -257,11 +264,11 @@ export class InnovationBuilder {
       if (!innovation.assessments[0]) {
         throw new Error('Cannot create reassessment without assesment');
       }
-      await new InnovationReassessmentBuilder(innovation, innovation.assessments[0])
-        .build(entityManager);
+      await new InnovationReassessmentBuilder(innovation, innovation.assessments[0]).build(entityManager);
     }
 
-    const ret = await entityManager.createQueryBuilder(InnovationEntity, 'innovation')
+    const ret = await entityManager
+      .createQueryBuilder(InnovationEntity, 'innovation')
       .innerJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.assessments', 'assessments')

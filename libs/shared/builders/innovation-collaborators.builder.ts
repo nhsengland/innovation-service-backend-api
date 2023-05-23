@@ -1,18 +1,14 @@
-import { randEmail, randRole } from "@ngneat/falso";
-import type { EntityManager } from "typeorm";
-import type { InnovationEntity, UserEntity } from "../entities";
-import { InnovationCollaboratorEntity } from "../entities/innovation/innovation-collaborator.entity";
-import { InnovationCollaboratorStatusEnum } from "../enums";
-import type { DomainContextType } from "../types";
+import { randEmail, randRole } from '@ngneat/falso';
+import type { EntityManager } from 'typeorm';
+import type { InnovationEntity, UserEntity } from '../entities';
+import { InnovationCollaboratorEntity } from '../entities/innovation/innovation-collaborator.entity';
+import { InnovationCollaboratorStatusEnum } from '../enums';
+import type { DomainContextType } from '../types';
 
 export class InnovationCollaboratorBuilder {
-
   innovationCollaborator: Partial<InnovationCollaboratorEntity> = {};
 
-  constructor(
-    domainContext: DomainContextType,
-    innovation: InnovationEntity,
-  ) {
+  constructor(domainContext: DomainContextType, innovation: InnovationEntity) {
     this.innovationCollaborator = {
       email: randEmail(),
       collaboratorRole: randRole(),
@@ -21,7 +17,7 @@ export class InnovationCollaboratorBuilder {
       createdBy: domainContext.id,
       updatedBy: domainContext.id,
       invitedAt: new Date()
-    }
+    };
   }
 
   setEmail(email: string): InnovationCollaboratorBuilder {
@@ -50,7 +46,9 @@ export class InnovationCollaboratorBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<InnovationCollaboratorEntity> {
-    const innovationCollaborator = await entityManager.getRepository(InnovationCollaboratorEntity).save(this.innovationCollaborator);
+    const innovationCollaborator = await entityManager
+      .getRepository(InnovationCollaboratorEntity)
+      .save(this.innovationCollaborator);
     return innovationCollaborator;
   }
 }

@@ -1,7 +1,8 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class migrationsAlterTableOrganisationsAddDescriptionAndRegistrationNumberColumns1679052740986 implements MigrationInterface {
-
+export class migrationsAlterTableOrganisationsAddDescriptionAndRegistrationNumberColumns1679052740986
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       ALTER TABLE organisation ADD description nvarchar(50) NULL;
@@ -9,6 +10,5 @@ export class migrationsAlterTableOrganisationsAddDescriptionAndRegistrationNumbe
     `);
   }
 
-  public async down(): Promise<void> { }
-
+  public async down(): Promise<void> {}
 }

@@ -5,20 +5,19 @@ import type { DataSourceOptions } from 'typeorm';
 
 import { TypeORMCustomStrategy } from './custom-strategy.config';
 
-import { GENERAL_ENTITIES, INNOVATION_ENTITIES, ORGANISATION_ENTITIES, USER_ENTITIES, VIEW_ENTITIES } from '../../entities';
-
+import {
+  GENERAL_ENTITIES,
+  INNOVATION_ENTITIES,
+  ORGANISATION_ENTITIES,
+  USER_ENTITIES,
+  VIEW_ENTITIES
+} from '../../entities';
 
 dotenv.config();
-
 
 if (!process.env['DB_HOST']) {
   console.error('DB connection undefined. Please, make sure environment variables are in place');
 }
-
-
-export const NOSQLDB_DEFAULT_CONNECTION = Object.freeze({
-  host: `mongodb://${process.env['COSMOSDB_ACCOUNT']}:${escape(process.env['COSMOSDB_KEY'] || '')}@${process.env['COSMOSDB_HOST']}:${process.env['COSMOSDB_PORT']}/${process.env['COSMOSDB_DB']}?ssl=true&retryWrites=false`
-});
 
 export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
   name: 'default',
@@ -53,6 +52,6 @@ export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
   extra: { options: { enableArithAbort: true, trustServerCertificate: true } },
   migrations: [`${join(__dirname, '..', '..')}/data-access/migrations/*.ts`],
   migrationsTableName: 'Migrations',
-  cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },
+  cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` }
   // logging: process.env['DB_LOGGING'] === 'true'
 });

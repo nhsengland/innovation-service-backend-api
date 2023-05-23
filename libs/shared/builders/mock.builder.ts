@@ -1,14 +1,13 @@
 import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { UserEntity } from '../entities';
-import { DomainUsersService, NOSQLConnectionService } from '../services';
+import { DomainUsersService } from '../services';
 import type { DomainUserInfoType } from '../types';
 
 export class MockBuilder {
-
   private _spies: jest.SpyInstance[] = [];
 
-  constructor() { }
+  constructor() {}
 
   public reset(): void {
     for (const spy of this._spies) {
@@ -21,23 +20,12 @@ export class MockBuilder {
     return this._spies;
   }
 
-
   public addSpy(spy: jest.SpyInstance): MockBuilder {
     this._spies.push(spy);
     return this;
   }
 
-
-  mockNoSQLServiceInit(): MockBuilder {
-    this._spies.push(jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue());
-    return this;
-  }
-
-
-  mockDomainUser(
-    user: UserEntity,
-  ): DomainUserInfoBuilder {
-
+  mockDomainUser(user: UserEntity): DomainUserInfoBuilder {
     const data = {
       id: user.id,
       identityId: user.identityId,
@@ -50,18 +38,14 @@ export class MockBuilder {
       phone: randPhoneNumber(),
       // roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })], // Was like this before, not needed
       roles: user.serviceRoles,
-      surveyId: null,
-      organisations: [],
+      organisations: []
     } as DomainUserInfoType;
 
     return new DomainUserInfoBuilder(data, this);
-
   }
-
 }
 
 class DomainUserInfoBuilder {
-
   user: DomainUserInfoType;
   builder: MockBuilder;
   constructor(user: DomainUserInfoType, builder: MockBuilder) {
@@ -70,8 +54,8 @@ class DomainUserInfoBuilder {
   }
 
   async build(entityManager: EntityManager): Promise<MockBuilder> {
-
-    const user = await entityManager.createQueryBuilder(UserEntity, 'user')
+    const user = await entityManager
+      .createQueryBuilder(UserEntity, 'user')
       .leftJoinAndSelect('user.serviceRoles', 'roles')
       .leftJoinAndSelect('user.userOrganisations', 'organisationUsers')
       .leftJoinAndSelect('organisationUsers.organisation', 'organisation')
@@ -100,14 +84,18 @@ class DomainUserInfoBuilder {
           size: organisation.size,
           description: organisation.description,
           registrationNumber: organisation.registrationNumber,
-          organisationUnits: organisationUnit ? [{
-            id: organisationUnit.id,
-            name: organisationUnit.name,
-            acronym: organisationUnit.acronym,
-            organisationUnitUser: {
-              id: organisationUnitUser.id,
-            }
-          }] : [],
+          organisationUnits: organisationUnit
+            ? [
+                {
+                  id: organisationUnit.id,
+                  name: organisationUnit.name,
+                  acronym: organisationUnit.acronym,
+                  organisationUnitUser: {
+                    id: organisationUnitUser.id
+                  }
+                }
+              ]
+            : []
         }
       ];
     }

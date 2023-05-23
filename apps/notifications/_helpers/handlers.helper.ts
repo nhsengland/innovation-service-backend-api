@@ -3,28 +3,23 @@ import type { Schema } from 'joi';
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 // import { GenericErrorsEnum, InternalServerError } from '@notifications/shared/errors';
 
+import type { DomainContextType } from '@notifications/shared/types';
 import { EmailTypeEnum, NOTIFICATIONS_CONFIG } from '../_config';
 import type { BaseHandler } from '../_handlers/base.handler';
-import type { DomainContextType } from '@notifications/shared/types';
-
+import type { Context } from '@azure/functions';
 
 export class HandlersHelper {
-
   static async runHandler(
-    requestUser: { id: string, identityId: string },
+    //TODO: Add azure function context for logs
+    requestUser: DomainContextType,
     action: NotifierTypeEnum,
     params: { [key: string]: any },
-    domainContext?: DomainContextType,
+    azureContext: Context
   ): Promise<BaseHandler<NotifierTypeEnum, EmailTypeEnum, Record<string, unknown>>> {
-
-    return new NOTIFICATIONS_CONFIG[action].handler(requestUser, params, domainContext).run();
-
+    return new NOTIFICATIONS_CONFIG[action].handler(requestUser, params, azureContext).run();
   }
 
   static handlerJoiDefinition(action: NotifierTypeEnum): Schema {
-
     return NOTIFICATIONS_CONFIG[action].joiDefinition;
-
   }
-
 }

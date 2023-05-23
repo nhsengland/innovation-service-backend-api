@@ -1,11 +1,16 @@
 export const AnnouncementTemplateType = ['GENERIC'] as const;
-export type AnnouncementTemplateType = typeof AnnouncementTemplateType[number];
+export type AnnouncementTemplateType = (typeof AnnouncementTemplateType)[number];
 
 export type AnnouncementParamsType = {
   GENERIC: {
-    title: string,
-    inset?: { title: string, description?: string, link?: { label: string, url: string } },
-    description?: string[],
-    secondaryAction?: { label: string, url: string }
-  }
+    inset?: { title?: string; content?: string; link?: { label: string; url: string } };
+    content?: string;
+    actionLink?: { label: string; url: string };
+  };
+};
+
+export enum AnnouncementStatusEnum {
+  SCHEDULED = 'SCHEDULED',
+  ACTIVE = 'ACTIVE',
+  DONE = 'DONE'
 }

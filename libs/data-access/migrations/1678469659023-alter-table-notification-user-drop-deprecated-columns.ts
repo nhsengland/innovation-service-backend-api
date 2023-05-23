@@ -1,6 +1,5 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-
 export class alterTableNotificationUserDropDeprecatedColumns1678469659023 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -19,5 +18,4 @@ export class alterTableNotificationUserDropDeprecatedColumns1678469659023 implem
   public async down(_queryRunner: QueryRunner): Promise<void> {
     // deprecating the down migration
   }
-
 }

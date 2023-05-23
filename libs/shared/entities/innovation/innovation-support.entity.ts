@@ -1,4 +1,13 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -9,16 +18,13 @@ import { InnovationActionEntity } from './innovation-action.entity';
 
 import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
 
-
 @Entity('innovation_support')
 export class InnovationSupportEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ type: 'simple-enum', enum: InnovationSupportStatusEnum, nullable: false })
   status: InnovationSupportStatusEnum;
-
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
@@ -28,28 +34,28 @@ export class InnovationSupportEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
-  @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, { nullable: true })
+  @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
+    nullable: true
+  })
   @JoinTable({
     name: 'innovation_support_user',
     joinColumn: {
       name: 'innovation_support_id',
-      referencedColumnName: 'id',
+      referencedColumnName: 'id'
     },
     inverseJoinColumn: {
       name: 'organisation_unit_user_id',
-      referencedColumnName: 'id',
-    },
+      referencedColumnName: 'id'
+    }
   })
   organisationUnitUsers: OrganisationUnitUserEntity[];
 
   @OneToMany(() => InnovationActionEntity, record => record.innovationSupport, { lazy: true })
   actions: Promise<InnovationActionEntity[]>;
 
-
   static new(data: Partial<InnovationSupportEntity>): InnovationSupportEntity {
     const instance = new InnovationSupportEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

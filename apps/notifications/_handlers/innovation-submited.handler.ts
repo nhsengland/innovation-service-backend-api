@@ -1,53 +1,135 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import {
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum
+} from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
+import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-
+import type { Context } from '@azure/functions';
 
 export class InnovationSubmitedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITED,
-  EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
+  | EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR
+  | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS
+  | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
   Record<string, never>
 > {
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
+  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED],
-    domainContext: DomainContextType
-  ) {
-    super(requestUser, data, domainContext);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
-
   async run(): Promise<this> {
-
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
-    if (innovation.owner.isActive) {
+    const requestUserInfo = await this.recipientsService.getUsersRecipient(
+      this.requestUser.id,
+      ServiceRoleEnum.INNOVATOR
+    );
+    await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
+
+    const collaborators = (
+      await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId)
+    ).filter(c => c !== this.requestUser.id);
+
+    const innovatorRecipientIds = collaborators;
+    if (this.requestUser.id !== innovation.ownerId) {
+      innovatorRecipientIds.push(innovation.ownerId);
+    }
+
+    const innovatorRecipients = await this.recipientsService.getUsersRecipient(
+      innovatorRecipientIds,
+      ServiceRoleEnum.INNOVATOR
+    );
+
+    if (requestUserInfo) {
+      await this.prepareConfirmationEmail(innovation.name, requestUserInfo);
+      await this.prepareConfirmationInApp(requestUserInfo);
+    }
+
+    await this.prepareEmailToInnovators(innovatorRecipients, innovation.name);
+    await this.prepareInAppToInnovators(innovatorRecipients.map(i => i.roleId));
+
+    await this.prepareEmailToAssessmentUsers(assessmentUsers, innovation.name);
+    await this.prepareInAppToAssessmentUsers(assessmentUsers.map(na => na.roleId));
+
+    return this;
+  }
+
+  async prepareConfirmationEmail(innovationName: string, recipient: RecipientType): Promise<void> {
+    this.emails.push({
+      templateId: EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR,
+      to: recipient,
+      notificationPreferenceType: null,
+      params: {
+        // display_name: '', // This will be filled by the email-listener function.
+        innovation_name: innovationName
+      }
+    });
+  }
+
+  async prepareConfirmationInApp(recipient: RecipientType): Promise<void> {
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.INNOVATION,
+        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION_TO_INNOVATORS,
+        id: this.inputData.innovationId
+      },
+      userRoleIds: [recipient.roleId],
+      params: {}
+    });
+  }
+
+  async prepareEmailToInnovators(recipients: RecipientType[], innovationName: string): Promise<void> {
+    for (const recipient of recipients) {
       this.emails.push({
-        templateId: EmailTypeEnum.INNOVATION_SUBMITED_TO_INNOVATOR,
-        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS,
+        to: recipient,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name
+          innovation_name: innovationName
         }
       });
     }
+  }
 
-    for (const assessmentUser of assessmentUsers) {
+  async prepareInAppToInnovators(roleIds: string[]): Promise<void> {
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.INNOVATION,
+        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION_TO_INNOVATORS,
+        id: this.inputData.innovationId
+      },
+      userRoleIds: roleIds,
+      params: {}
+    });
+  }
+
+  async prepareEmailToAssessmentUsers(recipients: RecipientType[], innovationName: string): Promise<void> {
+    for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
-        to: { type: 'identityId', value: assessmentUser.identityId, displayNameParam: 'display_name' },
+        to: recipient,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: innovation.name,
+          innovation_name: innovationName,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('assessment/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
@@ -55,16 +137,18 @@ export class InnovationSubmitedHandler extends BaseHandler<
         }
       });
     }
-
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION, id: this.inputData.innovationId },
-      userRoleIds: assessmentUsers.map(user => user.roleId),
-      params: {}
-    });
-
-    return this;
-
   }
 
+  async prepareInAppToAssessmentUsers(roleIds: string[]): Promise<void> {
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.INNOVATION,
+        detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
+        id: this.inputData.innovationId
+      },
+      userRoleIds: roleIds,
+      params: {}
+    });
+  }
 }

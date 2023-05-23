@@ -1,6 +1,5 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-
 export class alterTableActivityLogAddColumnUserRole1678898270292 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`ALTER TABLE activity_log ADD user_role_id uniqueidentifier NULL;`);
@@ -23,5 +22,4 @@ export class alterTableActivityLogAddColumnUserRole1678898270292 implements Migr
       ALTER TABLE activity_log DROP COLUMN user_role_id;
     `);
   }
-
 }

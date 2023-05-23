@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createInnovationTransferTable1628247290724 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // innovation_transfer table
     await queryRunner.query(`CREATE TABLE "innovation_transfer" (
@@ -32,5 +31,4 @@ export class createInnovationTransferTable1628247290724 implements MigrationInte
 
     await queryRunner.query(`DROP TABLE "innovation_transfer"`);
   }
-
 }

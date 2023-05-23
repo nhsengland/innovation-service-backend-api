@@ -1,34 +1,29 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
-import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
 import type { ResponseDTO } from './transformation.dtos';
 
-import {
-  JwtDecoder
-} from '@innovations/shared/decorators';
+import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import {
-  AuthorizationServiceSymbol, AuthorizationServiceType
-} from '@innovations/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import type { InnovationTransferService } from '../_services/innovation-transfer.service';
+import SYMBOLS from '../_services/symbols';
 import { BodySchema, BodyType } from './validations.schema';
 
 class CreateInnovationTransfer {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationTransferService = container.get<InnovationTransferServiceType>(InnovationTransferServiceSymbol);
+    const innovationTransferService = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
 
     try {
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .setInnovation(body.innovationId)
         .checkInnovatorType()
         .checkInnovation({ isOwner: true })
@@ -38,7 +33,8 @@ class CreateInnovationTransfer {
 
       const result = await innovationTransferService.createInnovationTransfer(
         {
-          id: requestUser.id, identityId: requestUser.identityId
+          id: requestUser.id,
+          identityId: requestUser.identityId
         },
         domainContext,
         body.innovationId,
@@ -47,7 +43,6 @@ class CreateInnovationTransfer {
       );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -64,10 +59,10 @@ export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/
       content: {
         'application/json': {
           schema: {
-            type: 'object',
-          },
-        },
-      },
+            type: 'object'
+          }
+        }
+      }
     },
     responses: {
       200: {
@@ -75,22 +70,22 @@ export default openApi(CreateInnovationTransfer.httpTrigger as AzureFunction, '/
         content: {
           'application/json': {
             schema: {
-              type: 'object',
-            },
-          },
-        },
+              type: 'object'
+            }
+          }
+        }
       },
       400: {
         description: 'Bad Request',
         content: {
           'application/json': {
             schema: {
-              type: 'object',
-            },
-          },
-        },
+              type: 'object'
+            }
+          }
+        }
       },
-      422: {description: 'Unprocessable Entity'},
-    },
-  },
+      422: { description: 'Unprocessable Entity' }
+    }
+  }
 });

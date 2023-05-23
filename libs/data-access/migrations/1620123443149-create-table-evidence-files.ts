@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTableEvidenceFiles1620123443149 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `CREATE TABLE "innovation_evidence_file" ("innovation_evidence_id" uniqueidentifier NOT NULL, "innovation_file_id" uniqueidentifier NOT NULL, CONSTRAINT "pk_innovation_evidence_file_innovation_evidence_id_innovation_file_id" PRIMARY KEY ("innovation_evidence_id", "innovation_file_id"))`
@@ -35,5 +34,4 @@ export class createTableEvidenceFiles1620123443149 implements MigrationInterface
     );
     await queryRunner.query(`DROP TABLE "innovation_evidence_file"`);
   }
-
 }

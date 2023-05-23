@@ -1,8 +1,8 @@
 export type ResponseDTO = {
-  id: string,
-  invitedAt: Date,
+  id: string;
+  invitedAt: Date;
   innovation: {
-    id: string,
-    name: string
-  }
+    id: string;
+    name: string;
+  };
 }[];

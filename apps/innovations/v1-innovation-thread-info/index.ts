@@ -8,36 +8,32 @@ import { ActionEnum, TargetEnum } from '@innovations/shared/services/integration
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from '../_services/interfaces';
 
+import type { InnovationThreadsService } from '../_services/innovation-threads.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 import { ParamsSchema } from './validation.schemas';
 
-
 class V1InnovationThreadInfo {
-
   @JwtDecoder()
-  @Audit({action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId'})
+  @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const threadsService = container.get<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
-
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context)
+      await authorizationService
+        .validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .checkAdminType()
         .verify();
 
-      const result = await threadsService.getThreadInfo(
-        pathParams.threadId,
-      );
+      const result = await threadsService.getThreadInfo(pathParams.threadId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
@@ -45,18 +41,15 @@ class V1InnovationThreadInfo {
         createdAt: result.createdAt,
         createdBy: {
           id: result.createdBy.id,
-          name: result.createdBy.name,
+          name: result.createdBy.name
         }
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationThreadInfo.httpTrigger as AzureFunction, '/v1/{innovationId}/threads/{threadId}', {
@@ -72,8 +65,8 @@ export default openApi(V1InnovationThreadInfo.httpTrigger as AzureFunction, '/v1
         description: 'Innovation Id',
         required: true,
         schema: {
-          type: 'string',
-        },
+          type: 'string'
+        }
       },
       {
         name: 'threadId',
@@ -81,9 +74,9 @@ export default openApi(V1InnovationThreadInfo.httpTrigger as AzureFunction, '/v1
         description: 'Thread Id',
         required: true,
         schema: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     ],
     responses: {
       200: {
@@ -94,45 +87,45 @@ export default openApi(V1InnovationThreadInfo.httpTrigger as AzureFunction, '/v1
               type: 'object',
               properties: {
                 id: {
-                  type: 'string',
+                  type: 'string'
                 },
                 subject: {
-                  type: 'string',
+                  type: 'string'
                 },
                 createdAt: {
-                  type: 'string',
+                  type: 'string'
                 },
                 createdBy: {
                   type: 'object',
                   properties: {
                     id: {
-                      type: 'string',
+                      type: 'string'
                     },
                     name: {
-                      type: 'string',
+                      type: 'string'
                     },
                     type: {
-                      type: 'string',
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                      type: 'string'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       401: {
-        description: 'Unauthorized',
+        description: 'Unauthorized'
       },
       403: {
-        description: 'Forbidden',
+        description: 'Forbidden'
       },
       404: {
-        description: 'Not Found',
+        description: 'Not Found'
       },
       500: {
-        description: 'Internal Server Error',
-      },
-    },
-  },
+        description: 'Internal Server Error'
+      }
+    }
+  }
 });

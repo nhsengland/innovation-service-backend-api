@@ -8,7 +8,6 @@ import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_reassessment_request')
 export class InnovationReassessmentRequestEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -26,11 +25,9 @@ export class InnovationReassessmentRequestEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_assessment_id' })
   assessment: InnovationAssessmentEntity;
 
-
   static new(data: Partial<InnovationReassessmentRequestEntity>): InnovationReassessmentRequestEntity {
     const instance = new InnovationReassessmentRequestEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

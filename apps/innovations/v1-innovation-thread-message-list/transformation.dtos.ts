@@ -1,5 +1,3 @@
-
-
 export type ResponseDTO = {
   count: number;
   messages: {
@@ -18,4 +16,4 @@ export type ResponseDTO = {
     };
     updatedAt: Date;
   }[];
-}
+};

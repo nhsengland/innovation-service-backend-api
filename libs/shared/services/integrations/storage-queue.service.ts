@@ -1,8 +1,12 @@
-import { QueueClient, QueueSendMessageOptions, QueueSendMessageResponse, QueueServiceClient } from '@azure/storage-queue';
+import {
+  QueueClient,
+  QueueSendMessageOptions,
+  QueueSendMessageResponse,
+  QueueServiceClient
+} from '@azure/storage-queue';
 import { injectable } from 'inversify';
 
 import { STORAGE_QUEUE_CONFIG } from '../../config';
-
 
 export enum QueuesEnum {
   AUDIT = 'audit-send-queue',
@@ -12,11 +16,11 @@ export enum QueuesEnum {
   NOTIFICATION = 'notification-queue'
 }
 
-
 @injectable()
 export class StorageQueueService {
-
-  private queueServiceClient: QueueServiceClient = QueueServiceClient.fromConnectionString(STORAGE_QUEUE_CONFIG.storageConnectionString);
+  private queueServiceClient: QueueServiceClient = QueueServiceClient.fromConnectionString(
+    STORAGE_QUEUE_CONFIG.storageConnectionString
+  );
 
   private async init(queueName: QueuesEnum): Promise<QueueClient> {
     const queueClient = this.queueServiceClient.getQueueClient(queueName);
@@ -25,11 +29,14 @@ export class StorageQueueService {
     return queueClient;
   }
 
-  async sendMessage(queueName: QueuesEnum, message: { [key: string]: any }, options?: QueueSendMessageOptions): Promise<QueueSendMessageResponse> {
+  async sendMessage<T = any>(
+    queueName: QueuesEnum,
+    message: T,
+    options?: QueueSendMessageOptions
+  ): Promise<QueueSendMessageResponse> {
     const queueClient = await this.init(queueName);
     const payload = JSON.stringify(message);
 
     return queueClient.sendMessage(Buffer.from(payload).toString('base64'), options);
-
   }
 }

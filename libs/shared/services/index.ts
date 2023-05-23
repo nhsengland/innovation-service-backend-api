@@ -14,6 +14,5 @@ export { StorageQueueService } from './integrations/storage-queue.service';
 export { CacheService, CacheConfigType } from './storage/cache.service';
 export { FileStorageService } from './storage/file-storage.service';
 export { SQLConnectionService } from './storage/sql-connection.service';
-export { NOSQLConnectionService } from './storage/nosql-connection.service';
 
 export * from './interfaces';

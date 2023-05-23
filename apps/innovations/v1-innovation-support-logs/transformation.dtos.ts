@@ -1,6 +1,5 @@
 import type { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 
-
 export type ResponseDTO = {
   id: string;
   type: InnovationSupportLogTypeEnum;
@@ -28,4 +27,4 @@ export type ResponseDTO = {
       acronym: string | null;
     };
   }[];
-}
+};

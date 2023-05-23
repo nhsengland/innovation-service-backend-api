@@ -4,10 +4,8 @@ import { InnovationEntity } from '../innovation/innovation.entity';
 
 import type { InnovationGroupedStatusEnum } from '../../enums/innovation.enums';
 
-
 @ViewEntity()
 export class InnovationGroupedStatusViewEntity {
-
   @ViewColumn({ name: 'id' })
   innovationId: string;
 
@@ -17,5 +15,4 @@ export class InnovationGroupedStatusViewEntity {
   @OneToOne(() => InnovationEntity, record => record.id)
   @JoinColumn({ name: 'id' })
   innovation: InnovationEntity;
-
 }

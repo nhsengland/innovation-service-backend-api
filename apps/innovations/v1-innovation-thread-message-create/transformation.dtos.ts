@@ -1,5 +1,3 @@
-
-
 export type ResponseDTO = {
   threadMessage: {
     createdBy: {
@@ -11,4 +9,4 @@ export type ResponseDTO = {
     isEditable: boolean;
     createdAt: Date;
   };
-}
+};

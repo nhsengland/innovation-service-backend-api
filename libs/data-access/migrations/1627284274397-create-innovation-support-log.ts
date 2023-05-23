@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createInnovationSupportLog1627284274397 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // innovation_support_log table
     await queryRunner.query(`CREATE TABLE "innovation_support_log" (
@@ -59,9 +58,7 @@ export class createInnovationSupportLog1627284274397 implements MigrationInterfa
     await queryRunner.query(
       `DROP INDEX "idx_innovation_support_log_organisation_unit_organisation_unit_id" ON "innovation_support_log_organisation_unit"`
     );
-    await queryRunner.query(
-      `DROP TABLE "innovation_support_log_organisation_unit"`
-    );
+    await queryRunner.query(`DROP TABLE "innovation_support_log_organisation_unit"`);
 
     // innovation_support_log table
     await queryRunner.query(
@@ -74,5 +71,4 @@ export class createInnovationSupportLog1627284274397 implements MigrationInterfa
 
     await queryRunner.query(`DROP TABLE "innovation_support_log"`);
   }
-
 }

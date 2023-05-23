@@ -1,9 +1,7 @@
-import type { MigrationInterface, QueryRunner } from "typeorm";
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class migrationsCreateAnnouncementAndAnnouncementUserTables1680011041629 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE TABLE "announcement"
       (
@@ -39,6 +37,5 @@ export class migrationsCreateAnnouncementAndAnnouncementUserTables1680011041629 
     `);
   }
 
-  public async down(): Promise<void> { }
-
+  public async down(): Promise<void> {}
 }

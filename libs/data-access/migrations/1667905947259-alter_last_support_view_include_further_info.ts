@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterLastSupportViewIncludeFurtherInfo1667905947259
-  implements MigrationInterface {
+export class alterLastSupportViewIncludeFurtherInfo1667905947259 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
         

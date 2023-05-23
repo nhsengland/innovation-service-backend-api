@@ -2,11 +2,8 @@ import SQLDB_SEEDS_CONNECTION from '../config/seeds-connection.config';
 
 import { OrganisationUnitEntity } from '../../shared/entities';
 
-
 export class alterOrganisationUnitIsShadow1626707748930 {
-
   async up(): Promise<void> {
-
     const data = [
       { acronym: 'NOCRI/NIHR', isShadow: true },
       { acronym: 'NHS-SC', isShadow: true },
@@ -21,20 +18,17 @@ export class alterOrganisationUnitIsShadow1626707748930 {
     const organisationUnitRepo = SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity);
 
     for (const organisationUnit of data) {
-
-      const dbOrganisationUnit = await organisationUnitRepo.findOne({ where: { acronym: organisationUnit.acronym } });
+      const dbOrganisationUnit = await organisationUnitRepo.findOne({
+        where: { acronym: organisationUnit.acronym }
+      });
 
       if (!dbOrganisationUnit) continue;
 
       dbOrganisationUnit.isShadow = true;
 
       await organisationUnitRepo.save(dbOrganisationUnit);
-
     }
-
   }
 
-
-  async down(): Promise<void> { }
-
+  async down(): Promise<void> {}
 }

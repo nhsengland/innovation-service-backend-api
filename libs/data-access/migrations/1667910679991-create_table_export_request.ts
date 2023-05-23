@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class createTableExportRequest1667910679991
-  implements MigrationInterface {
+export class createTableExportRequest1667910679991 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       Create Table [dbo].[innovation_export_request] (
@@ -31,12 +30,8 @@ export class createTableExportRequest1667910679991
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP CONSTRAINT "fk_export_request_organisation_unit_id"`
-    );
-    await queryRunner.query(
-      `DROP CONSTRAINT "fk_export_request_innovation_id"`
-    );
+    await queryRunner.query(`DROP CONSTRAINT "fk_export_request_organisation_unit_id"`);
+    await queryRunner.query(`DROP CONSTRAINT "fk_export_request_innovation_id"`);
     await queryRunner.query(`DROP TABLE [dbo].[export_request]`);
   }
 }

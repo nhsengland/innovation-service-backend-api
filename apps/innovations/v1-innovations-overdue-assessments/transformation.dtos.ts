@@ -1,3 +1,3 @@
 export type ResponseDTO = {
-  overdue: number
-}
+  overdue: number;
+};

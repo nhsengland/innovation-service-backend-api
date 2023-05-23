@@ -3,67 +3,48 @@ import SQLDB_SEEDS_CONNECTION from '../config/seeds-connection.config';
 import { OrganisationEntity, OrganisationUnitEntity } from '../../shared/entities';
 import { OrganisationTypeEnum } from '../../shared/enums';
 
-
 export class loadInitialOrganisations1626172199310 {
-
   async up(): Promise<void> {
-
     const data = [
       {
         name: 'NOCRI/NIHR',
         acronym: 'NOCRI/NIHR',
-        units: [
-          { name: 'NOCRI/NIHR', acronym: 'NOCRI/NIHR', isShadow: true }
-        ]
+        units: [{ name: 'NOCRI/NIHR', acronym: 'NOCRI/NIHR', isShadow: true }]
       },
       {
         name: 'NHS Supply Chain',
         acronym: 'NHS-SC',
-        units: [
-          { name: 'NHS Supply Chain', acronym: 'NHS-SC', isShadow: true }
-        ]
+        units: [{ name: 'NHS Supply Chain', acronym: 'NHS-SC', isShadow: true }]
       },
       {
         name: 'NICE',
         acronym: 'NICE',
-        units: [
-          { name: 'NICE', acronym: 'NICE', isShadow: true }
-        ],
+        units: [{ name: 'NICE', acronym: 'NICE', isShadow: true }]
       },
       {
         name: 'Scottish Heath Technology Group',
         acronym: 'SHTG',
-        units: [
-          { name: 'Scottish Heath Technology Group', acronym: 'SHTG', isShadow: true }
-        ],
+        units: [{ name: 'Scottish Heath Technology Group', acronym: 'SHTG', isShadow: true }]
       },
       {
         name: 'NHSE Specialised Commissioning',
         acronym: 'NHSE-SC',
-        units: [
-          { name: 'NHSE Specialised Commissioning', acronym: 'NHSE-SC', isShadow: true }
-        ],
+        units: [{ name: 'NHSE Specialised Commissioning', acronym: 'NHSE-SC', isShadow: true }]
       },
       {
         name: 'Life Sciences Hub Wales',
         acronym: 'LSHW',
-        units: [
-          { name: 'Life Sciences Hub Wales', acronym: 'LSHW', isShadow: true }
-        ],
+        units: [{ name: 'Life Sciences Hub Wales', acronym: 'LSHW', isShadow: true }]
       },
       {
         name: 'Department for International Trade',
         acronym: 'DIT',
-        units: [
-          { name: 'Department for International Trade', acronym: 'DIT', isShadow: true },
-        ],
+        units: [{ name: 'Department for International Trade', acronym: 'DIT', isShadow: true }]
       },
       {
         name: 'Health Technology Wales',
         acronym: 'HTW',
-        units: [
-          { name: 'Health Technology Wales', acronym: 'HTW', isShadow: true }
-        ]
+        units: [{ name: 'Health Technology Wales', acronym: 'HTW', isShadow: true }]
       },
       {
         name: 'MHRA',
@@ -99,9 +80,7 @@ export class loadInitialOrganisations1626172199310 {
       }
     ];
 
-
     for (const organisation of data) {
-
       const orgObj = OrganisationEntity.new({
         name: organisation.name,
         acronym: organisation.acronym,
@@ -112,7 +91,6 @@ export class loadInitialOrganisations1626172199310 {
       const savedOrganisation = await SQLDB_SEEDS_CONNECTION.manager.getRepository(OrganisationEntity).save(orgObj);
 
       for (const organisationUnit of organisation.units) {
-
         const orgUnitObj = OrganisationUnitEntity.new({
           name: organisationUnit.name,
           acronym: organisationUnit.acronym,
@@ -121,20 +99,14 @@ export class loadInitialOrganisations1626172199310 {
           updatedBy: 'seed'
         });
         await SQLDB_SEEDS_CONNECTION.getRepository(OrganisationUnitEntity).save(orgUnitObj);
-
       }
     }
-
   }
 
-
   async down(): Promise<void> {
-
     const query = SQLDB_SEEDS_CONNECTION.createQueryBuilder().delete();
 
     await query.from(OrganisationUnitEntity).execute();
     await query.from(OrganisationEntity).execute();
-
   }
-
 }

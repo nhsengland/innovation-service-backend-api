@@ -1,4 +1,3 @@
 export type ResponseDTO = {
-    organisationId: string
-  };
-  
+  organisationId: string;
+};

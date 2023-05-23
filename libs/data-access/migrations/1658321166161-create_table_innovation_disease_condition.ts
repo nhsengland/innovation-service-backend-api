@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class createTableInnovationDiseaseCondition1658321166161
-  implements MigrationInterface {
+export class createTableInnovationDiseaseCondition1658321166161 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE TABLE "innovation_disease_condition" (
       "created_at" datetime2 NOT NULL CONSTRAINT "df_innovation_disease_condition_created_at" DEFAULT getdate(), 
@@ -26,12 +25,8 @@ export class createTableInnovationDiseaseCondition1658321166161
     await queryRunner.query(
       `DROP INDEX "idx_innovation_disease_condition_type_innovation_id" ON "innovation_disease_condition"`
     );
-    await queryRunner.query(
-      `ALTER TABLE "innovation_disease_condition" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_disease_condition" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_disease_condition"`);
-    await queryRunner.query(
-      `DROP TABLE "innovation_disease_condition_history"`
-    );
+    await queryRunner.query(`DROP TABLE "innovation_disease_condition_history"`);
   }
 }

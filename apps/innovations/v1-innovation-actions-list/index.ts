@@ -7,26 +7,24 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 
+import type { InnovationActionsService } from '../_services/innovation-actions.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationActionsList {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationActionsService = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
+    const innovationActionsService = container.get<InnovationActionsService>(SYMBOLS.InnovationActionsService);
 
     try {
-
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
       const { skip, take, order, ...filters } = queryParams;
 
-      const authInstance = await authorizationService.validate(context)
+      const authInstance = await authorizationService
+        .validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -34,11 +32,11 @@ class V1InnovationActionsList {
         .verify();
       const domainContext = authInstance.getContext();
 
-      const result = await innovationActionsService.getActionsList(
-        domainContext,
-        filters,
-        { skip, take, order }
-      );
+      const result = await innovationActionsService.getActionsList(domainContext, filters, {
+        skip,
+        take,
+        order
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
@@ -60,7 +58,6 @@ class V1InnovationActionsList {
         }))
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -101,7 +98,7 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The order of the records.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -110,7 +107,7 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The status of the action.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -119,7 +116,7 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The section of the action.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -128,7 +125,7 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The innovation id of the action.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -137,9 +134,9 @@ export default openApi(V1InnovationActionsList.httpTrigger as AzureFunction, '/v
         required: false,
         description: 'The innovation name of the action.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
-      },
+      }
     ],
     responses: {
       200: {

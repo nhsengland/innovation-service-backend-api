@@ -2,17 +2,16 @@ import Joi from 'joi';
 
 export type IdentityOperationType = {
   data: {
-    identityId: string,
+    identityId: string;
     body: {
-      displayName?: string,
-      mobilePhone?: string | null,
-      accountEnabled?: boolean
-    }
-  }
-}
+      displayName?: string;
+      mobilePhone?: string | null;
+      accountEnabled?: boolean;
+    };
+  };
+};
 
 export const IdentityOperationSchema = Joi.object<IdentityOperationType>({
-
   data: Joi.object<IdentityOperationType['data']>({
     identityId: Joi.string().guid().required(),
     body: Joi.object({
@@ -21,5 +20,4 @@ export const IdentityOperationSchema = Joi.object<IdentityOperationType>({
       accountEnabled: Joi.boolean().optional()
     }).required()
   }).required()
-
 }).required();

@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createSystemStateViewOrganisationLevel1638887434278 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       CREATE OR ALTER VIEW [vw_system_state_organisationlevel] AS
       SELECT 
@@ -26,15 +24,11 @@ export class createSystemStateViewOrganisationLevel1638887434278 implements Migr
 	     	o.name,ou.name			
       ) innovationsorgQuery
     `);
-
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       DROP VIEW dbo.[vw_system_state_organisationlevel]
     `);
-
   }
-
 }

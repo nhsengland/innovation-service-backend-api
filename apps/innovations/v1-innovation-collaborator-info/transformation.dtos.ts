@@ -1,20 +1,19 @@
-import type { InnovationCollaboratorStatusEnum } from "@innovations/shared/enums";
-
+import type { InnovationCollaboratorStatusEnum } from '@innovations/shared/enums';
 
 export type ResponseDTO = {
   id: string;
   name?: string;
   role?: string;
   email: string;
-  status: InnovationCollaboratorStatusEnum,
+  status: InnovationCollaboratorStatusEnum;
   innovation: {
-    id: string,
-    name: string,
-    description: null | string,
+    id: string;
+    name: string;
+    description: null | string;
     owner: {
-      id: string,
-      name?: string
-    }
-  },
-  invitedAt: Date
-}
+      id: string;
+      name?: string;
+    };
+  };
+  invitedAt: Date;
+};

@@ -7,25 +7,24 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from '../_services/interfaces';
 
+import type { InnovationThreadsService } from '../_services/innovation-threads.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1InnovationThreadCreate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const threadsService = container.get<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
-
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
@@ -45,7 +44,7 @@ class V1InnovationThreadCreate {
         pathParams.innovationId,
         queryParams.skip,
         queryParams.take,
-        orderBy,
+        orderBy
       );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
@@ -62,26 +61,25 @@ class V1InnovationThreadCreate {
               id: thread.lastMessage.createdBy.id,
               name: thread.lastMessage.createdBy.name,
               type: thread.lastMessage.createdBy.role,
-              ...thread.lastMessage.createdBy.isOwner !== undefined && { isOwner: thread.lastMessage.createdBy.isOwner },
+              ...(thread.lastMessage.createdBy.isOwner !== undefined && {
+                isOwner: thread.lastMessage.createdBy.isOwner
+              }),
               organisationUnit: {
                 id: thread.lastMessage.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
                 name: thread.lastMessage.createdBy.organisationUnit?.name ?? '', // if the organisationUnit exists, then all props are ensured to exist
-                acronym: thread.lastMessage.createdBy.organisationUnit?.acronym ?? '', // if the organisationUnit exists, then all props are ensured to exist
-              },
-            },
-          },
-        })),
+                acronym: thread.lastMessage.createdBy.organisationUnit?.acronym ?? '' // if the organisationUnit exists, then all props are ensured to exist
+              }
+            }
+          }
+        }))
       });
 
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads', {
@@ -97,8 +95,8 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
         description: 'Innovation Id',
         required: true,
         schema: {
-          type: 'string',
-        },
+          type: 'string'
+        }
       },
       {
         name: 'skip',
@@ -106,8 +104,8 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
         description: 'Skip',
         required: false,
         schema: {
-          type: 'number',
-        },
+          type: 'number'
+        }
       },
       {
         name: 'take',
@@ -115,8 +113,8 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
         description: 'Take',
         required: false,
         schema: {
-          type: 'number',
-        },
+          type: 'number'
+        }
       },
       {
         name: 'order',
@@ -124,9 +122,9 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
         description: 'Order',
         required: false,
         schema: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     ],
     responses: {
       200: {
@@ -137,7 +135,7 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
               type: 'object',
               properties: {
                 count: {
-                  type: 'number',
+                  type: 'number'
                 },
                 threads: {
                   type: 'array',
@@ -145,79 +143,79 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                     type: 'object',
                     properties: {
                       id: {
-                        type: 'string',
+                        type: 'string'
                       },
                       subject: {
-                        type: 'string',
+                        type: 'string'
                       },
                       messageCount: {
-                        type: 'number',
+                        type: 'number'
                       },
                       createdAt: {
-                        type: 'string',
+                        type: 'string'
                       },
                       isNew: {
-                        type: 'boolean',
+                        type: 'boolean'
                       },
                       lastMessage: {
                         type: 'object',
                         properties: {
                           id: {
-                            type: 'string',
+                            type: 'string'
                           },
                           createdAt: {
-                            type: 'string',
+                            type: 'string'
                           },
                           createdBy: {
                             type: 'object',
                             properties: {
                               id: {
-                                type: 'string',
+                                type: 'string'
                               },
                               name: {
-                                type: 'string',
+                                type: 'string'
                               },
                               type: {
-                                type: 'string',
+                                type: 'string'
                               },
                               organisationUnit: {
                                 type: 'object',
                                 properties: {
                                   id: {
-                                    type: 'string',
+                                    type: 'string'
                                   },
                                   name: {
-                                    type: 'string',
+                                    type: 'string'
                                   },
                                   acronym: {
-                                    type: 'string',
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                                    type: 'string'
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       401: {
-        description: 'Unauthorized',
+        description: 'Unauthorized'
       },
       403: {
-        description: 'Forbidden',
+        description: 'Forbidden'
       },
       404: {
-        description: 'Not Found',
+        description: 'Not Found'
       },
       500: {
-        description: 'Internal Server Error',
-      },
-    },
-  },
+        description: 'Internal Server Error'
+      }
+    }
+  }
 });

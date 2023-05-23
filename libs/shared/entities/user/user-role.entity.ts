@@ -9,10 +9,8 @@ import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity
 import { OrganisationEntity } from '../organisation/organisation.entity';
 import { UserEntity } from './user.entity';
 
-
 @Entity('user_role')
 export class UserRoleEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -51,14 +49,15 @@ export class UserRoleEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }
 
 // Entity helpers
 export const roleEntity2RoleType = (role: UserRoleEntity): RoleType => {
   // sanity check to ensure relations are loaded
-  if ((!role.organisation && role.organisationId) && (!role.organisationUnit && role.organisationUnitId)) {
-    throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, {message: 'role relations are not loaded'});
+  if (!role.organisation && role.organisationId && !role.organisationUnit && role.organisationUnitId) {
+    throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, {
+      message: 'role relations are not loaded'
+    });
   }
 
   return {

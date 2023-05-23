@@ -18,23 +18,14 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1AdminTermsOfUse {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const toUService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
-
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      await authorizationService.validate(context).checkAdminType().verify();
 
       const result = await toUService.getTermsOfUse(pathParams.touId);
 
@@ -47,38 +38,34 @@ class V1AdminTermsOfUse {
   }
 }
 
-export default openApi(
-  V1AdminTermsOfUse.httpTrigger as AzureFunction,
-  '/v1/tou/{touId}',
-  {
-    get: {
-      description: 'Get terms of use.',
-      operationId: 'v1-admin-terms-of-use',
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-      responses: {
-        '200': {
-          description: 'The terms of use',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', format: 'uuid' },
-                  name: { type: 'string' },
-                  touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
-                  summary: { type: 'string' },
-                  releaseAt: { type: 'string', format: 'date-time', nullable: true },
-                  createdAt: { type: 'string', format: 'date-time' },
-                },
-              },
-            },
-          },
-        },
-        '400': { description: 'Bad request.' },
-        '401': { description: 'The user is not authorized to get terms of use.' },
-        '404': { description: 'The terms of use was not found.' },
-        '500': { description: 'An error occurred while listing the terms of use.' },
+export default openApi(V1AdminTermsOfUse.httpTrigger as AzureFunction, '/v1/tou/{touId}', {
+  get: {
+    description: 'Get terms of use.',
+    operationId: 'v1-admin-terms-of-use',
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    responses: {
+      '200': {
+        description: 'The terms of use',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                id: { type: 'string', format: 'uuid' },
+                name: { type: 'string' },
+                touType: { type: 'string', enum: Object.values(TermsOfUseTypeEnum) },
+                summary: { type: 'string' },
+                releaseAt: { type: 'string', format: 'date-time', nullable: true },
+                createdAt: { type: 'string', format: 'date-time' }
+              }
+            }
+          }
+        }
       },
-    },
+      '400': { description: 'Bad request.' },
+      '401': { description: 'The user is not authorized to get terms of use.' },
+      '404': { description: 'The terms of use was not found.' },
+      '500': { description: 'An error occurred while listing the terms of use.' }
+    }
   }
-);
+});

@@ -5,10 +5,8 @@ import { BaseEntity } from '../base.entity';
 
 import { UserEntity } from './user.entity';
 
-
 @Entity('user_preference')
 export class UserPreferenceEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -34,5 +32,4 @@ export class UserPreferenceEntity extends BaseEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

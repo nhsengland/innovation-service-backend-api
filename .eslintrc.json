@@ -1,6 +1,8 @@
 {
   "extends": [
-    "plugin:@typescript-eslint/recommended"
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
   "parserOptions": {
     "project": "./tsconfig.json"
@@ -12,8 +14,6 @@
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-unused-vars": ["warn", { "vars": "all", "args": "none", "ignoreRestSiblings": false }],
-    "@typescript-eslint/no-floating-promises": "error",
-    "quotes": ["warn", "single", { "avoidEscape": true, "allowTemplateLiterals": true }],
-    "semi": ["warn", "always"]
+    "@typescript-eslint/no-floating-promises": "error"
   }
 }

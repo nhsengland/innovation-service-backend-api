@@ -7,22 +7,21 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { NotificationsServiceSymbol, NotificationsServiceType } from '../_services/interfaces';
 
+import type { NotificationsService } from '../_services/notifications.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { PathParamsSchema, PathParamType } from './validation.schemas';
 
-
 class V1UserNotificationsDelete {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const notificationsService = container.get<NotificationsServiceType>(NotificationsServiceSymbol);
+    const notificationsService = container.get<NotificationsService>(SYMBOLS.NotificationsService);
 
     try {
-      const authInstance = await authService.validate(context)
+      const authInstance = await authService
+        .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
@@ -36,14 +35,11 @@ class V1UserNotificationsDelete {
         id: queryParams.notificationId
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '/v1/notifications/{notificationId}', {
@@ -51,7 +47,7 @@ export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '
     description: 'Returns the id of the deleted notification',
     operationId: 'v1-notifications-delete',
     tags: ['[v1] Notifications'],
-    parameters: SwaggerHelper.paramJ2S({path: PathParamsSchema}),
+    parameters: SwaggerHelper.paramJ2S({ path: PathParamsSchema }),
     responses: {
       200: {
         description: 'Success',
@@ -65,7 +61,7 @@ export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '
             }
           }
         }
-      },
-    },
-  },
+      }
+    }
+  }
 });

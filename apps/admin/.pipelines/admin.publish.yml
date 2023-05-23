@@ -2,13 +2,13 @@ trigger:
   batch: true
   tags:
     include:
-      - '2.*'
+      - "2.*"
   branches:
     include:
       - develop
   paths:
     include:
-      - '*'
+      - "*"
       - apps/admin
     exclude:
       - apps
@@ -21,4 +21,4 @@ pool:
 extends:
   template: ../../../.pipelines/build-function-app.yml
   parameters:
-      appName: admin
+    appName: admin

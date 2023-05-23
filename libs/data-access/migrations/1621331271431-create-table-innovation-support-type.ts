@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTableInnovationSupportType1621331271431 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // innovation_support_type table
     await queryRunner.query(`CREATE TABLE "innovation_support_type" (
@@ -26,15 +25,10 @@ export class createTableInnovationSupportType1621331271431 implements MigrationI
     );
 
     // new innovation columns
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD main_category nvarchar(255)`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD main_category nvarchar(255)`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" ADD has_problem_tackle_knowledge nvarchar(255)`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" ADD has_problem_tackle_knowledge nvarchar(255)`);
   }
-
 
   async down(queryRunner: QueryRunner): Promise<void> {
     // innovation_support_type table
@@ -42,24 +36,15 @@ export class createTableInnovationSupportType1621331271431 implements MigrationI
       `ALTER TABLE "innovation_support_type" DROP CONSTRAINT "fk_innovation_support_type_innovation_innovation_id"`
     );
 
-    await queryRunner.query(
-      `DROP INDEX "idx_innovation_support_type_innovation_id" ON "innovation_support_type"`
-    );
+    await queryRunner.query(`DROP INDEX "idx_innovation_support_type_innovation_id" ON "innovation_support_type"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_support_type" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_support_type" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_support_type"`);
     await queryRunner.query(`DROP TABLE "innovation_support_type_history"`);
 
     // new innovation columns
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN main_category`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN main_category`);
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP COLUMN has_problem_tackle_knowledge`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP COLUMN has_problem_tackle_knowledge`);
   }
-
 }

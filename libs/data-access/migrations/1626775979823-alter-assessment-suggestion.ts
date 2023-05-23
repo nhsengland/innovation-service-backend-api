@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterAssessmentSuggestion1626775979823 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // innovation_assessment_organisation_unit table
     await queryRunner.query(
@@ -84,9 +83,6 @@ export class alterAssessmentSuggestion1626775979823 implements MigrationInterfac
     await queryRunner.query(
       `DROP INDEX "idx_innovation_assessment_organisation_unit_organisation_unit_id" ON "innovation_assessment_organisation_unit"`
     );
-    await queryRunner.query(
-      `DROP TABLE "innovation_assessment_organisation_unit"`
-    );
+    await queryRunner.query(`DROP TABLE "innovation_assessment_organisation_unit"`);
   }
-
 }

@@ -1,7 +1,7 @@
 export type ResponseDTO = {
   organisation: {
-    id: string,
-    name: string,
-    acronym: null | string
-  }
+    id: string;
+    name: string;
+    acronym: null | string;
+  };
 }[];

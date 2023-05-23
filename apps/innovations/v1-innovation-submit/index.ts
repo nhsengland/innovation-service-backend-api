@@ -8,32 +8,34 @@ import { ActionEnum, TargetEnum } from '@innovations/shared/services/integration
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
+import type { InnovationsService } from '../_services/innovations.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1InnovationSubmit {
-
   @JwtDecoder()
-  @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.INNOVATION, identifierParam: 'innovationId' })
+  @Audit({
+    action: ActionEnum.UPDATE,
+    target: TargetEnum.INNOVATION,
+    identifierParam: 'innovationId'
+  })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
+    const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkInnovation()
         .verify();
       const requestUser = auth.getUserInfo();
-      const domainContext = auth.getContext()
+      const domainContext = auth.getContext();
 
       const result = await innovationsService.submitInnovation(
         { id: requestUser.id, identityId: requestUser.identityId },
@@ -45,14 +47,11 @@ class V1InnovationSubmit {
         status: result.status
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, '/v1/{innovationId}/submit', {
@@ -68,9 +67,9 @@ export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, '/v1/{in
         description: 'Innovation ID',
         required: true,
         schema: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     ],
     responses: {
       200: {
@@ -82,35 +81,32 @@ export default openApi(V1InnovationSubmit.httpTrigger as AzureFunction, '/v1/{in
               properties: {
                 id: {
                   type: 'string',
-                  description: 'Innovation ID',
+                  description: 'Innovation ID'
                 },
                 status: {
                   type: 'string',
-                  description: 'Innovation status',
-                },
-              },
-            },
-          },
-        },
+                  description: 'Innovation status'
+                }
+              }
+            }
+          }
+        }
       },
       400: {
-        description: 'Bad request.',
+        description: 'Bad request.'
       },
       401: {
-        description: 'Unauthorized.',
+        description: 'Unauthorized.'
       },
       403: {
-        description: 'Forbidden.',
+        description: 'Forbidden.'
       },
       404: {
-        description: 'Not found.',
+        description: 'Not found.'
       },
       500: {
-        description: 'Internal server error.',
-      },
-    },
-  },
+        description: 'Internal server error.'
+      }
+    }
+  }
 });
-
-
-

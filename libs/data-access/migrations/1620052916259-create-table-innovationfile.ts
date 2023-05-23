@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTableInnovationfile1620052916259 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(
       `CREATE TABLE innovation_file(
                 "created_at" datetime2 NOT NULL CONSTRAINT "df_innovationfile_created_at" DEFAULT getdate(),

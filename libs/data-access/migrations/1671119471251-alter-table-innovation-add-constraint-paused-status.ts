@@ -1,10 +1,7 @@
-import type { MigrationInterface, QueryRunner } from 'typeorm'
-
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableInnovationAddConstraintPausedStatus1671119471251 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"
     `);
@@ -20,11 +17,9 @@ export class alterTableInnovationAddConstraintPausedStatus1671119471251 implemen
         'PAUSED'
         ))`
     );
-
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"
     `);
@@ -39,7 +34,5 @@ export class alterTableInnovationAddConstraintPausedStatus1671119471251 implemen
         'COMPLETE'
         ))`
     );
-
   }
-
 }

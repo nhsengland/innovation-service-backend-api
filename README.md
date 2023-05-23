@@ -66,12 +66,6 @@ These files are needed to provide environment variables to the app function when
     "DB_PWD": "Pass@word",
     "DB_NAME": "innovationdb",
 
-    "COSMOSDB_HOST": "{secret}",
-    "COSMOSDB_ACCOUNT": "{secret}",
-    "COSMOSDB_KEY": "{secret}",
-    "COSMOSDB_DB": "{secret}",
-    "COSMOSDB_PORT": "{secret}",
-
     "AD_TENANT_NAME": "{secret}",
     "AD_CLIENT_ID": "{secret}",
     "AD_CLIENT_SECRET": "{secret}",
@@ -86,7 +80,6 @@ These files are needed to provide environment variables to the app function when
 
     "REDIS_CACHE_CONNECTIONSTRING": "{secret}",
 
-    "SLS_TTL": 300,
     "ADMIN_OID": "{secret}",
 
     "EMAIL_NOTIFICATION_API_ISSUER":"{secret}",
@@ -125,7 +118,7 @@ $ ...
 ## Testing an app
 Before being able to run tests, you must run migratins on the "tests" DB. Then you can test each app individually.
 ``` bash
-$ npm run migrations:tests # Only needs to be runned once.
+$ npm run migrations:test # Only needs to be runned once.
 
 $ npm run app:test --app=innovations
 $ npm run app:test --app=users

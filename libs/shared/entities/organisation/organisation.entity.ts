@@ -7,11 +7,8 @@ import { OrganisationUnitEntity } from './organisation-unit.entity';
 
 import { OrganisationTypeEnum } from '../../enums/organisation.enums';
 
-
-
 @Entity('organisation')
 export class OrganisationEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -45,11 +42,9 @@ export class OrganisationEntity extends BaseEntity {
   @OneToMany(() => OrganisationUnitEntity, record => record.organisation, { lazy: true })
   organisationUnits: Promise<OrganisationUnitEntity[]>;
 
-
   static new(data: Partial<OrganisationEntity>): OrganisationEntity {
     const instance = new OrganisationEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

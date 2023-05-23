@@ -7,22 +7,19 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 
+import type { InnovationSectionsService } from '../_services/innovation-sections.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1InnovationEvidenceCreate {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationSectionsService = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
@@ -36,22 +33,15 @@ class V1InnovationEvidenceCreate {
       const requestUser = auth.getUserInfo();
       const innovation = auth.getInnovationInfo();
 
-      await innovationSectionsService.createInnovationEvidence(
-        { id: requestUser.id },
-        innovation.id,
-        body
-      );
+      await innovationSectionsService.createInnovationEvidence({ id: requestUser.id }, innovation.id, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({});
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationEvidenceCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/evidence', {
@@ -61,7 +51,9 @@ export default openApi(V1InnovationEvidenceCreate.httpTrigger as AzureFunction, 
     summary: 'Create an innovation evidence entry.',
     operationId: 'v1-innovation-evidence-create',
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
-    requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The evidence data to create.' }),
+    requestBody: SwaggerHelper.bodyJ2S(BodySchema, {
+      description: 'The evidence data to create.'
+    }),
     responses: {
       200: {
         description: 'Innovation evidence info.',
@@ -69,27 +61,26 @@ export default openApi(V1InnovationEvidenceCreate.httpTrigger as AzureFunction, 
           'application/json': {
             schema: {
               type: 'object',
-              properties: {
-              },
-            },
-          },
-        },
+              properties: {}
+            }
+          }
+        }
       },
       400: {
-        description: 'Bad Request',
+        description: 'Bad Request'
       },
       401: {
-        description: 'Unauthorized',
+        description: 'Unauthorized'
       },
       403: {
-        description: 'Forbidden',
+        description: 'Forbidden'
       },
       404: {
-        description: 'Not found',
+        description: 'Not found'
       },
       500: {
-        description: 'Internal server error',
-      },
-    },
-  },
+        description: 'Internal server error'
+      }
+    }
+  }
 });

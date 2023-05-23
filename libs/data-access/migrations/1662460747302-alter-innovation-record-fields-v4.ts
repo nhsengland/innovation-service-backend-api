@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovationRecordFieldsV41662460747302 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
 
       DECLARE @Command nvarchar(max) = '';
@@ -131,11 +129,9 @@ export class alterInnovationRecordFieldsV41662460747302 implements MigrationInte
       ALTER TABLE innovation ADD other_care_setting nvarchar(100) NULL;
 
     `);
-
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
     
       ALTER TABLE innovation_area DROP CONSTRAINT CK_innovation_area_type;
@@ -197,7 +193,5 @@ export class alterInnovationRecordFieldsV41662460747302 implements MigrationInte
       ALTER TABLE innovation DROP COLUMN other_care_setting;
 
     `);
-
   }
-
 }

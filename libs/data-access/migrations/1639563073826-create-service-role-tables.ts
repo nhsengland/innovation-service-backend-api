@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createServiceRoleTables1639563073826 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // user table - drop constraints
     await queryRunner.query(
@@ -57,25 +56,18 @@ export class createServiceRoleTables1639563073826 implements MigrationInterface 
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "user" DROP CONSTRAINT "CK_user_type"`
-    );
+    await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "CK_user_type"`);
 
     await queryRunner.query(
       `ALTER TABLE "user" ADD CONSTRAINT "CK_user_type" CHECK (([type]='ACCESSOR' OR [type]='INNOVATOR' OR [type]='ASSESSMENT'))`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "user_role" DROP CONSTRAINT "fk_user_role_user_user_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "user_role" DROP CONSTRAINT "fk_user_role_user_user_id"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "user_role" DROP CONSTRAINT "fk_user_role_role_role_id"`
-    );
+    await queryRunner.query(`ALTER TABLE "user_role" DROP CONSTRAINT "fk_user_role_role_role_id"`);
 
     await queryRunner.query(`DROP TABLE "user_role"`);
 
     await queryRunner.query(`DROP TABLE "role"`);
   }
-
 }

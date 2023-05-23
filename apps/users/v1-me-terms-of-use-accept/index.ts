@@ -7,22 +7,20 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/sha
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { TermsOfUseServiceSymbol, TermsOfUseServiceType } from '../_services/interfaces';
 
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { ResponseDTO } from './transformation.dtos';
 
-
 class V1MeTermsOfUseAccept {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
+    const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
 
     try {
-
-      const authInstance = await authorizationService.validate(context)
+      const authInstance = await authorizationService
+        .validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -30,22 +28,19 @@ class V1MeTermsOfUseAccept {
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const result = await termsOfUseService.acceptActiveTermsOfUse({ id: requestUser.id }, domainContext.currentRole.role);
+      const result = await termsOfUseService.acceptActiveTermsOfUse(
+        { id: requestUser.id },
+        domainContext.currentRole.role
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
-
     } catch (error) {
-
       context.res = ResponseHelper.Error(context, error);
       return;
-
     }
-
   }
-
 }
-
 
 // TODO: Improve response
 export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/me/terms-of-use/accept', {
@@ -68,7 +63,7 @@ export default openApi(V1MeTermsOfUseAccept.httpTrigger as AzureFunction, '/v1/m
           }
         }
       },
-      422: {description: 'Unprocessable Entity'},
+      422: { description: 'Unprocessable Entity' }
     }
   }
 });

@@ -1,43 +1,40 @@
-import type { InnovationSupportStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationSupportStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import { BaseHandler } from './base.handler';
-
+import type { Context } from '@azure/functions';
 
 export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
   NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
   EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-  { organisationUnitName: string, supportStatus: InnovationSupportStatusEnum }
+  { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED],
-    domainContext: DomainContextType,
-  ) {
-    super(requestUser, data, domainContext);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
-
   async run(): Promise<this> {
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const innovator = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
-    const innovationInfo = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const innovatorInfo = await this.recipientsService.userInfo(innovationInfo.owner.id);
-    const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
+    if (innovator) {
+      const innovatorIdentity = await this.recipientsService.usersIdentityInfo(innovator.identityId);
+      const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
-    if (innovatorInfo.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
-        to: { type: 'email', value: innovatorInfo.email },
+        to: innovator,
+        notificationPreferenceType: null,
         params: {
-          display_name: innovatorInfo.name,
-          innovation_name: innovationInfo.name,
+          display_name: innovatorIdentity?.displayName ?? 'user', // Review what should happen if user is not found
+          innovation_name: innovation.name,
           unit_name: unitInfo.organisationUnit.name,
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/support')
@@ -46,9 +43,7 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
         }
       });
     }
-    
+
     return this;
-
   }
-
 }

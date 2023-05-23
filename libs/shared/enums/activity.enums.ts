@@ -5,7 +5,7 @@ export enum ActivityTypeEnum {
   SUPPORT = 'SUPPORT',
   COMMENTS = 'COMMENTS',
   ACTIONS = 'ACTIONS',
-  THREADS = 'THREADS',
+  THREADS = 'THREADS'
 }
 
 export enum ActivityEnum {

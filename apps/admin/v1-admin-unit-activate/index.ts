@@ -3,10 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType
-} from '@admin/shared/services';
+import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
@@ -18,46 +15,30 @@ import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.sch
 
 class V1AdminUnitActivate {
   @JwtDecoder()
-  static async httpTrigger(
-    context: CustomContextType,
-    request: HttpRequest
-  ): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(
-      AuthorizationServiceSymbol
-    );
+  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
     const organisationsService = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
     try {
-        const params = JoiHelper.Validate<ParamsType>(
-        ParamsSchema,
-        request.params
-        );
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-        const body = JoiHelper.Validate<BodyType>(
-            BodySchema,
-            request.body
-        );
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-        const auth = await authorizationService
-        .validate(context)
-        .checkAdminType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-        const requestUser = auth.getUserInfo();
+      const result = await organisationsService.activateUnit(
+        auth.getContext(),
+        params.organisationId,
+        params.organisationUnitId,
+        body.userIds
+      );
 
-        const result = await organisationsService.activateUnit(
-            requestUser,
-            params.organisationId,
-            params.organisationUnitId,
-            body.userIds
-        );
-
-        context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
-        return;
-        } catch (error) {
-        context.res = ResponseHelper.Error(context, error);
-        return;
-        }
+      context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
+      return;
+    } catch (error) {
+      context.res = ResponseHelper.Error(context, error);
+      return;
+    }
   }
 }
 
@@ -75,8 +56,8 @@ export default openApi(
           description: 'The organisation id.',
           required: true,
           schema: {
-            type: 'string',
-          },
+            type: 'string'
+          }
         },
         {
           name: 'organisationUnitId',
@@ -84,25 +65,25 @@ export default openApi(
           description: 'The organisation unit id.',
           required: true,
           schema: {
-            type: 'string',
-          },
-        },
+            type: 'string'
+          }
+        }
       ],
       requestBody: {
         description: 'The id of the users to unlock.',
         required: true,
         content: {
-            'application/json': {
-                schema: {
-                    type: 'object',
-                    properties: {
-                        userIds: {
-                            type: 'string',
-                            description: 'Ids of the users to unlock.'
-                        }
-                    }
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                userIds: {
+                  type: 'string',
+                  description: 'Ids of the users to unlock.'
                 }
+              }
             }
+          }
         }
       },
       responses: {
@@ -115,26 +96,26 @@ export default openApi(
                 properties: {
                   unitId: {
                     type: 'string',
-                    description: 'The organisation unit id.',
-                  },
-                },
-              },
-            },
-          },
+                    description: 'The organisation unit id.'
+                  }
+                }
+              }
+            }
+          }
         },
         '400': {
-          description: 'Bad request.',
+          description: 'Bad request.'
         },
         '401': {
-          description: 'The user is not authorized to activate an organisation unit.',
+          description: 'The user is not authorized to activate an organisation unit.'
         },
         '404': {
-          description: 'The organisation unit does not exist.',
+          description: 'The organisation unit does not exist.'
         },
         '500': {
-          description: 'An error occurred while activating the organisation unit.',
-        },
-      },
-    },
+          description: 'An error occurred while activating the organisation unit.'
+        }
+      }
+    }
   }
 );

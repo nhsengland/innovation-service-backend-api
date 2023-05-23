@@ -1,12 +1,9 @@
-
 import type { Context, HttpMethod, HttpRequest, Logger } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
 
 import type { CustomContextType, DomainContextType } from '../types';
 
-
 export class HttpTestBuilder {
-
   private request: HttpRequest = {
     url: '',
     method: 'GET',
@@ -15,36 +12,47 @@ export class HttpTestBuilder {
     params: {},
     query: {},
     rawBody: '',
-    user: { id: randUuid(), type: 'AppService', username: randUserName(), identityProvider: 'AzureAD', claimsPrincipalData: {} },
+    user: {
+      id: randUuid(),
+      type: 'AppService',
+      username: randUserName(),
+      identityProvider: 'AzureAD',
+      claimsPrincipalData: {}
+    }
   } as HttpRequest;
 
   private context: CustomContextType;
 
   private logger: Logger = {
-    info: (...args: any[]) => { console.info(...args); },
-    warn: (...args: any[]) => { console.warn(...args); },
-    error: (...args: any[]) => { console.error(...args); },
-    verbose: (...args: any[]) => { console.log(...args); },
+    info: (...args: any[]) => {
+      console.info(...args);
+    },
+    warn: (...args: any[]) => {
+      console.warn(...args);
+    },
+    error: (...args: any[]) => {
+      console.error(...args);
+    },
+    verbose: (...args: any[]) => {
+      console.log(...args);
+    }
   } as unknown as Logger;
-
 
   public setContext(): HttpTestBuilder {
     const context = {
       auth: {
         user: {
           identityId: randUuid(),
-          name: randUserName(),
+          name: randUserName()
         },
-        context: {
-
-        }
+        context: {}
       },
       log: this.logger,
-      done: () => { },
+      done: () => {},
       res: {},
       bindings: {},
       bindingData: {
-        invocationId: randUuid(),
+        invocationId: randUuid()
       },
       executionContext: {
         invocationId: randUuid(),
@@ -52,22 +60,22 @@ export class HttpTestBuilder {
         functionDirectory: randUserName(),
         traceContext: {
           traceparent: randUuid(),
-          tracestate: randUuid(),
+          tracestate: randUuid()
         },
         retryContext: {
           retryCount: 0,
           retryReason: '',
           errorDetails: '',
-          maxRetryCount: 0,
-        },
+          maxRetryCount: 0
+        }
       },
       bindingDefinitions: [],
       invocationId: randUuid(),
       traceContext: {
         traceparent: randUuid(),
         tracestate: randUuid(),
-        attributes: {},
-      },
+        attributes: {}
+      }
     };
 
     this.context = context as CustomContextType;
@@ -105,14 +113,13 @@ export class HttpTestBuilder {
         identityId: domainContext.identityId,
         name: randUserName(), // is not used
         roleId: domainContext.currentRole.id
-      },
+      }
     };
     return this;
   }
 
-  public async invoke<T = any>(func: (context: Context, ...args: any[]) => (void | Promise<any>)): Promise<T> {
+  public async invoke<T = any>(func: (context: Context, ...args: any[]) => void | Promise<any>): Promise<T> {
     await func(this.context, this.request);
     return this.context.res as T;
   }
-
 }

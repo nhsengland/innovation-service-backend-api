@@ -1,9 +1,8 @@
-import type { MigrationInterface, QueryRunner } from 'typeorm'
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterIdleSupportsViewWithCTE1665136834575 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
         
             CREATE OR ALTER   VIEW [dbo].[idle_support_view_entity]
             AS
@@ -117,10 +116,10 @@ export class alterIdleSupportsViewWithCTE1665136834575 implements MigrationInter
                 INNER JOIN [user] ownerUser ON ownerUser.id = i.owner_id
                 LEFT JOIN notificationLog L on L.innovationId = T.innovationId and L.unitId = T.unitId AND DATEDIFF(day, L.created_at, GETDATE()) < 30
                 WHERE L.created_at IS NULL
-        `)
-    }
+        `);
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query('DROP VIEW dbo.idle_support_view_entity')
-    }
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query('DROP VIEW dbo.idle_support_view_entity');
+  }
 }

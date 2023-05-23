@@ -7,23 +7,21 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
+import type { InnovationsService } from '../_services/innovations.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationsList {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
+    const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-
-      const authInstance = await authorizationService.validate(context)
+      const authInstance = await authorizationService
+        .validate(context)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
@@ -32,13 +30,15 @@ class V1InnovationsList {
       const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, { userType: domainContext.currentRole.role });
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, {
+        userType: domainContext.currentRole.role
+      });
 
       const { skip, take, order, ...filters } = queryParams;
 
       const result = await innovationsService.getInnovationsList(
         {
-          id: requestUser.id,
+          id: requestUser.id
         },
         domainContext,
         filters,
@@ -62,30 +62,28 @@ class V1InnovationsList {
           otherMainCategoryDescription: item.otherMainCategoryDescription,
           ...(item.isAssessmentOverdue === undefined ? {} : { isAssessmentOverdue: item.isAssessmentOverdue }),
           ...(item.assessment === undefined ? {} : { assessment: item.assessment }),
-          ...(item.supports === undefined ? {} : {
-            supports: item.supports.map(s => ({
-              id: s.id,
-              status: s.status,
-              updatedAt: s.updatedAt,
-              organisation: s.organisation
-            }))
-          }),
+          ...(item.supports === undefined
+            ? {}
+            : {
+                supports: item.supports.map(s => ({
+                  id: s.id,
+                  status: s.status,
+                  updatedAt: s.updatedAt,
+                  organisation: s.organisation
+                }))
+              }),
           ...(item.notifications === undefined ? {} : { notifications: item.notifications }),
-          ...(item.statistics === undefined ? {} : { statistics: item.statistics }),
+          ...(item.statistics === undefined ? {} : { statistics: item.statistics })
         }))
       };
       context.res = ResponseHelper.Ok<ResponseDTO>(response);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
-
 
 export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
   get: {
@@ -100,13 +98,13 @@ export default openApi(V1InnovationsList.httpTrigger as AzureFunction, '/v1', {
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for innovation object' },
-              },
-            },
-          },
-        },
+                id: { type: 'string', description: 'Unique identifier for innovation object' }
+              }
+            }
+          }
+        }
       },
-      400: { description: 'Invalid innovation payload' },
-    },
-  },
+      400: { description: 'Invalid innovation payload' }
+    }
+  }
 });

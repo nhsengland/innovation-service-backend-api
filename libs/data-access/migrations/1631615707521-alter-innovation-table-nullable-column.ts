@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovationTableNullableColumn1631615707521 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     // DROP survey_id unique constraint
     await queryRunner.query(`
       ALTER TABLE "innovation" DROP CONSTRAINT "UQ_a12c9bdde3b857e71ab2a77c0d6"
@@ -20,11 +18,9 @@ export class alterInnovationTableNullableColumn1631615707521 implements Migratio
 			ON innovation(survey_id)
 			WHERE survey_id IS NOT NULL;
 		`);
-
   }
 
   async down(): Promise<void> {
     // Irreversible.
   }
-
 }

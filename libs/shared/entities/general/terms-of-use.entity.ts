@@ -8,7 +8,6 @@ import { TermsOfUseTypeEnum } from '../../enums/general.enums';
 
 @Entity('terms_of_use')
 export class TermsOfUseEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -28,11 +27,9 @@ export class TermsOfUseEntity extends BaseEntity {
   @OneToMany(() => TermsOfUseUserEntity, record => record.termsOfUse, { lazy: true })
   termsOfUseUsers: TermsOfUseUserEntity[];
 
-
   static new(data: Partial<TermsOfUseEntity>): TermsOfUseEntity {
     const instance = new TermsOfUseEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

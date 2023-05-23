@@ -1,4 +1,4 @@
-import { TestDataType, TestsHelper } from '@innovations/shared/tests';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -14,43 +14,37 @@ import type { ResponseDTO } from './transformation.dtos';
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
-  }),
+  })
 }));
 
 describe('v1-innovation-collaborator-create Suite', () => {
-
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
-
-    new MockBuilder().mockNoSQLServiceInit();
-
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
-
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('200', () => {
-
     it('should create a collaborator as a innovation owner', async () => {
       const httpTestBuilder = new HttpTestBuilder();
 
-      const mocks = await new MockBuilder()
-        .mockDomainUser(testData.baseUsers.innovator)
-        .build(em);
+      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.innovator).build(em);
 
       const expected = { id: randUuid() };
 
-      const createCollaboratorSpy = jest.spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator').mockResolvedValue(expected);
+      const createCollaboratorSpy = jest
+        .spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator')
+        .mockResolvedValue(expected);
 
       const result = await httpTestBuilder
         .setUrl('/v1/:innovationId/collaborators')
@@ -59,7 +53,7 @@ describe('v1-innovation-collaborator-create Suite', () => {
         .setMethod('POST')
         .setAuth(testData.domainContexts.innovator)
         .setBody({ email: randEmail(), role: randText() })
-        .invoke<{ status: number, body: ResponseDTO }>(v1InnovationCollaboratorCreate);
+        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationCollaboratorCreate);
 
       expect(result.body).toMatchObject(expected);
       expect(result.status).toBe(200);
@@ -67,17 +61,13 @@ describe('v1-innovation-collaborator-create Suite', () => {
 
       mocks.reset();
     });
-
   });
 
   describe('403', () => {
-
     it('should return error if the user is not the owner', async () => {
       const httpTestBuilder = new HttpTestBuilder();
 
-      const mocks = await new MockBuilder()
-        .mockDomainUser(testData.baseUsers.innovator2)
-        .build(em);
+      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.innovator2).build(em);
 
       const result = await httpTestBuilder
         .setUrl('/v1/:innovationId/collaborators')
@@ -86,7 +76,9 @@ describe('v1-innovation-collaborator-create Suite', () => {
         .setMethod('POST')
         .setAuth(testData.domainContexts.innovator2)
         .setBody({ email: randEmail(), role: randText() })
-        .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string } }>(v1InnovationCollaboratorCreate);
+        .invoke<{ status: number; body: { error: GenericErrorsEnum; message: string } }>(
+          v1InnovationCollaboratorCreate
+        );
 
       expect(result.body.error).toMatch(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
       expect(result.body.message).toMatch('Forbidden operation');
@@ -94,25 +86,20 @@ describe('v1-innovation-collaborator-create Suite', () => {
 
       mocks.reset();
     });
-
   });
 
   describe('Access', () => {
-
     it.each([
       [ServiceRoleEnum.ADMIN, 403],
       [ServiceRoleEnum.ACCESSOR, 403],
       [ServiceRoleEnum.ASSESSMENT, 403],
-      [ServiceRoleEnum.INNOVATOR, 200],
-    ])(('access with user %s should give %i'), async (userType: ServiceRoleEnum, status: number) => {
-
-      const [user, context] = TestsHelper.getUser(userType);
+      [ServiceRoleEnum.INNOVATOR, 200]
+    ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
+      const [user, context] = TestsLegacyHelper.getUser(userType);
 
       const httpTestBuilder = new HttpTestBuilder();
 
-      const mocks = await new MockBuilder()
-        .mockDomainUser(user!)
-        .build(em);
+      const mocks = await new MockBuilder().mockDomainUser(user!).build(em);
 
       jest.spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator').mockResolvedValue({ id: randUuid() });
 
@@ -123,12 +110,11 @@ describe('v1-innovation-collaborator-create Suite', () => {
         .setMethod('POST')
         .setAuth(context!)
         .setBody({ email: randEmail(), role: randText() })
-        .invoke<{ status: number, body: ResponseDTO }>(v1InnovationCollaboratorCreate);
+        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationCollaboratorCreate);
 
       expect(result.status).toBe(status);
 
       mocks.reset();
     });
-
   });
 });

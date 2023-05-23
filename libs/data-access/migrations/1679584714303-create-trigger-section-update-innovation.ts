@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTriggerSectionUpdateInnovation1679584714303 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TRIGGER tr_section_update_innovation ON innovation_section
@@ -16,6 +15,5 @@ export class createTriggerSectionUpdateInnovation1679584714303 implements Migrat
     `);
   }
 
-  public async down(): Promise<void> { }
-
+  public async down(): Promise<void> {}
 }

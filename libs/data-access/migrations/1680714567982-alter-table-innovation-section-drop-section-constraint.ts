@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableInnovationSectionDropSectionConstraint1680714567982 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Need to fetch the name of the constraint to drop it since it's not a named constraint
     const res = await queryRunner.query(`
@@ -16,13 +15,12 @@ export class alterTableInnovationSectionDropSectionConstraint1680714567982 imple
         AND col.name = 'section'
     `);
 
-    if(res?.length===1) {
+    if (res?.length === 1) {
       await queryRunner.query(`
         ALTER TABLE innovation_section DROP CONSTRAINT ${res[0].name};
       `);
     }
   }
 
-  public async down(): Promise<void> { }
-
+  public async down(): Promise<void> {}
 }

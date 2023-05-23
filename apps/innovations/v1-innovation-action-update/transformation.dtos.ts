@@ -1,3 +1,3 @@
 export type ResponseDTO = {
-  id: string
+  id: string;
 };

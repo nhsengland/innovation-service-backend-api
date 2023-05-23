@@ -1,18 +1,13 @@
 import * as appInsights from 'applicationinsights';
 import { injectable } from 'inversify';
 
-
 @injectable()
 export class LoggerService {
-
   private runningLocally = process.env['LOCAL_MODE'] || process.env['JEST_WORKER_ID'] || false;
 
   constructor() {
     if (!this.runningLocally) {
-      appInsights
-        .setup()
-        .setDistributedTracingMode(appInsights.DistributedTracingModes.AI_AND_W3C)
-        .start();
+      appInsights.setup().setDistributedTracingMode(appInsights.DistributedTracingModes.AI_AND_W3C).start();
     }
   }
 
@@ -24,9 +19,7 @@ export class LoggerService {
   // client.trackDependency({target:"http://dbname", name:"select customers proc", data:"SELECT * FROM Customers", duration:231, resultCode:0, success: true, dependencyTypeName: "ZSQL"});
   // client.trackRequest({name:"GET /customers", url:"http://myserver/customers", duration:309, resultCode:200, success:true});
 
-
   log(message: string, additionalInformation?: any): void {
-
     if (this.runningLocally) {
       console.log('[LOG]: ', message, additionalInformation);
       return;
@@ -37,11 +30,9 @@ export class LoggerService {
       severity: appInsights.Contracts.SeverityLevel.Information,
       properties: additionalInformation
     });
-
   }
 
   error(message: string, additionalInformation?: any): void {
-
     if (this.runningLocally) {
       console.error('[ERROR]: ', message, additionalInformation);
       return;
@@ -49,13 +40,12 @@ export class LoggerService {
 
     appInsights.defaultClient.trackTrace({
       message: `[ERROR] ${message}`,
-      severity: appInsights.Contracts.SeverityLevel.Error,
+      severity: appInsights.Contracts.SeverityLevel.Error
     });
-    if(additionalInformation instanceof Error) {
+    if (additionalInformation instanceof Error) {
       appInsights.defaultClient.trackException({
-        exception: additionalInformation,
+        exception: additionalInformation
       });
     }
   }
-
 }

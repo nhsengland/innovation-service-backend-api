@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableActivityLogAddReassessmentContraint1667383826048 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       declare @Command nvarchar(max) = '';
       select @Command = @Command + 'ALTER TABLE [' + t.name + '] DROP CONSTRAINT ' + d.name + CHAR(10)+ CHAR(13) + ';'
@@ -27,13 +25,10 @@ export class alterTableActivityLogAddReassessmentContraint1667383826048 implemen
         'ACTION_STATUS_DECLINED_UPDATE','ACTION_STATUS_COMPLETED_UPDATE',
         'ACTION_STATUS_CANCELLED_UPDATE', 'THREAD_CREATION', 'THREAD_MESSAGE_CREATION',
         'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED'
-      ))`
-    );
-
+      ))`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "activity_log" DROP CONSTRAINT "CK_activity_log_activity"
     `);
@@ -49,9 +44,6 @@ export class alterTableActivityLogAddReassessmentContraint1667383826048 implemen
         'ACTION_CREATION','ACTION_STATUS_IN_REVIEW_UPDATE',
         'ACTION_STATUS_DECLINED_UPDATE','ACTION_STATUS_COMPLETED_UPDATE',
         'ACTION_STATUS_CANCELLED_UPDATE', 'THREAD_CREATION', 'THREAD_MESSAGE_CREATION'
-      ))`
-    );
-
+      ))`);
   }
-
 }

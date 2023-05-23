@@ -4,17 +4,15 @@ import { randCompanyName, randAlpha, randBoolean } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 export class OrganisationBuilder {
-  
-  organisation: Partial<OrganisationEntity> = { };
+  organisation: Partial<OrganisationEntity> = {};
 
   constructor() {
     this.organisation = {
       name: randCompanyName(),
       acronym: randAlpha({ length: 5 }).join('.'),
       isShadow: randBoolean(),
-      type: OrganisationTypeEnum.ACCESSOR,
+      type: OrganisationTypeEnum.ACCESSOR
     };
-    
   }
 
   ofType(type: OrganisationTypeEnum): OrganisationBuilder {

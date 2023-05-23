@@ -1,25 +1,17 @@
-import { Column, DeleteDateColumn, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+
+import { BaseEntity } from '../base.entity';
 
 import { AnnouncementEntity } from './announcement.entity';
-
-import type { ServiceRoleEnum } from '../../enums';
-
 import { UserEntity } from './user.entity';
 
 @Entity('announcement_user')
-export class AnnouncementUserEntity {
+export class AnnouncementUserEntity extends BaseEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @PrimaryColumn({ name: 'id', type: 'bigint', generated: true })
-  id: number;
-
-  @Column({ name: 'target_roles', type: 'simple-array' })
-  targetRoles: ServiceRoleEnum[];
-
-  @Column({ name: 'read_at', type: 'datetime2', nullable: true })
-  readAt: Date | null;
-
-  @DeleteDateColumn({ name: 'deleted_at', type: 'datetime2', nullable: true })
-  deletedAt: Date | null;
+  @Column({ name: 'read_at', type: 'datetime2' })
+  readAt: Date;
 
   @ManyToOne(() => AnnouncementEntity)
   @JoinColumn({ name: 'announcement_id' })
@@ -34,5 +26,4 @@ export class AnnouncementUserEntity {
     Object.assign(instance, data);
     return instance;
   }
-
 }

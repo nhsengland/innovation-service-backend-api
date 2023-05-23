@@ -8,15 +8,19 @@ export type SqlProvider = () => Promise<DataSource>;
 let connection: DataSource;
 export const sqlProvider = (_context: interfaces.Context) => {
   return async (): Promise<DataSource> => {
-    if(!connection) {
-      connection = process.env['JEST_WORKER_ID'] || process.env['NODE_ENV'] === 'test' ? new DataSource(SQLDB_TESTS_CONNECTION) : new DataSource(SQLDB_DEFAULT_CONNECTION);
+    if (!connection) {
+      connection =
+        process.env['JEST_WORKER_ID'] || process.env['NODE_ENV'] === 'test'
+          ? new DataSource(SQLDB_TESTS_CONNECTION)
+          : new DataSource(SQLDB_DEFAULT_CONNECTION);
       try {
         await connection.initialize();
         console.log('SQL Connection successfully created.');
-  
       } catch (error: any) {
         console.log(error);
-        throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, { details: error });
+        throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
+          details: error
+        });
       }
     }
     return connection;

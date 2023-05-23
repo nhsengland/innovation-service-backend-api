@@ -1,11 +1,13 @@
 {
-  "bindings": [{
-    "type": "queueTrigger",
-    "direction": "in",
-    "name": "queueItem",
-    "queueName": "in-app-send-queue",
-    "connection": "AZURE_STORAGE_CONNECTIONSTRING"
-  }],
+  "bindings": [
+    {
+      "type": "queueTrigger",
+      "direction": "in",
+      "name": "queueItem",
+      "queueName": "in-app-send-queue",
+      "connection": "AZURE_STORAGE_CONNECTIONSTRING"
+    }
+  ],
   "retry": {
     "strategy": "fixedDelay",
     "delayInterval": "00:00:01",

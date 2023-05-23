@@ -34,7 +34,7 @@ export enum InnovationActionStatusEnum {
 export enum InnovationSectionStatusEnum {
   NOT_STARTED = 'NOT_STARTED',
   DRAFT = 'DRAFT',
-  SUBMITTED = 'SUBMITTED',
+  SUBMITTED = 'SUBMITTED'
 }
 
 export enum InnovationSupportStatusEnum {
@@ -45,7 +45,7 @@ export enum InnovationSupportStatusEnum {
   ENGAGING = 'ENGAGING',
   UNSUITABLE = 'UNSUITABLE',
   WITHDRAWN = 'WITHDRAWN',
-  COMPLETE = 'COMPLETE',
+  COMPLETE = 'COMPLETE'
 }
 
 export enum InnovationTransferStatusEnum {
@@ -53,18 +53,18 @@ export enum InnovationTransferStatusEnum {
   COMPLETED = 'COMPLETED',
   DECLINED = 'DECLINED',
   CANCELED = 'CANCELED',
-  EXPIRED = 'EXPIRED',
+  EXPIRED = 'EXPIRED'
 }
 
 export enum InnovationSupportLogTypeEnum {
   STATUS_UPDATE = 'STATUS_UPDATE',
-  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION',
+  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION'
 }
 
 export enum ThreadContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   SUPPORT = 'SUPPORT',
-  ACTION = 'ACTION',
+  ACTION = 'ACTION'
 }
 
 export enum InnovationExportRequestStatusEnum {
@@ -72,7 +72,7 @@ export enum InnovationExportRequestStatusEnum {
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
   CANCELLED = 'CANCELLED',
-  EXPIRED = 'EXPIRED',
+  EXPIRED = 'EXPIRED'
 }
 
 export enum InnovationCollaboratorStatusEnum {

@@ -7,25 +7,23 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationSectionsServiceSymbol, InnovationSectionsServiceType } from '../_services/interfaces';
 
+import type { InnovationSectionsService } from '../_services/innovation-sections.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1InnovationSectionsList {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationSectionsService = container.get<InnovationSectionsServiceType>(InnovationSectionsServiceSymbol);
+    const innovationSectionsService = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
@@ -36,26 +34,27 @@ class V1InnovationSectionsList {
       const domainContext = auth.getContext();
 
       const result = await innovationSectionsService.getInnovationSectionsList(domainContext, params.innovationId);
-      context.res = ResponseHelper.Ok<ResponseDTO>(result.map(section => ({
-        id: section.id,
-        section: section.section,
-        status: section.status,
-        submittedAt: section.submittedAt,
-        submittedBy: section.submittedBy ? {
-          name: section.submittedBy.name,
-          isOwner: section.submittedBy.isOwner
-        }: null,
-        openActionsCount: section.openActionsCount
-      })));
+      context.res = ResponseHelper.Ok<ResponseDTO>(
+        result.map(section => ({
+          id: section.id,
+          section: section.section,
+          status: section.status,
+          submittedAt: section.submittedAt,
+          submittedBy: section.submittedBy
+            ? {
+                name: section.submittedBy.name,
+                isOwner: section.submittedBy.isOwner
+              }
+            : null,
+          openActionsCount: section.openActionsCount
+        }))
+      );
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, '/v1/{innovationId}/sections', {
@@ -64,9 +63,7 @@ export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, '/
     tags: ['Innovation'],
     summary: 'Get an innovation sections list.',
     operationId: 'v1-innovation-sections-list',
-    parameters: [
-      { in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } },
-    ],
+    parameters: [{ in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }],
     responses: {
       200: {
         description: 'Success',
@@ -77,15 +74,15 @@ export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, '/
               properties: {
                 id: {
                   type: 'string',
-                  description: 'Innovation id.',
+                  description: 'Innovation id.'
                 },
                 name: {
                   type: 'string',
-                  description: 'Innovation name.',
+                  description: 'Innovation name.'
                 },
                 status: {
                   type: 'string',
-                  description: 'Innovation status.',
+                  description: 'Innovation status.'
                 },
                 sections: {
                   type: 'array',
@@ -95,40 +92,40 @@ export default openApi(V1InnovationSectionsList.httpTrigger as AzureFunction, '/
                     properties: {
                       id: {
                         type: 'string',
-                        description: 'Innovation section id.',
+                        description: 'Innovation section id.'
                       },
                       section: {
                         type: 'string',
-                        description: 'Innovation section name.',
+                        description: 'Innovation section name.'
                       },
                       status: {
                         type: 'string',
-                        description: 'Innovation section status.',
+                        description: 'Innovation section status.'
                       },
                       submittedAt: {
                         type: 'string',
-                        description: 'Innovation section submitted date.',
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                        description: 'Innovation section submitted date.'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       401: {
-        description: 'Unauthorized',
+        description: 'Unauthorized'
       },
       403: {
-        description: 'Forbidden',
+        description: 'Forbidden'
       },
       404: {
-        description: 'Not Found',
+        description: 'Not Found'
       },
       500: {
-        description: 'Internal Server Error',
-      },
-    },
-  },
+        description: 'Internal Server Error'
+      }
+    }
+  }
 });

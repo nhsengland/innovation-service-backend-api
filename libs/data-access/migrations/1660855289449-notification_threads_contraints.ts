@@ -1,16 +1,10 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class notificationThreadsContraints1660855289449 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_type"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_type"`
-    );
-
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`);
 
     // activity_log table
     await queryRunner.query(
@@ -28,18 +22,12 @@ export class notificationThreadsContraints1660855289449 implements MigrationInte
         'SUPPORT_STATUS_UPDATE', 'THREAD_CREATION', 'THREAD_MESSAGE_CREATION', 'THREAD_MESSAGE_UPDATE'
       ))`
     );
-
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_type"`);
 
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_type"`
-    );
-
-    await queryRunner.query(
-      `ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`
-    );
+    await queryRunner.query(`ALTER TABLE "notification" DROP CONSTRAINT "CK_notification_context_detail"`);
 
     await queryRunner.query(
       `ALTER TABLE "notification" ADD CONSTRAINT "CK_notification_context_type"
@@ -56,7 +44,5 @@ export class notificationThreadsContraints1660855289449 implements MigrationInte
         'SUPPORT_STATUS_UPDATE'
       ))
     `);
-
   }
-
 }

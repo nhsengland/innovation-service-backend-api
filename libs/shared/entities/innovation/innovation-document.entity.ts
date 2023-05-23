@@ -7,7 +7,6 @@ import { InnovationEntity } from './innovation.entity';
 
 @Entity('innovation_document')
 export class InnovationDocumentEntity extends BaseEntity {
-
   @PrimaryColumn({ type: 'uniqueidentifier' })
   id: string;
 
@@ -20,13 +19,12 @@ export class InnovationDocumentEntity extends BaseEntity {
   @Column({ name: 'is_snapshot' })
   isSnapshot: boolean;
 
-  @Column({type: 'nvarchar', nullable: true })
+  @Column({ type: 'nvarchar', nullable: true })
   description: string | null;
 
   @OneToOne(() => InnovationEntity)
   @JoinColumn({ name: 'id' })
   innovation: InnovationEntity;
-
 }
 
 /**
@@ -34,7 +32,10 @@ export class InnovationDocumentEntity extends BaseEntity {
  * @param innovation the source innovation
  * @returns the document entity to be created
  */
-export const createDocumentFromInnovation = (innovation: InnovationEntity, customFields?: { website?: string }): InnovationDocumentEntity => {
+export const createDocumentFromInnovation = (
+  innovation: InnovationEntity,
+  customFields?: { website?: string }
+): InnovationDocumentEntity => {
   const document: CurrentDocumentType = {
     version: CurrentDocumentConfig.version,
     INNOVATION_DESCRIPTION: {
@@ -55,7 +56,7 @@ export const createDocumentFromInnovation = (innovation: InnovationEntity, custo
     REVENUE_MODEL: {},
     TESTING_WITH_USERS: {}
   };
-  
+
   return {
     id: innovation.id,
     version: CurrentDocumentConfig.version,

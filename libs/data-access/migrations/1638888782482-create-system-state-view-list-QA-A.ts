@@ -1,10 +1,8 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createSystemStateViewListQAA1638888782482 implements MigrationInterface {
-
-	async up(queryRunner: QueryRunner): Promise<void> {
-
-		await queryRunner.query(`
+  async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
       CREATE OR ALTER VIEW [vw_system_state_list_A_QA] AS
       SELECT 
         innovationsAQAQuery.Organisation_Name,
@@ -27,15 +25,11 @@ export class createSystemStateViewListQAA1638888782482 implements MigrationInter
       GROUP by o.name,o.[type] ,oru.role,ou.name
       ) innovationsAQAQuery
     `);
+  }
 
-	}
-
-	async down(queryRunner: QueryRunner): Promise<void> {
-
-		await queryRunner.query(`
+  async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
 			DROP VIEW dbo.[vw_system_state_list_A_QA]
 		`);
-
-	}
-
+  }
 }

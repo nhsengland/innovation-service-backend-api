@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createNotificationPreferenceTable1633718634305 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     //This table stores the user preference for email notifications
     await queryRunner.query(`CREATE TABLE "notification_preference" (
@@ -28,5 +27,4 @@ export class createNotificationPreferenceTable1633718634305 implements Migration
 
     await queryRunner.query(`DROP TABLE "notification_preference"`);
   }
-
 }

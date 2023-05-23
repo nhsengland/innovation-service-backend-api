@@ -1,4 +1,14 @@
-import { Column, Entity, Index, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  Index,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn
+} from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -11,11 +21,9 @@ import { InnovationSectionStatusEnum } from '../../enums/innovation.enums';
 
 import { UserEntity } from '../user/user.entity';
 
-
 @Entity('innovation_section')
 @Index(['section', 'innovation'], { unique: true })
 export class InnovationSectionEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -44,14 +52,15 @@ export class InnovationSectionEntity extends BaseEntity {
   })
   files: InnovationFileEntity[];
 
-  @OneToMany(() => InnovationActionEntity, record => record.innovationSection, { lazy: true, cascade: ['insert', 'update'] })
+  @OneToMany(() => InnovationActionEntity, record => record.innovationSection, {
+    lazy: true,
+    cascade: ['insert', 'update']
+  })
   actions: Promise<InnovationActionEntity[]>;
-
 
   static new(data: Partial<InnovationSectionEntity>): InnovationSectionEntity {
     const instance = new InnovationSectionEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

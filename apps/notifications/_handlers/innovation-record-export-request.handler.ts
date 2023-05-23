@@ -1,45 +1,50 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
-import { container, EmailTypeEnum, ENV } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { ENV, EmailTypeEnum } from '../_config';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
 export class InnovationRecordExportRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
   EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
   Record<string, never>
 > {
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
-    domainContext: DomainContextType,
-  ) {
-    super(requestUser, data, domainContext);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const request = await this.recipientsService.getExportRequestWithRelations(this.inputData.requestId);
+    if (owner?.isActive) {
+      const request = await this.recipientsService.getExportRequestInfo(this.inputData.requestId);
+      const accessor = await this.recipientsService.getUsersRecipient(
+        request.createdBy.id,
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        { organisationUnit: request.createdBy.unitId }
+      );
+      const accessorIdentity = accessor ? await this.recipientsService.usersIdentityInfo(accessor.identityId) : null;
 
-    if (innovation.owner.isActive) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
-        to: { type: 'identityId', value: innovation.owner.identityId, displayNameParam: 'display_name' },
+        to: owner,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
-          unit_name: request.exportRequest.organisationUnit.name,
-          accessor_name: request.createdBy.name,
-          pdf_request_comment: request.exportRequest.requestReason,
+          unit_name: request.createdBy.unitName,
+          accessor_name: accessorIdentity?.displayName ?? 'user', //Review what should happen if user is not found
+          pdf_request_comment: request.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/export/list')
-          .setPathParams({ innovationId: this.inputData.innovationId })
-          .buildUrl(), // TODO: Check what exactly is this URL.
+            .addPath('innovator/innovations/:innovationId/export/list')
+            .setPathParams({ innovationId: this.inputData.innovationId })
+            .buildUrl() // TODO: Check what exactly is this URL.
         }
       });
     }

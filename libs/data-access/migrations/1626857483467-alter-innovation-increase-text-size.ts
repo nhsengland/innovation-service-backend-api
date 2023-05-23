@@ -1,9 +1,7 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterInnovationIncreaseTextSize1626857483467 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
-
     // Innovation table.
     await queryRunner.query(`
       ALTER TABLE "innovation" ALTER COLUMN description nvarchar(max);
@@ -98,7 +96,6 @@ export class alterInnovationIncreaseTextSize1626857483467 implements MigrationIn
       ALTER TABLE "innovation_subgroup" ALTER COLUMN other_condition nvarchar(max);
     `);
 
-
     // innovation_evidence table
     await queryRunner.query(`
       ALTER TABLE "innovation_evidence" ALTER COLUMN summary nvarchar(max);
@@ -107,7 +104,6 @@ export class alterInnovationIncreaseTextSize1626857483467 implements MigrationIn
     await queryRunner.query(`
       ALTER TABLE "innovation_evidence" ALTER COLUMN description nvarchar(max);
     `);
-
 
     // innovation_assessment table
     await queryRunner.query(`
@@ -159,5 +155,4 @@ export class alterInnovationIncreaseTextSize1626857483467 implements MigrationIn
   async down(): Promise<void> {
     // Irreversible.
   }
-
 }

@@ -1,10 +1,7 @@
-import type { MigrationInterface, QueryRunner } from 'typeorm'
-
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterActionStatusInReviewToSubmitted1673448916947 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation_action" DROP CONSTRAINT "CK_innovation_action_status"
     `);
@@ -143,12 +140,10 @@ export class alterActionStatusInReviewToSubmitted1673448916947 implements Migrat
           INNER JOIN [user] ownerUser ON ownerUser.id = i.owner_id
           LEFT JOIN notificationLog L on L.innovationId = T.innovationId and L.unitId = T.unitId AND DATEDIFF(day, L.created_at, GETDATE()) < 30
           WHERE L.created_at IS NULL
-        `)
-
+        `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "innovation_action" DROP CONSTRAINT "CK_innovation_action_status"
     `);
@@ -198,8 +193,7 @@ export class alterActionStatusInReviewToSubmitted1673448916947 implements Migrat
         'THREAD_MESSAGE_CREATION',
         'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED',
         'INNOVATION_PAUSE'
-      ))`
-    );
+      ))`);
 
     await queryRunner.query(`
 
@@ -315,8 +309,6 @@ export class alterActionStatusInReviewToSubmitted1673448916947 implements Migrat
                 INNER JOIN [user] ownerUser ON ownerUser.id = i.owner_id
                 LEFT JOIN notificationLog L on L.innovationId = T.innovationId and L.unitId = T.unitId AND DATEDIFF(day, L.created_at, GETDATE()) < 30
                 WHERE L.created_at IS NULL
-        `)
-
+        `);
   }
-
 }

@@ -1,6 +1,6 @@
-import type { EmailNotificationPreferenceEnum, EmailNotificationTypeEnum } from '@users/shared/enums';
+import type { EmailNotificationPreferenceEnum, EmailNotificationType } from '@users/shared/enums';
 
 export type ResponseDTO = {
-  notificationType: EmailNotificationTypeEnum,
+  notificationType: EmailNotificationType;
   preference: EmailNotificationPreferenceEnum;
-}[]
+}[];

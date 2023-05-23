@@ -10,11 +10,10 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationFileService extends BaseService {
-
   constructor(@inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType) {
     super();
   }
-  
+
   /**
    * uploads a file to the innovation
    * @param userId the user identifier making the request
@@ -26,21 +25,20 @@ export class InnovationFileService extends BaseService {
    */
   async uploadInnovationFile(
     userId: string,
-    innovationId: string, 
-    filename: string, 
-    context: null | string, 
+    innovationId: string,
+    filename: string,
+    context: null | string,
     entityManager?: EntityManager
-  ): Promise<{id: string, displayFileName: string, url: string}> {
-    
+  ): Promise<{ id: string; displayFileName: string; url: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
     const extension = extname(filename);
     const filenameWithoutExtension = basename(filename, extension);
-    
+
     const file = await connection.save(InnovationFileEntity, {
       createdBy: userId,
-      displayFileName: filenameWithoutExtension.substring(0, 99-extension.length) + extension, // failsafe to avoid filename too long (100 chars max)
+      displayFileName: filenameWithoutExtension.substring(0, 99 - extension.length) + extension, // failsafe to avoid filename too long (100 chars max)
       innovation: { id: innovationId },
-      context,
+      context
     });
 
     return {
@@ -57,15 +55,12 @@ export class InnovationFileService extends BaseService {
    * @returns the files
    */
   async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileEntity[]> {
-
-    if(!ids?.length) {
+    if (!ids?.length) {
       return [];
     }
-    
+
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    return connection.createQueryBuilder(InnovationFileEntity, 'file')
-      .where('file.id IN (:...ids)', { ids })
-      .getMany();
+    return connection.createQueryBuilder(InnovationFileEntity, 'file').where('file.id IN (:...ids)', { ids }).getMany();
   }
 }

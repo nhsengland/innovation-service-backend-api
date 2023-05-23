@@ -3,30 +3,33 @@ import type { AzureFunction } from '@azure/functions';
 
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType, DomainServiceSymbol, DomainServiceType } from '@users/shared/services';
+import {
+  AuthorizationServiceSymbol,
+  AuthorizationServiceType,
+  DomainServiceSymbol,
+  DomainServiceType
+} from '@users/shared/services';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
-import { AnnouncementsServiceSymbol, AnnouncementsServiceType, TermsOfUseServiceSymbol, TermsOfUseServiceType, UsersServiceSymbol, UsersServiceType } from '../_services/interfaces';
 
 import { PhoneUserPreferenceEnum, ServiceRoleEnum } from '@users/shared/enums';
+import type { AnnouncementsService } from '../_services/announcements.service';
+import SYMBOLS from '../_services/symbols';
+import type { TermsOfUseService } from '../_services/terms-of-use.service';
+import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
 
-
-
 class V1MeInfo {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const usersService = container.get<UsersServiceType>(UsersServiceSymbol);
-    const termsOfUseService = container.get<TermsOfUseServiceType>(TermsOfUseServiceSymbol);
     const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-    const announcementsService = container.get<AnnouncementsServiceType>(AnnouncementsServiceSymbol);
+    const usersService = container.get<UsersService>(SYMBOLS.UsersService);
+    const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
+    const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-
       const authInstance = await authorizationService.validate(context).verify();
       const requestUser = authInstance.getUserInfo();
       // [TechDebt] - TODO the domain context isn't always available and currently it's picking one at random (first)
@@ -40,15 +43,15 @@ class V1MeInfo {
       let hasInnovationCollaborations = false;
       let hasAnnouncements = false;
       let userPreferences: {
-        contactByPhone: boolean,
-        contactByEmail: boolean,
-        contactByPhoneTimeframe: null | PhoneUserPreferenceEnum,
-        contactDetails: null | string,
+        contactByPhone: boolean;
+        contactByEmail: boolean;
+        contactByPhoneTimeframe: null | PhoneUserPreferenceEnum;
+        contactDetails: null | string;
       } = {
         contactByEmail: false,
         contactByPhone: false,
         contactByPhoneTimeframe: null,
-        contactDetails: null,
+        contactDetails: null
       };
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ADMIN) {
@@ -57,21 +60,23 @@ class V1MeInfo {
         hasInnovationCollaborations = false;
         hasAnnouncements = false;
       } else {
-        termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role)).isAccepted;
+        termsOfUseAccepted = (
+          await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, domainContext.currentRole.role)
+        ).isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
         hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
-        hasAnnouncements = (await announcementsService.getAnnouncements(domainContext)).length > 0;
+        hasAnnouncements = (await announcementsService.getUserAnnouncements(domainContext)).length > 0;
       }
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-        userPreferences = (await domainService.users.getUserPreferences(requestUser.id));
+        userPreferences = await domainService.users.getUserPreferences(requestUser.id);
       }
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: requestUser.id,
         email: requestUser.email,
         displayName: requestUser.displayName,
-        roles: requestUser.roles,
+        roles: requestUser.roles.filter(role => role.lockedAt === null),
         contactByEmail: userPreferences.contactByEmail,
         contactByPhone: userPreferences.contactByPhone,
         contactByPhoneTimeframe: userPreferences.contactByPhoneTimeframe,
@@ -86,16 +91,12 @@ class V1MeInfo {
         organisations: requestUser.organisations
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
-
 
 // TODO: Improve response
 export default openApi(V1MeInfo.httpTrigger as AzureFunction, '/v1/me', {

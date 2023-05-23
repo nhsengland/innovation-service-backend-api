@@ -1,5 +1,5 @@
-import type { TestDataType } from '@innovations/shared/tests/tests.helper';
-import { TestsHelper } from '@innovations/shared/tests/tests.helper';
+import type { TestDataType } from '@innovations/shared/tests/tests-legacy.helper';
+import { TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 
 import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
 import { MockBuilder } from '@innovations/shared/builders/mock.builder';
@@ -15,11 +15,10 @@ import type { ResponseDTO } from './transformation.dtos';
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
     return descriptor;
-  }),
+  })
 }));
 
 describe('v1-innovation-action-info Suite', () => {
-
   let testData: TestDataType;
   let em: EntityManager;
   const exampleAction = {
@@ -31,35 +30,33 @@ describe('v1-innovation-action-info Suite', () => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
-    createdBy: { id: randomUUID(), name: 'name 1', role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' } },
+    createdBy: {
+      id: randomUUID(),
+      name: 'name 1',
+      role: ServiceRoleEnum.ACCESSOR,
+      organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
+    }
   };
 
   beforeAll(async () => {
-
-    new MockBuilder().mockNoSQLServiceInit();
-
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
-
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.resetAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('200', () => {
-
     it('should return an action', async () => {
       const httpTestBuilder = new HttpTestBuilder();
 
-      const mocks = await new MockBuilder()
-        .mockDomainUser(testData.baseUsers.accessor)
-        .build(em);
+      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.accessor).build(em);
 
       jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
 
@@ -69,7 +66,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setParams({ innovationId: testData.innovation.id, actionId: exampleAction.id })
         .setMethod('GET')
         .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number, body: ResponseDTO }>(v1InnovationActionInfo);
+        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(exampleAction);
       expect(result.status).toBe(200);
@@ -77,13 +74,10 @@ describe('v1-innovation-action-info Suite', () => {
       mocks.reset();
     });
 
-
     it('should return an decline reason when action status is DECLINED', async () => {
       const httpTestBuilder = new HttpTestBuilder();
 
-      const mocks = await new MockBuilder()
-        .mockDomainUser(testData.baseUsers.accessor)
-        .build(em);
+      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.accessor).build(em);
 
       const expected = {
         id: randomUUID(),
@@ -94,7 +88,12 @@ describe('v1-innovation-action-info Suite', () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
-        createdBy: { id: randomUUID(), name: 'name 1', role: ServiceRoleEnum.ACCESSOR, organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' } },
+        createdBy: {
+          id: randomUUID(),
+          name: 'name 1',
+          role: ServiceRoleEnum.ACCESSOR,
+          organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
+        },
         declineReason: 'this was rejected'
       };
 
@@ -106,7 +105,7 @@ describe('v1-innovation-action-info Suite', () => {
         .setParams({ innovationId: testData.innovation.id, actionId: expected.id })
         .setMethod('GET')
         .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number, body: ResponseDTO }>(v1InnovationActionInfo);
+        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(expected);
       expect(result.status).toBe(200);
@@ -114,7 +113,6 @@ describe('v1-innovation-action-info Suite', () => {
       mocks.reset();
     });
   });
-
 
   describe('400', () => {
     it('should return error when no required params are passed', async () => {
@@ -125,12 +123,14 @@ describe('v1-innovation-action-info Suite', () => {
         .setContext()
         .setMethod('GET')
         .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string, details: ErrorDetailsType[] } }>(v1InnovationActionInfo);
+        .invoke<{
+          status: number;
+          body: { error: GenericErrorsEnum; message: string; details: ErrorDetailsType[] };
+        }>(v1InnovationActionInfo);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
       expect(result.body.message).toMatch('Invalid request');
       expect(result.status).toBe(400);
-
     });
 
     it('should return error when innovationId param is not passed', async () => {
@@ -142,20 +142,21 @@ describe('v1-innovation-action-info Suite', () => {
         .setParams({ actionId: randomUUID() })
         .setMethod('GET')
         .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string, details: ErrorDetailsType[] } }>(v1InnovationActionInfo);
+        .invoke<{
+          status: number;
+          body: { error: GenericErrorsEnum; message: string; details: ErrorDetailsType[] };
+        }>(v1InnovationActionInfo);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
       expect(result.body.message).toMatch('Invalid request');
       expect(result.body.details[0]).toMatchObject({
         context: {},
         key: 'innovationId',
-        message: '\"innovationId\" is required',
-        type: 'any.required',
+        message: '"innovationId" is required',
+        type: 'any.required'
       });
       expect(result.status).toBe(400);
-
     });
-
 
     it('should return error when actionId param is not passed', async () => {
       const httpTestBuilder = new HttpTestBuilder();
@@ -166,7 +167,10 @@ describe('v1-innovation-action-info Suite', () => {
         .setParams({ innovationId: testData.innovation.id })
         .setMethod('GET')
         .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number, body: { error: GenericErrorsEnum, message: string, details: ErrorDetailsType[] } }>(v1InnovationActionInfo);
+        .invoke<{
+          status: number;
+          body: { error: GenericErrorsEnum; message: string; details: ErrorDetailsType[] };
+        }>(v1InnovationActionInfo);
 
       expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
       expect(result.body.message).toMatch('Invalid request');
@@ -174,31 +178,24 @@ describe('v1-innovation-action-info Suite', () => {
         context: {},
         key: 'actionId',
         message: '"actionId" is required',
-        type: 'any.required',
+        type: 'any.required'
       });
       expect(result.status).toBe(400);
-
     });
-
   });
 
-
   describe('Access', () => {
-
     it.each([
       [ServiceRoleEnum.ADMIN, 200],
       [ServiceRoleEnum.ACCESSOR, 200],
       [ServiceRoleEnum.ASSESSMENT, 200],
-      [ServiceRoleEnum.INNOVATOR, 200],
-    ])(('access with user %s should give %i'), async (userType: ServiceRoleEnum, status: number) => {
-
-      const [user, context] = TestsHelper.getUser(userType);
+      [ServiceRoleEnum.INNOVATOR, 200]
+    ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
+      const [user, context] = TestsLegacyHelper.getUser(userType);
 
       const httpTestBuilder = new HttpTestBuilder();
 
-      const mocks = await new MockBuilder()
-        .mockDomainUser(user!)
-        .build(em);
+      const mocks = await new MockBuilder().mockDomainUser(user!).build(em);
 
       jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
 
@@ -214,8 +211,5 @@ describe('v1-innovation-action-info Suite', () => {
 
       mocks.reset();
     });
-
   });
-
 });
-

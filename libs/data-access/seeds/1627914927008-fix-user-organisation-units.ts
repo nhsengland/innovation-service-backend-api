@@ -1,11 +1,8 @@
 import type { QueryRunner } from 'typeorm';
 
-
 export class fixUserOrganisationUnits1627914927008 {
-
-	async up(queryRunner: QueryRunner): Promise<void> {
-
-		await queryRunner.query(`
+  async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
       DECLARE @originOrgUnitId as nvarchar(100);
       DECLARE @destOrgUnitId as nvarchar(100);
 
@@ -18,10 +15,7 @@ export class fixUserOrganisationUnits1627914927008 {
       SET organisation_unit_id = @destOrgUnitId
       WHERE organisation_unit_id = @originOrgUnitId;
 		`);
+  }
 
-	}
-
-
-	async down(): Promise<void> { }
-
+  async down(): Promise<void> {}
 }

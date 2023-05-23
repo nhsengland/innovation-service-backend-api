@@ -7,40 +7,35 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationTransferServiceSymbol, InnovationTransferServiceType } from '../_services/interfaces';
 
+import type { InnovationTransferService } from '../_services/innovation-transfer.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationTransferList {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationTransferService = container.get<InnovationTransferServiceType>(InnovationTransferServiceSymbol);
+    const innovationTransferService = container.get<InnovationTransferService>(SYMBOLS.InnovationTransferService);
 
     try {
-
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context)
-        .checkInnovatorType()
-        .verify();
+      const auth = await authorizationService.validate(context).checkInnovatorType().verify();
       const requestUser = auth.getUserInfo();
 
-      const result = await innovationTransferService.getInnovationTransfersList(requestUser.id, queryParams.assignedToMe);
+      const result = await innovationTransferService.getInnovationTransfersList(
+        requestUser.id,
+        queryParams.assignedToMe
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationTransferList.httpTrigger as AzureFunction, '/v1/transfers', {
@@ -56,12 +51,12 @@ export default openApi(V1InnovationTransferList.httpTrigger as AzureFunction, '/
             schema: {
               type: 'array',
               items: {
-                type: 'object',
-              },
-            },
-          },
-        },
-      },
-    },
-  },
+                type: 'object'
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 });

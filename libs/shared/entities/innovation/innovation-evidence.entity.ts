@@ -9,7 +9,6 @@ import { InnovationFileEntity } from './innovation-file.entity';
 
 @Entity('innovation_evidence')
 export class InnovationEvidenceEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -25,7 +24,6 @@ export class InnovationEvidenceEntity extends BaseEntity {
   @Column({ name: 'description', nullable: true })
   description: string;
 
-
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
@@ -34,15 +32,13 @@ export class InnovationEvidenceEntity extends BaseEntity {
   @JoinTable({
     name: 'innovation_evidence_file',
     joinColumn: { name: 'innovation_evidence_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
   })
   files: InnovationFileEntity[];
-
 
   static new(data: Partial<InnovationEvidenceEntity>): InnovationEvidenceEntity {
     const instance = new InnovationEvidenceEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

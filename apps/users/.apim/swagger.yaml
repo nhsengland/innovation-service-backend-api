@@ -5,60 +5,6 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-user-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
-  "/v1/announcements/{announcementId}/read":
-    patch:
-      operationId: v1-announcement-read
-      description: Mark as read an announcement.
-      parameters:
-        - name: announcementId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "204":
-          description: Success
-        "404":
-          description: Not found
-  /v1/announcements:
-    get:
-      description: Returns the user announcements
-      operationId: v1-announcements-list
-      tags:
-        - "[v1] Announcements"
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      format: uuid
-                    template:
-                      type: string
-                      enum:
-                        - "0"
-                    targetRoles:
-                      type: array
-                      items:
-                        type: string
-                        enum:
-                          - ADMIN
-                          - INNOVATOR
-                          - ACCESSOR
-                          - ASSESSMENT
-                          - QUALIFYING_ACCESSOR
-                    createdAt:
-                      type: string
-                      format: date-time
-                    params:
-                      type: object
   /v1/email-preferences:
     get:
       description: Returns the user email notifications preferences
@@ -137,6 +83,62 @@ paths:
                 type: array
                 items:
                   type: object
+  "/v1/me/announcements/{announcementId}/read":
+    patch:
+      operationId: v1-me-announcement-read
+      description: Mark an announcement as read.
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Success
+        "404":
+          description: Not found
+  /v1/me/announcements:
+    get:
+      description: Returns unread announcements
+      operationId: v1-me-announcements
+      tags:
+        - "[v1] Announcements"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uuid
+                    title:
+                      type: string
+                    template:
+                      type: string
+                      enum:
+                        - "0"
+                    userRoles:
+                      type: array
+                      items:
+                        type: string
+                        enum:
+                          - ADMIN
+                          - INNOVATOR
+                          - ACCESSOR
+                          - ASSESSMENT
+                          - QUALIFYING_ACCESSOR
+                    createdAt:
+                      type: string
+                      format: date-time
+                    params:
+                      type: object
   /v1/me:
     post:
       summary: Create a new user on DB
@@ -545,14 +547,22 @@ paths:
                             - COMMENT_REPLY
                             - ACTION_CREATION
                             - ACTION_UPDATE
+                            - NEEDS_ASSESSMENT_STARTED
                             - NEEDS_ASSESSMENT_COMPLETED
+                            - NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
                             - NEEDS_ASSESSMENT_ORGANISATION_SUGGESTION
                             - INNOVATION_SUBMISSION
+                            - INNOVATION_SUBMISSION_TO_INNOVATORS
+                            - INNOVATION_SUBMISSION_REASSESSMENT
                             - SUPPORT_STATUS_UPDATE
                             - INNOVATION_REASSESSMENT_REQUEST
                             - INNOVATION_STOP_SHARING
+                            - INNOVATION_WITHDRAWN
                             - COLLABORATOR_INVITE
                             - COLLABORATOR_UPDATE
+                            - TRANSFER_PENDING
+                            - TRANSFER_EXPIRED
+                            - TRANSFER_REMINDER
                           description: The notification context detail
                         contextId:
                           type: string
@@ -614,6 +624,31 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
+  "/v1/units/{organisationUnitId}/user":
+    get:
+      description: Get organisation unit user info.
+      operationId: v1-organisation-unit-user
+      parameters:
+        - name: organisationUnitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to get this information.
+        "404":
+          description: The user doesn't exist on the IS.
+        "409":
+          description: The user is from other other organisation or already exists in the
+            unit.
+        "500":
+          description: An error occurred while getting this information.
   /v1/organisations:
     get:
       description: Retrieves organisations list
@@ -630,26 +665,6 @@ paths:
                 type: array
                 items:
                   type: object
-  /v1/survey:
-    post:
-      operationId: v1-survey-create
-      description: Creates a Survey object with answers
-      tags:
-        - "[v1] Survey"
-      parameters: []
-      responses:
-        "200":
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier for survey object
-        "400":
-          description: Invalid survey payload
   /v1:
     head:
       operationId: v1-users-email-available

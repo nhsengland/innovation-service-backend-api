@@ -1,10 +1,7 @@
-import type { MigrationInterface, QueryRunner } from 'typeorm'
-
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class alterTableActivityLogAddConstraintPausedInnovation1671106536106 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "activity_log" DROP CONSTRAINT "CK_activity_log_activity"
     `);
@@ -32,13 +29,10 @@ export class alterTableActivityLogAddConstraintPausedInnovation1671106536106 imp
         'THREAD_MESSAGE_CREATION',
         'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED',
         'INNOVATION_PAUSE'
-      ))`
-    );
-
+      ))`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-
     await queryRunner.query(`
       ALTER TABLE "activity_log" DROP CONSTRAINT "CK_activity_log_activity"
     `);
@@ -65,9 +59,6 @@ export class alterTableActivityLogAddConstraintPausedInnovation1671106536106 imp
         'ACTION_STATUS_REQUESTED_UPDATE',
         'THREAD_CREATION', 'THREAD_MESSAGE_CREATION',
         'NEEDS_ASSESSMENT_REASSESSMENT_REQUESTED'
-      ))`
-    );
-
+      ))`);
   }
-
 }

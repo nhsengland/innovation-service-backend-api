@@ -1,7 +1,6 @@
-import type { MigrationInterface, QueryRunner } from "typeorm"
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createTableReassessmentRequest1667383826047 implements MigrationInterface {
-
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE TABLE "innovation_reassessment_request" (
         "created_at" datetime2 NOT NULL CONSTRAINT "df_innovation_reassessment_request_created_at" DEFAULT getdate(), 
@@ -43,5 +42,4 @@ export class createTableReassessmentRequest1667383826047 implements MigrationInt
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DROP TABLE "innovation_reassessment_request"`);
   }
-
 }

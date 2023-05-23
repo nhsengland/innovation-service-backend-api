@@ -1,63 +1,75 @@
-import { NotificationContextDetailEnum, NotificationContextTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import {
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum
+} from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum } from '../_config';
 
 import { BaseHandler } from './base.handler';
-
+import type { Context } from '@azure/functions';
 
 export class LockUserHandler extends BaseHandler<
   NotifierTypeEnum.LOCK_USER,
   EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
   Record<string, never>
 > {
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
-    domainContext: DomainContextType,
-  ) {
-    super(requestUser, data, domainContext);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
-
   async run(): Promise<this> {
+    const userId = await this.recipientsService.identityId2UserId(this.inputData.user.identityId);
+    const identityInfo = await this.recipientsService.usersIdentityInfo(this.inputData.user.identityId);
 
-    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id, {withDeleted: true});
+    if (!userId) {
+      // this will never happen, query includes deleted, but if it did we wouldn't be able to handle it anyway
+      return this;
+    }
 
-    // E-mail to the user who is being locked.
-    this.emails.push({
-      templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
-      to: { type: 'identityId', value: userInfo.identityId, displayNameParam: 'display_name' },
-      params: {
-        // display_name: '', // This will be filled by the email-listener function.
-      }
+    if (identityInfo) {
+      // E-mail to the user who is being locked.
+      this.emails.push({
+        templateId: EmailTypeEnum.LOCK_USER_TO_LOCKED_USER,
+        to: { email: identityInfo.email, displayname: identityInfo.displayName },
+        notificationPreferenceType: null,
+        params: {
+          // display_name: '', // This will be filled by the email-listener function.
+        }
+      });
+    }
+
+    const userInnovatorRole = await this.recipientsService.getUsersRecipient(userId, ServiceRoleEnum.INNOVATOR, {
+      withDeleted: true
     });
 
-    if (userInfo.userRoles.includes(ServiceRoleEnum.INNOVATOR)) {
-
+    if (userInnovatorRole) {
       // InApp to all assigned users of locked user innovations.
-      const userInnovations = (await this.recipientsService.userInnovationsWithAssignedUsers(this.inputData.user.id));
+      const userInnovations = await this.recipientsService.userInnovationsWithAssignedRecipients(userId);
 
       for (const innovation of userInnovations) {
-
         // Filter duplicated ids..
-        const uniqueUsers = [...new Map(innovation.assignedUsers.map(item => [`${item.id}_${item.organisationUnitId}`, item])).values()];
+        const uniqueUsers = [...new Set(innovation.assignedUsers.map(user => user.roleId))];
 
         this.inApp.push({
           innovationId: innovation.id,
-          context: { type: NotificationContextTypeEnum.INNOVATION, detail: NotificationContextDetailEnum.LOCK_USER, id: innovation.id },
-          userRoleIds: uniqueUsers.map(user => user.roleId),
+          context: {
+            type: NotificationContextTypeEnum.INNOVATION,
+            detail: NotificationContextDetailEnum.LOCK_USER,
+            id: innovation.id
+          },
+          userRoleIds: uniqueUsers,
           params: {}
         });
       }
     }
 
     return this;
-
   }
-
 }

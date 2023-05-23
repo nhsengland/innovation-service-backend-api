@@ -1,84 +1,97 @@
-import { InnovationTransferStatusEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import { InnovationTransferStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@notifications/shared/services';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container } from '../_config';
+import { ENV, container } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
 
+import type { Context } from '@azure/functions';
+import { UrlModel } from '@notifications/shared/models';
 import { BaseHandler } from './base.handler';
-
 
 export class InnovationTransferOwnershipCompletedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
-  EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER | EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER | EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
+  | EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER
+  | EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER
+  | EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
   Record<string, never>
 > {
-
   private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
 
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED],
-    domainContext: DomainContextType,
+    azureContext: Context
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data, azureContext);
   }
 
-
   async run(): Promise<this> {
-
-    const innovation = await this.recipientsService.innovationInfoWithOwner(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.identityProviderService.getUserInfo(innovation.owner.identityId);
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
     const transfer = await this.recipientsService.innovationTransferInfoWithOwner(this.inputData.transferId);
+    const transferOwner = await this.recipientsService.getUsersRecipient(transfer.ownerId, ServiceRoleEnum.INNOVATOR);
 
     switch (transfer.status) {
-
       case InnovationTransferStatusEnum.COMPLETED:
-        this.emails.push({
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER,
-          to: { type: 'identityId', value: transfer.owner.identityId, displayNameParam: 'innovator_name' },
-          params: {
-            // innovator_name: '', // This will be filled by the email-listener function.
-            innovation_name: innovation.name,
-            new_innovator_name: innovationOwnerInfo.displayName,
-            new_innovator_email: innovationOwnerInfo.email
-          }
-        });
+        if (transferOwner) {
+          const innovatorIdentity = await this.recipientsService.usersIdentityInfo(transferOwner?.identityId);
+
+          this.emails.push({
+            templateId: EmailTypeEnum.INNOVATION_TRANSFER_COMPLETED_TO_ORIGINAL_OWNER,
+            to: transferOwner,
+            notificationPreferenceType: null,
+            params: {
+              innovator_name: innovatorIdentity?.displayName ?? 'user', // Review what should happen if user is not found
+              innovation_name: innovation.name,
+              new_innovator_name: innovationOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
+              new_innovator_email: innovationOwnerInfo?.email ?? 'user email' //Review what should happen if user is not found
+            }
+          });
+        }
         break;
 
       case InnovationTransferStatusEnum.CANCELED:
+        // If the transfer canceled is a preference we need to figure out if the email is a user or not but that would
+        // require extra work and not needed now.
+        // 1. get the user info by email
+        // 2. if user is found then use the user info to get the role and send to role
+        // 3. if user is not found then use the email as the recipient
         this.emails.push({
           templateId: EmailTypeEnum.INNOVATION_TRANSFER_CANCELLED_TO_NEW_OWNER,
-          to: { type: 'email', value: transfer.email },
+          to: { email: transfer.email },
+          notificationPreferenceType: null,
           params: {
-            innovator_name: innovationOwnerInfo.displayName,
+            innovator_name: innovationOwnerInfo?.displayName ?? 'user', //Review what should happen if user is not found
             innovation_name: innovation.name
           }
         });
         break;
 
       case InnovationTransferStatusEnum.DECLINED:
-        const targetUser = await this.identityProviderService.getUserInfoByEmail(transfer.email);
-        this.emails.push({
-          templateId: EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
-          to: { type: 'identityId', value: transfer.owner.identityId, displayNameParam: 'innovator_name' },
-          params: {
-            innovator_name: innovationOwnerInfo.displayName,
-            new_innovator_name: targetUser?.displayName || 'User',
-            innovation_name: innovation.name
-          }
-        });
+        // Review seems odd to use transferOwner for one thing but innovator_name for the body of the email
+        if (transferOwner) {
+          const targetUser = await this.identityProviderService.getUserInfoByEmail(transfer.email);
+          this.emails.push({
+            templateId: EmailTypeEnum.INNOVATION_TRANSFER_DECLINED_TO_ORIGINAL_OWNER,
+            to: transferOwner,
+            notificationPreferenceType: null,
+            params: {
+              innovator_name: innovationOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
+              new_innovator_name: targetUser?.displayName || transfer.email,
+              innovation_name: innovation.name,
+              innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
+                .addPath('innovator/innovations/:innovationId')
+                .setPathParams({ innovationId: this.inputData.innovationId })
+                .buildUrl()
+            }
+          });
+        }
         break;
-
       default:
         break;
-
     }
 
     return this;
-
   }
-
 }

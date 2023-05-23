@@ -1,48 +1,65 @@
-import { EmailNotificationTypeEnum, NotifierTypeEnum } from '@notifications/shared/enums';
+import {
+  NotificationContextDetailEnum,
+  NotificationContextTypeEnum,
+  NotifierTypeEnum
+} from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum } from '../_config';
 
 import { BaseHandler } from './base.handler';
-
+import type { Context } from '@azure/functions';
 
 export class InnovationWithdrawnHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_WITHDRAWN,
   EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
-  Record<string, never>
+  Record<string, string>
 > {
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
-    requestUser: { id: string, identityId: string },
+    requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_WITHDRAWN],
-    domainContext: DomainContextType,
-  ) {
-    super(requestUser, data, domainContext);
+    azureContext: Context
+) {
+    super(requestUser, data, azureContext);
   }
 
-
   async run(): Promise<this> {
-
-    const assignedUsers = await this.recipientsService.usersInfo(this.inputData.innovation.assignedUserIds);
-    const uniqueAssignedUsers = [...new Map(assignedUsers.map(item => [item['id'], item])).values()];
+    const assignedUsers = await this.recipientsService.usersBagToRecipients(
+      this.inputData.innovation.affectedUsers.map(u => ({
+        id: u.userId,
+        userType: u.userType,
+        organisationUnit: u.organisationUnitId
+      }))
+    );
+    const uniqueAssignedUsers = [...new Map(assignedUsers.map(item => [item['userId'], item])).values()];
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const user of uniqueAssignedUsers.filter(item => this.isEmailPreferenceInstantly(EmailNotificationTypeEnum.SUPPORT, item.emailNotificationPreferences))) {
+    for (const user of uniqueAssignedUsers) {
       this.emails.push({
         templateId: EmailTypeEnum.INNOVATION_WITHDRAWN_TO_ASSIGNED_USERS,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        notificationPreferenceType: 'SUPPORT',
+        to: user,
         params: {
-          // display_name: '', // This will be filled by the email-listener function.
           innovation_name: this.inputData.innovation.name
         }
       });
     }
 
+    if (assignedUsers.length) {
+      this.inApp.push({
+        innovationId: this.inputData.innovation.id,
+        context: {
+          type: NotificationContextTypeEnum.INNOVATION,
+          detail: NotificationContextDetailEnum.INNOVATION_WITHDRAWN,
+          id: this.inputData.innovation.id
+        },
+        userRoleIds: assignedUsers.map(u => u.roleId),
+        params: {
+          innovationName: this.inputData.innovation.name
+        }
+      });
+    }
+
     return this;
-
   }
-
 }

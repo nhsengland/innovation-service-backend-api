@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class migrateSupportLogToActivityLog1638966930402 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     //Update createdBy to userId for comments where createdBy is null
     await queryRunner.query(
@@ -9,9 +8,7 @@ export class migrateSupportLogToActivityLog1638966930402 implements MigrationInt
     );
 
     // Move Activity log data into a temp table
-    await queryRunner.query(
-      `SELECT * INTO #TempAcitivityLog FROM dbo.activity_log`
-    );
+    await queryRunner.query(`SELECT * INTO #TempAcitivityLog FROM dbo.activity_log`);
 
     // Insert support logs of type ACCESSOR_SUGGESTION into ActivityLog table (activity - ORGANISATION_SUGGESTION & type - SUPPORT)
     await queryRunner.query(
@@ -133,7 +130,6 @@ export class migrateSupportLogToActivityLog1638966930402 implements MigrationInt
     );
   }
 
-
   async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`DELETE FROM dbo.activity_log;`);
 
@@ -145,5 +141,4 @@ export class migrateSupportLogToActivityLog1638966930402 implements MigrationInt
 
     await queryRunner.query(`DROP TABLE IF EXISTS  #TempAcitivityLog`);
   }
-
 }

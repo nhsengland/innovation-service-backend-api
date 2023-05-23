@@ -1,37 +1,33 @@
-import { TestDataType, TestsHelper } from '@innovations/shared/tests/tests.helper';
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
-import { NOSQLConnectionService } from '@innovations/shared/services';
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
-import { InnovationFileServiceSymbol, InnovationFileServiceType } from './interfaces';
+import SYMBOLS from './symbols';
 
 describe('Innovation supports service test suite', () => {
-
   let sut: InnovationFileService;
   let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
-    sut = container.get<InnovationFileServiceType>(InnovationFileServiceSymbol);
-    await TestsHelper.init();
-    testData = TestsHelper.sampleData;
+    sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    jest.spyOn(NOSQLConnectionService.prototype, 'init').mockResolvedValue();
-    em = await TestsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     jest.restoreAllMocks();
-    await TestsHelper.releaseQueryRunnerEntityManager(em);
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('uploadInnovationFile', () => {
     it('should updload an innovation file', async () => {
-
       const filename = randText();
 
       const file = await sut.uploadInnovationFile(

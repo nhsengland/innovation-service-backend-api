@@ -7,25 +7,23 @@ import { AuthorizationServiceSymbol, type AuthorizationServiceType } from '@inno
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationActionsServiceSymbol, InnovationActionsServiceType } from '../_services/interfaces';
 
+import type { InnovationActionsService } from '../_services/innovation-actions.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1InnovationActionInfo {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationActionsService = container.get<InnovationActionsServiceType>(InnovationActionsServiceSymbol);
+    const innovationActionsService = container.get<InnovationActionsService>(SYMBOLS.InnovationActionsService);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context)
+      await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
         .checkInnovatorType()
@@ -46,13 +44,12 @@ class V1InnovationActionInfo {
         updatedBy: {
           name: result.updatedBy.name,
           role: result.updatedBy.role,
-          ...result.updatedBy.isOwner !== undefined && { isOwner: result.updatedBy.isOwner }
+          ...(result.updatedBy.isOwner !== undefined && { isOwner: result.updatedBy.isOwner })
         },
         createdBy: { ...result.createdBy },
         ...(result.declineReason ? { declineReason: result.declineReason } : {})
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
@@ -83,18 +80,13 @@ export default openApi(V1InnovationActionInfo.httpTrigger as AzureFunction, '/v1
                 },
                 status: {
                   type: 'string',
-                  enum: [
-                    'DRAFT',
-                    'SUBMITTED',
-                    'APPROVED',
-                    'REJECTED'
-                  ]
+                  enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED']
                 },
                 description: {
                   type: 'string'
                 },
                 section: {
-                  type: 'string',
+                  type: 'string'
                 },
                 createdAt: {
                   type: 'string',
@@ -108,7 +100,7 @@ export default openApi(V1InnovationActionInfo.httpTrigger as AzureFunction, '/v1
                     },
                     organisationUnit: {
                       type: 'string'
-                    },
+                    }
                   }
                 }
               }

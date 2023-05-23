@@ -7,26 +7,24 @@ import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovatio
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationsServiceSymbol, InnovationsServiceType } from '../_services/interfaces';
 
+import type { InnovationsService } from '../_services/innovations.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
-
 class V1InnovationsActivitiesLogList {
-
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const innovationsService = container.get<InnovationsServiceType>(InnovationsServiceSymbol);
+    const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
@@ -39,11 +37,11 @@ class V1InnovationsActivitiesLogList {
 
       const { skip, take, order, ...filters } = queryParams;
 
-      const result = await innovationsService.getInnovationActivitiesLog(
-        params.innovationId,
-        filters,
-        { skip, take, order }
-      );
+      const result = await innovationsService.getInnovationActivitiesLog(params.innovationId, filters, {
+        skip,
+        take,
+        order
+      });
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
@@ -56,16 +54,12 @@ class V1InnovationsActivitiesLogList {
         }))
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
-
 
 export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFunction, '/v1/{innovationId}/activities', {
   get: {
@@ -79,7 +73,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         required: true,
         description: 'Innovation Id.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -109,7 +103,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         required: false,
         description: 'The order of the records.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -118,7 +112,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         required: false,
         description: 'Activity types of the logs.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -127,7 +121,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         required: false,
         description: 'Activity Logs that start after this date.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       },
       {
@@ -136,7 +130,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
         required: false,
         description: 'Activity Logs that start before this date.',
         schema: {
-          type: 'string',
+          type: 'string'
         }
       }
     ],
@@ -149,7 +143,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
               type: 'object',
               properties: {
                 count: {
-                  type: 'number',
+                  type: 'number'
                 },
                 innovation: {
                   type: 'object',
@@ -159,7 +153,7 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
                     },
                     name: {
                       type: 'string'
-                    },
+                    }
                   }
                 },
                 data: {
@@ -168,43 +162,43 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
                     type: 'object',
                     properties: {
                       type: {
-                        type: 'string',
+                        type: 'string'
                       },
                       activity: {
-                        type: 'string',
+                        type: 'string'
                       },
                       date: {
-                        type: 'number',
+                        type: 'number'
                       },
                       params: {
                         type: 'object',
                         properties: {
                           actionUserId: {
-                            type: 'string',
+                            type: 'string'
                           },
                           interveningUserId: {
-                            type: 'string',
+                            type: 'string'
                           },
                           assessmentId: {
-                            type: 'string',
+                            type: 'string'
                           },
                           sectionId: {
-                            type: 'string',
+                            type: 'string'
                           },
                           actionId: {
-                            type: 'string',
+                            type: 'string'
                           },
                           innovationSupportStatus: {
-                            type: 'string',
+                            type: 'string'
                           },
                           organisations: {
                             type: 'array',
                             items: {
-                              type: 'string',
+                              type: 'string'
                             }
                           },
                           organisationUnit: {
-                            type: 'string',
+                            type: 'string'
                           },
                           comment: {
                             type: 'object',
@@ -224,15 +218,15 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
                             type: 'object',
                             properties: {
                               id: {
-                                type: 'string',
+                                type: 'string'
                               },
                               subject: {
-                                type: 'string',
+                                type: 'string'
                               },
                               messageId: {
-                                type: 'string',
+                                type: 'string'
                               }
-                            },
+                            }
                           },
                           actionUserName: {
                             type: 'string'
@@ -240,19 +234,19 @@ export default openApi(V1InnovationsActivitiesLogList.httpTrigger as AzureFuncti
                           interveningUserName: {
                             type: 'string'
                           }
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       500: {
         description: 'An error occurred while processing the request.'
       }
-    },
-  },
+    }
+  }
 });

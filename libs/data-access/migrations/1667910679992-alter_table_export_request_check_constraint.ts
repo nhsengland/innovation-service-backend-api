@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class alterTableExportRequestCheckConstraint1667910679992
-  implements MigrationInterface {
+export class alterTableExportRequestCheckConstraint1667910679992 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       declare @Command nvarchar(max) = '';
@@ -15,13 +14,9 @@ export class alterTableExportRequestCheckConstraint1667910679992
     await queryRunner.query(`
       ALTER TABLE [dbo].[innovation_export_request] ADD CONSTRAINT "CK_innovation_export_request_status" CHECK (status IN ('PENDING','APPROVED','REJECTED','CANCELLED'));
     `);
-    
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP CONSTRAINT "CK_innovation_export_request_status"`
-    );
-  
+    await queryRunner.query(`DROP CONSTRAINT "CK_innovation_export_request_status"`);
   }
 }

@@ -8,27 +8,29 @@ import { ActionEnum, TargetEnum } from '@innovations/shared/services/integration
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
-import { InnovationThreadsServiceSymbol, InnovationThreadsServiceType } from '../_services/interfaces';
 
+import type { InnovationThreadsService } from '../_services/innovation-threads.service';
+import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
-
 class V1InnovationThreadCreate {
-
   @JwtDecoder()
-  @Audit({action: ActionEnum.CREATE, target: TargetEnum.THREAD, identifierResponseField: 'thread.id'})
+  @Audit({
+    action: ActionEnum.CREATE,
+    target: TargetEnum.THREAD,
+    identifierResponseField: 'thread.id'
+  })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-
     const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const threadsService = container.get<InnovationThreadsServiceType>(InnovationThreadsServiceSymbol);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
-
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const auth = await authorizationService.validate(context)
+      const auth = await authorizationService
+        .validate(context)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
@@ -43,7 +45,7 @@ class V1InnovationThreadCreate {
         pathParams.innovationId,
         body.subject,
         body.message,
-        true,
+        true
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -51,20 +53,17 @@ class V1InnovationThreadCreate {
           id: result.thread.id,
           subject: result.thread.subject,
           createdBy: {
-            id: result.thread.createdBy,
+            id: result.thread.createdBy
           },
-          createdAt: result.thread.createdAt,
+          createdAt: result.thread.createdAt
         }
       });
       return;
-
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
       return;
     }
-
   }
-
 }
 
 export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/v1/{innovationId}/threads', {
@@ -80,9 +79,9 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
         description: 'The innovation id.',
         required: true,
         schema: {
-          type: 'string',
-        },
-      },
+          type: 'string'
+        }
+      }
     ],
     requestBody: {
       description: 'The thread details.',
@@ -95,18 +94,18 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
               subject: {
                 type: 'string',
                 description: 'The thread subject.',
-                example: 'Subject',
+                example: 'Subject'
               },
               message: {
                 type: 'string',
                 description: 'The thread message.',
-                example: 'Message',
-              },
+                example: 'Message'
+              }
             },
-            required: ['subject', 'message'],
-          },
-        },
-      },
+            required: ['subject', 'message']
+          }
+        }
+      }
     },
     responses: {
       '200': {
@@ -122,12 +121,12 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                     id: {
                       type: 'string',
                       description: 'The thread id.',
-                      example: '00000000-0000-0000-0000-000000000000',
+                      example: '00000000-0000-0000-0000-000000000000'
                     },
                     subject: {
                       type: 'string',
                       description: 'The thread subject.',
-                      example: 'Subject',
+                      example: 'Subject'
                     },
                     createdBy: {
                       type: 'object',
@@ -135,37 +134,37 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                         id: {
                           type: 'string',
                           description: 'The user id.',
-                          example: '00000000-0000-0000-0000-000000000000',
-                        },
-                      },
+                          example: '00000000-0000-0000-0000-000000000000'
+                        }
+                      }
                     },
                     createdAt: {
                       type: 'string',
                       description: 'The thread creation date.',
-                      example: '2021-01-01T00:00:00.000Z',
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+                      example: '2021-01-01T00:00:00.000Z'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       '400': {
-        description: 'The request was invalid.',
+        description: 'The request was invalid.'
       },
       '401': {
-        description: 'The user is not authenticated.',
+        description: 'The user is not authenticated.'
       },
       '403': {
-        description: 'The user is not authorized to create a thread.',
+        description: 'The user is not authorized to create a thread.'
       },
       '404': {
-        description: 'The innovation does not exist.',
+        description: 'The innovation does not exist.'
       },
       '500': {
-        description: 'An error occurred while creating the thread.',
-      },
-    },
-  },
+        description: 'An error occurred while creating the thread.'
+      }
+    }
+  }
 });

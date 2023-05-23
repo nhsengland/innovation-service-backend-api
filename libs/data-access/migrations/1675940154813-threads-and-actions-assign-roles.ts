@@ -1,9 +1,8 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class threadsAndActionsAssignRole1675940154813 implements MigrationInterface {
-
-    public async up(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.query(`
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
         UPDATE innovation_thread
           SET author_user_role_id = ur.id
         FROM innovation_thread it
@@ -11,7 +10,7 @@ export class threadsAndActionsAssignRole1675940154813 implements MigrationInterf
         where it.author_user_role_id is null
       `);
 
-      await queryRunner.query(`
+    await queryRunner.query(`
         UPDATE innovation_thread_message
             SET author_user_role_id = ur.id
         FROM innovation_thread_message itm
@@ -19,7 +18,7 @@ export class threadsAndActionsAssignRole1675940154813 implements MigrationInterf
         where itm.author_user_role_id is null
       `);
 
-      await queryRunner.query(`
+    await queryRunner.query(`
         UPDATE innovation_action
             SET created_by_user_role_id = ur.id
         FROM innovation_action ia
@@ -27,17 +26,16 @@ export class threadsAndActionsAssignRole1675940154813 implements MigrationInterf
         where ia.created_by_user_role_id is null
       `);
 
-      await queryRunner.query(`
+    await queryRunner.query(`
         UPDATE innovation_action
             SET updated_by_user_role_id = ur.id
         FROM innovation_action ia
         inner join user_role ur on ia.updated_by = ur.user_id
         where ia.updated_by_user_role_id is null
       `);
-    }
+  }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
-      await queryRunner.query(`PRINT 'This migration cannot be reverted'`);
-    }
-
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`PRINT 'This migration cannot be reverted'`);
+  }
 }

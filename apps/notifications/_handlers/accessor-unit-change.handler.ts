@@ -1,44 +1,55 @@
-import type { NotifierTypeEnum } from '@notifications/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum } from '../_config';
-import { RecipientsServiceSymbol, RecipientsServiceType } from '../_services/interfaces';
+import { EmailTypeEnum } from '../_config';
 
+import { NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { BaseHandler } from './base.handler';
+import type { Context } from '@azure/functions';
 
-
+// REVIEW this isn't used
 export class AccessorUnitChangeHandler extends BaseHandler<
   NotifierTypeEnum.ACCESSOR_UNIT_CHANGE,
-  EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
+  | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED
+  | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT
+  | EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
   Record<string, never>
 > {
-
-  private recipientsService = container.get<RecipientsServiceType>(RecipientsServiceSymbol);
-
   constructor(
-    requestUser: { id: string, identityId: string },
-    domainContext: DomainContextType,
-    data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE]
+    requestUser: DomainContextType,
+    data: NotifierTemplatesType[NotifierTypeEnum.ACCESSOR_UNIT_CHANGE],
+    azureContext: Context
   ) {
-    super(requestUser, data, domainContext);
+    super(requestUser, data, azureContext);
   }
 
-
   async run(): Promise<this> {
+    const userInfo = await this.recipientsService.getUsersRecipient(
+      this.inputData.user.id,
+      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+      { organisationUnit: this.inputData.newOrganisationUnitId }
+    );
+    const userIdentityInfo = await this.recipientsService.usersIdentityInfo(this.inputData.user.identityId);
 
-    const userInfo = await this.recipientsService.userInfo(this.inputData.user.id);
+    if (!userInfo || !userIdentityInfo) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
 
     const oldUnitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.oldOrganisationUnitId);
     const newUnitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.newOrganisationUnitId);
 
-    const oldUnitQAs = await this.recipientsService.organisationUnitsQualifyingAccessors([this.inputData.oldOrganisationUnitId]);
-    const newUnitQAs = (await this.recipientsService.organisationUnitsQualifyingAccessors([this.inputData.newOrganisationUnitId]))
-      .filter(item => item.id !== this.inputData.user.id); // Exclude moved user from new unit QAs.
+    const oldUnitQAs = await this.recipientsService.organisationUnitsQualifyingAccessors([
+      this.inputData.oldOrganisationUnitId
+    ]);
+    const newUnitQAs = (
+      await this.recipientsService.organisationUnitsQualifyingAccessors([this.inputData.newOrganisationUnitId])
+    ).filter(item => item.userId !== this.inputData.user.id); // Exclude moved user from new unit QAs.
 
     // E-mail to the user (accessor) that moved.
     this.emails.push({
       templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_USER_MOVED,
-      to: { type: 'identityId', value: userInfo.identityId, displayNameParam: 'display_name' },
+      to: userInfo,
+      notificationPreferenceType: null,
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         old_organisation: oldUnitInfo.organisation.name,
@@ -52,10 +63,11 @@ export class AccessorUnitChangeHandler extends BaseHandler<
     for (const user of oldUnitQAs) {
       this.emails.push({
         templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_OLD_UNIT,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        to: user,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          user_name: userInfo.name,
+          user_name: userIdentityInfo.displayName,
           old_unit: oldUnitInfo.organisationUnit.name
         }
       });
@@ -65,17 +77,16 @@ export class AccessorUnitChangeHandler extends BaseHandler<
     for (const user of newUnitQAs) {
       this.emails.push({
         templateId: EmailTypeEnum.ACCESSOR_UNIT_CHANGE_TO_QA_NEW_UNIT,
-        to: { type: 'identityId', value: user.identityId, displayNameParam: 'display_name' },
+        to: user,
+        notificationPreferenceType: null,
         params: {
           // display_name: '', // This will be filled by the email-listener function.
-          user_name: userInfo.name,
+          user_name: userIdentityInfo.displayName,
           new_unit: newUnitInfo.organisationUnit.name
         }
       });
     }
 
     return this;
-
   }
-
 }

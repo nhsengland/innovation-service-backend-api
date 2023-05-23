@@ -1,7 +1,6 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class createAssessmentTables1621861108212 implements MigrationInterface {
-
   async up(queryRunner: QueryRunner): Promise<void> {
     // drop constraints
     await queryRunner.query(
@@ -109,27 +108,20 @@ export class createAssessmentTables1621861108212 implements MigrationInterface {
       `ALTER TABLE "innovation_assessment" DROP CONSTRAINT "fk_innovation_assessment_innovation_innovation_id"`
     );
 
-    await queryRunner.query(
-      `ALTER TABLE "innovation_assessment" SET ( SYSTEM_VERSIONING = OFF )`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation_assessment" SET ( SYSTEM_VERSIONING = OFF )`);
     await queryRunner.query(`DROP TABLE "innovation_assessment"`);
     await queryRunner.query(`DROP TABLE "innovation_assessment_history"`);
 
     // innovation table
-    await queryRunner.query(
-      `ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"`
-    );
+    await queryRunner.query(`ALTER TABLE "innovation" DROP CONSTRAINT "CK_innovation_status"`);
     await queryRunner.query(
       `ALTER TABLE "innovation" ADD CONSTRAINT "CK_innovation_status" CHECK (([status]='COMPLETE' OR [status]='ABANDONED' OR [status]='NEEDS_ASSESSMENT_REVIEW' OR [status]='IN_PROGRESS' OR [status]='WAITING_NEEDS_ASSESSMENT'))`
     );
 
     // user table
-    await queryRunner.query(
-      `ALTER TABLE "user" DROP CONSTRAINT "CK_user_type"`
-    );
+    await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "CK_user_type"`);
     await queryRunner.query(
       `ALTER TABLE "user" ADD CONSTRAINT "CK_user_type" CHECK (([type]='ACCESSOR' OR [type]='INNOVATOR'))`
     );
   }
-
 }

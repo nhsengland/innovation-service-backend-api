@@ -3,9 +3,12 @@ import { container } from '@notifications/shared/config/inversify.config';
 import { DispatchService } from '../_services/dispatch.service';
 import { EmailService } from '../_services/email.service';
 import {
-  DispatchServiceSymbol, DispatchServiceType,
-  EmailServiceSymbol, EmailServiceType,
-  RecipientsServiceSymbol, RecipientsServiceType
+  DispatchServiceSymbol,
+  DispatchServiceType,
+  EmailServiceSymbol,
+  EmailServiceType,
+  RecipientsServiceSymbol,
+  RecipientsServiceType
 } from '../_services/interfaces';
 import { RecipientsService } from '../_services/recipients.service';
 
@@ -16,21 +19,15 @@ container.bind<RecipientsServiceType>(RecipientsServiceSymbol).to(RecipientsServ
 
 export { container };
 export const startup = async (): Promise<void> => {
-
   console.log('Initializing Notifications app function');
 
   try {
-
     console.log('Initialization complete');
-
   } catch (error) {
-
     // TODO: Treat this error! Should we end the process?
     console.error('Notifications app function was UNABLE to start');
     console.error(error);
-
   }
-
 };
 
 void startup();

@@ -8,4 +8,4 @@ export type ResponseDTO = {
     isOwner?: boolean;
     organisationUnit: { id: string; acronym: string } | null;
   }[];
-}
+};

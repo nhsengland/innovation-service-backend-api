@@ -6,10 +6,8 @@ import { InnovationEvidenceEntity } from './innovation-evidence.entity';
 import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationEntity } from './innovation.entity';
 
-
 @Entity('innovation_file')
 export class InnovationFileEntity extends BaseEntity {
-
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -18,7 +16,6 @@ export class InnovationFileEntity extends BaseEntity {
 
   @Column({ name: 'display_file_name', length: 100 })
   displayFileName: string;
-
 
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
@@ -30,11 +27,9 @@ export class InnovationFileEntity extends BaseEntity {
   @ManyToMany(() => InnovationSectionEntity, record => record.files)
   sections: InnovationSectionEntity[];
 
-
   static new(data: Partial<InnovationFileEntity>): InnovationFileEntity {
     const instance = new InnovationFileEntity();
     Object.assign(instance, data);
     return instance;
   }
-
 }

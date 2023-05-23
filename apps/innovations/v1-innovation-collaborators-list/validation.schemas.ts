@@ -12,14 +12,21 @@ enum orderFields {
 
 export type ParamsType = {
   innovationId: string;
-}
+};
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
+  innovationId: Joi.string().guid().required()
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
-  status?: InnovationCollaboratorStatusEnum[]
-}
-export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) }).append<QueryParamsType>({
-  status: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid(...Object.values(InnovationCollaboratorStatusEnum))).optional(),
-}).required();
+  status?: InnovationCollaboratorStatusEnum[];
+};
+export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
+  orderKeys: Object.keys(orderFields)
+})
+  .append<QueryParamsType>({
+    status: JoiHelper.AppCustomJoi()
+      .stringArray()
+      .items(Joi.string().valid(...Object.values(InnovationCollaboratorStatusEnum)))
+      .optional()
+  })
+  .required();

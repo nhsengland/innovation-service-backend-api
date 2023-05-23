@@ -23,7 +23,7 @@ export class TermsOfUseService extends BaseService {
       releasedAt?: Date;
     }
   ): Promise<{ id: string }> {
-    return await this.sqlConnection.transaction(async (transaction) => {
+    return await this.sqlConnection.transaction(async transaction => {
       const savedToU = await transaction.save(
         TermsOfUseEntity,
         TermsOfUseEntity.new({
@@ -32,7 +32,7 @@ export class TermsOfUseService extends BaseService {
           summary: touPayload.summary || '',
           createdBy: requestUser.id,
           updatedBy: requestUser.id,
-          releasedAt: touPayload.releasedAt || null,
+          releasedAt: touPayload.releasedAt || null
         })
       );
 
@@ -43,17 +43,14 @@ export class TermsOfUseService extends BaseService {
   async updateTermsOfUse(
     requestUser: { id: string },
     touPayload: {
-      name: string,
-      touType: TermsOfUseTypeEnum,
-      summary?: string,
-      releasedAt?: Date
+      name: string;
+      touType: TermsOfUseTypeEnum;
+      summary?: string;
+      releasedAt?: Date;
     },
     touId: string
-  ):
-    Promise<{ id: string }> {
-
+  ): Promise<{ id: string }> {
     await this.sqlConnection.transaction(async transaction => {
-
       await transaction.update(
         TermsOfUseEntity,
         { id: touId },
@@ -76,7 +73,10 @@ export class TermsOfUseService extends BaseService {
    * @param entityManager optional entity manager
    * @returns list of terms of use and total count.
    */
-  async getTermsOfUseList(pagination: PaginationQueryParamsType<'createdAt'>, entityManager?: EntityManager): Promise<{
+  async getTermsOfUseList(
+    pagination: PaginationQueryParamsType<'createdAt'>,
+    entityManager?: EntityManager
+  ): Promise<{
     count: number;
     data: {
       id: string;
@@ -85,7 +85,7 @@ export class TermsOfUseService extends BaseService {
       summary: string;
       releasedAt: Date | null;
       createdAt: Date;
-    }[]
+    }[];
   }> {
     const em = entityManager || this.sqlConnection.manager;
 
@@ -98,9 +98,12 @@ export class TermsOfUseService extends BaseService {
     for (const [key, order] of Object.entries(pagination.order)) {
       let field: string;
       switch (key) {
-        case 'createdAt': field = 'tou.createdAt'; break;
+        case 'createdAt':
+          field = 'tou.createdAt';
+          break;
         default:
-          field = 'tou.createdAt'; break;
+          field = 'tou.createdAt';
+          break;
       }
       query.addOrderBy(field, order);
     }
@@ -126,7 +129,10 @@ export class TermsOfUseService extends BaseService {
    * @param entityManager optional entity manager
    * @returns list of terms of use and total count.
    */
-  async getTermsOfUse(id: string, entityManager?: EntityManager): Promise<{
+  async getTermsOfUse(
+    id: string,
+    entityManager?: EntityManager
+  ): Promise<{
     id: string;
     name: string;
     touType: TermsOfUseTypeEnum;
@@ -136,9 +142,7 @@ export class TermsOfUseService extends BaseService {
   }> {
     const em = entityManager || this.sqlConnection.manager;
 
-    const tou = await em.createQueryBuilder(TermsOfUseEntity, 'tou')
-      .where('tou.id = :id', { id })
-      .getOne();
+    const tou = await em.createQueryBuilder(TermsOfUseEntity, 'tou').where('tou.id = :id', { id }).getOne();
 
     if (!tou) {
       throw new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USER_NOT_FOUND);
