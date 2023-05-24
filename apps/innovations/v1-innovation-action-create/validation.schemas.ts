@@ -1,5 +1,7 @@
-import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import Joi from 'joi';
+
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 
 export type ParamsType = {
   innovationId: string;
@@ -17,5 +19,5 @@ export const BodySchema = Joi.object<BodyType>({
     .valid(...CurrentCatalogTypes.InnovationSections)
     .required()
     .description('The section key.'),
-  description: Joi.string().max(500).required().description('The description of the action.')
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required().description('The description of the action.')
 }).required();

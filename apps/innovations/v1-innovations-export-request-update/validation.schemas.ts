@@ -28,7 +28,7 @@ export const BodySchema = Joi.object<BodyType>({
   ]),
   rejectReason: Joi.when('status', {
     is: InnovationExportRequestStatusEnum.REJECTED,
-    then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required(),
+    then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required(),
     otherwise: Joi.forbidden()
   })
 });

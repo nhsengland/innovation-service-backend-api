@@ -827,15 +827,11 @@ export class InnovationThreadsService extends BaseService {
     messageId: string,
     thread: InnovationThreadEntity
   ): Promise<void> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.THREAD_CREATION,
-      {
-        threadId: thread.id,
-        messageId,
-        innovationId: thread.innovation.id
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_CREATION, {
+      threadId: thread.id,
+      messageId,
+      innovationId: thread.innovation.id
+    });
   }
 
   private async sendThreadMessageCreateNotification(
@@ -843,14 +839,10 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
   ): Promise<void> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.THREAD_MESSAGE_CREATION,
-      {
-        threadId: thread.id,
-        messageId: threadMessage.id,
-        innovationId: thread.innovation.id
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_MESSAGE_CREATION, {
+      threadId: thread.id,
+      messageId: threadMessage.id,
+      innovationId: thread.innovation.id
+    });
   }
 }

@@ -20,7 +20,7 @@ import { InnovationSectionEntity } from './innovation/innovation-section.entity'
 import { InnovationSupportLogEntity } from './innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from './innovation/innovation-support.entity';
 import { InnovationThreadMessageEntity } from './innovation/innovation-thread-message.entity';
-import { InnovationThreadEntity } from './innovation/Innovation-thread.entity';
+import { InnovationThreadEntity } from './innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
@@ -37,7 +37,7 @@ export { InnovationSectionEntity } from './innovation/innovation-section.entity'
 export { InnovationSupportLogEntity } from './innovation/innovation-support-log.entity';
 export { InnovationSupportEntity } from './innovation/innovation-support.entity';
 export { InnovationThreadMessageEntity } from './innovation/innovation-thread-message.entity';
-export { InnovationThreadEntity } from './innovation/Innovation-thread.entity';
+export { InnovationThreadEntity } from './innovation/innovation-thread.entity';
 export { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
