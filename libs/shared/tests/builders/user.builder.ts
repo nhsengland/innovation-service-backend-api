@@ -1,4 +1,4 @@
-import { randEmail, randFullName, randPastDate, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randEmail, randFullName, randPastDate, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 import { UserEntity } from '../../entities/user/user.entity';
@@ -76,7 +76,9 @@ export class UserBuilder extends BaseBuilder {
     this.user.serviceRoles.push(
       UserRoleEntity.new({
         role: type,
-        ...(ServiceRoleEnum.INNOVATOR && OrganisationEntity.new({ isShadow: true })),
+        ...(type === ServiceRoleEnum.INNOVATOR && {
+          organisation: OrganisationEntity.new({ name: randAbbreviation(), isShadow: true })
+        }),
         ...(organisationId && OrganisationEntity.new({ id: organisationId })),
         ...(organisationUnitId && OrganisationUnitEntity.new({ id: organisationUnitId }))
       })

@@ -24,17 +24,13 @@ export class HttpTestBuilder {
   private context: CustomContextType;
 
   private logger: Logger = {
-    info: (...args: any[]) => {
-      console.info(...args);
+    info: (..._args: any[]) => {
     },
-    warn: (...args: any[]) => {
-      console.warn(...args);
+    warn: (..._args: any[]) => {
     },
-    error: (...args: any[]) => {
-      console.error(...args);
+    error: (..._args: any[]) => {
     },
-    verbose: (...args: any[]) => {
-      console.log(...args);
+    verbose: (..._args: any[]) => {
     }
   } as unknown as Logger;
 
