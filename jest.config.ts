@@ -16,6 +16,7 @@ const jestBaseConfig: Config = {
   globalSetup: '<rootDir>/jest.global-setup.ts',
   globalTeardown: '<rootDir>/jest.global-teardown.ts',
   coverageReporters: ['text', 'cobertura'],
+  coveragePathIgnorePatterns: ['.config.ts', '.interfaces.ts', '.schemas.ts', '.types.ts', 'libs/shared/tests'],
   testTimeout: 15000
 };
 
