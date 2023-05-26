@@ -1,7 +1,10 @@
+import { randUuid } from '@ngneat/falso';
+
+import V1SendInAppListener from '.'; // Must be imported first to start inversify configurations.
+
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 import { AzureQueueTriggerBuilder, CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
 
-import V1SendInAppListener from '.';
 import { DispatchService } from '../_services/dispatch.service';
 
 describe('Notitications / v1-in-app-listener / index suite', () => {
@@ -20,7 +23,7 @@ describe('Notitications / v1-in-app-listener / index suite', () => {
   it('Should run function and succeed', async () => {
 
     const serviceSpy = jest.spyOn(DispatchService.prototype, 'saveInAppNotification').mockResolvedValue({
-      id: 'random-id'
+      id: randUuid()
     });
 
     const result = await new AzureQueueTriggerBuilder()
