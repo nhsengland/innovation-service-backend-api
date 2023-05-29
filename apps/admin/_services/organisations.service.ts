@@ -19,7 +19,8 @@ import {
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@admin/shared/enums';
 import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
@@ -77,6 +78,7 @@ export class OrganisationsService extends BaseService {
         .where('r.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
         .andWhere('ur.lockedAt IS NULL')
         .andWhere('r.lockedAt IS NULL')
+        .andWhere('u.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
         .groupBy('ur.user_id, u.external_id')
         .having('count(*) = 1')
         .getRawMany()
@@ -174,7 +176,7 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           UserEntity,
           { id: In(usersToLock.map(ur => ur.id)) },
-          { lockedAt: now, updatedAt: now }
+          { lockedAt: now, updatedAt: now, status: UserStatusEnum.LOCKED }
         );
       }
 
@@ -256,7 +258,7 @@ export class OrganisationsService extends BaseService {
       .innerJoin('ur.user', 'user')
       .where('ur.user_id IN (:...userIds)', { userIds })
       .andWhere('ur.organisation_unit_id = :unitId', { unitId }) //ensure users have role in unit
-      .andWhere('user.lockedAt IS NOT NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
     // unlock locked roles of selected users
@@ -312,7 +314,7 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserEntity,
         { id: In(usersToUnlockId) },
-        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
+        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id, status: UserStatusEnum.ACTIVE }
       );
 
       await transaction.update(

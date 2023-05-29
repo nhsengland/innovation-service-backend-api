@@ -9,7 +9,8 @@ import {
   EmailNotificationType,
   InnovationStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum
+  NotificationContextTypeEnum,
+  UserStatusEnum
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
@@ -82,13 +83,11 @@ export class NotificationsService extends BaseService {
      */
     const query = em
       .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-      .withDeleted()
       .innerJoin('notificationUser.notification', 'notification')
+      .withDeleted()
       .innerJoin('notification.innovation', 'innovation')
       .leftJoin('innovation.owner', 'innovationOwner')
-      .where('notificationUser.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
-      .andWhere('notificationUser.deleted_at IS NULL')
-      .andWhere('innovationOwner.deleted_at IS NULL');
+      .where('notificationUser.user_role_id = :roleId', { roleId: domainContext.currentRole.id });
 
     // optional filters
     if (filters.unreadOnly) {
@@ -120,6 +119,7 @@ export class NotificationsService extends BaseService {
       'notificationUser.id',
       'notificationUser.readAt',
       'innovationOwner.identityId',
+      'innovationOwner.status',
       'notification.id',
       'notification.contextType',
       'notification.contextDetail',
@@ -133,7 +133,9 @@ export class NotificationsService extends BaseService {
 
     const [notifications, count] = await query.getManyAndCount();
 
-    const userIds = notifications.map(n => n.notification.innovation.owner.identityId);
+    const userIds = notifications
+      .filter(n => n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
+      .map(n => n.notification.innovation.owner.identityId);
 
     const innovationOwners = await this.identityProviderService.getUsersMap(userIds);
 

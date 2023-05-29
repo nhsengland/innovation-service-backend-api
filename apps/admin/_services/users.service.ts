@@ -9,7 +9,7 @@ import {
   UserEntity,
   UserRoleEntity
 } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   NotFoundError,
@@ -79,7 +79,8 @@ export class UsersService extends BaseService {
           UserEntity,
           { id: userId },
           {
-            lockedAt: data.accountEnabled === false ? new Date().toISOString() : null
+            lockedAt: data.accountEnabled === false ? new Date().toISOString() : null,
+            status: data.accountEnabled === false ? UserStatusEnum.LOCKED : UserStatusEnum.ACTIVE
           }
         );
 
@@ -113,11 +114,9 @@ export class UsersService extends BaseService {
 
       // Send notification to locked user.
       if (data.accountEnabled != undefined && !data.accountEnabled) {
-        await this.notifierService.send(
-          context,
-          NotifierTypeEnum.LOCK_USER,
-          { user: { identityId: dbUser.identityId } }
-        );
+        await this.notifierService.send(context, NotifierTypeEnum.LOCK_USER, {
+          user: { identityId: dbUser.identityId }
+        });
       }
 
       // Remove cache entry.

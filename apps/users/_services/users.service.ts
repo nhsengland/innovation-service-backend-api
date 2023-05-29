@@ -21,7 +21,8 @@ import {
   OrganisationTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
-  TermsOfUseTypeEnum
+  TermsOfUseTypeEnum,
+  UserStatusEnum
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import {
@@ -247,7 +248,7 @@ export class UsersService extends BaseService {
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR }
         },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
-        {},
+        {}
       );
 
       return { id: dbUser.id };
@@ -401,7 +402,8 @@ export class UsersService extends BaseService {
 
     const query = this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles');
+      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     // Filters
     if (filters.userTypes.length > 0) {
@@ -421,7 +423,7 @@ export class UsersService extends BaseService {
     }
 
     if (filters.onlyActive) {
-      query.andWhere('user.lockedAt IS NULL');
+      query.andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE });
     }
 
     query.skip(pagination.skip).take(pagination.take);
@@ -454,7 +456,7 @@ export class UsersService extends BaseService {
 
         return {
           id: dbUser.id,
-          isActive: !dbUser.lockedAt,
+          isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
           name: identityUser.displayName ?? 'N/A',
           lockedAt: dbUser.lockedAt,

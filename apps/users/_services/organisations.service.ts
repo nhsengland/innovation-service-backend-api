@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
-import { OrganisationTypeEnum, ServiceRoleEnum } from '@users/shared/enums';
+import { OrganisationTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@users/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 
 import { ValidationsHelper } from '@users/shared/helpers';
@@ -114,7 +114,9 @@ export class OrganisationsService extends BaseService {
         acronym: unit.acronym,
         isActive: !unit.inactivatedAt,
         userCount: onlyActiveUsers
-          ? (await unit.organisationUnitUsers).filter(unitUser => !unitUser.organisationUser.user.lockedAt).length
+          ? (
+              await unit.organisationUnitUsers
+            ).filter(unitUser => unitUser.organisationUser.user.status === UserStatusEnum.ACTIVE).length
           : (
               await unit.organisationUnitUsers
             ).length
@@ -197,6 +199,7 @@ export class OrganisationsService extends BaseService {
       .leftJoin('userRole.organisation', 'organisation')
       .leftJoin('userRole.organisationUnit', 'unit')
       .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
     if (!roles.length) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);

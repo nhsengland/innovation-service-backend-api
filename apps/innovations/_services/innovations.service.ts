@@ -35,7 +35,8 @@ import {
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -526,6 +527,7 @@ export class InnovationsService extends BaseService {
       if (fetchUsers) {
         innovationsAssessmentsQuery.leftJoin('assessments.assignTo', 'assignTo');
         innovationsAssessmentsQuery.addSelect('assignTo.id', 'assignTo_id');
+        innovationsAssessmentsQuery.addSelect('assignTo.status', 'assignTo_status');
       }
 
       assessmentsMap = new Map((await innovationsAssessmentsQuery.getMany()).map(a => [a.innovation.id, a]));
@@ -579,7 +581,8 @@ export class InnovationsService extends BaseService {
           .leftJoin('organisationUnitUsers.organisationUser', 'organisationUser')
           .addSelect('organisationUser.role', 'organisationUser_role')
           .leftJoin('organisationUser.user', 'user')
-          .addSelect('user.id', 'user_id');
+          .addSelect('user.id', 'user_id')
+          .addSelect('user.status', 'user_status');
       }
 
       (await innovationsSupportsQuery.getMany()).forEach(s => {
@@ -594,10 +597,16 @@ export class InnovationsService extends BaseService {
     // Fetch users names.
     let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
     if (fetchUsers) {
-      const assessmentUsersIds = new Set([...assessmentsMap.values()].map(a => a.assignTo.id));
+      const assessmentUsersIds = new Set(
+        [...assessmentsMap.values()].filter(a => a.assignTo.status !== UserStatusEnum.DELETED).map(a => a.assignTo.id)
+      );
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
-          s.flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id))
+          s.flatMap(support =>
+            support.organisationUnitUsers
+              .filter(item => item.organisationUser.user.status !== UserStatusEnum.DELETED)
+              .map(item => item.organisationUser.user.id)
+          )
         )
       );
       usersInfo = new Map(
@@ -885,7 +894,8 @@ export class InnovationsService extends BaseService {
         'innovationAssessments.id',
         'innovationAssessments.createdAt',
         'innovationAssessments.finishedAt',
-        'assignTo.id'
+        'assignTo.id',
+        'assignTo.status'
       ]);
     }
 
@@ -915,7 +925,9 @@ export class InnovationsService extends BaseService {
 
     // Fetch users names.
     const assessmentUsersIds = filters.fields?.includes('assessment')
-      ? innovation.assessments?.map(assessment => assessment.assignTo.id)
+      ? innovation.assessments
+          ?.filter(assessment => assessment.assignTo.status !== UserStatusEnum.DELETED)
+          .map(assessment => assessment.assignTo.id)
       : [];
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
     let usersInfo = [];
@@ -1299,11 +1311,7 @@ export class InnovationsService extends BaseService {
     });
 
     // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_SUBMITED,
-      { innovationId }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
 
     return {
       id: innovationId,
@@ -1330,17 +1338,13 @@ export class InnovationsService extends BaseService {
     });
 
     for (const savedInnovation of savedInnovations) {
-      await this.notifierService.send(
-        context,
-        NotifierTypeEnum.INNOVATION_WITHDRAWN,
-        {
-          innovation: {
-            id: savedInnovation.id,
-            name: savedInnovation.name,
-            affectedUsers: savedInnovation.affectedUsers
-          }
+      await this.notifierService.send(context, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
+        innovation: {
+          id: savedInnovation.id,
+          name: savedInnovation.name,
+          affectedUsers: savedInnovation.affectedUsers
         }
-      );
+      });
     }
 
     return { id: dbInnovation.id };
@@ -1360,6 +1364,7 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
 
     const previousAssignedAccessors = dbSupports.flatMap(support =>
@@ -1441,11 +1446,11 @@ export class InnovationsService extends BaseService {
       return { id: innovationId };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
+      innovationId,
+      previousAssignedAccessors: previousAssignedAccessors,
+      message: data.message
+    });
 
     return result;
   }
@@ -1581,11 +1586,10 @@ export class InnovationsService extends BaseService {
 
     // Create notification
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-      { innovationId: innovationId, requestId: request.id }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+      innovationId: innovationId,
+      requestId: request.id
+    });
 
     return {
       id: request.id
@@ -1649,11 +1653,10 @@ export class InnovationsService extends BaseService {
     });
 
     // Create notification
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
-      { innovationId: exportRequest.innovation.id, requestId: updatedRequest.id }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK, {
+      innovationId: exportRequest.innovation.id,
+      requestId: updatedRequest.id
+    });
 
     return {
       id: updatedRequest.id

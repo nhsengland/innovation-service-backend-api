@@ -25,7 +25,8 @@ import {
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   OrganisationTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 import {
@@ -149,7 +150,7 @@ export class RecipientsService extends BaseService {
   > {
     const query = this.sqlConnection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.email', 'collaborator.status', 'user.id'])
+      .select(['collaborator.email', 'collaborator.status', 'user.id', 'user.status'])
       .leftJoin('collaborator.user', 'user')
       .where('collaborator.innovation_id = :innovationId', { innovationId });
 
@@ -160,7 +161,7 @@ export class RecipientsService extends BaseService {
     const collaborators = (await query.getMany()).map(c => ({
       email: c.email,
       status: c.status,
-      userId: c.user?.id
+      userId: c.user?.status !== UserStatusEnum.DELETED ? c.user?.id : undefined
     }));
 
     return collaborators;
@@ -230,7 +231,7 @@ export class RecipientsService extends BaseService {
         'organisationUser.id', // there are required only for the typeOrm to work (create the hierarchical structure)
         'user.id',
         'user.identityId',
-        'user.lockedAt',
+        'user.status',
         'serviceRoles.id',
         'serviceRoles.role',
         'serviceRoles.lockedAt'
@@ -241,7 +242,7 @@ export class RecipientsService extends BaseService {
       .innerJoin('organisationUser.user', 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .where('serviceRoles.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
-      .andWhere('user.locked_at IS NULL');
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE });
 
     if ('innovationId' in data) {
       query.andWhere('support.innovation_id = :innovationId', { innovationId: data.innovationId });
@@ -270,7 +271,7 @@ export class RecipientsService extends BaseService {
             role: role.role,
             userId: user.id,
             identityId: user.identityId,
-            isActive: !(role.lockedAt || user.lockedAt)
+            isActive: !role.lockedAt && user.status === UserStatusEnum.ACTIVE
           });
         }
       }
@@ -297,7 +298,7 @@ export class RecipientsService extends BaseService {
           'organisationUser.id',
           'user.id',
           'user.identityId',
-          'user.lockedAt',
+          'user.status',
           'serviceRoles.id',
           'serviceRoles.role',
           'serviceRoles.lockedAt'
@@ -310,6 +311,7 @@ export class RecipientsService extends BaseService {
         .innerJoin('user.serviceRoles', 'serviceRoles')
         .where('innovation.owner_id = :userId', { userId })
         .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
+        .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
         .getMany()) || [];
 
     const res: Awaited<ReturnType<RecipientsService['userInnovationsWithAssignedRecipients']>> = [];
@@ -326,7 +328,7 @@ export class RecipientsService extends BaseService {
               role: role.role,
               userId: user.id,
               identityId: user.identityId,
-              isActive: !(role.lockedAt || user.lockedAt)
+              isActive: !role.lockedAt && user.status === UserStatusEnum.ACTIVE
             });
           }
         }
@@ -355,7 +357,7 @@ export class RecipientsService extends BaseService {
         'action.status',
         'user.id',
         'user.identityId',
-        'user.lockedAt',
+        'user.status',
         'role.id',
         'role.role',
         'role.lockedAt',
@@ -371,7 +373,7 @@ export class RecipientsService extends BaseService {
       .leftJoin('action.innovationSupport', 'support')
       .leftJoin('support.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
-      .andWhere('user.locked_at IS NULL')
+      .andWhere('user.status = :userActive', { userDeleted: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!dbAction) {
@@ -394,7 +396,7 @@ export class RecipientsService extends BaseService {
         identityId: dbAction.createdByUser.identityId,
         roleId: dbAction.createdByUserRole.id,
         role: dbAction.createdByUserRole.role,
-        isActive: !(dbAction.createdByUser.lockedAt || dbAction.createdByUserRole.lockedAt)
+        isActive: !dbAction.createdByUserRole.lockedAt && dbAction.createdByUser.status === UserStatusEnum.ACTIVE
       }
     };
   }
@@ -411,7 +413,7 @@ export class RecipientsService extends BaseService {
         'thread.subject',
         'author.id',
         'author.identityId',
-        'author.lockedAt',
+        'author.status',
         'authorUserRole.id',
         'authorUserRole.role',
         'authorUserRole.lockedAt'
@@ -435,7 +437,7 @@ export class RecipientsService extends BaseService {
             identityId: dbThread.author.identityId,
             roleId: dbThread.authorUserRole.id,
             role: dbThread.authorUserRole.role,
-            isActive: !(dbThread.author.lockedAt || dbThread.authorUserRole.lockedAt)
+            isActive: dbThread.author.status === UserStatusEnum.ACTIVE && !dbThread.authorUserRole.lockedAt
           }
         })
     };
@@ -653,7 +655,9 @@ export class RecipientsService extends BaseService {
         .andWhere('notificationPreferences.preference = :preference', {
           preference: EmailNotificationPreferenceEnum.DAILY
         })
-        .andWhere('user.locked_at IS NULL AND userRole.locked_at IS NULL AND user.deleted_at IS NULL')
+        .andWhere('user.status = :userActive AND userRole.locked_at IS NULL AND user.deleted_at IS NULL', {
+          userActive: UserStatusEnum.ACTIVE
+        })
         .groupBy('user.id')
         .addGroupBy('user.external_id')
         .addGroupBy('userRole.role')
@@ -691,7 +695,7 @@ export class RecipientsService extends BaseService {
       .andWhere('roles.role = :role', { role: ServiceRoleEnum.INNOVATOR })
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
-      .andWhere('owner.lockedAt IS NULL AND roles.lockedAt IS NULL')
+      .andWhere('owner.status = :userActive AND roles.lockedAt IS NULL', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
     return dbInnovations.map(innovation => ({
@@ -745,7 +749,7 @@ export class RecipientsService extends BaseService {
       )
       .innerJoin('user_role', 'qas', 'qas.organisation_unit_id = userRole.organisation_unit_id')
       .innerJoin('user', 'qaUser', 'qaUser.id = qas.user_id')
-      .leftJoin('innovation.owner', 'owner') // currently owner can be deleted and innovation active ...
+      .leftJoin('innovation.owner', 'owner', 'owner.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // currently owner can be deleted and innovation active ...
 
       // Conditions
       .where('activityLog.type IN (:...types)', {
@@ -762,8 +766,7 @@ export class RecipientsService extends BaseService {
 
       // filter locked/deleted
       .andWhere('qas.locked_at IS NULL')
-      .andWhere('qaUser.locked_at IS NULL')
-      .andWhere('qaUser.deleted_at IS NULL')
+      .andWhere('qaUser.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
 
       // group by
       .groupBy('innovation.id')
@@ -926,7 +929,7 @@ export class RecipientsService extends BaseService {
 
     const query = this.sqlConnection
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.lockedAt', 'user.id', 'user.identityId', 'user.lockedAt']);
+      .select(['userRole.id', 'userRole.lockedAt', 'user.id', 'user.identityId', 'user.status']);
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });
@@ -948,20 +951,18 @@ export class RecipientsService extends BaseService {
       query.andWhere('user.locked_at IS NULL').andWhere('userRole.locked_at IS NULL');
     }
 
-    if (withDeleted) {
-      // This must be done before the innerJoin with the user
-      query.withDeleted();
-    }
-
-    // join user to check the locked_at
+    // join user to check the status
     query.innerJoin('userRole.user', 'user');
+    if (!withDeleted) {
+      query.andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
+    }
 
     const userRoles = (await query.getMany()).map(r => ({
       roleId: r.id,
       role: r.role,
       userId: r.user.id,
       identityId: r.user.identityId,
-      isActive: !(r.lockedAt || r.user.lockedAt)
+      isActive: !r.lockedAt && r.user.status === UserStatusEnum.ACTIVE
     }));
 
     return userRoles;
@@ -975,7 +976,6 @@ export class RecipientsService extends BaseService {
   async identityId2UserId(identityId: string): Promise<string | null> {
     const user = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .withDeleted()
       .select('user.id')
       .where('user.identityId = :identityId', { identityId })
       .getOne();
@@ -991,7 +991,6 @@ export class RecipientsService extends BaseService {
   async userId2IdentityId(userId: string): Promise<string | null> {
     const user = await this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .withDeleted()
       .select('user.identityId')
       .where('user.id = :userId', { userId })
       .getOne();

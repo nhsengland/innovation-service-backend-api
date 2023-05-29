@@ -6,7 +6,8 @@ import {
   InnovationCollaboratorStatusEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
@@ -39,6 +40,7 @@ export class DomainUsersService {
         'user.id',
         'user.identityId',
         'user.lockedAt',
+        'user.status',
         'user.firstTimeSignInAt',
         // These should be removed in the future and use the service roles instead
         'userOrganisations.id',
@@ -71,12 +73,13 @@ export class DomainUsersService {
       .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .leftJoin('serviceRoles.organisation', 'roleOrganisation')
-      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit');
+      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
+      .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     if (data.userId) {
-      query.where('user.id = :userId', { userId: data.userId });
+      query.andWhere('user.id = :userId', { userId: data.userId });
     } else if (data.identityId) {
-      query.where('user.external_id = :identityId', { identityId: data.identityId });
+      query.andWhere('user.external_id = :identityId', { identityId: data.identityId });
     }
 
     const dbUser = await query.getOne();
@@ -94,7 +97,7 @@ export class DomainUsersService {
       displayName: authUser.displayName,
       roles: dbUser.serviceRoles.map(roleEntity2RoleType),
       phone: authUser.mobilePhone,
-      isActive: !dbUser.lockedAt,
+      isActive: dbUser.status === UserStatusEnum.ACTIVE,
       lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
@@ -153,7 +156,8 @@ export class DomainUsersService {
 
     const query = this.userRepository
       .createQueryBuilder('users')
-      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles');
+      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles')
+      .andWhere('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
       query.where('users.id IN (:...userIds)', { userIds: data.userIds });
     } else if (data.identityIds) {
@@ -178,7 +182,7 @@ export class DomainUsersService {
         roles: dbUser.serviceRoles,
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
-        isActive: !dbUser.lockedAt,
+        isActive: dbUser.status === UserStatusEnum.ACTIVE,
         lastLoginAt: identityUser.lastLoginAt
       };
     });
@@ -337,7 +341,7 @@ export class DomainUsersService {
         { id: dbUser.id },
         {
           deleteReason: data.reason,
-          deletedAt: new Date().toISOString()
+          status: UserStatusEnum.DELETED
         }
       );
 
