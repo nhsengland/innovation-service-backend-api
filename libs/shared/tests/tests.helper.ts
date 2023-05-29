@@ -50,29 +50,29 @@ export class TestsHelper {
     return this.completeScenarioData;
   }
 
-  getUserContext(user: TestUserType, serviceRole: ServiceRoleEnum): DomainContextType {
-    const role = user.roles.find(r => r.role === serviceRole);
+  getUserContext(user: TestUserType, userRole?: ServiceRoleEnum): DomainContextType {
+    if (!userRole) {
+      if (user.roles.length === 1) {
+        userRole = user.roles[0]?.role;
+      } else {
+        throw new Error('TestsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
+      }
+    }
+
+    const role = user.roles.find(r => r.role === userRole);
     if (!role) {
-      throw new Error('Role not found.');
+      throw new Error('TestsHelper::getUserContext: User role not found.');
     }
 
     if (role.role === ServiceRoleEnum.INNOVATOR) {
       if (!role.organisation) {
         throw new Error('Invalid role found.');
       }
-
       return {
         id: user.id,
         identityId: user.identityId,
-        organisation: {
-          id: role.organisation.id,
-          name: role.organisation.name,
-          acronym: null
-        },
-        currentRole: {
-          id: role.id,
-          role: role.role
-        }
+        organisation: { id: role.organisation.id, name: role.organisation.name, acronym: null },
+        currentRole: { id: role.id, role: role.role }
       };
     }
 
@@ -80,7 +80,6 @@ export class TestsHelper {
       if (!role.organisation || !role.organisationUnit) {
         throw new Error('Invalid role found.');
       }
-
       return {
         id: user.id,
         identityId: user.identityId,
@@ -88,16 +87,9 @@ export class TestsHelper {
           id: role.organisation.id,
           name: role.organisation.name,
           acronym: null,
-          organisationUnit: {
-            id: role.organisationUnit.id,
-            name: role.organisationUnit.name,
-            acronym: ''
-          }
+          organisationUnit: { id: role.organisationUnit.id, name: role.organisationUnit.name, acronym: '' }
         },
-        currentRole: {
-          id: role.id,
-          role: role.role
-        }
+        currentRole: { id: role.id, role: role.role }
       };
     }
 
@@ -105,10 +97,7 @@ export class TestsHelper {
       return {
         id: user.id,
         identityId: user.identityId,
-        currentRole: {
-          id: role.id,
-          role: role.role
-        }
+        currentRole: { id: role.id, role: role.role }
       };
     }
 
@@ -116,13 +105,11 @@ export class TestsHelper {
       return {
         id: user.id,
         identityId: user.identityId,
-        currentRole: {
-          id: role.id,
-          role: role.role
-        }
+        currentRole: { id: role.id, role: role.role }
       };
     }
-    throw new Error('No role found.');
+
+    throw new Error('TestsHelper::getUserContext: Unexpected error, no role found.');
   }
 
   /**

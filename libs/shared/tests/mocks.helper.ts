@@ -3,8 +3,21 @@ import { IdentityProviderService } from '../services';
 
 import type { TestUserType } from './builders/user.builder';
 import { randUserName, randUuid } from '@ngneat/falso';
+// import { JwtDecoder } from '../decorators';
 
 export class MocksHelper {
+
+  // TODO: Not working yet!
+  // static mockJwtDecoderDecorator(_app: 'admin' | 'innovations' | 'notifications' | 'users'): void {
+
+  //   jest.fn(JwtDecoder).mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => descriptor)
+
+  //   // jest.mock(`../decorators`, () => ({
+  //   //   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => descriptor)
+  //   // }));
+
+  // }
+
   static mockIdentityServiceGetUserInfo(user: TestUserType): void {
     jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockResolvedValue({
       identityId: user.identityId,
@@ -18,45 +31,34 @@ export class MocksHelper {
   }
 
   static mockContext(): Context {
-    const logger: Logger = ((..._args: any[]) => {
-    }) as Logger;
 
-    logger.error = (..._args: any[]) => {
-    };
-
-    logger.warn = (..._args: any[]) => {
-    };
-
-    logger.info = (..._args: any[]) => {
-    };
-
-    logger.verbose = (..._args: any[]) => {
-    };
+    const logger = ((..._args: any[]): void => {}) as Logger;
+    logger.error = (..._args: any[]) => {};
+    logger.warn = (..._args: any[]) => {};
+    logger.info = (..._args: any[]) => {};
+    logger.verbose = (..._args: any[]) => {};
 
     return {
+      invocationId: randUuid(),
       log: logger,
       done: () => {},
       res: {},
       bindings: {},
-      bindingData: {
-        invocationId: randUuid()
-      },
+      bindingData: { invocationId: randUuid() },
       executionContext: {
         invocationId: randUuid(),
         functionName: randUserName(),
         functionDirectory: randUserName(),
-        retryContext: {
-          retryCount: 0,
-          maxRetryCount: 0
-        }
+        retryContext: { retryCount: 0, maxRetryCount: 0 }
       },
       bindingDefinitions: [],
-      invocationId: randUuid(),
       traceContext: {
-        traceparent: randUuid(),
-        tracestate: randUuid(),
-        attributes: {}
+        traceparent: null,
+        tracestate: null,
+        attributes: null
       }
     };
+
   }
+
 }

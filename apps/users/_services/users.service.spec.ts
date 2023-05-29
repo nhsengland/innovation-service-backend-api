@@ -45,7 +45,14 @@ describe('Services / Users service suite', () => {
         phone: user.mobilePhone,
         type: user.roles[0]?.role,
         lockedAt: null,
-        userOrganisations: [],
+        userOrganisations: user.organisations.map(item => ({
+          id: item.id,
+          name: item.name,
+          size: item.size,
+          role: item.role,
+          isShadow: item.isShadow,
+          units: item.organisationUnits
+        })),
         innovations: [
           {
             id: scenario.users.johnInnovator.innovations?.[0]?.id,

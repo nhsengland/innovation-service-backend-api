@@ -55,9 +55,7 @@ export class UserRoleEntity extends BaseEntity {
 export const roleEntity2RoleType = (role: UserRoleEntity): RoleType => {
   // sanity check to ensure relations are loaded
   if (!role.organisation && role.organisationId && !role.organisationUnit && role.organisationUnitId) {
-    throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, {
-      message: 'role relations are not loaded'
-    });
+    throw new InternalServerError(GenericErrorsEnum.UNKNOWN_ERROR, { message: 'Role relations not loaded' });
   }
 
   return {
