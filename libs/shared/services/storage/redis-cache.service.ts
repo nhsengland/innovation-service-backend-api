@@ -1,5 +1,5 @@
 import type { createClient } from 'redis';
-import type { LoggerService } from '..';
+import type { LoggerService } from '../integrations/logger.service';
 
 const DEFAULT_CACHE_TTL = Number(process.env['REDIS_CACHE_TTL']) || 24 * 3600; // This is really || since we want to use the default if the env variable is not set or NaN
 

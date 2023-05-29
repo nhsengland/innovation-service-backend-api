@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 import { createClient } from 'redis';
 
-import type { LoggerService } from '..';
 import { REDIS_DEFAULT_CONNECTION } from '../../config/redis.config';
 import type { IdentityUserInfo } from '../../types/domain.types';
+import type { LoggerService } from '../integrations/logger.service';
 import SHARED_SYMBOLS from '../symbols';
 import { RedisCache } from './redis-cache.service';
 

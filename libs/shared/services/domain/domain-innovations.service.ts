@@ -1,25 +1,23 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { EXPIRATION_DATES } from '../../constants';
-import {
-  ActivityLogEntity,
-  InnovationActionEntity,
-  InnovationAssessmentEntity,
-  InnovationCollaboratorEntity,
-  InnovationEntity,
-  InnovationExportRequestEntity,
-  InnovationFileEntity,
-  InnovationGroupedStatusViewEntity,
-  InnovationSectionEntity,
-  InnovationSupportEntity,
-  InnovationSupportLogEntity,
-  InnovationThreadEntity,
-  InnovationThreadMessageEntity,
-  InnovationTransferEntity,
-  NotificationEntity,
-  NotificationUserEntity,
-  OrganisationUnitEntity
-} from '../../entities';
+import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
+import { InnovationActionEntity } from '../../entities/innovation/innovation-action.entity';
+import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
+import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
+import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
+import { InnovationFileEntity } from '../../entities/innovation/innovation-file.entity';
+import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
+import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
+import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
+import { InnovationThreadMessageEntity } from '../../entities/innovation/innovation-thread-message.entity';
+import { InnovationThreadEntity } from '../../entities/innovation/innovation-thread.entity';
+import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
+import { NotificationUserEntity } from '../../entities/user/notification-user.entity';
+import { NotificationEntity } from '../../entities/user/notification.entity';
+import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
 import {
   ActivityEnum,
   ActivityTypeEnum,

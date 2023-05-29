@@ -1,8 +1,10 @@
 import { inject, injectable } from 'inversify';
 
 import type { DataSource } from 'typeorm';
-import type { FileStorageService, IdentityProviderService, NotifierService } from '..';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
+import type { IdentityProviderService } from '../integrations/identity-provider.service';
+import type { NotifierService } from '../integrations/notifier.service';
+import type { FileStorageService } from '../storage/file-storage.service';
 import type { SqlProvider } from '../storage/sql-connection.provider';
 import SHARED_SYMBOLS from '../symbols';
 import { DomainInnovationsService } from './domain-innovations.service';

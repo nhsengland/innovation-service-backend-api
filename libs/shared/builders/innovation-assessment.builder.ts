@@ -1,6 +1,8 @@
 import { randBoolean, randPastDate, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationAssessmentEntity, type InnovationEntity, type UserEntity } from '../entities';
+import { InnovationAssessmentEntity } from '../entities/innovation/innovation-assessment.entity';
+import type { InnovationEntity } from '../entities/innovation/innovation.entity';
+import type { UserEntity } from '../entities/user/user.entity';
 
 export class InnovationAssessmentBuilder {
   innovationAssessment: Partial<InnovationAssessmentEntity> = {};

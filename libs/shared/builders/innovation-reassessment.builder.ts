@@ -1,6 +1,8 @@
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationAssessmentEntity, InnovationReassessmentRequestEntity, type InnovationEntity } from '../entities';
+import type { InnovationAssessmentEntity } from '../entities/innovation/innovation-assessment.entity';
+import { InnovationReassessmentRequestEntity } from '../entities/innovation/innovation-reassessment-request.entity';
+import type { InnovationEntity } from '../entities/innovation/innovation.entity';
 
 export class InnovationReassessmentBuilder {
   innovationReassessment: InnovationReassessmentRequestEntity;

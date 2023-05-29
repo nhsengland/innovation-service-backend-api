@@ -1,18 +1,16 @@
 import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import {
-  ActivityLogEntity,
-  InnovationFileEntity,
-  OrganisationEntity,
-  OrganisationUnitEntity,
-  OrganisationUnitUserEntity,
-  OrganisationUserEntity,
-  UserEntity,
-  type InnovationEntity,
-  type InnovationSectionEntity,
-  type InnovationSupportEntity
-} from '../entities';
+import { ActivityLogEntity } from '../entities/innovation/activity-log.entity';
+import { InnovationFileEntity } from '../entities/innovation/innovation-file.entity';
+import type { InnovationSectionEntity } from '../entities/innovation/innovation-section.entity';
+import type { InnovationSupportEntity } from '../entities/innovation/innovation-support.entity';
+import type { InnovationEntity } from '../entities/innovation/innovation.entity';
+import { OrganisationUnitUserEntity } from '../entities/organisation/organisation-unit-user.entity';
+import { OrganisationUnitEntity } from '../entities/organisation/organisation-unit.entity';
+import { OrganisationUserEntity } from '../entities/organisation/organisation-user.entity';
+import { OrganisationEntity } from '../entities/organisation/organisation.entity';
+import { UserEntity } from '../entities/user/user.entity';
 import type {
   AccessorOrganisationRoleEnum,
   ActivityEnum,

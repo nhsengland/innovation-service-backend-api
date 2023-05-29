@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import type { DataSource } from 'typeorm';
 
-import { AuditEntity } from '../../entities';
+import { AuditEntity } from '../../entities/general/audit.entity';
 import type { SQLConnectionService } from '../storage/sql-connection.service';
 import SHARED_SYMBOLS from '../symbols';
 import { QueuesEnum, StorageQueueService } from './storage-queue.service';

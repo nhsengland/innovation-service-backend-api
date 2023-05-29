@@ -1,6 +1,5 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import {
   InnovationCollaboratorStatusEnum,
@@ -12,6 +11,10 @@ import {
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
 
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
+import { UserEntity } from '../../entities/user/user.entity';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
