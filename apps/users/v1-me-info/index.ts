@@ -27,7 +27,7 @@ class V1MeInfo {
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const requestUser = await domainService._users.getUserInfo({ identityId: context.auth.user.identityId });
+      const requestUser = await domainService.users.getUserInfo({ identityId: context.auth.user.identityId });
       const userRoles = requestUser.roles.filter(role => role.lockedAt === null);
 
       let termsOfUseAccepted = true;
