@@ -15,7 +15,8 @@ import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
 import type {
@@ -83,7 +84,8 @@ export class InnovationSectionsService extends BaseService {
         'sections.status',
         'sections.submittedAt',
         'submittedBy.id',
-        'submittedBy.identityId'
+        'submittedBy.identityId',
+        'submittedBy.status'
       ])
       .leftJoin('innovation.owner', 'owner')
       .innerJoin('innovation.sections', 'sections')
@@ -136,7 +138,10 @@ export class InnovationSectionsService extends BaseService {
       openActions = await query.getRawMany();
     }
 
-    const innovators = sections.map(s => s.submittedBy?.identityId).filter((u): u is string => !!u);
+    const innovators = sections
+      .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
+      .map(s => s.submittedBy?.identityId)
+      .filter((u): u is string => !!u);
     const innovatorNames = await this.identityService.getUsersMap(innovators);
 
     return CurrentCatalogTypes.InnovationSections.map(sectionKey => {
@@ -222,7 +227,8 @@ export class InnovationSectionsService extends BaseService {
         'section.status',
         'section.submittedAt',
         'submittedBy.id',
-        'submittedBy.identityId'
+        'submittedBy.identityId',
+        'submittedBy.status'
       ])
       .leftJoin('section.submittedBy', 'submittedBy')
       .where('section.innovation_id = :innovationId', { innovationId })
@@ -260,9 +266,9 @@ export class InnovationSectionsService extends BaseService {
     // Avoid throwing an error if the user is not found.
     try {
       submittedBy =
-        (dbSection?.submittedBy &&
-          (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName) ??
-        null;
+        dbSection?.submittedBy && dbSection.submittedBy.status !== UserStatusEnum.DELETED
+          ? (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName
+          : null;
     } catch (e) {
       submittedBy = null;
     }
@@ -366,6 +372,10 @@ export class InnovationSectionsService extends BaseService {
           if (dataToUpdate[key] !== undefined) {
             innovation[key] = dataToUpdate[key];
             updateInnovation = true;
+          }
+          // If postcode exists it is set after countryName
+          if (key === 'countryName') {
+            innovation.postcode = null;
           }
         }
       );

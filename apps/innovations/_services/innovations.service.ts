@@ -35,7 +35,8 @@ import {
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -521,6 +522,7 @@ export class InnovationsService extends BaseService {
       if (fetchUsers) {
         innovationsAssessmentsQuery.leftJoin('assessments.assignTo', 'assignTo');
         innovationsAssessmentsQuery.addSelect('assignTo.id', 'assignTo_id');
+        innovationsAssessmentsQuery.addSelect('assignTo.status', 'assignTo_status');
       }
 
       assessmentsMap = new Map((await innovationsAssessmentsQuery.getMany()).map(a => [a.innovation.id, a]));
@@ -574,7 +576,8 @@ export class InnovationsService extends BaseService {
           .leftJoin('organisationUnitUsers.organisationUser', 'organisationUser')
           .addSelect('organisationUser.role', 'organisationUser_role')
           .leftJoin('organisationUser.user', 'user')
-          .addSelect('user.id', 'user_id');
+          .addSelect('user.id', 'user_id')
+          .addSelect('user.status', 'user_status');
       }
 
       (await innovationsSupportsQuery.getMany()).forEach(s => {
@@ -589,10 +592,16 @@ export class InnovationsService extends BaseService {
     // Fetch users names.
     let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
     if (fetchUsers) {
-      const assessmentUsersIds = new Set([...assessmentsMap.values()].map(a => a.assignTo.id));
+      const assessmentUsersIds = new Set(
+        [...assessmentsMap.values()].filter(a => a.assignTo.status !== UserStatusEnum.DELETED).map(a => a.assignTo.id)
+      );
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
-          s.flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id))
+          s.flatMap(support =>
+            support.organisationUnitUsers
+              .filter(item => item.organisationUser.user.status !== UserStatusEnum.DELETED)
+              .map(item => item.organisationUser.user.id)
+          )
         )
       );
       usersInfo = new Map(
@@ -880,7 +889,8 @@ export class InnovationsService extends BaseService {
         'innovationAssessments.id',
         'innovationAssessments.createdAt',
         'innovationAssessments.finishedAt',
-        'assignTo.id'
+        'assignTo.id',
+        'assignTo.status'
       ]);
     }
 
@@ -910,7 +920,9 @@ export class InnovationsService extends BaseService {
 
     // Fetch users names.
     const assessmentUsersIds = filters.fields?.includes('assessment')
-      ? innovation.assessments?.map(assessment => assessment.assignTo.id)
+      ? innovation.assessments
+          ?.filter(assessment => assessment.assignTo.status !== UserStatusEnum.DELETED)
+          .map(assessment => assessment.assignTo.id)
       : [];
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
     let usersInfo = [];
@@ -1347,6 +1359,7 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
 
     const previousAssignedAccessors = dbSupports.flatMap(support =>

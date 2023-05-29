@@ -1,3 +1,9 @@
+export enum UserStatusEnum {
+  ACTIVE = 'ACTIVE',
+  LOCKED = 'LOCKED',
+  DELETED = 'DELETED'
+}
+
 export enum ServiceRoleEnum {
   ADMIN = 'ADMIN',
   INNOVATOR = 'INNOVATOR',

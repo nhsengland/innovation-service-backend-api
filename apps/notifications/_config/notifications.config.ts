@@ -130,7 +130,7 @@ export const NOTIFICATIONS_CONFIG: {
         statusChanged: Joi.boolean().strict().required(),
         organisationUnitId: Joi.string().guid().required(),
         newAssignedAccessors: Joi.array().items(Joi.object({ id: Joi.string().guid().required() })),
-        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required()
+        message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
       }).required()
     }).required()
   },

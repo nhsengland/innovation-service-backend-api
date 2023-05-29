@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
-import { AnnouncementEntity, AnnouncementUserEntity, UserEntity } from '@users/shared/entities';
+import { AnnouncementEntity, AnnouncementUserEntity, UserEntity, UserRoleEntity } from '@users/shared/entities';
 import type { AnnouncementTemplateType } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
@@ -13,7 +13,10 @@ export class AnnouncementsService extends BaseService {
     super();
   }
 
-  async getUserAnnouncements(requestUser: DomainContextType): Promise<
+  async getUserAnnouncements(
+    requestUser: DomainContextType,
+    entityManager?: EntityManager
+  ): Promise<
     {
       id: string;
       title: string;
@@ -23,7 +26,19 @@ export class AnnouncementsService extends BaseService {
       params: null | Record<string, unknown>;
     }[]
   > {
-    const announcements = await this.sqlConnection.manager
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const requestUserRole = await connection
+      .createQueryBuilder(UserRoleEntity, 'role')
+      .select(['role.id', 'role.createdAt'])
+      .where('role.id = :roleId', { roleId: requestUser.currentRole.id })
+      .getOne();
+
+    if (!requestUserRole) {
+      return [];
+    }
+
+    const announcements = await connection
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
@@ -39,6 +54,7 @@ export class AnnouncementsService extends BaseService {
       .where("CONCAT(',', announcement.user_roles, ',') LIKE :userRole", {
         userRole: `%,${requestUser.currentRole.role},%`
       })
+      .andWhere('announcement.starts_at > :createdAtUserRole', { createdAtUserRole: requestUserRole.createdAt })
       .andWhere('GETDATE() > announcement.starts_at')
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
       .andWhere('announcementUsers.read_at IS NULL')

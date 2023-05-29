@@ -3,10 +3,10 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColum
 import { BaseEntity } from '../base.entity';
 
 import { UserEntity } from '../user/user.entity';
+import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationThreadMessageEntity } from './innovation-thread-message.entity';
 import { InnovationEntity } from './innovation.entity';
 
-import { UserRoleEntity } from '..';
 import { ThreadContextTypeEnum } from '../../enums/innovation.enums';
 
 @Entity('innovation_thread')
@@ -17,12 +17,7 @@ export class InnovationThreadEntity extends BaseEntity {
   @Column({ length: 100 })
   subject: string;
 
-  @Column({
-    type: 'simple-enum',
-    name: 'context_type',
-    enum: ThreadContextTypeEnum,
-    nullable: true
-  })
+  @Column({ type: 'simple-enum', name: 'context_type', enum: ThreadContextTypeEnum, nullable: true })
   contextType: ThreadContextTypeEnum | undefined;
 
   @Column({ type: 'uniqueidentifier', name: 'context_id', nullable: true })

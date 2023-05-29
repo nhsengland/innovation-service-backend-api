@@ -2,6 +2,7 @@ import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
+import { UserStatusEnum } from '../../enums/user.enums';
 import { TermsOfUseUserEntity } from '../general/terms-of-use-user.entity';
 import { OrganisationUserEntity } from '../organisation/organisation-user.entity';
 import { UserRoleEntity } from './user-role.entity';
@@ -13,6 +14,9 @@ export class UserEntity extends BaseEntity {
 
   @Column({ name: 'external_id', type: 'nvarchar', nullable: false })
   identityId: string;
+
+  @Column({ type: 'simple-enum', enum: UserStatusEnum, nullable: false })
+  status: UserStatusEnum;
 
   @Column({ name: 'first_time_sign_in_at', type: 'datetime2', nullable: true })
   firstTimeSignInAt: null | Date;
@@ -28,7 +32,6 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => UserRoleEntity, record => record.user, { cascade: ['update', 'insert'] })
   serviceRoles: UserRoleEntity[];
-
 
   @OneToMany(() => TermsOfUseUserEntity, record => record.user, { lazy: true })
   termsOfUseUser: Promise<TermsOfUseUserEntity[]>;

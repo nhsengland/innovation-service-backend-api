@@ -34,7 +34,8 @@ import {
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
@@ -227,6 +228,7 @@ export class DomainInnovationsService {
             .innerJoin('assessment.assignTo', 'assignedUser')
             .where('assessment.innovation_id = :innovationId', { innovationId: dbInnovation.id })
             .andWhere('assessment.finished_at IS NULL')
+            .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
             .getOne();
 
           if (assignedNa) {
@@ -246,6 +248,7 @@ export class DomainInnovationsService {
           .andWhere('collaborator.status = :collaboratorActiveStatus', {
             collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
           })
+          .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
           .getMany();
 
         if (activeCollaborators.length > 0) {
@@ -354,12 +357,14 @@ export class DomainInnovationsService {
 
         affectedUsers.push(
           ...dbInnovation.innovationSupports.flatMap(item =>
-            item.organisationUnitUsers.map(su => ({
-              userId: su.organisationUser.user.id,
-              userType: su.organisationUser.role as unknown as ServiceRoleEnum,
-              organisationId: item.organisationUnit.organisationId,
-              organisationUnitId: item.organisationUnit.id
-            }))
+            item.organisationUnitUsers
+              .filter(su => su.organisationUser.user.status !== UserStatusEnum.DELETED)
+              .map(su => ({
+                userId: su.organisationUser.user.id,
+                userType: su.organisationUser.role as unknown as ServiceRoleEnum,
+                organisationId: item.organisationUnit.organisationId,
+                organisationUnitId: item.organisationUnit.id
+              }))
           )
         );
 
@@ -592,7 +597,7 @@ export class DomainInnovationsService {
         'threadMessage.id',
         'author.id',
         'author.identityId',
-        'author.lockedAt',
+        'author.status',
         'authorRole.id',
         'authorRole.role',
         'authorRole.lockedAt',
@@ -610,7 +615,7 @@ export class DomainInnovationsService {
     const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
     const duplicateSet = new Set<string>();
 
-    const authorIds = messages.map(m => m.author.identityId);
+    const authorIds = messages.filter(m => m.author.status !== UserStatusEnum.DELETED).map(m => m.author.identityId);
 
     const usersInfo = withUserNames ? await this.identityProviderService.getUsersMap(authorIds) : new Map();
 
@@ -623,7 +628,7 @@ export class DomainInnovationsService {
           id: message.author.id,
           identityId: message.author.identityId,
           name: usersInfo.get(message.author.identityId)?.displayName,
-          locked: !!(message.author.lockedAt || message.authorUserRole.lockedAt),
+          locked: message.author.status === UserStatusEnum.LOCKED || !!message.authorUserRole.lockedAt,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
           ...(message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: message.author.id === thread.innovation.owner?.id

@@ -16,7 +16,8 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
-  ThreadContextTypeEnum
+  ThreadContextTypeEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
@@ -101,7 +102,11 @@ export class InnovationSupportsService extends BaseService {
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
         .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
-        .flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id));
+        .flatMap(support =>
+          support.organisationUnitUsers
+            .filter(item => item.organisationUser.user.status === UserStatusEnum.ACTIVE)
+            .map(item => item.organisationUser.user.id)
+        );
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
     }
@@ -114,7 +119,7 @@ export class InnovationSupportsService extends BaseService {
           .map(su => ({
             id: su.organisationUser.user.id,
             organisationUnitUserId: su.id,
-            name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
+            name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
           }))
           .filter(authUser => authUser.name);
       }
@@ -290,7 +295,9 @@ export class InnovationSupportsService extends BaseService {
 
     // Fetch users names.
 
-    const assignedAccessorsIds = innovationSupport.organisationUnitUsers.map(item => item.organisationUser.user.id);
+    const assignedAccessorsIds = innovationSupport.organisationUnitUsers
+      .filter(item => item.organisationUser.user.status === UserStatusEnum.ACTIVE)
+      .map(item => item.organisationUser.user.id);
     const usersInfo = await this.domainService.users.getUsersList({
       userIds: assignedAccessorsIds
     });
@@ -302,7 +309,7 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.organisationUser.user.id,
           organisationUnitUserId: su.id,
-          name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
+          name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
         }))
         .filter(authUser => authUser.name)
     };

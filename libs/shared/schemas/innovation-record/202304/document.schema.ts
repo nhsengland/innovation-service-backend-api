@@ -41,14 +41,14 @@ export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['e
     .required(),
   evidenceType: Joi.string().valid(...catalogEvidenceType),
   description: Joi.string().max(50),
-  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp).required(),
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m).required(),
   files: Joi.array().items(Joi.string().guid()).min(1)
 });
 
 export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Map = {
   INNOVATION_DESCRIPTION: Joi.object<DocumentType202304['INNOVATION_DESCRIPTION']>({
     name: Joi.string().max(100).trim(),
-    description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium),
+    description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s),
     countryName: Joi.string().max(100),
     postcode: Joi.string().max(8),
     website: Joi.string().max(100), // TODO not validating URL format atm
@@ -65,8 +65,8 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
       .min(1),
     otherCareSetting: Joi.string().max(100),
     mainPurpose: Joi.string().valid(...catalogMainPurpose),
-    supportDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
-    currentlyReceivingSupport: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
+    supportDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
+    currentlyReceivingSupport: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
     involvedAACProgrammes: Joi.array()
       .items(Joi.string().valid(...catalogInvolvedAACProgrammes))
       .min(1)
@@ -74,13 +74,13 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     .required()
     .min(1),
   UNDERSTANDING_OF_NEEDS: Joi.object<DocumentType202304['UNDERSTANDING_OF_NEEDS']>({
-    problemsTackled: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
-    howInnovationWork: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
-    benefitsOrImpact: Joi.array().items(Joi.string().max(TEXTAREA_LENGTH_LIMIT.small)).min(1),
+    problemsTackled: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
+    howInnovationWork: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
+    benefitsOrImpact: Joi.array().items(Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs)).min(1),
     impactDiseaseCondition: Joi.string().valid(...catalogYesNo),
     diseasesConditionsImpact: Joi.array().items(Joi.string().max(100)).min(1),
     estimatedCarbonReductionSavings: Joi.string().valid(...catalogYesNotYetNo),
-    estimatedCarbonReductionSavingsDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
+    estimatedCarbonReductionSavingsDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
     carbonReductionPlan: Joi.string().valid(...catalogCarbonReductionPlan),
     keyHealthInequalities: Joi.array()
       .items(Joi.string().valid(...catalogKeyHealthInequalities))
@@ -93,7 +93,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
   EVIDENCE_OF_EFFECTIVENESS: Joi.object<DocumentType202304['EVIDENCE_OF_EFFECTIVENESS']>({
     hasEvidence: Joi.string().valid(...catalogYesNotYet),
     currentlyCollectingEvidence: Joi.string().valid(...catalogYesNo),
-    summaryOngoingEvidenceGathering: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
+    summaryOngoingEvidenceGathering: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
     files: Joi.array().items(Joi.string().guid()).min(1),
     needsSupportAnyArea: Joi.array()
       .items(Joi.string().valid(...catalogNeedsSupportAnyArea))
@@ -103,15 +103,15 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     .min(1),
   MARKET_RESEARCH: Joi.object<DocumentType202304['MARKET_RESEARCH']>({
     hasMarketResearch: Joi.string().valid(...catalogYesInProgressNotYet),
-    marketResearch: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown),
+    marketResearch: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
     optionBestDescribesInnovation: Joi.string().valid(...catalogOptionBestDescribesInnovation),
-    whatCompetitorsAlternativesExist: Joi.string().max(TEXTAREA_LENGTH_LIMIT.largeDown)
+    whatCompetitorsAlternativesExist: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l)
   })
     .required()
     .min(1),
   CURRENT_CARE_PATHWAY: Joi.object<DocumentType202304['CURRENT_CARE_PATHWAY']>({
     innovationPathwayKnowledge: Joi.string().valid(...catalogPathwayKnowledge),
-    potentialPathway: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp)
+    potentialPathway: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m)
   })
     .required()
     .min(1),
@@ -126,7 +126,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
       .items(
         Joi.object({
           kind: Joi.string().max(100),
-          feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium)
+          feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s)
         })
       )
       .min(1),
@@ -165,20 +165,20 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
       .items(Joi.string().valid(...catalogRevenues))
       .min(1),
     otherRevenueDescription: Joi.string().max(100),
-    payingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
-    benefittingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
+    payingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m),
+    benefittingOrganisations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m),
     hasFunding: Joi.string().valid(...catalogYesNoNotRelevant),
-    fundingDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium)
+    fundingDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s)
   })
     .required()
     .min(1),
   COST_OF_INNOVATION: Joi.object<DocumentType202304['COST_OF_INNOVATION']>({
     hasCostKnowledge: Joi.string().valid(...catalogHasCostKnowledge),
-    costDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
+    costDescription: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m),
     patientsRange: Joi.string().valid(...catalogPatientRange),
-    eligibilityCriteria: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
-    sellExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium),
-    usageExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.mediumUp),
+    eligibilityCriteria: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m),
+    sellExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s),
+    usageExpectations: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m),
     costComparison: Joi.string().valid(...catalogCostComparison)
   })
     .required()
@@ -187,8 +187,8 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     hasDeployPlan: Joi.string().valid(...catalogYesNo),
     isDeployed: Joi.string().valid(...catalogYesNo),
     deploymentPlans: Joi.array().items(Joi.string().max(100)).min(1),
-    commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
-    organisationDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large),
+    commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
+    organisationDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
     hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure),
     files: Joi.array().items(Joi.string().guid()).min(1)
   })

@@ -1,14 +1,14 @@
 import { injectable } from 'inversify';
 
 import { InnovationEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
-import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import { GenericErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 
 import {
-  ValidationResult,
-  AdminOperationsRulesMapper,
   AdminOperationType,
-  AdminRuleType
+  AdminOperationsRulesMapper,
+  AdminRuleType,
+  ValidationResult
 } from '../_config/admin-operations.config';
 
 import { BaseService } from './base.service';
@@ -25,6 +25,7 @@ export class ValidationService extends BaseService {
       .select(['user.id', 'userRole.role'])
       .innerJoin('userRole.user', 'user')
       .where('userRole.user_id = :userId', { userId })
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
 
     const result: ValidationResult[] = [];
@@ -72,7 +73,7 @@ export class ValidationService extends BaseService {
       .innerJoin('user.serviceRoles', 'userRoles')
       .where('userRoles.role = :userRole', { userRole: ServiceRoleEnum.ASSESSMENT })
       .andWhere('user.id != :userId', { userId })
-      .andWhere('user.locked_at IS NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getCount();
 
     return { rule: 'AssessmentUserIsNotTheOnlyOne', valid: dbUsersCount > 0 };
@@ -102,7 +103,7 @@ export class ValidationService extends BaseService {
       .where('userRole.role IN (:...userRoles) ', {
         userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR]
       })
-      .andWhere('user.locked_at IS NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .groupBy('userRole.organisation_unit_id')
       .getRawMany();
 
@@ -133,7 +134,7 @@ export class ValidationService extends BaseService {
         'userOrganisationUnits',
         'userOrganisationUnits.organisation_unit_id = userRole.organisation_unit_id'
       )
-      .where('user.locked_at IS NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .groupBy('userRole.organisation_unit_id')
       .getRawMany();
 
@@ -155,7 +156,7 @@ export class ValidationService extends BaseService {
       .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
       .innerJoin('organisationUser.user', 'user')
       .where('organisationUser.user_id = :userId', { userId })
-      .andWhere('user.locked_at IS NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .andWhere('supports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
       .andWhere(
         `NOT EXISTS(

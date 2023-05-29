@@ -12,7 +12,7 @@ import {
   InnovationDocumentEntity,
   createDocumentFromInnovation
 } from '../entities/innovation/innovation-document.entity';
-import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '../enums';
+import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '../enums';
 import type { DocumentType } from '../schemas/innovation-record';
 import type { DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
@@ -272,7 +272,12 @@ export class InnovationBuilder {
       .innerJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .leftJoinAndSelect('assessments.assignTo', 'assignedAssessors')
+      .leftJoinAndSelect(
+        'assessments.assignTo',
+        'assignedAssessors',
+        'assignedAssessors.status <> :assignedAssessorDeleted',
+        { assignedAssessorDeleted: UserStatusEnum.DELETED }
+      )
       .leftJoinAndSelect('assessments.organisationUnits', 'suggestedOrganisationUnits')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')

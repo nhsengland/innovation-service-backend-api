@@ -18,5 +18,5 @@ export const BodySchema = Joi.object<BodyType>({
   updatedInnovationRecord: Joi.string()
     .valid(...Object.values(YesOrNoCatalogueType))
     .required(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.medium).required()
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
 }).required();

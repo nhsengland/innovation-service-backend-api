@@ -1,5 +1,6 @@
 import Joi from 'joi';
 
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { InnovationActionStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 
 export type ParamsType = {
@@ -54,6 +55,6 @@ export const BodySchema = Joi.object<BodyType>({
     })
     .when('$userRole', {
       is: ServiceRoleEnum.INNOVATOR,
-      then: Joi.string().max(500).required()
+      then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
     })
 }).required();

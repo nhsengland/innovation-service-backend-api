@@ -1,6 +1,11 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '@innovations/shared/enums';
 import {
   ConflictError,
   ForbiddenError,
@@ -278,8 +283,10 @@ export class InnovationCollaboratorsService extends BaseService {
         'innovation.id',
         'innovationOwner.identityId',
         'innovationOwner.id',
+        'innovationOwner.status',
         'innovationOwner.deletedAt',
         'collaboratorUser.identityId',
+        'collaboratorUser.status',
         'collaborator.id',
         'collaborator.email',
         'collaborator.status',
@@ -305,9 +312,8 @@ export class InnovationCollaboratorsService extends BaseService {
       }
     }
 
-    let collaboratorName;
-
-    if (collaborator.user) {
+    let collaboratorName = '[deleted user]';
+    if (collaborator.user && collaborator.user.status !== UserStatusEnum.DELETED) {
       const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
       collaboratorName = collaboratorUser.displayName;
     }
@@ -325,7 +331,7 @@ export class InnovationCollaboratorsService extends BaseService {
         owner: {
           id: collaborator.innovation.owner.id,
           name:
-            collaborator.innovation.owner.deletedAt === null
+            collaborator.innovation.owner.status !== UserStatusEnum.DELETED
               ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName
               : undefined
         }

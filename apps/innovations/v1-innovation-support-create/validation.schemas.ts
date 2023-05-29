@@ -26,7 +26,7 @@ export const BodySchema = Joi.object<BodyType>({
       InnovationSupportStatusEnum.COMPLETE
     )
     .required(),
-  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).trim().required(),
+  message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),
   accessors: Joi.when('status', {
     is: InnovationSupportStatusEnum.ENGAGING,
     then: Joi.array()

@@ -18,7 +18,8 @@ import {
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
-  ThreadContextTypeEnum
+  ThreadContextTypeEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -101,9 +102,11 @@ export class InnovationActionsService extends BaseService {
         'innovationSection.section',
         'innovationSupport.id',
         'updatedByUser.identityId',
+        'updatedByUser.status',
         'updatedByUserRole.role',
         'createdByUser.id',
         'createdByUser.identityId',
+        'createdByUser.status',
         'createdByUserRole.role',
         'organisationUnit.id',
         'organisationUnit.acronym',
@@ -261,7 +264,12 @@ export class InnovationActionsService extends BaseService {
     }
 
     const usersIds = actions
-      .flatMap(action => [action.createdByUser.identityId, action.updatedByUserRole?.user.identityId])
+      .flatMap(action => [
+        action.createdByUser.status !== UserStatusEnum.DELETED ? action.createdByUser.identityId : undefined,
+        action.updatedByUserRole && action.updatedByUserRole.user.status !== UserStatusEnum.DELETED
+          ? action.updatedByUserRole.user.identityId
+          : undefined
+      ])
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
@@ -344,6 +352,7 @@ export class InnovationActionsService extends BaseService {
         'innovationSection.section',
         'innovation.id',
         'owner.id',
+        'owner.status',
         'createdByUserRole.id',
         'createdByUserRole.role',
         'createdByUserOrganisationUnit.id',
@@ -351,10 +360,12 @@ export class InnovationActionsService extends BaseService {
         'createdByUserOrganisationUnit.acronym',
         'createdByUser.id',
         'createdByUser.identityId',
+        'createdByUser.status',
         'updatedByUserRole.id',
         'updatedByUserRole.role',
         'updatedByUser.id',
-        'updatedByUser.identityId'
+        'updatedByUser.identityId',
+        'updatedByUser.status'
       ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
@@ -387,10 +398,14 @@ export class InnovationActionsService extends BaseService {
       }
     }
 
-    const createdByUser = await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId);
+    let createdByUserName = '[deleted user]';
+    if (dbAction.createdByUserRole.user.status !== UserStatusEnum.DELETED) {
+      createdByUserName = (await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId))
+        .displayName;
+    }
 
     let lastUpdatedByUserName = '[deleted user]';
-    if (dbAction.updatedByUserRole) {
+    if (dbAction.updatedByUserRole && dbAction.updatedByUserRole.user.status !== UserStatusEnum.DELETED) {
       lastUpdatedByUserName =
         (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))?.displayName ||
         'unknown user';
@@ -413,7 +428,7 @@ export class InnovationActionsService extends BaseService {
       },
       createdBy: {
         id: dbAction.createdByUserRole.user.id,
-        name: createdByUser.displayName,
+        name: createdByUserName,
         role: dbAction.createdByUserRole.role,
         ...(dbAction.createdByUserRole.organisationUnit && {
           organisationUnit: {

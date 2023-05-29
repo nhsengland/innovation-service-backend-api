@@ -8,7 +8,6 @@ import type { CustomContextType } from '../types';
 type JWTType = {
   oid: string;
   name: string;
-  extension_passwordResetOn: number;
   exp: number;
   nbf: number;
   ver: string;
