@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { EntityManager, Repository } from 'typeorm';
 
 import {
+  InnovationCollaboratorEntity,
   InnovationEntity,
   InnovationSupportEntity,
   InnovationTransferEntity,
@@ -13,7 +14,6 @@ import {
   UserPreferenceEntity,
   UserRoleEntity
 } from '@users/shared/entities';
-import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationTransferStatusEnum,
@@ -27,17 +27,16 @@ import {
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { CacheService, DomainService, IdentityProviderService, NotifierService } from '@users/shared/services';
-import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
+import type { CacheConfigType, CacheService, DomainService, IdentityProviderService, NotifierService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
+
 import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
-  userRepository: Repository<UserEntity>;
-  organisationRepository: Repository<OrganisationEntity>;
+
+  private userRepository: Repository<UserEntity>;
   private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
@@ -49,7 +48,6 @@ export class UsersService extends BaseService {
   ) {
     super();
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
-    this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.cache = cacheService.get('IdentityUserInfo');
   }
 
@@ -74,6 +72,7 @@ export class UsersService extends BaseService {
       model: 'minimal' | 'full';
     }
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
+
     const user = await this.domainService.users.getUserInfo({ userId });
     const model = params.model;
     if (model === 'minimal') {

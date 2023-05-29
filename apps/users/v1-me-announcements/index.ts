@@ -21,14 +21,16 @@ class V1MeAnnouncements {
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const authInstance = await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
+      const requestContext = auth.getContext();
 
-      const announcements = await announcementsService.getUserAnnouncements(authInstance.getContext());
+      const announcements = await announcementsService.getUserAnnouncements({ id: requestContext.id, roleId: requestContext.currentRole.id });
+
       context.res = ResponseHelper.Ok<ResponseDTO>(
         announcements.map(announcement => ({
           id: announcement.id,

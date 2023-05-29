@@ -2,14 +2,16 @@ import type { DataSource, Repository } from 'typeorm';
 
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import {
+  AccessorOrganisationRoleEnum,
   InnovationCollaboratorStatusEnum,
+  InnovatorOrganisationRoleEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
+import type { DomainContextType, RoleType } from '../../types';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
@@ -20,7 +22,7 @@ import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
-  userRepository: Repository<UserEntity>;
+  private userRepository: Repository<UserEntity>;
 
   constructor(
     private sqlConnection: DataSource,
@@ -31,7 +33,34 @@ export class DomainUsersService {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
 
-  async getUserInfo(data: { userId?: string; identityId?: string }): Promise<DomainUserInfoType> {
+  async getUserInfo(data: { userId?: string; identityId?: string }): Promise<{
+    id: string;
+    identityId: string;
+    email: string;
+    displayName: string;
+    roles: RoleType[];
+    phone: null | string;
+    isActive: boolean;
+    lockedAt: null | Date;
+    passwordResetAt: null | Date;
+    firstTimeSignInAt: null | Date;
+    organisations: {
+      id: string;
+      name: string;
+      acronym: null | string;
+      role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
+      isShadow: boolean;
+      size: null | string;
+      description: null | string;
+      registrationNumber: null | string;
+      organisationUnits: {
+        id: string;
+        name: string;
+        acronym: string;
+        organisationUnitUser: { id: string };
+      }[];
+    }[];
+  }> {
     if (!data.userId && !data.identityId) {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
     }
@@ -217,7 +246,11 @@ export class DomainUsersService {
    *  - userRoles: the user roles to filter by.
    * @returns the user as an array.
    */
-  async getUserByEmail(email: string, filters?: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
+  async getUserByEmail(
+    email: string,
+    filters?: { userRoles: ServiceRoleEnum[] }
+  ): Promise<Awaited<ReturnType<DomainUsersService['getUserInfo']>>[]> {
+
     try {
       const authUser = await this.identityProviderService.getUserInfoByEmail(email);
       if (!authUser) {
