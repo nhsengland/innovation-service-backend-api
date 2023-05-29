@@ -3,9 +3,9 @@ import { inject, injectable } from 'inversify';
 import { NotifierTypeEnum, ServiceRoleEnum } from '../../enums';
 import type { AdminDomainContextType, DomainContextType, NotifierTemplatesType } from '../../types';
 
-import type { LoggerService, StorageQueueService } from '..';
 import SHARED_SYMBOLS from '../symbols';
-import { QueuesEnum } from './storage-queue.service';
+import type { LoggerService } from './logger.service';
+import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
 // TechDebt: Allow for system domain_context (this might be a breaking change and require notifications typing). Keeping the 00000000-0000-0000-0000-000000000000 for now.
 //           It used to be F4D75573-47CF-EC11-B656-0050F25A2AF6

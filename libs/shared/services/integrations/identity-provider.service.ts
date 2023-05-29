@@ -9,11 +9,11 @@ import {
   UserErrorsEnum
 } from '../../errors';
 
-import type { LoggerService, StorageQueueService } from '..';
 import type { IdentityUserInfo } from '../../types/domain.types';
 import type { CacheConfigType, CacheService } from '../storage/cache.service';
 import SHARED_SYMBOLS from '../symbols';
-import { QueuesEnum } from './storage-queue.service';
+import type { LoggerService } from './logger.service';
+import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
 type b2cGetUserInfoByEmailDTO = {
   value: {

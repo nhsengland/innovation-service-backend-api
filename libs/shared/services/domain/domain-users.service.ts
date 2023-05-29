@@ -12,7 +12,8 @@ import {
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
 import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
 
-import type { IdentityProviderService, NotifierService } from '..';
+import type { IdentityProviderService } from '../integrations/identity-provider.service';
+import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {

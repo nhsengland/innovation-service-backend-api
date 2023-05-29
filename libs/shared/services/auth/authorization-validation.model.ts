@@ -9,8 +9,7 @@ import {
 } from '../../enums';
 import { ForbiddenError, UnprocessableEntityError } from '../../errors';
 import type { DomainContextType, DomainUserInfoType } from '../../types';
-
-import type { DomainService } from '..';
+import type { DomainService } from '../domain/domain.service';
 
 export enum AuthErrorsEnum {
   AUTH_USER_NOT_LOADED = 'AUTH.0001',

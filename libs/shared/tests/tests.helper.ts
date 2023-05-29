@@ -1,13 +1,13 @@
 import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
-import type { SQLConnectionService } from '../services';
 
+import { ServiceRoleEnum } from '../enums';
+import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
-import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 import type { DomainContextType } from '../types';
 import type { TestUserType } from './builders/user.builder';
-import { ServiceRoleEnum } from '../enums';
+import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
 export class TestsHelper {
   private sqlConnection: DataSource;

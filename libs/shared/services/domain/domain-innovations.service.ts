@@ -1,6 +1,5 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
-import type { FileStorageService, IdentityProviderService } from '..';
 import { EXPIRATION_DATES } from '../../constants';
 import {
   ActivityLogEntity,
@@ -40,7 +39,9 @@ import {
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
+import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import type { FileStorageService } from '../storage/file-storage.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;

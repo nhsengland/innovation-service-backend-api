@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import type { DomainService } from '..';
 import type { CustomContextType } from '../../types';
+import type { DomainService } from '../domain/domain.service';
 import SHARED_SYMBOLS from '../symbols';
 import { AuthorizationValidationModel } from './authorization-validation.model';
 

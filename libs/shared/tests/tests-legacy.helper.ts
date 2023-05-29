@@ -19,7 +19,7 @@ import {
   OrganisationTypeEnum,
   ServiceRoleEnum
 } from '../enums';
-import type { SQLConnectionService } from '../services';
+import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
 import type {
   AccessorDomainContextType,

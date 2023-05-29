@@ -4,8 +4,8 @@ import { get } from 'lodash';
 import { container } from '../config/inversify.config';
 import { GenericErrorsEnum } from '../errors';
 import { NotImplementedError } from '../errors/errors.config';
-import type { AuditService, SQLConnectionService } from '../services';
-import { ActionEnum, TargetEnum } from '../services/integrations/audit.service';
+import { ActionEnum, AuditService, TargetEnum } from '../services/integrations/audit.service';
+import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
 import type { CustomContextType } from '../types';
 
