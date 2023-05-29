@@ -15,14 +15,8 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderService,
-  IdentityProviderServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, ObjectLiteral } from 'typeorm';
@@ -38,9 +32,9 @@ type UpdateCollaboratorStatusType =
 @injectable()
 export class InnovationCollaboratorsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
   ) {
     super();
   }

@@ -1,6 +1,9 @@
 import { randAlpha, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { InnovationActionEntity, InnovationSectionEntity, InnovationSupportEntity, UserRoleEntity } from '../entities';
+import { InnovationActionEntity } from '../entities/innovation/innovation-action.entity';
+import { InnovationSectionEntity } from '../entities/innovation/innovation-section.entity';
+import { InnovationSupportEntity } from '../entities/innovation/innovation-support.entity';
+import { UserRoleEntity } from '../entities/user/user-role.entity';
 import { InnovationActionStatusEnum } from '../enums';
 import type { DomainContextType } from '../types';
 

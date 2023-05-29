@@ -25,12 +25,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType,
-  type DomainServiceType
-} from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
@@ -40,6 +35,7 @@ import type {
   InnovationSupportsLogType
 } from '../_types/innovation.types';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
@@ -47,8 +43,8 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationSupportsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService)
     private innovationThreadsService: InnovationThreadsService
   ) {

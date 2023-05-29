@@ -1,6 +1,7 @@
-import { OrganisationUnitEntity, type OrganisationEntity } from '../entities';
-import { randCompanyName, randAlpha, randBoolean } from '@ngneat/falso';
+import { randAlpha, randBoolean, randCompanyName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
+import { OrganisationUnitEntity } from '../entities/organisation/organisation-unit.entity';
+import type { OrganisationEntity } from '../entities/organisation/organisation.entity';
 
 export class OrganisationUnitBuilder {
   organisationUnit: Partial<OrganisationUnitEntity> = {};

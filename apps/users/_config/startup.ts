@@ -3,10 +3,11 @@ import type { Container } from 'inversify';
 import { join } from 'path';
 import YAML from 'yaml';
 
-import { HttpServiceSymbol, type HttpServiceType } from '@users/shared/services';
+import type { HttpService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 export const startup = async (container: Container): Promise<void> => {
-  const httpService = container.get<HttpServiceType>(HttpServiceSymbol);
+  const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
 
   try {
     console.group('Initializing Users app function:');

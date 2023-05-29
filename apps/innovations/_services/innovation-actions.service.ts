@@ -28,17 +28,11 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import { ActivityLogListParamsType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
@@ -47,10 +41,12 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationActionsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
-    @inject(SYMBOLS.InnovationThreadsService) private innovationThreadsService: InnovationThreadsService
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService,
+    @inject(SYMBOLS.InnovationThreadsService)
+    private innovationThreadsService: InnovationThreadsService
   ) {
     super();
   }

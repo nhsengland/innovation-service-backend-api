@@ -1,7 +1,8 @@
 import { randEmail, randRole } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import type { InnovationEntity, UserEntity } from '../entities';
 import { InnovationCollaboratorEntity } from '../entities/innovation/innovation-collaborator.entity';
+import type { InnovationEntity } from '../entities/innovation/innovation.entity';
+import type { UserEntity } from '../entities/user/user.entity';
 import { InnovationCollaboratorStatusEnum } from '../enums';
 import type { DomainContextType } from '../types';
 

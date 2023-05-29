@@ -7,20 +7,16 @@ import {
 } from '@notifications/shared/enums';
 import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType
-} from '@notifications/shared/services';
+import type { DomainService, IdentityProviderService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
@@ -38,8 +34,8 @@ export class ActionUpdateHandler extends BaseHandler<
     section: CurrentCatalogTypes.InnovationSections;
   }
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
+  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   private data: {
     innovation?: {

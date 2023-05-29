@@ -1,18 +1,12 @@
 import { inject, injectable } from 'inversify';
 
-import {
-  FileStorageServiceSymbol,
-  FileStorageServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType,
-  SQLProviderSymbol,
-  SQLProviderType
-} from '../interfaces';
-
 import type { DataSource } from 'typeorm';
 import { GenericErrorsEnum, ServiceUnavailableError } from '../../errors';
+import type { IdentityProviderService } from '../integrations/identity-provider.service';
+import type { NotifierService } from '../integrations/notifier.service';
+import type { FileStorageService } from '../storage/file-storage.service';
+import type { SqlProvider } from '../storage/sql-connection.provider';
+import SHARED_SYMBOLS from '../symbols';
 import { DomainInnovationsService } from './domain-innovations.service';
 import { DomainUsersService } from './domain-users.service';
 
@@ -38,12 +32,12 @@ export class DomainService {
   }
 
   constructor(
-    @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType,
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
-    @inject(SQLProviderSymbol) public sqlProvider: SQLProviderType,
-    @inject(NotifierServiceSymbol)
-    private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
+    @inject(SHARED_SYMBOLS.SqlProvider) public sqlProvider: SqlProvider,
+    @inject(SHARED_SYMBOLS.NotifierService)
+    private notifierService: NotifierService
   ) {}
 
   setConnection(connection: DataSource): void {

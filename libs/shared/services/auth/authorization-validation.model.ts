@@ -9,8 +9,7 @@ import {
 } from '../../enums';
 import { ForbiddenError, UnprocessableEntityError } from '../../errors';
 import type { DomainContextType, DomainUserInfoType } from '../../types';
-
-import type { DomainServiceType } from '../interfaces';
+import type { DomainService } from '../domain/domain.service';
 
 export enum AuthErrorsEnum {
   AUTH_USER_NOT_LOADED = 'AUTH.0001',
@@ -60,7 +59,7 @@ export class AuthorizationValidationModel {
   private userValidations = new Map<UserValidationKeys, () => null | AuthErrorsEnum>();
   private innovationValidations = new Map<InnovationValidationKeys, () => null | AuthErrorsEnum>();
 
-  constructor(private domainService: DomainServiceType) {}
+  constructor(private domainService: DomainService) {}
 
   setUser(identityId: string): this {
     this.user = { identityId };

@@ -1,9 +1,12 @@
 import type { Context } from '@azure/functions';
+
 import { JoiHelper } from '@users/shared/helpers';
+import type { IdentityProviderService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
+
 import { container } from '../_config';
 
-import { IdentityOperationType, IdentityOperationSchema } from './validation.schemas';
-import { IdentityProviderServiceSymbol, IdentityProviderServiceType } from '@users/shared/services';
+import { IdentityOperationSchema, IdentityOperationType } from './validation.schemas';
 
 class V1IdentityOperationsQueueListener {
   static async queueTrigger(
@@ -19,7 +22,7 @@ class V1IdentityOperationsQueueListener {
       };
     }
   ): Promise<void> {
-    const identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
+    const identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
     context.log.info('IDENTITY OPERATIONS LISTENER: ', JSON.stringify(requestOperation));
 

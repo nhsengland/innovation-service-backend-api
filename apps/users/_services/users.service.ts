@@ -13,6 +13,7 @@ import {
   UserPreferenceEntity,
   UserRoleEntity
 } from '@users/shared/entities';
+import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationTransferStatusEnum,
@@ -25,22 +26,12 @@ import {
   UserStatusEnum
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
-import {
-  CacheServiceSymbol,
-  CacheServiceType,
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@users/shared/services';
+import type { PaginationQueryParamsType } from '@users/shared/helpers';
+import type { CacheService, DomainService, IdentityProviderService, NotifierService } from '@users/shared/services';
 import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
-
-import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
-import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -50,11 +41,11 @@ export class UsersService extends BaseService {
   private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
-    @inject(CacheServiceSymbol) cacheService: CacheServiceType,
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);

@@ -3,13 +3,9 @@ import { inject, injectable } from 'inversify';
 import { NotifierTypeEnum, ServiceRoleEnum } from '../../enums';
 import type { AdminDomainContextType, DomainContextType, NotifierTemplatesType } from '../../types';
 
-import {
-  LoggerServiceSymbol,
-  LoggerServiceType,
-  StorageQueueServiceSymbol,
-  StorageQueueServiceType
-} from '../interfaces';
-import { QueuesEnum } from './storage-queue.service';
+import SHARED_SYMBOLS from '../symbols';
+import type { LoggerService } from './logger.service';
+import { QueuesEnum, StorageQueueService } from './storage-queue.service';
 
 // TechDebt: Allow for system domain_context (this might be a breaking change and require notifications typing). Keeping the 00000000-0000-0000-0000-000000000000 for now.
 //           It used to be F4D75573-47CF-EC11-B656-0050F25A2AF6
@@ -24,14 +20,14 @@ const SYSTEM_CRON_SENDER: AdminDomainContextType = {
 @injectable()
 export class NotifierService {
   constructor(
-    @inject(LoggerServiceSymbol) private loggerService: LoggerServiceType,
-    @inject(StorageQueueServiceSymbol) private storageQueueService: StorageQueueServiceType
+    @inject(SHARED_SYMBOLS.LoggerService) private loggerService: LoggerService,
+    @inject(SHARED_SYMBOLS.StorageQueueService) private storageQueueService: StorageQueueService
   ) {}
 
   async send<T extends NotifierTypeEnum>( // This typing strategy, validates the correct properties for the supplied notifierType.
     requestUser: DomainContextType,
     notifierType: T,
-    params: NotifierTemplatesType[T],
+    params: NotifierTemplatesType[T]
   ): Promise<boolean> {
     try {
       await this.storageQueueService.sendMessage(QueuesEnum.NOTIFICATION, {
@@ -61,10 +57,6 @@ export class NotifierService {
     notifierType: T,
     params: NotifierTemplatesType[T]
   ): Promise<boolean> {
-    return this.send(
-      SYSTEM_CRON_SENDER,
-      notifierType,
-      params,
-    );
+    return this.send(SYSTEM_CRON_SENDER, notifierType, params);
   }
 }

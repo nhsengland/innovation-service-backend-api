@@ -25,17 +25,13 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
 import type { InnovationAssessmentType } from '../_types/innovation.types';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
@@ -44,8 +40,8 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationAssessmentsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService) private threadService: InnovationThreadsService
   ) {
     super();
@@ -190,11 +186,11 @@ export class InnovationAssessmentsService extends BaseService {
         { comment: { id: thread.thread.id, value: data.message } }
       );
 
-      await this.notifierService.send(
-        domainContext,
-        NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED,
-        { innovationId, assessmentId: assessment.id, threadId: thread.thread.id }
-      );
+      await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_STARTED, {
+        innovationId,
+        assessmentId: assessment.id,
+        threadId: thread.thread.id
+      });
 
       return { id: assessment['id'] };
     });
@@ -345,15 +341,11 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     if (data.isSubmission && !dbAssessment.finishedAt) {
-      await this.notifierService.send(
-        domainContext,
-        NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED,
-        {
-          innovationId: innovationId,
-          assessmentId: assessmentId,
-          organisationUnitIds: data.suggestedOrganisationUnitsIds || []
-        }
-      );
+      await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_COMPLETED, {
+        innovationId: innovationId,
+        assessmentId: assessmentId,
+        organisationUnitIds: data.suggestedOrganisationUnitsIds || []
+      });
     }
 
     return { id: result.id };
@@ -452,11 +444,9 @@ export class InnovationAssessmentsService extends BaseService {
       return { assessment: { id: assessmentClone.id }, reassessment: { id: reassessment.id } };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
-      { innovationId: innovationId }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST, {
+      innovationId: innovationId
+    });
 
     return {
       assessment: { id: result.assessment.id },
@@ -509,16 +499,12 @@ export class InnovationAssessmentsService extends BaseService {
       };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
-      {
-        innovationId,
-        assessmentId: updatedAssessment.id,
-        previousAssessor: { id: previousAssessor.id },
-        newAssessor: { id: newAssessor.id }
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE, {
+      innovationId,
+      assessmentId: updatedAssessment.id,
+      previousAssessor: { id: previousAssessor.id },
+      newAssessor: { id: newAssessor.id }
+    });
 
     return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id };
   }

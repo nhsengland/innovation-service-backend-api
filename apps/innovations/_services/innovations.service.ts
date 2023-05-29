@@ -46,13 +46,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType,
-  type DomainUsersService
-} from '@innovations/shared/services';
+import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
@@ -66,13 +60,14 @@ import type {
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }

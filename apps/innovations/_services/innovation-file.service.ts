@@ -4,13 +4,14 @@ import { basename, extname } from 'path';
 import type { EntityManager } from 'typeorm';
 
 import { InnovationFileEntity } from '@innovations/shared/entities';
-import { FileStorageServiceSymbol, FileStorageServiceType } from '@innovations/shared/services';
+import type { FileStorageService } from '@innovations/shared/services';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationFileService extends BaseService {
-  constructor(@inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType) {
+  constructor(@inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService) {
     super();
   }
 

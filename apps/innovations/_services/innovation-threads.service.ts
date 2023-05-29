@@ -24,24 +24,18 @@ import {
   NotFoundError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderService,
-  IdentityProviderServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationThreadsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProvider: IdentityProviderService,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProvider: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }

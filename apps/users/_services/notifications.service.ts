@@ -1,3 +1,6 @@
+import { inject, injectable } from 'inversify';
+import type { EntityManager } from 'typeorm';
+
 import {
   NotificationEntity,
   NotificationPreferenceEntity,
@@ -14,15 +17,17 @@ import {
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import { IdentityProviderService, IdentityProviderServiceSymbol } from '@users/shared/services';
+import type { IdentityProviderService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { DomainContextType } from '@users/shared/types';
-import { inject, injectable } from 'inversify';
-import type { EntityManager } from 'typeorm';
+
 import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-  constructor(@inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService) {
+  constructor(
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
+  ) {
     super();
   }
 

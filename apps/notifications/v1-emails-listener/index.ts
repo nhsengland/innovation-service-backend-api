@@ -1,11 +1,12 @@
 import type { Context } from '@azure/functions';
 
+import type { NotificationLogTypeEnum } from '@notifications/shared/enums';
 import { JoiHelper } from '@notifications/shared/helpers';
 
 import { container, EmailTypeEnum } from '../_config';
-import { DispatchServiceSymbol, DispatchServiceType } from '../_services/interfaces';
 
-import type { NotificationLogTypeEnum } from '@notifications/shared/enums';
+import type { DispatchService } from '../_services/dispatch.service';
+import SYMBOLS from '../_services/symbols';
 import { MessageSchema, MessageType } from './validation.schemas';
 
 class V1SendEmailListener {
@@ -23,7 +24,7 @@ class V1SendEmailListener {
       };
     }
   ): Promise<void> {
-    const dispatchService = container.get<DispatchServiceType>(DispatchServiceSymbol);
+    const dispatchService = container.get<DispatchService>(SYMBOLS.DispatchService);
 
     context.log.info('EMAIL LISTENER: ', JSON.stringify(requestMessage));
 

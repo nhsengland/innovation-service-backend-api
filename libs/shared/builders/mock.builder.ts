@@ -1,6 +1,6 @@
 import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import { UserEntity } from '../entities';
+import { UserEntity } from '../entities/user/user.entity';
 import { DomainUsersService } from '../services';
 import type { DomainUserInfoType } from '../types';
 

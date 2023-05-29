@@ -1,12 +1,11 @@
 import type { Context, Logger } from '@azure/functions';
-import { IdentityProviderService } from '../services';
 
-import type { TestUserType } from './builders/user.builder';
 import { randUserName, randUuid } from '@ngneat/falso';
+import { IdentityProviderService } from '../services/integrations/identity-provider.service';
+import type { TestUserType } from './builders/user.builder';
 // import { JwtDecoder } from '../decorators';
 
 export class MocksHelper {
-
   // TODO: Not working yet!
   // static mockJwtDecoderDecorator(_app: 'admin' | 'innovations' | 'notifications' | 'users'): void {
 
@@ -31,7 +30,6 @@ export class MocksHelper {
   }
 
   static mockContext(): Context {
-
     const logger = ((..._args: any[]): void => {}) as Logger;
     logger.error = (..._args: any[]) => {};
     logger.warn = (..._args: any[]) => {};
@@ -58,7 +56,5 @@ export class MocksHelper {
         attributes: null
       }
     };
-
   }
-
 }

@@ -1,12 +1,13 @@
 import { inject, injectable } from 'inversify';
 
 import type { CustomContextType } from '../../types';
-import { DomainServiceSymbol, DomainServiceType } from '../interfaces';
+import type { DomainService } from '../domain/domain.service';
+import SHARED_SYMBOLS from '../symbols';
 import { AuthorizationValidationModel } from './authorization-validation.model';
 
 @injectable()
 export class AuthorizationService {
-  constructor(@inject(DomainServiceSymbol) private domainService: DomainServiceType) {}
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {}
 
   /**
    * Authorization validations methods.

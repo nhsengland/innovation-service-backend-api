@@ -25,16 +25,10 @@ import {
 import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@admin/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { ENV } from '../_config';
 import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
@@ -43,9 +37,9 @@ import SYMBOLS from './symbols';
 @injectable()
 export class OrganisationsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
   ) {
     super();

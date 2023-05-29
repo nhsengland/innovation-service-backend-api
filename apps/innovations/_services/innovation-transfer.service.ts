@@ -15,15 +15,9 @@ import {
   InnovationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  IdentityProviderServiceSymbol,
-  NotifierServiceSymbol,
-  type DomainServiceType,
-  type IdentityProviderServiceType,
-  type NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
@@ -40,10 +34,10 @@ type TransferQueryFilterType = {
 @injectable()
 export class InnovationTransferService extends BaseService {
   constructor(
-    @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType,
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationCollaboratorsService)
     private collaboratorsService: InnovationCollaboratorsService
   ) {
@@ -231,14 +225,10 @@ export class InnovationTransferService extends BaseService {
       });
       const transfer = await transactionManager.save(InnovationTransferEntity, transferObj);
 
-      await this.notifierService.send(
-        domainContext,
-        NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION,
-        {
-          innovationId: innovation.id,
-          transferId: transfer.id
-        }
-      );
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_CREATION, {
+        innovationId: innovation.id,
+        transferId: transfer.id
+      });
 
       return { id: transfer.id };
     });
@@ -342,11 +332,10 @@ export class InnovationTransferService extends BaseService {
       }
 
       // It should send a notification for all cases
-      await this.notifierService.send(
-        domainContext,
-        NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED,
-        { innovationId: transfer.innovation.id, transferId: transfer.id }
-      );
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_COMPLETED, {
+        innovationId: transfer.innovation.id,
+        transferId: transfer.id
+      });
 
       return { id: savedTransfer.id };
     });
