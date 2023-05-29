@@ -80,7 +80,7 @@ export class UserBuilder extends BaseBuilder {
     return this;
   }
 
-  createInnovatorOrganisation(data?: { name?: string; isShadow?: boolean }): this {
+  createInnovatorAndOrganisation(data?: { name?: string; isShadow?: boolean }): this {
     this.additionalEntities.organisation = OrganisationEntity.new({
       type: OrganisationTypeEnum.INNOVATOR,
       name: data?.name ?? randCompanyName(),

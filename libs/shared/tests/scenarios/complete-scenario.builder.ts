@@ -20,7 +20,7 @@ export class CompleteScenarioBuilder {
       // // 1 innovation in status 'CREATED'
       const johnInnovator = await new UserBuilder(entityManager)
         .setName('John Innovator')
-        .createInnovatorOrganisation()
+        .createInnovatorAndOrganisation()
         // .addRole(ServiceRoleEnum.INNOVATOR)
         .save();
       const johnInnovation = await new InnovationBuilder(entityManager).setOwner(johnInnovator.id).save();
@@ -29,7 +29,7 @@ export class CompleteScenarioBuilder {
       // // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user.
       const adamInnovator = await new UserBuilder(entityManager)
         .setName('Adam Innovator')
-        .createInnovatorOrganisation()
+        .createInnovatorAndOrganisation()
         // .addRole(ServiceRoleEnum.INNOVATOR)
         .save();
       const adamInnovation = await new InnovationBuilder(entityManager)
