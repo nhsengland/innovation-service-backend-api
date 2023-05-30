@@ -7,7 +7,7 @@ import { AzureQueueTriggerBuilder, CompleteScenarioType, TestsHelper } from '@no
 
 import { DispatchService } from '../_services/dispatch.service';
 
-describe('Notitications / v1-in-app-listener / index suite', () => {
+describe('Notifications / v1-in-app-listener / index suite', () => {
 
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
@@ -29,13 +29,13 @@ describe('Notitications / v1-in-app-listener / index suite', () => {
     const result = await new AzureQueueTriggerBuilder()
       .setRequestData({
         requestUser: { id: scenario.users.johnInnovator.id },
-        innovationId: scenario.users.johnInnovator.innovations[0]?.id,
+        innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
         context: {
           type: NotificationContextTypeEnum.INNOVATION,
           detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
-          id: scenario.users.johnInnovator.innovations[0]?.id
+          id: scenario.users.johnInnovator.innovations.johnInnovation.id
         },
-        userRoleIds: [scenario.users.johnInnovator.roles[0]?.id],
+        userRoleIds: [scenario.users.johnInnovator.roles['innovatorRole']?.id],
         params: {}
       })
       .call<{ done: boolean }>(V1SendInAppListener);
@@ -55,13 +55,13 @@ describe('Notitications / v1-in-app-listener / index suite', () => {
       await new AzureQueueTriggerBuilder()
         .setRequestData({
           requestUser: { id: scenario.users.johnInnovator.id },
-          innovationId: scenario.users.johnInnovator.innovations[0]?.id,
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           context: {
             type: NotificationContextTypeEnum.INNOVATION,
             detail: NotificationContextDetailEnum.INNOVATION_SUBMISSION,
-            id: scenario.users.johnInnovator.innovations[0]?.id
+            id: scenario.users.johnInnovator.innovations.johnInnovation.id
           },
-          userRoleIds: [scenario.users.johnInnovator.roles[0]?.id],
+          userRoleIds: [scenario.users.johnInnovator.roles['innovatorRole']?.id],
           params: {}
         })
         .call<{ done: boolean }>(V1SendInAppListener);

@@ -1,19 +1,41 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randAbbreviation, randCompanyName, randEmail, randFullName, randPastDate, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import { UserEntity } from '../../entities/user/user.entity';
-import { UserRoleEntity } from '../../entities/user/user-role.entity';
-import { OrganisationEntity } from '../../entities/organisation/organisation.entity';
+import { OrganisationUnitUserEntity } from '../../entities';
 import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
 import { OrganisationUserEntity } from '../../entities/organisation/organisation-user.entity';
+import { OrganisationEntity } from '../../entities/organisation/organisation.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
+import { UserEntity } from '../../entities/user/user.entity';
 import {
   AccessorOrganisationRoleEnum,
   InnovatorOrganisationRoleEnum,
-  OrganisationTypeEnum,
-  ServiceRoleEnum
-} from '../../enums';
+  OrganisationTypeEnum
+} from '../../enums/organisation.enums';
+import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
+import type { RoleType } from '../../types';
 
 import { BaseBuilder } from './base.builder';
+
+export type TestUserOrganisationUnitType = {
+  id: string;
+  acronym: string;
+  name: string;
+  organisationUnitUser: { id: string };
+};
+
+export type TestUserOrganisationsType = {
+  id: string;
+  name: string;
+  acronym: string | null;
+  isShadow: boolean;
+  description: string | null;
+  registrationNumber: string | null;
+  role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
+  size: string | null;
+  organisationUnits: { [key: string]: TestUserOrganisationUnitType };
+};
 
 export type TestUserType = {
   id: string;
@@ -24,23 +46,9 @@ export type TestUserType = {
   isActive: boolean;
   lockedAt: null | Date;
   roles: {
-    id: string;
-    role: ServiceRoleEnum;
-    lockedAt: null | Date;
-    organisation?: { id: string; name: string; acronym: null | string };
-    organisationUnit?: { id: string; name: string; acronym: string };
-  }[];
-  organisations: {
-    id: string;
-    name: string;
-    acronym: null | string;
-    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
-    isShadow: boolean;
-    size: null | string;
-    description: null | string;
-    registrationNumber: null | string;
-    organisationUnits: { id: string; name: string; acronym: string; organisationUnitUser: { id: string } }[];
-  }[];
+    [key: string]: RoleType;
+  };
+  organisations: { [key: string]: TestUserOrganisationsType };
 };
 
 export class UserBuilder extends BaseBuilder {
@@ -51,9 +59,12 @@ export class UserBuilder extends BaseBuilder {
     mobilePhone: null | string;
   };
 
-  private additionalEntities: {
-    organisation?: OrganisationEntity;
-  } = {};
+  private rolesToAdd: {
+    key: string;
+    role: ServiceRoleEnum;
+    organisationId?: string;
+    organisationUnitId?: string;
+  }[] = [];
 
   constructor(entityManager: EntityManager) {
     super(entityManager);
@@ -80,21 +91,7 @@ export class UserBuilder extends BaseBuilder {
     return this;
   }
 
-  createInnovatorAndOrganisation(data?: { name?: string; isShadow?: boolean }): this {
-    this.additionalEntities.organisation = OrganisationEntity.new({
-      type: OrganisationTypeEnum.INNOVATOR,
-      name: data?.name ?? randCompanyName(),
-      acronym: randAbbreviation(),
-      isShadow: data?.isShadow !== undefined ? data.isShadow : true
-    });
-    return this;
-  }
-
-  addRole(type: ServiceRoleEnum, organisationId?: string, organisationUnitId?: string): this {
-    if ([ServiceRoleEnum.INNOVATOR].includes(type) && !organisationId) {
-      throw new Error('UserBuilder::addRole: Innovator user type need to be in an organisation (even if shadow).');
-    }
-
+  addRole(type: ServiceRoleEnum, roleName: string, organisationId?: string, organisationUnitId?: string): this {
     if (
       [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(type) &&
       (!organisationId || !organisationUnitId)
@@ -102,55 +99,96 @@ export class UserBuilder extends BaseBuilder {
       throw new Error('UserBuilder::addRole: Accessor user types need to be in an organisation and unit.');
     }
 
+    if (type === ServiceRoleEnum.INNOVATOR && organisationUnitId) {
+      throw new Error(`UserBuilder::addRole: Innovator user types don't take organisation units`);
+    }
+
     if ([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(type) && (organisationId || organisationUnitId)) {
       throw new Error(`UserBuilder::addRole: Assessment and Admin roles don't take organisation arguments.`);
     }
 
-    this.user.serviceRoles.push(
-      UserRoleEntity.new({
-        role: type,
-        // ...(type === ServiceRoleEnum.INNOVATOR && {
-        //   organisation: OrganisationEntity.new({ name: randAbbreviation(), isShadow: true })
-        // }),
-        ...(organisationId && { organisation: OrganisationEntity.new({ id: organisationId }) }),
-        ...(organisationUnitId && { organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }) })
-      })
-    );
+    this.rolesToAdd.push({
+      key: roleName,
+      role: type,
+      ...(organisationId && { organisationId }),
+      ...(organisationUnitId && { organisationUnitId })
+    });
 
     return this;
   }
 
-  async save(): Promise<TestUserType> {
+  private async saveRole(
+    user: UserEntity,
+    role: {
+      role: ServiceRoleEnum;
+      organisationId?: string;
+      organisationUnitId?: string;
+    }
+  ): Promise<void> {
+    let dbOrganisation: OrganisationEntity | undefined;
+    let dbOrganisationUnit: OrganisationUnitEntity | undefined;
 
-    const dbUser = await this.getEntityManager().getRepository(UserEntity).save(this.user);
+    if (role.organisationId) {
+      dbOrganisation = OrganisationEntity.new({ id: role.organisationId });
+    }
 
-    if (this.additionalEntities.organisation) {
-
-      const dbOrganisation = await this.getEntityManager().save(
+    if (!role.organisationId && role.role === ServiceRoleEnum.INNOVATOR) {
+      dbOrganisation = await this.getEntityManager().save(
         OrganisationEntity,
-        this.additionalEntities.organisation
+        OrganisationEntity.new({
+          name: randCompanyName(),
+          acronym: randAbbreviation(),
+          isShadow: true,
+          type: OrganisationTypeEnum.INNOVATOR
+        })
       );
+    }
 
-      await this.getEntityManager().save(
+    let dbOrganisationUser: OrganisationUserEntity | undefined;
+
+    if (dbOrganisation) {
+      dbOrganisationUser = await this.getEntityManager().save(
         OrganisationUserEntity,
         OrganisationUserEntity.new({
           organisation: dbOrganisation,
-          user: dbUser,
-          role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER
-          // createdBy: dbUser.id,
-          // updatedBy: dbUser.id
+          user,
+          role:
+            role.role === ServiceRoleEnum.INNOVATOR
+              ? InnovatorOrganisationRoleEnum.INNOVATOR_OWNER
+              : AccessorOrganisationRoleEnum.ACCESSOR
         })
       );
+    }
+
+    if (role.organisationUnitId && dbOrganisationUser) {
+      dbOrganisationUnit = OrganisationUnitEntity.new({ id: role.organisationUnitId });
 
       await this.getEntityManager().save(
-        UserRoleEntity,
-        UserRoleEntity.new({
-          user: dbUser,
-          role: ServiceRoleEnum.INNOVATOR,
-          organisation: dbOrganisation
+        OrganisationUnitUserEntity,
+        OrganisationUnitUserEntity.new({
+          organisationUnit: dbOrganisationUnit,
+          organisationUser: dbOrganisationUser
         })
       );
+    }
 
+    //save role
+    await this.getEntityManager().save(
+      UserRoleEntity,
+      UserRoleEntity.new({
+        user: user,
+        role: role.role,
+        ...(dbOrganisation && { organisation: dbOrganisation }),
+        ...(dbOrganisationUnit && { organisationUnit: dbOrganisationUnit })
+      })
+    );
+  }
+
+  async save(): Promise<TestUserType> {
+    const dbUser = await this.getEntityManager().getRepository(UserEntity).save(this.user);
+
+    for (const roleToAdd of this.rolesToAdd) {
+      await this.saveRole(dbUser, roleToAdd);
     }
 
     const result = await this.getEntityManager()
@@ -158,6 +196,7 @@ export class UserBuilder extends BaseBuilder {
       .select([
         'user.id',
         'user.identityId',
+        'user.status',
         'user.lockedAt',
         'user.firstTimeSignInAt',
 
@@ -199,51 +238,118 @@ export class UserBuilder extends BaseBuilder {
       throw new Error('Error saving/retrieving user information.');
     }
 
+    const userRoles: {
+      [key: string]: {
+        id: string;
+        role: ServiceRoleEnum;
+        lockedAt: null | Date;
+        organisation?: { id: string; name: string; acronym: null | string };
+        organisationUnit?: { id: string; name: string; acronym: string };
+      };
+    } = {};
+
+    this.rolesToAdd.map(r => {
+      const foundRole = result.serviceRoles.find(sR => {
+        if (sR.role !== r.role) {
+          return false;
+        }
+
+        if (r.organisationId && sR.organisation) {
+          if (r.organisationId !== sR.organisation.id) {
+            return false;
+          }
+        }
+
+        if (r.organisationUnitId && sR.organisationUnit) {
+          if (r.organisationUnitId !== sR.organisationUnit.id) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      if (!foundRole) {
+        throw new Error('userBuilder::save: Error retrieving user roles.');
+      }
+
+      userRoles[r.key] = {
+        id: foundRole.id,
+        role: foundRole.role,
+        lockedAt: foundRole.lockedAt,
+        ...(foundRole.organisation && {
+          organisation: {
+            id: foundRole.organisation.id,
+            name: foundRole.organisation.name,
+            acronym: foundRole.organisation.acronym
+          }
+        }),
+        ...(foundRole.organisationUnit && {
+          organisationUnit: {
+            id: foundRole.organisationUnit.id,
+            name: foundRole.organisationUnit.name,
+            acronym: foundRole.organisationUnit.acronym
+          }
+        })
+      };
+    });
+
+    const organisations: {
+      [key: string]: {
+        id: string;
+        name: string;
+        acronym: string | null;
+        size: string | null;
+        role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
+        isShadow: boolean;
+        description: string | null;
+        registrationNumber: string | null;
+        organisationUnits: {
+          [key: string]: {
+            id: string;
+            acronym: string;
+            name: string;
+            organisationUnitUser: { id: string };
+          };
+        };
+      };
+    } = {};
+
+    (await result.userOrganisations).map(userOrganisation => {
+      const organisation = userOrganisation.organisation;
+      const organisationUnits = userOrganisation.userOrganisationUnits;
+      organisations[organisation.name] = {
+        id: organisation.id,
+        name: organisation.name,
+        acronym: organisation.acronym,
+        size: organisation.size,
+        role: userOrganisation.role,
+        isShadow: organisation.isShadow,
+        description: organisation.description,
+        registrationNumber: organisation.registrationNumber,
+        organisationUnits: {}
+      };
+
+      organisationUnits.map(item => {
+        organisations[organisation.name]!.organisationUnits[item.organisationUnit.name] = {
+          id: item.organisationUnit.id,
+          acronym: item.organisationUnit.acronym,
+          name: item.organisationUnit.name,
+          organisationUnitUser: { id: item.id }
+        };
+      });
+    });
+
     return {
       id: result.id,
       identityId: result.identityId,
       name: this.additionalFields.name ?? randFullName(),
       email: randEmail(),
       mobilePhone: this.additionalFields.mobilePhone,
-      isActive: true,
+      isActive: result.status === UserStatusEnum.ACTIVE,
       lockedAt: result.lockedAt,
-      roles: result.serviceRoles.map(item => ({
-        id: item.id,
-        role: item.role,
-        lockedAt: item.lockedAt,
-        ...(item.organisation && {
-          organisation: { id: item.organisation.id, name: item.organisation.name, acronym: item.organisation.acronym }
-        }),
-        ...(item.organisationUnit && {
-          organisationUnit: {
-            id: item.organisationUnit.id,
-            name: item.organisationUnit.name,
-            acronym: item.organisationUnit.acronym
-          }
-        })
-      })),
-      organisations: (await result.userOrganisations).map(userOrganisation => {
-        const organisation = userOrganisation.organisation;
-        const organisationUnits = userOrganisation.userOrganisationUnits;
-        return {
-          id: organisation.id,
-          name: organisation.name,
-          acronym: organisation.acronym,
-          size: organisation.size,
-          role: userOrganisation.role,
-          isShadow: organisation.isShadow,
-          description: organisation.description,
-          registrationNumber: organisation.registrationNumber,
-          organisationUnits: organisationUnits.map(item => ({
-            id: item.organisationUnit.id,
-            acronym: item.organisationUnit.acronym,
-            name: item.organisationUnit.name,
-            organisationUnitUser: { id: item.id }
-          }))
-        };
-      })
+      roles: userRoles,
+      organisations: organisations
     };
-
   }
-
 }

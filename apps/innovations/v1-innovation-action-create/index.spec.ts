@@ -40,8 +40,8 @@ describe('Innovations / v1-innovation-action-create / index suite', () => {
     jest.spyOn(innovationActionsService, 'createAction').mockResolvedValue({ id: expected.id });
 
     const result = await new AzureHttpTriggerBuilder()
-      .setAuth(scenario.users.johnInnovator)
-      .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations[0]!.id })
+      .setAuth(scenario.users.johnInnovator, 'innovatorRole')
+      .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id })
       .setBody<BodyType>({
         section: 'INNOVATION_DESCRIPTION',
         description: randText()
