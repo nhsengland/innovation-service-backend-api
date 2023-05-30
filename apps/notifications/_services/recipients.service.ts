@@ -925,7 +925,7 @@ export class RecipientsService extends BaseService {
 
     const query = this.sqlConnection
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.lockedAt', 'user.id', 'user.identityId', 'user.status']);
+      .select(['userRole.id', 'userRole.lockedAt', 'userRole.role', 'user.id', 'user.identityId', 'user.status']);
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });
