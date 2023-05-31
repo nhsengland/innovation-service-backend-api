@@ -37,6 +37,7 @@ import { BaseService } from './base.service';
 
 import { InnovationCollaboratorEntity } from '@notifications/shared/entities/innovation/innovation-collaborator.entity';
 import type { IdentityUserInfo } from '@notifications/shared/types';
+import type { EntityManager } from 'typeorm';
 
 export type RecipientType = {
   roleId: string;
@@ -144,6 +145,7 @@ export class RecipientsService extends BaseService {
       userId?: string;
     }[]
   > {
+
     const query = this.sqlConnection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select(['collaborator.email', 'collaborator.status', 'user.id', 'user.status'])
@@ -369,7 +371,7 @@ export class RecipientsService extends BaseService {
       .leftJoin('action.innovationSupport', 'support')
       .leftJoin('support.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
-      .andWhere('user.status = :userActive', { userDeleted: UserStatusEnum.ACTIVE })
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!dbAction) {
@@ -853,7 +855,8 @@ export class RecipientsService extends BaseService {
   async getUsersRecipient(
     userId: string,
     roles: ServiceRoleEnum | ServiceRoleEnum[],
-    extraFilters?: RoleFilter
+    extraFilters?: RoleFilter,
+    entityManager?: EntityManager
   ): Promise<null | RecipientType>;
   /**
    * retrieves user recipients for a role
@@ -868,27 +871,40 @@ export class RecipientsService extends BaseService {
   async getUsersRecipient(
     userIds: string[],
     roles: ServiceRoleEnum | ServiceRoleEnum[],
-    extraFilters?: RoleFilter
+    extraFilters?: RoleFilter,
+    entityManager?: EntityManager
   ): Promise<RecipientType[]>;
   async getUsersRecipient(
     userIds: string | string[],
     roles: ServiceRoleEnum | ServiceRoleEnum[],
-    extraFilters?: RoleFilter
+    extraFilters?: RoleFilter,
+    entityManager?: EntityManager
+  ): Promise<null | RecipientType | RecipientType[]>;
+  async getUsersRecipient(
+    userIds: string | string[],
+    roles: ServiceRoleEnum | ServiceRoleEnum[],
+    extraFilters?: RoleFilter,
+    entityManager?: EntityManager
   ): Promise<null | RecipientType | RecipientType[]> {
     const userIdsArray = typeof userIds === 'string' ? [userIds] : userIds;
     if (!userIdsArray.length) {
       return [];
     }
 
+    const em = entityManager ?? this.sqlConnection.manager;
+
     const rolesArray = typeof roles === 'string' ? [roles] : roles;
-    const userRoles = await this.getRole({
-      userIds: userIdsArray,
-      roles: rolesArray,
-      includeLocked: true, // maybe make this an option but was currently used like this most of the times and the handler chooses
-      ...(extraFilters?.organisation && { organisation: [extraFilters.organisation] }),
-      ...(extraFilters?.organisationUnit && { organisationUnit: [extraFilters.organisationUnit] }),
-      ...(extraFilters?.withDeleted && { withDeleted: true })
-    });
+    const userRoles = await this.getRole(
+      {
+        userIds: userIdsArray,
+        roles: rolesArray,
+        includeLocked: true, // maybe make this an option but was currently used like this most of the times and the handler chooses
+        ...(extraFilters?.organisation && { organisation: [extraFilters.organisation] }),
+        ...(extraFilters?.organisationUnit && { organisationUnit: [extraFilters.organisationUnit] }),
+        ...(extraFilters?.withDeleted && { withDeleted: true })
+      },
+      em
+    );
 
     if (typeof userIds === 'string') {
       return userRoles[0] ?? null;
@@ -908,14 +924,17 @@ export class RecipientsService extends BaseService {
    * @property withDeleted return deleted users
    * @returns list of recipients
    */
-  private async getRole(filters: {
-    userIds?: string[];
-    roles?: ServiceRoleEnum[];
-    organisations?: string[];
-    organisationUnits?: string[];
-    includeLocked?: boolean;
-    withDeleted?: boolean;
-  }): Promise<RecipientType[]> {
+  private async getRole(
+    filters: {
+      userIds?: string[];
+      roles?: ServiceRoleEnum[];
+      organisations?: string[];
+      organisationUnits?: string[];
+      includeLocked?: boolean;
+      withDeleted?: boolean;
+    },
+    entityManager?: EntityManager
+  ): Promise<RecipientType[]> {
     const { userIds, roles, organisations, organisationUnits, includeLocked, withDeleted } = filters;
 
     // sanity check to ensure we're filtering for something
@@ -923,9 +942,11 @@ export class RecipientsService extends BaseService {
       return [];
     }
 
-    const query = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.lockedAt', 'user.id', 'user.identityId', 'user.status']);
+      .select(['userRole.id', 'userRole.lockedAt', 'userRole.role', 'user.id', 'user.identityId', 'user.status']);
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });

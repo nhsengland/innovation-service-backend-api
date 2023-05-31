@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
@@ -51,23 +52,26 @@ export class TestsHelper {
     return this.completeScenarioData;
   }
 
-  getUserContext(user: TestUserType, userRole?: ServiceRoleEnum): DomainContextType {
-    if (!userRole) {
-      if (user.roles.length === 1) {
-        userRole = user.roles[0]?.role;
+  getUserContext<T extends Pick<TestUserType, 'id' | 'identityId' | 'roles'>>(
+    user: T,
+    userRoleKey?: keyof T['roles']
+  ): DomainContextType {
+    if (!userRoleKey) {
+      if ([...Object.keys(user.roles)].length === 1) {
+        userRoleKey = [...Object.keys(user.roles)][0]!;
       } else {
-        throw new Error('TestsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
+        throw new Error('DTOsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
       }
     }
 
-    const role = user.roles.find(r => r.role === userRole);
+    const role = user.roles[userRoleKey as string]; // could be a toString()
     if (!role) {
       throw new Error('TestsHelper::getUserContext: User role not found.');
     }
 
     if (role.role === ServiceRoleEnum.INNOVATOR) {
       if (!role.organisation) {
-        throw new Error('Invalid role found.');
+        throw new Error('TestsHelper::getUserContext: Invalid role found.');
       }
       return {
         id: user.id,
@@ -79,7 +83,7 @@ export class TestsHelper {
 
     if (role.role === ServiceRoleEnum.ACCESSOR || role.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
       if (!role.organisation || !role.organisationUnit) {
-        throw new Error('Invalid role found.');
+        throw new Error('TestsHelper::getUserContext: Invalid role found.');
       }
       return {
         id: user.id,

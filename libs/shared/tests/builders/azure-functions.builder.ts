@@ -1,16 +1,15 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { AzureFunction, HttpRequest, HttpRequestParams } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
 
-import type { ServiceRoleEnum } from '../../enums/user.enums';
 import { DTOsHelper } from '../helpers/dtos.helper';
 import { MocksHelper } from '../mocks.helper';
 import { DomainUsersService } from '../../services/domain/domain-users.service';
-import type { AppResponse, CustomContextType } from '../../types';
+import type { AppResponse, CustomContextType, RoleType } from '../../types';
 
-import type { TestUserType } from './user.builder';
+import type { TestUserOrganisationUnitType, TestUserOrganisationsType, TestUserType } from './user.builder';
 
 export class AzureHttpTriggerBuilder {
-
   private context: CustomContextType;
   private request: HttpRequest = {
     url: '',
@@ -34,12 +33,10 @@ export class AzureHttpTriggerBuilder {
   };
 
   constructor() {
-
     this.context = {
       auth: { user: { identityId: randUuid(), name: randUserName() } },
       ...MocksHelper.mockContext()
     };
-
   }
 
   // public setUrl(url: string): this {
@@ -57,9 +54,21 @@ export class AzureHttpTriggerBuilder {
   //   return this;
   // }
 
-  public setAuth(user: TestUserType, userRole?: ServiceRoleEnum): this {
+  public setAuth<
+    T extends Pick<
+      TestUserType,
+      'id' | 'identityId' | 'email' | 'name' | 'mobilePhone' | 'isActive' | 'lockedAt' | 'roles' | 'organisations'
+    >
+  >(user: T, userRoleKey?: keyof T['roles']): this {
+    if (!userRoleKey) {
+      if ([...Object.keys(user.roles)].length === 1) {
+        userRoleKey = [...Object.keys(user.roles)][0]!;
+      } else {
+        throw new Error('DTOsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
+      }
+    }
 
-    const userRequextContext = DTOsHelper.getUserRequestContext(user, userRole);
+    const userRequextContext = DTOsHelper.getUserRequestContext(user, userRoleKey);
 
     this.context.auth = {
       user: {
@@ -69,22 +78,30 @@ export class AzureHttpTriggerBuilder {
       }
     };
 
+    const organisations = [...Object.keys(user.organisations).map(key => user.organisations[key])].filter(
+      (item): item is TestUserOrganisationsType => !!item
+    );
+
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
       id: user.id,
       identityId: user.identityId,
       email: user.email,
       displayName: user.name,
-      roles: user.roles,
+      roles: [...Object.keys(user.roles).map(key => user.roles[key])].filter((item): item is RoleType => !!item),
       phone: user.mobilePhone,
       isActive: user.isActive,
       lockedAt: user.lockedAt,
       passwordResetAt: null,
       firstTimeSignInAt: null,
-      organisations: user.organisations
+      organisations: organisations.map(org => ({
+        ...org,
+        organisationUnits: [...Object.keys(org.organisationUnits).map(key => org.organisationUnits[key])].filter(
+          (item): item is TestUserOrganisationUnitType => !!item
+        )
+      }))
     });
 
     return this;
-
   }
 
   public setBody<T extends { [key: string]: any }>(body: T): this {
@@ -104,17 +121,14 @@ export class AzureHttpTriggerBuilder {
 }
 
 export class AzureQueueTriggerBuilder {
-
   private context: CustomContextType;
   private request: { data: Record<string, unknown> } = { data: {} };
 
   constructor() {
-
     this.context = {
       auth: { user: { identityId: randUuid(), name: randUserName() } },
       ...MocksHelper.mockContext()
     };
-
   }
 
   public setRequestData(data: Record<string, unknown>): this {
@@ -126,5 +140,4 @@ export class AzureQueueTriggerBuilder {
     await func(this.context, this.request);
     return this.context.res as T;
   }
-
 }
