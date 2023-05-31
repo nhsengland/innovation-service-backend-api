@@ -5,9 +5,9 @@ import { randUserName, randUuid } from '@ngneat/falso';
 import { DTOsHelper } from '../helpers/dtos.helper';
 import { MocksHelper } from '../mocks.helper';
 import { DomainUsersService } from '../../services/domain/domain-users.service';
-import type { AppResponse, CustomContextType, RoleType } from '../../types';
+import type { AppResponse, CustomContextType } from '../../types/request.types';
 
-import type { TestUserOrganisationUnitType, TestUserOrganisationsType, TestUserType } from './user.builder';
+import type { TestUserType } from './user.builder';
 
 export class AzureHttpTriggerBuilder {
   private context: CustomContextType;
@@ -20,13 +20,6 @@ export class AzureHttpTriggerBuilder {
     params: {},
     query: {},
     user: null,
-    // user: {
-    //   id: randUuid(),
-    //   type: 'AppService',
-    //   username: randUserName(),
-    //   identityProvider: 'AzureAD',
-    //   claimsPrincipalData: {}
-    // },
     parseFormBody: () => {
       throw new Error('Function not implemented.');
     }
@@ -54,15 +47,11 @@ export class AzureHttpTriggerBuilder {
   //   return this;
   // }
 
-  public setAuth<
-    T extends Pick<
-      TestUserType,
-      'id' | 'identityId' | 'email' | 'name' | 'mobilePhone' | 'isActive' | 'lockedAt' | 'roles' | 'organisations'
-    >
-  >(user: T, userRoleKey?: keyof T['roles']): this {
+  public setAuth(user: TestUserType, userRoleKey?: keyof TestUserType['roles']): this {
+
     if (!userRoleKey) {
-      if ([...Object.keys(user.roles)].length === 1) {
-        userRoleKey = [...Object.keys(user.roles)][0]!;
+      if (Object.keys(user.roles).length === 1) {
+        userRoleKey = Object.keys(user.roles)[0];
       } else {
         throw new Error('DTOsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
       }
@@ -78,30 +67,25 @@ export class AzureHttpTriggerBuilder {
       }
     };
 
-    const organisations = [...Object.keys(user.organisations).map(key => user.organisations[key])].filter(
-      (item): item is TestUserOrganisationsType => !!item
-    );
-
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
       id: user.id,
       identityId: user.identityId,
       email: user.email,
       displayName: user.name,
-      roles: [...Object.keys(user.roles).map(key => user.roles[key])].filter((item): item is RoleType => !!item),
+      roles: Object.values(user.roles),
       phone: user.mobilePhone,
       isActive: user.isActive,
       lockedAt: user.lockedAt,
       passwordResetAt: null,
       firstTimeSignInAt: null,
-      organisations: organisations.map(org => ({
-        ...org,
-        organisationUnits: [...Object.keys(org.organisationUnits).map(key => org.organisationUnits[key])].filter(
-          (item): item is TestUserOrganisationUnitType => !!item
-        )
+      organisations: Object.values(user.organisations).map(organisation => ({
+        ...organisation,
+        organisationUnits: Object.values(organisation.organisationUnits)
       }))
     });
 
     return this;
+
   }
 
   public setBody<T extends { [key: string]: any }>(body: T): this {

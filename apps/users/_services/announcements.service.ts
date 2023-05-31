@@ -30,7 +30,8 @@ export class AnnouncementsService extends BaseService {
 
     const dbUserRole = await connection
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.role', 'userRole.userId', 'userRole.createdAt'])
+      .select(['userRole.id', 'userRole.role', 'userRole.createdAt', 'user.id'])
+      .innerJoin('userRole.user', 'user')
       .where('userRole.id = :roleId', { roleId: userRoleId })
       .getOne();
 
@@ -49,7 +50,7 @@ export class AnnouncementsService extends BaseService {
         'announcement.params'
       ])
       .leftJoin('announcement.announcementUsers', 'announcementUsers', 'announcementUsers.user_id = :userId', {
-        userId: dbUserRole.userId
+        userId: dbUserRole.user.id
       })
       .where("CONCAT(',', announcement.user_roles, ',') LIKE :userRole", {
         userRole: `%,${dbUserRole.role},%`

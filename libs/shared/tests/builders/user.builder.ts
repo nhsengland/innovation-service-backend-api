@@ -45,10 +45,8 @@ export type TestUserType = {
   mobilePhone: null | string;
   isActive: boolean;
   lockedAt: null | Date;
-  roles: {
-    [key: string]: RoleType;
-  };
-  organisations: { [key: string]: TestUserOrganisationsType };
+  roles: Record<string, RoleType>;
+  organisations: Record<string, TestUserOrganisationsType>;
 };
 
 export class UserBuilder extends BaseBuilder {
@@ -92,6 +90,7 @@ export class UserBuilder extends BaseBuilder {
   }
 
   addRole(type: ServiceRoleEnum, roleName: string, organisationId?: string, organisationUnitId?: string): this {
+
     if (
       [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(type) &&
       (!organisationId || !organisationUnitId)
@@ -115,6 +114,7 @@ export class UserBuilder extends BaseBuilder {
     });
 
     return this;
+
   }
 
   private async saveRole(
@@ -248,7 +248,7 @@ export class UserBuilder extends BaseBuilder {
       };
     } = {};
 
-    this.rolesToAdd.map(r => {
+    this.rolesToAdd.forEach(r => {
       const foundRole = result.serviceRoles.find(sR => {
         if (sR.role !== r.role) {
           return false;
@@ -316,8 +316,10 @@ export class UserBuilder extends BaseBuilder {
     } = {};
 
     (await result.userOrganisations).map(userOrganisation => {
+
       const organisation = userOrganisation.organisation;
       const organisationUnits = userOrganisation.userOrganisationUnits;
+
       organisations[organisation.name] = {
         id: organisation.id,
         name: organisation.name,
@@ -338,6 +340,7 @@ export class UserBuilder extends BaseBuilder {
           organisationUnitUser: { id: item.id }
         };
       });
+
     });
 
     return {
@@ -351,5 +354,7 @@ export class UserBuilder extends BaseBuilder {
       roles: userRoles,
       organisations: organisations
     };
+
   }
+  
 }

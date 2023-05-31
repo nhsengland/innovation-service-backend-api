@@ -6,19 +6,17 @@ import type { DomainContextType } from '../../types/domain.types';
 import type { TestUserType } from '../builders/user.builder';
 
 export class DTOsHelper {
-  static getUserRequestContext<T extends Pick<TestUserType, 'id' | 'identityId' | 'roles'>>(
-    user: T,
-    userRoleKey?: keyof T['roles']
-  ): DomainContextType {
+  static getUserRequestContext(user: TestUserType, userRoleKey?: keyof TestUserType['roles']): DomainContextType {
+
     if (!userRoleKey) {
-      if ([...Object.keys(user.roles)].length === 1) {
-        userRoleKey = [...Object.keys(user.roles)][0]!;
+      if (Object.keys(user.roles).length === 1) {
+        userRoleKey = Object.keys(user.roles)[0];
       } else {
-        throw new Error('DTOsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
+        throw new Error('DTOsHelper::getUserRequestContext: More than 1 role, needs userRoleKey parameter defined.');
       }
     }
 
-    const role = user.roles[userRoleKey as string];
+    const role = user.roles[userRoleKey!];
     if (!role) {
       throw new Error('DTOsHelper::getUserContext: User role not found.');
     }
@@ -71,19 +69,18 @@ export class DTOsHelper {
     throw new Error('DTOsHelper::getUserContext: Unexpected error, no role found.');
   }
 
-  static getRecipientUser<T extends Pick<TestUserType, 'id' | 'identityId' | 'isActive' | 'roles'>>(
-    user: T,
-    userRoleKey?: keyof T['roles']
-  ): RecipientType {
+  static getRecipientUser(user: TestUserType, userRoleKey?: keyof TestUserType['roles']): RecipientType {
+
     if (!userRoleKey) {
-      if ([...Object.keys(user.roles)].length === 1) {
-        userRoleKey = [...Object.keys(user.roles)][0]!;
+      if (Object.keys(user.roles).length === 1) {
+        userRoleKey = Object.keys(user.roles)[0];
       } else {
         throw new Error('DTOsHelper::getRecipientUser: User with more than 1 role, needs userRole parameter defined.');
       }
     }
 
-    const role = user.roles[userRoleKey as string];
+    const role = user.roles[userRoleKey!];
+
     if (!role) {
       throw new Error('DTOsHelper::getRecipientUser: User role not found.');
     }

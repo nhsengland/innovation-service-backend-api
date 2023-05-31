@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
 import { GenericErrorsEnum, InternalServerError } from '../../errors';
@@ -23,14 +23,11 @@ export class UserRoleEntity extends BaseEntity {
   @Column({ name: 'locked_at', type: 'datetime2', nullable: true })
   lockedAt: Date | null;
 
-  @Column({ name: 'user_id', nullable: false, insert: false, update: false })
-  userId: string;
+  @RelationId('organisation')
+  organisationId: string;
 
-  @Column({ name: 'organisation_id', nullable: true, insert: false, update: false })
-  organisationId: null | string;
-
-  @Column({ name: 'organisation_unit_id', nullable: true, insert: false, update: false })
-  organisationUnitId: null | string;
+  @RelationId('organisationUnit')
+  organisationUnitId: string;
 
   @ManyToOne(() => UserEntity, { nullable: false })
   @JoinColumn({ name: 'user_id' })
