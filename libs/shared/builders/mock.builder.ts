@@ -2,7 +2,6 @@ import { randEmail, randPhoneNumber, randUserName } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { UserEntity } from '../entities/user/user.entity';
 import { DomainUsersService } from '../services';
-import type { DomainUserInfoType } from '../types';
 
 export class MockBuilder {
   private _spies: jest.SpyInstance[] = [];
@@ -25,7 +24,8 @@ export class MockBuilder {
     return this;
   }
 
-  mockDomainUser(user: UserEntity): DomainUserInfoBuilder {
+  mockDomainUser(user: UserEntity) {
+
     const data = {
       id: user.id,
       identityId: user.identityId,
@@ -36,19 +36,17 @@ export class MockBuilder {
       firstTimeSignInAt: user.firstTimeSignInAt,
       passwordResetAt: null,
       phone: randPhoneNumber(),
-      // roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })], // Was like this before, not needed
-      roles: user.serviceRoles,
-      organisations: []
-    } as DomainUserInfoType;
+      roles: user.serviceRoles
+    };
 
     return new DomainUserInfoBuilder(data, this);
   }
 }
 
 class DomainUserInfoBuilder {
-  user: DomainUserInfoType;
+  user: any;
   builder: MockBuilder;
-  constructor(user: DomainUserInfoType, builder: MockBuilder) {
+  constructor(user: any, builder: MockBuilder) {
     this.user = user;
     this.builder = builder;
   }

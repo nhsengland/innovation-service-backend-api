@@ -13,8 +13,8 @@ export class AnnouncementsService extends BaseService {
     super();
   }
 
-  async getUserAnnouncements(
-    requestUser: DomainContextType,
+  async getUserRoleAnnouncements(
+    userRoleId: string,
     entityManager?: EntityManager
   ): Promise<
     {
@@ -28,13 +28,14 @@ export class AnnouncementsService extends BaseService {
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const requestUserRole = await connection
-      .createQueryBuilder(UserRoleEntity, 'role')
-      .select(['role.id', 'role.createdAt'])
-      .where('role.id = :roleId', { roleId: requestUser.currentRole.id })
+    const dbUserRole = await connection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .select(['userRole.id', 'userRole.role', 'userRole.createdAt', 'user.id'])
+      .innerJoin('userRole.user', 'user')
+      .where('userRole.id = :roleId', { roleId: userRoleId })
       .getOne();
 
-    if (!requestUserRole) {
+    if (!dbUserRole) {
       return [];
     }
 
@@ -49,12 +50,12 @@ export class AnnouncementsService extends BaseService {
         'announcement.params'
       ])
       .leftJoin('announcement.announcementUsers', 'announcementUsers', 'announcementUsers.user_id = :userId', {
-        userId: requestUser.id
+        userId: dbUserRole.user.id
       })
       .where("CONCAT(',', announcement.user_roles, ',') LIKE :userRole", {
-        userRole: `%,${requestUser.currentRole.role},%`
+        userRole: `%,${dbUserRole.role},%`
       })
-      .andWhere('announcement.starts_at > :createdAtUserRole', { createdAtUserRole: requestUserRole.createdAt })
+      .andWhere('announcement.starts_at > :createdAtUserRole', { createdAtUserRole: dbUserRole.createdAt })
       .andWhere('GETDATE() > announcement.starts_at')
       .andWhere('(announcement.expires_at IS NULL OR GETDATE() < announcement.expires_at)')
       .andWhere('announcementUsers.read_at IS NULL')
