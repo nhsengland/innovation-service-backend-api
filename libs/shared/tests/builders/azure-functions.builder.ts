@@ -47,7 +47,7 @@ export class AzureHttpTriggerBuilder {
   //   return this;
   // }
 
-  public setAuth(user: TestUserType, userRoleKey?: keyof TestUserType['roles']): this {
+  public setAuth<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): this {
 
     if (!userRoleKey) {
       if (Object.keys(user.roles).length === 1) {

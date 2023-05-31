@@ -6,17 +6,17 @@ import type { DomainContextType } from '../../types/domain.types';
 import type { TestUserType } from '../builders/user.builder';
 
 export class DTOsHelper {
-  static getUserRequestContext(user: TestUserType, userRoleKey?: keyof TestUserType['roles']): DomainContextType {
+  static getUserRequestContext<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): DomainContextType {
 
     if (!userRoleKey) {
       if (Object.keys(user.roles).length === 1) {
-        userRoleKey = Object.keys(user.roles)[0];
+        userRoleKey = Object.keys(user.roles)[0]!;
       } else {
         throw new Error('DTOsHelper::getUserRequestContext: More than 1 role, needs userRoleKey parameter defined.');
       }
     }
 
-    const role = user.roles[userRoleKey!];
+    const role = user.roles[userRoleKey as string];
     if (!role) {
       throw new Error('DTOsHelper::getUserContext: User role not found.');
     }
@@ -69,17 +69,17 @@ export class DTOsHelper {
     throw new Error('DTOsHelper::getUserContext: Unexpected error, no role found.');
   }
 
-  static getRecipientUser(user: TestUserType, userRoleKey?: keyof TestUserType['roles']): RecipientType {
+  static getRecipientUser<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): RecipientType {
 
     if (!userRoleKey) {
       if (Object.keys(user.roles).length === 1) {
-        userRoleKey = Object.keys(user.roles)[0];
+        userRoleKey = Object.keys(user.roles)[0]!;
       } else {
         throw new Error('DTOsHelper::getRecipientUser: User with more than 1 role, needs userRole parameter defined.');
       }
     }
 
-    const role = user.roles[userRoleKey!];
+    const role = user.roles[userRoleKey as string];
 
     if (!role) {
       throw new Error('DTOsHelper::getRecipientUser: User role not found.');
