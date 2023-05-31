@@ -55,8 +55,7 @@ class V1MeInfo {
           .isAccepted;
         hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
         hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
-        hasAnnouncements =
-          (await announcementsService.getUserAnnouncements({ id: requestUser.id, roleId: userRole.id })).length > 0;
+        hasAnnouncements = (await announcementsService.getUserRoleAnnouncements(userRole.id)).length > 0;
 
         if (userRole.role === ServiceRoleEnum.INNOVATOR) {
           userPreferences = await domainService.users.getUserPreferences(requestUser.id);

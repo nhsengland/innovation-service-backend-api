@@ -29,7 +29,7 @@ class V1MeAnnouncements {
         .verify();
       const requestContext = auth.getContext();
 
-      const announcements = await announcementsService.getUserAnnouncements({ id: requestContext.id, roleId: requestContext.currentRole.id });
+      const announcements = await announcementsService.getUserRoleAnnouncements(requestContext.currentRole.id);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(
         announcements.map(announcement => ({

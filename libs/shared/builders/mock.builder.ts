@@ -36,9 +36,7 @@ export class MockBuilder {
       firstTimeSignInAt: user.firstTimeSignInAt,
       passwordResetAt: null,
       phone: randPhoneNumber(),
-      // roles: [UserRoleEntity.new({ id: randUuid(), role: ServiceRoleEnum.INNOVATOR })], // Was like this before, not needed
-      roles: user.serviceRoles,
-      // organisations: []
+      roles: user.serviceRoles
     };
 
     return new DomainUserInfoBuilder(data, this);
