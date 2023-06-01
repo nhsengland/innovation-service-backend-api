@@ -8,6 +8,7 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { UserBuilder } from '../builders/user.builder';
+import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -21,26 +22,6 @@ export class CompleteScenarioBuilder {
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async createScenario() {
     return await this.sqlConnection.transaction(async entityManager => {
-      //organisations
-
-      const aliceOrg = await new OrganisationBuilder(entityManager).setName('aliceOrg').save();
-
-      // organisationUnits
-
-      const aliceOrgUnit = await new OrganisationUnitBuilder(entityManager)
-        .addToOrganisation(aliceOrg.id)
-        .setName('aliceOrgUnit')
-        .save();
-
-      // QAs and Accessors
-
-      // Alice Qualifying Accessor specs:
-      // Belongs to an active organisation.
-      const aliceQualifyingAccessor = await new UserBuilder(entityManager)
-        .setName('Alice Qualifying Accessor')
-        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', aliceOrg.id, aliceOrgUnit.id)
-        .save();
-
       // Needs assessors
 
       const paulNeedsAssessor = await new UserBuilder(entityManager)
@@ -48,16 +29,43 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
         .save();
 
-      // Innovators.
+      // QAs and Accessors
 
-      // John Innovator specs:
-      // 1 innovation in status 'CREATED' with 1 action in status 'REQUESTED'
+      const healthOrg = await new OrganisationBuilder(entityManager).setName('Health Organisation').save();
+
+      const healthOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(healthOrg.id)
+        .setName('Health Org Unit')
+        .save();
+
+      // Alice Qualifying Accessor specs:
+      // Belongs to an active organisation.
+      const aliceQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Alice Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', healthOrg.id, healthOrgUnit.id)
+        .save();
+
+      // Ingrid Accessor specs:
+      // Belongs to an active organisation.
+      const ingridAccessor = await new UserBuilder(entityManager)
+        .setName('Ingrid Accessor')
+        .addRole(ServiceRoleEnum.ACCESSOR, 'accessorRole', healthOrg.id, healthOrgUnit.id)
+        .save();
+
+      // Innovators
+
+      // John Innovator
       const johnInnovator = await new UserBuilder(entityManager)
         .setName('John Innovator')
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
         // .addRole(ServiceRoleEnum.INNOVATOR)
         .save();
 
+      // Innovation owned by johnInnovator with janeCollaborator as ACTIVE collaborator
+      const johnInnovation = await (
+        await new InnovationBuilder(entityManager).setOwner(johnInnovator.id).addSection('INNOVATION_DESCRIPTION')
+      ).save();
+    
       // Jane Innovator specs:
       // Collaborator on jonhInnovation
       const janeInnovator = await new UserBuilder(entityManager)
@@ -65,34 +73,11 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
         .save();
 
-      // Adam Innovator specs:
-      // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user.
-      const adamInnovator = await new UserBuilder(entityManager)
-        .setName('Adam Innovator')
-        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
-        .save();
-
-      // Innovations
-
-      // Innovation owned by johnInnovator with janeCollaborator as ACTIVE collaborator
-      const johnInnovation = await (
-        await new InnovationBuilder(entityManager).setOwner(johnInnovator.id).addSection('INNOVATION_DESCRIPTION')
-      ).save();
-
-      const adamInnovation = await new InnovationBuilder(entityManager)
-        .setOwner(adamInnovator.id)
-        .addTransfer('transfers@example.org')
-        .save();
-
-      // Collaborators
-
       // Add janeInnovator as a collaborator on johnInnovation
       const janeCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setUser(janeInnovator.id)
         .setInnovation(johnInnovation.id)
         .save();
-
-      // Actions
 
       // action on johnInnovation created by Alice (QA)
       const johnInnovationActionByAlice = await new InnovationActionBuilder(entityManager)
@@ -112,6 +97,67 @@ export class CompleteScenarioBuilder {
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .save();
 
+      const johnInnovationThreadByAlice = await (
+        await new InnovationThreadBuilder(entityManager)
+          .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+          .setInnovation(johnInnovation.id)
+          .addMessage(
+            { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+            'aliceMessage'
+          )
+      ).save();
+
+      const johnInnovationThreadByIngrid = await (
+        await new InnovationThreadBuilder(entityManager)
+          .setAuthor(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
+          .setInnovation(johnInnovation.id)
+          .addMessage(
+            { id: ingridAccessor.id, roleId: ingridAccessor.roles['accessorRole']!.id },
+            'ingridMessage'
+          )
+      ).save();
+
+      const johnInnovationThreadByPaul = await (
+        await new InnovationThreadBuilder(entityManager)
+          .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+          .setInnovation(johnInnovation.id)
+          .addMessage(
+            { id: paulNeedsAssessor.id, roleId: paulNeedsAssessor.roles['assessmentRole']!.id },
+            'paulMessage'
+          )
+      ).save();
+
+      const johnInnovationThreadByJane = await (
+        await new InnovationThreadBuilder(entityManager)
+          .setAuthor(janeInnovator.id, janeInnovator.roles['innovatorRole']!.id)
+          .setInnovation(johnInnovation.id)
+          .addMessage(
+            { id: janeInnovator.id, roleId: janeInnovator.roles['innovatorRole']!.id },
+            'janeMessage'
+          )
+      ).save();
+
+      const johnInnovationThreadByJohn = await (
+        await new InnovationThreadBuilder(entityManager)
+          .setAuthor(johnInnovator.id, johnInnovator.roles['innovatorRole']!.id)
+          .setInnovation(johnInnovation.id)
+          .addMessage(
+            { id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id },
+            'johnMessage'
+          )
+      ).save();
+      // Adam Innovator specs:
+      // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user.
+      const adamInnovator = await new UserBuilder(entityManager)
+        .setName('Adam Innovator')
+        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
+        .save();
+
+      const adamInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(adamInnovator.id)
+        .addTransfer('transfers@example.org')
+        .save();
+
       return {
         users: {
           johnInnovator: {
@@ -120,8 +166,33 @@ export class CompleteScenarioBuilder {
             innovations: {
               johnInnovation: {
                 ...johnInnovation,
-                actions: [johnInnovationActionByAlice, johnInnovationActionByPaul],
-                collaborators: [janeCollaborator]
+                actions: {
+                  actionByAlice: johnInnovationActionByAlice,
+                  actionByPaul: johnInnovationActionByPaul
+                },
+                threads: {
+                  threadByAliceQA: {
+                    ...johnInnovationThreadByAlice,
+                    messages: { aliceMessage: johnInnovationThreadByAlice.messages['aliceMessage']! }
+                  },
+                  threadByPaulNA: {
+                    ...johnInnovationThreadByPaul,
+                    messages: { paulMessage: johnInnovationThreadByPaul.messages['paulMessage']! }
+                  },
+                  threadByIngridAccessor: {
+                    ...johnInnovationThreadByIngrid,
+                    messages: { ingridMessage: johnInnovationThreadByIngrid.messages['ingridMessage']! }
+                  },
+                  threadByJaneCollaborator: {
+                    ...johnInnovationThreadByJane,
+                    messages: { janeMessage: johnInnovationThreadByJane.messages['janeMessage']! }
+                  },
+                  threadByJohn: {
+                    ...johnInnovationThreadByJohn,
+                    messages: { johnMessage: johnInnovationThreadByJohn.messages['johnMessage']! }
+                  }
+                },
+                collaborators: { janeCollaborator: janeCollaborator }
               }
             }
           },
@@ -141,10 +212,22 @@ export class CompleteScenarioBuilder {
             ...aliceQualifyingAccessor,
             roles: { qaRole: aliceQualifyingAccessor.roles['qaRole']! },
             organisations: {
-              aliceOrg: {
-                ...aliceQualifyingAccessor.organisations['aliceOrg']!,
+              healthOrg: {
+                ...aliceQualifyingAccessor.organisations['Health Organisation']!,
                 organisationUnits: {
-                  aliceOrgUnit: aliceQualifyingAccessor.organisations['aliceOrg']!.organisationUnits['aliceOrgUnit']!
+                  healthOrgUnit: aliceQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
+                }
+              }
+            }
+          },
+          ingridAccessor: {
+            ...ingridAccessor,
+            roles: { accessorRole: ingridAccessor.roles['accessorRole']! },
+            organisations: {
+              healthOrg: {
+                ...ingridAccessor.organisations['Health Organisation']!,
+                organisationUnits: {
+                  healthOrgUnit: ingridAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
                 }
               }
             }

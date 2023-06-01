@@ -26,7 +26,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
     const actionOwnerContext = testsHelper.getUserContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
 
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const action = innovation.actions[0]!;
+    const action = innovation.actions.actionByAlice;
 
     //mock request user info
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
@@ -54,7 +54,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
     // mock action
     jest.spyOn(RecipientsService.prototype, 'actionInfoWithOwner').mockResolvedValue({
       organisationUnit: {
-        name: scenario.users.aliceQualifyingAccessor.organisations.aliceOrg.organisationUnits.aliceOrgUnit.name
+        name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
       }
     } as any);
 
@@ -81,7 +81,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         accessor_name: scenario.users.aliceQualifyingAccessor.name,
-        unit_name: scenario.users.aliceQualifyingAccessor.organisations.aliceOrg.organisationUnits.aliceOrgUnit.name,
+        unit_name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({
@@ -98,7 +98,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         accessor_name: scenario.users.aliceQualifyingAccessor.name,
-        unit_name: scenario.users.aliceQualifyingAccessor.organisations.aliceOrg.organisationUnits.aliceOrgUnit.name,
+        unit_name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({
@@ -129,7 +129,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
     const actionOwnerContext = testsHelper.getUserContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
 
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const action = innovation.actions[1]!; //action created by Paul (NA)
+    const action = innovation.actions.actionByPaul; //action created by Paul (NA)
 
     //mock request user info
     jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({

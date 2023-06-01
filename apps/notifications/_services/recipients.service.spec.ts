@@ -113,7 +113,7 @@ describe('Notifications / _services / recipients service suite', () => {
   describe('actionInfoWithOwner suite', () => {
     it('Should get action info', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const dbAction = dbInnovation.actions[0]!; // action creted by Alice (QA)
+      const dbAction = dbInnovation.actions.actionByAlice;
 
       const actionInfo = await sut.actionInfoWithOwner(dbAction.id);
 

@@ -57,7 +57,7 @@ export class AzureHttpTriggerBuilder {
       }
     }
 
-    const userRequextContext = DTOsHelper.getUserRequestContext(user, userRoleKey);
+    const userRequextContext = DTOsHelper.getUserRequestContext(user, userRoleKey as string);
 
     this.context.auth = {
       user: {
