@@ -8,7 +8,7 @@ export type ResponseDTO = {
   submittedAt: null | Date;
   submittedBy: null | {
     name: string;
-    isOwner: boolean;
+    isOwner?: boolean;
   };
   data: null | { [key: string]: any };
   actionsIds?: string[];

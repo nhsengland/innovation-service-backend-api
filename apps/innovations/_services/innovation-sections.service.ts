@@ -67,7 +67,7 @@ export class InnovationSectionsService extends BaseService {
       submittedAt: null | Date;
       submittedBy: null | {
         name: string;
-        isOwner: boolean;
+        isOwner?: boolean;
       };
       openActionsCount: number;
     }[]
@@ -150,6 +150,8 @@ export class InnovationSectionsService extends BaseService {
       if (section) {
         const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
 
+        const submittedByName = section.submittedBy && innovatorNames.get(section.submittedBy.identityId)?.displayName;
+
         return {
           id: section.id,
           section: section.section,
@@ -157,8 +159,10 @@ export class InnovationSectionsService extends BaseService {
           submittedAt: section.submittedAt,
           submittedBy: section.submittedBy
             ? {
-                name: innovatorNames.get(section.submittedBy.identityId)?.displayName ?? 'unknown user',
-                isOwner: section.submittedBy.id === innovation.owner?.id ?? false
+                name: submittedByName ?? 'unknown user',
+                ...(submittedByName && {
+                  isOwner: section.submittedBy.id === innovation.owner?.id
+                })
               }
             : null,
           openActionsCount
@@ -189,7 +193,7 @@ export class InnovationSectionsService extends BaseService {
     submittedAt: null | Date;
     submittedBy: null | {
       name: string;
-      isOwner: boolean;
+      isOwner?: boolean;
     };
     data: null | { [key: string]: any };
     actionsIds?: string[];
@@ -288,7 +292,7 @@ export class InnovationSectionsService extends BaseService {
       submittedBy: dbSection?.submittedBy
         ? {
             name: submittedBy ?? 'unknown user',
-            isOwner: dbSection.submittedBy.id === innovation.owner?.id
+            ...(submittedBy && { isOwner: dbSection.submittedBy.id === innovation.owner?.id })
           }
         : null,
       data: !sectionHidden ? sectionData : null,
