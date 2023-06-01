@@ -67,17 +67,21 @@ export class RecipientsService extends BaseService {
    * @param userIdentityId the user identity id
    * @returns user info or null if not found
    */
-  async usersIdentityInfo(userIdentityId: string): Promise<IdentityUserInfo | null>;
+  async usersIdentityInfo(userIdentityId?: string): Promise<IdentityUserInfo | null>;
   /**
-   * gets the identityIfno for a list of users
+   * gets the identityInfo for a list of users
    * @param userIdentityIds the user identity ids
    * @param includeLocked wether to include locked users (default: false)
    * @returns list of users identity info
    */
   async usersIdentityInfo(userIdentityIds: string[]): Promise<Map<string, IdentityUserInfo>>;
   async usersIdentityInfo(
-    userIdentityIds: string | string[]
+    userIdentityIds?: string | string[]
   ): Promise<null | IdentityUserInfo | Map<string, IdentityUserInfo>> {
+    if (!userIdentityIds) {
+      return null;
+    }
+
     if (typeof userIdentityIds === 'string') {
       return (await this.identityProviderService.getUsersList([userIdentityIds]))[0] ?? null;
     } else {
@@ -88,7 +92,7 @@ export class RecipientsService extends BaseService {
   /**
    * retrieves basic innovation info (note this assumes that the owner is not deleted unless withDeleted is set to true)
    *
-   * !!!REVIEW THIS!!! we need to review all assumptions that innovations have an owner; Also remove the identityId from the response
+   * !!!REVIEW THIS!!! Also remove the identityId from the response
    *
    * @param innovationId the innovation id
    * @param withDeleted optionally include deleted records (default: false)
@@ -99,8 +103,8 @@ export class RecipientsService extends BaseService {
     withDeleted = false
   ): Promise<{
     name: string;
-    ownerId: string;
-    ownerIdentityId: string;
+    ownerId?: string;
+    ownerIdentityId?: string;
   }> {
     const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation');
 
@@ -110,7 +114,7 @@ export class RecipientsService extends BaseService {
 
     query
       .select(['innovation.name', 'owner.id', 'owner.identityId'])
-      .innerJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId });
 
     const dbInnovation = await query.getOne();
@@ -121,8 +125,8 @@ export class RecipientsService extends BaseService {
 
     return {
       name: dbInnovation.name,
-      ownerId: dbInnovation.owner.id,
-      ownerIdentityId: dbInnovation.owner.identityId
+      ownerId: dbInnovation.owner?.id,
+      ownerIdentityId: dbInnovation.owner?.identityId
     };
   }
 
@@ -145,7 +149,6 @@ export class RecipientsService extends BaseService {
       userId?: string;
     }[]
   > {
-
     const query = this.sqlConnection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select(['collaborator.email', 'collaborator.status', 'user.id', 'user.status'])
@@ -687,8 +690,8 @@ export class RecipientsService extends BaseService {
     const dbInnovations = await this.sqlConnection
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.identityId', 'roles.id', 'roles.role'])
-      .innerJoin('innovations.owner', 'owner')
-      .innerJoin('owner.serviceRoles', 'roles')
+      .leftJoin('innovations.owner', 'owner')
+      .leftJoin('owner.serviceRoles', 'roles')
       .where(`innovations.status = '${InnovationStatusEnum.CREATED}'`)
       .andWhere('roles.role = :role', { role: ServiceRoleEnum.INNOVATOR })
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
@@ -696,17 +699,19 @@ export class RecipientsService extends BaseService {
       .andWhere('owner.status = :userActive AND roles.lockedAt IS NULL', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
-    return dbInnovations.map(innovation => ({
-      recipient: {
-        userId: innovation.owner.id,
-        identityId: innovation.owner.identityId,
-        roleId: innovation.owner.serviceRoles[0]?.id ?? '',
-        role: innovation.owner.serviceRoles[0]?.role ?? ServiceRoleEnum.INNOVATOR,
-        isActive: innovation.owner.serviceRoles[0] ? true : false
-      },
-      innovationId: innovation.id,
-      innovationName: innovation.name
-    }));
+    return dbInnovations
+      .filter(innovation => innovation.owner)
+      .map(innovation => ({
+        recipient: {
+          userId: innovation.owner?.id ?? '',
+          identityId: innovation.owner?.identityId ?? '',
+          roleId: innovation.owner?.serviceRoles[0]?.id ?? '',
+          role: innovation.owner?.serviceRoles[0]?.role ?? ServiceRoleEnum.INNOVATOR,
+          isActive: innovation.owner?.serviceRoles[0] ? true : false
+        },
+        innovationId: innovation.id,
+        innovationName: innovation.name
+      }));
   }
 
   /**
@@ -853,7 +858,7 @@ export class RecipientsService extends BaseService {
    * @returns the recipient for notifications
    */
   async getUsersRecipient(
-    userId: string,
+    userId: undefined | string,
     roles: ServiceRoleEnum | ServiceRoleEnum[],
     extraFilters?: RoleFilter,
     entityManager?: EntityManager
@@ -875,17 +880,22 @@ export class RecipientsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<RecipientType[]>;
   async getUsersRecipient(
-    userIds: string | string[],
+    userIds: undefined | string | string[],
     roles: ServiceRoleEnum | ServiceRoleEnum[],
     extraFilters?: RoleFilter,
     entityManager?: EntityManager
   ): Promise<null | RecipientType | RecipientType[]>;
   async getUsersRecipient(
-    userIds: string | string[],
+    userIds: undefined | string | string[],
     roles: ServiceRoleEnum | ServiceRoleEnum[],
     extraFilters?: RoleFilter,
     entityManager?: EntityManager
   ): Promise<null | RecipientType | RecipientType[]> {
+    // Moved this verification to here to prevent verifications all around the code
+    if (!userIds) {
+      return null;
+    }
+
     const userIdsArray = typeof userIds === 'string' ? [userIds] : userIds;
     if (!userIdsArray.length) {
       return [];

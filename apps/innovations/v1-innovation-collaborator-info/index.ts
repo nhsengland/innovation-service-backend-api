@@ -43,10 +43,12 @@ class V1InnovationCollaboratorInfo {
           id: collaborator.innovation.id,
           name: collaborator.innovation.name,
           description: collaborator.innovation.description,
-          owner: {
-            id: collaborator.innovation.owner.id,
-            name: collaborator.innovation.owner.name
-          }
+          ...(collaborator.innovation.owner && {
+            owner: {
+              id: collaborator.innovation.owner.id,
+              name: collaborator.innovation.owner.name
+            }
+          })
         },
         invitedAt: collaborator.invitedAt
       });

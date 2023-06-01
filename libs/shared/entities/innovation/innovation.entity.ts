@@ -66,9 +66,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'withdraw_reason', type: 'nvarchar', nullable: true })
   withdrawReason: null | string;
 
-  @ManyToOne(() => UserEntity, { nullable: false })
+  @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'owner_id' })
-  owner: UserEntity;
+  owner: null | UserEntity;
 
   @ManyToMany(() => OrganisationEntity, record => record.innovationShares, {
     nullable: true,

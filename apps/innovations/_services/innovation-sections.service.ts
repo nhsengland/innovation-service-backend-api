@@ -288,7 +288,7 @@ export class InnovationSectionsService extends BaseService {
       submittedBy: dbSection?.submittedBy
         ? {
             name: submittedBy ?? 'unknown user',
-            isOwner: dbSection.submittedBy.id === innovation.owner.id
+            isOwner: dbSection.submittedBy.id === innovation.owner?.id
           }
         : null,
       data: !sectionHidden ? sectionData : null,

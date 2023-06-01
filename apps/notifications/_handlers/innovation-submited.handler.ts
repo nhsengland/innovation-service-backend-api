@@ -46,8 +46,8 @@ export class InnovationSubmitedHandler extends BaseHandler<
       await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId)
     ).filter(c => c !== this.requestUser.id);
 
-    const innovatorRecipientIds = collaborators;
-    if (this.requestUser.id !== innovation.ownerId) {
+    const innovatorRecipientIds = [...collaborators];
+    if (innovation.ownerId && this.requestUser.id !== innovation.ownerId) {
       innovatorRecipientIds.push(innovation.ownerId);
     }
 

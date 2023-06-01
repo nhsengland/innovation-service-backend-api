@@ -17,6 +17,7 @@ import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
 import { NotificationUserEntity } from '../../entities/user/notification-user.entity';
 import { NotificationEntity } from '../../entities/user/notification.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
 import {
   ActivityEnum,
@@ -190,7 +191,6 @@ export class DomainInnovationsService {
 
     const dbInnovations = await this.innovationRepository
       .createQueryBuilder('innovations')
-      .withDeleted()
       .leftJoinAndSelect('innovations.owner', 'owner')
       .leftJoinAndSelect('owner.serviceRoles', 'roles')
       .leftJoinAndSelect('innovations.innovationSupports', 'supports')
@@ -203,16 +203,40 @@ export class DomainInnovationsService {
       })
       .getMany();
 
+    /**
+     * If in the future we want to withdraw innovations for different users this needs to be inside the for loop
+     */
+    let userId = user.id;
+    let roleId = user.roleId;
+    if (user.id === '' && user.roleId === '') {
+      // We will use transfer to get ownerId
+      const transfer = await em
+        .createQueryBuilder(InnovationTransferEntity, 'transfer')
+        .select(['transfer.id', 'transfer.createdBy'])
+        .where('transfer.innovation_id = :innovationId', { innovationId: innovations[0]!.id }) // We are verifying above
+        .orderBy('transfer.updatedAt', 'DESC')
+        .getOne();
+      if (!transfer) {
+        return []; // this will never happen
+      }
+
+      const userRole = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .withDeleted()
+        .select(['role.id'])
+        .where('user_id = :userId', { userId: transfer.createdBy })
+        .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+        .getOne();
+      if (!userRole) {
+        return []; // this will never happen
+      }
+
+      userId = transfer.createdBy;
+      roleId = userRole.id;
+    }
+
     try {
       for (const dbInnovation of dbInnovations) {
-        const userId = user.id === '' ? dbInnovation.owner.id : user.id;
-        const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(r => r.role === ServiceRoleEnum.INNOVATOR);
-        let roleId = user.roleId;
-
-        if (innovationOwnerRole && user.roleId === '') {
-          roleId = innovationOwnerRole.id;
-        }
-
         const affectedUsers: {
           userId: string;
           userType: ServiceRoleEnum;

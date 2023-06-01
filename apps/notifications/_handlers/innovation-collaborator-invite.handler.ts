@@ -9,9 +9,9 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class InnovationCollaboratorInviteHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
@@ -23,12 +23,18 @@ export class InnovationCollaboratorInviteHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+
+    // This will never happen since in order to invite a collaborator you have to be an owner
+    if (!innovation.ownerIdentityId) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_OWNER_NOT_FOUND);
+    }
+
     const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
 
     if (!innovationOwnerInfo) {

@@ -934,7 +934,7 @@ export class InnovationsService extends BaseService {
       usersInfo = await this.domainService.users.getUsersList({
         userIds: [...assessmentUsersIds, ...[innovation.owner.id]]
       });
-      ownerInfo = usersInfo.find(item => item.id === innovation.owner.id);
+      ownerInfo = usersInfo.find(item => item.id === innovation.owner?.id);
     } else {
       usersInfo = await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds] });
     }
@@ -1010,16 +1010,16 @@ export class InnovationsService extends BaseService {
         ? {
             owner: {
               id: innovation.owner.id,
-              name: ownerInfo?.displayName || '',
-              email: ownerInfo?.email || '',
+              name: ownerInfo?.displayName ?? '',
+              email: ownerInfo?.email ?? '',
               contactByEmail: ownerPreferences.contactByEmail,
               contactByPhone: ownerPreferences.contactByPhone,
               contactByPhoneTimeframe: ownerPreferences.contactByPhoneTimeframe,
               contactDetails: ownerPreferences.contactDetails,
-              mobilePhone: ownerInfo?.mobilePhone || '',
+              mobilePhone: ownerInfo?.mobilePhone ?? '',
               isActive: !!ownerInfo?.isActive,
               lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-              organisations: ((await innovation.owner?.userOrganisations) || [])
+              organisations: ((await innovation.owner?.userOrganisations) ?? [])
                 .filter(item => !item.organisation.isShadow)
                 .map(item => ({
                   name: item.organisation.name,

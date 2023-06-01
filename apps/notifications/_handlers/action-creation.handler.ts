@@ -46,8 +46,13 @@ export class ActionCreationHandler extends BaseHandler<
 
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
 
+    const recipientsIds = [...collaborators];
+    if (innovation.ownerId) {
+      recipientsIds.push(innovation.ownerId);
+    }
+
     const innovatorRecipients = await this.recipientsService.getUsersRecipient(
-      [...collaborators, innovation.ownerId],
+      recipientsIds,
       ServiceRoleEnum.INNOVATOR
     );
 

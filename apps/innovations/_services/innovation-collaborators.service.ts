@@ -265,7 +265,7 @@ export class InnovationCollaboratorsService extends BaseService {
       id: string;
       name: string;
       description: null | string;
-      owner: { id: string; name?: string };
+      owner?: { id: string; name?: string };
     };
     invitedAt: Date;
   }> {
@@ -276,7 +276,7 @@ export class InnovationCollaboratorsService extends BaseService {
       .withDeleted()
       .innerJoin('collaborator.innovation', 'innovation')
       .leftJoin('collaborator.user', 'collaboratorUser')
-      .innerJoin('innovation.owner', 'innovationOwner')
+      .leftJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.name',
         'innovation.description',
@@ -305,7 +305,7 @@ export class InnovationCollaboratorsService extends BaseService {
     }
 
     // Check if user is not the invited collaborator and the he is not the innovation owner
-    if (collaborator.innovation.owner.id !== domainContext.id) {
+    if (collaborator.innovation.owner && collaborator.innovation.owner.id !== domainContext.id) {
       const domainUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
       if (collaborator.email !== domainUserInfo.email) {
         throw new UnauthorizedError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
@@ -328,13 +328,15 @@ export class InnovationCollaboratorsService extends BaseService {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
         description: collaborator.innovation.description,
-        owner: {
-          id: collaborator.innovation.owner.id,
-          name:
-            collaborator.innovation.owner.status !== UserStatusEnum.DELETED
-              ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName
-              : undefined
-        }
+        ...(collaborator.innovation.owner && {
+          owner: {
+            id: collaborator.innovation.owner.id,
+            name:
+              collaborator.innovation.owner.status !== UserStatusEnum.DELETED
+                ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName
+                : undefined
+          }
+        })
       },
       invitedAt: collaborator.invitedAt
     };
@@ -397,8 +399,7 @@ export class InnovationCollaboratorsService extends BaseService {
     const collaborator = await connection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .innerJoin('collaborator.innovation', 'innovation')
-      .withDeleted()
-      .innerJoin('innovation.owner', 'innovationOwner')
+      .leftJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.id',
         'innovationOwner.id',
@@ -413,7 +414,7 @@ export class InnovationCollaboratorsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
-    const isOwner = collaborator.innovation.owner.id === requestUser.id;
+    const isOwner = collaborator.innovation.owner?.id === requestUser.id;
     const isCollaborator = collaborator.email === requestUser.email;
 
     if (!isOwner && !isCollaborator) {

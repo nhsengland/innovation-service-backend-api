@@ -139,8 +139,8 @@ export class NotificationsService extends BaseService {
     const [notifications, count] = await query.getManyAndCount();
 
     const userIds = notifications
-      .filter(n => n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
-      .map(n => n.notification.innovation.owner.identityId);
+      .filter(n => n.notification.innovation.owner && n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
+      .map(n => n.notification.innovation.owner!.identityId); // We are filtering before, so it will exist
 
     const innovationOwners = await this.identityProviderService.getUsersMap(userIds);
 
@@ -152,7 +152,7 @@ export class NotificationsService extends BaseService {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
           status: n.notification.innovation.status,
-          ownerName: innovationOwners.get(n.notification.innovation.owner.identityId)?.displayName ?? ''
+          ownerName: innovationOwners.get(n.notification.innovation.owner?.identityId ?? '')?.displayName ?? ''
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,

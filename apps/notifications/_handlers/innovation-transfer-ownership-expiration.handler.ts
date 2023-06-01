@@ -9,20 +9,19 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION,
   EmailTypeEnum.INNOVATION_TRANSFER_EXPIRED,
   Record<string, never> // Validate
 > {
-
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_TRANSFER_OWNERSHIP_EXPIRATION],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -31,8 +30,13 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
 
     // This should never happen since we include deleted innovations.
     if (!innovation) {
+      this.logger(`InnovationTransferOwnershipExpirationHandler: Innovation not found ${this.inputData.innovationId}`);
+      return this;
+    }
+
+    if (!innovation.ownerId) {
       this.logger(
-        `InnovationTransferOwnershipExpirationHandler: Innovation not found ${this.inputData.innovationId}`
+        `InnovationTransferOwnershipExpirationHandler: Innovation owner not found for for innovation ${this.inputData.innovationId}`
       );
       return this;
     }

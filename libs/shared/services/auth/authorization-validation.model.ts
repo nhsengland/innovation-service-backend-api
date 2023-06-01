@@ -47,11 +47,10 @@ enum InnovationValidationKeys {
 }
 
 export class AuthorizationValidationModel {
-
   private user: { identityId?: string; data?: DomainUserInfoType } = {};
   private innovation: {
     id?: string;
-    data?: { id: string; name: string; status: InnovationStatusEnum; owner: string };
+    data?: { id: string; name: string; status: InnovationStatusEnum; owner?: string };
   } = {};
   private roleId?: string;
 
@@ -169,19 +168,13 @@ export class AuthorizationValidationModel {
     if (this.user.data?.roles.filter(item => item.organisation).length === 0) {
       return AuthErrorsEnum.AUTH_USER_WITHOUT_ORGANISATION;
     }
-    if (
-      data?.organisationRole &&
-      !data.organisationRole.some(role => role === this.requestContext?.currentRole.role)
-    ) {
+    if (data?.organisationRole && !data.organisationRole.some(role => role === this.requestContext?.currentRole.role)) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_ROLE_NOT_ALLOWED;
     }
     if (data?.organisationId && data.organisationId !== this.requestContext.organisation.id) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_NOT_ALLOWED;
     }
-    if (
-      data?.organisationUnitId &&
-      data.organisationUnitId !== this.requestContext.organisation.organisationUnit?.id
-    ) {
+    if (data?.organisationUnitId && data.organisationUnitId !== this.requestContext.organisation.organisationUnit?.id) {
       return AuthErrorsEnum.AUTH_USER_ORGANISATION_UNIT_NOT_ALLOWED;
     }
 
@@ -357,11 +350,7 @@ export class AuthorizationValidationModel {
         throw new ForbiddenError(AuthErrorsEnum.AUTH_MISSING_DOMAIN_CONTEXT);
       }
       if (!this.innovation.data) {
-        this.innovation.data = await this.fetchInnovationData(
-          this.user.data,
-          this.innovation.id,
-          this.requestContext
-        );
+        this.innovation.data = await this.fetchInnovationData(this.user.data, this.innovation.id, this.requestContext);
       }
 
       this.innovationValidations.forEach(checkMethod => validations.push(checkMethod())); // This will run the validation itself and return the result to the array.
@@ -395,12 +384,11 @@ export class AuthorizationValidationModel {
     user: DomainUserInfoType,
     innovationId: string,
     context: DomainContextType
-  ): Promise<undefined | { id: string; name: string; status: InnovationStatusEnum; owner: string }> {
+  ): Promise<undefined | { id: string; name: string; status: InnovationStatusEnum; owner?: string }> {
     const query = this.domainService.innovations.innovationRepository
       .createQueryBuilder('innovation')
       .select(['innovation.id', 'innovation.name', 'innovation.status', 'owner.id'])
-      .withDeleted() // TODO: This will be change by having innovation owner as null
-      .innerJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.owner', 'owner')
       .where('innovation.id = :innovationId', { innovationId });
 
     if (context.currentRole.role === ServiceRoleEnum.INNOVATOR) {
@@ -467,7 +455,7 @@ export class AuthorizationValidationModel {
           id: innovation.id,
           name: innovation.name,
           status: innovation.status,
-          owner: innovation.owner.id
+          owner: innovation.owner?.id
         }
       : undefined;
   }

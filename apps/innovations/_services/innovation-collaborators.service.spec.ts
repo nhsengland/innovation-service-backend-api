@@ -371,7 +371,7 @@ describe('Innovation Collaborators Suite', () => {
             id: testData.innovation.id,
             name: testData.innovation.name,
             description: testData.innovation.description,
-            owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
+            owner: { id: testData.innovation.owner?.id, name: 'Innovator 1 name' }
           }
         };
 
@@ -409,7 +409,7 @@ describe('Innovation Collaborators Suite', () => {
             id: testData.innovation.id,
             name: testData.innovation.name,
             description: testData.innovation.description,
-            owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
+            owner: { id: testData.innovation.owner?.id, name: 'Innovator 1 name' }
           }
         };
 
@@ -454,7 +454,7 @@ describe('Innovation Collaborators Suite', () => {
             id: testData.innovation.id,
             name: testData.innovation.name,
             description: testData.innovation.description,
-            owner: { id: testData.innovation.owner.id, name: 'Innovator 1 name' }
+            owner: { id: testData.innovation.owner?.id, name: 'Innovator 1 name' }
           }
         };
 

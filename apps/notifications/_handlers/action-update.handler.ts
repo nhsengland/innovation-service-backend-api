@@ -5,7 +5,7 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
+import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainService, IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
@@ -40,7 +40,7 @@ export class ActionUpdateHandler extends BaseHandler<
   private data: {
     innovation?: {
       name: string;
-      owner: RecipientType;
+      owner?: RecipientType;
     };
     actionInfo?: {
       id: string;
@@ -63,9 +63,8 @@ export class ActionUpdateHandler extends BaseHandler<
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
-    if (!owner) throw new NotFoundError(InnovationErrorsEnum.INNOVATION_OWNER_NOT_FOUND);
 
-    this.data.innovation = { name: innovation.name, owner: owner };
+    this.data.innovation = { name: innovation.name, owner: owner ?? undefined };
     this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
     switch (this.requestUser.currentRole.role) {
@@ -86,9 +85,12 @@ export class ActionUpdateHandler extends BaseHandler<
             await this.prepareConfirmationInApp();
           }
           // if action was submitted or declined by a collaborator notify owner
-          if (this.requestUser.currentRole.id !== this.data.innovation.owner.roleId) {
+          if (this.requestUser.currentRole.id !== this.data.innovation.owner?.roleId) {
             await this.prepareEmailForInnovationOwnerFromCollaborator();
-            await this.prepareInAppForInnovationOwner();
+
+            if (owner) {
+              await this.prepareInAppForInnovationOwner();
+            }
           }
         }
         break;
@@ -103,12 +105,14 @@ export class ActionUpdateHandler extends BaseHandler<
             InnovationActionStatusEnum.DELETED
           ].includes(this.inputData.action.status)
         ) {
-          await this.prepareEmailForInnovationOwner();
-          await this.prepareInAppForInnovationOwner();
+          if (owner) {
+            await this.prepareEmailForInnovationOwner();
+            await this.prepareInAppForInnovationOwner();
+          }
           // check if action was submitted by a collaborator
           if (
             this.inputData.action.previouslyUpdatedByUserRole &&
-            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.roleId &&
+            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner?.roleId &&
             this.inputData.action.previouslyUpdatedByUserRole.role === ServiceRoleEnum.INNOVATOR
           ) {
             await this.prepareInAppForCollaborator();
@@ -174,7 +178,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
   private async prepareEmailForInnovationOwner(): Promise<void> {
     // This never happens
-    if (!this.data.innovation) {
+    if (!this.data.innovation || !this.data.innovation.owner) {
       return;
     }
 
@@ -221,8 +225,7 @@ export class ActionUpdateHandler extends BaseHandler<
   }
 
   private async prepareEmailForInnovationOwnerFromCollaborator(): Promise<void> {
-    // This never happens
-    if (!this.data.innovation) {
+    if (!this.data.innovation || !this.data.innovation.owner) {
       return;
     }
 

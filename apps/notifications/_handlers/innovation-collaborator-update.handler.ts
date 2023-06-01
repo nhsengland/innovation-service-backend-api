@@ -12,7 +12,7 @@ import { EmailTypeEnum, ENV } from '../_config';
 import type { Context } from '@azure/functions';
 import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import type { RecipientType } from '../_services/recipients.service';
+import type { RecipientsService, RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
 export class InnovationCollaboratorUpdateHandler extends BaseHandler<
@@ -35,14 +35,18 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+
     if (
       [
         InnovationCollaboratorStatusEnum.ACTIVE,
         InnovationCollaboratorStatusEnum.DECLINED,
         InnovationCollaboratorStatusEnum.LEFT
-      ].includes(this.inputData.innovationCollaborator.status)
+      ].includes(this.inputData.innovationCollaborator.status) &&
+      owner
     ) {
-      await this.prepareNotificationToOwner();
+      await this.prepareNotificationToOwner(innovation, owner);
     }
 
     if (
@@ -52,7 +56,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         InnovationCollaboratorStatusEnum.LEFT
       ].includes(this.inputData.innovationCollaborator.status)
     ) {
-      await this.prepareNotificationToCollaborator();
+      await this.prepareNotificationToCollaborator(innovation);
     }
 
     if ([InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)) {
@@ -62,9 +66,10 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     return this;
   }
 
-  async prepareNotificationToOwner(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+  async prepareNotificationToOwner(
+    innovation: Awaited<ReturnType<RecipientsService['innovationInfo']>>,
+    owner?: RecipientType
+  ): Promise<void> {
     if (!owner) {
       this.logger(`Innovation owner not found for ${innovation.name}`);
       return;
@@ -124,9 +129,11 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     });
   }
 
-  async prepareNotificationToCollaborator(): Promise<void> {
-    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const innovationOwnerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+  async prepareNotificationToCollaborator(
+    innovation: Awaited<ReturnType<RecipientsService['innovationInfo']>>
+  ): Promise<void> {
+    const ownerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+
     const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
       this.inputData.innovationCollaborator.id
     );
@@ -164,7 +171,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         notificationPreferenceType: null,
         templateId,
         params: {
-          innovator_name: innovationOwnerInfo?.displayName ?? 'user ', //Review what should happen if the owner is not found
+          innovator_name: ownerInfo?.displayName ?? 'user ', //Review what should happen if the owner is not found
           innovation_name: innovation.name
         }
       });

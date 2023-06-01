@@ -1,25 +1,33 @@
 import { randCountry, randProduct } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import { InnovationCollaboratorStatusEnum, InnovationSectionStatusEnum, InnovationStatusEnum, InnovationTransferStatusEnum } from '../../enums/innovation.enums';
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
-import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
+import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
+import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserEntity } from '../../entities/user/user.entity';
+import {
+  InnovationCollaboratorStatusEnum,
+  InnovationSectionStatusEnum,
+  InnovationStatusEnum,
+  InnovationTransferStatusEnum
+} from '../../enums/innovation.enums';
 import { NotFoundError } from '../../errors/errors.config';
 import { UserErrorsEnum } from '../../errors/errors.enums';
 
-import { BaseBuilder } from './base.builder';
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
+import { BaseBuilder } from './base.builder';
 
 export type TestInnovationType = {
   id: string;
   name: string;
   ownerId: string;
   transfers: { id: string; email: string; status: InnovationTransferStatusEnum }[];
-  sections: Map<CurrentCatalogTypes.InnovationSections, { id: string, status: InnovationSectionStatusEnum, section: CurrentCatalogTypes.InnovationSections }>; 
-  collaborators: { id: string, status: InnovationCollaboratorStatusEnum }[]
+  sections: Map<
+    CurrentCatalogTypes.InnovationSections,
+    { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections }
+  >;
+  collaborators: { id: string; status: InnovationCollaboratorStatusEnum }[];
 };
 
 export class InnovationBuilder extends BaseBuilder {
@@ -57,14 +65,25 @@ export class InnovationBuilder extends BaseBuilder {
     );
     return this;
   }
-  
-  async addSection(section: CurrentCatalogTypes.InnovationSections, status?: InnovationSectionStatusEnum): Promise<this> {
-    (await this.innovation.sections).push(InnovationSectionEntity.new({ section: section, status: status ?? InnovationSectionStatusEnum.SUBMITTED }))
+
+  async addSection(
+    section: CurrentCatalogTypes.InnovationSections,
+    status?: InnovationSectionStatusEnum
+  ): Promise<this> {
+    (await this.innovation.sections).push(
+      InnovationSectionEntity.new({ section: section, status: status ?? InnovationSectionStatusEnum.SUBMITTED })
+    );
     return this;
   }
 
   addCollaborator(userId?: string, status?: InnovationCollaboratorStatusEnum): this {
-    this.innovation.collaborators.push(InnovationCollaboratorEntity.new({ ...(userId && { user: UserEntity.new({ id: userId }) }), status: status ?? InnovationCollaboratorStatusEnum.ACTIVE, innovation: this.innovation }))
+    this.innovation.collaborators.push(
+      InnovationCollaboratorEntity.new({
+        ...(userId && { user: UserEntity.new({ id: userId }) }),
+        status: status ?? InnovationCollaboratorStatusEnum.ACTIVE,
+        innovation: this.innovation
+      })
+    );
     return this;
   }
 
@@ -77,7 +96,7 @@ export class InnovationBuilder extends BaseBuilder {
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.transfers', 'transfers')
       .leftJoinAndSelect('innovation.collaborators', 'collaborators')
@@ -93,7 +112,7 @@ export class InnovationBuilder extends BaseBuilder {
     return {
       id: this.innovation.id,
       name: this.innovation.name,
-      ownerId: this.innovation.owner?.id,
+      ownerId: this.innovation.owner?.id ?? '', // This will never happen, we verify in the beginning
       transfers: this.innovation.transfers.map(item => ({
         id: item.id,
         email: item.email,

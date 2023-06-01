@@ -9,9 +9,9 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class InnovationReassessmentRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST,
@@ -24,7 +24,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_REASSESSMENT_REQUEST],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -38,7 +38,7 @@ export class InnovationReassessmentRequestHandler extends BaseHandler<
       await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId)
     ).filter(c => c !== this.requestUser.id);
 
-    if (this.requestUser.id !== innovation.ownerId) {
+    if (innovation.ownerId && this.requestUser.id !== innovation.ownerId) {
       innovatorRecipientIds.push(innovation.ownerId);
     }
 

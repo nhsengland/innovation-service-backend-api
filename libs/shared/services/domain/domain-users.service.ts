@@ -347,6 +347,7 @@ export class DomainUsersService {
             },
             {
               updatedBy: dbUser.id,
+              owner: null,
               expires_at: dbInnovation.expirationTransferDate
             }
           );

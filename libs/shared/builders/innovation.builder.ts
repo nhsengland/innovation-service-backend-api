@@ -268,7 +268,7 @@ export class InnovationBuilder {
 
     const ret = await entityManager
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect(

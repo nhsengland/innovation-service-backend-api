@@ -61,10 +61,12 @@ export class ThreadCreationHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
     const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
-    const recipients = await this.recipientsService.getUsersRecipient(
-      [innovation.ownerId, ...collaboratorIds],
-      ServiceRoleEnum.INNOVATOR
-    );
+
+    const recipientIds = collaboratorIds;
+    if (innovation.ownerId) {
+      recipientIds.push(innovation.ownerId);
+    }
+    const recipients = await this.recipientsService.getUsersRecipient(recipientIds, ServiceRoleEnum.INNOVATOR);
 
     if (recipients.length) {
       const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
@@ -104,13 +106,13 @@ export class ThreadCreationHandler extends BaseHandler<
   }
 
   private async prepareNotificationForOwnerAndCollaboratorsFromInnovator(
-    innovation: { name: string; ownerId: string },
+    innovation: { name: string; ownerId?: string },
     thread: { id: string; subject: string }
   ): Promise<void> {
     const recipientIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
 
     // Add owner if not the same as the request user.
-    if (this.requestUser.id !== innovation.ownerId) {
+    if (innovation.ownerId && this.requestUser.id !== innovation.ownerId) {
       recipientIds.push(innovation.ownerId);
     }
 
