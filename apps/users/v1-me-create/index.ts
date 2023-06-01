@@ -1,43 +1,23 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
-import type { AzureFunction, HttpRequest } from '@azure/functions';
-import jwtDecode, { JwtPayload } from 'jwt-decode';
+import type { AzureFunction } from '@azure/functions';
 
-import { BadRequestError, UserErrorsEnum } from '@users/shared/errors';
-import { JoiHelper, ResponseHelper } from '@users/shared/helpers';
+import { ResponseHelper } from '@users/shared/helpers';
 
 import { container } from '../_config';
 
+import { JwtDecoder } from '@users/shared/decorators';
 import type { CustomContextType } from '@users/shared/types';
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType } from './validation.schemas';
 
 class V1MeCreate {
-  static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
+  @JwtDecoder()
+  static async httpTrigger(context: CustomContextType): Promise<void> {
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
-      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
-
-      if (!body.identityId) {
-        // If identityId not supplied, try go get it from the token.
-
-        try {
-          const decodedToken = jwtDecode<JwtPayload>(body.token ?? '');
-
-          if (decodedToken.sub) {
-            body.identityId = decodedToken.sub;
-          } else {
-            throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
-          }
-        } catch (error) {
-          throw new BadRequestError(UserErrorsEnum.REQUEST_USER_INVALID_TOKEN);
-        }
-      }
-
-      const result = await usersService.createUserInnovator({ identityId: body.identityId });
-
+      const result = await usersService.createUserInnovator({ identityId: context.auth.user.identityId });
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
     } catch (error) {

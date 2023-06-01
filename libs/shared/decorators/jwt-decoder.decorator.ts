@@ -37,8 +37,8 @@ export function JwtDecoder() {
 
         context.auth = {
           user: {
-            identityId: jwt.oid,
-            name: jwt.name,
+            identityId: jwt.sub,
+            name: jwt.name ?? '',
             ...(role && { roleId: role })
           }
         };
