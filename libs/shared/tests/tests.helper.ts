@@ -3,15 +3,21 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
+import { NotFoundError, UserErrorsEnum } from '../errors';
+import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
+import type { TestUserType } from './builders/user.builder';
+import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
 export class TestsHelper {
   private sqlConnection: DataSource;
   private em: EntityManager;
 
-  private completeScenarioData: CompleteScenarioType;
+  protected completeScenarioData: CompleteScenarioType;
+  protected identityMap = new Map<string, TestUserType>();
+  protected userMap = new Map<string, TestUserType>();
 
   constructor() {
     // This is set in jest.setup.ts and is used to share data between tests)
@@ -24,6 +30,11 @@ export class TestsHelper {
 
     while (!this.sqlConnection.isInitialized) {
       await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // This is set when we're running the tests and not the global setup / teardown
+    if (this.completeScenarioData) {
+      this.setupGlobalMocks();
     }
 
     return this;
@@ -73,5 +84,21 @@ export class TestsHelper {
   async releaseQueryRunnerEntityManager(): Promise<void> {
     await this.em.queryRunner?.rollbackTransaction();
     await this.em.queryRunner?.release();
+  }
+
+  private setupGlobalMocks(): void {
+    // Helper maps
+    for (const user of Object.values(this.completeScenarioData.users)) {
+      this.identityMap.set(user.identityId, user);
+      this.userMap.set(user.id, user);
+    }
+
+    jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockImplementation(async (identityId: string) => {
+      const user = this.identityMap.get(identityId);
+      if (!user) {
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+      }
+      return DTOsHelper.getIdentityUserInfo(user);
+    });
   }
 }

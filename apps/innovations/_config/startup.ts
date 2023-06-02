@@ -3,19 +3,17 @@ import type { Container } from 'inversify';
 import { join } from 'path';
 import YAML from 'yaml';
 
-import type { HttpService } from '@innovations/shared/services';
+import type { HttpService, LoggerService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 
 export const startup = async (container: Container): Promise<void> => {
   console.log('Initializing Innovations app function');
 
   const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
+  const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
 
   try {
-    console.group('Initializing Innovations app function:');
-
-    console.log('Initialization complete');
-    console.groupEnd();
+    logger.log('Initialization complete');
 
     if (process.env['LOCAL_MODE'] ?? false) {
       console.group('Generating documentation...');
@@ -31,7 +29,6 @@ export const startup = async (container: Container): Promise<void> => {
     }
   } catch (error) {
     // TODO: Treat this error! Should we end the process?
-    console.error('Innovations app function was UNABLE to start');
-    console.error(error);
+    logger.error('Innovations app function was UNABLE to start', { error });
   }
 };

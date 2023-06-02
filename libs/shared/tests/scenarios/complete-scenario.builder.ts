@@ -4,11 +4,11 @@ import type { DataSource } from 'typeorm';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
+import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { UserBuilder } from '../builders/user.builder';
-import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -27,6 +27,12 @@ export class CompleteScenarioBuilder {
       const paulNeedsAssessor = await new UserBuilder(entityManager)
         .setName('Paul Needs Assessor')
         .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
+        .save();
+
+      // Admin
+      const allMighty = await new UserBuilder(entityManager)
+        .setName('All Mighty')
+        .addRole(ServiceRoleEnum.ADMIN, 'adminRole')
         .save();
 
       // QAs and Accessors
@@ -65,7 +71,7 @@ export class CompleteScenarioBuilder {
       const johnInnovation = await (
         await new InnovationBuilder(entityManager).setOwner(johnInnovator.id).addSection('INNOVATION_DESCRIPTION')
       ).save();
-    
+
       // Jane Innovator specs:
       // Collaborator on jonhInnovation
       const janeInnovator = await new UserBuilder(entityManager)
@@ -111,10 +117,7 @@ export class CompleteScenarioBuilder {
         await new InnovationThreadBuilder(entityManager)
           .setAuthor(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
           .setInnovation(johnInnovation.id)
-          .addMessage(
-            { id: ingridAccessor.id, roleId: ingridAccessor.roles['accessorRole']!.id },
-            'ingridMessage'
-          )
+          .addMessage({ id: ingridAccessor.id, roleId: ingridAccessor.roles['accessorRole']!.id }, 'ingridMessage')
       ).save();
 
       const johnInnovationThreadByPaul = await (
@@ -131,20 +134,14 @@ export class CompleteScenarioBuilder {
         await new InnovationThreadBuilder(entityManager)
           .setAuthor(janeInnovator.id, janeInnovator.roles['innovatorRole']!.id)
           .setInnovation(johnInnovation.id)
-          .addMessage(
-            { id: janeInnovator.id, roleId: janeInnovator.roles['innovatorRole']!.id },
-            'janeMessage'
-          )
+          .addMessage({ id: janeInnovator.id, roleId: janeInnovator.roles['innovatorRole']!.id }, 'janeMessage')
       ).save();
 
       const johnInnovationThreadByJohn = await (
         await new InnovationThreadBuilder(entityManager)
           .setAuthor(johnInnovator.id, johnInnovator.roles['innovatorRole']!.id)
           .setInnovation(johnInnovation.id)
-          .addMessage(
-            { id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id },
-            'johnMessage'
-          )
+          .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user.
@@ -160,6 +157,7 @@ export class CompleteScenarioBuilder {
 
       return {
         users: {
+          // Innovators
           johnInnovator: {
             ...johnInnovator,
             roles: { innovatorRole: johnInnovator.roles['innovatorRole']! },
@@ -208,6 +206,7 @@ export class CompleteScenarioBuilder {
             roles: { innovatorRole: adamInnovator.roles['innovatorRole']! },
             innovations: { adamInnovation: { ...adamInnovation } }
           },
+          // Accessors
           aliceQualifyingAccessor: {
             ...aliceQualifyingAccessor,
             roles: { qaRole: aliceQualifyingAccessor.roles['qaRole']! },
@@ -215,7 +214,8 @@ export class CompleteScenarioBuilder {
               healthOrg: {
                 ...aliceQualifyingAccessor.organisations['Health Organisation']!,
                 organisationUnits: {
-                  healthOrgUnit: aliceQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
+                  healthOrgUnit:
+                    aliceQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
                 }
               }
             }
@@ -227,14 +227,21 @@ export class CompleteScenarioBuilder {
               healthOrg: {
                 ...ingridAccessor.organisations['Health Organisation']!,
                 organisationUnits: {
-                  healthOrgUnit: ingridAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
+                  healthOrgUnit:
+                    ingridAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
                 }
               }
             }
           },
+          // Needs assessors
           paulNeedsAssessor: {
             ...paulNeedsAssessor,
             roles: { assessmentRole: paulNeedsAssessor.roles['assessmentRole']! }
+          },
+          // Admins
+          allMighty: {
+            ...allMighty,
+            roles: { admin: allMighty.roles['adminRole']! }
           }
         }
       };

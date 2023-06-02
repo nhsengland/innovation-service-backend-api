@@ -15,9 +15,7 @@ export const sqlProvider = (_context: interfaces.Context) => {
           : new DataSource(SQLDB_DEFAULT_CONNECTION);
       try {
         await connection.initialize();
-        console.log('SQL Connection successfully created.');
       } catch (error: any) {
-        console.log(error);
         throw new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
           details: error
         });

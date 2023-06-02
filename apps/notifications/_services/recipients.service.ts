@@ -77,6 +77,9 @@ export class RecipientsService extends BaseService {
   async usersIdentityInfo(userIdentityIds: string[]): Promise<Map<string, IdentityUserInfo>>;
   async usersIdentityInfo(
     userIdentityIds?: string | string[]
+  ): Promise<null | IdentityUserInfo | Map<string, IdentityUserInfo>>;
+  async usersIdentityInfo(
+    userIdentityIds?: string | string[]
   ): Promise<null | IdentityUserInfo | Map<string, IdentityUserInfo>> {
     if (!userIdentityIds) {
       return null;

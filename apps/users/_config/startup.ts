@@ -3,17 +3,15 @@ import type { Container } from 'inversify';
 import { join } from 'path';
 import YAML from 'yaml';
 
-import type { HttpService } from '@users/shared/services';
+import type { HttpService, LoggerService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 export const startup = async (container: Container): Promise<void> => {
   const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
+  const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
 
   try {
-    console.group('Initializing Users app function:');
-
-    console.log('Initialization complete');
-    console.groupEnd();
+    logger.log('Initialization complete');
 
     if (process.env['LOCAL_MODE'] ?? false) {
       console.group('Generating documentation...');
@@ -29,7 +27,6 @@ export const startup = async (container: Container): Promise<void> => {
     }
   } catch (error) {
     // TODO: Treat this error! Should we end the process?
-    console.error('Users app function was UNABLE to start');
-    console.error(error);
+    logger.error('Users app function was UNABLE to start', { error });
   }
 };

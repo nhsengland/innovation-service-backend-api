@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { RecipientType } from 'apps/notifications/_services/recipients.service';
 import { ServiceRoleEnum } from '../../enums/user.enums';
-import type { DomainContextType } from '../../types/domain.types';
+import type { DomainContextType, IdentityUserInfo } from '../../types/domain.types';
 
 import type { TestUserType } from '../builders/user.builder';
 
 export class DTOsHelper {
   static getUserRequestContext<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): DomainContextType {
-
     if (!userRoleKey) {
       if (Object.keys(user.roles).length === 1) {
         userRoleKey = Object.keys(user.roles)[0]!;
@@ -70,7 +69,6 @@ export class DTOsHelper {
   }
 
   static getRecipientUser<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): RecipientType {
-
     if (!userRoleKey) {
       if (Object.keys(user.roles).length === 1) {
         userRoleKey = Object.keys(user.roles)[0]!;
@@ -109,6 +107,19 @@ export class DTOsHelper {
       userId: user.id,
       identityId: user.identityId,
       isActive: user.isActive
+    };
+  }
+
+  static getIdentityUserInfo(user: TestUserType): IdentityUserInfo {
+    return {
+      displayName: user.name,
+      email: user.email,
+      identityId: user.identityId,
+      isActive: user.isActive,
+      mobilePhone: user.mobilePhone,
+      // maybe in the future
+      lastLoginAt: null,
+      passwordResetAt: null
     };
   }
 }

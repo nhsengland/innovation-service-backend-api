@@ -4,7 +4,7 @@ import YAML from 'yaml';
 
 import { container } from '@admin/shared/config/inversify.config';
 
-import type { HttpService } from '@admin/shared/services';
+import type { HttpService, LoggerService } from '@admin/shared/services';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AnnouncementsService } from '../_services/announcements.service';
@@ -24,16 +24,12 @@ container.bind<ValidationService>(SYMBOLS.ValidationService).to(ValidationServic
 container.bind<AnnouncementsService>(SYMBOLS.AnnouncementsService).to(AnnouncementsService).inSingletonScope();
 
 export const startup = async (): Promise<void> => {
-  console.log('Initializing Admin app function');
+  const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
+  logger.log('Initializing Admin app function');
 
   const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
 
   try {
-    console.group('Initializing Admin app function:');
-
-    console.log('Initialization complete');
-    console.groupEnd();
-
     if (process.env['LOCAL_MODE'] ?? false) {
       console.group('Generating documentation...');
 
@@ -48,8 +44,7 @@ export const startup = async (): Promise<void> => {
     }
   } catch (error) {
     // TODO: Treat this error! Should we end the process?
-    console.error('Admin app function was UNABLE to start');
-    console.error(error);
+    logger.error('Admin app function was UNABLE to start', { error });
   }
 };
 

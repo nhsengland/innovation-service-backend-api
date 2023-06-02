@@ -21,7 +21,9 @@ export class LoggerService {
 
   log(message: string, additionalInformation?: any): void {
     if (this.runningLocally) {
-      console.log('[LOG]: ', message, additionalInformation);
+      if (!process.env['JEST_WORKER_ID']) {
+        console.log('[LOG]: ', message, additionalInformation);
+      }
       return;
     }
 
@@ -34,7 +36,9 @@ export class LoggerService {
 
   error(message: string, additionalInformation?: any): void {
     if (this.runningLocally) {
-      console.error('[ERROR]: ', message, additionalInformation);
+      if (!process.env['JEST_WORKER_ID']) {
+        console.error('[ERROR]: ', message, additionalInformation);
+      }
       return;
     }
 

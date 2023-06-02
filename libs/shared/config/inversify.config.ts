@@ -37,26 +37,28 @@ container.bind<StorageQueueService>(SHARED_SYMBOLS.StorageQueueService).to(Stora
 container.bind<AuditService>(SHARED_SYMBOLS.AuditService).to(AuditService).inSingletonScope();
 container.bind<CacheService>(SHARED_SYMBOLS.CacheService).to(CacheService).inSingletonScope();
 
+const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
+
 // Initialize the services that depend on the SQL connection
 const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 domainService
   .sqlProvider()
   .then(connection => {
-    console.log('DomainService INIT');
+    logger.log('DomainService INIT');
     domainService.setConnection(connection);
   })
   .catch(error => {
-    console.log('SQLConnection ERROR', error);
+    logger.log('SQLConnection ERROR', error);
     process.exit(1);
   });
 const sqlService = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
 sqlService
   .sqlProvider()
   .then(connection => {
-    console.log('SQLConnection INIT');
+    logger.log('SQLConnection INIT');
     sqlService.setConnection(connection);
   })
   .catch(error => {
-    console.log('SQLConnection ERROR', error);
+    logger.log('SQLConnection ERROR', error);
     process.exit(1);
   });
