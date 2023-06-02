@@ -3,11 +3,8 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
-import { ServiceRoleEnum } from '../enums';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
-import type { DomainContextType } from '../types';
-import type { TestUserType } from './builders/user.builder';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
 export class TestsHelper {
@@ -50,71 +47,6 @@ export class TestsHelper {
   }
   getCompleteScenario(): CompleteScenarioType {
     return this.completeScenarioData;
-  }
-
-  getUserContext<T extends Pick<TestUserType, 'id' | 'identityId' | 'roles'>>(
-    user: T,
-    userRoleKey?: keyof T['roles']
-  ): DomainContextType {
-    if (!userRoleKey) {
-      if ([...Object.keys(user.roles)].length === 1) {
-        userRoleKey = [...Object.keys(user.roles)][0]!;
-      } else {
-        throw new Error('DTOsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
-      }
-    }
-
-    const role = user.roles[userRoleKey as string]; // could be a toString()
-    if (!role) {
-      throw new Error('TestsHelper::getUserContext: User role not found.');
-    }
-
-    if (role.role === ServiceRoleEnum.INNOVATOR) {
-      if (!role.organisation) {
-        throw new Error('TestsHelper::getUserContext: Invalid role found.');
-      }
-      return {
-        id: user.id,
-        identityId: user.identityId,
-        organisation: { id: role.organisation.id, name: role.organisation.name, acronym: null },
-        currentRole: { id: role.id, role: role.role }
-      };
-    }
-
-    if (role.role === ServiceRoleEnum.ACCESSOR || role.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
-      if (!role.organisation || !role.organisationUnit) {
-        throw new Error('TestsHelper::getUserContext: Invalid role found.');
-      }
-      return {
-        id: user.id,
-        identityId: user.identityId,
-        organisation: {
-          id: role.organisation.id,
-          name: role.organisation.name,
-          acronym: null,
-          organisationUnit: { id: role.organisationUnit.id, name: role.organisationUnit.name, acronym: '' }
-        },
-        currentRole: { id: role.id, role: role.role }
-      };
-    }
-
-    if (role.role === ServiceRoleEnum.ADMIN) {
-      return {
-        id: user.id,
-        identityId: user.identityId,
-        currentRole: { id: role.id, role: role.role }
-      };
-    }
-
-    if (role.role === ServiceRoleEnum.ASSESSMENT) {
-      return {
-        id: user.id,
-        identityId: user.identityId,
-        currentRole: { id: role.id, role: role.role }
-      };
-    }
-
-    throw new Error('TestsHelper::getUserContext: Unexpected error, no role found.');
   }
 
   /**

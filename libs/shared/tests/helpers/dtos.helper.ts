@@ -18,12 +18,12 @@ export class DTOsHelper {
 
     const role = user.roles[userRoleKey as string];
     if (!role) {
-      throw new Error('DTOsHelper::getUserContext: User role not found.');
+      throw new Error('DTOsHelper::getUserRequestContext: User role not found.');
     }
 
     if (role.role === ServiceRoleEnum.INNOVATOR) {
       if (!role.organisation) {
-        throw new Error('Invalid role found.');
+        throw new Error('DTOsHelper::getUserRequestContext: Invalid role found.');
       }
       return {
         id: user.id,
@@ -35,7 +35,7 @@ export class DTOsHelper {
 
     if (role.role === ServiceRoleEnum.ACCESSOR || role.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
       if (!role.organisation || !role.organisationUnit) {
-        throw new Error('Invalid role found.');
+        throw new Error('DTOsHelper::getUserRequestContext: Invalid role found.');
       }
       return {
         id: user.id,
@@ -66,7 +66,7 @@ export class DTOsHelper {
       };
     }
 
-    throw new Error('DTOsHelper::getUserContext: Unexpected error, no role found.');
+    throw new Error('DTOsHelper::getUserRequestContext: Unexpected error, no role found.');
   }
 
   static getRecipientUser<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): RecipientType {

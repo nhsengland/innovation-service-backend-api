@@ -5,7 +5,6 @@ import { RecipientsService } from '../_services/recipients.service';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 
 describe('Innovator account creation notification handler', () => {
-  let handler: InnovatorAccountCreationHandler;
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
 
@@ -20,14 +19,14 @@ describe('Innovator account creation notification handler', () => {
 
   describe('Innovator creates account', () => {
     it('should send an email to the new user', async () => {
-      const userContext = testsHelper.getUserContext(scenario.users.johnInnovator);
+      const userContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
       // mock recipients
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
         .mockResolvedValue(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
 
-      handler = new InnovatorAccountCreationHandler(userContext, {}, MocksHelper.mockContext());
+      const handler = new InnovatorAccountCreationHandler(userContext, {}, MocksHelper.mockContext());
 
       await handler.run();
 
@@ -50,12 +49,12 @@ describe('Innovator account creation notification handler', () => {
     });
 
     it('should not send an email when no recipients are found', async () => {
-      const userContext = testsHelper.getUserContext(scenario.users.johnInnovator);
+      const userContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator);
 
       // mock recipients
       jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValue(null);
 
-      handler = new InnovatorAccountCreationHandler(userContext, {}, MocksHelper.mockContext());
+      const handler = new InnovatorAccountCreationHandler(userContext, {}, MocksHelper.mockContext());
 
       await handler.run();
 

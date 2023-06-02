@@ -53,7 +53,7 @@ export class AzureHttpTriggerBuilder {
       if (Object.keys(user.roles).length === 1) {
         userRoleKey = Object.keys(user.roles)[0];
       } else {
-        throw new Error('DTOsHelper::getUserContext: User with more than 1 role, needs userRole parameter defined.');
+        throw new Error('AzureHttpTriggerBuilder::setAuth: User with more than 1 role, needs userRole parameter defined.');
       }
     }
 
