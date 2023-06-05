@@ -6,10 +6,11 @@ import { RecipientsService } from '../_services/recipients.service';
 export class NotificationsTestsHelper extends TestsHelper {
   override async init(): Promise<this> {
     await super.init();
+    const identityMap = this.completeScenarioBuilder.getIdentityMap();
 
     // Setup the mock for the recipients service.
     jest.spyOn(RecipientsService.prototype, 'identityId2UserId').mockImplementation(async (identityId: string) => {
-      return this.identityMap.get(identityId)?.id || null;
+      return identityMap.get(identityId)?.id || null;
     });
 
     jest
@@ -21,8 +22,8 @@ export class NotificationsTestsHelper extends TestsHelper {
         const identityIds = Array.isArray(userIdentityIds) ? userIdentityIds : [userIdentityIds];
         const res = new Map<string, IdentityUserInfo>();
         identityIds.forEach(id => {
-          if (this.identityMap.has(id)) {
-            res.set(id, DTOsHelper.getIdentityUserInfo(this.identityMap.get(id)!));
+          if (identityMap.has(id)) {
+            res.set(id, DTOsHelper.getIdentityUserInfo(identityMap.get(id)!));
           }
         });
         if (typeof userIdentityIds === 'string') {

@@ -8,20 +8,28 @@ import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
-import { UserBuilder } from '../builders/user.builder';
+import { TestUserType, UserBuilder } from '../builders/user.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
 export class CompleteScenarioBuilder {
   sqlConnection: DataSource;
+  scenario: CompleteScenarioType;
+
+  private identityMap: Map<string, TestUserType>;
+  private userMap: Map<string, TestUserType>;
 
   constructor(sqlConnection: DataSource) {
     this.sqlConnection = sqlConnection;
+
+    // This is set in jest.setup.ts and is used to share data between tests)
+    // Comment this if not using global setup / teardown
+    this.scenario = (global as any).completeScenarioData;
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
   async createScenario() {
-    return await this.sqlConnection.transaction(async entityManager => {
+    const res = await this.sqlConnection.transaction(async entityManager => {
       // Needs assessors
 
       const paulNeedsAssessor = await new UserBuilder(entityManager)
@@ -246,5 +254,34 @@ export class CompleteScenarioBuilder {
         }
       };
     });
+    this.scenario = res;
+    return res;
+  }
+
+  getScenario(): CompleteScenarioType {
+    return this.scenario;
+  }
+
+  getIdentityMap(): ReadonlyMap<string, TestUserType> {
+    if (!this.identityMap) {
+      this.loadMaps();
+    }
+    return this.identityMap;
+  }
+
+  getUserMap(): ReadonlyMap<string, TestUserType> {
+    if (!this.identityMap) {
+      this.loadMaps();
+    }
+    return this.userMap;
+  }
+
+  loadMaps(): void {
+    this.identityMap = new Map();
+    this.userMap = new Map();
+    for (const user of Object.values(this.scenario.users)) {
+      this.identityMap.set(user.identityId, user);
+      this.userMap.set(user.id, user);
+    }
   }
 }
