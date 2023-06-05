@@ -4,10 +4,12 @@ import type { DataSource } from 'typeorm';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
-import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
+import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
+import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
@@ -102,6 +104,13 @@ export class CompleteScenarioBuilder {
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .save();
 
+      const johnInnovationSupportByAlice = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(johnInnovation.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([aliceQualifyingAccessor])
+        .save();
+
       // action on johnInnovation created by Paul (NA)
       const johnInnovationActionByPaul = await new InnovationActionBuilder(entityManager)
         .setCreatedBy(paulNeedsAssessor.id)
@@ -129,13 +138,15 @@ export class CompleteScenarioBuilder {
       ).save();
 
       const johnInnovationThreadByPaul = await (
-        await new InnovationThreadBuilder(entityManager)
-          .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
-          .setInnovation(johnInnovation.id)
-          .addMessage(
-            { id: paulNeedsAssessor.id, roleId: paulNeedsAssessor.roles['assessmentRole']!.id },
-            'paulMessage'
-          )
+        await (
+          await new InnovationThreadBuilder(entityManager)
+            .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+            .setInnovation(johnInnovation.id)
+            .addMessage(
+              { id: paulNeedsAssessor.id, roleId: paulNeedsAssessor.roles['assessmentRole']!.id },
+              'paulMessage'
+            )
+        ).addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
 
       const johnInnovationThreadByJane = await (
@@ -172,6 +183,9 @@ export class CompleteScenarioBuilder {
             innovations: {
               johnInnovation: {
                 ...johnInnovation,
+                supports: {
+                  supportByAlice: johnInnovationSupportByAlice
+                },
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
                   actionByPaul: johnInnovationActionByPaul
@@ -183,7 +197,10 @@ export class CompleteScenarioBuilder {
                   },
                   threadByPaulNA: {
                     ...johnInnovationThreadByPaul,
-                    messages: { paulMessage: johnInnovationThreadByPaul.messages['paulMessage']! }
+                    messages: {
+                      paulMessage: johnInnovationThreadByPaul.messages['paulMessage']!,
+                      johnMessage: johnInnovationThreadByPaul.messages['johnMessage']!
+                    }
                   },
                   threadByIngridAccessor: {
                     ...johnInnovationThreadByIngrid,

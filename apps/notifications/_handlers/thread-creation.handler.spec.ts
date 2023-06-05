@@ -86,6 +86,12 @@ describe('Notifications / _handlers / thread-creation suite', () => {
         displayName: requestUser.name
       } as any);
 
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+        ownerId: scenario.users.johnInnovator.id,
+        ownerIdentityId: scenario.users.johnInnovator.identityId
+      });
+
       const handler = new ThreadCreationHandler(
         requestContext,
         {
@@ -155,13 +161,23 @@ describe('Notifications / _handlers / thread-creation suite', () => {
   });
 
   describe('New thread by innovator', () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
         .mockResolvedValue([
           DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')
         ]);
+
+      jest
+        .spyOn(RecipientsService.prototype, 'innovationAssignedRecipients')
+        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')]);
+
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+        name: scenario.users.johnInnovator.innovations.johnInnovation.name,
+        ownerId: scenario.users.johnInnovator.id,
+        ownerIdentityId: scenario.users.johnInnovator.identityId
+      });
     });
 
     const getJohnData = (): ThreadCreationHandlerData => {
@@ -212,8 +228,24 @@ describe('Notifications / _handlers / thread-creation suite', () => {
 
       await handler.run();
 
-      expect(handler.emails).toHaveLength(1);
+      expect(handler.emails).toHaveLength(2);
       expect(handler.emails).toMatchObject([
+        {
+          templateId: EmailTypeEnum.THREAD_CREATION_TO_ASSIGNED_USERS,
+          notificationPreferenceType: 'MESSAGE',
+          to: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+          params: {
+            // display_name: '', // This will be filled by the email-listener function.
+            innovation_name: innovation.name,
+            thread_url: new UrlModel(ENV.webBaseTransactionalUrl)
+              .addPath('accessor/innovations/:innovationId/threads/:threadId')
+              .setPathParams({
+                innovationId: innovation.id,
+                threadId: thread.id
+              })
+              .buildUrl()
+          }
+        },
         {
           templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
           notificationPreferenceType: 'MESSAGE',
@@ -233,6 +265,19 @@ describe('Notifications / _handlers / thread-creation suite', () => {
         }
       ]);
       expect(handler.inApp).toMatchObject([
+        {
+          innovationId: innovation.id,
+          context: {
+            type: NotificationContextTypeEnum.THREAD,
+            detail: NotificationContextDetailEnum.THREAD_CREATION,
+            id: thread.id
+          },
+          userRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
+          params: {
+            subject: thread.subject,
+            messageId: message.id
+          }
+        },
         {
           innovationId: innovation.id,
           context: {
