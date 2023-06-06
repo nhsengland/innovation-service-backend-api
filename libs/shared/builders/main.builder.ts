@@ -2,7 +2,7 @@ import { randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 import { ActivityLogEntity } from '../entities/innovation/activity-log.entity';
-import { InnovationFileEntity } from '../entities/innovation/innovation-file.entity';
+import { InnovationFileLegacyEntity } from '../entities/innovation/innovation-file-legacy.entity';
 import type { InnovationSectionEntity } from '../entities/innovation/innovation-section.entity';
 import type { InnovationSupportEntity } from '../entities/innovation/innovation-support.entity';
 import type { InnovationEntity } from '../entities/innovation/innovation.entity';
@@ -103,13 +103,13 @@ export class TestDataBuilder {
     return entityManager.getRepository(OrganisationUnitUserEntity).save(orgUnitUser);
   }
 
-  async addFileToInnovation(i: InnovationEntity, entityManager: EntityManager): Promise<InnovationFileEntity> {
-    const file = InnovationFileEntity.new({
+  async addFileToInnovation(i: InnovationEntity, entityManager: EntityManager): Promise<InnovationFileLegacyEntity> {
+    const file = InnovationFileLegacyEntity.new({
       innovation: i,
       displayFileName: randText()
     });
 
-    return entityManager.getRepository(InnovationFileEntity).save(file);
+    return entityManager.getRepository(InnovationFileLegacyEntity).save(file);
   }
 
   async addActivityLog<T extends ActivityEnum>(

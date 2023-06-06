@@ -3,7 +3,7 @@ import { basename, extname } from 'path';
 
 import type { EntityManager } from 'typeorm';
 
-import { InnovationFileEntity } from '@innovations/shared/entities';
+import { InnovationFileLegacyEntity } from '@innovations/shared/entities';
 import type { FileStorageService } from '@innovations/shared/services';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -35,7 +35,7 @@ export class InnovationFileService extends BaseService {
     const extension = extname(filename);
     const filenameWithoutExtension = basename(filename, extension);
 
-    const file = await connection.save(InnovationFileEntity, {
+    const file = await connection.save(InnovationFileLegacyEntity, {
       createdBy: userId,
       displayFileName: filenameWithoutExtension.substring(0, 99 - extension.length) + extension, // failsafe to avoid filename too long (100 chars max)
       innovation: { id: innovationId },
@@ -55,13 +55,16 @@ export class InnovationFileService extends BaseService {
    * @param entityManager optional entity manager to use for the transaction
    * @returns the files
    */
-  async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileEntity[]> {
+  async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileLegacyEntity[]> {
     if (!ids?.length) {
       return [];
     }
 
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    return connection.createQueryBuilder(InnovationFileEntity, 'file').where('file.id IN (:...ids)', { ids }).getMany();
+    return connection
+      .createQueryBuilder(InnovationFileLegacyEntity, 'file')
+      .where('file.id IN (:...ids)', { ids })
+      .getMany();
   }
 }

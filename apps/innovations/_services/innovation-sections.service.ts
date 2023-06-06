@@ -4,7 +4,7 @@ import {
   InnovationActionEntity,
   InnovationDocumentEntity,
   InnovationEntity,
-  InnovationFileEntity,
+  InnovationFileLegacyEntity,
   InnovationSectionEntity,
   UserEntity,
   UserRoleEntity
@@ -322,7 +322,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     // This variable will hold files marked to be deleted, to be removed only inside the transaction.
-    let sectionDeletedFiles: InnovationFileEntity[] = [];
+    let sectionDeletedFiles: InnovationFileLegacyEntity[] = [];
 
     // We always have at most one section per sectionKey, so we can just get the first one.
     let section = await this.sqlConnection
@@ -688,7 +688,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (evidence.files && evidence.files.length > 0) {
         //delete files
-        await transaction.delete(InnovationFileEntity, { id: In(evidence.files) });
+        await transaction.delete(InnovationFileLegacyEntity, { id: In(evidence.files) });
       }
 
       // save the new evidences

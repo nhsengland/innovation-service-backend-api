@@ -6,7 +6,7 @@ import { InnovationActionEntity } from '../../entities/innovation/innovation-act
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
 import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
-import { InnovationFileEntity } from '../../entities/innovation/innovation-file.entity';
+import { InnovationFileLegacyEntity } from '../../entities/innovation/innovation-file-legacy.entity';
 import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
@@ -536,10 +536,10 @@ export class DomainInnovationsService {
   }
 
   async deleteInnovationFiles(transactionManager: EntityManager, files: string[]): Promise<void>;
-  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileLegacyEntity[]): Promise<void>;
   async deleteInnovationFiles(
     transactionManager: EntityManager,
-    files: InnovationFileEntity[] | string[]
+    files: InnovationFileLegacyEntity[] | string[]
   ): Promise<void> {
     if (files.length === 0) {
       return;
@@ -547,17 +547,17 @@ export class DomainInnovationsService {
 
     if (typeof files[0] === 'string') {
       files = await transactionManager
-        .createQueryBuilder(InnovationFileEntity, 'file')
+        .createQueryBuilder(InnovationFileLegacyEntity, 'file')
         .where('id IN (:...files)', { files })
         .getMany();
     } else {
-      // if it's not string it's InnovationFileEntity
-      files = files as InnovationFileEntity[];
+      // if it's not string it's InnovationFileLegacyEntity
+      files = files as InnovationFileLegacyEntity[];
     }
 
     for (const file of files) {
       try {
-        await transactionManager.softDelete(InnovationFileEntity, { id: file.id });
+        await transactionManager.softDelete(InnovationFileLegacyEntity, { id: file.id });
       } catch (error) {
         // TODO: Log this here!
         throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_DELETE_ERROR);

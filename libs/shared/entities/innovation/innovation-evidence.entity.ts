@@ -3,7 +3,7 @@ import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGe
 import { BaseEntity } from '../base.entity';
 
 import { InnovationEntity } from '../innovation/innovation.entity';
-import { InnovationFileEntity } from './innovation-file.entity';
+import { InnovationFileLegacyEntity } from './innovation-file-legacy.entity';
 
 // TODO: This entity will not be used anymore for the IR and can be removed
 
@@ -28,13 +28,13 @@ export class InnovationEvidenceEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
+  @ManyToMany(() => InnovationFileLegacyEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_evidence_file',
     joinColumn: { name: 'innovation_evidence_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
   })
-  files: InnovationFileEntity[];
+  files: InnovationFileLegacyEntity[];
 
   static new(data: Partial<InnovationEvidenceEntity>): InnovationEvidenceEntity {
     const instance = new InnovationEvidenceEntity();

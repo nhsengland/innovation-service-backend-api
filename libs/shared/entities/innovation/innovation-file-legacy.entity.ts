@@ -6,8 +6,8 @@ import { InnovationEvidenceEntity } from './innovation-evidence.entity';
 import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationEntity } from './innovation.entity';
 
-@Entity('innovation_file')
-export class InnovationFileEntity extends BaseEntity {
+@Entity('innovation_file_legacy')
+export class InnovationFileLegacyEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -27,8 +27,8 @@ export class InnovationFileEntity extends BaseEntity {
   @ManyToMany(() => InnovationSectionEntity, record => record.files)
   sections: InnovationSectionEntity[];
 
-  static new(data: Partial<InnovationFileEntity>): InnovationFileEntity {
-    const instance = new InnovationFileEntity();
+  static new(data: Partial<InnovationFileLegacyEntity>): InnovationFileLegacyEntity {
+    const instance = new InnovationFileLegacyEntity();
     Object.assign(instance, data);
     return instance;
   }
