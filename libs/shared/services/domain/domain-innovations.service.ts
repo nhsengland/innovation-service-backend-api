@@ -623,7 +623,7 @@ export class DomainInnovationsService {
         'author.status',
         'authorRole.id',
         'authorRole.role',
-        'authorRole.lockedAt',
+        'authorRole.isActive',
         'organisationUnit.id',
         'organisationUnit.acronym'
       ])
@@ -651,7 +651,7 @@ export class DomainInnovationsService {
           id: message.author.id,
           identityId: message.author.identityId,
           name: usersInfo.get(message.author.identityId)?.displayName,
-          locked: message.author.status === UserStatusEnum.LOCKED || !!message.authorUserRole.lockedAt,
+          locked: message.author.status === UserStatusEnum.LOCKED || !message.authorUserRole.isActive,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
           ...(message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: message.author.id === thread.innovation.owner?.id

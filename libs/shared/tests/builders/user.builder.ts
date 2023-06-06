@@ -90,7 +90,6 @@ export class UserBuilder extends BaseBuilder {
   }
 
   addRole(type: ServiceRoleEnum, roleName: string, organisationId?: string, organisationUnitId?: string): this {
-
     if (
       [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(type) &&
       (!organisationId || !organisationUnitId)
@@ -114,7 +113,6 @@ export class UserBuilder extends BaseBuilder {
     });
 
     return this;
-
   }
 
   private async saveRole(
@@ -202,7 +200,7 @@ export class UserBuilder extends BaseBuilder {
 
         'roles.id',
         'roles.role',
-        'roles.lockedAt',
+        'roles.isActive',
         'roleOrganisation.id',
         'roleOrganisation.name',
         'roleOrganisation.acronym',
@@ -242,7 +240,7 @@ export class UserBuilder extends BaseBuilder {
       [key: string]: {
         id: string;
         role: ServiceRoleEnum;
-        lockedAt: null | Date;
+        isActive: boolean;
         organisation?: { id: string; name: string; acronym: null | string };
         organisationUnit?: { id: string; name: string; acronym: string };
       };
@@ -276,7 +274,7 @@ export class UserBuilder extends BaseBuilder {
       userRoles[r.key] = {
         id: foundRole.id,
         role: foundRole.role,
-        lockedAt: foundRole.lockedAt,
+        isActive: foundRole.isActive,
         ...(foundRole.organisation && {
           organisation: {
             id: foundRole.organisation.id,
@@ -316,7 +314,6 @@ export class UserBuilder extends BaseBuilder {
     } = {};
 
     (await result.userOrganisations).map(userOrganisation => {
-
       const organisation = userOrganisation.organisation;
       const organisationUnits = userOrganisation.userOrganisationUnits;
 
@@ -340,7 +337,6 @@ export class UserBuilder extends BaseBuilder {
           organisationUnitUser: { id: item.id }
         };
       });
-
     });
 
     return {
@@ -354,7 +350,5 @@ export class UserBuilder extends BaseBuilder {
       roles: userRoles,
       organisations: organisations
     };
-
   }
-  
 }

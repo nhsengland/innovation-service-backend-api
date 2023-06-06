@@ -91,7 +91,7 @@ export class DomainUsersService {
         // Service roles
         'serviceRoles.id',
         'serviceRoles.role',
-        'serviceRoles.lockedAt',
+        'serviceRoles.isActive',
         'roleOrganisation.id',
         'roleOrganisation.name',
         'roleOrganisation.acronym',
@@ -250,7 +250,6 @@ export class DomainUsersService {
     email: string,
     filters?: { userRoles: ServiceRoleEnum[] }
   ): Promise<Awaited<ReturnType<DomainUsersService['getUserInfo']>>[]> {
-
     try {
       const authUser = await this.identityProviderService.getUserInfoByEmail(email);
       if (!authUser) {
@@ -365,13 +364,7 @@ export class DomainUsersService {
         }
       }
 
-      await transaction.update(
-        UserRoleEntity,
-        { user: { id: dbUser.id } },
-        {
-          deletedAt: new Date().toISOString()
-        }
-      );
+      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
 
       await transaction.update(
         UserEntity,
@@ -404,7 +397,7 @@ export class DomainUsersService {
       .select([
         'userRole.id',
         'userRole.role',
-        'userRole.lockedAt',
+        'userRole.isActive',
         'organisation.id',
         'organisation.name',
         'organisation.acronym',
@@ -417,7 +410,7 @@ export class DomainUsersService {
       .where('userRole.user = :userId', { userId });
 
     if (activeOnly) {
-      query.andWhere('userRole.lockedAt IS NULL');
+      query.andWhere('userRole.isActive = 1');
     }
 
     // currently we're returning the first role found when no roleId (related to TechDebt in v1-me-info) and this is to

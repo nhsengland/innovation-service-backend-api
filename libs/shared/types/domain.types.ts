@@ -8,7 +8,7 @@ import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 export type RoleType = {
   id: string;
   role: ServiceRoleEnum;
-  lockedAt: Date | null;
+  isActive: boolean;
   organisation?: { id: string; name: string; acronym: string | null };
   organisationUnit?: { id: string; name: string; acronym: string };
 };

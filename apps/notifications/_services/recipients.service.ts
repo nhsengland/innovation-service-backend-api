@@ -238,7 +238,7 @@ export class RecipientsService extends BaseService {
         'user.status',
         'serviceRoles.id',
         'serviceRoles.role',
-        'serviceRoles.lockedAt'
+        'serviceRoles.isActive'
       ])
       .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
       .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -275,7 +275,7 @@ export class RecipientsService extends BaseService {
             role: role.role,
             userId: user.id,
             identityId: user.identityId,
-            isActive: !role.lockedAt && user.status === UserStatusEnum.ACTIVE
+            isActive: role.isActive && user.status === UserStatusEnum.ACTIVE
           });
         }
       }
@@ -305,7 +305,7 @@ export class RecipientsService extends BaseService {
           'user.status',
           'serviceRoles.id',
           'serviceRoles.role',
-          'serviceRoles.lockedAt'
+          'serviceRoles.isActive'
         ])
         .innerJoin('innovation.innovationSupports', 'support')
         .innerJoin('support.organisationUnit', 'organisationUnit')
@@ -332,7 +332,7 @@ export class RecipientsService extends BaseService {
               role: role.role,
               userId: user.id,
               identityId: user.identityId,
-              isActive: !role.lockedAt && user.status === UserStatusEnum.ACTIVE
+              isActive: role.isActive && user.status === UserStatusEnum.ACTIVE
             });
           }
         }
@@ -364,7 +364,7 @@ export class RecipientsService extends BaseService {
         'user.status',
         'role.id',
         'role.role',
-        'role.lockedAt',
+        'role.isActive',
         'support.id',
         'unit.id',
         'unit.name',
@@ -400,7 +400,7 @@ export class RecipientsService extends BaseService {
         identityId: dbAction.createdByUser.identityId,
         roleId: dbAction.createdByUserRole.id,
         role: dbAction.createdByUserRole.role,
-        isActive: !dbAction.createdByUserRole.lockedAt && dbAction.createdByUser.status === UserStatusEnum.ACTIVE
+        isActive: dbAction.createdByUserRole.isActive && dbAction.createdByUser.status === UserStatusEnum.ACTIVE
       }
     };
   }
@@ -420,7 +420,7 @@ export class RecipientsService extends BaseService {
         'author.status',
         'authorUserRole.id',
         'authorUserRole.role',
-        'authorUserRole.lockedAt'
+        'authorUserRole.isActive'
       ])
       .leftJoin('thread.author', 'author')
       .leftJoin('thread.authorUserRole', 'authorUserRole')
@@ -441,7 +441,7 @@ export class RecipientsService extends BaseService {
             identityId: dbThread.author.identityId,
             roleId: dbThread.authorUserRole.id,
             role: dbThread.authorUserRole.role,
-            isActive: dbThread.author.status === UserStatusEnum.ACTIVE && !dbThread.authorUserRole.lockedAt
+            isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
           }
         })
     };
@@ -659,7 +659,7 @@ export class RecipientsService extends BaseService {
         .andWhere('notificationPreferences.preference = :preference', {
           preference: EmailNotificationPreferenceEnum.DAILY
         })
-        .andWhere('user.status = :userActive AND userRole.locked_at IS NULL AND user.deleted_at IS NULL', {
+        .andWhere('user.status = :userActive AND userRole.is_active = 1 AND user.deleted_at IS NULL', {
           userActive: UserStatusEnum.ACTIVE
         })
         .groupBy('user.id')
@@ -699,7 +699,7 @@ export class RecipientsService extends BaseService {
       .andWhere('roles.role = :role', { role: ServiceRoleEnum.INNOVATOR })
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) != 0')
       .andWhere('DATEDIFF(DAY, innovations.created_at, DATEADD(DAY, -1, GETDATE())) % 30 = 0')
-      .andWhere('owner.status = :userActive AND roles.lockedAt IS NULL', { userActive: UserStatusEnum.ACTIVE })
+      .andWhere('owner.status = :userActive AND roles.isActive = 1', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
     return dbInnovations
@@ -771,7 +771,7 @@ export class RecipientsService extends BaseService {
       .andWhere('qas.role = :role', { role: ServiceRoleEnum.QUALIFYING_ACCESSOR }) // only notify QAs
 
       // filter locked/deleted
-      .andWhere('qas.locked_at IS NULL')
+      .andWhere('qas.is_active = 1')
       .andWhere('qaUser.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
 
       // group by
@@ -959,7 +959,7 @@ export class RecipientsService extends BaseService {
 
     const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.lockedAt', 'userRole.role', 'user.id', 'user.identityId', 'user.status']);
+      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status']);
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });
@@ -978,7 +978,7 @@ export class RecipientsService extends BaseService {
     }
 
     if (!includeLocked) {
-      query.andWhere('user.locked_at IS NULL').andWhere('userRole.locked_at IS NULL');
+      query.andWhere('user.locked_at IS NULL').andWhere('userRole.is_active = 1');
     }
 
     // join user to check the status
@@ -992,7 +992,7 @@ export class RecipientsService extends BaseService {
       role: r.role,
       userId: r.user.id,
       identityId: r.user.identityId,
-      isActive: !r.lockedAt && r.user.status === UserStatusEnum.ACTIVE
+      isActive: r.isActive && r.user.status === UserStatusEnum.ACTIVE
     }));
 
     return userRoles;

@@ -70,7 +70,7 @@ export class OrganisationsService extends BaseService {
         .innerJoin('user_role', 'r', 'ur.user_id = r.user_id')
         .innerJoin('user', 'u', 'ur.user_id = u.id')
         .where('r.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
-        .andWhere('ur.lockedAt IS NULL')
+        .andWhere('ur.is_active = 1')
         .andWhere('r.lockedAt IS NULL')
         .andWhere('u.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
         .groupBy('ur.user_id, u.external_id')
@@ -178,7 +178,7 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserRoleEntity,
         { organisationUnit: unitId, lockedAt: IsNull() },
-        { lockedAt: now, updatedAt: now }
+        { isActive: false, updatedAt: now }
       );
 
       const organisationId = unit.organisationId;
@@ -261,7 +261,7 @@ export class OrganisationsService extends BaseService {
       .select(['ur.id', 'ur.role'])
       .where('ur.organisation_unit_id = :unitId', { unitId }) // ensure users have role in unit
       .andWhere('ur.user_id IN (:...userIds)', { userIds })
-      .andWhere('ur.locked_at IS NOT NULL')
+      .andWhere('ur.is_active = 0')
       .getMany();
 
     //check if at least 1 user is QA
@@ -314,7 +314,7 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserRoleEntity,
         { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
-        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
+        { isActive: true, updatedAt: now, updatedBy: requestUser.id }
       );
 
       return { unitId };
@@ -576,7 +576,7 @@ export class OrganisationsService extends BaseService {
           organisationUnit: unit,
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
-          lockedAt: unit.inactivatedAt ? new Date() : null
+          isActive: !unit.inactivatedAt
         })
       );
     });

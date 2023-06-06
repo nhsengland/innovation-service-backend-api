@@ -24,8 +24,7 @@ export class MockBuilder {
     return this;
   }
 
-  mockDomainUser(user: UserEntity) {
-
+  mockDomainUser(user: UserEntity): DomainUserInfoBuilder {
     const data = {
       id: user.id,
       identityId: user.identityId,
