@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
+import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -93,6 +94,12 @@ export class CompleteScenarioBuilder {
       const janeCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setUser(janeInnovator.id)
         .setInnovation(johnInnovation.id)
+        .save();
+
+      // Add elisaPendingCollaborator as a pending collaborator on johnInnovation
+      const elisaPendingCollaborator = await new InnovationCollaboratorBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationCollaboratorStatusEnum.PENDING)
         .save();
 
       // action on johnInnovation created by Alice (QA)
@@ -215,7 +222,10 @@ export class CompleteScenarioBuilder {
                     messages: { johnMessage: johnInnovationThreadByJohn.messages['johnMessage']! }
                   }
                 },
-                collaborators: { janeCollaborator: janeCollaborator }
+                collaborators: {
+                  janeCollaborator: janeCollaborator,
+                  elisaPendingCollaborator: elisaPendingCollaborator
+                }
               }
             }
           },

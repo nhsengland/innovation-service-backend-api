@@ -1,13 +1,14 @@
+import { randEmail, randPastDate } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import { UserEntity } from '../../entities/user/user.entity';
 import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
 import { BaseBuilder } from './base.builder';
-import { UserEntity } from '../../entities/user/user.entity';
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import { randEmail, randPastDate } from '@ngneat/falso';
 
 export type TestCollaboratorType = {
   id: string;
+  email: string;
   status: InnovationCollaboratorStatusEnum;
 };
 
@@ -55,6 +56,7 @@ export class InnovationCollaboratorBuilder extends BaseBuilder {
 
     return {
       id: result.id,
+      email: result.email,
       status: result.status
     };
   }
