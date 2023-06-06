@@ -1,4 +1,7 @@
 import { env } from 'process';
+import { container } from './libs/shared/config/inversify.config';
+import type { CacheService } from './libs/shared/services';
+import SHARED_SYMBOLS from './libs/shared/services/symbols';
 
 // Disable console.log in tests
 // global.console.log = jest.fn();
@@ -8,4 +11,9 @@ import { env } from 'process';
 // an alternative could be export to a file on setup then read it here instead of using the env
 (global as any).sampleData = (global as any).sampleData || JSON.parse(env['sampleData'] as string);
 
-(global as any).completeScenarioData = (global as any).completeScenarioData || JSON.parse(env['completeScenarioData'] as string);
+(global as any).completeScenarioData =
+  (global as any).completeScenarioData || JSON.parse(env['completeScenarioData'] as string);
+
+afterAll(async () => {
+  await container.get<CacheService>(SHARED_SYMBOLS.CacheService)?.destroy();
+});
