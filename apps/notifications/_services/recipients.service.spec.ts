@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
-import type { RecipientsService } from './recipients.service';
-import { container } from '../_config';
-import type { EntityManager } from 'typeorm';
-import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { randUuid } from '@ngneat/falso';
+import { ServiceRoleEnum } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
-import { SYMBOLS } from './symbols';
+import { CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
+import type { EntityManager } from 'typeorm';
+import { container } from '../_config';
+import type { RecipientsService } from './recipients.service';
+import { SYMBOLS } from './symbols';
 
 describe('Notifications / _services / recipients service suite', () => {
   let sut: RecipientsService;
@@ -34,6 +34,55 @@ describe('Notifications / _services / recipients service suite', () => {
   afterEach(async () => {
     jest.restoreAllMocks();
     await testsHelper.releaseQueryRunnerEntityManager();
+  });
+
+  describe('getUsersIdentityInfo suite', () => {
+    it('Should get an identity info when passed a valid user identity id', async () => {
+      const identityInfo = await sut.usersIdentityInfo(scenario.users.johnInnovator.identityId);
+
+      expect(identityInfo).toMatchObject(DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator));
+    });
+
+    it('Should get multiple identity info when passed an array of user identity ids', async () => {
+      const identityInfo = await sut.usersIdentityInfo([
+        scenario.users.johnInnovator.identityId,
+        scenario.users.adamInnovator.identityId,
+        scenario.users.ingridAccessor.identityId
+      ]);
+
+      expect(identityInfo).toHaveLength(3);
+      expect(identityInfo).toMatchObject([
+        DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator),
+        DTOsHelper.getIdentityUserInfo(scenario.users.adamInnovator),
+        DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)
+      ]);
+    });
+
+    it('Should return null when passed a non existent user identity id', async () => {
+      const identityInfo = await sut.usersIdentityInfo(randUuid());
+
+      expect(identityInfo).toBeNull();
+    });
+
+    it('It should return empty array when passed an empty array of user identity ids', async () => {
+      const identityInfo = await sut.usersIdentityInfo([]);
+
+      expect(identityInfo).toHaveLength(0);
+    });
+
+    it('Should filter out non existent user identity ids', async () => {
+      const identityInfo = await sut.usersIdentityInfo([
+        scenario.users.johnInnovator.identityId,
+        randUuid(),
+        scenario.users.ingridAccessor.identityId
+      ]);
+
+      expect(identityInfo).toHaveLength(2);
+      expect(identityInfo).toMatchObject([
+        DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator),
+        DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)
+      ]);
+    });
   });
 
   describe('getUsersRecipients suite', () => {
