@@ -243,6 +243,20 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe.skip('innovationSharedOrganisationsWithUnits suite', () => {
+    it('Should return not found if innovation not found', async () => {
+      await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+      );
+    });
+
+    it('Should return list of organisations unit is shared with', () => {
+      fail('add new org to scenario');
+      // fail('add shares to scenario');
+      // fail('show only shared')
+    });
+  });
+
   /*
   describe('getUsersRecipients suite', () => {
     it('Should get a recipient when passed a valid user', async () => {
