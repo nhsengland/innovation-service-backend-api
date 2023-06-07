@@ -170,7 +170,7 @@ export class RecipientsService extends BaseService {
     const collaborators = (await query.getMany()).map(c => ({
       email: c.email,
       status: c.status,
-      userId: c.user?.status !== UserStatusEnum.DELETED ? c.user?.id : undefined
+      userId: c.user && c.user.status !== UserStatusEnum.DELETED ? c.user.id : undefined
     }));
 
     return collaborators;
