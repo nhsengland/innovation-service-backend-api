@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
+import { InnovationEntity } from '@notifications/shared/entities';
+import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
@@ -19,9 +21,6 @@ describe('Notifications / _services / recipients service suite', () => {
     sut = container.get<RecipientsService>(SYMBOLS.RecipientsService);
     testsHelper = await new TestsHelper().init();
     scenario = testsHelper.getCompleteScenario();
-
-    // todo remove
-    console.log(em);
   });
 
   beforeEach(async () => {
@@ -62,6 +61,12 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(identityInfo).toBeNull();
     });
 
+    it('Should return null when no arguments passed', async () => {
+      const identityInfo = await sut.usersIdentityInfo();
+
+      expect(identityInfo).toBeNull();
+    });
+
     it('It should return empty array when passed an empty array of user identity ids', async () => {
       const identityInfo = await sut.usersIdentityInfo([]);
 
@@ -82,6 +87,48 @@ describe('Notifications / _services / recipients service suite', () => {
           [scenario.users.ingridAccessor.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)]
         ])
       );
+    });
+  });
+
+  describe('innovationInfo suite', () => {
+    it('Should get innovation info', async () => {
+      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      const innovation = await sut.innovationInfo(dbInnovation.id);
+
+      expect(innovation).toMatchObject({
+        name: dbInnovation.name,
+        ownerId: scenario.users.johnInnovator.id,
+        ownerIdentityId: scenario.users.johnInnovator.identityId
+      });
+    });
+
+    it('Should fail to get non-existent innovation info', async () => {
+      await expect(() => sut.innovationInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+      );
+    });
+
+    it('Should throw error if innovation is deleted', async () => {
+      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      await em.getRepository(InnovationEntity).softRemove({ id: dbInnovation.id });
+
+      await expect(() => sut.innovationInfo(dbInnovation.id, false, em)).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
+      );
+    });
+
+    it('Should return deleted innovations if withDeleted', async () => {
+      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      await em.getRepository(InnovationEntity).softRemove({ id: dbInnovation.id });
+
+      const innovation = await sut.innovationInfo(dbInnovation.id, true, em);
+
+      expect(innovation).toMatchObject({
+        name: dbInnovation.name,
+        ownerId: scenario.users.johnInnovator.id,
+        ownerIdentityId: scenario.users.johnInnovator.identityId
+      });
     });
   });
 
@@ -140,25 +187,6 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationInfo suite', () => {
-    it('Should get innovation info', async () => {
-      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
-
-      const innovation = await sut.innovationInfo(dbInnovation.id);
-
-      expect(innovation).toMatchObject({
-        name: dbInnovation.name,
-        ownerId: scenario.users.johnInnovator.id,
-        ownerIdentityId: scenario.users.johnInnovator.identityId
-      });
-    });
-
-    it('Should fail to get non-existent innovation info', async () => {
-      await expect(() => sut.innovationInfo(randUuid())).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
-      );
-    });
-  });
 
   describe('actionInfoWithOwner suite', () => {
     it('Should get action info', async () => {

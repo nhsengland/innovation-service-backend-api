@@ -103,13 +103,15 @@ export class RecipientsService extends BaseService {
    */
   async innovationInfo(
     innovationId: string,
-    withDeleted = false
+    withDeleted = false,
+    entityManager?: EntityManager
   ): Promise<{
     name: string;
     ownerId?: string;
     ownerIdentityId?: string;
   }> {
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation');
+    const em = entityManager ?? this.sqlConnection.manager;
+    const query = em.createQueryBuilder(InnovationEntity, 'innovation');
 
     if (withDeleted) {
       query.withDeleted();
