@@ -30,6 +30,11 @@ export class InnovationCollaboratorBuilder extends BaseBuilder {
     return this;
   }
 
+  setEmail(email: string): this {
+    this.collaborator.email = email;
+    return this;
+  }
+
   setStatus(status: InnovationCollaboratorStatusEnum): this {
     this.collaborator.status = status;
     return this;

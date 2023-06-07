@@ -146,7 +146,8 @@ export class RecipientsService extends BaseService {
    */
   private async getInnovationCollaborators(
     innovationId: string,
-    status?: InnovationCollaboratorStatusEnum[]
+    status?: InnovationCollaboratorStatusEnum[],
+    entityManager?: EntityManager
   ): Promise<
     {
       email: string;
@@ -154,7 +155,9 @@ export class RecipientsService extends BaseService {
       userId?: string;
     }[]
   > {
-    const query = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select(['collaborator.email', 'collaborator.status', 'user.id', 'user.status'])
       .leftJoin('collaborator.user', 'user')

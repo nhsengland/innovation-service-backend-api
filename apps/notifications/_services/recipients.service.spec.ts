@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity } from '@notifications/shared/entities';
+import { InnovationEntity, UserEntity } from '@notifications/shared/entities';
+import { InnovationCollaboratorStatusEnum } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -129,6 +130,116 @@ describe('Notifications / _services / recipients service suite', () => {
         ownerId: scenario.users.johnInnovator.id,
         ownerIdentityId: scenario.users.johnInnovator.identityId
       });
+    });
+  });
+
+  describe('getInnovationCollaborators', () => {
+    it('should return a list of innovation collaborators', async () => {
+      const collaborators = await sut['getInnovationCollaborators'](
+        scenario.users.johnInnovator.innovations.johnInnovation.id
+      );
+
+      expect(collaborators).toHaveLength(2);
+      expect(collaborators).toMatchObject([
+        {
+          email: scenario.users.janeInnovator.email,
+          status: InnovationCollaboratorStatusEnum.ACTIVE,
+          userId: scenario.users.janeInnovator.id
+        },
+        {
+          email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
+          status: InnovationCollaboratorStatusEnum.PENDING,
+          userId: undefined
+        }
+      ]);
+    });
+
+    it('should return an empty list if no collaborators', async () => {
+      const collaborators = await sut['getInnovationCollaborators'](
+        scenario.users.adamInnovator.innovations.adamInnovation.id
+      );
+
+      expect(collaborators).toHaveLength(0);
+    });
+
+    it('should filter by status', async () => {
+      const collaborators = await sut['getInnovationCollaborators'](
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        [InnovationCollaboratorStatusEnum.ACTIVE]
+      );
+
+      expect(collaborators).toHaveLength(1);
+      expect(collaborators).toMatchObject([
+        {
+          email: scenario.users.janeInnovator.email,
+          status: InnovationCollaboratorStatusEnum.ACTIVE,
+          userId: scenario.users.janeInnovator.id
+        }
+      ]);
+    });
+
+    it('should ignore status if empty array', async () => {
+      const collaborators = await sut['getInnovationCollaborators'](
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        []
+      );
+
+      expect(collaborators).toHaveLength(2);
+      expect(collaborators).toMatchObject([
+        {
+          email: scenario.users.janeInnovator.email,
+          status: InnovationCollaboratorStatusEnum.ACTIVE,
+          userId: scenario.users.janeInnovator.id
+        },
+        {
+          email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
+          status: InnovationCollaboratorStatusEnum.PENDING,
+          userId: undefined
+        }
+      ]);
+    });
+
+    it('should support multiple status', async () => {
+      const collaborators = await sut['getInnovationCollaborators'](
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        [
+          InnovationCollaboratorStatusEnum.ACTIVE,
+          InnovationCollaboratorStatusEnum.PENDING,
+          InnovationCollaboratorStatusEnum.EXPIRED
+        ]
+      );
+
+      expect(collaborators).toHaveLength(2);
+      expect(collaborators).toMatchObject([
+        {
+          email: scenario.users.janeInnovator.email,
+          status: InnovationCollaboratorStatusEnum.ACTIVE,
+          userId: scenario.users.janeInnovator.id
+        },
+        {
+          email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
+          status: InnovationCollaboratorStatusEnum.PENDING,
+          userId: undefined
+        }
+      ]);
+    });
+
+    it('should not return user id if user deleted', async () => {
+      await em.getRepository(UserEntity).softRemove({ id: scenario.users.janeInnovator.id });
+      const collaborators = await sut['getInnovationCollaborators'](
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        [InnovationCollaboratorStatusEnum.ACTIVE],
+        em
+      );
+
+      expect(collaborators).toHaveLength(1);
+      expect(collaborators).toMatchObject([
+        {
+          email: scenario.users.janeInnovator.email,
+          status: InnovationCollaboratorStatusEnum.ACTIVE,
+          userId: undefined
+        }
+      ]);
     });
   });
 
