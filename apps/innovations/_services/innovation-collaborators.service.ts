@@ -11,7 +11,6 @@ import {
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
-  UnauthorizedError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -308,7 +307,7 @@ export class InnovationCollaboratorsService extends BaseService {
     if (collaborator.innovation.owner && collaborator.innovation.owner.id !== domainContext.id) {
       const domainUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
       if (collaborator.email !== domainUserInfo.email) {
-        throw new UnauthorizedError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
       }
     }
 
