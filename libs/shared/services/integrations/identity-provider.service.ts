@@ -3,9 +3,9 @@ import { inject, injectable } from 'inversify';
 
 import {
   GenericErrorsEnum,
+  InternalServerError,
   NotFoundError,
   ServiceUnavailableError,
-  UnauthorizedError,
   UserErrorsEnum
 } from '../../errors';
 
@@ -124,7 +124,7 @@ export class IdentityProviderService {
       case 404:
         return new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
       case 401:
-        return new UnauthorizedError(GenericErrorsEnum.SERVICE_IDENTIY_UNAUTHORIZED);
+        return new InternalServerError(GenericErrorsEnum.SERVICE_IDENTIY_UNAUTHORIZED);
       default:
         return new ServiceUnavailableError(GenericErrorsEnum.SERVICE_SQL_UNAVAILABLE, {
           details: { message }

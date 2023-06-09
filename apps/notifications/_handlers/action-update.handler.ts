@@ -7,7 +7,7 @@ import {
 } from '@notifications/shared/enums';
 import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import type { DomainService, IdentityProviderService } from '@notifications/shared/services';
+import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -34,7 +34,6 @@ export class ActionUpdateHandler extends BaseHandler<
     section: CurrentCatalogTypes.InnovationSections;
   }
 > {
-  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   private data: {
@@ -102,7 +101,7 @@ export class ActionUpdateHandler extends BaseHandler<
             InnovationActionStatusEnum.COMPLETED,
             InnovationActionStatusEnum.REQUESTED,
             InnovationActionStatusEnum.CANCELLED,
-            InnovationActionStatusEnum.DELETED
+            // InnovationActionStatusEnum.DELETED
           ].includes(this.inputData.action.status)
         ) {
           if (owner) {
@@ -130,12 +129,7 @@ export class ActionUpdateHandler extends BaseHandler<
   // Private methods.
 
   private async prepareEmailForAccessorOrAssessment(): Promise<void> {
-    const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-
-    // Don't send email to inactive users
-    if (!requestInfo.isActive) {
-      return;
-    }
+    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
     let templateId: EmailTypeEnum;
     switch (this.data.actionInfo?.status) {

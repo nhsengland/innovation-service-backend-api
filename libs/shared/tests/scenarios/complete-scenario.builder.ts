@@ -1,16 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
+import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
+import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
+import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
-import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
-import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
@@ -55,6 +54,11 @@ export class CompleteScenarioBuilder {
         .setName('Health Org Unit')
         .save();
 
+      const healthOrgAiUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(healthOrg.id)
+        .setName('Health Org AI Unit')
+        .save();
+
       // Alice Qualifying Accessor specs:
       // Belongs to an active organisation.
       const aliceQualifyingAccessor = await new UserBuilder(entityManager)
@@ -67,6 +71,14 @@ export class CompleteScenarioBuilder {
       const ingridAccessor = await new UserBuilder(entityManager)
         .setName('Ingrid Accessor')
         .addRole(ServiceRoleEnum.ACCESSOR, 'accessorRole', healthOrg.id, healthOrgUnit.id)
+        .save();
+
+      // Jaimie Madrox Accessor specs:
+      // Belongs to two units in Health Organisation.
+      const jamieMadroxAccessor = await new UserBuilder(entityManager)
+        .setName('Jamie <Madrox>')
+        .addRole(ServiceRoleEnum.ACCESSOR, 'regularRole', healthOrg.id, healthOrgUnit.id)
+        .addRole(ServiceRoleEnum.ACCESSOR, 'aiRole', healthOrg.id, healthOrgAiUnit.id)
         .save();
 
       // Innovators
@@ -93,6 +105,7 @@ export class CompleteScenarioBuilder {
       // Add janeInnovator as a collaborator on johnInnovation
       const janeCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setUser(janeInnovator.id)
+        .setEmail(janeInnovator.email)
         .setInnovation(johnInnovation.id)
         .save();
 
@@ -264,6 +277,24 @@ export class CompleteScenarioBuilder {
                 organisationUnits: {
                   healthOrgUnit:
                     ingridAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!
+                }
+              }
+            }
+          },
+          jamieMadroxAccessor: {
+            ...jamieMadroxAccessor,
+            roles: {
+              regularRole: jamieMadroxAccessor.roles['regularRole']!,
+              aiRole: jamieMadroxAccessor.roles['aiRole']!
+            },
+            organisations: {
+              healthOrg: {
+                ...jamieMadroxAccessor.organisations['Health Organisation']!,
+                organisationUnits: {
+                  healthOrgUnit:
+                    jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!,
+                  healthOrgAiUnit:
+                    jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
                 }
               }
             }

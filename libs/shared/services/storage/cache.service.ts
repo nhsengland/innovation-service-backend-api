@@ -49,4 +49,8 @@ export class CacheService {
   get<T extends keyof CacheConfigType>(cacheId: T): CacheConfigType[T] {
     return this.cacheConfigMap[cacheId];
   }
+
+  async destroy(): Promise<void> {
+    await this.redis.quit();
+  }
 }

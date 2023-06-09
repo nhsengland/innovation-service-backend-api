@@ -3,7 +3,6 @@ import { randAbbreviation, randCompanyName, randEmail, randFullName, randPastDat
 import type { EntityManager } from 'typeorm';
 
 import { OrganisationUnitUserEntity } from '../../entities';
-import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
 import { OrganisationUserEntity } from '../../entities/organisation/organisation-user.entity';
 import { OrganisationEntity } from '../../entities/organisation/organisation.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
@@ -16,6 +15,7 @@ import {
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import type { RoleType } from '../../types';
 
+import { groupBy } from 'lodash';
 import { BaseBuilder } from './base.builder';
 
 export type TestUserOrganisationUnitType = {
@@ -90,7 +90,6 @@ export class UserBuilder extends BaseBuilder {
   }
 
   addRole(type: ServiceRoleEnum, roleName: string, organisationId?: string, organisationUnitId?: string): this {
-
     if (
       [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(type) &&
       (!organisationId || !organisationUnitId)
@@ -114,82 +113,74 @@ export class UserBuilder extends BaseBuilder {
     });
 
     return this;
-
   }
 
-  private async saveRole(
+  private async saveRoles(
     user: UserEntity,
-    role: {
+    roles: {
       role: ServiceRoleEnum;
       organisationId?: string;
       organisationUnitId?: string;
-    }
+    }[]
   ): Promise<void> {
-    let dbOrganisation: OrganisationEntity | undefined;
-    let dbOrganisationUnit: OrganisationUnitEntity | undefined;
+    const rolesPerOrg = groupBy(roles, 'organisationId');
+    for (const [org, values] of Object.entries(rolesPerOrg)) {
+      let dbOrganisationId: string | undefined = org !== 'undefined' ? org : undefined;
+      let dbOrganisationUserId: string | undefined;
 
-    if (role.organisationId) {
-      dbOrganisation = OrganisationEntity.new({ id: role.organisationId });
+      // Create the innovator organisation if one was not given
+      const isInnovator = values.some(v => v.role === ServiceRoleEnum.INNOVATOR);
+
+      // sanity check
+      if (isInnovator && (values.some(v => v.role !== ServiceRoleEnum.INNOVATOR) || values.length > 1)) {
+        throw new Error("Innovator can't have other roles nor multiple roles");
+      }
+
+      if (!dbOrganisationId && isInnovator) {
+        dbOrganisationId = (
+          await this.getEntityManager().save(OrganisationEntity, {
+            name: randCompanyName(),
+            acronym: randAbbreviation(),
+            isShadow: true,
+            type: OrganisationTypeEnum.INNOVATOR
+          })
+        ).id;
+      }
+
+      // Create the organisation user
+      if (dbOrganisationId) {
+        dbOrganisationUserId = (
+          await this.getEntityManager().save(OrganisationUserEntity, {
+            organisation: { id: dbOrganisationId },
+            user,
+            role: isInnovator ? InnovatorOrganisationRoleEnum.INNOVATOR_OWNER : AccessorOrganisationRoleEnum.ACCESSOR
+          })
+        ).id;
+      }
+
+      for (const role of values) {
+        if (role.organisationUnitId && dbOrganisationUserId) {
+          await this.getEntityManager().save(OrganisationUnitUserEntity, {
+            organisationUnit: { id: role.organisationUnitId },
+            organisationUser: { id: dbOrganisationUserId }
+          });
+        }
+
+        //save role
+        await this.getEntityManager().save(UserRoleEntity, {
+          user: user,
+          role: role.role,
+          ...(dbOrganisationId && { organisation: { id: dbOrganisationId } }), // not using role because of innovator auto create
+          ...(role.organisationUnitId && { organisationUnit: { id: role.organisationUnitId } })
+        });
+      }
     }
-
-    if (!role.organisationId && role.role === ServiceRoleEnum.INNOVATOR) {
-      dbOrganisation = await this.getEntityManager().save(
-        OrganisationEntity,
-        OrganisationEntity.new({
-          name: randCompanyName(),
-          acronym: randAbbreviation(),
-          isShadow: true,
-          type: OrganisationTypeEnum.INNOVATOR
-        })
-      );
-    }
-
-    let dbOrganisationUser: OrganisationUserEntity | undefined;
-
-    if (dbOrganisation) {
-      dbOrganisationUser = await this.getEntityManager().save(
-        OrganisationUserEntity,
-        OrganisationUserEntity.new({
-          organisation: dbOrganisation,
-          user,
-          role:
-            role.role === ServiceRoleEnum.INNOVATOR
-              ? InnovatorOrganisationRoleEnum.INNOVATOR_OWNER
-              : AccessorOrganisationRoleEnum.ACCESSOR
-        })
-      );
-    }
-
-    if (role.organisationUnitId && dbOrganisationUser) {
-      dbOrganisationUnit = OrganisationUnitEntity.new({ id: role.organisationUnitId });
-
-      await this.getEntityManager().save(
-        OrganisationUnitUserEntity,
-        OrganisationUnitUserEntity.new({
-          organisationUnit: dbOrganisationUnit,
-          organisationUser: dbOrganisationUser
-        })
-      );
-    }
-
-    //save role
-    await this.getEntityManager().save(
-      UserRoleEntity,
-      UserRoleEntity.new({
-        user: user,
-        role: role.role,
-        ...(dbOrganisation && { organisation: dbOrganisation }),
-        ...(dbOrganisationUnit && { organisationUnit: dbOrganisationUnit })
-      })
-    );
   }
 
   async save(): Promise<TestUserType> {
     const dbUser = await this.getEntityManager().getRepository(UserEntity).save(this.user);
 
-    for (const roleToAdd of this.rolesToAdd) {
-      await this.saveRole(dbUser, roleToAdd);
-    }
+    await this.saveRoles(dbUser, this.rolesToAdd);
 
     const result = await this.getEntityManager()
       .createQueryBuilder(UserEntity, 'user')
@@ -202,7 +193,7 @@ export class UserBuilder extends BaseBuilder {
 
         'roles.id',
         'roles.role',
-        'roles.lockedAt',
+        'roles.isActive',
         'roleOrganisation.id',
         'roleOrganisation.name',
         'roleOrganisation.acronym',
@@ -242,7 +233,7 @@ export class UserBuilder extends BaseBuilder {
       [key: string]: {
         id: string;
         role: ServiceRoleEnum;
-        lockedAt: null | Date;
+        isActive: boolean;
         organisation?: { id: string; name: string; acronym: null | string };
         organisationUnit?: { id: string; name: string; acronym: string };
       };
@@ -276,7 +267,7 @@ export class UserBuilder extends BaseBuilder {
       userRoles[r.key] = {
         id: foundRole.id,
         role: foundRole.role,
-        lockedAt: foundRole.lockedAt,
+        isActive: foundRole.isActive,
         ...(foundRole.organisation && {
           organisation: {
             id: foundRole.organisation.id,
@@ -316,7 +307,6 @@ export class UserBuilder extends BaseBuilder {
     } = {};
 
     (await result.userOrganisations).map(userOrganisation => {
-
       const organisation = userOrganisation.organisation;
       const organisationUnits = userOrganisation.userOrganisationUnits;
 
@@ -340,7 +330,6 @@ export class UserBuilder extends BaseBuilder {
           organisationUnitUser: { id: item.id }
         };
       });
-
     });
 
     return {
@@ -354,7 +343,5 @@ export class UserBuilder extends BaseBuilder {
       roles: userRoles,
       organisations: organisations
     };
-
   }
-  
 }

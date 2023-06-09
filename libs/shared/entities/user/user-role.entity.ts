@@ -14,14 +14,11 @@ export class UserRoleEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'active_since', type: 'datetime2' })
-  activeSince: Date;
-
   @Column({ name: 'role', nullable: false })
   role: ServiceRoleEnum;
 
-  @Column({ name: 'locked_at', type: 'datetime2', nullable: true })
-  lockedAt: Date | null;
+  @Column({ name: 'is_active' })
+  isActive: boolean;
 
   @RelationId('organisation')
   organisationId: string;
@@ -58,7 +55,7 @@ export const roleEntity2RoleType = (role: UserRoleEntity): RoleType => {
   return {
     id: role.id,
     role: role.role,
-    lockedAt: role.lockedAt,
+    isActive: role.isActive,
     ...(role.organisation && {
       organisation: {
         id: role.organisation.id,

@@ -3,10 +3,10 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
-import { NotFoundError, UserErrorsEnum } from '../errors';
 import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
+import type { TestUserType } from './builders/user.builder';
 import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
@@ -80,12 +80,19 @@ export class TestsHelper {
 
   private setupGlobalMocks(): void {
     const identityMap = this.completeScenarioBuilder.getIdentityMap();
-    jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockImplementation(async (identityId: string) => {
-      const user = identityMap.get(identityId);
-      if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-      return DTOsHelper.getIdentityUserInfo(user);
+    // jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockImplementation(async (identityId: string) => {
+    //   const user = identityMap.get(identityId);
+    //   if (!user) {
+    //     throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    //   }
+    //   return DTOsHelper.getIdentityUserInfo(user);
+    // });
+
+    jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockImplementation(async (identityIds: string[]) => {
+      return identityIds
+        .map(identityId => identityMap.get(identityId))
+        .filter((x): x is TestUserType => !!x)
+        .map(DTOsHelper.getIdentityUserInfo);
     });
   }
 }

@@ -20,9 +20,9 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
         PERIOD FOR SYSTEM_TIME (valid_from, valid_to),
         CONSTRAINT "pk_innovation_document_id" PRIMARY KEY ("id")
       ) with (SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.innovation_document_history, History_retention_period = 7 YEAR));
-  
+
       ALTER TABLE "innovation_document" ADD CONSTRAINT "fk_innovation_document_innovation_id" FOREIGN KEY ("id") REFERENCES "innovation"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
-  
+
       -- Ensure that the document is a valid JSON
       ALTER TABLE "innovation_document" ADD CONSTRAINT CK_innovation_document_is_json CHECK (ISJSON(document)=1);
 
@@ -129,7 +129,7 @@ export class createTableInnovationDocumentAndMigration1680028339424 implements M
 
     const filesMap = new Map<string, Map<InnovationSections, string[]>>();
     for (const file of await queryRunner.manager
-      .createQueryBuilder(InnovationFileEntity, 'file')
+      .createQueryBuilder(InnovationFileLegacyEntity, 'file')
       .getRawMany()) {
       if (!filesMap.has(file.file_innovation_id)) {
         filesMap.set(file.file_innovation_id, new Map<InnovationSections, string[]>());

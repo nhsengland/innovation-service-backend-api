@@ -11,16 +11,15 @@ import type { CustomContextType } from '@users/shared/types';
 import { container } from '../_config';
 
 import type { AnnouncementsService } from '../_services/announcements.service';
+import SYMBOLS from '../_services/symbols';
 import type { TermsOfUseService } from '../_services/terms-of-use.service';
 import type { UsersService } from '../_services/users.service';
-import SYMBOLS from '../_services/symbols';
 
 import type { ResponseDTO } from './transformation.dtos';
 
 class V1MeInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-
     const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
     const termsOfUseService = container.get<TermsOfUseService>(SYMBOLS.TermsOfUseService);
@@ -28,7 +27,7 @@ class V1MeInfo {
 
     try {
       const requestUser = await domainService.users.getUserInfo({ identityId: context.auth.user.identityId });
-      const userRoles = requestUser.roles.filter(role => role.lockedAt === null);
+      const userRoles = requestUser.roles.filter(role => role.isActive);
 
       let termsOfUseAccepted = true;
       let hasInnovationTransfers = false;

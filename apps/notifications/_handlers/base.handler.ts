@@ -86,7 +86,6 @@ export abstract class BaseHandler<
       case ServiceRoleEnum.ASSESSMENT:
         return 'assessment';
       case ServiceRoleEnum.ACCESSOR:
-        return 'accessor';
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
         return 'accessor';
       case ServiceRoleEnum.INNOVATOR:
@@ -100,8 +99,6 @@ export abstract class BaseHandler<
 
   async getEmails(): Promise<HandlerEmailOutboundType<EmailTemplatesType[EmailResponseType]>[]> {
     const res: HandlerEmailOutboundType<EmailTemplatesType[EmailResponseType]>[] = [];
-    // TODO: create sets of recipients
-
     // Optimize preference and email fetching by fetching only once
     const uniqueRoles = new Set<string>();
     const uniqueIdentities = new Set<string>();

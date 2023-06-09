@@ -244,7 +244,7 @@ export class UsersService extends BaseService {
             organisation: organisation,
             organisationUnit: unit,
             createdBy: requestUser.id,
-            lockedAt: organisation.inactivatedAt || unit.inactivatedAt ? new Date() : null
+            isActive: !organisation.inactivatedAt
           })
         );
       }
