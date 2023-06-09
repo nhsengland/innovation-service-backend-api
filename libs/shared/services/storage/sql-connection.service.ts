@@ -23,4 +23,8 @@ export class SQLConnectionService {
   setConnection(conection: DataSource): void {
     this.connection = conection;
   }
+
+  async destroy(): Promise<void> {
+    await this.connection?.destroy();
+  }
 }

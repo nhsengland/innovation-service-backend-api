@@ -105,6 +105,7 @@ export class CompleteScenarioBuilder {
       // Add janeInnovator as a collaborator on johnInnovation
       const janeCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setUser(janeInnovator.id)
+        .setEmail(janeInnovator.email)
         .setInnovation(johnInnovation.id)
         .save();
 

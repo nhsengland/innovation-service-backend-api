@@ -103,13 +103,15 @@ export class RecipientsService extends BaseService {
    */
   async innovationInfo(
     innovationId: string,
-    withDeleted = false
+    withDeleted = false,
+    entityManager?: EntityManager
   ): Promise<{
     name: string;
     ownerId?: string;
     ownerIdentityId?: string;
   }> {
-    const query = this.sqlConnection.createQueryBuilder(InnovationEntity, 'innovation');
+    const em = entityManager ?? this.sqlConnection.manager;
+    const query = em.createQueryBuilder(InnovationEntity, 'innovation');
 
     if (withDeleted) {
       query.withDeleted();
@@ -144,7 +146,8 @@ export class RecipientsService extends BaseService {
    */
   private async getInnovationCollaborators(
     innovationId: string,
-    status?: InnovationCollaboratorStatusEnum[]
+    status?: InnovationCollaboratorStatusEnum[],
+    entityManager?: EntityManager
   ): Promise<
     {
       email: string;
@@ -152,7 +155,9 @@ export class RecipientsService extends BaseService {
       userId?: string;
     }[]
   > {
-    const query = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select(['collaborator.email', 'collaborator.status', 'user.id', 'user.status'])
       .leftJoin('collaborator.user', 'user')
@@ -165,7 +170,7 @@ export class RecipientsService extends BaseService {
     const collaborators = (await query.getMany()).map(c => ({
       email: c.email,
       status: c.status,
-      userId: c.user?.status !== UserStatusEnum.DELETED ? c.user?.id : undefined
+      userId: c.user && c.user.status !== UserStatusEnum.DELETED ? c.user.id : undefined
     }));
 
     return collaborators;

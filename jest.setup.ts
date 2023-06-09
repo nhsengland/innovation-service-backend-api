@@ -1,6 +1,6 @@
 import { env } from 'process';
 import { container } from './libs/shared/config/inversify.config';
-import type { CacheService } from './libs/shared/services';
+import type { CacheService, SQLConnectionService } from './libs/shared/services';
 import SHARED_SYMBOLS from './libs/shared/services/symbols';
 
 // Disable console.log in tests
@@ -16,4 +16,5 @@ import SHARED_SYMBOLS from './libs/shared/services/symbols';
 
 afterAll(async () => {
   await container.get<CacheService>(SHARED_SYMBOLS.CacheService)?.destroy();
+  await container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService)?.destroy();
 });
