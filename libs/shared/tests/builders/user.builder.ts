@@ -129,10 +129,10 @@ export class UserBuilder extends BaseBuilder {
       let dbOrganisationUserId: string | undefined;
 
       // Create the innovator organisation if one was not given
-      const isInnovator = values.find(v => v.role === ServiceRoleEnum.INNOVATOR);
+      const isInnovator = values.some(v => v.role === ServiceRoleEnum.INNOVATOR);
 
       // sanity check
-      if (isInnovator && values.find(v => v.role !== ServiceRoleEnum.INNOVATOR || values.length > 1)) {
+      if (isInnovator && (values.some(v => v.role !== ServiceRoleEnum.INNOVATOR) || values.length > 1)) {
         throw new Error("Innovator can't have other roles nor multiple roles");
       }
 
