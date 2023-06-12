@@ -92,7 +92,8 @@ export class NotificationsService extends BaseService {
       .withDeleted()
       .innerJoin('notification.innovation', 'innovation')
       .leftJoin('innovation.owner', 'innovationOwner')
-      .where('notificationUser.user_role_id = :roleId', { roleId: domainContext.currentRole.id });
+      .where('notificationUser.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+      .andWhere('notificationUser.deleted_at IS NULL');
 
     // optional filters
     if (filters.unreadOnly) {
