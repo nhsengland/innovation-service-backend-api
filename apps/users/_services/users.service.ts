@@ -2,6 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { EntityManager, Repository } from 'typeorm';
 
 import {
+  InnovationCollaboratorEntity,
   InnovationEntity,
   InnovationSupportEntity,
   InnovationTransferEntity,
@@ -21,43 +22,32 @@ import {
   OrganisationTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
-  TermsOfUseTypeEnum
+  TermsOfUseTypeEnum,
+  UserStatusEnum
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
-import {
-  CacheServiceSymbol,
-  CacheServiceType,
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@users/shared/services';
-import type { CacheConfigType } from '@users/shared/services/storage/cache.service';
-
+import type { PaginationQueryParamsType } from '@users/shared/helpers';
+import type { CacheConfigType, CacheService, DomainService, IdentityProviderService, NotifierService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
-import { InnovationCollaboratorEntity } from '@users/shared/entities/innovation/innovation-collaborator.entity';
-import type { PaginationQueryParamsType } from '@users/shared/helpers';
 import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
-  userRepository: Repository<UserEntity>;
-  organisationRepository: Repository<OrganisationEntity>;
+
+  private userRepository: Repository<UserEntity>;
   private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
-    @inject(CacheServiceSymbol) cacheService: CacheServiceType,
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
     this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
-    this.organisationRepository = this.sqlConnection.getRepository<OrganisationEntity>(OrganisationEntity);
     this.cache = cacheService.get('IdentityUserInfo');
   }
 
@@ -82,6 +72,7 @@ export class UsersService extends BaseService {
       model: 'minimal' | 'full';
     }
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
+
     const user = await this.domainService.users.getUserInfo({ userId });
     const model = params.model;
     if (model === 'minimal') {
@@ -247,7 +238,7 @@ export class UsersService extends BaseService {
           currentRole: { id: userRole.id, role: ServiceRoleEnum.INNOVATOR }
         },
         NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION,
-        {},
+        {}
       );
 
       return { id: dbUser.id };
@@ -401,7 +392,8 @@ export class UsersService extends BaseService {
 
     const query = this.sqlConnection
       .createQueryBuilder(UserEntity, 'user')
-      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles');
+      .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     // Filters
     if (filters.userTypes.length > 0) {
@@ -421,7 +413,7 @@ export class UsersService extends BaseService {
     }
 
     if (filters.onlyActive) {
-      query.andWhere('user.lockedAt IS NULL');
+      query.andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE });
     }
 
     query.skip(pagination.skip).take(pagination.take);
@@ -454,7 +446,7 @@ export class UsersService extends BaseService {
 
         return {
           id: dbUser.id,
-          isActive: !dbUser.lockedAt,
+          isActive: dbUser.status === UserStatusEnum.ACTIVE,
           roles: dbUser.serviceRoles,
           name: identityUser.displayName ?? 'N/A',
           lockedAt: dbUser.lockedAt,

@@ -1,5 +1,6 @@
 import type { EntityManager } from 'typeorm';
-import { InnovationSectionEntity, type InnovationEntity } from '../entities';
+import { InnovationSectionEntity } from '../entities/innovation/innovation-section.entity';
+import type { InnovationEntity } from '../entities/innovation/innovation.entity';
 import { InnovationSectionStatusEnum } from '../enums';
 import { CurrentCatalogTypes } from '../schemas/innovation-record';
 

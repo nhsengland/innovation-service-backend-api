@@ -19,21 +19,16 @@ import {
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@admin/shared/enums';
 import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@admin/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { ENV } from '../_config';
 import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
@@ -42,9 +37,9 @@ import SYMBOLS from './symbols';
 @injectable()
 export class OrganisationsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
     @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
   ) {
     super();
@@ -75,8 +70,9 @@ export class OrganisationsService extends BaseService {
         .innerJoin('user_role', 'r', 'ur.user_id = r.user_id')
         .innerJoin('user', 'u', 'ur.user_id = u.id')
         .where('r.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
-        .andWhere('ur.lockedAt IS NULL')
+        .andWhere('ur.is_active = 1')
         .andWhere('r.lockedAt IS NULL')
+        .andWhere('u.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
         .groupBy('ur.user_id, u.external_id')
         .having('count(*) = 1')
         .getRawMany()
@@ -174,7 +170,7 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           UserEntity,
           { id: In(usersToLock.map(ur => ur.id)) },
-          { lockedAt: now, updatedAt: now }
+          { lockedAt: now, updatedAt: now, status: UserStatusEnum.LOCKED }
         );
       }
 
@@ -182,7 +178,7 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserRoleEntity,
         { organisationUnit: unitId, lockedAt: IsNull() },
-        { lockedAt: now, updatedAt: now }
+        { isActive: false, updatedAt: now }
       );
 
       const organisationId = unit.organisationId;
@@ -256,7 +252,7 @@ export class OrganisationsService extends BaseService {
       .innerJoin('ur.user', 'user')
       .where('ur.user_id IN (:...userIds)', { userIds })
       .andWhere('ur.organisation_unit_id = :unitId', { unitId }) //ensure users have role in unit
-      .andWhere('user.lockedAt IS NOT NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
     // unlock locked roles of selected users
@@ -265,7 +261,7 @@ export class OrganisationsService extends BaseService {
       .select(['ur.id', 'ur.role'])
       .where('ur.organisation_unit_id = :unitId', { unitId }) // ensure users have role in unit
       .andWhere('ur.user_id IN (:...userIds)', { userIds })
-      .andWhere('ur.locked_at IS NOT NULL')
+      .andWhere('ur.is_active = 0')
       .getMany();
 
     //check if at least 1 user is QA
@@ -312,13 +308,13 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserEntity,
         { id: In(usersToUnlockId) },
-        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
+        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id, status: UserStatusEnum.ACTIVE }
       );
 
       await transaction.update(
         UserRoleEntity,
         { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
-        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id }
+        { isActive: true, updatedAt: now, updatedBy: requestUser.id }
       );
 
       return { unitId };
@@ -580,7 +576,7 @@ export class OrganisationsService extends BaseService {
           organisationUnit: unit,
           createdBy: domainContext.id,
           updatedBy: domainContext.id,
-          lockedAt: unit.inactivatedAt ? new Date() : null
+          isActive: !unit.inactivatedAt
         })
       );
     });

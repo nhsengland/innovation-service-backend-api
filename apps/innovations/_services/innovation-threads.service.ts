@@ -10,7 +10,13 @@ import {
   UserEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
-import { ActivityEnum, NotifierTypeEnum, ServiceRoleEnum, ThreadContextTypeEnum } from '@innovations/shared/enums';
+import {
+  ActivityEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  ThreadContextTypeEnum,
+  UserStatusEnum
+} from '@innovations/shared/enums';
 import {
   BadRequestError,
   GenericErrorsEnum,
@@ -18,24 +24,18 @@ import {
   NotFoundError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderService,
-  IdentityProviderServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationThreadsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProvider: IdentityProviderService,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProvider: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }
@@ -221,7 +221,7 @@ export class InnovationThreadsService extends BaseService {
     const author = await connection
       .createQueryBuilder(UserEntity, 'user')
       .where('user.id = :userId', { userId: requestUser.id })
-      .andWhere('user.locked_at IS NULL')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!author) {
@@ -231,7 +231,6 @@ export class InnovationThreadsService extends BaseService {
     const thread = await connection
       .createQueryBuilder(InnovationThreadEntity, 'threads')
       .innerJoinAndSelect('threads.innovation', 'innovations')
-      .leftJoinAndSelect('threads.author', 'users')
       .where('threads.id = :threadId', { threadId })
       .getOne();
 
@@ -304,6 +303,7 @@ export class InnovationThreadsService extends BaseService {
       .innerJoinAndSelect('thread.innovation', 'innovation')
       .innerJoinAndSelect('message.author', 'author')
       .where('message.id = :messageId', { messageId })
+      .andWhere('author.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
     if (!message) {
@@ -341,7 +341,7 @@ export class InnovationThreadsService extends BaseService {
     try {
       thread = await this.sqlConnection
         .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .select(['thread.id', 'thread.subject', 'thread.createdAt', 'author.id', 'author.identityId'])
+        .select(['thread.id', 'thread.subject', 'thread.createdAt', 'author.id', 'author.identityId', 'author.status'])
         .leftJoin('thread.author', 'author')
         .where('thread.id = :threadId', { threadId })
         .getOneOrFail();
@@ -350,8 +350,7 @@ export class InnovationThreadsService extends BaseService {
     }
 
     let author: DomainUserInfoType | null = null;
-
-    if (thread.author) {
+    if (thread.author.status !== UserStatusEnum.DELETED) {
       author = await this.domainService.users.getUserInfo({
         userId: thread.author.id,
         identityId: thread.author.identityId
@@ -364,7 +363,7 @@ export class InnovationThreadsService extends BaseService {
       createdAt: thread.createdAt,
       createdBy: {
         id: author?.id ?? '',
-        name: thread.author ? author?.displayName || 'unknown user' : '[deleted user]'
+        name: author ? author?.displayName || 'unknown user' : '[deleted user]'
       }
     };
   }
@@ -426,6 +425,7 @@ export class InnovationThreadsService extends BaseService {
         'messages.updatedAt',
         'messageAuthor.id',
         'messageAuthor.identityId',
+        'messageAuthor.status',
         'authorUserRole.role',
         'organisation.id',
         'organisation.acronym',
@@ -437,6 +437,7 @@ export class InnovationThreadsService extends BaseService {
         'thread.subject',
         'thread.author',
         'users.identityId',
+        'users.status',
         'innovation.id',
         'owner.id'
       ])
@@ -455,17 +456,11 @@ export class InnovationThreadsService extends BaseService {
 
     const [messages, count] = await threadMessageQuery.getManyAndCount();
 
-    const firstMessage = messages.find(_ => true);
+    const threadMessagesAuthors = messages
+      .filter(tm => tm.author && tm.author.status !== UserStatusEnum.DELETED)
+      .map(tm => tm.author.identityId);
 
-    const threadAuthor = firstMessage!.thread.author?.identityId; // a thread always has at least 1 message
-    const threadMessagesAuthors = messages.filter(tm => tm.author).map(tm => tm.author.identityId);
-
-    let authors = [];
-    if (threadAuthor) {
-      authors = [...new Set([threadAuthor, ...threadMessagesAuthors])];
-    } else {
-      authors = [...new Set([...threadMessagesAuthors])];
-    }
+    let authors = [...new Set([...threadMessagesAuthors])];
 
     const authorsMap = await this.identityProvider.getUsersMap(authors);
 
@@ -500,7 +495,10 @@ export class InnovationThreadsService extends BaseService {
         isEditable: tm.isEditable,
         createdBy: {
           id: tm.author?.id,
-          name: tm.author ? authorsMap.get(tm.author.identityId)?.displayName || 'unknown user' : '[deleted user]',
+          name:
+            tm.author && tm.author.status !== UserStatusEnum.DELETED
+              ? authorsMap.get(tm.author.identityId)?.displayName || 'unknown user'
+              : '[deleted user]',
           role: tm.authorUserRole?.role,
           ...(tm.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: tm.author.id === tm.thread.innovation.owner?.id ?? false
@@ -609,6 +607,7 @@ export class InnovationThreadsService extends BaseService {
         'messages.createdAt',
         'author.id',
         'author.identityId',
+        'author.status',
         'thread.id',
         'userRole.role',
         'orgUnit.id',
@@ -624,7 +623,13 @@ export class InnovationThreadsService extends BaseService {
 
     const threadMessages = await threadMessagesQuery.getMany();
 
-    const userIds = [...new Set(threadMessages.filter(tm => tm.author).map(tm => tm.author?.identityId))];
+    const userIds = [
+      ...new Set(
+        threadMessages
+          .filter(tm => tm.author && tm.author.status !== UserStatusEnum.DELETED)
+          .map(tm => tm.author?.identityId)
+      )
+    ];
     const messageAuthors = await this.identityProvider.getUsersMap(userIds);
 
     const count = threads.find(_ => true)?.count || 0;
@@ -664,9 +669,10 @@ export class InnovationThreadsService extends BaseService {
             createdAt: message.createdAt,
             createdBy: {
               id: message.author?.id,
-              name: message.author
-                ? messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user'
-                : '[deleted user]',
+              name:
+                message.author && message.author.status !== UserStatusEnum.DELETED
+                  ? messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user'
+                  : '[deleted user]',
               role: message.authorUserRole?.role,
               ...(message.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {
                 isOwner: t.owner_id === message.author.id
@@ -783,7 +789,7 @@ export class InnovationThreadsService extends BaseService {
     const author = await transaction
       .createQueryBuilder(UserEntity, 'users')
       .where('users.id = :userId', { userId: requestUser.id })
-      .andWhere('users.locked_at IS NULL')
+      .andWhere('users.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOneOrFail();
 
     const innovation = await transaction
@@ -827,15 +833,11 @@ export class InnovationThreadsService extends BaseService {
     messageId: string,
     thread: InnovationThreadEntity
   ): Promise<void> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.THREAD_CREATION,
-      {
-        threadId: thread.id,
-        messageId,
-        innovationId: thread.innovation.id
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_CREATION, {
+      threadId: thread.id,
+      messageId,
+      innovationId: thread.innovation.id
+    });
   }
 
   private async sendThreadMessageCreateNotification(
@@ -843,14 +845,10 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity,
     threadMessage: InnovationThreadMessageEntity
   ): Promise<void> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.THREAD_MESSAGE_CREATION,
-      {
-        threadId: thread.id,
-        messageId: threadMessage.id,
-        innovationId: thread.innovation.id
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_MESSAGE_CREATION, {
+      threadId: thread.id,
+      messageId: threadMessage.id,
+      innovationId: thread.innovation.id
+    });
   }
 }

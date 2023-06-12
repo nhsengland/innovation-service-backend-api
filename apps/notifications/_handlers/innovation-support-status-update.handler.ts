@@ -7,14 +7,15 @@ import {
 } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
-import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
+import type { DomainService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
@@ -22,7 +23,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
   { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   private data: {
     innovation?: {
@@ -40,7 +41,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 

@@ -15,7 +15,7 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATOR_ACCOUNT_CREATION],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -32,7 +32,6 @@ export class InnovatorAccountCreationHandler extends BaseHandler<
         }
       });
     }
-
     return this;
   }
 }

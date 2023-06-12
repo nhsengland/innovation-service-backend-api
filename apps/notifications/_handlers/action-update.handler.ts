@@ -5,22 +5,18 @@ import {
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
-import { EmailErrorsEnum, InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
+import { EmailErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType
-} from '@notifications/shared/services';
+import type { IdentityProviderService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import type { CurrentCatalogTypes } from '@notifications/shared/schemas/innovation-record';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class ActionUpdateHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_UPDATE,
@@ -38,13 +34,12 @@ export class ActionUpdateHandler extends BaseHandler<
     section: CurrentCatalogTypes.InnovationSections;
   }
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
-  private identityProviderService = container.get<IdentityProviderServiceType>(IdentityProviderServiceSymbol);
+  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   private data: {
     innovation?: {
       name: string;
-      owner: RecipientType;
+      owner?: RecipientType;
     };
     actionInfo?: {
       id: string;
@@ -67,9 +62,8 @@ export class ActionUpdateHandler extends BaseHandler<
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
-    if (!owner) throw new NotFoundError(InnovationErrorsEnum.INNOVATION_OWNER_NOT_FOUND);
 
-    this.data.innovation = { name: innovation.name, owner: owner };
+    this.data.innovation = { name: innovation.name, owner: owner ?? undefined };
     this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 
     switch (this.requestUser.currentRole.role) {
@@ -90,9 +84,12 @@ export class ActionUpdateHandler extends BaseHandler<
             await this.prepareConfirmationInApp();
           }
           // if action was submitted or declined by a collaborator notify owner
-          if (this.requestUser.currentRole.id !== this.data.innovation.owner.roleId) {
+          if (this.requestUser.currentRole.id !== this.data.innovation.owner?.roleId) {
             await this.prepareEmailForInnovationOwnerFromCollaborator();
-            await this.prepareInAppForInnovationOwner();
+
+            if (owner) {
+              await this.prepareInAppForInnovationOwner();
+            }
           }
         }
         break;
@@ -104,15 +101,17 @@ export class ActionUpdateHandler extends BaseHandler<
             InnovationActionStatusEnum.COMPLETED,
             InnovationActionStatusEnum.REQUESTED,
             InnovationActionStatusEnum.CANCELLED,
-            InnovationActionStatusEnum.DELETED
+            // InnovationActionStatusEnum.DELETED
           ].includes(this.inputData.action.status)
         ) {
-          await this.prepareEmailForInnovationOwner();
-          await this.prepareInAppForInnovationOwner();
+          if (owner) {
+            await this.prepareEmailForInnovationOwner();
+            await this.prepareInAppForInnovationOwner();
+          }
           // check if action was submitted by a collaborator
           if (
             this.inputData.action.previouslyUpdatedByUserRole &&
-            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner.roleId &&
+            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner?.roleId &&
             this.inputData.action.previouslyUpdatedByUserRole.role === ServiceRoleEnum.INNOVATOR
           ) {
             await this.prepareInAppForCollaborator();
@@ -130,12 +129,7 @@ export class ActionUpdateHandler extends BaseHandler<
   // Private methods.
 
   private async prepareEmailForAccessorOrAssessment(): Promise<void> {
-    const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-
-    // Don't send email to inactive users
-    if (!requestInfo.isActive) {
-      return;
-    }
+    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
     let templateId: EmailTypeEnum;
     switch (this.data.actionInfo?.status) {
@@ -178,7 +172,7 @@ export class ActionUpdateHandler extends BaseHandler<
 
   private async prepareEmailForInnovationOwner(): Promise<void> {
     // This never happens
-    if (!this.data.innovation) {
+    if (!this.data.innovation || !this.data.innovation.owner) {
       return;
     }
 
@@ -225,8 +219,7 @@ export class ActionUpdateHandler extends BaseHandler<
   }
 
   private async prepareEmailForInnovationOwnerFromCollaborator(): Promise<void> {
-    // This never happens
-    if (!this.data.innovation) {
+    if (!this.data.innovation || !this.data.innovation.owner) {
       return;
     }
 

@@ -1,23 +1,21 @@
 import { InnovationEntity, UserEntity } from '@innovations/shared/entities';
 import { InnovationCollaboratorEntity } from '@innovations/shared/entities/innovation/innovation-collaborator.entity';
-import { InnovationCollaboratorStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '@innovations/shared/enums';
 import {
   ConflictError,
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
-  UnauthorizedError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderService,
-  IdentityProviderServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, ObjectLiteral } from 'typeorm';
@@ -33,9 +31,9 @@ type UpdateCollaboratorStatusType =
 @injectable()
 export class InnovationCollaboratorsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
   ) {
     super();
   }
@@ -110,14 +108,10 @@ export class InnovationCollaboratorsService extends BaseService {
       collaboratorId = dbCollaborator.id;
     }
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE,
-      {
-        innovationCollaboratorId: collaboratorId,
-        innovationId: innovationId
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_COLLABORATOR_INVITE, {
+      innovationCollaboratorId: collaboratorId,
+      innovationId: innovationId
+    });
 
     return { id: collaboratorId };
   }
@@ -270,7 +264,7 @@ export class InnovationCollaboratorsService extends BaseService {
       id: string;
       name: string;
       description: null | string;
-      owner: { id: string; name?: string };
+      owner?: { id: string; name?: string };
     };
     invitedAt: Date;
   }> {
@@ -281,15 +275,17 @@ export class InnovationCollaboratorsService extends BaseService {
       .withDeleted()
       .innerJoin('collaborator.innovation', 'innovation')
       .leftJoin('collaborator.user', 'collaboratorUser')
-      .innerJoin('innovation.owner', 'innovationOwner')
+      .leftJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.name',
         'innovation.description',
         'innovation.id',
         'innovationOwner.identityId',
         'innovationOwner.id',
+        'innovationOwner.status',
         'innovationOwner.deletedAt',
         'collaboratorUser.identityId',
+        'collaboratorUser.status',
         'collaborator.id',
         'collaborator.email',
         'collaborator.status',
@@ -308,16 +304,15 @@ export class InnovationCollaboratorsService extends BaseService {
     }
 
     // Check if user is not the invited collaborator and the he is not the innovation owner
-    if (collaborator.innovation.owner.id !== domainContext.id) {
+    if (collaborator.innovation.owner && collaborator.innovation.owner.id !== domainContext.id) {
       const domainUserInfo = await this.identityProviderService.getUserInfo(domainContext.identityId);
       if (collaborator.email !== domainUserInfo.email) {
-        throw new UnauthorizedError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
+        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NO_ACCESS);
       }
     }
 
-    let collaboratorName;
-
-    if (collaborator.user) {
+    let collaboratorName = '[deleted user]';
+    if (collaborator.user && collaborator.user.status !== UserStatusEnum.DELETED) {
       const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
       collaboratorName = collaboratorUser.displayName;
     }
@@ -332,13 +327,15 @@ export class InnovationCollaboratorsService extends BaseService {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
         description: collaborator.innovation.description,
-        owner: {
-          id: collaborator.innovation.owner.id,
-          name:
-            collaborator.innovation.owner.deletedAt === null
-              ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName
-              : undefined
-        }
+        ...(collaborator.innovation.owner && {
+          owner: {
+            id: collaborator.innovation.owner.id,
+            name:
+              collaborator.innovation.owner.status !== UserStatusEnum.DELETED
+                ? (await this.identityProviderService.getUserInfo(collaborator.innovation.owner.identityId)).displayName
+                : undefined
+          }
+        })
       },
       invitedAt: collaborator.invitedAt
     };
@@ -379,17 +376,13 @@ export class InnovationCollaboratorsService extends BaseService {
     );
 
     if (data.status) {
-      await this.notifierService.send(
-        domainContext,
-        NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE,
-        {
-          innovationId: innovationId,
-          innovationCollaborator: {
-            id: collaborator.id,
-            status: data.status
-          }
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_COLLABORATOR_UPDATE, {
+        innovationId: innovationId,
+        innovationCollaborator: {
+          id: collaborator.id,
+          status: data.status
         }
-      );
+      });
     }
 
     return { id: collaborator.id };
@@ -405,8 +398,7 @@ export class InnovationCollaboratorsService extends BaseService {
     const collaborator = await connection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .innerJoin('collaborator.innovation', 'innovation')
-      .withDeleted()
-      .innerJoin('innovation.owner', 'innovationOwner')
+      .leftJoin('innovation.owner', 'innovationOwner')
       .select([
         'innovation.id',
         'innovationOwner.id',
@@ -421,7 +413,7 @@ export class InnovationCollaboratorsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
-    const isOwner = collaborator.innovation.owner.id === requestUser.id;
+    const isOwner = collaborator.innovation.owner?.id === requestUser.id;
     const isCollaborator = collaborator.email === requestUser.email;
 
     if (!isOwner && !isCollaborator) {

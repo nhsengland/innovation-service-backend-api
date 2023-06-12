@@ -275,8 +275,6 @@ describe('Innovation Actions Suite', () => {
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
-      const expected = await em.createQueryBuilder(InnovationActionEntity, 'action').getCount();
-
       const actions = await sut.getActionsList(
         testData.domainContexts.assessmentUser,
         { allActions: true, fields: [] },
@@ -284,7 +282,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(expected);
+      expect(actions.count).toBe(2);
     });
 
     it('should list all actions created by QA/A as a QA/A', async () => {
@@ -355,8 +353,6 @@ describe('Innovation Actions Suite', () => {
         .setStatus(InnovationActionStatusEnum.REQUESTED)
         .build(em);
 
-      const expected = await em.createQueryBuilder(InnovationActionEntity, 'action').getCount();
-
       const actions = await sut.getActionsList(
         testData.domainContexts.accessor,
         { allActions: true, fields: [] },
@@ -364,7 +360,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(expected);
+      expect(actions.count).toBe(2);
     });
 
     it('should list all actions that match an innovation name', async () => {

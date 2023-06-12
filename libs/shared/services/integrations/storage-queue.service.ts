@@ -6,7 +6,7 @@ import {
 } from '@azure/storage-queue';
 import { injectable } from 'inversify';
 
-import { STORAGE_QUEUE_CONFIG } from '../../config';
+import { STORAGE_QUEUE_CONFIG } from '../../config/storage-queue.config';
 
 export enum QueuesEnum {
   AUDIT = 'audit-send-queue',

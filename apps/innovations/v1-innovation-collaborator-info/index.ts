@@ -1,8 +1,10 @@
 import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@innovations/shared/services';
+import type { AuthorizationService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
@@ -15,7 +17,7 @@ import { ParamsSchema, ParamsType } from './validation.schemas';
 class V1InnovationCollaboratorInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const innovationCollaboratorsService = container.get<InnovationCollaboratorsService>(
       SYMBOLS.InnovationCollaboratorsService
     );
@@ -41,10 +43,12 @@ class V1InnovationCollaboratorInfo {
           id: collaborator.innovation.id,
           name: collaborator.innovation.name,
           description: collaborator.innovation.description,
-          owner: {
-            id: collaborator.innovation.owner.id,
-            name: collaborator.innovation.owner.name
-          }
+          ...(collaborator.innovation.owner && {
+            owner: {
+              id: collaborator.innovation.owner.id,
+              name: collaborator.innovation.owner.name
+            }
+          })
         },
         invitedAt: collaborator.invitedAt
       });

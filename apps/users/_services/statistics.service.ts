@@ -6,7 +6,8 @@ import {
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DomainContextType, DomainUserInfoType } from '@users/shared/types';
@@ -116,6 +117,7 @@ export class StatisticsService extends BaseService {
       .andWhere('innovationSupports.status = :status', {
         status: InnovationSupportStatusEnum.ENGAGING
       })
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // This is not needed since a deleted user would not be able to do this request
       .getCount();
 
     return {

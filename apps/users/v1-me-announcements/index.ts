@@ -4,7 +4,8 @@ import type { AzureFunction } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { AnnouncementTemplateType, ServiceRoleEnum } from '@users/shared/enums';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import type { AuthorizationService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -16,18 +17,20 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1MeAnnouncements {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const authInstance = await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .checkAccessorType()
         .checkAssessmentType()
         .checkInnovatorType()
         .verify();
+      const requestContext = auth.getContext();
 
-      const announcements = await announcementsService.getUserAnnouncements(authInstance.getContext());
+      const announcements = await announcementsService.getUserRoleAnnouncements(requestContext.currentRole.id);
+
       context.res = ResponseHelper.Ok<ResponseDTO>(
         announcements.map(announcement => ({
           id: announcement.id,

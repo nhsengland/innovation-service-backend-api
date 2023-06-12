@@ -1,11 +1,9 @@
-import {
-  InnovationSupportEntity,
-  InnovationEntity,
-  OrganisationUnitEntity,
-  type OrganisationUnitUserEntity
-} from '../entities';
-import { InnovationSupportStatusEnum } from '../enums';
 import type { EntityManager } from 'typeorm';
+import { InnovationSupportEntity } from '../entities/innovation/innovation-support.entity';
+import { InnovationEntity } from '../entities/innovation/innovation.entity';
+import type { OrganisationUnitUserEntity } from '../entities/organisation/organisation-unit-user.entity';
+import { OrganisationUnitEntity } from '../entities/organisation/organisation-unit.entity';
+import { InnovationSupportStatusEnum } from '../enums';
 
 export class InnovationSupportBuilder {
   innovationSupport: Partial<InnovationSupportEntity> = {};

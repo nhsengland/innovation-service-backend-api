@@ -2,12 +2,8 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { ResponseHelper } from '@users/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType,
-  DomainServiceSymbol,
-  DomainServiceType
-} from '@users/shared/services';
+import type { AuthorizationService, DomainService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -16,8 +12,8 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1MeInnovationsInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
+    const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
     try {
       const authInstance = await authorizationService.validate(context).checkInnovatorType().verify();

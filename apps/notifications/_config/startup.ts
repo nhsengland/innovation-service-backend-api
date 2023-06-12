@@ -1,33 +1,21 @@
 import { container } from '@notifications/shared/config/inversify.config';
 
+import type { LoggerService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import { DispatchService } from '../_services/dispatch.service';
 import { EmailService } from '../_services/email.service';
-import {
-  DispatchServiceSymbol,
-  DispatchServiceType,
-  EmailServiceSymbol,
-  EmailServiceType,
-  RecipientsServiceSymbol,
-  RecipientsServiceType
-} from '../_services/interfaces';
 import { RecipientsService } from '../_services/recipients.service';
+import SYMBOLS from '../_services/symbols';
 
 // Specific inversify container configuration
-container.bind<DispatchServiceType>(DispatchServiceSymbol).to(DispatchService).inSingletonScope();
-container.bind<EmailServiceType>(EmailServiceSymbol).to(EmailService).inSingletonScope();
-container.bind<RecipientsServiceType>(RecipientsServiceSymbol).to(RecipientsService).inSingletonScope();
+container.bind<DispatchService>(SYMBOLS.DispatchService).to(DispatchService).inSingletonScope();
+container.bind<EmailService>(SYMBOLS.EmailService).to(EmailService).inSingletonScope();
+container.bind<RecipientsService>(SYMBOLS.RecipientsService).to(RecipientsService).inSingletonScope();
 
 export { container };
 export const startup = async (): Promise<void> => {
-  console.log('Initializing Notifications app function');
-
-  try {
-    console.log('Initialization complete');
-  } catch (error) {
-    // TODO: Treat this error! Should we end the process?
-    console.error('Notifications app function was UNABLE to start');
-    console.error(error);
-  }
+  const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
+  logger.log('Initializing Notifications app function');
 };
 
 void startup();

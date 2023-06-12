@@ -4,7 +4,7 @@ import {
   InnovationActionEntity,
   InnovationDocumentEntity,
   InnovationEntity,
-  InnovationFileEntity,
+  InnovationFileLegacyEntity,
   InnovationSectionEntity,
   UserEntity,
   UserRoleEntity
@@ -15,18 +15,15 @@ import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  FileStorageServiceSymbol,
-  FileStorageServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
+import type {
+  DomainService,
+  FileStorageService,
+  IdentityProviderService,
+  NotifierService
 } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
@@ -40,6 +37,7 @@ import {
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
 import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { EntityManager, In } from 'typeorm';
 import { InnovationFileService } from './innovation-file.service';
@@ -48,10 +46,10 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationSectionsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(IdentityProviderServiceSymbol) private identityService: IdentityProviderServiceType,
-    @inject(FileStorageServiceSymbol) private fileStorageService: FileStorageServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
+    @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
@@ -69,7 +67,7 @@ export class InnovationSectionsService extends BaseService {
       submittedAt: null | Date;
       submittedBy: null | {
         name: string;
-        isOwner: boolean;
+        isOwner?: boolean;
       };
       openActionsCount: number;
     }[]
@@ -86,7 +84,8 @@ export class InnovationSectionsService extends BaseService {
         'sections.status',
         'sections.submittedAt',
         'submittedBy.id',
-        'submittedBy.identityId'
+        'submittedBy.identityId',
+        'submittedBy.status'
       ])
       .leftJoin('innovation.owner', 'owner')
       .innerJoin('innovation.sections', 'sections')
@@ -139,7 +138,10 @@ export class InnovationSectionsService extends BaseService {
       openActions = await query.getRawMany();
     }
 
-    const innovators = sections.map(s => s.submittedBy?.identityId).filter((u): u is string => !!u);
+    const innovators = sections
+      .filter(s => s.submittedBy && s.submittedBy.status !== UserStatusEnum.DELETED)
+      .map(s => s.submittedBy?.identityId)
+      .filter((u): u is string => !!u);
     const innovatorNames = await this.identityService.getUsersMap(innovators);
 
     return CurrentCatalogTypes.InnovationSections.map(sectionKey => {
@@ -148,6 +150,8 @@ export class InnovationSectionsService extends BaseService {
       if (section) {
         const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
 
+        const submittedByName = section.submittedBy && innovatorNames.get(section.submittedBy.identityId)?.displayName;
+
         return {
           id: section.id,
           section: section.section,
@@ -155,8 +159,10 @@ export class InnovationSectionsService extends BaseService {
           submittedAt: section.submittedAt,
           submittedBy: section.submittedBy
             ? {
-                name: innovatorNames.get(section.submittedBy.identityId)?.displayName ?? 'unknown user',
-                isOwner: section.submittedBy.id === innovation.owner?.id ?? false
+                name: submittedByName ?? 'unknown user',
+                ...(submittedByName && {
+                  isOwner: section.submittedBy.id === innovation.owner?.id
+                })
               }
             : null,
           openActionsCount
@@ -187,7 +193,7 @@ export class InnovationSectionsService extends BaseService {
     submittedAt: null | Date;
     submittedBy: null | {
       name: string;
-      isOwner: boolean;
+      isOwner?: boolean;
     };
     data: null | { [key: string]: any };
     actionsIds?: string[];
@@ -225,7 +231,8 @@ export class InnovationSectionsService extends BaseService {
         'section.status',
         'section.submittedAt',
         'submittedBy.id',
-        'submittedBy.identityId'
+        'submittedBy.identityId',
+        'submittedBy.status'
       ])
       .leftJoin('section.submittedBy', 'submittedBy')
       .where('section.innovation_id = :innovationId', { innovationId })
@@ -263,9 +270,9 @@ export class InnovationSectionsService extends BaseService {
     // Avoid throwing an error if the user is not found.
     try {
       submittedBy =
-        (dbSection?.submittedBy &&
-          (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName) ??
-        null;
+        dbSection?.submittedBy && dbSection.submittedBy.status !== UserStatusEnum.DELETED
+          ? (await this.identityService.getUserInfo(dbSection.submittedBy.identityId)).displayName
+          : null;
     } catch (e) {
       submittedBy = null;
     }
@@ -285,7 +292,7 @@ export class InnovationSectionsService extends BaseService {
       submittedBy: dbSection?.submittedBy
         ? {
             name: submittedBy ?? 'unknown user',
-            isOwner: dbSection.submittedBy.id === innovation.owner.id
+            ...(submittedBy && { isOwner: dbSection.submittedBy.id === innovation.owner?.id })
           }
         : null,
       data: !sectionHidden ? sectionData : null,
@@ -315,7 +322,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     // This variable will hold files marked to be deleted, to be removed only inside the transaction.
-    let sectionDeletedFiles: InnovationFileEntity[] = [];
+    let sectionDeletedFiles: InnovationFileLegacyEntity[] = [];
 
     // We always have at most one section per sectionKey, so we can just get the first one.
     let section = await this.sqlConnection
@@ -681,7 +688,7 @@ export class InnovationSectionsService extends BaseService {
 
       if (evidence.files && evidence.files.length > 0) {
         //delete files
-        await transaction.delete(InnovationFileEntity, { id: In(evidence.files) });
+        await transaction.delete(InnovationFileLegacyEntity, { id: In(evidence.files) });
       }
 
       // save the new evidences

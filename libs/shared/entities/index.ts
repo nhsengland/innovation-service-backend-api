@@ -14,13 +14,13 @@ import { InnovationCollaboratorEntity } from './innovation/innovation-collaborat
 import { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 import { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
-import { InnovationFileEntity } from './innovation/innovation-file.entity';
+import { InnovationFileLegacyEntity } from './innovation/innovation-file-legacy.entity';
 import { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 import { InnovationSectionEntity } from './innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from './innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from './innovation/innovation-support.entity';
 import { InnovationThreadMessageEntity } from './innovation/innovation-thread-message.entity';
-import { InnovationThreadEntity } from './innovation/Innovation-thread.entity';
+import { InnovationThreadEntity } from './innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
@@ -31,13 +31,13 @@ export { InnovationCollaboratorEntity } from './innovation/innovation-collaborat
 export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
 export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 export { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
-export { InnovationFileEntity } from './innovation/innovation-file.entity';
+export { InnovationFileLegacyEntity } from './innovation/innovation-file-legacy.entity';
 export { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 export { InnovationSectionEntity } from './innovation/innovation-section.entity';
 export { InnovationSupportLogEntity } from './innovation/innovation-support-log.entity';
 export { InnovationSupportEntity } from './innovation/innovation-support.entity';
 export { InnovationThreadMessageEntity } from './innovation/innovation-thread-message.entity';
-export { InnovationThreadEntity } from './innovation/Innovation-thread.entity';
+export { InnovationThreadEntity } from './innovation/innovation-thread.entity';
 export { InnovationTransferEntity } from './innovation/innovation-transfer.entity';
 export { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 export { InnovationEntity } from './innovation/innovation.entity';
@@ -88,7 +88,7 @@ export const INNOVATION_ENTITIES = [
   InnovationDocumentEntity,
   InnovationEvidenceEntity,
   InnovationExportRequestEntity,
-  InnovationFileEntity,
+  InnovationFileLegacyEntity,
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportLogEntity,

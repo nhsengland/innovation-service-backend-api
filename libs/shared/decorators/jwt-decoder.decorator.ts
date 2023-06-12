@@ -8,7 +8,6 @@ import type { CustomContextType } from '../types';
 type JWTType = {
   oid: string;
   name: string;
-  extension_passwordResetOn: number;
   exp: number;
   nbf: number;
   ver: string;
@@ -30,7 +29,7 @@ export function JwtDecoder() {
     descriptor.value = async function (...args: any[]) {
       const context: CustomContextType = args[0];
       const request: HttpRequest = args[1];
-      const token = request.headers['authorization'] || '';
+      const token = request.headers['authorization'] ?? '';
       const role = request.headers['x-is-role'];
 
       try {
@@ -38,8 +37,8 @@ export function JwtDecoder() {
 
         context.auth = {
           user: {
-            identityId: jwt.oid,
-            name: jwt.name,
+            identityId: jwt.sub,
+            name: jwt.name ?? '',
             ...(role && { roleId: role })
           }
         };

@@ -1,9 +1,10 @@
 export const TEXTAREA_LENGTH_LIMIT = {
-  small: 200,
-  medium: 500,
-  mediumUp: 1000,
-  largeDown: 1500,
-  large: 2000
+  xs: 200,
+  s: 500,
+  m: 1000,
+  l: 1500,
+  xl: 2000,
+  xxl: 4000
 };
 
 export const ORGANISATIONS_LENGTH_LIMITS = {

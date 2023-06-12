@@ -1,7 +1,7 @@
 import type { DataSource, EntityManager } from 'typeorm';
 
-import { container } from '../config/inversify.config';
 import { TestDataBuilder, UserBuilder } from '../builders';
+import { container } from '../config/inversify.config';
 
 import type {
   InnovationEntity,
@@ -19,7 +19,8 @@ import {
   OrganisationTypeEnum,
   ServiceRoleEnum
 } from '../enums';
-import { SQLConnectionServiceSymbol, type SQLConnectionServiceType } from '../services';
+import type { SQLConnectionService } from '../services/storage/sql-connection.service';
+import SHARED_SYMBOLS from '../services/symbols';
 import type {
   AccessorDomainContextType,
   AdminDomainContextType,
@@ -85,7 +86,7 @@ export class TestsLegacyHelper {
   }
 
   static async init(): Promise<void> {
-    const sqlService = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol);
+    const sqlService = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService);
 
     this.sqlConnection = sqlService.getConnection();
 

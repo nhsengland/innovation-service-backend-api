@@ -1,18 +1,17 @@
 import { randBoolean, randCountry, randNumber, randProduct, randText, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import {
-  InnovationEntity,
-  type InnovationSectionEntity,
-  type InnovationSupportEntity,
-  type OrganisationUnitEntity,
-  type OrganisationUnitUserEntity,
-  type UserEntity
-} from '../entities';
+
 import {
   InnovationDocumentEntity,
   createDocumentFromInnovation
 } from '../entities/innovation/innovation-document.entity';
-import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '../enums';
+import type { InnovationSectionEntity } from '../entities/innovation/innovation-section.entity';
+import type { InnovationSupportEntity } from '../entities/innovation/innovation-support.entity';
+import { InnovationEntity } from '../entities/innovation/innovation.entity';
+import type { OrganisationUnitUserEntity } from '../entities/organisation/organisation-unit-user.entity';
+import type { OrganisationUnitEntity } from '../entities/organisation/organisation-unit.entity';
+import type { UserEntity } from '../entities/user/user.entity';
+import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '../enums';
 import type { DocumentType } from '../schemas/innovation-record';
 import type { DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
@@ -269,10 +268,15 @@ export class InnovationBuilder {
 
     const ret = await entityManager
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .innerJoinAndSelect('innovation.owner', 'owner')
+      .leftJoinAndSelect('innovation.owner', 'owner')
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
-      .leftJoinAndSelect('assessments.assignTo', 'assignedAssessors')
+      .leftJoinAndSelect(
+        'assessments.assignTo',
+        'assignedAssessors',
+        'assignedAssessors.status <> :assignedAssessorDeleted',
+        { assignedAssessorDeleted: UserStatusEnum.DELETED }
+      )
       .leftJoinAndSelect('assessments.organisationUnits', 'suggestedOrganisationUnits')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')

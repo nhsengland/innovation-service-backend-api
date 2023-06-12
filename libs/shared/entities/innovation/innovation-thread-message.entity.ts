@@ -1,18 +1,18 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
+
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
 import { UserRoleEntity } from '../user/user-role.entity';
-
 import { UserEntity } from '../user/user.entity';
-import { InnovationThreadEntity } from './Innovation-thread.entity';
+import { InnovationThreadEntity } from './innovation-thread.entity';
 
 @Entity('innovation_thread_message')
 export class InnovationThreadMessageEntity extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ length: 2000 })
+  @Column({ length: 4000 })
   message: string;
 
   @Column({ name: 'is_editable', nullable: false, default: false })

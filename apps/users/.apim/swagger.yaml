@@ -141,7 +141,7 @@ paths:
                       type: object
   /v1/me:
     post:
-      summary: Create a new user on DB
+      description: Create a new user on DB
       operationId: v1-me-create
       tags:
         - "[v1] Users"

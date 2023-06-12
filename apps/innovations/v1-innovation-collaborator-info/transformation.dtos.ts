@@ -10,7 +10,7 @@ export type ResponseDTO = {
     id: string;
     name: string;
     description: null | string;
-    owner: {
+    owner?: {
       id: string;
       name?: string;
     };

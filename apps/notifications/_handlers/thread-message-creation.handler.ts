@@ -22,7 +22,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.THREAD_MESSAGE_CREATION],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -95,7 +95,9 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
     const collaborators = await this.recipientsService.getUsersRecipient(collaboratorIds, ServiceRoleEnum.INNOVATOR);
 
-    inAppRecipientsRoleIds.push(...collaborators.map(c => c.roleId));
+    inAppRecipientsRoleIds.push(
+      ...collaborators.filter(c => c.roleId !== this.requestUser.currentRole.id).map(c => c.roleId)
+    );
 
     if (inAppRecipientsRoleIds.length > 0) {
       this.inApp.push({

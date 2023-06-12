@@ -1,21 +1,17 @@
 import { injectable } from 'inversify';
 import type { DataSource } from 'typeorm';
 
-import {
-  LoggerServiceSymbol,
-  LoggerServiceType,
-  SQLConnectionServiceSymbol,
-  SQLConnectionServiceType
-} from '@admin/shared/services';
+import type { LoggerService, SQLConnectionService } from '@admin/shared/services';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { container } from '../_config';
 
 @injectable()
 export class BaseService {
-  private _logger: LoggerServiceType;
-  get logger(): LoggerServiceType {
+  private _logger: LoggerService;
+  get logger(): LoggerService {
     if (!this._logger) {
-      this._logger = container.get<LoggerServiceType>(LoggerServiceSymbol);
+      this._logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
     }
     return this._logger;
   }
@@ -23,7 +19,7 @@ export class BaseService {
   private _sqlConnection: DataSource;
   get sqlConnection(): DataSource {
     if (!this._sqlConnection) {
-      this._sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
+      this._sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
     }
     return this._sqlConnection;
   }

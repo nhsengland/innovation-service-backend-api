@@ -4,6 +4,7 @@ import { container } from '../_config';
 
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
+import type { TestUserOrganisationUnitType, TestUserOrganisationsType } from '@users/shared/tests/builders/user.builder';
 
 describe('Services / Users service suite', () => {
   let testsHelper: TestsHelper;
@@ -38,18 +39,26 @@ describe('Services / Users service suite', () => {
       MocksHelper.mockIdentityServiceGetUserInfo(scenario.users.johnInnovator);
       const user = scenario.users.johnInnovator;
       const result = await usersService.getUserById(user.id, { model: 'full' });
+      const expectedOrgs = [...Object.keys(user.organisations).map(key => user.organisations[key])].filter((item): item is TestUserOrganisationsType => !!item);
       expect(result).toMatchObject({
         id: user.id,
         displayName: user.name,
         email: user.email,
         phone: user.mobilePhone,
-        type: user.roles[0]?.role,
+        type: user.roles['innovatorRole']?.role,
         lockedAt: null,
-        userOrganisations: [],
+        userOrganisations: expectedOrgs.map(org => ({
+          id: org.id,
+          name: org.name,
+          size: org.size,
+          role: org.role,
+          isShadow: org.isShadow,
+          units: [...Object.keys(org.organisationUnits).map(key => org.organisationUnits[key])].filter((item): item is TestUserOrganisationUnitType => !!item)
+        })),
         innovations: [
           {
-            id: scenario.users.johnInnovator.innovations?.[0]?.id,
-            name: scenario.users.johnInnovator.innovations?.[0]?.name
+            id: scenario.users.johnInnovator.innovations.johnInnovation.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovation.name
           }
         ]
       });
@@ -58,7 +67,7 @@ describe('Services / Users service suite', () => {
 
   describe('getUserPendingInnovationTransfers method suite', () => {
     it('Get a pending transfer', async () => {
-      const innovation = scenario.users.adamInnovator.innovations[0];
+      const innovation = scenario.users.adamInnovator.innovations.adamInnovation;
 
       if (!innovation) {
         throw new Error(`No innovation found`);

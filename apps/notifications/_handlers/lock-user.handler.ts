@@ -6,10 +6,9 @@ import {
 } from '@notifications/shared/enums';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum } from '../_config';
-
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { EmailTypeEnum } from '../_config';
+import { BaseHandler } from './base.handler';
 
 export class LockUserHandler extends BaseHandler<
   NotifierTypeEnum.LOCK_USER,
@@ -20,7 +19,7 @@ export class LockUserHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.LOCK_USER],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 

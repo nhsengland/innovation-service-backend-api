@@ -1,26 +1,27 @@
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
-import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
+import type { DomainService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
   EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
   Record<string, never>
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 

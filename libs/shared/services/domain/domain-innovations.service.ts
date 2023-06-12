@@ -1,25 +1,24 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
 import { EXPIRATION_DATES } from '../../constants';
-import {
-  ActivityLogEntity,
-  InnovationActionEntity,
-  InnovationAssessmentEntity,
-  InnovationCollaboratorEntity,
-  InnovationEntity,
-  InnovationExportRequestEntity,
-  InnovationFileEntity,
-  InnovationGroupedStatusViewEntity,
-  InnovationSectionEntity,
-  InnovationSupportEntity,
-  InnovationSupportLogEntity,
-  InnovationThreadEntity,
-  InnovationThreadMessageEntity,
-  InnovationTransferEntity,
-  NotificationEntity,
-  NotificationUserEntity,
-  OrganisationUnitEntity
-} from '../../entities';
+import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
+import { InnovationActionEntity } from '../../entities/innovation/innovation-action.entity';
+import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
+import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
+import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
+import { InnovationFileLegacyEntity } from '../../entities/innovation/innovation-file-legacy.entity';
+import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
+import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
+import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
+import { InnovationThreadMessageEntity } from '../../entities/innovation/innovation-thread-message.entity';
+import { InnovationThreadEntity } from '../../entities/innovation/innovation-thread.entity';
+import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
+import { NotificationUserEntity } from '../../entities/user/notification-user.entity';
+import { NotificationEntity } from '../../entities/user/notification.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
+import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovation-grouped-status.view.entity';
 import {
   ActivityEnum,
   ActivityTypeEnum,
@@ -33,13 +32,15 @@ import {
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
+import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
-import type { FileStorageServiceType, IdentityProviderServiceType } from '../interfaces';
+import type { FileStorageService } from '../storage/file-storage.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -48,8 +49,8 @@ export class DomainInnovationsService {
 
   constructor(
     private sqlConnection: DataSource,
-    private fileStorageService: FileStorageServiceType,
-    private identityProviderService: IdentityProviderServiceType,
+    private fileStorageService: FileStorageService,
+    private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService
   ) {
     this.innovationRepository = this.sqlConnection.getRepository(InnovationEntity);
@@ -190,7 +191,6 @@ export class DomainInnovationsService {
 
     const dbInnovations = await this.innovationRepository
       .createQueryBuilder('innovations')
-      .withDeleted()
       .leftJoinAndSelect('innovations.owner', 'owner')
       .leftJoinAndSelect('owner.serviceRoles', 'roles')
       .leftJoinAndSelect('innovations.innovationSupports', 'supports')
@@ -203,16 +203,40 @@ export class DomainInnovationsService {
       })
       .getMany();
 
+    /**
+     * If in the future we want to withdraw innovations for different users this needs to be inside the for loop
+     */
+    let userId = user.id;
+    let roleId = user.roleId;
+    if (user.id === '' && user.roleId === '') {
+      // We will use transfer to get ownerId
+      const transfer = await em
+        .createQueryBuilder(InnovationTransferEntity, 'transfer')
+        .select(['transfer.id', 'transfer.createdBy'])
+        .where('transfer.innovation_id = :innovationId', { innovationId: innovations[0]!.id }) // We are verifying above
+        .orderBy('transfer.updatedAt', 'DESC')
+        .getOne();
+      if (!transfer) {
+        return []; // this will never happen
+      }
+
+      const userRole = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .withDeleted()
+        .select(['role.id'])
+        .where('user_id = :userId', { userId: transfer.createdBy })
+        .andWhere('role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
+        .getOne();
+      if (!userRole) {
+        return []; // this will never happen
+      }
+
+      userId = transfer.createdBy;
+      roleId = userRole.id;
+    }
+
     try {
       for (const dbInnovation of dbInnovations) {
-        const userId = user.id === '' ? dbInnovation.owner.id : user.id;
-        const innovationOwnerRole = dbInnovation.owner.serviceRoles.find(r => r.role === ServiceRoleEnum.INNOVATOR);
-        let roleId = user.roleId;
-
-        if (innovationOwnerRole && user.roleId === '') {
-          roleId = innovationOwnerRole.id;
-        }
-
         const affectedUsers: {
           userId: string;
           userType: ServiceRoleEnum;
@@ -227,6 +251,7 @@ export class DomainInnovationsService {
             .innerJoin('assessment.assignTo', 'assignedUser')
             .where('assessment.innovation_id = :innovationId', { innovationId: dbInnovation.id })
             .andWhere('assessment.finished_at IS NULL')
+            .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
             .getOne();
 
           if (assignedNa) {
@@ -246,6 +271,7 @@ export class DomainInnovationsService {
           .andWhere('collaborator.status = :collaboratorActiveStatus', {
             collaboratorActiveStatus: InnovationCollaboratorStatusEnum.ACTIVE
           })
+          .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
           .getMany();
 
         if (activeCollaborators.length > 0) {
@@ -354,12 +380,14 @@ export class DomainInnovationsService {
 
         affectedUsers.push(
           ...dbInnovation.innovationSupports.flatMap(item =>
-            item.organisationUnitUsers.map(su => ({
-              userId: su.organisationUser.user.id,
-              userType: su.organisationUser.role as unknown as ServiceRoleEnum,
-              organisationId: item.organisationUnit.organisationId,
-              organisationUnitId: item.organisationUnit.id
-            }))
+            item.organisationUnitUsers
+              .filter(su => su.organisationUser.user.status !== UserStatusEnum.DELETED)
+              .map(su => ({
+                userId: su.organisationUser.user.id,
+                userType: su.organisationUser.role as unknown as ServiceRoleEnum,
+                organisationId: item.organisationUnit.organisationId,
+                organisationUnitId: item.organisationUnit.id
+              }))
           )
         );
 
@@ -508,10 +536,10 @@ export class DomainInnovationsService {
   }
 
   async deleteInnovationFiles(transactionManager: EntityManager, files: string[]): Promise<void>;
-  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileEntity[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileLegacyEntity[]): Promise<void>;
   async deleteInnovationFiles(
     transactionManager: EntityManager,
-    files: InnovationFileEntity[] | string[]
+    files: InnovationFileLegacyEntity[] | string[]
   ): Promise<void> {
     if (files.length === 0) {
       return;
@@ -519,17 +547,17 @@ export class DomainInnovationsService {
 
     if (typeof files[0] === 'string') {
       files = await transactionManager
-        .createQueryBuilder(InnovationFileEntity, 'file')
+        .createQueryBuilder(InnovationFileLegacyEntity, 'file')
         .where('id IN (:...files)', { files })
         .getMany();
     } else {
-      // if it's not string it's InnovationFileEntity
-      files = files as InnovationFileEntity[];
+      // if it's not string it's InnovationFileLegacyEntity
+      files = files as InnovationFileLegacyEntity[];
     }
 
     for (const file of files) {
       try {
-        await transactionManager.softDelete(InnovationFileEntity, { id: file.id });
+        await transactionManager.softDelete(InnovationFileLegacyEntity, { id: file.id });
       } catch (error) {
         // TODO: Log this here!
         throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_DELETE_ERROR);
@@ -592,10 +620,10 @@ export class DomainInnovationsService {
         'threadMessage.id',
         'author.id',
         'author.identityId',
-        'author.lockedAt',
+        'author.status',
         'authorRole.id',
         'authorRole.role',
-        'authorRole.lockedAt',
+        'authorRole.isActive',
         'organisationUnit.id',
         'organisationUnit.acronym'
       ])
@@ -610,7 +638,7 @@ export class DomainInnovationsService {
     const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
     const duplicateSet = new Set<string>();
 
-    const authorIds = messages.map(m => m.author.identityId);
+    const authorIds = messages.filter(m => m.author.status !== UserStatusEnum.DELETED).map(m => m.author.identityId);
 
     const usersInfo = withUserNames ? await this.identityProviderService.getUsersMap(authorIds) : new Map();
 
@@ -623,7 +651,7 @@ export class DomainInnovationsService {
           id: message.author.id,
           identityId: message.author.identityId,
           name: usersInfo.get(message.author.identityId)?.displayName,
-          locked: !!(message.author.lockedAt || message.authorUserRole.lockedAt),
+          locked: message.author.status === UserStatusEnum.LOCKED || !message.authorUserRole.isActive,
           userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
           ...(message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {
             isOwner: message.author.id === thread.innovation.owner?.id

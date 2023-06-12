@@ -1,16 +1,15 @@
 import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-openapi';
 import type { AzureFunction, HttpRequest } from '@azure/functions';
+
 import { JwtDecoder } from '@innovations/shared/decorators';
 import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType,
-  DomainServiceSymbol,
-  DomainServiceType
-} from '@innovations/shared/services';
+import type { AuthorizationService, DomainService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
+
 import { container } from '../_config';
+
 import type { PDFService } from '../_services/pdf.service';
 import SYMBOLS from '../_services/symbols';
 import { BodySchema, ParamsSchema, ParamsType, type BodyType } from './validation.schemas';
@@ -18,8 +17,8 @@ class PostInnovationPDFExport {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     try {
-      const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-      const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+      const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
+      const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
       const pdfService = container.get<PDFService>(SYMBOLS.PDFService);
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);

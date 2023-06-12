@@ -4,7 +4,8 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { JwtDecoder } from '@users/shared/decorators';
 import { EmailNotificationPreferenceEnum, EmailNotificationType } from '@users/shared/enums';
 import { ResponseHelper } from '@users/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@users/shared/services';
+import type { AuthorizationService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { CustomContextType } from '@users/shared/types';
 
 import { container } from '../_config';
@@ -16,7 +17,7 @@ import type { ResponseDTO } from './transformation.dtos';
 class V1UserEmailNotificationsInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<void> {
-    const authService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+    const authService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
     const notificationsService = container.get<NotificationsService>(SYMBOLS.NotificationsService);
 
     try {

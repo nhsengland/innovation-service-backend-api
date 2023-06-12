@@ -1,3 +1,6 @@
+import { inject, injectable } from 'inversify';
+import type { EntityManager } from 'typeorm';
+
 import {
   NotificationEntity,
   NotificationPreferenceEntity,
@@ -9,19 +12,22 @@ import {
   EmailNotificationType,
   InnovationStatusEnum,
   NotificationContextDetailEnum,
-  NotificationContextTypeEnum
+  NotificationContextTypeEnum,
+  UserStatusEnum
 } from '@users/shared/enums';
 import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import { IdentityProviderService, IdentityProviderServiceSymbol } from '@users/shared/services';
+import type { IdentityProviderService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { DomainContextType } from '@users/shared/types';
-import { inject, injectable } from 'inversify';
-import type { EntityManager } from 'typeorm';
+
 import { BaseService } from './base.service';
 
 @injectable()
 export class NotificationsService extends BaseService {
-  constructor(@inject(IdentityProviderServiceSymbol) private identityProviderService: IdentityProviderService) {
+  constructor(
+    @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService
+  ) {
     super();
   }
 
@@ -82,13 +88,11 @@ export class NotificationsService extends BaseService {
      */
     const query = em
       .createQueryBuilder(NotificationUserEntity, 'notificationUser')
-      .withDeleted()
       .innerJoin('notificationUser.notification', 'notification')
+      .withDeleted()
       .innerJoin('notification.innovation', 'innovation')
       .leftJoin('innovation.owner', 'innovationOwner')
-      .where('notificationUser.user_role_id = :roleId', { roleId: domainContext.currentRole.id })
-      .andWhere('notificationUser.deleted_at IS NULL')
-      .andWhere('innovationOwner.deleted_at IS NULL');
+      .where('notificationUser.user_role_id = :roleId', { roleId: domainContext.currentRole.id });
 
     // optional filters
     if (filters.unreadOnly) {
@@ -120,6 +124,7 @@ export class NotificationsService extends BaseService {
       'notificationUser.id',
       'notificationUser.readAt',
       'innovationOwner.identityId',
+      'innovationOwner.status',
       'notification.id',
       'notification.contextType',
       'notification.contextDetail',
@@ -133,7 +138,9 @@ export class NotificationsService extends BaseService {
 
     const [notifications, count] = await query.getManyAndCount();
 
-    const userIds = notifications.map(n => n.notification.innovation.owner.identityId);
+    const userIds = notifications
+      .filter(n => n.notification.innovation.owner && n.notification.innovation.owner.status !== UserStatusEnum.DELETED)
+      .map(n => n.notification.innovation.owner!.identityId); // We are filtering before, so it will exist
 
     const innovationOwners = await this.identityProviderService.getUsersMap(userIds);
 
@@ -145,7 +152,7 @@ export class NotificationsService extends BaseService {
           id: n.notification.innovation.id,
           name: n.notification.innovation.name,
           status: n.notification.innovation.status,
-          ownerName: innovationOwners.get(n.notification.innovation.owner.identityId)?.displayName ?? ''
+          ownerName: innovationOwners.get(n.notification.innovation.owner?.identityId ?? '')?.displayName ?? ''
         },
         contextType: n.notification.contextType,
         contextDetail: n.notification.contextDetail,

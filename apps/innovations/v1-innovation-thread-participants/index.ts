@@ -3,12 +3,11 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import {
-  AuthorizationServiceSymbol,
-  AuthorizationServiceType,
-  DomainServiceSymbol,
-  DomainServiceType
+import type {
+  AuthorizationService,
+  DomainService
 } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -22,8 +21,8 @@ class V1InnovationThreadParticipants {
   @JwtDecoder()
   @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
-    const domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
+    const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
     try {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);

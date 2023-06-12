@@ -1,4 +1,4 @@
-import type { UserRoleEntity } from '../entities';
+import type { UserRoleEntity } from '../entities/user/user-role.entity';
 import { ServiceRoleEnum } from '../enums';
 import { ConflictError, OrganisationErrorsEnum } from '../errors';
 

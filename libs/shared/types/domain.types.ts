@@ -1,24 +1,16 @@
 import Joi from 'joi';
+
 import type { ActivityEnum } from '../enums/activity.enums';
 import type { InnovationSupportStatusEnum } from '../enums/innovation.enums';
-import type { AccessorOrganisationRoleEnum, InnovatorOrganisationRoleEnum } from '../enums/organisation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export type RoleType = {
   id: string;
   role: ServiceRoleEnum;
-  lockedAt: Date | null;
-  organisation?: {
-    id: string;
-    name: string;
-    acronym: string | null;
-  };
-  organisationUnit?: {
-    id: string;
-    name: string;
-    acronym: string;
-  };
+  isActive: boolean;
+  organisation?: { id: string; name: string; acronym: string | null };
+  organisationUnit?: { id: string; name: string; acronym: string };
 };
 
 // User domain types.
@@ -33,22 +25,6 @@ export type DomainUserInfoType = {
   lockedAt: null | Date;
   passwordResetAt: null | Date;
   firstTimeSignInAt: null | Date;
-  organisations: {
-    id: string;
-    name: string;
-    acronym: null | string;
-    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
-    isShadow: boolean;
-    size: null | string;
-    description: null | string;
-    registrationNumber: null | string;
-    organisationUnits: {
-      id: string;
-      name: string;
-      acronym: string;
-      organisationUnitUser: { id: string };
-    }[];
-  }[];
 };
 
 export type InnovatorDomainContextType = {

@@ -16,7 +16,8 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotifierTypeEnum,
-  ThreadContextTypeEnum
+  ThreadContextTypeEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
@@ -24,12 +25,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import {
-  DomainServiceSymbol,
-  NotifierServiceSymbol,
-  NotifierServiceType,
-  type DomainServiceType
-} from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
@@ -39,6 +35,7 @@ import type {
   InnovationSupportsLogType
 } from '../_types/innovation.types';
 
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
@@ -46,8 +43,8 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationSupportsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService)
     private innovationThreadsService: InnovationThreadsService
   ) {
@@ -105,7 +102,11 @@ export class InnovationSupportsService extends BaseService {
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
         .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
-        .flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id));
+        .flatMap(support =>
+          support.organisationUnitUsers
+            .filter(item => item.organisationUser.user.status === UserStatusEnum.ACTIVE)
+            .map(item => item.organisationUser.user.id)
+        );
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
     }
@@ -118,7 +119,7 @@ export class InnovationSupportsService extends BaseService {
           .map(su => ({
             id: su.organisationUser.user.id,
             organisationUnitUserId: su.id,
-            name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
+            name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
           }))
           .filter(authUser => authUser.name);
       }
@@ -294,7 +295,9 @@ export class InnovationSupportsService extends BaseService {
 
     // Fetch users names.
 
-    const assignedAccessorsIds = innovationSupport.organisationUnitUsers.map(item => item.organisationUser.user.id);
+    const assignedAccessorsIds = innovationSupport.organisationUnitUsers
+      .filter(item => item.organisationUser.user.status === UserStatusEnum.ACTIVE)
+      .map(item => item.organisationUser.user.id);
     const usersInfo = await this.domainService.users.getUsersList({
       userIds: assignedAccessorsIds
     });
@@ -306,7 +309,7 @@ export class InnovationSupportsService extends BaseService {
         .map(su => ({
           id: su.organisationUser.user.id,
           organisationUnitUserId: su.id,
-          name: usersInfo.find(item => item.id === su.organisationUser.user.id && item.isActive)?.displayName || ''
+          name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
         }))
         .filter(authUser => authUser.name)
     };
@@ -400,24 +403,20 @@ export class InnovationSupportsService extends BaseService {
       return { id: savedSupport.id };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
-      {
-        innovationId,
-        innovationSupport: {
-          id: result.id,
-          status: data.status,
-          statusChanged: true,
-          message: data.message,
-          organisationUnitId: organisationUnitId,
-          newAssignedAccessors:
-            data.status === InnovationSupportStatusEnum.ENGAGING
-              ? (data.accessors ?? []).map(item => ({ id: item.id }))
-              : []
-        }
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
+      innovationId,
+      innovationSupport: {
+        id: result.id,
+        status: data.status,
+        statusChanged: true,
+        message: data.message,
+        organisationUnitId: organisationUnitId,
+        newAssignedAccessors:
+          data.status === InnovationSupportStatusEnum.ENGAGING
+            ? (data.accessors ?? []).map(item => ({ id: item.id }))
+            : []
       }
-    );
+    });
 
     return result;
   }
@@ -439,8 +438,6 @@ export class InnovationSupportsService extends BaseService {
 
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
-      .leftJoinAndSelect('innovation.owner', 'owner')
-      .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.innovationSupports', 'supports')
       .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
       .where('innovation.id = :innovationId', { innovationId })
@@ -508,14 +505,10 @@ export class InnovationSupportsService extends BaseService {
       data?.organisationUnits &&
       data?.organisationUnits.length > 0
     ) {
-      await this.notifierService.send(
-        domainContext,
-        NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION,
-        {
-          innovationId,
-          organisationUnitIds: data.organisationUnits
-        }
-      );
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION, {
+        innovationId,
+        organisationUnitIds: data.organisationUnits
+      });
     }
 
     return result;
@@ -618,26 +611,22 @@ export class InnovationSupportsService extends BaseService {
       return { id: savedSupport.id };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
-      {
-        innovationId,
-        innovationSupport: {
-          id: result.id,
-          status: data.status,
-          statusChanged: previousStatus !== data.status,
-          message: data.message,
-          organisationUnitId: dbSupport.organisationUnit.id,
-          newAssignedAccessors:
-            data.status === InnovationSupportStatusEnum.ENGAGING
-              ? (data.accessors ?? [])
-                  .filter(item => !previousUsersOrganisationUnitUsersIds.has(item.organisationUnitUserId))
-                  .map(item => ({ id: item.id }))
-              : []
-        }
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
+      innovationId,
+      innovationSupport: {
+        id: result.id,
+        status: data.status,
+        statusChanged: previousStatus !== data.status,
+        message: data.message,
+        organisationUnitId: dbSupport.organisationUnit.id,
+        newAssignedAccessors:
+          data.status === InnovationSupportStatusEnum.ENGAGING
+            ? (data.accessors ?? [])
+                .filter(item => !previousUsersOrganisationUnitUsersIds.has(item.organisationUnitUserId))
+                .map(item => ({ id: item.id }))
+            : []
       }
-    );
+    });
 
     return result;
   }
@@ -649,16 +638,12 @@ export class InnovationSupportsService extends BaseService {
     status: InnovationSupportStatusEnum,
     requestReason: string
   ): Promise<boolean> {
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST,
-      {
-        innovationId,
-        supportId,
-        proposedStatus: status,
-        requestStatusUpdateComment: requestReason
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_CHANGE_REQUEST, {
+      innovationId,
+      supportId,
+      proposedStatus: status,
+      requestStatusUpdateComment: requestReason
+    });
 
     return true;
   }

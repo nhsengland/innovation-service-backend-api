@@ -18,7 +18,8 @@ import {
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
-  ThreadContextTypeEnum
+  ThreadContextTypeEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -27,17 +28,11 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  IdentityProviderServiceSymbol,
-  IdentityProviderServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import { ActivityLogListParamsType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { Brackets, EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
@@ -46,10 +41,10 @@ import SYMBOLS from './symbols';
 @injectable()
 export class InnovationActionsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType,
-    @inject(IdentityProviderServiceSymbol)
-    private identityProviderService: IdentityProviderServiceType,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.IdentityProviderService)
+    private identityProviderService: IdentityProviderService,
     @inject(SYMBOLS.InnovationThreadsService)
     private innovationThreadsService: InnovationThreadsService
   ) {
@@ -107,9 +102,11 @@ export class InnovationActionsService extends BaseService {
         'innovationSection.section',
         'innovationSupport.id',
         'updatedByUser.identityId',
+        'updatedByUser.status',
         'updatedByUserRole.role',
         'createdByUser.id',
         'createdByUser.identityId',
+        'createdByUser.status',
         'createdByUserRole.role',
         'organisationUnit.id',
         'organisationUnit.acronym',
@@ -267,7 +264,12 @@ export class InnovationActionsService extends BaseService {
     }
 
     const usersIds = actions
-      .flatMap(action => [action.createdByUser.identityId, action.updatedByUserRole?.user.identityId])
+      .flatMap(action => [
+        action.createdByUser.status !== UserStatusEnum.DELETED ? action.createdByUser.identityId : undefined,
+        action.updatedByUserRole && action.updatedByUserRole.user.status !== UserStatusEnum.DELETED
+          ? action.updatedByUserRole.user.identityId
+          : undefined
+      ])
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
@@ -350,6 +352,7 @@ export class InnovationActionsService extends BaseService {
         'innovationSection.section',
         'innovation.id',
         'owner.id',
+        'owner.status',
         'createdByUserRole.id',
         'createdByUserRole.role',
         'createdByUserOrganisationUnit.id',
@@ -357,10 +360,12 @@ export class InnovationActionsService extends BaseService {
         'createdByUserOrganisationUnit.acronym',
         'createdByUser.id',
         'createdByUser.identityId',
+        'createdByUser.status',
         'updatedByUserRole.id',
         'updatedByUserRole.role',
         'updatedByUser.id',
-        'updatedByUser.identityId'
+        'updatedByUser.identityId',
+        'updatedByUser.status'
       ])
       .innerJoin('action.innovationSection', 'innovationSection')
       .innerJoin('innovationSection.innovation', 'innovation')
@@ -393,10 +398,14 @@ export class InnovationActionsService extends BaseService {
       }
     }
 
-    const createdByUser = await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId);
+    let createdByUserName = '[deleted user]';
+    if (dbAction.createdByUserRole.user.status !== UserStatusEnum.DELETED) {
+      createdByUserName = (await this.identityProviderService.getUserInfo(dbAction.createdByUserRole.user.identityId))
+        .displayName;
+    }
 
     let lastUpdatedByUserName = '[deleted user]';
-    if (dbAction.updatedByUserRole) {
+    if (dbAction.updatedByUserRole && dbAction.updatedByUserRole.user.status !== UserStatusEnum.DELETED) {
       lastUpdatedByUserName =
         (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))?.displayName ||
         'unknown user';
@@ -419,7 +428,7 @@ export class InnovationActionsService extends BaseService {
       },
       createdBy: {
         id: dbAction.createdByUserRole.user.id,
-        name: createdByUser.displayName,
+        name: createdByUserName,
         role: dbAction.createdByUserRole.role,
         ...(dbAction.createdByUserRole.organisationUnit && {
           organisationUnit: {
@@ -509,14 +518,10 @@ export class InnovationActionsService extends BaseService {
       return { id: actionResult.id };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.ACTION_CREATION,
-      {
-        innovationId: innovation.id,
-        action: { id: result.id, section: data.section }
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_CREATION, {
+      innovationId: innovation.id,
+      action: { id: result.id, section: data.section }
+    });
 
     return result;
   }
@@ -570,19 +575,15 @@ export class InnovationActionsService extends BaseService {
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.ACTION_UPDATE,
-      {
-        innovationId: dbAction.innovationSection.innovation.id,
-        action: {
-          id: dbAction.id,
-          section: dbAction.innovationSection.section,
-          status: result.status,
-          previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
-        }
-      },
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
+      innovationId: dbAction.innovationSection.innovation.id,
+      action: {
+        id: dbAction.id,
+        section: dbAction.innovationSection.section,
+        status: result.status,
+        previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
+      }
+    });
 
     return { id: result.id };
   }
@@ -630,19 +631,15 @@ export class InnovationActionsService extends BaseService {
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.ACTION_UPDATE,
-      {
-        innovationId: dbAction.innovationSection.innovation.id,
-        action: {
-          id: dbAction.id,
-          section: dbAction.innovationSection.section,
-          status: result.status,
-          previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
-        }
+    await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
+      innovationId: dbAction.innovationSection.innovation.id,
+      action: {
+        id: dbAction.id,
+        section: dbAction.innovationSection.section,
+        status: result.status,
+        previouslyUpdatedByUserRole: actionLastUpdatedByUserRole
       }
-    );
+    });
 
     return { id: result.id };
   }
@@ -675,19 +672,15 @@ export class InnovationActionsService extends BaseService {
 
     const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.ACTION_UPDATE,
-      {
-        innovationId: innovationId,
-        action: {
-          id: dbAction.id,
-          section: dbAction.innovationSection.section,
-          status: result.status
-        },
-        comment: data.message
-      }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
+      innovationId: innovationId,
+      action: {
+        id: dbAction.id,
+        section: dbAction.innovationSection.section,
+        status: result.status
+      },
+      comment: data.message
+    });
 
     return { id: result.id };
   }

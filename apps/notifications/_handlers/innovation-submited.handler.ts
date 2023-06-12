@@ -9,10 +9,11 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { container, EmailTypeEnum, ENV } from '../_config';
 
-import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
+import type { Context } from '@azure/functions';
+import type { DomainService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class InnovationSubmitedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITED,
@@ -21,13 +22,13 @@ export class InnovationSubmitedHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
   Record<string, never>
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -45,8 +46,8 @@ export class InnovationSubmitedHandler extends BaseHandler<
       await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId)
     ).filter(c => c !== this.requestUser.id);
 
-    const innovatorRecipientIds = collaborators;
-    if (this.requestUser.id !== innovation.ownerId) {
+    const innovatorRecipientIds = [...collaborators];
+    if (innovation.ownerId && this.requestUser.id !== innovation.ownerId) {
       innovatorRecipientIds.push(innovation.ownerId);
     }
 

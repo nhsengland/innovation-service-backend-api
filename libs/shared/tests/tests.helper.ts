@@ -1,27 +1,33 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
-import { SQLConnectionServiceSymbol, type SQLConnectionServiceType } from '../services';
 
+import { IdentityProviderService } from '../services';
+import type { SQLConnectionService } from '../services/storage/sql-connection.service';
+import SHARED_SYMBOLS from '../services/symbols';
+import type { TestUserType } from './builders/user.builder';
+import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
 
 export class TestsHelper {
   private sqlConnection: DataSource;
   private em: EntityManager;
 
-  private completeScenarioData: CompleteScenarioType;
-
-  constructor() {
-    // This is set in jest.setup.ts and is used to share data between tests)
-    // Comment this if not using global setup / teardown
-    this.completeScenarioData = (global as any).completeScenarioData;
-  }
+  protected completeScenarioBuilder: CompleteScenarioBuilder;
 
   async init(): Promise<this> {
-    this.sqlConnection = container.get<SQLConnectionServiceType>(SQLConnectionServiceSymbol).getConnection();
+    this.sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
 
     while (!this.sqlConnection.isInitialized) {
       await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    this.completeScenarioBuilder = new CompleteScenarioBuilder(this.sqlConnection);
+
+    // This is set when we're running the tests and not the global setup / teardown
+    if (this.completeScenarioBuilder.getScenario()) {
+      this.setupGlobalMocks();
     }
 
     return this;
@@ -40,11 +46,10 @@ export class TestsHelper {
   }
 
   async createCompleteScenario(): Promise<CompleteScenarioType> {
-    this.completeScenarioData = await new CompleteScenarioBuilder(this.sqlConnection).createScenario();
-    return this.completeScenarioData;
+    return this.completeScenarioBuilder.createScenario();
   }
   getCompleteScenario(): CompleteScenarioType {
-    return this.completeScenarioData;
+    return this.completeScenarioBuilder.getScenario();
   }
 
   /**
@@ -71,5 +76,23 @@ export class TestsHelper {
   async releaseQueryRunnerEntityManager(): Promise<void> {
     await this.em.queryRunner?.rollbackTransaction();
     await this.em.queryRunner?.release();
+  }
+
+  private setupGlobalMocks(): void {
+    const identityMap = this.completeScenarioBuilder.getIdentityMap();
+    // jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockImplementation(async (identityId: string) => {
+    //   const user = identityMap.get(identityId);
+    //   if (!user) {
+    //     throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    //   }
+    //   return DTOsHelper.getIdentityUserInfo(user);
+    // });
+
+    jest.spyOn(IdentityProviderService.prototype, 'getUsersList').mockImplementation(async (identityIds: string[]) => {
+      return identityIds
+        .map(identityId => identityMap.get(identityId))
+        .filter((x): x is TestUserType => !!x)
+        .map(DTOsHelper.getIdentityUserInfo);
+    });
   }
 }

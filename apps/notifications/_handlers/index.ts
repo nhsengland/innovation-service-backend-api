@@ -18,7 +18,7 @@ export { InnovationSupportStatusChangeRequestHandler } from './innovation-suppor
 export { InnovationSupportStatusUpdateHandler } from './innovation-support-status-update.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './innovation-transfer-ownership-completed.handler';
 export { InnovationTransferOwnershipCreationHandler } from './innovation-transfer-ownership-creation.handler';
-export { InnovationTransferOwnershipExpirationHandler } from './innovation-transfer-ownership-exipraton.handler';
+export { InnovationTransferOwnershipExpirationHandler } from './innovation-transfer-ownership-expiration.handler';
 export { InnovationTransferOwnershipReminderHandler } from './innovation-transfer-ownership-reminder.handler';
 export { InnovationWithdrawnHandler } from './innovation-withdrawn.handler';
 export { InnovatorAccountCreationHandler } from './innovator-account-creation.handler';

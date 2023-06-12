@@ -1,9 +1,12 @@
 import { randPastDate, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import { OrganisationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '../entities';
 import { ServiceRoleEnum } from '../enums';
 
+import type { OrganisationUnitEntity } from '../entities/organisation/organisation-unit.entity';
+import type { OrganisationEntity } from '../entities/organisation/organisation.entity';
+import { UserRoleEntity } from '../entities/user/user-role.entity';
+import { UserEntity } from '../entities/user/user.entity';
 import { BaseBuilder } from './base.builder';
 
 export class UserBuilder extends BaseBuilder {

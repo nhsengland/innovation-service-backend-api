@@ -6,27 +6,28 @@ import {
 } from '@notifications/shared/enums';
 import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import { DomainServiceSymbol, DomainServiceType } from '@notifications/shared/services';
+import type { DomainService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
 import { container, ENV } from '../_config';
 import { EmailTypeEnum } from '../_config/emails.config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class ActionCreationHandler extends BaseHandler<
   NotifierTypeEnum.ACTION_CREATION,
   EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
   { section: string }
 > {
-  private domainService = container.get<DomainServiceType>(DomainServiceSymbol);
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -45,8 +46,13 @@ export class ActionCreationHandler extends BaseHandler<
 
     const collaborators = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
 
+    const recipientsIds = [...collaborators];
+    if (innovation.ownerId) {
+      recipientsIds.push(innovation.ownerId);
+    }
+
     const innovatorRecipients = await this.recipientsService.getUsersRecipient(
-      [...collaborators, innovation.ownerId],
+      recipientsIds,
       ServiceRoleEnum.INNOVATOR
     );
 

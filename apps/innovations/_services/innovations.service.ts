@@ -35,7 +35,8 @@ import {
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -45,13 +46,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
-import {
-  DomainServiceSymbol,
-  DomainServiceType,
-  NotifierServiceSymbol,
-  NotifierServiceType,
-  type DomainUsersService
-} from '@innovations/shared/services';
+import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
@@ -65,13 +60,14 @@ import type {
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { ActionEnum } from '@innovations/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
 @injectable()
 export class InnovationsService extends BaseService {
   constructor(
-    @inject(DomainServiceSymbol) private domainService: DomainServiceType,
-    @inject(NotifierServiceSymbol) private notifierService: NotifierServiceType
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
   }
@@ -526,6 +522,7 @@ export class InnovationsService extends BaseService {
       if (fetchUsers) {
         innovationsAssessmentsQuery.leftJoin('assessments.assignTo', 'assignTo');
         innovationsAssessmentsQuery.addSelect('assignTo.id', 'assignTo_id');
+        innovationsAssessmentsQuery.addSelect('assignTo.status', 'assignTo_status');
       }
 
       assessmentsMap = new Map((await innovationsAssessmentsQuery.getMany()).map(a => [a.innovation.id, a]));
@@ -579,7 +576,8 @@ export class InnovationsService extends BaseService {
           .leftJoin('organisationUnitUsers.organisationUser', 'organisationUser')
           .addSelect('organisationUser.role', 'organisationUser_role')
           .leftJoin('organisationUser.user', 'user')
-          .addSelect('user.id', 'user_id');
+          .addSelect('user.id', 'user_id')
+          .addSelect('user.status', 'user_status');
       }
 
       (await innovationsSupportsQuery.getMany()).forEach(s => {
@@ -594,10 +592,16 @@ export class InnovationsService extends BaseService {
     // Fetch users names.
     let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
     if (fetchUsers) {
-      const assessmentUsersIds = new Set([...assessmentsMap.values()].map(a => a.assignTo.id));
+      const assessmentUsersIds = new Set(
+        [...assessmentsMap.values()].filter(a => a.assignTo.status !== UserStatusEnum.DELETED).map(a => a.assignTo.id)
+      );
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
-          s.flatMap(support => support.organisationUnitUsers.map(item => item.organisationUser.user.id))
+          s.flatMap(support =>
+            support.organisationUnitUsers
+              .filter(item => item.organisationUser.user.status !== UserStatusEnum.DELETED)
+              .map(item => item.organisationUser.user.id)
+          )
         )
       );
       usersInfo = new Map(
@@ -885,7 +889,8 @@ export class InnovationsService extends BaseService {
         'innovationAssessments.id',
         'innovationAssessments.createdAt',
         'innovationAssessments.finishedAt',
-        'assignTo.id'
+        'assignTo.id',
+        'assignTo.status'
       ]);
     }
 
@@ -915,7 +920,9 @@ export class InnovationsService extends BaseService {
 
     // Fetch users names.
     const assessmentUsersIds = filters.fields?.includes('assessment')
-      ? innovation.assessments?.map(assessment => assessment.assignTo.id)
+      ? innovation.assessments
+          ?.filter(assessment => assessment.assignTo.status !== UserStatusEnum.DELETED)
+          .map(assessment => assessment.assignTo.id)
       : [];
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
     let usersInfo = [];
@@ -927,7 +934,7 @@ export class InnovationsService extends BaseService {
       usersInfo = await this.domainService.users.getUsersList({
         userIds: [...assessmentUsersIds, ...[innovation.owner.id]]
       });
-      ownerInfo = usersInfo.find(item => item.id === innovation.owner.id);
+      ownerInfo = usersInfo.find(item => item.id === innovation.owner?.id);
     } else {
       usersInfo = await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds] });
     }
@@ -1003,16 +1010,16 @@ export class InnovationsService extends BaseService {
         ? {
             owner: {
               id: innovation.owner.id,
-              name: ownerInfo?.displayName || '',
-              email: ownerInfo?.email || '',
+              name: ownerInfo?.displayName ?? '',
+              email: ownerInfo?.email ?? '',
               contactByEmail: ownerPreferences.contactByEmail,
               contactByPhone: ownerPreferences.contactByPhone,
               contactByPhoneTimeframe: ownerPreferences.contactByPhoneTimeframe,
               contactDetails: ownerPreferences.contactDetails,
-              mobilePhone: ownerInfo?.mobilePhone || '',
+              mobilePhone: ownerInfo?.mobilePhone ?? '',
               isActive: !!ownerInfo?.isActive,
               lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-              organisations: ((await innovation.owner?.userOrganisations) || [])
+              organisations: ((await innovation.owner?.userOrganisations) ?? [])
                 .filter(item => !item.organisation.isShadow)
                 .map(item => ({
                   name: item.organisation.name,
@@ -1299,11 +1306,7 @@ export class InnovationsService extends BaseService {
     });
 
     // Add notification with Innovation submited for needs assessment
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_SUBMITED,
-      { innovationId }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUBMITED, { innovationId });
 
     return {
       id: innovationId,
@@ -1330,17 +1333,13 @@ export class InnovationsService extends BaseService {
     });
 
     for (const savedInnovation of savedInnovations) {
-      await this.notifierService.send(
-        context,
-        NotifierTypeEnum.INNOVATION_WITHDRAWN,
-        {
-          innovation: {
-            id: savedInnovation.id,
-            name: savedInnovation.name,
-            affectedUsers: savedInnovation.affectedUsers
-          }
+      await this.notifierService.send(context, NotifierTypeEnum.INNOVATION_WITHDRAWN, {
+        innovation: {
+          id: savedInnovation.id,
+          name: savedInnovation.name,
+          affectedUsers: savedInnovation.affectedUsers
         }
-      );
+      });
     }
 
     return { id: dbInnovation.id };
@@ -1360,6 +1359,7 @@ export class InnovationsService extends BaseService {
       .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUser.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
+      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
 
     const previousAssignedAccessors = dbSupports.flatMap(support =>
@@ -1441,11 +1441,11 @@ export class InnovationsService extends BaseService {
       return { id: innovationId };
     });
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_STOP_SHARING,
-      { innovationId, previousAssignedAccessors: previousAssignedAccessors, message: data.message }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_STOP_SHARING, {
+      innovationId,
+      previousAssignedAccessors: previousAssignedAccessors,
+      message: data.message
+    });
 
     return result;
   }
@@ -1581,11 +1581,10 @@ export class InnovationsService extends BaseService {
 
     // Create notification
 
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
-      { innovationId: innovationId, requestId: request.id }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+      innovationId: innovationId,
+      requestId: request.id
+    });
 
     return {
       id: request.id
@@ -1649,11 +1648,10 @@ export class InnovationsService extends BaseService {
     });
 
     // Create notification
-    await this.notifierService.send(
-      domainContext,
-      NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
-      { innovationId: exportRequest.innovation.id, requestId: updatedRequest.id }
-    );
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK, {
+      innovationId: exportRequest.innovation.id,
+      requestId: updatedRequest.id
+    });
 
     return {
       id: updatedRequest.id

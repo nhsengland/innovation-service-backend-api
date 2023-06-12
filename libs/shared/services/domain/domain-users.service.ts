@@ -1,33 +1,66 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { InnovationEntity, UserEntity, UserPreferenceEntity, UserRoleEntity } from '../../entities';
 import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import {
+  AccessorOrganisationRoleEnum,
   InnovationCollaboratorStatusEnum,
+  InnovatorOrganisationRoleEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
-  ServiceRoleEnum
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
-import type { DomainContextType, DomainUserInfoType, RoleType } from '../../types';
+import type { DomainContextType, RoleType } from '../../types';
 
-import type { IdentityProviderServiceType, NotifierServiceType } from '../interfaces';
-
+import { InnovationEntity } from '../../entities/innovation/innovation.entity';
+import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
+import { UserEntity } from '../../entities/user/user.entity';
+import type { IdentityProviderService } from '../integrations/identity-provider.service';
+import type { NotifierService } from '../integrations/notifier.service';
 import type { DomainInnovationsService } from './domain-innovations.service';
 
 export class DomainUsersService {
-  userRepository: Repository<UserEntity>;
+  private userRepository: Repository<UserEntity>;
 
   constructor(
     private sqlConnection: DataSource,
-    private identityProviderService: IdentityProviderServiceType,
+    private identityProviderService: IdentityProviderService,
     private domainInnovationsService: DomainInnovationsService,
-    private notifierService: NotifierServiceType
+    private notifierService: NotifierService
   ) {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
 
-  async getUserInfo(data: { userId?: string; identityId?: string }): Promise<DomainUserInfoType> {
+  async getUserInfo(data: { userId?: string; identityId?: string }): Promise<{
+    id: string;
+    identityId: string;
+    email: string;
+    displayName: string;
+    roles: RoleType[];
+    phone: null | string;
+    isActive: boolean;
+    lockedAt: null | Date;
+    passwordResetAt: null | Date;
+    firstTimeSignInAt: null | Date;
+    organisations: {
+      id: string;
+      name: string;
+      acronym: null | string;
+      role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
+      isShadow: boolean;
+      size: null | string;
+      description: null | string;
+      registrationNumber: null | string;
+      organisationUnits: {
+        id: string;
+        name: string;
+        acronym: string;
+        organisationUnitUser: { id: string };
+      }[];
+    }[];
+  }> {
     if (!data.userId && !data.identityId) {
       throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
     }
@@ -39,6 +72,7 @@ export class DomainUsersService {
         'user.id',
         'user.identityId',
         'user.lockedAt',
+        'user.status',
         'user.firstTimeSignInAt',
         // These should be removed in the future and use the service roles instead
         'userOrganisations.id',
@@ -57,7 +91,7 @@ export class DomainUsersService {
         // Service roles
         'serviceRoles.id',
         'serviceRoles.role',
-        'serviceRoles.lockedAt',
+        'serviceRoles.isActive',
         'roleOrganisation.id',
         'roleOrganisation.name',
         'roleOrganisation.acronym',
@@ -71,12 +105,13 @@ export class DomainUsersService {
       .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .leftJoin('serviceRoles.organisation', 'roleOrganisation')
-      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit');
+      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
+      .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     if (data.userId) {
-      query.where('user.id = :userId', { userId: data.userId });
+      query.andWhere('user.id = :userId', { userId: data.userId });
     } else if (data.identityId) {
-      query.where('user.external_id = :identityId', { identityId: data.identityId });
+      query.andWhere('user.external_id = :identityId', { identityId: data.identityId });
     }
 
     const dbUser = await query.getOne();
@@ -94,7 +129,7 @@ export class DomainUsersService {
       displayName: authUser.displayName,
       roles: dbUser.serviceRoles.map(roleEntity2RoleType),
       phone: authUser.mobilePhone,
-      isActive: !dbUser.lockedAt,
+      isActive: dbUser.status === UserStatusEnum.ACTIVE,
       lockedAt: dbUser.lockedAt,
       passwordResetAt: authUser.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
@@ -153,7 +188,8 @@ export class DomainUsersService {
 
     const query = this.userRepository
       .createQueryBuilder('users')
-      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles');
+      .innerJoinAndSelect('users.serviceRoles', 'serviceRoles')
+      .andWhere('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
       query.where('users.id IN (:...userIds)', { userIds: data.userIds });
     } else if (data.identityIds) {
@@ -178,7 +214,7 @@ export class DomainUsersService {
         roles: dbUser.serviceRoles,
         email: identityUser.email,
         mobilePhone: identityUser.mobilePhone,
-        isActive: !dbUser.lockedAt,
+        isActive: dbUser.status === UserStatusEnum.ACTIVE,
         lastLoginAt: identityUser.lastLoginAt
       };
     });
@@ -210,7 +246,10 @@ export class DomainUsersService {
    *  - userRoles: the user roles to filter by.
    * @returns the user as an array.
    */
-  async getUserByEmail(email: string, filters?: { userRoles: ServiceRoleEnum[] }): Promise<DomainUserInfoType[]> {
+  async getUserByEmail(
+    email: string,
+    filters?: { userRoles: ServiceRoleEnum[] }
+  ): Promise<Awaited<ReturnType<DomainUsersService['getUserInfo']>>[]> {
     try {
       const authUser = await this.identityProviderService.getUserInfoByEmail(email);
       if (!authUser) {
@@ -307,6 +346,7 @@ export class DomainUsersService {
             },
             {
               updatedBy: dbUser.id,
+              owner: null,
               expires_at: dbInnovation.expirationTransferDate
             }
           );
@@ -324,20 +364,14 @@ export class DomainUsersService {
         }
       }
 
-      await transaction.update(
-        UserRoleEntity,
-        { user: { id: dbUser.id } },
-        {
-          deletedAt: new Date().toISOString()
-        }
-      );
+      await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
 
       await transaction.update(
         UserEntity,
         { id: dbUser.id },
         {
           deleteReason: data.reason,
-          deletedAt: new Date().toISOString()
+          status: UserStatusEnum.DELETED
         }
       );
 
@@ -363,7 +397,7 @@ export class DomainUsersService {
       .select([
         'userRole.id',
         'userRole.role',
-        'userRole.lockedAt',
+        'userRole.isActive',
         'organisation.id',
         'organisation.name',
         'organisation.acronym',
@@ -376,7 +410,7 @@ export class DomainUsersService {
       .where('userRole.user = :userId', { userId });
 
     if (activeOnly) {
-      query.andWhere('userRole.lockedAt IS NULL');
+      query.andWhere('userRole.isActive = 1');
     }
 
     // currently we're returning the first role found when no roleId (related to TechDebt in v1-me-info) and this is to

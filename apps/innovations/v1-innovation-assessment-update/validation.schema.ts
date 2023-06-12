@@ -35,56 +35,56 @@ export type BodyType = {
   isSubmission?: boolean;
 };
 export const BodySchema = Joi.object<BodyType>({
-  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null).optional(),
-  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.large).allow(null).optional(),
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).allow(null).optional(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).allow(null).optional(),
 
   maturityLevel: Joi.string()
     .valid(...MaturityLevelCatalogueType)
     .allow(null)
     .optional(),
-  maturityLevelComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  maturityLevelComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasRegulatoryApprovals: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasRegulatoryApprovalsComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasRegulatoryApprovalsComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasEvidence: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasEvidenceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasEvidenceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasValidation: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasValidationComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasValidationComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasProposition: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasPropositionComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasPropositionComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasCompetitionKnowledge: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasCompetitionKnowledgeComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasCompetitionKnowledgeComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasImplementationPlan: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasImplementationPlanComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasImplementationPlanComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   hasScaleResource: Joi.string()
     .valid(...YesPartiallyNoCatalogueType)
     .allow(null)
     .optional(),
-  hasScaleResourceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.small).allow(null).optional(),
+  hasScaleResourceComment: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xs).allow(null).optional(),
 
   suggestedOrganisationUnitsIds: Joi.array().items(Joi.string().guid()).allow(null).optional(),
   isSubmission: Joi.boolean().strict().optional().default(false)

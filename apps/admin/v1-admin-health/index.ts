@@ -3,18 +3,19 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@admin/shared/decorators';
 import { ResponseHelper } from '@admin/shared/helpers';
-import { AuthorizationServiceSymbol, AuthorizationServiceType } from '@admin/shared/services';
+import type { AuthorizationService } from '@admin/shared/services';
 import type { CustomContextType } from '@admin/shared/types';
 
 import { container } from '../_config';
 
+import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import type { ResponseDTO } from './transformation';
 
 class V1Health {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, _request: HttpRequest): Promise<any> {
     try {
-      const authorizationService = container.get<AuthorizationServiceType>(AuthorizationServiceSymbol);
+      const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
       await authorizationService.validate(context).checkAdminType().verify();
       context.res = ResponseHelper.Ok<ResponseDTO>({
         status: 'OK'

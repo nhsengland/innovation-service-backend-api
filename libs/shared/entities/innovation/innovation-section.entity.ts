@@ -13,7 +13,7 @@ import {
 import { BaseEntity } from '../base.entity';
 
 import { InnovationActionEntity } from './innovation-action.entity';
-import { InnovationFileEntity } from './innovation-file.entity';
+import { InnovationFileLegacyEntity } from './innovation-file-legacy.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
@@ -44,13 +44,13 @@ export class InnovationSectionEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToMany(() => InnovationFileEntity, record => record.evidence, { nullable: true })
+  @ManyToMany(() => InnovationFileLegacyEntity, record => record.evidence, { nullable: true })
   @JoinTable({
     name: 'innovation_section_file',
     joinColumn: { name: 'innovation_section_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'innovation_file_id', referencedColumnName: 'id' }
   })
-  files: InnovationFileEntity[];
+  files: InnovationFileLegacyEntity[];
 
   @OneToMany(() => InnovationActionEntity, record => record.innovationSection, {
     lazy: true,
