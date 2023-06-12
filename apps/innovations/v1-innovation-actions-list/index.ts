@@ -60,6 +60,7 @@ class V1InnovationActionsList {
       });
       return;
     } catch (error) {
+      console.log(error)
       context.res = ResponseHelper.Error(context, error);
       return;
     }
