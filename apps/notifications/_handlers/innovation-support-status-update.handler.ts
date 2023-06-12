@@ -32,7 +32,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       owner: RecipientType | null;
     };
     requestUserAdditionalInfo?: {
-      displayName?: string;
+      displayName: string;
       organisation: { id: string; name: string };
       organisationUnit: { id: string; name: string };
     };
@@ -87,7 +87,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     };
 
     // If the innovation is not found, then we don't need to send any notification. (This could probably throw an error as it should not happen, but leaving like this.)
-    if (!this.data.innovation) {
+    if (!this.data.innovation || !this.data.requestUserAdditionalInfo) {
       return this;
     }
 
@@ -109,7 +109,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
       await this.prepareInAppForNewAccessors(this.data.requestUserAdditionalInfo.organisationUnit);
-      await this.prepareEmailForNewAccessors();
+      await this.prepareEmailForNewAccessors(this.data.requestUserAdditionalInfo);
     }
 
     return this;
@@ -139,7 +139,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
   }
 
-  private async prepareEmailForNewAccessors(): Promise<void> {
+  private async prepareEmailForNewAccessors(requestUserInfo: { displayName: string }): Promise<void> {
     const newAssignedAccessors = (
       this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id) ?? []
     ).map(a => a.id);
@@ -158,7 +158,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         notificationPreferenceType: 'SUPPORT',
         to: recipient,
         params: {
-          qa_name: this.data.requestUserAdditionalInfo?.displayName ?? 'qualified accessor', // what should the default be, believe it will never happen
+          qa_name: requestUserInfo.displayName, 
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
