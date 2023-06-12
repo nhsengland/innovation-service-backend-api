@@ -7,7 +7,7 @@ import {
 } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
-import type { DomainService } from '@notifications/shared/services';
+import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -23,7 +23,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
   { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
-  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
+  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   private data: {
     innovation?: {
@@ -46,9 +46,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const requestUserInfo = await this.domainService.users.getUserInfo({
-      userId: this.requestUser.id
-    });
+    const requestUserInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
@@ -101,7 +99,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
-      await this.prepareInAppForAccessorsWhenEngaging();
+      await this.prepareInAppForNewAccessors();
       await this.prepareEmailForNewAccessors();
     }
 
@@ -178,10 +176,18 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     });
   }
 
-  private async prepareInAppForAccessorsWhenEngaging(): Promise<void> {
-    const assignedUsers = await this.recipientsService.innovationAssignedRecipients({
-      innovationSupportId: this.inputData.innovationSupport.id
-    });
+  private async prepareInAppForNewAccessors(): Promise<void> {
+    const newAssignedAccessors = (
+      this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id) ?? []
+    ).map(a => a.id);
+
+    const recipients = await this.recipientsService.getUsersRecipient(
+      newAssignedAccessors,
+      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+      {
+        organisationUnit: this.inputData.innovationSupport.organisationUnitId
+      }
+    );
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
@@ -190,9 +196,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
         id: this.inputData.innovationSupport.id
       },
-      userRoleIds: assignedUsers
-        .filter(user => user.roleId !== this.requestUser.currentRole.id)
-        .map(user => user.roleId),
+      userRoleIds: recipients.filter(user => user.roleId !== this.requestUser.currentRole.id).map(user => user.roleId),
       params: {
         organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
