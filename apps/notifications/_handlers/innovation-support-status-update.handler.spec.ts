@@ -13,6 +13,7 @@ import type { RecipientType } from '../_services/recipients.service';
 import { UrlModel } from '@notifications/shared/models';
 import { RecipientsService } from '../_services/recipients.service';
 import { randText } from '@ngneat/falso';
+import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 
 describe('Notifications / _handlers / innovation-support-status-update suite', () => {
   let testsHelper: TestsHelper;
@@ -22,6 +23,61 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
     testsHelper = await new TestsHelper().init();
     scenario = testsHelper.getCompleteScenario();
   });
+
+  describe('Request user organisation not found', () => {
+    it('Should throw a not found error', async () => {
+      const handler = new InnovationSupportStatusUpdateHandler(
+        DTOsHelper.getUserRequestContext(scenario.users.allMighty), //admin has no org
+        {
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationSupport: {
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByAlice.id,
+            status: InnovationSupportStatusEnum.ENGAGING,
+            statusChanged: false,
+            message: '',
+            organisationUnitId:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            newAssignedAccessors: [
+              { id: scenario.users.aliceQualifyingAccessor.id },
+              { id: scenario.users.ingridAccessor.id }
+            ]
+          }
+        },
+        MocksHelper.mockContext()
+      );
+
+      await expect(() => handler.run()).rejects.toThrowError(
+        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
+    );
+    })
+  })
+  describe('Request user organisation unit not found', () => {
+    it('Should throw a not found error', async () => {
+      const handler = new InnovationSupportStatusUpdateHandler(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'), //innovator has no unit
+        {
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          innovationSupport: {
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByAlice.id,
+            status: InnovationSupportStatusEnum.ENGAGING,
+            statusChanged: false,
+            message: '',
+            organisationUnitId:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            newAssignedAccessors: [
+              { id: scenario.users.aliceQualifyingAccessor.id },
+              { id: scenario.users.ingridAccessor.id }
+            ]
+          }
+        },
+        MocksHelper.mockContext()
+      );
+      await expect(() => handler.run()).rejects.toThrowError(
+        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      );
+
+    })
+  })
 
   describe('Innovation status has not changed', () => {
     describe('Status is ENGAGING', () => {
@@ -134,7 +190,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
         const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
         const support = innovation.supports.supportByAlice;
         const handler = new InnovationSupportStatusUpdateHandler(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           {
             innovationId: innovation.id,
             innovationSupport: {

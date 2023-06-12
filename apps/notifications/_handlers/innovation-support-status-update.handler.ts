@@ -16,6 +16,7 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
+import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
@@ -46,6 +47,14 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
+    if (!this.requestUser.organisation) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    }
+
+    if (!this.requestUser.organisation.organisationUnit) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+    }
+    
     const requestUserInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
@@ -68,12 +77,12 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
       organisation: {
-        id: this.requestUser.organisation?.id ?? '',
-        name: this.requestUser.organisation?.name ?? ''
+        id: this.requestUser.organisation?.id,
+        name: this.requestUser.organisation?.name
       },
       organisationUnit: {
-        id: this.requestUser?.organisation?.organisationUnit?.id ?? '',
-        name: this.requestUser?.organisation?.organisationUnit?.name ?? ''
+        id: this.requestUser?.organisation?.organisationUnit?.id,
+        name: this.requestUser?.organisation?.organisationUnit?.name
       }
     };
 
@@ -83,8 +92,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
 
     if (this.inputData.innovationSupport.statusChanged) {
-      await this.prepareEmailForInnovators(innovatorRecipients);
-      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.roleId));
+      await this.prepareEmailForInnovators(innovatorRecipients, this.data.innovation, this.data.requestUserAdditionalInfo.organisation);
+      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.roleId), this.data.requestUserAdditionalInfo.organisationUnit);
 
       if (
         [
@@ -94,12 +103,12 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
         ].includes(this.inputData.innovationSupport.status)
       ) {
-        await this.prepareInAppForAssessmentWhenWaitingStatus();
+        await this.prepareInAppForAssessmentWhenWaitingStatus(this.data.requestUserAdditionalInfo.organisationUnit);
       }
     }
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
-      await this.prepareInAppForNewAccessors();
+      await this.prepareInAppForNewAccessors(this.data.requestUserAdditionalInfo.organisationUnit);
       await this.prepareEmailForNewAccessors();
     }
 
@@ -107,7 +116,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   // Private methods.
-  private async prepareEmailForInnovators(recipients: RecipientType[]): Promise<void> {
+  private async prepareEmailForInnovators(recipients: RecipientType[], innovation: { name: string }, organisation: { name: string }): Promise<void> {
     // Send email only to user if email preference INSTANTLY (NotifierTypeEnum.SUPPORT).
     for (const recipient of recipients) {
       this.emails.push({
@@ -115,9 +124,8 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         notificationPreferenceType: 'SUPPORT',
         to: recipient,
         params: {
-          // display_name: '', // This will be filled by the email-listener function.
-          innovation_name: this.data.innovation?.name || '',
-          organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
+          innovation_name: innovation.name,
+          organisation_name: organisation.name,
           support_status: TranslationHelper.translate(
             `SUPPORT_STATUS.${this.inputData.innovationSupport.status}`
           ).toLowerCase(),
@@ -160,7 +168,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
   }
 
-  private async prepareInAppForInnovators(roleIds: string[]): Promise<void> {
+  private async prepareInAppForInnovators(roleIds: string[], organisationUnit: { name: string }): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -170,13 +178,13 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       },
       userRoleIds: roleIds,
       params: {
-        organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
+        organisationUnitName: organisationUnit.name,
         supportStatus: this.inputData.innovationSupport.status
       }
     });
   }
 
-  private async prepareInAppForNewAccessors(): Promise<void> {
+  private async prepareInAppForNewAccessors(organisationUnit: { name: string }): Promise<void> {
     const newAssignedAccessors = (
       this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id) ?? []
     ).map(a => a.id);
@@ -198,13 +206,13 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       },
       userRoleIds: recipients.filter(user => user.roleId !== this.requestUser.currentRole.id).map(user => user.roleId),
       params: {
-        organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
+        organisationUnitName: organisationUnit.name,
         supportStatus: this.inputData.innovationSupport.status
       }
     });
   }
 
-  private async prepareInAppForAssessmentWhenWaitingStatus(): Promise<void> {
+  private async prepareInAppForAssessmentWhenWaitingStatus(organisationUnit: { name: string }): Promise<void> {
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
     this.inApp.push({
@@ -216,7 +224,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       },
       userRoleIds: assessmentUsers.map(item => item.roleId),
       params: {
-        organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
+        organisationUnitName: organisationUnit.name,
         supportStatus: this.inputData.innovationSupport.status
       }
     });
