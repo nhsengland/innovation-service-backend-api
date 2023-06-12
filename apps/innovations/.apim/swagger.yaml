@@ -2176,10 +2176,222 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+  "/v1/{innovationId}/files":
+    post:
+      description: Create a new innovation file.
+      operationId: v1-innovation-file-create
+      tags:
+        - "[v1] Innovation Files"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                context:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      maxLength: 100
+                    type:
+                      type: string
+                      enum:
+                        - INNOVATION
+                        - INNOVATION_SECTION
+                  required:
+                    - id
+                    - type
+                  additionalProperties: false
+                name:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 500
+                file:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      maxLength: 100
+                    name:
+                      type: string
+                      maxLength: 100
+                    size:
+                      type: number
+                      format: float
+                    extension:
+                      type: string
+                      maxLength: 4
+                  required:
+                    - id
+                    - name
+                    - size
+                    - extension
+                  additionalProperties: false
+              required:
+                - context
+                - name
+                - file
+              additionalProperties: false
+      responses:
+        "200":
+          description: The innovation file has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                required:
+                  - id
+        "400":
+          description: The innovation file could not be created.
+        "401":
+          description: The user is not authorized to create an innovation file.
+        "403":
+          description: The user is not allowed to create an innovation file.
+        "404":
+          description: The innovation could not be found.
+        "500":
+          description: An unexpected error occurred while creating the innovation file.
+    get:
+      operationId: v1-innovation-files-list
+      description: Get innovation files list
+      tags:
+        - "[v1] Innovation Files"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+        - name: name
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: uploadedBy
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - ADMIN
+                - INNOVATOR
+                - ACCESSOR
+                - ASSESSMENT
+                - QUALIFYING_ACCESSOR
+        - name: contextTypes
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - INNOVATION
+                - INNOVATION_SECTION
+        - name: contextId
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+        - name: organisations
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+        - name: dateFilter
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                field:
+                  type: string
+                  enum:
+                    - createdAt
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+              required:
+                - field
+              additionalProperties: false
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: Unique identifier for innovation object
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/{innovationId}/files/{fileId}":
     get:
       operationId: v1-innovation-file-info
       description: Get innovation file info
+      tags:
+        - "[v1] Innovation Files"
       parameters:
         - name: innovationId
           in: path
@@ -2262,10 +2474,12 @@ paths:
           description: Invalid payload
         "404":
           description: Innovation not found
-  "/v1/{innovationId}/files":
-    get:
-      operationId: v1-innovation-files-list
-      description: Get innovation files list
+  "/v1/{innovationId}/files/upload-url":
+    post:
+      operationId: v1-innovation-file-upload-url
+      description: Get the upload url for an innovation file.
+      tags:
+        - "[v1] Innovation Files"
       parameters:
         - name: innovationId
           in: path
@@ -2273,96 +2487,18 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: skip
-          in: query
-          required: false
-          schema:
-            type: number
-            format: float
-        - name: take
-          in: query
-          required: false
-          schema:
-            type: number
-            format: float
-            maximum: 100
-            default: 20
-        - name: order
-          in: query
-          required: false
-          schema:
-            type: object
-            properties: {}
-            additionalProperties:
-              type: string
-              enum:
-                - ASC
-                - DESC
-            default:
-              default: DESC
-        - name: name
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: uploadedBy
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - ADMIN
-                - INNOVATOR
-                - ACCESSOR
-                - ASSESSMENT
-                - QUALIFYING_ACCESSOR
-        - name: contextTypes
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - INNOVATION
-                - INNOVATION_SECTION
-        - name: contextId
-          in: query
-          required: false
-          schema:
-            type: string
-            minLength: 100
-            maxLength: 100
-        - name: organisations
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-        - name: dateFilter
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
               type: object
               properties:
-                field:
+                filename:
                   type: string
-                  enum:
-                    - createdAt
-                startDate:
-                  type: string
-                  format: date-time
-                endDate:
-                  type: string
-                  format: date-time
+                  maxLength: 100
               required:
-                - field
+                - filename
               additionalProperties: false
       responses:
         "200":
@@ -2374,15 +2510,15 @@ paths:
                 properties:
                   id:
                     type: string
-                    description: Unique identifier for innovation object
+                  name:
+                    type: string
+                  url:
+                    type: string
+                    description: url for file upload
         "400":
-          description: The request is invalid.
-        "401":
-          description: The user is not authenticated.
-        "403":
-          description: The user is not authorized to access this resource.
-        "500":
-          description: An error occurred while processing the request.
+          description: Invalid payload
+        "404":
+          description: Innovation not found
   "/v1/{innovationId}":
     get:
       operationId: v1-innovation-info

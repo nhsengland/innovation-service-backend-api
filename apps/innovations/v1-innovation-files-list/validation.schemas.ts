@@ -39,7 +39,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
     .stringArray()
     .items(Joi.string().valid(...Object.values(InnovationFileContextTypeEnum)))
     .optional(),
-  contextId: Joi.string().length(100).optional(),
+  contextId: Joi.string().max(100).optional(),
   organisations: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().uuid()).optional(),
   dateFilter: JoiHelper.AppCustomJoi()
     .stringArrayOfObjects()

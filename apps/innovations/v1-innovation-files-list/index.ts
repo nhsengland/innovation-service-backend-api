@@ -70,6 +70,7 @@ export default openApi(V1InnovationFilesList.httpTrigger as AzureFunction, '/v1/
   get: {
     operationId: 'v1-innovation-files-list',
     description: 'Get innovation files list',
+    tags: ['[v1] Innovation Files'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
     responses: {
       200: {

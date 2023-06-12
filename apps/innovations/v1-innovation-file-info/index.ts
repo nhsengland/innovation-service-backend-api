@@ -65,6 +65,7 @@ export default openApi(V1InnovationFileInfo.httpTrigger as AzureFunction, '/v1/{
   get: {
     operationId: 'v1-innovation-file-info',
     description: 'Get innovation file info',
+    tags: ['[v1] Innovation Files'],
     parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {

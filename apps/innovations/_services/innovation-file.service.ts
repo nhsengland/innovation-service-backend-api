@@ -7,9 +7,11 @@ import { InnovationFileEntity, InnovationFileLegacyEntity } from '@innovations/s
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
 import { InnovationFileContextTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import type { DomainContextType } from '@innovations/shared/types';
+import { randomUUID } from 'crypto';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -190,7 +192,7 @@ export class InnovationFileService extends BaseService {
           name: file.filename,
           size: file.filesize ?? undefined,
           extension: file.extension,
-          url: this.fileStorageService.getDownloadUrl(file.id, file.filename)
+          url: this.fileStorageService.getDownloadUrl(file.id, file.filename, file.storageId)
         }
       }))
     };
@@ -274,8 +276,65 @@ export class InnovationFileService extends BaseService {
         name: file.filename,
         size: file.filesize ?? undefined,
         extension: file.extension,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.filename)
+        url: this.fileStorageService.getDownloadUrl(file.id, file.filename, file.storageId)
       }
+    };
+  }
+
+  async createFile(
+    domainContext: DomainContextType,
+    innovationId: string,
+    data: {
+      context: { id: string; type: InnovationFileContextTypeEnum };
+      name: string;
+      description?: string;
+      file: {
+        id: string;
+        name: string;
+        size: number;
+        extension: string;
+      };
+    },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    if (
+      domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR &&
+      data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION
+    ) {
+      throw new UnprocessableEntityError(
+        InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
+      );
+    }
+
+    const file = await connection.save(
+      InnovationFileEntity,
+      InnovationFileEntity.verifyType({
+        contextId: data.context.id,
+        contextType: data.context.type,
+        name: data.name,
+        description: data.description,
+        storageId: data.file.id,
+        filename: data.file.name,
+        filesize: data.file.size,
+        extension: data.file.extension,
+        innovation: { id: innovationId },
+        createdByUserRole: { id: domainContext.currentRole.id },
+        createdBy: domainContext.id,
+        updatedBy: domainContext.id
+      })
+    );
+
+    return { id: file.id };
+  }
+
+  async getFileUploadUrl(filename: string): Promise<{ id: string; name: string; url: string }> {
+    const id = randomUUID();
+    return {
+      id: id + extname(filename),
+      name: filename,
+      url: this.fileStorageService.getUploadUrl(id, filename)
     };
   }
 
