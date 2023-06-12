@@ -77,12 +77,12 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
       organisation: {
-        id: this.requestUser.organisation?.id,
-        name: this.requestUser.organisation?.name
+        id: this.requestUser.organisation.id,
+        name: this.requestUser.organisation.name
       },
       organisationUnit: {
-        id: this.requestUser?.organisation?.organisationUnit?.id,
-        name: this.requestUser?.organisation?.organisationUnit?.name
+        id: this.requestUser?.organisation.organisationUnit.id,
+        name: this.requestUser?.organisation.organisationUnit?.name
       }
     };
 
