@@ -86,7 +86,6 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       }
     };
 
-    // If the innovation is not found, then we don't need to send any notification. (This could probably throw an error as it should not happen, but leaving like this.)
     if (!this.data.innovation || !this.data.requestUserAdditionalInfo) {
       return this;
     }
