@@ -8,4 +8,5 @@ export type ResponseDTO = {
   createdAt: Date;
   createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
   file: { id: string; name: string; size?: number; extension: string; url: string };
+  canDelete: boolean;
 };

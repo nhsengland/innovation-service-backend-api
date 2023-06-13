@@ -9,6 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { InnovationFileService } from '../_services/innovation-file.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -21,7 +22,7 @@ class V1InnovationFileInfo {
     const innovationFileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
 
     try {
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .checkAssessmentType()
         .checkAccessorType()
@@ -31,7 +32,7 @@ class V1InnovationFileInfo {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const result = await innovationFileService.getFileInfo(params.innovationId, params.fileId);
+      const result = await innovationFileService.getFileInfo(auth.getContext(), params.innovationId, params.fileId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
@@ -51,7 +52,8 @@ class V1InnovationFileInfo {
           size: result.file.size,
           extension: result.file.extension,
           url: result.file.url
-        }
+        },
+        canDelete: result.canDelete
       });
       return;
     } catch (error) {
@@ -75,7 +77,42 @@ export default openApi(V1InnovationFileInfo.httpTrigger as AzureFunction, '/v1/{
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for innovation object' } // TODO: update this payload
+                id: { type: 'string' },
+                context: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    type: {
+                      type: 'string',
+                      enum: Object.values(InnovationFileContextTypeEnum)
+                    }
+                  }
+                },
+                name: { type: 'string' },
+                description: { type: 'string' },
+                createdAt: { type: 'string' },
+                createdBy: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    role: {
+                      type: 'string',
+                      enum: Object.values(ServiceRoleEnum)
+                    },
+                    isOwner: { type: 'boolean' },
+                    orgUnitName: { type: 'string' }
+                  }
+                },
+                file: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string', description: 'Storage Id' },
+                    name: { type: 'string' },
+                    size: { type: 'number' },
+                    extension: { type: 'string' },
+                    url: { type: 'string' }
+                  }
+                }
               }
             }
           }

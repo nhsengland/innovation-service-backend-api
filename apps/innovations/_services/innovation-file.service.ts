@@ -7,7 +7,12 @@ import { InnovationFileEntity, InnovationFileLegacyEntity } from '@innovations/s
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
 import { InnovationFileContextTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import {
+  ForbiddenError,
+  InnovationErrorsEnum,
+  NotFoundError,
+  UnprocessableEntityError
+} from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
@@ -199,6 +204,7 @@ export class InnovationFileService extends BaseService {
   }
 
   async getFileInfo(
+    domainContext: DomainContextType,
     innovationId: string,
     fileId: string,
     entityManager?: EntityManager
@@ -211,6 +217,7 @@ export class InnovationFileService extends BaseService {
     createdAt: Date;
     createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
     file: { name: string; size?: number; extension: string; url: string };
+    canDelete: boolean;
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
@@ -222,6 +229,7 @@ export class InnovationFileService extends BaseService {
         'file.contextId',
         'file.contextType',
         'file.name',
+        'file.description',
         'file.createdAt',
         'file.filename',
         'file.filesize',
@@ -277,7 +285,11 @@ export class InnovationFileService extends BaseService {
         size: file.filesize ?? undefined,
         extension: file.extension,
         url: this.fileStorageService.getDownloadUrl(file.id, file.filename, file.storageId)
-      }
+      },
+      canDelete: this.canDeleteFile(
+        { role: file.createdByUserRole.role, orgUnitId: file.createdByUserRole.organisationUnit?.id },
+        { role: domainContext.currentRole.role, orgUnitId: domainContext.organisation?.organisationUnit?.id }
+      )
     };
   }
 
@@ -329,6 +341,44 @@ export class InnovationFileService extends BaseService {
     return { id: file.id };
   }
 
+  async deleteFile(domainContext: DomainContextType, fileId: string, entityManager?: EntityManager): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const file = await connection
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .select(['file.id', 'createdByRole.id', 'createdByRole.role', 'createdByUserOrgUnit.id'])
+      .innerJoin('file.createdByUserRole', 'createdByRole')
+      .leftJoin('createdByRole.organisationUnit', 'createdByUserOrgUnit')
+      .where('file.id = :fileId', { fileId })
+      .getOne();
+
+    if (!file) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_FILE_NOT_FOUND);
+    }
+
+    if (
+      !this.canDeleteFile(
+        { role: file.createdByUserRole.role, orgUnitId: file.createdByUserRole.organisationUnit?.id },
+        { role: domainContext.currentRole.role, orgUnitId: domainContext.organisation?.organisationUnit?.id }
+      )
+    ) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE);
+    }
+
+    const now = new Date();
+    await connection.update(
+      InnovationFileEntity,
+      {
+        id: file.id
+      },
+      {
+        updatedAt: now,
+        deletedAt: now,
+        updatedBy: domainContext.id
+      }
+    );
+  }
+
   async getFileUploadUrl(filename: string): Promise<{ id: string; name: string; url: string }> {
     const id = randomUUID();
     return {
@@ -336,6 +386,23 @@ export class InnovationFileService extends BaseService {
       name: filename,
       url: this.fileStorageService.getUploadUrl(id, filename)
     };
+  }
+
+  private canDeleteFile(
+    createdByRole: { role: ServiceRoleEnum; orgUnitId?: string },
+    requestUserRole: { role: ServiceRoleEnum; orgUnitId?: string }
+  ): boolean {
+    switch (requestUserRole.role) {
+      case ServiceRoleEnum.INNOVATOR:
+        return createdByRole.role === ServiceRoleEnum.INNOVATOR;
+      case ServiceRoleEnum.ASSESSMENT:
+        return createdByRole.role === ServiceRoleEnum.ASSESSMENT;
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return createdByRole.orgUnitId === requestUserRole.orgUnitId;
+      default:
+        return false;
+    }
   }
 
   /** ---------------- */

@@ -9,6 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import type { InnovationFileService } from '../_services/innovation-file.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -80,7 +81,53 @@ export default openApi(V1InnovationFilesList.httpTrigger as AzureFunction, '/v1/
             schema: {
               type: 'object',
               properties: {
-                id: { type: 'string', description: 'Unique identifier for innovation object' } // TODO: update this payload
+                count: {
+                  type: 'integer',
+                  description: 'The total number of records.'
+                },
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      context: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          type: {
+                            type: 'string',
+                            enum: Object.values(InnovationFileContextTypeEnum)
+                          }
+                        }
+                      },
+                      name: { type: 'string' },
+                      createdAt: { type: 'string' },
+                      createdBy: {
+                        type: 'object',
+                        properties: {
+                          name: { type: 'string' },
+                          role: {
+                            type: 'string',
+                            enum: Object.values(ServiceRoleEnum)
+                          },
+                          isOwner: { type: 'boolean' },
+                          orgUnitName: { type: 'string' }
+                        }
+                      },
+                      file: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string', description: 'Storage Id' },
+                          name: { type: 'string' },
+                          size: { type: 'number' },
+                          extension: { type: 'string' },
+                          url: { type: 'string' }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }
