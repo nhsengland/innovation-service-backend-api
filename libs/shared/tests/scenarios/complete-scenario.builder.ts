@@ -6,7 +6,7 @@ import {
   InnovationFileContextTypeEnum,
   InnovationSupportStatusEnum
 } from '../../enums/innovation.enums';
-import { ServiceRoleEnum } from '../../enums/user.enums';
+import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
@@ -94,6 +94,13 @@ export class CompleteScenarioBuilder {
         .save();
 
       // Innovators
+
+      // Deleted innovator
+      const sebastiaoDeletedInnovator = await new UserBuilder(entityManager)
+        .setName('Sebastiao Deleted Innovator')
+        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
+        .setStatus(UserStatusEnum.DELETED)
+        .save();
 
       // John Innovator
       const johnInnovator = await new UserBuilder(entityManager)
@@ -224,6 +231,8 @@ export class CompleteScenarioBuilder {
           type: InnovationFileContextTypeEnum.INNOVATION
         })
         .setCreatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setDescription(null)
+        .setSize(null)
         .setInnovation(johnInnovation.id)
         .save();
 
@@ -251,6 +260,15 @@ export class CompleteScenarioBuilder {
           type: InnovationFileContextTypeEnum.INNOVATION
         })
         .setCreatedByUserRole(jamieMadroxAccessor.roles['aiRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationInnovationFileUploadedBySebastiaoDeletedUser = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(sebastiaoDeletedInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
 
@@ -319,7 +337,8 @@ export class CompleteScenarioBuilder {
                   innovationFileByPaul: johnInnovationInnovationFileUploadedByPaul,
                   innovationFileByAlice: johnInnovationInnovationFileUploadedByAlice,
                   innovationFileByIngrid: johnInnovationInnovationFileUploadedByIngrid,
-                  innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole
+                  innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
+                  innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser
                 }
               }
             }
@@ -335,6 +354,10 @@ export class CompleteScenarioBuilder {
             ...adamInnovator,
             roles: { innovatorRole: adamInnovator.roles['innovatorRole']! },
             innovations: { adamInnovation: { ...adamInnovation } }
+          },
+          sebastiaoDeletedInnovator: {
+            ...sebastiaoDeletedInnovator,
+            roles: { innovatorRole: sebastiaoDeletedInnovator.roles['innovatorRole']! }
           },
           // Accessors
           aliceQualifyingAccessor: {

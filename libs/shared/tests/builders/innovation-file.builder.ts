@@ -58,6 +58,16 @@ export class InnovationFileBuilder extends BaseBuilder {
     return this;
   }
 
+  setDescription(description: null | string): this {
+    this.file.description = description;
+    return this;
+  }
+
+  setSize(size: null | number): this {
+    this.file.filesize = size;
+    return this;
+  }
+
   async save(): Promise<TestFileType> {
     const savedFile = await this.getEntityManager().getRepository(InnovationFileEntity).save(this.file);
 

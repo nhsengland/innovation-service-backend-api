@@ -176,7 +176,7 @@ describe('Services / Innovation File service suite', () => {
           MocksHelper.mockIdentityServiceGetUserInfo(fileCreatedBy.user);
         });
 
-        it(`should return the information about the file`, async () => {
+        it(`should return the information about the file and canDelete as ${canDelete}`, async () => {
           const file = fileCreatedBy.file;
           const createdByUser = fileCreatedBy.user;
 
@@ -220,6 +220,43 @@ describe('Services / Innovation File service suite', () => {
           await expect(() => sut.getFileInfo(domainContext, innovation.id, randUuid(), em)).rejects.toThrowError(
             new NotFoundError(InnovationErrorsEnum.INNOVATION_FILE_NOT_FOUND)
           );
+        });
+      });
+
+      describe('when I request a file information about a file uploaded by a deleted innovator', () => {
+        it('should return the createdBy name as [deleted user] and dont return isOwner', async () => {
+          const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
+          const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+          const file = innovation.files.innovationFileByDeletedUser;
+          const createdByUser = scenario.users.sebastiaoDeletedInnovator;
+
+          // Mocks
+          const randomUrl = randUrl();
+          jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValue(randomUrl);
+
+          const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
+
+          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
+            id: file.id,
+            storageId: file.storageId,
+            name: file.name,
+            description: file.description,
+            context: file.context,
+            file: {
+              name: file.file.name,
+              size: file.file.size,
+              extension: file.file.extension,
+              url: randomUrl
+            },
+            createdAt: file.createdAt,
+            createdBy: {
+              name: '[deleted user]',
+              role: createdByUser.roles.innovatorRole.role
+            },
+            canDelete: true
+          };
+
+          expect(result).toMatchObject(expected);
         });
       });
     });
