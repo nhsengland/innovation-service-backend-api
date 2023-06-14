@@ -271,7 +271,6 @@ export class InnovationActionsService extends BaseService {
           : undefined
       ])
       .filter((u): u is string => u !== undefined);
-    
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
     const data = actions.map(action => ({
