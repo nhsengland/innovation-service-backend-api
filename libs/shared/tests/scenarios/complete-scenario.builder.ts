@@ -1,10 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  InnovationFileContextTypeEnum,
+  InnovationSupportStatusEnum
+} from '../../enums/innovation.enums';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
+import { InnovationFileBuilder } from '../builders/innovation-file.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
@@ -193,6 +198,62 @@ export class CompleteScenarioBuilder {
           .setInnovation(johnInnovation.id)
           .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
+
+      // John Innovation Files
+      const johnInnovationSectionFileUploadedByJohn = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: 'INNOVATION_DESCRIPTION',
+          type: InnovationFileContextTypeEnum.INNOVATION_SECTION
+        })
+        .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationSectionFileUploadedByJane = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: 'INNOVATION_DESCRIPTION',
+          type: InnovationFileContextTypeEnum.INNOVATION_SECTION
+        })
+        .setCreatedByUserRole(janeInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationInnovationFileUploadedByPaul = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationInnovationFileUploadedByAlice = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationInnovationFileUploadedByIngrid = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(ingridAccessor.roles['accessorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationInnovationFileUploadedByJamieWithAiRole = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(jamieMadroxAccessor.roles['aiRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -251,6 +312,14 @@ export class CompleteScenarioBuilder {
                 collaborators: {
                   janeCollaborator: janeCollaborator,
                   elisaPendingCollaborator: elisaPendingCollaborator
+                },
+                files: {
+                  sectionFileByJohn: johnInnovationSectionFileUploadedByJohn,
+                  sectionFileByJane: johnInnovationSectionFileUploadedByJane,
+                  innovationFileByPaul: johnInnovationInnovationFileUploadedByPaul,
+                  innovationFileByAlice: johnInnovationInnovationFileUploadedByAlice,
+                  innovationFileByIngrid: johnInnovationInnovationFileUploadedByIngrid,
+                  innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole
                 }
               }
             }
