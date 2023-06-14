@@ -465,7 +465,7 @@ export class InnovationActionsService extends BaseService {
     }
 
     // Get section & support data.
-    const innovationSection = (await innovation.sections).find(sec => sec.section === data.section);
+    const innovationSection = innovation.sections.find(sec => sec.section === data.section);
     if (!innovationSection) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }

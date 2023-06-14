@@ -1,11 +1,7 @@
 import { randCountry, randProduct } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
+import type { DeepPartial, EntityManager } from 'typeorm';
 
-import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
-import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
-import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import { UserEntity } from '../../entities/user/user.entity';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationSectionStatusEnum,
@@ -17,6 +13,7 @@ import { UserErrorsEnum } from '../../errors/errors.enums';
 
 import type { CurrentCatalogTypes } from '../../schemas/innovation-record';
 import { BaseBuilder } from './base.builder';
+import type { TestOrganisationType } from './organisation.builder';
 
 export type TestInnovationType = {
   id: string;
@@ -28,26 +25,28 @@ export type TestInnovationType = {
     { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections }
   >;
   collaborators: { id: string; status: InnovationCollaboratorStatusEnum }[];
+  sharedOrganisations: { id: string; name: string }[];
 };
 
 export class InnovationBuilder extends BaseBuilder {
-  private innovation: InnovationEntity;
+  private innovation: DeepPartial<InnovationEntity> = {
+    name: randProduct().title,
+    countryName: randCountry(),
+    status: InnovationStatusEnum.CREATED,
+    owner: null,
+    assessments: [],
+    collaborators: [],
+    organisationShares: [],
+    sections: [],
+    transfers: []
+  };
 
   constructor(entityManager: EntityManager) {
     super(entityManager);
-
-    this.innovation = InnovationEntity.new({
-      name: randProduct().title,
-      countryName: randCountry(),
-      status: InnovationStatusEnum.CREATED,
-      assessments: [],
-      transfers: [],
-      collaborators: []
-    });
   }
 
   setOwner(userId: string): this {
-    this.innovation.owner = UserEntity.new({ id: userId });
+    this.innovation.owner = { id: userId };
     return this;
   }
 
@@ -57,42 +56,46 @@ export class InnovationBuilder extends BaseBuilder {
   }
 
   addTransfer(email: string, status?: InnovationTransferStatusEnum): this {
-    this.innovation.transfers.push(
-      InnovationTransferEntity.new({
+    // TODO: Check if there's a better way to do this. Problem with DeepPartial and push is that without the spread the infered type is not correct
+    this.innovation.transfers = [
+      ...(this.innovation.transfers ?? []),
+      {
         email: email,
         status: status ?? InnovationTransferStatusEnum.PENDING
-      })
-    );
+      }
+    ];
     return this;
   }
 
-  async addSection(
-    section: CurrentCatalogTypes.InnovationSections,
-    status?: InnovationSectionStatusEnum
-  ): Promise<this> {
-    (await this.innovation.sections).push(
-      InnovationSectionEntity.new({ section: section, status: status ?? InnovationSectionStatusEnum.SUBMITTED })
-    );
+  addSection(section: CurrentCatalogTypes.InnovationSections, status?: InnovationSectionStatusEnum): this {
+    this.innovation.sections = [
+      ...(this.innovation.sections ?? []),
+      { section: section, status: status ?? InnovationSectionStatusEnum.SUBMITTED }
+    ];
     return this;
   }
 
   addCollaborator(userId?: string, status?: InnovationCollaboratorStatusEnum): this {
-    this.innovation.collaborators.push(
-      InnovationCollaboratorEntity.new({
-        ...(userId && { user: UserEntity.new({ id: userId }) }),
-        status: status ?? InnovationCollaboratorStatusEnum.ACTIVE,
-        innovation: this.innovation
-      })
-    );
+    this.innovation.collaborators = [
+      ...(this.innovation.collaborators ?? []),
+      { user: userId ? { id: userId } : null, status: status ?? InnovationCollaboratorStatusEnum.ACTIVE }
+    ];
+    return this;
+  }
+
+  shareWith(organisations: TestOrganisationType[]): this {
+    this.innovation.organisationShares = organisations.map(org => ({ id: org.id }));
     return this;
   }
 
   async save(): Promise<TestInnovationType> {
-    if (!this.innovation.owner) {
-      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    }
-
-    const savedInnovation = await this.getEntityManager().getRepository(InnovationEntity).save(this.innovation);
+    const savedInnovation = await this.getEntityManager()
+      .getRepository(InnovationEntity)
+      .save({
+        ...this.innovation,
+        sections: this.innovation.sections,
+        collaborators: this.innovation.collaborators
+      });
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationEntity, 'innovation')
@@ -100,6 +103,7 @@ export class InnovationBuilder extends BaseBuilder {
       .leftJoinAndSelect('innovation.sections', 'sections')
       .leftJoinAndSelect('innovation.transfers', 'transfers')
       .leftJoinAndSelect('innovation.collaborators', 'collaborators')
+      .leftJoinAndSelect('innovation.organisationShares', 'organisationShares')
       .where('innovation.id = :id', { id: savedInnovation.id })
       .getOne();
 
@@ -107,22 +111,26 @@ export class InnovationBuilder extends BaseBuilder {
       throw new Error('Error saving/retriving innovation information.');
     }
 
-    this.innovation = result;
+    // Sanity check but this requirement might actually change in the future. Builder forces owner for now
+    if (!result.owner) {
+      throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
+    }
 
     return {
-      id: this.innovation.id,
-      name: this.innovation.name,
-      ownerId: this.innovation.owner?.id ?? '', // This will never happen, we verify in the beginning
-      transfers: this.innovation.transfers.map(item => ({
+      id: result.id,
+      name: result.name,
+      ownerId: result.owner.id,
+      transfers: result.transfers.map(item => ({
         id: item.id,
         email: item.email,
         status: item.status
       })),
-      sections: new Map((await this.innovation.sections).map(s => [s['section'], s])),
-      collaborators: this.innovation.collaborators.map(c => ({
+      sections: new Map(result.sections.map(s => [s['section'], s])),
+      collaborators: result.collaborators.map(c => ({
         id: c.id,
         status: c.status
-      }))
+      })),
+      sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
     };
   }
 }

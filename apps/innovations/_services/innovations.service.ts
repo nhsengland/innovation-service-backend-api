@@ -1269,7 +1269,7 @@ export class InnovationsService extends BaseService {
       .where('innovations.id = :innovationId', { innovationId })
       .getOne();
 
-    const sections = await innovation?.sections;
+    const sections = innovation?.sections;
 
     if (!sections) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);

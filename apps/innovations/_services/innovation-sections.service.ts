@@ -96,7 +96,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const sections = await innovation.sections;
+    const sections = innovation.sections;
 
     let openActions: { section: string; actionsCount: number }[] = [];
 
@@ -458,7 +458,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const sections = await dbInnovation.sections;
+    const sections = dbInnovation.sections;
     const dbSection = sections[0]; // it's always the first one, as we only have one section per sectionKey.
     if (!dbSection) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);

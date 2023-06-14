@@ -45,19 +45,26 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.ADMIN, 'adminRole')
         .save();
 
-      // QAs and Accessors
-
+      // Organisations
+      // Health Organisation has two units: Health Org Unit and Health Org AI Unit
       const healthOrg = await new OrganisationBuilder(entityManager).setName('Health Organisation').save();
-
       const healthOrgUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(healthOrg.id)
         .setName('Health Org Unit')
         .save();
-
       const healthOrgAiUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(healthOrg.id)
         .setName('Health Org AI Unit')
         .save();
+
+      // MedTech Organisation has one unit: MedTech Org Unit
+      const medTechOrg = await new OrganisationBuilder(entityManager).setName('MedTech Organisation').save();
+      // const medTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
+      //   .addToOrganisation(medTechOrg.id)
+      //   .setName('MedTech Org Unit')
+      //   .save();
+
+      // QAs and Accessors
 
       // Alice Qualifying Accessor specs:
       // Belongs to an active organisation.
@@ -91,8 +98,12 @@ export class CompleteScenarioBuilder {
         .save();
 
       // Innovation owned by johnInnovator with janeCollaborator as ACTIVE collaborator
+      // This innovation is shared with medtechOrg and healthOrg
       const johnInnovation = await (
-        await new InnovationBuilder(entityManager).setOwner(johnInnovator.id).addSection('INNOVATION_DESCRIPTION')
+        await new InnovationBuilder(entityManager)
+          .setOwner(johnInnovator.id)
+          .shareWith([healthOrg, medTechOrg])
+          .addSection('INNOVATION_DESCRIPTION')
       ).save();
 
       // Jane Innovator specs:
@@ -183,7 +194,8 @@ export class CompleteScenarioBuilder {
           .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
       // Adam Innovator specs:
-      // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user.
+      // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
+      // healthOrg
       const adamInnovator = await new UserBuilder(entityManager)
         .setName('Adam Innovator')
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
@@ -192,6 +204,7 @@ export class CompleteScenarioBuilder {
       const adamInnovation = await new InnovationBuilder(entityManager)
         .setOwner(adamInnovator.id)
         .addTransfer('transfers@example.org')
+        .shareWith([healthOrg])
         .save();
 
       return {

@@ -42,9 +42,7 @@ describe('Innovation Sections Suite', () => {
 
     await TestsLegacyHelper.TestDataBuilder.createAction(
       testData.domainContexts.accessor,
-      (
-        await innovation.sections
-      )[0]!,
+      innovation.sections[0]!,
       innovation.innovationSupports[0]!
     )
       .setStatus(InnovationActionStatusEnum.REQUESTED)
@@ -64,9 +62,7 @@ describe('Innovation Sections Suite', () => {
 
     await TestsLegacyHelper.TestDataBuilder.createAction(
       testData.domainContexts.accessor,
-      (
-        await innovation.sections
-      )[0]!,
+      innovation.sections[0]!,
       innovation.innovationSupports[0]!
     )
       .setUpdatedBy(testData.baseUsers.innovator.id)
