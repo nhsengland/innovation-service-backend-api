@@ -8,6 +8,5 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
     testsHelper = await new TestsHelper().init();
     scenario = testsHelper.getCompleteScenario();
   });
-
   
 });
