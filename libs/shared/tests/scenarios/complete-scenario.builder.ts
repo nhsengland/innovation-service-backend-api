@@ -88,6 +88,20 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.ACCESSOR, 'aiRole', healthOrg.id, healthOrgAiUnit.id)
         .save();
 
+      // Sarah Qualifying Accessor specs:
+      // Belongs to an active organisation.
+      const sarahQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Sarah Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', healthOrg.id, healthOrgAiUnit.id)
+        .save();
+
+      // Bart Qualifying Accessor specs:
+      // Belongs to an active organisation.
+      const bartQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Bart Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', healthOrg.id, healthOrgAiUnit.id)
+        .save();
+
       // Innovators
 
       // John Innovator
@@ -308,6 +322,32 @@ export class CompleteScenarioBuilder {
                     jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!,
                   healthOrgAiUnit:
                     jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
+                }
+              }
+            }
+          },
+          sarahQualifyingAccessor: {
+            ...sarahQualifyingAccessor,
+            roles: { qaRole: sarahQualifyingAccessor.roles['qaRole']! },
+            organisations: {
+              healthOrg: {
+                ...sarahQualifyingAccessor.organisations['Health Organisation']!,
+                organisationUnits: {
+                  healthOrgAiUnit:
+                    sarahQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
+                }
+              }
+            }
+          },
+          bartQualifyingAccessor: {
+            ...bartQualifyingAccessor,
+            roles: { qaRole: bartQualifyingAccessor.roles['qaRole']! },
+            organisations: {
+              healthOrg: {
+                ...bartQualifyingAccessor.organisations['Health Organisation']!,
+                organisationUnits: {
+                  healthOrgAiUnit:
+                    bartQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
                 }
               }
             }
