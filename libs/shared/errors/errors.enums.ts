@@ -13,7 +13,8 @@ export enum GenericErrorsEnum {
   INTERNAL_TYPING_ERROR = 'GEN.0301',
 
   UNKNOWN_ERROR = 'ERR.1000',
-  NOT_IMPLEMENTED_ERROR = 'ERR.1001'
+  NOT_IMPLEMENTED_ERROR = 'ERR.1001',
+  EXTERNAL_SERVICE_ERROR = 'ERR.1002'
 }
 
 export enum UserErrorsEnum {

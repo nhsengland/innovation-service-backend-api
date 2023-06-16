@@ -1,4 +1,5 @@
 import type { Context } from '@azure/functions';
+import { AxiosError } from 'axios';
 import { GenericErrorsEnum } from '../errors';
 import { AppResponse, isBaseErrorType } from '../types';
 
@@ -70,8 +71,8 @@ export class ResponseHelper {
             invocationId: context.invocationId,
             error: res.body.error,
             message: res.body.message,
-            details: res.body.details ?? {},
-            stack: error.stack
+            ...(res.body.details && { details: res.body.details }),
+            ...(error.stack && { stack: error.stack })
           })
         );
       } else if (res.status >= 500) {
@@ -81,21 +82,39 @@ export class ResponseHelper {
             invocationId: context.invocationId,
             error: res.body.error,
             message: res.body.message,
-            details: res.body.details ?? {},
-            stack: error.stack
+            ...(res.body.details && { details: res.body.details }),
+            ...(error.stack && { stack: error.stack })
           })
         );
       }
       return res;
+    } else if (error instanceof AxiosError) {
+      context.log.error(
+        JSON.stringify({
+          invocationId: context.invocationId,
+          error: error.code,
+          message: error.message,
+          details: {
+            url: error.config.url,
+            // these are related to b2c graph response, maybe handle differently if we have more external services
+            ...(error.response?.data.error.code && { code: error.response?.data.error.code }),
+            ...(error.response?.data.error.message && { message: error.response?.data.error.message })
+          }
+        })
+      );
+      return this.Internal({
+        error: GenericErrorsEnum.EXTERNAL_SERVICE_ERROR,
+        message: 'Error communicating with external api'
+      });
     } else {
       // All errors we don't know about should be logged as error
       context.log.error(
         JSON.stringify({
           invocationId: context.invocationId,
           error: 'UNKNOWN_ERROR',
-          message: 'messsage' in error ? error.message : 'Unknown error',
-          details: 'details' in error ? error.details : {},
-          stack: 'stack' in error ? error.stack : 'No stack trace'
+          message: 'message' in error ? error.message : 'Unknown error',
+          ...('details' in error && { details: error.details }),
+          ...('stack' in error && { stack: error.stack })
         })
       );
       return this.Internal({ error: GenericErrorsEnum.UNKNOWN_ERROR, message: 'Unknown error.' });
