@@ -2367,6 +2367,15 @@ paths:
               required:
                 - field
               additionalProperties: false
+        - name: fields
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - description
       responses:
         "200":
           description: Success
@@ -2396,6 +2405,8 @@ paths:
                                 - INNOVATION
                                 - INNOVATION_SECTION
                         name:
+                          type: string
+                        description:
                           type: string
                         createdAt:
                           type: string

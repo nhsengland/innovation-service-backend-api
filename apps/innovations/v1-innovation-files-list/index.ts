@@ -43,6 +43,7 @@ class V1InnovationFilesList {
           id: item.id,
           context: { id: item.context.id, type: item.context.type },
           name: item.name,
+          description: item.description,
           createdAt: item.createdAt,
           createdBy: {
             name: item.createdBy.name,
@@ -102,6 +103,7 @@ export default openApi(V1InnovationFilesList.httpTrigger as AzureFunction, '/v1/
                         }
                       },
                       name: { type: 'string' },
+                      description: { type: 'string' },
                       createdAt: { type: 'string' },
                       createdBy: {
                         type: 'object',

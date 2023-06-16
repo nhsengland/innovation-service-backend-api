@@ -26,6 +26,7 @@ export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
     startDate?: Date;
     endDate?: Date;
   }[];
+  fields: 'description'[];
 };
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(OrderFields)
@@ -50,5 +51,6 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
         endDate: Joi.date().optional()
       })
     )
-    .optional()
+    .optional(),
+  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('description')).optional()
 });
