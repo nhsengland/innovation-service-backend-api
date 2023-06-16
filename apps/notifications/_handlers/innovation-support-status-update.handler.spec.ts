@@ -6,14 +6,14 @@ import {
   NotificationContextTypeEnum
 } from '@notifications/shared/enums';
 // import { RecipientsService } from '../_services/recipients.service';
+import { randText } from '@ngneat/falso';
+import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
+import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV, EmailTypeEnum } from '../_config';
 import type { RecipientType } from '../_services/recipients.service';
-import { UrlModel } from '@notifications/shared/models';
 import { RecipientsService } from '../_services/recipients.service';
-import { randText } from '@ngneat/falso';
-import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 
 describe('Notifications / _handlers / innovation-support-status-update suite', () => {
   let testsHelper: TestsHelper;
@@ -31,7 +31,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
         {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           innovationSupport: {
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByAlice.id,
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
             status: InnovationSupportStatusEnum.ENGAGING,
             statusChanged: false,
             message: '',
@@ -48,9 +48,9 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
 
       await expect(() => handler.run()).rejects.toThrowError(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
-    );
-    })
-  })
+      );
+    });
+  });
   describe('Request user organisation unit not found', () => {
     it('Should throw a not found error', async () => {
       const handler = new InnovationSupportStatusUpdateHandler(
@@ -58,7 +58,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
         {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           innovationSupport: {
-            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByAlice.id,
+            id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id,
             status: InnovationSupportStatusEnum.ENGAGING,
             statusChanged: false,
             message: '',
@@ -75,19 +75,18 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
       await expect(() => handler.run()).rejects.toThrowError(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
-
-    })
-  })
+    });
+  });
 
   describe('Innovation status has not changed', () => {
     describe('Status is ENGAGING', () => {
       let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
-      let support: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['supports']['supportByAlice'];
+      let support: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['supports']['supportByHealthOrgUnit'];
       let handler: InnovationSupportStatusUpdateHandler;
 
       beforeAll(async () => {
         innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-        support = innovation.supports.supportByAlice;
+        support = innovation.supports.supportByHealthOrgUnit;
 
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
           name: innovation.name,
@@ -188,7 +187,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
     describe('Status is not ENGAGING', () => {
       it('Should not send any email / inApp if support status is not ENGAGING', async () => {
         const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-        const support = innovation.supports.supportByAlice;
+        const support = innovation.supports.supportByHealthOrgUnit;
         const handler = new InnovationSupportStatusUpdateHandler(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           {
@@ -221,13 +220,13 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
     'Innovation support status updated to %s',
     (supportStatus: InnovationSupportStatusEnum, statusEmailText: string) => {
       let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
-      let support: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['supports']['supportByAlice'];
+      let support: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['supports']['supportByHealthOrgUnit'];
       let handler: InnovationSupportStatusUpdateHandler;
       const message = randText({ charCount: 20 });
 
       beforeAll(async () => {
         innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-        support = innovation.supports.supportByAlice;
+        support = innovation.supports.supportByHealthOrgUnit;
 
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
           name: innovation.name,
@@ -360,13 +359,13 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
     'Innovation support status updated to %s',
     (supportStatus: InnovationSupportStatusEnum, statusEmailText: string) => {
       let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
-      let support: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['supports']['supportByAlice'];
+      let support: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['supports']['supportByHealthOrgUnit'];
       let handler: InnovationSupportStatusUpdateHandler;
       const message = randText({ charCount: 20 });
 
       beforeAll(async () => {
         innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-        support = innovation.supports.supportByAlice;
+        support = innovation.supports.supportByHealthOrgUnit;
 
         jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
           name: innovation.name,

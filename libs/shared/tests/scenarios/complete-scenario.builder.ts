@@ -59,10 +59,10 @@ export class CompleteScenarioBuilder {
 
       // MedTech Organisation has one unit: MedTech Org Unit
       const medTechOrg = await new OrganisationBuilder(entityManager).setName('MedTech Organisation').save();
-      // const medTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
-      //   .addToOrganisation(medTechOrg.id)
-      //   .setName('MedTech Org Unit')
-      //   .save();
+      const medTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(medTechOrg.id)
+        .setName('MedTech Org Unit')
+        .save();
 
       // QAs and Accessors
 
@@ -83,9 +83,16 @@ export class CompleteScenarioBuilder {
       // Jaimie Madrox Accessor specs:
       // Belongs to two units in Health Organisation.
       const jamieMadroxAccessor = await new UserBuilder(entityManager)
-        .setName('Jamie <Madrox>')
-        .addRole(ServiceRoleEnum.ACCESSOR, 'regularRole', healthOrg.id, healthOrgUnit.id)
+        .setName('Jamie Madrox')
+        .addRole(ServiceRoleEnum.ACCESSOR, 'healthAccessorRole', healthOrg.id, healthOrgUnit.id)
         .addRole(ServiceRoleEnum.ACCESSOR, 'aiRole', healthOrg.id, healthOrgAiUnit.id)
+        .save();
+
+      // Sam accessor specs:
+      // Belongs to the medtech organisation.
+      const samAccessor = await new UserBuilder(entityManager)
+        .setName('Sam Accessor')
+        .addRole(ServiceRoleEnum.ACCESSOR, 'accessorRole', medTechOrg.id, medTechOrgUnit.id)
         .save();
 
       // Sarah Qualifying Accessor specs:
@@ -149,11 +156,18 @@ export class CompleteScenarioBuilder {
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .save();
 
-      const johnInnovationSupportByAlice = await new InnovationSupportBuilder(entityManager)
+      const johnInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(johnInnovation.id)
         .setOrganisationUnit(healthOrgUnit.id)
-        .setAccessors([aliceQualifyingAccessor])
+        .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .save();
+
+      const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(johnInnovation.id)
+        .setOrganisationUnit(medTechOrgUnit.id)
+        .setAccessors([samAccessor])
         .save();
 
       // action on johnInnovation created by Paul (NA)
@@ -231,7 +245,11 @@ export class CompleteScenarioBuilder {
               johnInnovation: {
                 ...johnInnovation,
                 supports: {
-                  supportByAlice: johnInnovationSupportByAlice
+                  supportByHealthOrgUnit: {
+                    ...johnInnovationSupportByHealthOrgUnit,
+                    accessors: [aliceQualifyingAccessor, jamieMadroxAccessor]
+                  },
+                  supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] }
                 },
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
@@ -311,7 +329,7 @@ export class CompleteScenarioBuilder {
           jamieMadroxAccessor: {
             ...jamieMadroxAccessor,
             roles: {
-              regularRole: jamieMadroxAccessor.roles['regularRole']!,
+              healthAccessorRole: jamieMadroxAccessor.roles['healthAccessorRole']!,
               aiRole: jamieMadroxAccessor.roles['aiRole']!
             },
             organisations: {
@@ -326,6 +344,19 @@ export class CompleteScenarioBuilder {
               }
             }
           },
+          samAccessor: {
+            ...samAccessor,
+            roles: { accessorRole: samAccessor.roles['accessorRole']! },
+            organisations: {
+              medTechOrg: {
+                ...samAccessor.organisations['MedTech Organisation']!,
+                organisationUnits: {
+                  medTechOrgUnit:
+                    samAccessor.organisations['MedTech Organisation']!.organisationUnits['MedTech Org Unit']!
+                }
+              }
+            }
+          },
           sarahQualifyingAccessor: {
             ...sarahQualifyingAccessor,
             roles: { qaRole: sarahQualifyingAccessor.roles['qaRole']! },
@@ -334,7 +365,9 @@ export class CompleteScenarioBuilder {
                 ...sarahQualifyingAccessor.organisations['Health Organisation']!,
                 organisationUnits: {
                   healthOrgAiUnit:
-                    sarahQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
+                    sarahQualifyingAccessor.organisations['Health Organisation']!.organisationUnits[
+                      'Health Org AI Unit'
+                    ]!
                 }
               }
             }
@@ -347,7 +380,9 @@ export class CompleteScenarioBuilder {
                 ...bartQualifyingAccessor.organisations['Health Organisation']!,
                 organisationUnits: {
                   healthOrgAiUnit:
-                    bartQualifyingAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
+                    bartQualifyingAccessor.organisations['Health Organisation']!.organisationUnits[
+                      'Health Org AI Unit'
+                    ]!
                 }
               }
             }
@@ -361,6 +396,21 @@ export class CompleteScenarioBuilder {
           allMighty: {
             ...allMighty,
             roles: { admin: allMighty.roles['adminRole']! }
+          }
+        },
+        organisations: {
+          healthOrg: {
+            ...healthOrg,
+            organisationUnits: {
+              healthOrgUnit: healthOrgUnit,
+              healthOrgAiUnit: healthOrgAiUnit
+            }
+          },
+          medTechOrg: {
+            ...medTechOrg,
+            organisationUnits: {
+              medTechOrgUnit: medTechOrgUnit
+            }
           }
         }
       };
