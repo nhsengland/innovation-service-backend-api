@@ -845,6 +845,7 @@ export class InnovationsService extends BaseService {
         'innovation.postcode',
         'innovation.createdAt',
         'innovationOwner.id',
+        'innovationOwner.status',
         'userOrganisations.id',
         'organisation.isShadow',
         'organisation.name',
@@ -929,7 +930,7 @@ export class InnovationsService extends BaseService {
     let ownerInfo = undefined;
     let ownerPreferences = undefined;
 
-    if (innovation.owner) {
+    if (innovation.owner && innovation.owner.status !== UserStatusEnum.DELETED) {
       ownerPreferences = await this.domainService.users.getUserPreferences(innovation.owner.id);
       usersInfo = await this.domainService.users.getUsersList({
         userIds: [...assessmentUsersIds, ...[innovation.owner.id]]
