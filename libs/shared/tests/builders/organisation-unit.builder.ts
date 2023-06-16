@@ -6,7 +6,7 @@ import { BaseBuilder } from './base.builder';
 export type TestOrganisationUnitType = {
   id: string;
   name: string;
-  acronym: string | null;
+  acronym: string;
   isShadow: boolean;
 };
 

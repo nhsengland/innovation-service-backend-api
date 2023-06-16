@@ -12,7 +12,7 @@ import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { UrlModel } from '@notifications/shared/models';
 import { InnovationErrorsEnum, NotFoundError, UserErrorsEnum } from '@notifications/shared/errors';
 
-describe('Notifications / _handlers / action-update suite', () => {
+describe('Notifications / _handlers / innovation-collborator-update handler suite', () => {
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
 
