@@ -11,6 +11,7 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -147,6 +148,12 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationCollaboratorStatusEnum.PENDING)
         .save();
 
+      // assessment on johnInnovation assigned to Paul (NA)
+      const johnInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .save();
+
       // action on johnInnovation created by Alice (QA)
       const johnInnovationActionByAlice = await new InnovationActionBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
@@ -251,6 +258,7 @@ export class CompleteScenarioBuilder {
                   },
                   supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] }
                 },
+                assessment: johnInnovationAssessmentByPaul,
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
                   actionByPaul: johnInnovationActionByPaul

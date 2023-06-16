@@ -3,7 +3,6 @@ import type { DeepPartial, EntityManager } from 'typeorm';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import {
-  InnovationCollaboratorStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationTransferStatusEnum
@@ -24,7 +23,6 @@ export type TestInnovationType = {
     CurrentCatalogTypes.InnovationSections,
     { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections }
   >;
-  collaborators: { id: string; status: InnovationCollaboratorStatusEnum }[];
   sharedOrganisations: { id: string; name: string }[];
 };
 
@@ -35,7 +33,6 @@ export class InnovationBuilder extends BaseBuilder {
     status: InnovationStatusEnum.CREATED,
     owner: null,
     assessments: [],
-    collaborators: [],
     organisationShares: [],
     sections: [],
     transfers: []
@@ -75,14 +72,6 @@ export class InnovationBuilder extends BaseBuilder {
     return this;
   }
 
-  addCollaborator(userId?: string, status?: InnovationCollaboratorStatusEnum): this {
-    this.innovation.collaborators = [
-      ...(this.innovation.collaborators ?? []),
-      { user: userId ? { id: userId } : null, status: status ?? InnovationCollaboratorStatusEnum.ACTIVE }
-    ];
-    return this;
-  }
-
   shareWith(organisations: TestOrganisationType[]): this {
     this.innovation.organisationShares = organisations.map(org => ({ id: org.id }));
     return this;
@@ -93,8 +82,7 @@ export class InnovationBuilder extends BaseBuilder {
       .getRepository(InnovationEntity)
       .save({
         ...this.innovation,
-        sections: this.innovation.sections,
-        collaborators: this.innovation.collaborators
+        sections: this.innovation.sections
       });
 
     const result = await this.getEntityManager()
@@ -126,10 +114,6 @@ export class InnovationBuilder extends BaseBuilder {
         status: item.status
       })),
       sections: new Map(result.sections.map(s => [s['section'], s])),
-      collaborators: result.collaborators.map(c => ({
-        id: c.id,
-        status: c.status
-      })),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
     };
   }
