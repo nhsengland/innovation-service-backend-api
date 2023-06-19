@@ -6,7 +6,7 @@ import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/s
 import { ENV, EmailTypeEnum } from '../_config';
 import { UrlModel } from '@notifications/shared/models';
 
-describe('Notifications / _handlers / needs-assessment-started handler suite', () => {
+describe('Notifications / _handlers / needs-assessment-assessor-update handler suite', () => {
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
 
