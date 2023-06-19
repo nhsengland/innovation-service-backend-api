@@ -40,6 +40,11 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
         .save();
 
+      const seanNeedsAssessor = await new UserBuilder(entityManager)
+        .setName('Paul Needs Assessor')
+        .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
+        .save();
+
       // Admin
       const allMighty = await new UserBuilder(entityManager)
         .setName('All Mighty')
@@ -399,6 +404,10 @@ export class CompleteScenarioBuilder {
           paulNeedsAssessor: {
             ...paulNeedsAssessor,
             roles: { assessmentRole: paulNeedsAssessor.roles['assessmentRole']! }
+          },
+          seanNeedsAssessor: {
+            ...seanNeedsAssessor,
+            roles: { assessmentRole: seanNeedsAssessor.roles['assessmentRole']! }
           },
           // Admins
           allMighty: {
