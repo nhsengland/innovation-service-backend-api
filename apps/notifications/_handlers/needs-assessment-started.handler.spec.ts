@@ -7,7 +7,7 @@ import { ENV, EmailTypeEnum } from '../_config';
 import { UrlModel } from '@notifications/shared/models';
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '@notifications/shared/enums';
 
-describe('Notifications / _handlers / innovation-owner-delete-account handler suite', () => {
+describe('Notifications / _handlers / needs-assessment-started handler suite', () => {
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
 
@@ -116,7 +116,7 @@ describe('Notifications / _handlers / innovation-owner-delete-account handler su
       expect(handler.emails).toHaveLength(0);
     });
 
-    it('Should send inApp to innovation owner', () => {
+    it('Should not send inApp to innovation owner', () => {
       expect(handler.inApp).toHaveLength(0);
     });
    
