@@ -2,11 +2,7 @@ import { randCountry, randProduct } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import {
-  InnovationSectionStatusEnum,
-  InnovationStatusEnum,
-  InnovationTransferStatusEnum
-} from '../../enums/innovation.enums';
+import { InnovationSectionStatusEnum, InnovationStatusEnum } from '../../enums/innovation.enums';
 import { NotFoundError } from '../../errors/errors.config';
 import { UserErrorsEnum } from '../../errors/errors.enums';
 
@@ -18,7 +14,6 @@ export type TestInnovationType = {
   id: string;
   name: string;
   ownerId: string;
-  transfers: { id: string; email: string; status: InnovationTransferStatusEnum }[];
   sections: Map<
     CurrentCatalogTypes.InnovationSections,
     { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections }
@@ -49,18 +44,6 @@ export class InnovationBuilder extends BaseBuilder {
 
   setStatus(status: InnovationStatusEnum): this {
     this.innovation.status = status;
-    return this;
-  }
-
-  addTransfer(email: string, status?: InnovationTransferStatusEnum): this {
-    // TODO: Check if there's a better way to do this. Problem with DeepPartial and push is that without the spread the infered type is not correct
-    this.innovation.transfers = [
-      ...(this.innovation.transfers ?? []),
-      {
-        email: email,
-        status: status ?? InnovationTransferStatusEnum.PENDING
-      }
-    ];
     return this;
   }
 
@@ -108,11 +91,6 @@ export class InnovationBuilder extends BaseBuilder {
       id: result.id,
       name: result.name,
       ownerId: result.owner.id,
-      transfers: result.transfers.map(item => ({
-        id: item.id,
-        email: item.email,
-        status: item.status
-      })),
       sections: new Map(result.sections.map(s => [s['section'], s])),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
     };
