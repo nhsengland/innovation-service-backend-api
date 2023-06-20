@@ -1,5 +1,5 @@
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { InnovationTransferOwnershipReminderHandler } from './innovation-transfer-ownership-reminder.handler';
+import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { IdentityProviderService } from '@notifications/shared/services';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV, EmailTypeEnum } from '../_config';
