@@ -812,7 +812,6 @@ export class InnovationSectionsService extends BaseService {
 
     return {
       ...sectionData,
-      files: [],
       ...(evidenceData && { evidences: evidenceData })
     };
   }
