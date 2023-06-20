@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum } from '../../enums/innovation.enums';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -12,6 +12,7 @@ import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
+import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -245,8 +246,13 @@ export class CompleteScenarioBuilder {
 
       const adamInnovation = await new InnovationBuilder(entityManager)
         .setOwner(adamInnovator.id)
-        .addTransfer('transfers@example.org')
         .shareWith([healthOrg])
+        .save();
+
+      const adamInnovationTransferToJane = await new InnovationTransferBuilder(entityManager)
+        .setStatus(InnovationTransferStatusEnum.PENDING)
+        .setEmail(janeInnovator.email)
+        .setInnovation(adamInnovation.id)
         .save();
 
       return {
@@ -312,7 +318,7 @@ export class CompleteScenarioBuilder {
           adamInnovator: {
             ...adamInnovator,
             roles: { innovatorRole: adamInnovator.roles['innovatorRole']! },
-            innovations: { adamInnovation: { ...adamInnovation } }
+            innovations: { adamInnovation: { ...adamInnovation, transfer: adamInnovationTransferToJane } }
           },
           // Accessors
           aliceQualifyingAccessor: {
