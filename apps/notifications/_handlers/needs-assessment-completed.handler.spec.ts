@@ -69,14 +69,10 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
 
   describe('Innovation owner is active', () => {
     beforeEach(async () => {
-      // mock innovation owner
+      // mock innovation owner and collaborators
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner));
-
-      // mock innovator recipients
-      jest
-        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner))
         .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')]);
 
       handler = new NeedsAssessmentCompletedHandler(
@@ -263,15 +259,11 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
   });
 
   describe('Innovation owner is not active', () => {
-    beforeEach(async () => {
-      // mock innovation owner
+    beforeAll(async () => {
+      // mock innovation owner and collaborators
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValueOnce({ ...DTOsHelper.getRecipientUser(innovationOwner), isActive: false });
-
-      // mock innovator recipients
-      jest
-        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+        .mockResolvedValueOnce({ ...DTOsHelper.getRecipientUser(innovationOwner), isActive: false })
         .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')]);
 
       handler = new NeedsAssessmentCompletedHandler(
