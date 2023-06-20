@@ -6,7 +6,7 @@ import { ENV, EmailTypeEnum } from '../_config';
 import { UrlModel } from '@notifications/shared/models';
 import { IdentityProviderService } from '@notifications/shared/services';
 
-describe('Notifications / _handlers / idle-innovators handler suite', () => {
+describe('Notifications / _handlers / innovation-transfer-ownership-creation handler suite', () => {
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
 
