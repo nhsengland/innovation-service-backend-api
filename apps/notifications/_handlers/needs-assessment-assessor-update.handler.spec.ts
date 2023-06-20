@@ -43,9 +43,7 @@ describe('Notifications / _handlers / needs-assessment-assessor-update handler s
   ])('Should send email to %s', async (_, templateId: EmailTypeEnum) => {
     jest
       .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(previousAssessor));
-    jest
-      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(previousAssessor))
       .mockResolvedValueOnce(DTOsHelper.getRecipientUser(newAssessor));
 
     const recipientAssessor =
@@ -82,9 +80,7 @@ describe('Notifications / _handlers / needs-assessment-assessor-update handler s
   it('Should not send emails if the assessors are not found', async () => {
     jest
       .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(null);
-    jest
-      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(null);
 
     handler = new NeedsAssessmentAssessorUpdateHandler(
