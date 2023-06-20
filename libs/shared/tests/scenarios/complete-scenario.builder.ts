@@ -154,15 +154,7 @@ export class CompleteScenarioBuilder {
         .setNeedsAssessor(paulNeedsAssessor.id)
         .save();
 
-      // action on johnInnovation created by Alice (QA)
-      const johnInnovationActionByAlice = await new InnovationActionBuilder(entityManager)
-        .setCreatedBy(aliceQualifyingAccessor.id)
-        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
-        .setUpdatedBy(aliceQualifyingAccessor.id)
-        .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
-        .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
-        .save();
-
+      // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
       const johnInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(johnInnovation.id)
@@ -170,11 +162,21 @@ export class CompleteScenarioBuilder {
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
 
+      // support on johnInnovation by MedTechOrgUnit accessor (sam)
       const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(johnInnovation.id)
         .setOrganisationUnit(medTechOrgUnit.id)
         .setAccessors([samAccessor])
+        .save();
+
+      // action on johnInnovation created by Alice (QA)
+      const johnInnovationActionByAlice = await new InnovationActionBuilder(entityManager)
+        .setCreatedBy(aliceQualifyingAccessor.id)
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(aliceQualifyingAccessor.id)
+        .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .save();
 
       // action on johnInnovation created by Paul (NA)
