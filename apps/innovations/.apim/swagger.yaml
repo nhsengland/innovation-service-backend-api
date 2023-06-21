@@ -1350,12 +1350,6 @@ paths:
                       enum:
                         - YES
                         - NO
-                    files:
-                      type: array
-                      items:
-                        type: string
-                        format: uuid
-                      minItems: 1
                   additionalProperties: false
                 EVIDENCE_OF_EFFECTIVENESS:
                   type: object
@@ -1473,12 +1467,6 @@ paths:
                             maxLength: 500
                         additionalProperties: false
                       minItems: 1
-                    files:
-                      type: array
-                      items:
-                        type: string
-                        format: uuid
-                      minItems: 1
                   additionalProperties: false
                 REGULATIONS_AND_STANDARDS:
                   type: object
@@ -1524,12 +1512,6 @@ paths:
                     otherRegulationDescription:
                       type: string
                       maxLength: 100
-                    files:
-                      type: array
-                      items:
-                        type: string
-                        format: uuid
-                      minItems: 1
                   additionalProperties: false
                 INTELLECTUAL_PROPERTY:
                   type: object
@@ -1661,12 +1643,6 @@ paths:
                         - YES
                         - NO
                         - NOT_SURE
-                    files:
-                      type: array
-                      items:
-                        type: string
-                        format: uuid
-                      minItems: 1
                   additionalProperties: false
                 evidences:
                   type: array
