@@ -41,6 +41,7 @@ export class InnovationFileService extends BaseService {
         startDate?: Date;
         endDate?: Date;
       }[];
+      fields?: 'description'[];
     },
     pagination: PaginationQueryParamsType<'name' | 'createdAt' | 'contextType'>,
     entityManager?: EntityManager
@@ -51,6 +52,7 @@ export class InnovationFileService extends BaseService {
       storageId: string;
       context: { id: string; type: InnovationFileContextTypeEnum };
       name: string;
+      description?: string;
       createdAt: Date;
       createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
       file: { name: string; size?: number; extension: string; url: string };
@@ -66,6 +68,7 @@ export class InnovationFileService extends BaseService {
         'file.contextId',
         'file.contextType',
         'file.name',
+        'file.description',
         'file.createdAt',
         'file.filename',
         'file.filesize',
@@ -178,6 +181,7 @@ export class InnovationFileService extends BaseService {
         storageId: file.storageId,
         context: { id: file.contextId, type: file.contextType },
         name: file.name,
+        ...(filters.fields?.includes('description') && { description: file.description ?? undefined }),
         createdAt: file.createdAt,
         createdBy: {
           name: usersInfo.get(file.createdByUserRole.user.identityId)?.displayName ?? '[deleted user]',

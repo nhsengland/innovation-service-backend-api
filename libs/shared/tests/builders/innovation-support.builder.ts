@@ -3,7 +3,7 @@ import {
   InnovationEntity,
   InnovationSupportEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity,
+  OrganisationUnitUserEntity
 } from '../../entities';
 import { InnovationSupportStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
@@ -76,7 +76,7 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
     return {
       id: result.id,
-      status: result.status,
+      status: result.status
     };
   }
 }

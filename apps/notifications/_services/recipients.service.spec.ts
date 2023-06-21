@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity, UserEntity } from '@notifications/shared/entities';
-import { InnovationCollaboratorStatusEnum } from '@notifications/shared/enums';
+import { InnovationEntity, InnovationSupportEntity, UserEntity } from '@notifications/shared/entities';
+import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
 import { CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
+import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
 import { container } from '../_config';
@@ -243,17 +244,136 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe.skip('innovationSharedOrganisationsWithUnits suite', () => {
+  describe('innovationSharedOrganisationsWithUnits suite', () => {
     it('Should return not found if innovation not found', async () => {
       await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
       );
     });
 
-    it('Should return list of organisations unit is shared with', () => {
-      fail('add new org to scenario');
-      // fail('add shares to scenario');
-      // fail('show only shared')
+    it('Should return list of organisations and units that the innovation is shared with', async () => {
+      const shares = await sut.innovationSharedOrganisationsWithUnits(
+        scenario.users.johnInnovator.innovations.johnInnovation.id
+      );
+      expect(shares).toHaveLength(2);
+      expect(shares).toMatchObject([
+        {
+          id: scenario.organisations.healthOrg.id,
+          name: scenario.organisations.healthOrg.name,
+          acronym: scenario.organisations.healthOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+            },
+            {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
+            }
+          ]
+        },
+        {
+          id: scenario.organisations.medTechOrg.id,
+          name: scenario.organisations.medTechOrg.name,
+          acronym: scenario.organisations.medTechOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
+              name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+              acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
+            }
+          ]
+        }
+      ]);
+    });
+  });
+
+  describe('innovationAssignedRecipients suite', () => {
+    it('Returns a list of recipients for the innovation', async () => {
+      const res = await sut.innovationAssignedRecipients(scenario.users.johnInnovator.innovations.johnInnovation.id);
+      expect(res).toHaveLength(3);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.samAccessor, 'accessorRole')
+      ]);
+    });
+
+    it('Returns multiple roles if the same user support in multiple contexts', async () => {
+      // Add madrox as an accessor for the innovation in another unit
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      await new InnovationSupportBuilder(em)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(innovation.id)
+        .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id)
+        .setAccessors([scenario.users.jamieMadroxAccessor])
+        .save();
+
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        em
+      );
+      expect(res).toHaveLength(4);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'),
+        DTOsHelper.getRecipientUser(scenario.users.samAccessor, 'accessorRole')
+      ]);
+    });
+
+    it('Returns empty array if no recipients found', async () => {
+      await em.delete(InnovationSupportEntity, {
+        innovation: scenario.users.johnInnovator.innovations.johnInnovation.id
+      });
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        em
+      );
+      expect(res).toHaveLength(0);
+    });
+
+    it('Checks if user is active', async () => {
+      await testsHelper.deactivateUser(scenario.users.samAccessor.id, em);
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        em
+      );
+      expect(res).toHaveLength(3);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+        { ...DTOsHelper.getRecipientUser(scenario.users.samAccessor, 'accessorRole'), isActive: false }
+      ]);
+    });
+
+    it('Checks if user role is active', async () => {
+      await testsHelper.deactivateUserRole(scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id, em);
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        em
+      );
+      expect(res).toHaveLength(3);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        { ...DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'), isActive: false },
+        DTOsHelper.getRecipientUser(scenario.users.samAccessor, 'accessorRole')
+      ]);
+    });
+
+    it('Filters deleted users', async () => {
+      await testsHelper.deleteUser(scenario.users.samAccessor.id, em);
+      const res = await sut.innovationAssignedRecipients(
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        em
+      );
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
+      ]);
     });
   });
 

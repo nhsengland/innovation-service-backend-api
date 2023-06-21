@@ -222,22 +222,21 @@ export class RecipientsService extends BaseService {
 
   /**
    * returns the innovation assigned recipients to an innovation/support.
-   * @param data the parameters is either:
-   *  - innovationId - to get all the users assigned to the innovation
-   *  - innovationSupportId - to get all the users assigned to the innovation support
+   * @param innovationId the innovation id
+   * @param entityManager optionally pass an entity manager
    * @returns a list of users with their email notification preferences
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
-  async innovationAssignedRecipients(
-    data: { innovationId: string } | { innovationSupportId: string }
-  ): Promise<RecipientType[]> {
-    const query = this.sqlConnection
+  async innovationAssignedRecipients(innovationId: string, entityManager?: EntityManager): Promise<RecipientType[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .select([
         'support.id',
         'organisationUnit.id',
         'organisationUnitUser.id',
-        'organisationUser.id', // there are required only for the typeOrm to work (create the hierarchical structure)
+        'organisationUser.id', // these are required only for the typeOrm to work (create the hierarchical structure)
         'user.id',
         'user.identityId',
         'user.status',
@@ -251,22 +250,10 @@ export class RecipientsService extends BaseService {
       .innerJoin('organisationUser.user', 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .where('serviceRoles.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE });
-
-    if ('innovationId' in data) {
-      query.andWhere('support.innovation_id = :innovationId', { innovationId: data.innovationId });
-    } else if ('innovationSupportId' in data) {
-      query.andWhere('support.id = :innovationSupportId', {
-        innovationSupportId: data.innovationSupportId
-      });
-    }
+      .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
+      .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId });
 
     const dbInnovationSupports = await query.getMany();
-
-    // keep previous behavior throwing an error when searching for a specific support
-    if ('innovationSupportId' in data && !dbInnovationSupports.length) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
-    }
 
     const res: RecipientType[] = [];
     for (const support of dbInnovationSupports) {

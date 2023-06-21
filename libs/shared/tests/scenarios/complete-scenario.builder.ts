@@ -4,14 +4,17 @@ import type { DataSource } from 'typeorm';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationFileContextTypeEnum,
-  InnovationSupportStatusEnum
+  InnovationSupportStatusEnum,
+  InnovationTransferStatusEnum
 } from '../../enums/innovation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
+import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
+import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
@@ -44,6 +47,11 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
         .save();
 
+      const seanNeedsAssessor = await new UserBuilder(entityManager)
+        .setName('Paul Needs Assessor')
+        .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
+        .save();
+
       // Admin
       const allMighty = await new UserBuilder(entityManager)
         .setName('All Mighty')
@@ -64,10 +72,10 @@ export class CompleteScenarioBuilder {
 
       // MedTech Organisation has one unit: MedTech Org Unit
       const medTechOrg = await new OrganisationBuilder(entityManager).setName('MedTech Organisation').save();
-      // const medTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
-      //   .addToOrganisation(medTechOrg.id)
-      //   .setName('MedTech Org Unit')
-      //   .save();
+      const medTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(medTechOrg.id)
+        .setName('MedTech Org Unit')
+        .save();
 
       // QAs and Accessors
 
@@ -88,9 +96,30 @@ export class CompleteScenarioBuilder {
       // Jaimie Madrox Accessor specs:
       // Belongs to two units in Health Organisation.
       const jamieMadroxAccessor = await new UserBuilder(entityManager)
-        .setName('Jamie <Madrox>')
-        .addRole(ServiceRoleEnum.ACCESSOR, 'regularRole', healthOrg.id, healthOrgUnit.id)
+        .setName('Jamie Madrox')
+        .addRole(ServiceRoleEnum.ACCESSOR, 'healthAccessorRole', healthOrg.id, healthOrgUnit.id)
         .addRole(ServiceRoleEnum.ACCESSOR, 'aiRole', healthOrg.id, healthOrgAiUnit.id)
+        .save();
+
+      // Sam accessor specs:
+      // Belongs to the medtech organisation.
+      const samAccessor = await new UserBuilder(entityManager)
+        .setName('Sam Accessor')
+        .addRole(ServiceRoleEnum.ACCESSOR, 'accessorRole', medTechOrg.id, medTechOrgUnit.id)
+        .save();
+
+      // Sarah Qualifying Accessor specs:
+      // Belongs to an active organisation.
+      const sarahQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Sarah Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', healthOrg.id, healthOrgAiUnit.id)
+        .save();
+
+      // Bart Qualifying Accessor specs:
+      // Belongs to an active organisation.
+      const bartQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Bart Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', healthOrg.id, healthOrgAiUnit.id)
         .save();
 
       // Innovators
@@ -138,6 +167,28 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationCollaboratorStatusEnum.PENDING)
         .save();
 
+      // assessment on johnInnovation assigned to Paul (NA)
+      const johnInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .save();
+
+      // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
+      const johnInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(johnInnovation.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .save();
+
+      // support on johnInnovation by MedTechOrgUnit accessor (sam)
+      const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(johnInnovation.id)
+        .setOrganisationUnit(medTechOrgUnit.id)
+        .setAccessors([samAccessor])
+        .save();
+
       // action on johnInnovation created by Alice (QA)
       const johnInnovationActionByAlice = await new InnovationActionBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
@@ -145,13 +196,6 @@ export class CompleteScenarioBuilder {
         .setUpdatedBy(aliceQualifyingAccessor.id)
         .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
-        .save();
-
-      const johnInnovationSupportByAlice = await new InnovationSupportBuilder(entityManager)
-        .setStatus(InnovationSupportStatusEnum.ENGAGING)
-        .setInnovation(johnInnovation.id)
-        .setOrganisationUnit(healthOrgUnit.id)
-        .setAccessors([aliceQualifyingAccessor])
         .save();
 
       // action on johnInnovation created by Paul (NA)
@@ -282,8 +326,13 @@ export class CompleteScenarioBuilder {
 
       const adamInnovation = await new InnovationBuilder(entityManager)
         .setOwner(adamInnovator.id)
-        .addTransfer('transfers@example.org')
         .shareWith([healthOrg])
+        .save();
+
+      const adamInnovationTransferToJane = await new InnovationTransferBuilder(entityManager)
+        .setStatus(InnovationTransferStatusEnum.PENDING)
+        .setEmail(janeInnovator.email)
+        .setInnovation(adamInnovation.id)
         .save();
 
       return {
@@ -296,8 +345,13 @@ export class CompleteScenarioBuilder {
               johnInnovation: {
                 ...johnInnovation,
                 supports: {
-                  supportByAlice: johnInnovationSupportByAlice
+                  supportByHealthOrgUnit: {
+                    ...johnInnovationSupportByHealthOrgUnit,
+                    accessors: [aliceQualifyingAccessor, jamieMadroxAccessor]
+                  },
+                  supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] }
                 },
+                assessment: johnInnovationAssessmentByPaul,
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
                   actionByPaul: johnInnovationActionByPaul
@@ -353,7 +407,7 @@ export class CompleteScenarioBuilder {
           adamInnovator: {
             ...adamInnovator,
             roles: { innovatorRole: adamInnovator.roles['innovatorRole']! },
-            innovations: { adamInnovation: { ...adamInnovation } }
+            innovations: { adamInnovation: { ...adamInnovation, transfer: adamInnovationTransferToJane } }
           },
           sebastiaoDeletedInnovator: {
             ...sebastiaoDeletedInnovator,
@@ -389,7 +443,7 @@ export class CompleteScenarioBuilder {
           jamieMadroxAccessor: {
             ...jamieMadroxAccessor,
             roles: {
-              regularRole: jamieMadroxAccessor.roles['regularRole']!,
+              healthAccessorRole: jamieMadroxAccessor.roles['healthAccessorRole']!,
               aiRole: jamieMadroxAccessor.roles['aiRole']!
             },
             organisations: {
@@ -404,15 +458,77 @@ export class CompleteScenarioBuilder {
               }
             }
           },
+          samAccessor: {
+            ...samAccessor,
+            roles: { accessorRole: samAccessor.roles['accessorRole']! },
+            organisations: {
+              medTechOrg: {
+                ...samAccessor.organisations['MedTech Organisation']!,
+                organisationUnits: {
+                  medTechOrgUnit:
+                    samAccessor.organisations['MedTech Organisation']!.organisationUnits['MedTech Org Unit']!
+                }
+              }
+            }
+          },
+          sarahQualifyingAccessor: {
+            ...sarahQualifyingAccessor,
+            roles: { qaRole: sarahQualifyingAccessor.roles['qaRole']! },
+            organisations: {
+              healthOrg: {
+                ...sarahQualifyingAccessor.organisations['Health Organisation']!,
+                organisationUnits: {
+                  healthOrgAiUnit:
+                    sarahQualifyingAccessor.organisations['Health Organisation']!.organisationUnits[
+                      'Health Org AI Unit'
+                    ]!
+                }
+              }
+            }
+          },
+          bartQualifyingAccessor: {
+            ...bartQualifyingAccessor,
+            roles: { qaRole: bartQualifyingAccessor.roles['qaRole']! },
+            organisations: {
+              healthOrg: {
+                ...bartQualifyingAccessor.organisations['Health Organisation']!,
+                organisationUnits: {
+                  healthOrgAiUnit:
+                    bartQualifyingAccessor.organisations['Health Organisation']!.organisationUnits[
+                      'Health Org AI Unit'
+                    ]!
+                }
+              }
+            }
+          },
           // Needs assessors
           paulNeedsAssessor: {
             ...paulNeedsAssessor,
             roles: { assessmentRole: paulNeedsAssessor.roles['assessmentRole']! }
           },
+          seanNeedsAssessor: {
+            ...seanNeedsAssessor,
+            roles: { assessmentRole: seanNeedsAssessor.roles['assessmentRole']! }
+          },
           // Admins
           allMighty: {
             ...allMighty,
             roles: { admin: allMighty.roles['adminRole']! }
+          }
+        },
+        organisations: {
+          healthOrg: {
+            ...healthOrg,
+            organisationUnits: {
+              healthOrgUnit: healthOrgUnit,
+              healthOrgAiUnit: healthOrgAiUnit
+            }
+          },
+          medTechOrg: {
+            ...medTechOrg,
+            organisationUnits: {
+              medTechOrgUnit: medTechOrgUnit
+            }
           }
         }
       };

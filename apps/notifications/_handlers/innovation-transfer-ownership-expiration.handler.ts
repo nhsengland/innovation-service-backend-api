@@ -28,14 +28,8 @@ export class InnovationTransferOwnershipExpirationHandler extends BaseHandler<
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId, true);
 
-    // This should never happen since we include deleted innovations.
-    if (!innovation) {
-      this.logger(`InnovationTransferOwnershipExpirationHandler: Innovation not found ${this.inputData.innovationId}`);
-      return this;
-    }
-
     if (!innovation.ownerId) {
-      this.logger(
+      this.logger.error(
         `InnovationTransferOwnershipExpirationHandler: Innovation owner not found for for innovation ${this.inputData.innovationId}`
       );
       return this;

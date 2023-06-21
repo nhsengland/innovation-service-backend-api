@@ -189,11 +189,11 @@ export class DomainUsersService {
     const query = this.userRepository
       .createQueryBuilder('users')
       .innerJoinAndSelect('users.serviceRoles', 'serviceRoles')
-      .andWhere('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
+      .where('users.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     if (data.userIds) {
-      query.where('users.id IN (:...userIds)', { userIds: data.userIds });
+      query.andWhere('users.id IN (:...userIds)', { userIds: data.userIds });
     } else if (data.identityIds) {
-      query.where('users.external_id IN (:...identityIds)', { identityIds: data.identityIds });
+      query.andWhere('users.external_id IN (:...identityIds)', { identityIds: data.identityIds });
     }
 
     const dbUsers = await query.getMany();

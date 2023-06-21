@@ -3,6 +3,8 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
+import { UserEntity, UserRoleEntity } from '../entities';
+import { UserStatusEnum } from '../enums';
 import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
@@ -76,6 +78,18 @@ export class TestsHelper {
   async releaseQueryRunnerEntityManager(): Promise<void> {
     await this.em.queryRunner?.rollbackTransaction();
     await this.em.queryRunner?.release();
+  }
+
+  async deactivateUser(userId: string, em: EntityManager): Promise<void> {
+    await em.getRepository(UserEntity).update({ id: userId }, { status: UserStatusEnum.LOCKED });
+  }
+
+  async deleteUser(userId: string, em: EntityManager): Promise<void> {
+    await em.getRepository(UserEntity).update({ id: userId }, { status: UserStatusEnum.DELETED });
+  }
+
+  async deactivateUserRole(roleId: string, em: EntityManager): Promise<void> {
+    await em.getRepository(UserRoleEntity).update({ id: roleId }, { isActive: false });
   }
 
   private setupGlobalMocks(): void {

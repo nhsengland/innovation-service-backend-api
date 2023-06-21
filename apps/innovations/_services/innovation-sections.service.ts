@@ -321,13 +321,9 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    // This variable will hold files marked to be deleted, to be removed only inside the transaction.
-    let sectionDeletedFiles: InnovationFileLegacyEntity[] = [];
-
     // We always have at most one section per sectionKey, so we can just get the first one.
     let section = await this.sqlConnection
       .createQueryBuilder(InnovationSectionEntity, 'section')
-      .leftJoinAndSelect('section.files', 'sectionFiles')
       .where('section.innovation_id = :innovationId', { innovationId })
       .andWhere('section.section = :sectionKey', { sectionKey })
       .getOne();
@@ -351,22 +347,12 @@ export class InnovationSectionsService extends BaseService {
 
         createdBy: user.id,
         updatedAt: updatedAt,
-        updatedBy: user.id,
-
-        files:
-          CurrentDocumentConfig.allowFileUploads.has(sectionKey) && dataToUpdate['files']
-            ? dataToUpdate['files'].map((id: string) => ({ id }))
-            : []
+        updatedBy: user.id
       });
     } else {
       section.updatedBy = user.id;
       section.updatedAt = updatedAt;
       section.status = InnovationSectionStatusEnum.DRAFT;
-
-      if (CurrentDocumentConfig.allowFileUploads.has(sectionKey)) {
-        sectionDeletedFiles = section.files.filter(file => !dataToUpdate['files']?.includes(file.id));
-        section.files = (dataToUpdate['files'] ?? []).map((id: string) => ({ id }));
-      }
     }
 
     let updateInnovation = false;
@@ -421,8 +407,6 @@ export class InnovationSectionsService extends BaseService {
       sectionToBeSaved.updatedAt = updatedAt;
       sectionToBeSaved.updatedAt = updatedAt;
       const sectionSaved = await transaction.save(InnovationSectionEntity, sectionToBeSaved);
-
-      await this.domainService.innovations.deleteInnovationFiles(transaction, sectionDeletedFiles);
 
       if (shouldAddActivityLog) {
         await this.domainService.innovations.addActivityLog(
@@ -826,22 +810,10 @@ export class InnovationSectionsService extends BaseService {
     }
     const sectionData = document[sectionKey];
 
-    let files: { id: string; name: string; url: string }[] | undefined;
-    const sectionFiles: string[] = (sectionData as any).files ?? [];
-
-    // Add file URLs if needed
-    if (sectionFiles.length) {
-      files = (await this.innovationFileService.getFilesByIds(sectionFiles)).map(file => ({
-        id: file.id,
-        name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
-      }));
-    }
-
     return {
       ...sectionData,
-      ...(evidenceData && { evidences: evidenceData }),
-      ...(files && { files: files })
+      files: undefined, // TECHDEBT: This can be removed with the new IR version
+      ...(evidenceData && { evidences: evidenceData })
     };
   }
 

@@ -2,12 +2,7 @@ import { randCountry, randProduct } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
-import {
-  InnovationCollaboratorStatusEnum,
-  InnovationSectionStatusEnum,
-  InnovationStatusEnum,
-  InnovationTransferStatusEnum
-} from '../../enums/innovation.enums';
+import { InnovationSectionStatusEnum, InnovationStatusEnum } from '../../enums/innovation.enums';
 import { NotFoundError } from '../../errors/errors.config';
 import { UserErrorsEnum } from '../../errors/errors.enums';
 
@@ -19,12 +14,10 @@ export type TestInnovationType = {
   id: string;
   name: string;
   ownerId: string;
-  transfers: { id: string; email: string; status: InnovationTransferStatusEnum }[];
   sections: Map<
     CurrentCatalogTypes.InnovationSections,
     { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections }
   >;
-  collaborators: { id: string; status: InnovationCollaboratorStatusEnum }[];
   sharedOrganisations: { id: string; name: string }[];
 };
 
@@ -35,7 +28,6 @@ export class InnovationBuilder extends BaseBuilder {
     status: InnovationStatusEnum.CREATED,
     owner: null,
     assessments: [],
-    collaborators: [],
     organisationShares: [],
     sections: [],
     transfers: []
@@ -55,30 +47,10 @@ export class InnovationBuilder extends BaseBuilder {
     return this;
   }
 
-  addTransfer(email: string, status?: InnovationTransferStatusEnum): this {
-    // TODO: Check if there's a better way to do this. Problem with DeepPartial and push is that without the spread the infered type is not correct
-    this.innovation.transfers = [
-      ...(this.innovation.transfers ?? []),
-      {
-        email: email,
-        status: status ?? InnovationTransferStatusEnum.PENDING
-      }
-    ];
-    return this;
-  }
-
   addSection(section: CurrentCatalogTypes.InnovationSections, status?: InnovationSectionStatusEnum): this {
     this.innovation.sections = [
       ...(this.innovation.sections ?? []),
       { section: section, status: status ?? InnovationSectionStatusEnum.SUBMITTED }
-    ];
-    return this;
-  }
-
-  addCollaborator(userId?: string, status?: InnovationCollaboratorStatusEnum): this {
-    this.innovation.collaborators = [
-      ...(this.innovation.collaborators ?? []),
-      { user: userId ? { id: userId } : null, status: status ?? InnovationCollaboratorStatusEnum.ACTIVE }
     ];
     return this;
   }
@@ -93,8 +65,7 @@ export class InnovationBuilder extends BaseBuilder {
       .getRepository(InnovationEntity)
       .save({
         ...this.innovation,
-        sections: this.innovation.sections,
-        collaborators: this.innovation.collaborators
+        sections: this.innovation.sections
       });
 
     const result = await this.getEntityManager()
@@ -120,16 +91,7 @@ export class InnovationBuilder extends BaseBuilder {
       id: result.id,
       name: result.name,
       ownerId: result.owner.id,
-      transfers: result.transfers.map(item => ({
-        id: item.id,
-        email: item.email,
-        status: item.status
-      })),
       sections: new Map(result.sections.map(s => [s['section'], s])),
-      collaborators: result.collaborators.map(c => ({
-        id: c.id,
-        status: c.status
-      })),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
     };
   }
