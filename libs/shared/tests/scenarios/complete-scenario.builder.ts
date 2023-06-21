@@ -252,10 +252,11 @@ export class CompleteScenarioBuilder {
           .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
 
-      const johnInnovationExportRequestByAlice = new InnovationExportRequestBuilder(entityManager)
+      const johnInnovationExportRequestByAlice = await new InnovationExportRequestBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id, healthOrgUnit.id)
         .setInnovation(johnInnovation.id)
         .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
 
       // John Innovation Files
       const johnInnovationSectionFileUploadedByJohn = await new InnovationFileBuilder(entityManager)
