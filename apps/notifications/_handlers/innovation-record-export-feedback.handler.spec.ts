@@ -12,7 +12,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
 
   let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
   let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
-  
+
   let request: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['exportRequests']['requestByAlice'];
 
   let handler: InnovationRecordExportFeedbackHandler;
@@ -27,19 +27,19 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
     request = innovation.exportRequests.requestByAlice;
   });
 
-  beforeEach(() => {
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      name: innovation.name,
-      ownerId: innovationOwner.id,
-      ownerIdentityId: innovationOwner.identityId
-    });
-  });
-
   describe.each([
     [InnovationExportRequestStatusEnum.APPROVED, EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR],
     [InnovationExportRequestStatusEnum.REJECTED, EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR]
   ])('Innovation record export %s', (status: InnovationExportRequestStatusEnum, templateId: EmailTypeEnum) => {
     beforeEach(() => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
+      });
+
+      // mock export request info
       jest
         .spyOn(RecipientsService.prototype, 'getExportRequestInfo')
         .mockResolvedValueOnce({ ...request, status: status });
@@ -116,12 +116,10 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
     });
 
     it('Should not send email to accessor if accessor is not active', async () => {
-      jest
-        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValueOnce({
-          ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-          isActive: false
-        });
+      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce({
+        ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        isActive: false
+      });
 
       handler = new InnovationRecordExportFeedbackHandler(
         DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
