@@ -15,7 +15,7 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import { BaseService } from './base.service';
 
@@ -261,7 +261,10 @@ export class InnovationFileService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_FILE_NOT_FOUND);
     }
 
-    const createdByUser = await this.identityProviderService.getUserInfo(file.createdByUserRole.user.identityId);
+    let createdByUser: null | IdentityUserInfo = null;
+    if (file.createdByUserRole.user.status !== UserStatusEnum.DELETED) {
+      createdByUser = await this.identityProviderService.getUserInfo(file.createdByUserRole.user.identityId);
+    }
 
     return {
       id: file.id,
@@ -274,7 +277,7 @@ export class InnovationFileService extends BaseService {
         name: createdByUser?.displayName ?? '[deleted user]',
         role: file.createdByUserRole.role,
         isOwner:
-          file.createdByUserRole.role === ServiceRoleEnum.INNOVATOR && file.innovation.owner
+          file.createdByUserRole.role === ServiceRoleEnum.INNOVATOR && createdByUser && file.innovation.owner
             ? file.createdByUserRole.user.id === file.innovation.owner.id
             : undefined,
         orgUnitName:
