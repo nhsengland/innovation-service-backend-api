@@ -812,6 +812,7 @@ export class InnovationSectionsService extends BaseService {
 
     return {
       ...sectionData,
+      files: [], // TECHDEBT: This can be removed with the new IR version
       ...(evidenceData && { evidences: evidenceData })
     };
   }
