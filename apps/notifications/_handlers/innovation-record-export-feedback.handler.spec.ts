@@ -1,6 +1,5 @@
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { InnovationRecordExportFeedbackHandler } from './innovation-record-export-feedback.handler';
-import { randText, randUuid } from '@ngneat/falso';
 import { InnovationExportRequestStatusEnum } from '@notifications/shared/enums';
 import { RecipientsService } from '../_services/recipients.service';
 import { ENV, EmailTypeEnum } from '../_config';
@@ -13,20 +12,10 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
 
   let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
   let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
+  
+  let request: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['exportRequests']['requestByAlice'];
 
   let handler: InnovationRecordExportFeedbackHandler;
-
-  let requestData: {
-    id: string;
-    status: InnovationExportRequestStatusEnum;
-    requestReason: string;
-    rejectReason: string | null;
-    createdBy: {
-      id: string;
-      unitId: string;
-      unitName: string;
-    };
-  };
 
   beforeAll(async () => {
     testsHelper = await new TestsHelper().init();
@@ -35,17 +24,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
     innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     innovationOwner = scenario.users.johnInnovator;
 
-    requestData = {
-      id: randUuid(),
-      status: InnovationExportRequestStatusEnum.PENDING,
-      requestReason: randText({ charCount: 10 }),
-      rejectReason: randText({ charCount: 10 }),
-      createdBy: {
-        id: scenario.users.aliceQualifyingAccessor.id,
-        unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-        unitName: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name
-      }
-    };
+    request = innovation.exportRequests.requestByAlice;
   });
 
   beforeEach(() => {
@@ -63,7 +42,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
     beforeEach(() => {
       jest
         .spyOn(RecipientsService.prototype, 'getExportRequestInfo')
-        .mockResolvedValueOnce({ ...requestData, status: status });
+        .mockResolvedValueOnce({ ...request, status: status });
     });
 
     it('Should send email to accessor who created the request', async () => {
@@ -75,7 +54,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
         DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
         {
           innovationId: innovation.id,
-          requestId: requestData.id
+          requestId: request.id
         },
         MocksHelper.mockContext()
       );
@@ -94,7 +73,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
               .addPath('accessor/innovations/:innovationId')
               .setPathParams({ innovationId: innovation.id })
               .buildUrl(),
-            pdf_rejection_comment: requestData.rejectReason
+            pdf_rejection_comment: request.rejectReason
           }
         }
       ]);
@@ -111,7 +90,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
         DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
         {
           innovationId: innovation.id,
-          requestId: requestData.id
+          requestId: request.id
         },
         MocksHelper.mockContext()
       );
@@ -130,7 +109,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
               .addPath('accessor/innovations/:innovationId')
               .setPathParams({ innovationId: innovation.id })
               .buildUrl(),
-            pdf_rejection_comment: requestData.rejectReason
+            pdf_rejection_comment: request.rejectReason
           }
         }
       ]);
@@ -148,7 +127,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
         DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
         {
           innovationId: innovation.id,
-          requestId: requestData.id
+          requestId: request.id
         },
         MocksHelper.mockContext()
       );

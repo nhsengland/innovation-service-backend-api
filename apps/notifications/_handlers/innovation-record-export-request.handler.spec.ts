@@ -2,8 +2,6 @@ import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/s
 import { InnovationRecordExportRequestHandler } from './innovation-record-export-request.handler';
 import { RecipientsService } from '../_services/recipients.service';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { InnovationExportRequestStatusEnum } from '@notifications/shared/enums';
-import { randText, randUuid } from '@ngneat/falso';
 import { ENV, EmailTypeEnum } from '../_config';
 import { UrlModel } from '@notifications/shared/models';
 
@@ -14,19 +12,9 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
   let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
   let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
 
-  let handler: InnovationRecordExportRequestHandler;
+  let request: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['exportRequests']['requestByAlice'];
 
-  let requestData: {
-    id: string;
-    status: InnovationExportRequestStatusEnum;
-    requestReason: string;
-    rejectReason: string | null;
-    createdBy: {
-      id: string;
-      unitId: string;
-      unitName: string;
-    };
-  };
+  let handler: InnovationRecordExportRequestHandler;
 
   beforeAll(async () => {
     testsHelper = await new TestsHelper().init();
@@ -35,17 +23,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
     innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     innovationOwner = scenario.users.johnInnovator;
 
-    requestData = {
-      id: randUuid(),
-      status: InnovationExportRequestStatusEnum.PENDING,
-      requestReason: randText({ charCount: 10 }),
-      rejectReason: null,
-      createdBy: {
-        id: scenario.users.aliceQualifyingAccessor.id,
-        unitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-        unitName: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name
-      }
-    };
+    request = innovation.exportRequests.requestByAlice;
   });
 
   beforeEach(() => {
@@ -56,7 +34,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
     });
 
 
-    jest.spyOn(RecipientsService.prototype, 'getExportRequestInfo').mockResolvedValueOnce(requestData);
+    jest.spyOn(RecipientsService.prototype, 'getExportRequestInfo').mockResolvedValueOnce(request);
   });
 
   it('Should send email to innovation owner', async () => {
@@ -69,7 +47,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       {
         innovationId: innovation.id,
-        requestId: requestData.id
+        requestId: request.id
       },
       MocksHelper.mockContext()
     );
@@ -83,9 +61,9 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
         notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
-          unit_name: requestData.createdBy.unitName,
+          unit_name: request.createdBy.unitName,
           accessor_name: scenario.users.aliceQualifyingAccessor.name,
-          pdf_request_comment: requestData.requestReason,
+          pdf_request_comment: request.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/export/list')
             .setPathParams({ innovationId: innovation.id })
@@ -105,7 +83,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       {
         innovationId: innovation.id,
-        requestId: requestData.id
+        requestId: request.id
       },
       MocksHelper.mockContext()
     );
@@ -119,9 +97,9 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
         notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
-          unit_name: requestData.createdBy.unitName,
+          unit_name: request.createdBy.unitName,
           accessor_name: 'user',
-          pdf_request_comment: requestData.requestReason,
+          pdf_request_comment: request.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('innovator/innovations/:innovationId/export/list')
             .setPathParams({ innovationId: innovation.id })
@@ -141,7 +119,7 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
       {
         innovationId: innovation.id,
-        requestId: requestData.id
+        requestId: request.id
       },
       MocksHelper.mockContext()
     );

@@ -1,7 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum, InnovationTransferStatusEnum } from '../../enums/innovation.enums';
+import {
+  InnovationCollaboratorStatusEnum,
+  InnovationExportRequestStatusEnum,
+  InnovationSupportStatusEnum,
+  InnovationTransferStatusEnum
+} from '../../enums/innovation.enums';
 import { ServiceRoleEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
@@ -13,6 +18,7 @@ import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
+import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -236,6 +242,13 @@ export class CompleteScenarioBuilder {
           .setInnovation(johnInnovation.id)
           .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
+
+      const johnInnovationExportRequestByAlice = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(aliceQualifyingAccessor.id, healthOrgUnit.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -300,6 +313,9 @@ export class CompleteScenarioBuilder {
                     ...johnInnovationThreadByJohn,
                     messages: { johnMessage: johnInnovationThreadByJohn.messages['johnMessage']! }
                   }
+                },
+                exportRequests: {
+                  requestByAlice: johnInnovationExportRequestByAlice
                 },
                 collaborators: {
                   janeCollaborator: janeCollaborator,
