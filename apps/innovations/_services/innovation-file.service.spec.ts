@@ -352,7 +352,7 @@ describe('Services / Innovation File service suite', () => {
         expect(dbFile).toHaveProperty('createdBy', naDomainContext.id);
       });
 
-      it('should throw error when creating a innovation section file', async () => {
+      it('should throw error when creating an innovation section file', async () => {
         const expected = {
           context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
@@ -410,7 +410,7 @@ describe('Services / Innovation File service suite', () => {
         expect(dbFile).toHaveProperty('createdBy', qaDomainContext.id);
       });
 
-      it('should throw error when creating a innovation section file', async () => {
+      it('should throw error when creating an innovation section file', async () => {
         const expected = {
           context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
