@@ -183,7 +183,7 @@ describe('Services / Innovation File service suite', () => {
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
-          const data: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
+          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
             id: file.id,
             storageId: file.storageId,
             name: file.name,
@@ -207,7 +207,7 @@ describe('Services / Innovation File service suite', () => {
             canDelete: fileCreatedBy.canDelete
           };
 
-          expect(result).toMatchObject(data);
+          expect(result).toMatchObject(expected);
         });
       }
     );
@@ -237,7 +237,7 @@ describe('Services / Innovation File service suite', () => {
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
-          const data: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
+          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
             id: file.id,
             storageId: file.storageId,
             name: file.name,
@@ -257,7 +257,7 @@ describe('Services / Innovation File service suite', () => {
             canDelete: true
           };
 
-          expect(result).toMatchObject(data);
+          expect(result).toMatchObject(expected);
         });
       });
     });
