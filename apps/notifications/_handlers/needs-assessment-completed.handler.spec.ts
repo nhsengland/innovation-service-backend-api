@@ -27,48 +27,45 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
     accessor = scenario.users.aliceQualifyingAccessor;
   });
 
-  beforeEach(() => {
-    // mock innovation info
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      name: innovation.name,
-      ownerId: innovationOwner.id,
-      ownerIdentityId: innovationOwner.identityId
-    });
-
-    // mock shared orgs
-    jest.spyOn(RecipientsService.prototype, 'innovationSharedOrganisationsWithUnits').mockResolvedValueOnce([
-      {
-        id: scenario.organisations.healthOrg.id,
-        name: scenario.organisations.healthOrg.name,
-        acronym: scenario.organisations.healthOrg.acronym,
-        organisationUnits: [
-          {
-            id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-            name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-            acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
-          },
-          {
-            id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-            name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
-            acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
-          }
-        ]
-      }
-    ]);
-
-    // mock innovation collaborators
-    jest
-      .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
-      .mockResolvedValueOnce([scenario.users.janeInnovator.id]);
-
-    // mock qualifying accessors of suggested and shared organisation units
-    jest
-      .spyOn(RecipientsService.prototype, 'organisationUnitsQualifyingAccessors')
-      .mockResolvedValueOnce([DTOsHelper.getRecipientUser(accessor, 'qaRole')]);
-  });
-
   describe('Innovation owner is active', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
+      });
+
+      // mock shared orgs
+      jest.spyOn(RecipientsService.prototype, 'innovationSharedOrganisationsWithUnits').mockResolvedValueOnce([
+        {
+          id: scenario.organisations.healthOrg.id,
+          name: scenario.organisations.healthOrg.name,
+          acronym: scenario.organisations.healthOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+            },
+            {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
+            }
+          ]
+        }
+      ]);
+
+      // mock innovation collaborators
+      jest
+        .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
+        .mockResolvedValueOnce([scenario.users.janeInnovator.id]);
+
+      // mock qualifying accessors of suggested and shared organisation units
+      jest
+        .spyOn(RecipientsService.prototype, 'organisationUnitsQualifyingAccessors')
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(accessor, 'qaRole')]);
       // mock innovation owner and collaborators
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
@@ -260,6 +257,43 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
 
   describe('Innovation owner is not active', () => {
     beforeAll(async () => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
+      });
+
+      // mock shared orgs
+      jest.spyOn(RecipientsService.prototype, 'innovationSharedOrganisationsWithUnits').mockResolvedValueOnce([
+        {
+          id: scenario.organisations.healthOrg.id,
+          name: scenario.organisations.healthOrg.name,
+          acronym: scenario.organisations.healthOrg.acronym,
+          organisationUnits: [
+            {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+            },
+            {
+              id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+              name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
+            }
+          ]
+        }
+      ]);
+
+      // mock innovation collaborators
+      jest
+        .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
+        .mockResolvedValueOnce([scenario.users.janeInnovator.id]);
+
+      // mock qualifying accessors of suggested and shared organisation units
+      jest
+        .spyOn(RecipientsService.prototype, 'organisationUnitsQualifyingAccessors')
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(accessor, 'qaRole')]);
       // mock innovation owner and collaborators
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
@@ -291,7 +325,7 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
       );
 
       expect(expectedEmail).toBeUndefined();
-    })
+    });
 
     it('Should not email innovation owner about organisations suggested and not shared with', () => {
       const expectedEmail = handler.emails.find(
@@ -301,6 +335,6 @@ describe('Notifications / _handlers / needs-assessment-completed handler suite',
       );
 
       expect(expectedEmail).toBeUndefined();
-    })
-  })
+    });
+  });
 });

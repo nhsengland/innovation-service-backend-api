@@ -31,10 +31,6 @@ describe('Notifications / _handlers / thread-creation suite', () => {
     scenario = testsHelper.getCompleteScenario();
   });
 
-  afterEach(async () => {
-    jest.restoreAllMocks();
-  });
-
   describe('New thread by assigned user (QA/A/NA)', () => {
     const getAliceData = (): ThreadCreationHandlerData => {
       return {
@@ -82,11 +78,11 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
       // to be removed
-      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValueOnce({
         displayName: requestUser.name
       } as any);
 
-      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         name: scenario.users.johnInnovator.innovations.johnInnovation.name,
         ownerId: scenario.users.johnInnovator.id,
         ownerIdentityId: scenario.users.johnInnovator.identityId
@@ -164,14 +160,14 @@ describe('Notifications / _handlers / thread-creation suite', () => {
     beforeEach(async () => {
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValue([
+        .mockResolvedValueOnce([
           DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
           DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')
         ]);
 
       jest
         .spyOn(RecipientsService.prototype, 'innovationAssignedRecipients')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')]);
 
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
         name: scenario.users.johnInnovator.innovations.johnInnovation.name,
@@ -212,7 +208,7 @@ describe('Notifications / _handlers / thread-creation suite', () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
       // to be removed
-      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockResolvedValueOnce({
         displayName: requestUser.name
       } as any);
 

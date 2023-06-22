@@ -43,21 +43,31 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     (collaboratorStatus: InnovationCollaboratorStatusEnum, templateId: EmailTypeEnum) => {
       let innovationUrl: string | undefined = undefined;
 
-      beforeEach(() => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: innovationOwner.id,
-          ownerIdentityId: innovationOwner.identityId
-        });
-        // mock innovation owner info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
-      });
+      // beforeEach(() => {
+      //   // mock innovation info
+      //   jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      //     name: innovation.name,
+      //     ownerId: innovationOwner.id,
+      //     ownerIdentityId: innovationOwner.identityId
+      //   });
+      //   // mock innovation owner info
+      //   jest
+      //     .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+      //     .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
+      // });
 
       describe('Collaborator does not exist in the service yet', () => {
-        beforeEach(() => {
+        beforeAll(() => {
+          // mock innovation info
+          jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+            name: innovation.name,
+            ownerId: innovationOwner.id,
+            ownerIdentityId: innovationOwner.identityId
+          });
+          // mock innovation owner info
+          jest
+            .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+            .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
           handler = new InnovationCollaboratorUpdateHandler(
             DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
             {
@@ -152,14 +162,14 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     const collaboratorStatus = InnovationCollaboratorStatusEnum.CANCELLED;
     const templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR;
 
-    beforeEach(() => {
+    beforeAll(() => {
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         name: innovation.name,
         ownerId: innovationOwner.id,
         ownerIdentityId: innovationOwner.identityId
       });
-      // mock innovation owner info
+      // mock innovation owner recipient 
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
         .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
@@ -175,7 +185,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
       });
 
       handler = new InnovationCollaboratorUpdateHandler(
-        DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
+        DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
         {
           innovationId: innovation.id,
           innovationCollaborator: {
@@ -202,7 +212,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     });
 
     describe('Collaborator exists in the service as an innovator', () => {
-      beforeEach(async () => {
+      beforeAll(async () => {
         // mock collaborator info
         jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
           collaboratorId: collaborator.id,
@@ -217,7 +227,7 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
           .mockResolvedValueOnce(DTOsHelper.getRecipientUser(collaboratorUser));
 
         handler = new InnovationCollaboratorUpdateHandler(
-          DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
+          DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
           {
             innovationId: innovation.id,
             innovationCollaborator: {
@@ -313,7 +323,17 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
     const collaboratorStatus = InnovationCollaboratorStatusEnum.REMOVED;
     const templateId = EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR;
 
-    beforeEach(() => {
+    beforeAll(() => {
+      // mock innovation info
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
+      });
+      // mock innovation owner info
+      jest
+        .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+        .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         name: innovation.name,
@@ -459,16 +479,14 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
 
     let innovationUrl: string;
 
-    beforeAll(() => {
+    beforeAll(async () => {
       otherCollaborator = scenario.users.adamInnovator;
 
       innovationUrl = new UrlModel(ENV.webBaseTransactionalUrl)
         .addPath('innovator/innovations/:innovationId')
         .setPathParams({ innovationId: innovation.id })
         .buildUrl();
-    });
 
-    beforeEach(async () => {
       // mock innovation info
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         name: innovation.name,
@@ -515,6 +533,54 @@ describe('Notifications / _handlers / innovation-collborator-update handler suit
 
       await handler.run();
     });
+
+    // beforeEach(async () => {
+    //   // mock innovation info
+    //   jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+    //     name: innovation.name,
+    //     ownerId: innovationOwner.id,
+    //     ownerIdentityId: innovationOwner.identityId
+    //   });
+    //   // mock innovation owner info
+    //   jest
+    //     .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+    //     .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
+    //   // mock collaborator info
+    //   jest.spyOn(RecipientsService.prototype, 'innovationCollaborationInfo').mockResolvedValueOnce({
+    //     collaboratorId: collaborator.id,
+    //     userId: collaboratorUser.id,
+    //     email: collaboratorUser.email,
+    //     status: collaboratorStatus
+    //   });
+
+    //   // mock collaborator recipient
+    //   jest
+    //     .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+    //     .mockResolvedValueOnce(DTOsHelper.getRecipientUser(collaboratorUser));
+
+    //   // mock active collaborators
+    //   jest
+    //     .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
+    //     .mockResolvedValueOnce([otherCollaborator.id]);
+    //   //mock active collaborators recipients
+    //   jest
+    //     .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+    //     .mockResolvedValueOnce([DTOsHelper.getRecipientUser(otherCollaborator)]);
+
+    //   handler = new InnovationCollaboratorUpdateHandler(
+    //     DTOsHelper.getUserRequestContext(collaboratorUser, 'innovatorRole'),
+    //     {
+    //       innovationId: innovation.id,
+    //       innovationCollaborator: {
+    //         id: collaborator.id,
+    //         status: collaboratorStatus
+    //       }
+    //     },
+    //     MocksHelper.mockContext()
+    //   );
+
+    //   await handler.run();
+    // });
 
     it('Should send an email to the innovation owner', () => {
       const expectedEmail = handler.emails.find(email => email.templateId === templateIdToOwner);

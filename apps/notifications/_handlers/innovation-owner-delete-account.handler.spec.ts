@@ -28,7 +28,7 @@ describe('Notifications / _handlers / innovation-owner-delete-account handler su
   });
 
   describe('Innovation has collaborators', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       jest
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
         .mockResolvedValueOnce([scenario.users.janeInnovator.id]);
@@ -78,7 +78,7 @@ describe('Notifications / _handlers / innovation-owner-delete-account handler su
   });
 
   describe('Innovation has no collaborators', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       jest
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
         .mockResolvedValueOnce([]);

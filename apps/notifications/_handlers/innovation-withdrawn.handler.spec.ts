@@ -20,9 +20,6 @@ describe('Notifications / _handlers / innovation-withdrawn handler suite', () =>
 
     innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     innovationOwner = scenario.users.johnInnovator;
-  });
-
-  beforeEach(async () => {
 
     jest.spyOn(RecipientsService.prototype, 'usersBagToRecipients').mockResolvedValueOnce([
       DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'),
@@ -55,7 +52,7 @@ describe('Notifications / _handlers / innovation-withdrawn handler suite', () =>
     )
 
     await handler.run();
-  })
+  });
 
   it('Should send email to all affectedUsers without duplicate emails', () => {
     expect(handler.emails).toMatchObject([{

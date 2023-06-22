@@ -24,7 +24,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
   });
 
   describe('Innovation owner is found', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         name: innovation.name,
         ownerId: innovationOwner.id,
@@ -82,7 +82,7 @@ describe('Notifications / _handlers / innovation-transfer-ownership-expiration h
   describe('Innovation owner is not found', () => {
     let loggerSpy: jest.SpyInstance<void, any[]>;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
         name: innovation.name,
         ownerId: undefined,

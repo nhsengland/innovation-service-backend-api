@@ -21,7 +21,7 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
     let oldOrganisationUnit: CompleteScenarioType['users']['aliceQualifyingAccessor']['organisations']['healthOrg']['organisationUnits']['healthOrgUnit'];
     let newOrganisationUnit: CompleteScenarioType['users']['sarahQualifyingAccessor']['organisations']['healthOrg']['organisationUnits']['healthOrgAiUnit'];
 
-    beforeEach(() => {
+    beforeAll(() => {
       oldOrganisationUnit =
         scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit;
       newOrganisationUnit =
@@ -72,7 +72,7 @@ describe('Notifications / _handlers / accessor-unit-change suite', () => {
     let oldOrganisationUnit: CompleteScenarioType['users']['aliceQualifyingAccessor']['organisations']['healthOrg']['organisationUnits']['healthOrgUnit'];
     let newOrganisationUnit: CompleteScenarioType['users']['sarahQualifyingAccessor']['organisations']['healthOrg']['organisationUnits']['healthOrgAiUnit'];
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       organisation = scenario.users.sarahQualifyingAccessor.organisations.healthOrg;
       oldOrganisationUnit =
         scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit;

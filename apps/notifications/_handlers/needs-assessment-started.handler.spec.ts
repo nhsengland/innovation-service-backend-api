@@ -26,16 +26,21 @@ describe('Notifications / _handlers / needs-assessment-started handler suite', (
     assessment = innovation.assessment;
   });
 
-  beforeEach(() => {
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      name: innovation.name,
-      ownerId: innovationOwner.id,
-      ownerIdentityId: innovationOwner.identityId
-    });
-  });
+  // beforeEach(() => {
+  //   jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+  //     name: innovation.name,
+  //     ownerId: innovationOwner.id,
+  //     ownerIdentityId: innovationOwner.identityId
+  //   });
+  // });
 
   describe('Innovation owner is active', () => {
-    beforeEach(async () => {
+    beforeAll(async () => {
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
+      });
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
         .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner));
@@ -94,7 +99,12 @@ describe('Notifications / _handlers / needs-assessment-started handler suite', (
   });
 
   describe('Innovation owner is not active', () => {
-     beforeEach(async () => {
+    beforeAll(async () => {
+      jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+        name: innovation.name,
+        ownerId: innovationOwner.id,
+        ownerIdentityId: innovationOwner.identityId
+      });
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
         .mockResolvedValueOnce({ ...DTOsHelper.getRecipientUser(innovationOwner), isActive: false });
@@ -119,6 +129,5 @@ describe('Notifications / _handlers / needs-assessment-started handler suite', (
     it('Should not send inApp to innovation owner', () => {
       expect(handler.inApp).toHaveLength(0);
     });
-   
-  })
+  });
 });

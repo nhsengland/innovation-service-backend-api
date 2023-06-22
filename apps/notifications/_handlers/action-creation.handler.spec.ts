@@ -26,7 +26,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
     (userRoleType: ServiceRoleEnum) => {
       let handler: ActionCreationHandler;
 
-      beforeEach(() => {
+      beforeAll(() => {
         const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
         const action = innovation.actions.actionByAlice;
 
@@ -74,7 +74,7 @@ describe('Notifications / _handlers / action-creation suite', () => {
 
       let handler: ActionCreationHandler;
 
-      beforeEach(async () => {
+      beforeAll(async () => {
         innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
         if (userRoleType === ServiceRoleEnum.QUALIFYING_ACCESSOR) {

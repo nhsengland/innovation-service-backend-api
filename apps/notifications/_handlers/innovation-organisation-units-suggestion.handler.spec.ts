@@ -21,7 +21,7 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
     innovation = scenario.users.johnInnovator.innovations.johnInnovation;
   });
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     jest.spyOn(RecipientsService.prototype, 'innovationSharedOrganisationsWithUnits').mockResolvedValueOnce([
       {
         id: scenario.organisations.healthOrg.id,

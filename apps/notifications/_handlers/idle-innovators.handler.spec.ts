@@ -35,9 +35,7 @@ describe('Notifications / _handlers / idle-innovators handler suite', () => {
       innovationId: scenario.users.adamInnovator.innovations.adamInnovation.id,
       innovationName: scenario.users.adamInnovator.innovations.adamInnovation.name
     };
-  });
 
-  beforeEach(async () => {
     jest
       .spyOn(RecipientsService.prototype, 'incompleteInnovationRecordOwners')
       .mockResolvedValueOnce([recipients['john']!, recipients['adam']!]);

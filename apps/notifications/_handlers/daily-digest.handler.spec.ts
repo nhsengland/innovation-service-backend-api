@@ -40,9 +40,7 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
       messagesCount: randNumber(),
       supportsCount: randNumber()
     };
-  });
 
-  beforeEach(async () => {
     // mock daily digest recipients
     jest
       .spyOn(RecipientsService.prototype, 'dailyDigestUsersWithCounts')
