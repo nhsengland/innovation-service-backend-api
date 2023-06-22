@@ -3,6 +3,7 @@ import type { DataSource } from 'typeorm';
 
 import {
   InnovationCollaboratorStatusEnum,
+  InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTransferStatusEnum
@@ -19,6 +20,7 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -250,6 +252,12 @@ export class CompleteScenarioBuilder {
           .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
       ).save();
 
+      const johnInnovationExportRequestByAlice = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(aliceQualifyingAccessor.id, healthOrgUnit.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
+
       // John Innovation Files
       const johnInnovationSectionFileUploadedByJohn = await new InnovationFileBuilder(entityManager)
         .setContext({
@@ -380,6 +388,9 @@ export class CompleteScenarioBuilder {
                     ...johnInnovationThreadByJohn,
                     messages: { johnMessage: johnInnovationThreadByJohn.messages['johnMessage']! }
                   }
+                },
+                exportRequests: {
+                  requestByAlice: johnInnovationExportRequestByAlice
                 },
                 collaborators: {
                   janeCollaborator: janeCollaborator,
