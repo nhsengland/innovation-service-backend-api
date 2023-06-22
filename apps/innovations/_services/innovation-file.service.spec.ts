@@ -1,14 +1,15 @@
 import { container } from '../_config';
 
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
+import { InnovationFileEntity } from '@innovations/shared/entities';
+import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
 import { FileStorageService } from '@innovations/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import type { TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randUrl, randUuid } from '@ngneat/falso';
+import { randFileName, randNumber, randUrl, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -258,6 +259,174 @@ describe('Services / Innovation File service suite', () => {
 
           expect(result).toMatchObject(expected);
         });
+      });
+    });
+  });
+
+  describe('createFile()', () => {
+    let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
+    let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
+
+    beforeAll(() => {
+      innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      innovationOwner = scenario.users.johnInnovator;
+    });
+
+    describe('When I create a file as an innovator', () => {
+      it.each([
+        [InnovationFileContextTypeEnum.INNOVATION, undefined],
+        [InnovationFileContextTypeEnum.INNOVATION_SECTION, 'UNDERSTANDING_OF_NEEDS']
+      ])(
+        'should create a file with context type %s',
+        async (contextType: InnovationFileContextTypeEnum, contextId: string | undefined) => {
+          const expected = {
+            context: { id: contextId ?? innovation.id, type: contextType },
+            name: randFileName(),
+            file: {
+              id: randFileName(),
+              name: randFileName(),
+              size: randNumber(),
+              extension: 'pdf'
+            }
+          };
+
+          const file = await sut.createFile(
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+            innovation.id,
+            expected,
+            em
+          );
+
+          const dbFile = await em
+            .createQueryBuilder(InnovationFileEntity, 'file')
+            .where('file.id = :fileId', { fileId: file.id })
+            .getOne();
+
+          expect(file).toHaveProperty('id');
+          expect(dbFile).toHaveProperty('name', expected.name);
+          expect(dbFile).toHaveProperty('storageId', expected.file.id);
+          expect(dbFile).toHaveProperty('filename', expected.file.name);
+          expect(dbFile).toHaveProperty('filesize', expected.file.size);
+          expect(dbFile).toHaveProperty('extension', expected.file.extension);
+          expect(dbFile).toHaveProperty('contextId', expected.context.id);
+          expect(dbFile).toHaveProperty('contextType', expected.context.type);
+          expect(dbFile).toHaveProperty('createdBy', innovationOwner.id);
+        }
+      );
+    });
+
+    describe('When I create a file as an NA', () => {
+      let naDomainContext: DomainContextType;
+
+      beforeAll(() => {
+        naDomainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
+      });
+
+      it('should create a file with context type INNOVATION', async () => {
+        const expected = {
+          context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        const file = await sut.createFile(naDomainContext, innovation.id, expected, em);
+
+        const dbFile = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.id = :fileId', { fileId: file.id })
+          .getOne();
+
+        expect(file).toHaveProperty('id');
+        expect(dbFile).toHaveProperty('name', expected.name);
+        expect(dbFile).toHaveProperty('storageId', expected.file.id);
+        expect(dbFile).toHaveProperty('filename', expected.file.name);
+        expect(dbFile).toHaveProperty('filesize', expected.file.size);
+        expect(dbFile).toHaveProperty('extension', expected.file.extension);
+        expect(dbFile).toHaveProperty('contextId', expected.context.id);
+        expect(dbFile).toHaveProperty('contextType', expected.context.type);
+        expect(dbFile).toHaveProperty('createdBy', naDomainContext.id);
+      });
+
+      it('should throw error when creating a innovation section file', async () => {
+        const expected = {
+          context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() => sut.createFile(naDomainContext, innovation.id, expected, em)).rejects.toThrowError(
+          new UnprocessableEntityError(
+            InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
+          )
+        );
+      });
+    });
+
+    describe('When I create a file as an QA/A', () => {
+      let qaDomainContext: DomainContextType;
+
+      beforeAll(() => {
+        innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+        qaDomainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+      });
+
+      it('should create a file with context type INNOVATION', async () => {
+        const expected = {
+          context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        const file = await sut.createFile(qaDomainContext, innovation.id, expected, em);
+
+        const dbFile = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.id = :fileId', { fileId: file.id })
+          .getOne();
+
+        expect(file).toHaveProperty('id');
+        expect(dbFile).toHaveProperty('name', expected.name);
+        expect(dbFile).toHaveProperty('storageId', expected.file.id);
+        expect(dbFile).toHaveProperty('filename', expected.file.name);
+        expect(dbFile).toHaveProperty('filesize', expected.file.size);
+        expect(dbFile).toHaveProperty('extension', expected.file.extension);
+        expect(dbFile).toHaveProperty('contextId', expected.context.id);
+        expect(dbFile).toHaveProperty('contextType', expected.context.type);
+        expect(dbFile).toHaveProperty('createdBy', qaDomainContext.id);
+      });
+
+      it('should throw error when creating a innovation section file', async () => {
+        const expected = {
+          context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() => sut.createFile(qaDomainContext, innovation.id, expected, em)).rejects.toThrowError(
+          new UnprocessableEntityError(
+            InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
+          )
+        );
       });
     });
   });
