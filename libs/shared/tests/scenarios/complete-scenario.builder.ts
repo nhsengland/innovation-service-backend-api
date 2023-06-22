@@ -46,7 +46,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const seanNeedsAssessor = await new UserBuilder(entityManager)
-        .setName('Paul Needs Assessor')
+        .setName('Sean Needs Assessor')
         .addRole(ServiceRoleEnum.ASSESSMENT, 'assessmentRole')
         .save();
 
@@ -284,6 +284,15 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovation.id)
         .save();
 
+      const johnInnovationInnovationFileUploadedBySean = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(seanNeedsAssessor.roles['assessmentRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
       const johnInnovationInnovationFileUploadedByAlice = await new InnovationFileBuilder(entityManager)
         .setContext({
           id: johnInnovation.id,
@@ -424,6 +433,7 @@ export class CompleteScenarioBuilder {
                   sectionFileByJohn: johnInnovationSectionFileUploadedByJohn,
                   sectionFileByJane: johnInnovationSectionFileUploadedByJane,
                   innovationFileByPaul: johnInnovationInnovationFileUploadedByPaul,
+                  innovationFileBySean: johnInnovationInnovationFileUploadedBySean,
                   innovationFileByAlice: johnInnovationInnovationFileUploadedByAlice,
                   innovationFileByIngrid: johnInnovationInnovationFileUploadedByIngrid,
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
