@@ -25,23 +25,19 @@ import { TestUserType, UserBuilder } from '../builders/user.builder';
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
 export class CompleteScenarioBuilder {
-  sqlConnection: DataSource;
   scenario: CompleteScenarioType;
 
   private identityMap: Map<string, TestUserType>;
   private userMap: Map<string, TestUserType>;
 
-  constructor(sqlConnection: DataSource) {
-    this.sqlConnection = sqlConnection;
-
+  constructor() {
     // This is set in jest.setup.ts and is used to share data between tests)
-    // Comment this if not using global setup / teardown
     this.scenario = (global as any).completeScenarioData;
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  async createScenario() {
-    const res = await this.sqlConnection.transaction(async entityManager => {
+  async createScenario(sqlConnection: DataSource) {
+    const res = await sqlConnection.transaction(async entityManager => {
       // Needs assessors
 
       const paulNeedsAssessor = await new UserBuilder(entityManager)

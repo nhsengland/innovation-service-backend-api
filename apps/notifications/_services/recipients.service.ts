@@ -394,12 +394,16 @@ export class RecipientsService extends BaseService {
     };
   }
 
-  async threadInfo(threadId: string): Promise<{
+  async threadInfo(
+    threadId: string,
+    entityManager?: EntityManager
+  ): Promise<{
     id: string;
     subject: string;
     author?: RecipientType;
   }> {
-    const dbThread = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+    const dbThread = await em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .select([
         'thread.id',
@@ -411,8 +415,8 @@ export class RecipientsService extends BaseService {
         'authorUserRole.role',
         'authorUserRole.isActive'
       ])
-      .leftJoin('thread.author', 'author')
-      .leftJoin('thread.authorUserRole', 'authorUserRole')
+      .innerJoin('thread.author', 'author')
+      .innerJoin('thread.authorUserRole', 'authorUserRole')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -423,16 +427,15 @@ export class RecipientsService extends BaseService {
       id: dbThread.id,
       subject: dbThread.subject,
       // In case author has been deleted, we still want to send notifications
-      ...(dbThread.author.id &&
-        dbThread.authorUserRole.id && {
-          author: {
-            userId: dbThread.author.id,
-            identityId: dbThread.author.identityId,
-            roleId: dbThread.authorUserRole.id,
-            role: dbThread.authorUserRole.role,
-            isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
-          }
-        })
+      ...(dbThread.author.status !== UserStatusEnum.DELETED && {
+        author: {
+          userId: dbThread.author.id,
+          identityId: dbThread.author.identityId,
+          roleId: dbThread.authorUserRole.id,
+          role: dbThread.authorUserRole.role,
+          isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
+        }
+      })
     };
   }
 

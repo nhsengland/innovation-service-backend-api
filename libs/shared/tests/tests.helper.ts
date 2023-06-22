@@ -16,7 +16,7 @@ export class TestsHelper {
   private sqlConnection: DataSource;
   private em: EntityManager;
 
-  protected completeScenarioBuilder: CompleteScenarioBuilder;
+  protected readonly completeScenarioBuilder: CompleteScenarioBuilder = new CompleteScenarioBuilder();
 
   async init(): Promise<this> {
     this.sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
@@ -24,8 +24,6 @@ export class TestsHelper {
     while (!this.sqlConnection.isInitialized) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
-
-    this.completeScenarioBuilder = new CompleteScenarioBuilder(this.sqlConnection);
 
     // This is set when we're running the tests and not the global setup / teardown
     if (this.completeScenarioBuilder.getScenario()) {
@@ -48,7 +46,7 @@ export class TestsHelper {
   }
 
   async createCompleteScenario(): Promise<CompleteScenarioType> {
-    return this.completeScenarioBuilder.createScenario();
+    return this.completeScenarioBuilder.createScenario(this.sqlConnection);
   }
   getCompleteScenario(): CompleteScenarioType {
     return this.completeScenarioBuilder.getScenario();

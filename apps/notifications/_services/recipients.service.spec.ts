@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity, InnovationSupportEntity, UserEntity } from '@notifications/shared/entities';
-import { InnovationCollaboratorStatusEnum, InnovationSupportStatusEnum } from '@notifications/shared/enums';
+import { InnovationEntity, InnovationSupportEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
+import {
+  InnovationCollaboratorStatusEnum,
+  InnovationSupportStatusEnum,
+  UserStatusEnum
+} from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
-import { CompleteScenarioType, TestsHelper } from '@notifications/shared/tests';
+import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
@@ -14,15 +18,14 @@ import { SYMBOLS } from './symbols';
 describe('Notifications / _services / recipients service suite', () => {
   let sut: RecipientsService;
 
-  let testsHelper: TestsHelper;
-  let scenario: CompleteScenarioType;
+  const testsHelper = new TestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
 
   let em: EntityManager;
 
   beforeAll(async () => {
     sut = container.get<RecipientsService>(SYMBOLS.RecipientsService);
-    testsHelper = await new TestsHelper().init();
-    scenario = testsHelper.getCompleteScenario();
+    await testsHelper.init();
   });
 
   beforeEach(async () => {
@@ -444,6 +447,62 @@ describe('Notifications / _services / recipients service suite', () => {
       await expect(() => sut.actionInfoWithOwner(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND)
       );
+    });
+  });
+
+  describe('threadInfo suite', () => {
+    const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
+    it('returns the thread info including author', async () => {
+      const threadInfo = await sut.threadInfo(thread.id);
+      expect(threadInfo).toMatchObject({
+        id: thread.id,
+        subject: thread.subject,
+        author: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      });
+    });
+
+    it('throws not found if thread not found', async () => {
+      await expect(() => sut.threadInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
+      );
+    });
+
+    it('returns inactive if author is inactive', async () => {
+      await em.update(UserEntity, { id: scenario.users.aliceQualifyingAccessor.id }, { status: UserStatusEnum.LOCKED });
+      const threadInfo = await sut.threadInfo(thread.id, em);
+      expect(threadInfo).toMatchObject({
+        id: thread.id,
+        subject: thread.subject,
+        author: { ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'), isActive: false }
+      });
+    });
+
+    it('returns inactive if author role is inactive', async () => {
+      await em.update(
+        UserRoleEntity,
+        { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        { isActive: false }
+      );
+      const threadInfo = await sut.threadInfo(thread.id, em);
+      expect(threadInfo).toMatchObject({
+        id: thread.id,
+        subject: thread.subject,
+        author: { ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'), isActive: false }
+      });
+    });
+
+    it("doesn't return author if author is deleted", async () => {
+      await em.update(
+        UserEntity,
+        { id: scenario.users.aliceQualifyingAccessor.id },
+        { status: UserStatusEnum.DELETED }
+      );
+      const threadInfo = await sut.threadInfo(thread.id, em);
+      expect(threadInfo).toMatchObject({
+        id: thread.id,
+        subject: thread.subject
+      });
+      expect(threadInfo.author).toBeUndefined();
     });
   });
 
