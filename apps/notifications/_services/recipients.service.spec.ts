@@ -7,6 +7,7 @@ import {
   UserStatusEnum
 } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
+import { DomainInnovationsService } from '@notifications/shared/services';
 import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
@@ -503,6 +504,78 @@ describe('Notifications / _services / recipients service suite', () => {
         subject: thread.subject
       });
       expect(threadInfo.author).toBeUndefined();
+    });
+  });
+
+  describe('threadIntervenientRecipients suite', () => {
+    const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
+    // Mock domain innovation service threadIntervenients and default reply
+    const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadIntervenients').mockResolvedValue([
+      {
+        id: scenario.users.johnInnovator.id,
+        identityId: scenario.users.johnInnovator.identityId,
+        name: scenario.users.johnInnovator.name,
+        locked: false,
+        isOwner: true,
+        userRole: {
+          id: scenario.users.johnInnovator.roles.innovatorRole.id,
+          role: scenario.users.johnInnovator.roles.innovatorRole.role
+        },
+        organisationUnit: null
+      },
+      {
+        id: scenario.users.paulNeedsAssessor.id,
+        identityId: scenario.users.paulNeedsAssessor.identityId,
+        name: scenario.users.paulNeedsAssessor.name,
+        locked: false,
+        isOwner: true,
+        userRole: {
+          id: scenario.users.paulNeedsAssessor.roles.assessmentRole.id,
+          role: scenario.users.paulNeedsAssessor.roles.assessmentRole.role
+        },
+        organisationUnit: null
+      },
+      {
+        id: scenario.users.aliceQualifyingAccessor.id,
+        identityId: scenario.users.aliceQualifyingAccessor.identityId,
+        name: scenario.users.aliceQualifyingAccessor.name,
+        locked: false,
+        isOwner: true,
+        userRole: {
+          id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+          role: scenario.users.aliceQualifyingAccessor.roles.qaRole.role
+        },
+        organisationUnit: null
+      }
+    ]);
+
+    afterEach(() => {
+      // clear statistics
+      mock.mockReset();
+    });
+
+    afterAll(() => {
+      mock.mockRestore();
+    });
+
+    it('fetches thread intervenients from domain services and maps to recipients type', async () => {
+      const res = await sut.threadIntervenientRecipients(thread.id);
+
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(thread.id, false);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      ]);
+    });
+
+    it('throws an error if thread not found', async () => {
+      mock.mockRejectedValueOnce(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
+
+      await expect(sut.threadIntervenientRecipients(thread.id)).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
+      );
     });
   });
 
