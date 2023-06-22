@@ -377,6 +377,76 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('userInnovationsWithAssignedRecipients suite', () => {
+    it('should list all user innovations with assigned recipients', async () => {
+      const res = await sut.userInnovationsWithAssignedRecipients(scenario.users.ottoOctaviusInnovator.id);
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        {
+          id: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.id,
+          name: scenario.users.ottoOctaviusInnovator.innovations.chestHarnessInnovation.name,
+          assignedUsers: [
+            DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+            DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
+          ]
+        },
+        {
+          id: scenario.users.ottoOctaviusInnovator.innovations.tentaclesInnovation.id,
+          name: scenario.users.ottoOctaviusInnovator.innovations.tentaclesInnovation.name,
+          assignedUsers: [DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')]
+        }
+      ]);
+    });
+
+    it('should return empty array if no assigned recipients', async () => {
+      const res = await sut.userInnovationsWithAssignedRecipients(scenario.users.sebastiaoDeletedInnovator.id);
+      expect(res).toHaveLength(0);
+    });
+  });
+
+  describe('actionInfoWithOwner suite', () => {
+    it('Should get action info without organisationUnit for Assessment Team', async () => {
+      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const dbAction = dbInnovation.actions.actionByPaul;
+
+      const actionInfo = await sut.actionInfoWithOwner(dbAction.id);
+
+      expect(actionInfo).toMatchObject({
+        id: dbAction.id,
+        displayId: dbAction.displayId,
+        status: dbAction.status,
+        owner: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
+      });
+      expect(actionInfo.organisationUnit).toBeUndefined();
+    });
+
+    it('Should get action info with organisationUnit for supporting organisation', async () => {
+      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const dbAction = dbInnovation.actions.actionByAlice;
+
+      const actionInfo = await sut.actionInfoWithOwner(dbAction.id);
+
+      expect(actionInfo).toMatchObject({
+        id: dbAction.id,
+        displayId: dbAction.displayId,
+        status: dbAction.status,
+        owner: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        organisationUnit: {
+          id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          acronym:
+            scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+        }
+      });
+    });
+
+    it('Should fail to get non-existent action info', async () => {
+      await expect(() => sut.actionInfoWithOwner(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND)
+      );
+    });
+  });
+
   /*
   describe('getUsersRecipients suite', () => {
     it('Should get a recipient when passed a valid user', async () => {
@@ -433,27 +503,7 @@ describe('Notifications / _services / recipients service suite', () => {
   });
 
 
-  describe('actionInfoWithOwner suite', () => {
-    it('Should get action info', async () => {
-      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const dbAction = dbInnovation.actions.actionByAlice;
-
-      const actionInfo = await sut.actionInfoWithOwner(dbAction.id);
-
-      expect(actionInfo).toMatchObject({
-        id: dbAction.id,
-        displayId: dbAction.displayId,
-        status: dbAction.status,
-        owner: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
-      });
-    });
-
-    it('Should fail to get non-existent action info', async () => {
-      await expect(() => sut.actionInfoWithOwner(randUuid())).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND)
-      );
-    });
-  });
+  
 
   describe('getInnovationActiveCollaborators suite', () => {
     it('Should get collaborators', async () => {

@@ -12,6 +12,7 @@ import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
+import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
@@ -20,7 +21,6 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
-import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -343,6 +343,34 @@ export class CompleteScenarioBuilder {
         .setInnovation(adamInnovation.id)
         .save();
 
+      // Otto Innovator specs:
+      // This innovator has more than one innovation being supported
+      // 2 innovations currently being supported
+      const ottoOctaviusInnovator = await new UserBuilder(entityManager)
+        .setName('Otto Octavius')
+        .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
+        .save();
+
+      const chestHarnessInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(ottoOctaviusInnovator.id)
+        .save();
+
+      const chestHarnessInnovationSupport = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(chestHarnessInnovation.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .save();
+
+      const tentaclesInnovation = await new InnovationBuilder(entityManager).setOwner(ottoOctaviusInnovator.id).save();
+
+      const tentaclesInnovationSupport = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(tentaclesInnovation.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([jamieMadroxAccessor])
+        .save();
+
       return {
         users: {
           // Innovators
@@ -423,6 +451,20 @@ export class CompleteScenarioBuilder {
           sebastiaoDeletedInnovator: {
             ...sebastiaoDeletedInnovator,
             roles: { innovatorRole: sebastiaoDeletedInnovator.roles['innovatorRole']! }
+          },
+          ottoOctaviusInnovator: {
+            ...ottoOctaviusInnovator,
+            roles: { innovatorRole: ottoOctaviusInnovator.roles['innovatorRole']! },
+            innovations: {
+              chestHarnessInnovation: {
+                ...chestHarnessInnovation,
+                supports: { chestHarnessInnovationSupport: chestHarnessInnovationSupport }
+              },
+              tentaclesInnovation: {
+                ...tentaclesInnovation,
+                supports: { tentaclesInnovationSupport: tentaclesInnovationSupport }
+              }
+            }
           },
           // Accessors
           aliceQualifyingAccessor: {

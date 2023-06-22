@@ -282,33 +282,32 @@ export class RecipientsService extends BaseService {
       assignedUsers: RecipientType[];
     }[]
   > {
-    const dbInnovations =
-      (await this.sqlConnection
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select([
-          'innovation.id',
-          'innovation.name',
-          'support.id',
-          'organisationUnit.id',
-          'organisationUnitUser.id',
-          'organisationUser.id',
-          'user.id',
-          'user.identityId',
-          'user.status',
-          'serviceRoles.id',
-          'serviceRoles.role',
-          'serviceRoles.isActive'
-        ])
-        .innerJoin('innovation.innovationSupports', 'support')
-        .innerJoin('support.organisationUnit', 'organisationUnit')
-        .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
-        .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
-        .innerJoin('organisationUser.user', 'user')
-        .innerJoin('user.serviceRoles', 'serviceRoles')
-        .where('innovation.owner_id = :userId', { userId })
-        .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
-        .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
-        .getMany()) || [];
+    const dbInnovations = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select([
+        'innovation.id',
+        'innovation.name',
+        'support.id',
+        'organisationUnit.id',
+        'organisationUnitUser.id',
+        'organisationUser.id',
+        'user.id',
+        'user.identityId',
+        'user.status',
+        'serviceRoles.id',
+        'serviceRoles.role',
+        'serviceRoles.isActive'
+      ])
+      .innerJoin('innovation.innovationSupports', 'support')
+      .innerJoin('support.organisationUnit', 'organisationUnit')
+      .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
+      .innerJoin('organisationUser.user', 'user')
+      .innerJoin('user.serviceRoles', 'serviceRoles')
+      .where('innovation.owner_id = :userId', { userId })
+      .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .getMany();
 
     const res: Awaited<ReturnType<RecipientsService['userInnovationsWithAssignedRecipients']>> = [];
     for (const innovation of dbInnovations) {
@@ -357,7 +356,6 @@ export class RecipientsService extends BaseService {
         'role.id',
         'role.role',
         'role.isActive',
-        'support.id',
         'unit.id',
         'unit.name',
         'unit.acronym'
@@ -366,8 +364,7 @@ export class RecipientsService extends BaseService {
       // think it's too much of an error to not send notifications in those cases
       .innerJoin('action.createdByUser', 'user')
       .innerJoin('action.createdByUserRole', 'role')
-      .leftJoin('action.innovationSupport', 'support')
-      .leftJoin('support.organisationUnit', 'unit')
+      .leftJoin('role.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
@@ -380,11 +377,11 @@ export class RecipientsService extends BaseService {
       id: dbAction.id,
       displayId: dbAction.displayId,
       status: dbAction.status,
-      ...(dbAction.innovationSupport && {
+      ...(dbAction.createdByUserRole.organisationUnit && {
         organisationUnit: {
-          id: dbAction.innovationSupport.organisationUnit.id,
-          name: dbAction.innovationSupport.organisationUnit.name,
-          acronym: dbAction.innovationSupport.organisationUnit.acronym
+          id: dbAction.createdByUserRole.organisationUnit.id,
+          name: dbAction.createdByUserRole.organisationUnit.name,
+          acronym: dbAction.createdByUserRole.organisationUnit.acronym
         }
       }),
       owner: {
