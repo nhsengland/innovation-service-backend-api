@@ -183,7 +183,7 @@ describe('Services / Innovation File service suite', () => {
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
-          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
+          const data: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
             id: file.id,
             storageId: file.storageId,
             name: file.name,
@@ -207,7 +207,7 @@ describe('Services / Innovation File service suite', () => {
             canDelete: fileCreatedBy.canDelete
           };
 
-          expect(result).toMatchObject(expected);
+          expect(result).toMatchObject(data);
         });
       }
     );
@@ -237,7 +237,7 @@ describe('Services / Innovation File service suite', () => {
 
           const result = await sut.getFileInfo(domainContext, innovation.id, file.id, em);
 
-          const expected: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
+          const data: Awaited<ReturnType<InnovationFileService['getFileInfo']>> = {
             id: file.id,
             storageId: file.storageId,
             name: file.name,
@@ -257,7 +257,7 @@ describe('Services / Innovation File service suite', () => {
             canDelete: true
           };
 
-          expect(result).toMatchObject(expected);
+          expect(result).toMatchObject(data);
         });
       });
     });
@@ -279,7 +279,7 @@ describe('Services / Innovation File service suite', () => {
       ])(
         'should create a file with context type %s',
         async (contextType: InnovationFileContextTypeEnum, contextId: string | undefined) => {
-          const expected = {
+          const data = {
             context: { id: contextId ?? innovation.id, type: contextType },
             name: randFileName(),
             file: {
@@ -293,7 +293,7 @@ describe('Services / Innovation File service suite', () => {
           const file = await sut.createFile(
             DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
-            expected,
+            data,
             em
           );
 
@@ -303,14 +303,16 @@ describe('Services / Innovation File service suite', () => {
             .getOne();
 
           expect(file).toHaveProperty('id');
-          expect(dbFile).toHaveProperty('name', expected.name);
-          expect(dbFile).toHaveProperty('storageId', expected.file.id);
-          expect(dbFile).toHaveProperty('filename', expected.file.name);
-          expect(dbFile).toHaveProperty('filesize', expected.file.size);
-          expect(dbFile).toHaveProperty('extension', expected.file.extension);
-          expect(dbFile).toHaveProperty('contextId', expected.context.id);
-          expect(dbFile).toHaveProperty('contextType', expected.context.type);
-          expect(dbFile).toHaveProperty('createdBy', innovationOwner.id);
+          expect(dbFile).toMatchObject({
+            name: data.name,
+            storageId: data.file.id,
+            filename: data.file.name,
+            filesize: data.file.size,
+            extension: data.file.extension,
+            contextId: data.context.id,
+            contextType: data.context.type,
+            createdBy: innovationOwner.id
+          });
         }
       );
     });
@@ -323,7 +325,7 @@ describe('Services / Innovation File service suite', () => {
       });
 
       it('should create a file with context type INNOVATION', async () => {
-        const expected = {
+        const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
           file: {
@@ -334,7 +336,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        const file = await sut.createFile(naDomainContext, innovation.id, expected, em);
+        const file = await sut.createFile(naDomainContext, innovation.id, data, em);
 
         const dbFile = await em
           .createQueryBuilder(InnovationFileEntity, 'file')
@@ -342,18 +344,20 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(file).toHaveProperty('id');
-        expect(dbFile).toHaveProperty('name', expected.name);
-        expect(dbFile).toHaveProperty('storageId', expected.file.id);
-        expect(dbFile).toHaveProperty('filename', expected.file.name);
-        expect(dbFile).toHaveProperty('filesize', expected.file.size);
-        expect(dbFile).toHaveProperty('extension', expected.file.extension);
-        expect(dbFile).toHaveProperty('contextId', expected.context.id);
-        expect(dbFile).toHaveProperty('contextType', expected.context.type);
-        expect(dbFile).toHaveProperty('createdBy', naDomainContext.id);
+        expect(dbFile).toMatchObject({
+          name: data.name,
+          storageId: data.file.id,
+          filename: data.file.name,
+          filesize: data.file.size,
+          extension: data.file.extension,
+          contextId: data.context.id,
+          contextType: data.context.type,
+          createdBy: naDomainContext.id
+        });
       });
 
-      it('should throw error when creating an innovation section file', async () => {
-        const expected = {
+      it('should throw error when creating file with context type INNOVATION_SECTION', async () => {
+        const data = {
           context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
           file: {
@@ -364,7 +368,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() => sut.createFile(naDomainContext, innovation.id, expected, em)).rejects.toThrowError(
+        await expect(() => sut.createFile(naDomainContext, innovation.id, data, em)).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -381,7 +385,7 @@ describe('Services / Innovation File service suite', () => {
       });
 
       it('should create a file with context type INNOVATION', async () => {
-        const expected = {
+        const data = {
           context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
           name: randFileName(),
           file: {
@@ -392,7 +396,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        const file = await sut.createFile(qaDomainContext, innovation.id, expected, em);
+        const file = await sut.createFile(qaDomainContext, innovation.id, data, em);
 
         const dbFile = await em
           .createQueryBuilder(InnovationFileEntity, 'file')
@@ -400,18 +404,20 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(file).toHaveProperty('id');
-        expect(dbFile).toHaveProperty('name', expected.name);
-        expect(dbFile).toHaveProperty('storageId', expected.file.id);
-        expect(dbFile).toHaveProperty('filename', expected.file.name);
-        expect(dbFile).toHaveProperty('filesize', expected.file.size);
-        expect(dbFile).toHaveProperty('extension', expected.file.extension);
-        expect(dbFile).toHaveProperty('contextId', expected.context.id);
-        expect(dbFile).toHaveProperty('contextType', expected.context.type);
-        expect(dbFile).toHaveProperty('createdBy', qaDomainContext.id);
+        expect(dbFile).toMatchObject({
+          name: data.name,
+          storageId: data.file.id,
+          filename: data.file.name,
+          filesize: data.file.size,
+          extension: data.file.extension,
+          contextId: data.context.id,
+          contextType: data.context.type,
+          createdBy: qaDomainContext.id
+        });
       });
 
-      it('should throw error when creating an innovation section file', async () => {
-        const expected = {
+      it('should throw error when creating file with context type INNOVATION_SECTION', async () => {
+        const data = {
           context: { id: 'TESTING_WITH_USERS', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
           name: randFileName(),
           file: {
@@ -422,7 +428,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() => sut.createFile(qaDomainContext, innovation.id, expected, em)).rejects.toThrowError(
+        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, em)).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
