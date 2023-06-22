@@ -7,11 +7,9 @@ import {
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { container, EmailTypeEnum, ENV } from '../_config';
+import { EmailTypeEnum, ENV } from '../_config';
 
 import type { Context } from '@azure/functions';
-import type { DomainService } from '@notifications/shared/services';
-import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
@@ -22,7 +20,6 @@ export class InnovationSubmitedHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ASSESSMENT_USERS,
   Record<string, never>
 > {
-  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   constructor(
     requestUser: DomainContextType,
@@ -40,8 +37,7 @@ export class InnovationSubmitedHandler extends BaseHandler<
       this.requestUser.id,
       ServiceRoleEnum.INNOVATOR
     );
-    await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
-
+    
     const collaborators = (
       await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId)
     ).filter(c => c !== this.requestUser.id);
