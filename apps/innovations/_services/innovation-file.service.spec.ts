@@ -561,8 +561,11 @@ describe('Services / Innovation File service suite', () => {
       const fileUploadUrl = await sut.getFileUploadUrl(name);
 
       expect(mock).toHaveBeenCalledTimes(1);
-      expect(fileUploadUrl.id).toBeDefined();
-      expect(fileUploadUrl).toMatchObject({ name, url });
+      expect(fileUploadUrl).toMatchObject({
+        id: expect.any(String),
+        name,
+        url
+      });
     });
   });
 
@@ -581,8 +584,7 @@ describe('Services / Innovation File service suite', () => {
         em
       );
 
-      expect(file.id).toBeDefined();
-      expect(file).toMatchObject({ displayFileName: filename, url });
+      expect(file).toMatchObject({ id: expect.any(String), displayFileName: filename, url });
     });
   });
 });
