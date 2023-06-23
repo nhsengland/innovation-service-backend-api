@@ -14,7 +14,7 @@ import type { TestFileType } from '@innovations/shared/tests/builders/innovation
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randFileName, randNumber, randUrl, randUuid } from '@ngneat/falso';
+import { randFileName, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -552,20 +552,39 @@ describe('Services / Innovation File service suite', () => {
     });
   });
 
-  // describe('uploadInnovationFile', () => {
-  //   it('should updload an innovation file', async () => {
-  //     const filename = randText();
+  describe('getFileUploadUrl', () => {
+    it('should return the file upload url', async () => {
+      const name = randFileName();
+      const url = randUrl();
+      const mock = jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
 
-  //     const file = await sut.uploadInnovationFile(
-  //       testData.baseUsers.innovator.id,
-  //       testData.innovation.id,
-  //       filename,
-  //       randText(),
-  //       em
-  //     );
+      const fileUploadUrl = await sut.getFileUploadUrl(name);
 
-  //     expect(file.id).toBeDefined();
-  //     expect(file.displayFileName).toBe(filename);
-  //   });
-  // });
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(fileUploadUrl).toMatchObject({
+        id: expect.any(String),
+        name,
+        url
+      });
+    });
+  });
+
+  // This will be removed - its currently being used by evidences
+  describe('uploadInnovationFile', () => {
+    it('should updload an innovation file', async () => {
+      const filename = randFileName();
+      const url = randUrl();
+      jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
+
+      const file = await sut.uploadInnovationFile(
+        scenario.users.johnInnovator.id,
+        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        filename,
+        randText(),
+        em
+      );
+
+      expect(file).toMatchObject({ id: expect.any(String), displayFileName: filename, url });
+    });
+  });
 });
