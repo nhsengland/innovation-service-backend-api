@@ -2,7 +2,12 @@ import { container } from '../_config';
 
 import { InnovationFileEntity } from '@innovations/shared/entities';
 import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '@innovations/shared/errors';
+import {
+  ForbiddenError,
+  InnovationErrorsEnum,
+  NotFoundError,
+  UnprocessableEntityError
+} from '@innovations/shared/errors';
 import { FileStorageService } from '@innovations/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import type { TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
@@ -15,16 +20,15 @@ import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
 
 describe('Services / Innovation File service suite', () => {
-  let testsHelper: TestsHelper;
-  let scenario: CompleteScenarioType;
+  const testsHelper = new TestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
 
   let sut: InnovationFileService;
   let em: EntityManager;
 
   beforeAll(async () => {
     sut = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
-    testsHelper = await new TestsHelper().init();
-    scenario = testsHelper.getCompleteScenario();
+    await testsHelper.init();
   });
 
   beforeEach(async () => {
@@ -434,6 +438,117 @@ describe('Services / Innovation File service suite', () => {
           )
         );
       });
+    });
+  });
+
+  describe('deleteFile()', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    describe.each([
+      ['innovation owner', DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')],
+      ['innovation collaborator', DTOsHelper.getUserRequestContext(scenario.users.janeInnovator, 'innovatorRole')]
+    ])('When I delete a file as an %s', (_: string, domainContext: DomainContextType) => {
+      it.each([
+        ['the owner', innovation.files.sectionFileByJohn.id],
+        ['a collaborator', innovation.files.sectionFileByJane.id]
+      ])('should be able to delete a file created by %s', async (_: string, fileId: string) => {
+        await sut.deleteFile(domainContext, fileId, em);
+
+        const dbFile = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .withDeleted()
+          .where('file.id = :fileId', { fileId })
+          .getOne();
+
+        expect(dbFile?.deletedAt).toBeTruthy();
+      });
+
+      it.each([
+        ['NA', innovation.files.innovationFileByPaul.id],
+        ['QA', innovation.files.innovationFileByAlice.id],
+        ['A', innovation.files.innovationFileByIngrid.id]
+      ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
+        await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrowError(
+          new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
+        );
+      });
+    });
+
+    describe.each([
+      ['QA', DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole')],
+      ['A', DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole')]
+    ])('When I delete a file as an %s', (_: string, domainContext: DomainContextType) => {
+      it.each([
+        ['myself', innovation.files.innovationFileByAlice.id],
+        ['an QA/A from the same unit', innovation.files.innovationFileByIngrid.id]
+      ])('should be able to delete a file created by %s', async (_: string, fileId: string) => {
+        await sut.deleteFile(domainContext, fileId, em);
+
+        const dbFile = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .withDeleted()
+          .where('file.id = :fileId', { fileId })
+          .getOne();
+
+        expect(dbFile?.deletedAt).toBeTruthy();
+      });
+
+      it.each([
+        ['QA/A from other unit', innovation.files.innovationFileByJamieWithAiRole.id],
+        ['innovation owner', innovation.files.sectionFileByJohn.id],
+        ['innovation collaborator', innovation.files.sectionFileByJane.id],
+        ['NA', innovation.files.innovationFileByPaul.id]
+      ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
+        await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrowError(
+          new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
+        );
+      });
+    });
+
+    describe('When I delete a file as an NA', () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole');
+
+      it.each([
+        ['myself', innovation.files.innovationFileByPaul.id],
+        ['another NA', innovation.files.innovationFileBySean.id]
+      ])('should be able to delete a file created by %s', async (_: string, fileId: string) => {
+        await sut.deleteFile(domainContext, fileId, em);
+
+        const dbFile = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .withDeleted()
+          .where('file.id = :fileId', { fileId })
+          .getOne();
+
+        expect(dbFile?.deletedAt).toBeTruthy();
+      });
+
+      it.each([
+        ['QA', innovation.files.innovationFileByAlice.id],
+        ['A', innovation.files.innovationFileByIngrid.id],
+        ['innovation owner', innovation.files.sectionFileByJohn.id],
+        ['innovation collaborator', innovation.files.sectionFileByJane.id]
+      ])('should throw an error if the file was created by a %s', async (_: string, fileId: string) => {
+        await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrowError(
+          new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
+        );
+      });
+    });
+
+    it('should throw an error if the file doesnt exist', async () => {
+      await expect(() =>
+        sut.deleteFile(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'), randUuid(), em)
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_FILE_NOT_FOUND));
+    });
+
+    it('should throw an error if an admin tries to delete a file', async () => {
+      await expect(() =>
+        sut.deleteFile(
+          DTOsHelper.getUserRequestContext(scenario.users.allMighty, 'admin'),
+          innovation.files.sectionFileByJohn.id,
+          em
+        )
+      ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE));
     });
   });
 
