@@ -36,11 +36,10 @@ export class TestsHelper {
   async cleanUp(): Promise<void> {
     const query = this.sqlConnection.createQueryRunner();
     await query.query(`
-      IF OBJECTPROPERTY(OBJECT_ID('EmpSalary'), 'TableTemporalType') = 2 ALTER TABLE EmpSalary SET (SYSTEM_VERSIONING = OFF)
       EXEC sp_MSForEachTable 'IF OBJECTPROPERTY(OBJECT_ID(''?''), ''TableTemporalType'') = 2 ALTER TABLE ? SET (SYSTEM_VERSIONING = OFF)';
-      EXEC sp_MSForEachTable "ALTER TABLE ? NOCHECK CONSTRAINT all"
-      EXEC sp_MSForEachTable "SET QUOTED_IDENTIFIER ON; DELETE FROM ?"
-      EXEC sp_MSForEachTable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"
+      EXEC sp_MSForEachTable 'ALTER TABLE ? NOCHECK CONSTRAINT all'
+      EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; IF OBJECT_ID(''?'') NOT IN (ISNULL(OBJECT_ID(''[dbo].[Migrations]''),0)) DELETE FROM ?'
+      EXEC sp_MSForEachTable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'
       EXEC sp_MSForEachTable 'IF OBJECTPROPERTY(OBJECT_ID(''?''), ''TableTemporalType'') = 2 ALTER TABLE ? SET (SYSTEM_VERSIONING = ON)';
     `);
   }
