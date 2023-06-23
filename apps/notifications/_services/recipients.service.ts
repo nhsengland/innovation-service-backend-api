@@ -492,20 +492,20 @@ export class RecipientsService extends BaseService {
   }> {
     const dbCollaborator = await this.sqlConnection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.id', 'collaborator.email', 'collaborator.status', 'collaborator.user_id'])
+      .select(['collaborator.id', 'collaborator.email', 'collaborator.status', 'user.id'])
+      .leftJoin('collaborator.user', 'user')
       .where('collaborator.id = :collaboratorId', { collaboratorId: innovationCollaboratorId })
-      // Using getRaw to avoid needless join with user which might have been deleted and create false results
-      .getRawOne();
+      .getOne();
 
     if (!dbCollaborator) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
     return {
-      collaboratorId: dbCollaborator.collaborator_id,
-      email: dbCollaborator.collaborator_email,
-      status: dbCollaborator.collaborator_status,
-      userId: dbCollaborator.user_id
+      collaboratorId: dbCollaborator.id,
+      email: dbCollaborator.email,
+      status: dbCollaborator.status,
+      userId: dbCollaborator.user?.id ?? null
     };
   }
 

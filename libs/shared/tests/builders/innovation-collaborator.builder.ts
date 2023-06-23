@@ -1,7 +1,6 @@
-import { randEmail, randPastDate } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
+import { randEmail } from '@ngneat/falso';
+import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
-import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserEntity } from '../../entities/user/user.entity';
 import { InnovationCollaboratorStatusEnum } from '../../enums/innovation.enums';
 import { BaseBuilder } from './base.builder';
@@ -13,16 +12,16 @@ export type TestCollaboratorType = {
 };
 
 export class InnovationCollaboratorBuilder extends BaseBuilder {
-  private collaborator: InnovationCollaboratorEntity;
+  private collaborator: DeepPartial<InnovationCollaboratorEntity>;
 
   constructor(entityManager: EntityManager) {
     super(entityManager);
 
-    this.collaborator = InnovationCollaboratorEntity.new({
+    this.collaborator = {
       status: InnovationCollaboratorStatusEnum.ACTIVE,
       email: randEmail(),
-      invitedAt: randPastDate()
-    });
+      invitedAt: new Date()
+    };
   }
 
   setUser(userId: string): this {
@@ -41,7 +40,12 @@ export class InnovationCollaboratorBuilder extends BaseBuilder {
   }
 
   setInnovation(innovationId: string): this {
-    this.collaborator.innovation = InnovationEntity.new({ id: innovationId });
+    this.collaborator.innovation = { id: innovationId };
+    return this;
+  }
+
+  setInvitedAt(date: Date): this {
+    this.collaborator.invitedAt = date;
     return this;
   }
 

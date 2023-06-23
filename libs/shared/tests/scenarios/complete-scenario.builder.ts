@@ -345,7 +345,7 @@ export class CompleteScenarioBuilder {
       const adamInnovationTransferToJane = await new InnovationTransferBuilder(entityManager)
         .setStatus(InnovationTransferStatusEnum.PENDING)
         .setEmail(janeInnovator.email)
-        .setInnovation(adamInnovation.id)
+        .setInnovation(adamInnovation)
         .save();
 
       // Otto Innovator specs:

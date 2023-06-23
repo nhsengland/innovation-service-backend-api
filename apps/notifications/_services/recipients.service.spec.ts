@@ -453,7 +453,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   describe('threadInfo suite', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
-    it('returns the thread info including author', async () => {
+    it('Returns the thread info including author', async () => {
       const threadInfo = await sut.threadInfo(thread.id);
       expect(threadInfo).toMatchObject({
         id: thread.id,
@@ -462,13 +462,13 @@ describe('Notifications / _services / recipients service suite', () => {
       });
     });
 
-    it('throws not found if thread not found', async () => {
+    it('Throws error not found if thread not found', async () => {
       await expect(() => sut.threadInfo(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
       );
     });
 
-    it('returns inactive if author is inactive', async () => {
+    it('Returns recipient inactive if author is inactive', async () => {
       await em.update(UserEntity, { id: scenario.users.aliceQualifyingAccessor.id }, { status: UserStatusEnum.LOCKED });
       const threadInfo = await sut.threadInfo(thread.id, em);
       expect(threadInfo).toMatchObject({
@@ -478,7 +478,7 @@ describe('Notifications / _services / recipients service suite', () => {
       });
     });
 
-    it('returns inactive if author role is inactive', async () => {
+    it('Returns recipient inactive if author role is inactive', async () => {
       await em.update(
         UserRoleEntity,
         { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
@@ -492,7 +492,7 @@ describe('Notifications / _services / recipients service suite', () => {
       });
     });
 
-    it("doesn't return author if author is deleted", async () => {
+    it("Doesn't return author if author is deleted", async () => {
       await em.update(
         UserEntity,
         { id: scenario.users.aliceQualifyingAccessor.id },
@@ -558,7 +558,7 @@ describe('Notifications / _services / recipients service suite', () => {
       mock.mockRestore();
     });
 
-    it('fetches thread intervenients from domain services and maps to recipients type', async () => {
+    it('Fetches thread intervenients from domain services and maps to recipients type', async () => {
       const res = await sut.threadIntervenientRecipients(thread.id);
 
       expect(mock).toHaveBeenCalledTimes(1);
@@ -570,11 +570,61 @@ describe('Notifications / _services / recipients service suite', () => {
       ]);
     });
 
-    it('throws an error if thread not found', async () => {
+    it('Throws an error if thread not found', async () => {
       mock.mockRejectedValueOnce(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
 
       await expect(sut.threadIntervenientRecipients(thread.id)).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('innovationTransferInfoWithOwner suite', () => {
+    it('Returns the innovation transfer with owner and email', async () => {
+      const transfer = scenario.users.adamInnovator.innovations.adamInnovation.transfer;
+      const res = await sut.innovationTransferInfoWithOwner(transfer.id);
+      expect(res).toMatchObject({
+        id: transfer.id,
+        status: transfer.status,
+        email: transfer.email,
+        ownerId: scenario.users.adamInnovator.id
+      });
+    });
+
+    it('Throws an error if transfer not found', async () => {
+      await expect(() => sut.innovationTransferInfoWithOwner(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_TRANSFER_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('innovationCollaborationInfo suite', () => {
+    it('Returns the innovation collaboration info for an external collaborator', async () => {
+      const collaboration =
+        scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator;
+      const res = await sut.innovationCollaborationInfo(collaboration.id);
+      expect(res).toMatchObject({
+        collaboratorId: collaboration.id,
+        status: collaboration.status,
+        email: collaboration.email,
+        userId: null
+      });
+    });
+
+    it('Returns the innovation collaboration info for a collaborator', async () => {
+      const collaboration = scenario.users.johnInnovator.innovations.johnInnovation.collaborators.janeCollaborator;
+      const res = await sut.innovationCollaborationInfo(collaboration.id);
+      expect(res).toMatchObject({
+        collaboratorId: collaboration.id,
+        status: collaboration.status,
+        email: collaboration.email,
+        userId: scenario.users.janeInnovator.id
+      });
+    });
+
+    it('Throws an error if collaboration not found', async () => {
+      await expect(() => sut.innovationCollaborationInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND)
       );
     });
   });

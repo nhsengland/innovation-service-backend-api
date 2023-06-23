@@ -1,8 +1,9 @@
-import type { DeepPartial, EntityManager } from 'typeorm';
-import { BaseBuilder } from './base.builder';
-import { InnovationTransferStatusEnum } from '../../enums/innovation.enums';
-import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
 import { randEmail } from '@ngneat/falso';
+import type { DeepPartial, EntityManager } from 'typeorm';
+import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
+import { InnovationTransferStatusEnum } from '../../enums/innovation.enums';
+import { BaseBuilder } from './base.builder';
+import type { TestInnovationType } from './innovation.builder';
 
 export type TestInnovationTransferType = {
   id: string;
@@ -14,20 +15,20 @@ export type TestInnovationTransferType = {
 };
 
 export class InnovationTransferBuilder extends BaseBuilder {
-
-  private transfer : DeepPartial<InnovationTransferEntity> = {
+  private transfer: DeepPartial<InnovationTransferEntity> = {
     status: InnovationTransferStatusEnum.PENDING,
     email: randEmail(),
     emailCount: 1,
-    ownerToCollaborator: false,
+    ownerToCollaborator: false
   };
 
-  constructor(entityManager: EntityManager){
+  constructor(entityManager: EntityManager) {
     super(entityManager);
   }
 
-  setInnovation(innovationId: string): this {
-    this.transfer.innovation = { id: innovationId };
+  setInnovation(innovation: TestInnovationType): this {
+    this.transfer.innovation = { id: innovation.id };
+    this.transfer.createdBy = innovation.ownerId;
     return this;
   }
 
@@ -51,11 +52,9 @@ export class InnovationTransferBuilder extends BaseBuilder {
     this.transfer.ownerToCollaborator = true;
     return this;
   }
-  
+
   async save(): Promise<TestInnovationTransferType> {
-    const savedTransfer = await this.getEntityManager()
-      .getRepository(InnovationTransferEntity)
-      .save(this.transfer);
+    const savedTransfer = await this.getEntityManager().getRepository(InnovationTransferEntity).save(this.transfer);
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationTransferEntity, 'transfer')
