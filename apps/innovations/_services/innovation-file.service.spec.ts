@@ -8,13 +8,13 @@ import {
   NotFoundError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { FileStorageService } from '@innovations/shared/services';
+import { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import type { TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randFileName, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
+import { randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -38,6 +38,400 @@ describe('Services / Innovation File service suite', () => {
   afterEach(async () => {
     jest.restoreAllMocks();
     await testsHelper.releaseQueryRunnerEntityManager();
+  });
+
+  describe('getFilesList', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    beforeEach(() => {
+      jest.spyOn(IdentityProviderService.prototype, 'getUsersMap').mockResolvedValue(
+        new Map([
+          [
+            scenario.users.paulNeedsAssessor.identityId,
+            DTOsHelper.getIdentityUserInfo(scenario.users.paulNeedsAssessor)
+          ],
+          [
+            scenario.users.seanNeedsAssessor.identityId,
+            DTOsHelper.getIdentityUserInfo(scenario.users.seanNeedsAssessor)
+          ],
+          [scenario.users.johnInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator)],
+          [scenario.users.janeInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.janeInnovator)],
+          [scenario.users.ingridAccessor.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)],
+          [
+            scenario.users.aliceQualifyingAccessor.identityId,
+            DTOsHelper.getIdentityUserInfo(scenario.users.aliceQualifyingAccessor)
+          ],
+          [
+            scenario.users.jamieMadroxAccessor.identityId,
+            DTOsHelper.getIdentityUserInfo(scenario.users.jamieMadroxAccessor)
+          ]
+        ])
+      );
+    });
+
+    it('should return the list of files without using filters and fields, paginated and orded by name', async () => {
+      const firstFileOrderedByName = { file: innovation.files.sectionFileByJohn, url: randUrl() };
+      const secondFileOrderedByName = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(firstFileOrderedByName.url)
+        .mockReturnValueOnce(secondFileOrderedByName.url);
+
+      const files = await sut.getFilesList(innovation.id, {}, { take: 2, skip: 0, order: { name: 'ASC' } }, em);
+
+      expect(files).toMatchObject({
+        count: Object.keys(innovation.files).length,
+        data: [
+          transformFileData(firstFileOrderedByName.file, firstFileOrderedByName.url, {
+            name: scenario.users.johnInnovator.name,
+            role: ServiceRoleEnum.INNOVATOR,
+            isOwner: true
+          }),
+          transformFileData(secondFileOrderedByName.file, secondFileOrderedByName.url, {
+            name: scenario.users.ingridAccessor.name,
+            role: ServiceRoleEnum.ACCESSOR,
+            orgUnitName: scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          })
+        ]
+      });
+    });
+
+    it('should return a file filtered by name', async () => {
+      const paulFile = { file: innovation.files.innovationFileByPaul, url: randUrl() };
+
+      jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValueOnce(paulFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { name: paulFile.file.name },
+        { take: 20, skip: 0, order: { name: 'ASC' } },
+        em
+      );
+
+      expect(files).toMatchObject({
+        count: 1,
+        data: [
+          transformFileData(paulFile.file, paulFile.url, {
+            name: scenario.users.paulNeedsAssessor.name,
+            role: ServiceRoleEnum.ASSESSMENT
+          })
+        ]
+      });
+    });
+
+    it('should return the list of files filtered by uploaded by', async () => {
+      const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
+      const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
+      const innovationDeletedUserFile = { file: innovation.files.innovationFileByDeletedUser, url: randUrl() };
+      const innovationCreatedAfterTodayFile = {
+        file: innovation.files.innovationFileUploadedAfterToday,
+        url: randUrl()
+      };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(innovationOwnerFile.url)
+        .mockReturnValueOnce(innovationCollaboratorFile.url)
+        .mockReturnValueOnce(innovationDeletedUserFile.url)
+        .mockReturnValueOnce(innovationCreatedAfterTodayFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
+        { take: 20, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationOwnerFile.file, innovationOwnerFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        }),
+        transformFileData(innovationCollaboratorFile.file, innovationCollaboratorFile.url, {
+          name: scenario.users.janeInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: false
+        }),
+        transformFileData(innovationDeletedUserFile.file, innovationDeletedUserFile.url, {
+          name: '[deleted user]',
+          role: ServiceRoleEnum.INNOVATOR
+        }),
+        transformFileData(innovationCreatedAfterTodayFile.file, innovationCreatedAfterTodayFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: data.length,
+        data: data
+      });
+    });
+
+    it('should return the list of files filtered by uploaded context type', async () => {
+      const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
+      const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(innovationOwnerFile.url)
+        .mockReturnValueOnce(innovationCollaboratorFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { contextTypes: [InnovationFileContextTypeEnum.INNOVATION_SECTION] },
+        { take: 2, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationOwnerFile.file, innovationOwnerFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        }),
+        transformFileData(innovationCollaboratorFile.file, innovationCollaboratorFile.url, {
+          name: scenario.users.janeInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: false
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: data.length,
+        data: data
+      });
+    });
+
+    it('should return the list of files filtered by uploaded context id', async () => {
+      const innovationFileByPaul = { file: innovation.files.innovationFileByPaul, url: randUrl() };
+      const innovationFileBySean = { file: innovation.files.innovationFileBySean, url: randUrl() };
+      const innovationFileByAlice = { file: innovation.files.innovationFileByAlice, url: randUrl() };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(innovationFileByPaul.url)
+        .mockReturnValueOnce(innovationFileBySean.url)
+        .mockReturnValueOnce(innovationFileByAlice.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { contextId: innovation.id },
+        { take: 3, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationFileByPaul.file, innovationFileByPaul.url, {
+          name: scenario.users.paulNeedsAssessor.name,
+          role: ServiceRoleEnum.ASSESSMENT
+        }),
+        transformFileData(innovationFileBySean.file, innovationFileBySean.url, {
+          name: scenario.users.seanNeedsAssessor.name,
+          role: ServiceRoleEnum.ASSESSMENT
+        }),
+        transformFileData(innovationFileByAlice.file, innovationFileByAlice.url, {
+          name: scenario.users.aliceQualifyingAccessor.name,
+          role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          orgUnitName:
+            scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+        })
+      ];
+
+      const filesCount = await em
+        .createQueryBuilder(InnovationFileEntity, 'file')
+        .where('file.contextId = :contextId', { contextId: innovation.id })
+        .getCount();
+
+      expect(files).toMatchObject({
+        count: filesCount,
+        data: data
+      });
+    });
+
+    it('should return the list of files filtered by uploaded organisations', async () => {
+      const innovationFileByAlice = { file: innovation.files.innovationFileByAlice, url: randUrl() };
+      const innovationFileByIngrid = { file: innovation.files.innovationFileByIngrid, url: randUrl() };
+      const innovationFileByJamie = { file: innovation.files.innovationFileByJamieWithAiRole, url: randUrl() };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(innovationFileByAlice.url)
+        .mockReturnValueOnce(innovationFileByIngrid.url)
+        .mockReturnValueOnce(innovationFileByJamie.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { organisations: [scenario.organisations.healthOrg.id] },
+        { take: 3, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationFileByAlice.file, innovationFileByAlice.url, {
+          name: scenario.users.aliceQualifyingAccessor.name,
+          role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          orgUnitName:
+            scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+        }),
+        transformFileData(innovationFileByIngrid.file, innovationFileByIngrid.url, {
+          name: scenario.users.ingridAccessor.name,
+          role: ServiceRoleEnum.ACCESSOR,
+          orgUnitName: scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+        }),
+        transformFileData(innovationFileByJamie.file, innovationFileByJamie.url, {
+          name: scenario.users.jamieMadroxAccessor.name,
+          role: ServiceRoleEnum.ACCESSOR,
+          orgUnitName: scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: data.length,
+        data: data
+      });
+    });
+
+    it('should return a file filtered by created at date', async () => {
+      const futureFile = { file: innovation.files.innovationFileUploadedAfterToday, url: randUrl() };
+
+      jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValueOnce(futureFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        {
+          dateFilter: [
+            {
+              field: 'createdAt',
+              startDate: new Date(),
+              endDate: randFutureDate()
+            }
+          ]
+        },
+        { take: 20, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(futureFile.file, futureFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: data.length,
+        data: data
+      });
+    });
+
+    it("should return a file with the createdBy name as 'deleted user' when createdBy user was deleted", async () => {
+      const innovationDeletedUserFile = { file: innovation.files.innovationFileByDeletedUser, url: randUrl() };
+
+      jest.spyOn(FileStorageService.prototype, 'getDownloadUrl').mockReturnValueOnce(innovationDeletedUserFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { name: innovationDeletedUserFile.file.name },
+        { take: 20, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationDeletedUserFile.file, innovationDeletedUserFile.url, {
+          name: '[deleted user]',
+          role: ServiceRoleEnum.INNOVATOR
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: data.length,
+        data: data
+      });
+    });
+
+    it('should return files order by createdAt', async () => {
+      const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
+      const innovationCollaboratorFile = { file: innovation.files.sectionFileByJane, url: randUrl() };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(innovationOwnerFile.url)
+        .mockReturnValueOnce(innovationCollaboratorFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
+        { take: 2, skip: 0, order: { createdAt: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationOwnerFile.file, innovationOwnerFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        }),
+        transformFileData(innovationCollaboratorFile.file, innovationCollaboratorFile.url, {
+          name: scenario.users.janeInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: false
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: expect.any(Number),
+        data: data
+      });
+    });
+
+    it('should return files order by contextType', async () => {
+      const innovationOwnerFile = { file: innovation.files.sectionFileByJohn, url: randUrl() };
+      const innovationDeletedUserFile = { file: innovation.files.innovationFileByDeletedUser, url: randUrl() };
+      const innovationCreatedAfterTodayFile = {
+        file: innovation.files.innovationFileUploadedAfterToday,
+        url: randUrl()
+      };
+
+      jest
+        .spyOn(FileStorageService.prototype, 'getDownloadUrl')
+        .mockReturnValueOnce(innovationDeletedUserFile.url)
+        .mockReturnValueOnce(innovationCreatedAfterTodayFile.url)
+        .mockReturnValueOnce(innovationOwnerFile.url);
+
+      const files = await sut.getFilesList(
+        innovation.id,
+        { uploadedBy: [ServiceRoleEnum.INNOVATOR] },
+        { take: 3, skip: 0, order: { contextType: 'ASC' } },
+        em
+      );
+
+      const data = [
+        transformFileData(innovationDeletedUserFile.file, innovationDeletedUserFile.url, {
+          name: '[deleted user]',
+          role: ServiceRoleEnum.INNOVATOR
+        }),
+        transformFileData(innovationCreatedAfterTodayFile.file, innovationCreatedAfterTodayFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        }),
+        transformFileData(innovationOwnerFile.file, innovationOwnerFile.url, {
+          name: scenario.users.johnInnovator.name,
+          role: ServiceRoleEnum.INNOVATOR,
+          isOwner: true
+        })
+      ];
+
+      expect(files).toMatchObject({
+        count: expect.any(Number),
+        data: data
+      });
+    });
   });
 
   describe('getFileInfo()', () => {
@@ -199,7 +593,7 @@ describe('Services / Innovation File service suite', () => {
               extension: file.file.extension,
               url: randomUrl
             },
-            createdAt: file.createdAt,
+            createdAt: new Date(file.createdAt),
             createdBy: {
               name: createdByUser.name,
               role: fileCreatedBy.role,
@@ -253,7 +647,7 @@ describe('Services / Innovation File service suite', () => {
               extension: file.file.extension,
               url: randomUrl
             },
-            createdAt: file.createdAt,
+            createdAt: new Date(file.createdAt),
             createdBy: {
               name: '[deleted user]',
               role: createdByUser.roles.innovatorRole.role
@@ -587,4 +981,21 @@ describe('Services / Innovation File service suite', () => {
       expect(file).toMatchObject({ id: expect.any(String), displayFileName: filename, url });
     });
   });
+
+  // Helper
+  const transformFileData = (
+    file: TestFileType,
+    url: string,
+    createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string }
+  ) => {
+    return {
+      id: file.id,
+      storageId: file.storageId,
+      context: file.context,
+      name: file.name,
+      createdAt: new Date(file.createdAt),
+      createdBy,
+      file: { ...file.file, url }
+    };
+  };
 });

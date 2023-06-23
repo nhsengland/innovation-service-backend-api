@@ -1,4 +1,4 @@
-import { rand, randFileName, randNumber, randPastDate, randText, randUuid } from '@ngneat/falso';
+import { rand, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationFileEntity } from '../../entities/innovation/innovation-file.entity';
 import type { InnovationFileContextTypeEnum } from '../../enums/innovation.enums';
@@ -18,7 +18,7 @@ export type TestFileType = {
     size?: number;
     extension: string;
   };
-  createdAt: Date;
+  createdAt: Date | string;
 };
 
 export class InnovationFileBuilder extends BaseBuilder {
@@ -29,15 +29,15 @@ export class InnovationFileBuilder extends BaseBuilder {
 
     const name = randFileName();
     const extension = rand(['.pdf', '.xlsx', '.csv', '.docx']);
-    this.file = InnovationFileEntity.verifyType({
+    this.file = {
       name: name,
       storageId: randUuid() + extension,
       description: randText(),
-      createdAt: randPastDate(),
+      createdAt: new Date(),
       filename: name + extension,
       extension: extension.replace('.', ''),
       filesize: randNumber()
-    });
+    };
   }
 
   setCreatedByUserRole(roleId: string): this {
@@ -58,6 +58,11 @@ export class InnovationFileBuilder extends BaseBuilder {
     return this;
   }
 
+  setName(name: string): this {
+    this.file.name = name;
+    return this;
+  }
+
   setDescription(description: null | string): this {
     this.file.description = description;
     return this;
@@ -68,14 +73,17 @@ export class InnovationFileBuilder extends BaseBuilder {
     return this;
   }
 
+  setCreatedAt(date: Date): this {
+    this.file.createdAt = date;
+    return this;
+  }
+
   async save(): Promise<TestFileType> {
     const savedFile = await this.getEntityManager().getRepository(InnovationFileEntity).save(this.file);
-
     const file = await this.getEntityManager()
       .createQueryBuilder(InnovationFileEntity, 'file')
       .where('file.id = :fileId', { fileId: savedFile.id })
       .getOne();
-
     if (!file) {
       throw new Error('Error saving/retrieving file information.');
     }

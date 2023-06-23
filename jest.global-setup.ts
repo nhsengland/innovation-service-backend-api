@@ -5,7 +5,6 @@ import { TestsLegacyHelper } from './libs/shared/tests/tests-legacy.helper';
 import { TestsHelper } from './libs/shared/tests/tests.helper';
 
 export default async (): Promise<void> => {
-
   console.log('Running tests helper setup');
 
   // See hack info in jest.setup.ts
@@ -16,7 +15,7 @@ export default async (): Promise<void> => {
   env['sampleData'] = JSON.stringify(await resolveNestedPromises(data));
 
   const completeScenarioData = await (await new TestsHelper().init()).createCompleteScenario();
-  env['completeScenarioData'] = JSON.stringify(await resolveNestedPromises(completeScenarioData));
+  env['completeScenarioData'] = JSON.stringify(completeScenarioData);
 
   env['CLIENT_WEB_BASE_URL'] = 'http://localhost:4200';
 };
