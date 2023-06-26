@@ -8,7 +8,7 @@ import {
   NotFoundError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
+import { FileStorageService } from '@innovations/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
 import type { TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
@@ -36,38 +36,11 @@ describe('Services / Innovation File service suite', () => {
   });
 
   afterEach(async () => {
-    jest.restoreAllMocks();
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
   describe('getFilesList', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-
-    beforeEach(() => {
-      jest.spyOn(IdentityProviderService.prototype, 'getUsersMap').mockResolvedValue(
-        new Map([
-          [
-            scenario.users.paulNeedsAssessor.identityId,
-            DTOsHelper.getIdentityUserInfo(scenario.users.paulNeedsAssessor)
-          ],
-          [
-            scenario.users.seanNeedsAssessor.identityId,
-            DTOsHelper.getIdentityUserInfo(scenario.users.seanNeedsAssessor)
-          ],
-          [scenario.users.johnInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.johnInnovator)],
-          [scenario.users.janeInnovator.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.janeInnovator)],
-          [scenario.users.ingridAccessor.identityId, DTOsHelper.getIdentityUserInfo(scenario.users.ingridAccessor)],
-          [
-            scenario.users.aliceQualifyingAccessor.identityId,
-            DTOsHelper.getIdentityUserInfo(scenario.users.aliceQualifyingAccessor)
-          ],
-          [
-            scenario.users.jamieMadroxAccessor.identityId,
-            DTOsHelper.getIdentityUserInfo(scenario.users.jamieMadroxAccessor)
-          ]
-        ])
-      );
-    });
 
     it('should return the list of files without using filters and fields, paginated and orded by name', async () => {
       const firstFileOrderedByName = { file: innovation.files.sectionFileByJohn, url: randUrl() };
