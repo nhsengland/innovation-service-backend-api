@@ -113,7 +113,7 @@ export class InnovationFileService extends BaseService {
     }
 
     if (filters.dateFilter && filters.dateFilter.length > 0) {
-      const dateFilterKeyMap = new Map([['createdAt', 'file.createdAt']]);
+      const dateFilterKeyMap = new Map([['createdAt', 'file.created_at']]);
 
       for (const dateFilter of filters.dateFilter) {
         const filterKey = dateFilterKeyMap.get(dateFilter.field);

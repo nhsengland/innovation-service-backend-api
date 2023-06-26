@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
+import { randSoonDate } from '@ngneat/falso';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -255,11 +256,13 @@ export class CompleteScenarioBuilder {
         .save();
 
       // John Innovation Files
+      // Keep in mind that createdAt order of this files matter.
       const johnInnovationSectionFileUploadedByJohn = await new InnovationFileBuilder(entityManager)
         .setContext({
           id: 'INNOVATION_DESCRIPTION',
           type: InnovationFileContextTypeEnum.INNOVATION_SECTION
         })
+        .setName('AAAAAAAAAAAAAA')
         .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
@@ -307,6 +310,7 @@ export class CompleteScenarioBuilder {
           id: johnInnovation.id,
           type: InnovationFileContextTypeEnum.INNOVATION
         })
+        .setName('AAAAAAAAAAAAAB')
         .setCreatedByUserRole(ingridAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
@@ -326,6 +330,16 @@ export class CompleteScenarioBuilder {
           type: InnovationFileContextTypeEnum.INNOVATION
         })
         .setCreatedByUserRole(sebastiaoDeletedInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationInnovationFileUploadedAfterTodayByJohn = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.id,
+          type: InnovationFileContextTypeEnum.INNOVATION
+        })
+        .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
+        .setCreatedAt(randSoonDate())
         .setInnovation(johnInnovation.id)
         .save();
 
@@ -437,7 +451,8 @@ export class CompleteScenarioBuilder {
                   innovationFileByAlice: johnInnovationInnovationFileUploadedByAlice,
                   innovationFileByIngrid: johnInnovationInnovationFileUploadedByIngrid,
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
-                  innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser
+                  innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser,
+                  innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn
                 }
               }
             }
