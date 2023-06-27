@@ -6,6 +6,7 @@ import type { EntityManager } from 'typeorm';
 import { InnovationFileEntity, InnovationFileLegacyEntity } from '@innovations/shared/entities';
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
+import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import { InnovationFileContextTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -325,6 +326,15 @@ export class InnovationFileService extends BaseService {
       throw new UnprocessableEntityError(
         InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
       );
+    }
+
+    const nFiles = await connection
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .where('file.innovation_id = :innovationId', { innovationId })
+      .getCount();
+
+    if (nFiles >= MAX_FILES_ALLOWED) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_MAX_ALLOWED_FILES_REACHED);
     }
 
     const file = await connection.save(

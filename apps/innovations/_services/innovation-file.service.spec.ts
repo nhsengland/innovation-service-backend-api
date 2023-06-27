@@ -1,5 +1,6 @@
 import { container } from '../_config';
 
+import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import { InnovationFileEntity } from '@innovations/shared/entities';
 import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
@@ -10,7 +11,7 @@ import {
 } from '@innovations/shared/errors';
 import { FileStorageService } from '@innovations/shared/services';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@innovations/shared/tests';
-import type { TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
+import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/tests/builders/innovation-file.builder';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
@@ -805,6 +806,36 @@ describe('Services / Innovation File service suite', () => {
           )
         );
       });
+    });
+
+    it('should throw an error if the max allowed files per innovation is reached', async () => {
+      const johnInnovator = scenario.users.johnInnovator;
+
+      for (let i = 0; i < MAX_FILES_ALLOWED; i++) {
+        await new InnovationFileBuilder(em)
+          .setContext({
+            id: 'INNOVATION_DESCRIPTION',
+            type: InnovationFileContextTypeEnum.INNOVATION_SECTION
+          })
+          .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
+          .setInnovation(innovation.id)
+          .save();
+      }
+
+      const data = {
+        context: { id: innovation.id, type: InnovationFileContextTypeEnum.INNOVATION },
+        name: randFileName(),
+        file: {
+          id: randFileName(),
+          name: randFileName(),
+          size: randNumber(),
+          extension: 'pdf'
+        }
+      };
+
+      await expect(() =>
+        sut.createFile(DTOsHelper.getUserRequestContext(johnInnovator, 'innovatorRole'), innovation.id, data, em)
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_MAX_ALLOWED_FILES_REACHED));
     });
   });
 
