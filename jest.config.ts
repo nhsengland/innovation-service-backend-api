@@ -24,7 +24,8 @@ const jestBaseConfig: Config = {
     '.types.ts',
     '.entity.ts',
     'libs/shared/tests',
-    'libs/data-access'
+    'libs/data-access',
+    'node_modules'
   ],
   testTimeout: 15000
 };

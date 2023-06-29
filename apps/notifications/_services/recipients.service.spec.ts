@@ -618,6 +618,52 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('getInnovationActiveCollaborators suite', () => {
+    it('Should only get active collaborators', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      const collaborators = await sut.getInnovationActiveCollaborators(innovation.id);
+
+      expect(collaborators).toHaveLength(1);
+      expect(collaborators[0]).toEqual(scenario.users.janeInnovator.id);
+    });
+
+    it('Should get an empty array for a non-existent innovation', async () => {
+      const collaborators = await sut.getInnovationActiveCollaborators(randUuid());
+
+      expect(collaborators).toHaveLength(0);
+    });
+  });
+
+  describe('needsAssessmentUsers suite', () => {
+    //const needsAssessmentUsers = [scenario.users.paulNeedsAssessor, scenario.users.seanNeedsAssessor];
+    it('Should get a list of needs assessment recipients', async () => {
+      const res = await sut.needsAssessmentUsers();
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+        DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor, 'assessmentRole')
+      ]);
+    });
+
+    it('Should ignore locked needs assessment recipients (default)', async () => {
+      await em.update(UserEntity, { id: scenario.users.paulNeedsAssessor.id }, { status: UserStatusEnum.LOCKED });
+      const res = await sut.needsAssessmentUsers(undefined, em);
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor, 'assessmentRole')]);
+    });
+
+    it('Should include locked needs assessment recipients if includeLocked', async () => {
+      await em.update(UserEntity, { id: scenario.users.paulNeedsAssessor.id }, { status: UserStatusEnum.LOCKED });
+      const res = await sut.needsAssessmentUsers(true, em);
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        { ...DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'), isActive: false },
+        DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor, 'assessmentRole')
+      ]);
+    });
+  });
+
   /*
   describe('getUsersRecipients suite', () => {
     it('Should get a recipient when passed a valid user', async () => {
@@ -676,21 +722,6 @@ describe('Notifications / _services / recipients service suite', () => {
 
   
 
-  describe('getInnovationActiveCollaborators suite', () => {
-    it('Should get collaborators', async () => {
-      const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
-
-      const collaborators = await sut.getInnovationActiveCollaborators(dbInnovation.id);
-
-      expect(collaborators).toHaveLength(1);
-      expect(collaborators[0]).toEqual(scenario.users.janeInnovator.id);
-    });
-
-    it('Should get an empty array for a non-existent innovation', async () => {
-      const collaborators = await sut.getInnovationActiveCollaborators(randUuid());
-
-      expect(collaborators).toHaveLength(0);
-    });
-  });
+  
   */
 });

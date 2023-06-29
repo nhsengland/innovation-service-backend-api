@@ -523,13 +523,17 @@ export class RecipientsService extends BaseService {
   /**
    * gets the needs assessment recipients
    * @param includeLocked also include locked users (default false)
+   * @param entityManager optionally pass an entity manager
    * @returns list of recipients
    */
-  async needsAssessmentUsers(includeLocked = false): Promise<RecipientType[]> {
-    return this.getRole({
-      roles: [ServiceRoleEnum.ASSESSMENT],
-      includeLocked
-    });
+  async needsAssessmentUsers(includeLocked = false, entityManager?: EntityManager): Promise<RecipientType[]> {
+    return this.getRole(
+      {
+        roles: [ServiceRoleEnum.ASSESSMENT],
+        includeLocked
+      },
+      entityManager
+    );
   }
 
   async organisationUnitInfo(organisationUnitId: string): Promise<{
@@ -951,7 +955,8 @@ export class RecipientsService extends BaseService {
 
     const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status']);
+      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status'])
+      .innerJoin('userRole.user', 'user');
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });
@@ -970,11 +975,12 @@ export class RecipientsService extends BaseService {
     }
 
     if (!includeLocked) {
-      query.andWhere('user.locked_at IS NULL').andWhere('userRole.is_active = 1');
+      query
+        .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED })
+        .andWhere('userRole.is_active = 1');
     }
 
     // join user to check the status
-    query.innerJoin('userRole.user', 'user');
     if (!withDeleted) {
       query.andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     }
