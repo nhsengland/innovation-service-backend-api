@@ -808,6 +808,7 @@ export class InnovationSectionsService extends BaseService {
         sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS'
           ? undefined
           : document.evidences?.map(evidence => ({
+              id: evidence.id,
               evidenceSubmitType: evidence.evidenceSubmitType,
               description: evidence.description
             }));
