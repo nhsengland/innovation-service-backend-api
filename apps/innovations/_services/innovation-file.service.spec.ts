@@ -746,6 +746,25 @@ describe('Services / Innovation File service suite', () => {
           )
         );
       });
+
+      it('should throw error when creating file with context type INNOVATION_EVIDENCE', async () => {
+        const data = {
+          context: { id: randUuid(), type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() => sut.createFile(naDomainContext, innovation.id, data, em)).rejects.toThrowError(
+          new UnprocessableEntityError(
+            InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
+          )
+        );
+      });
     });
 
     describe('When I create a file as an QA/A', () => {
@@ -803,6 +822,25 @@ describe('Services / Innovation File service suite', () => {
         await expect(() => sut.createFile(qaDomainContext, innovation.id, data, em)).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
+          )
+        );
+      });
+
+      it('should throw error when creating file with context type INNOVATION_EVIDENCE', async () => {
+        const data = {
+          context: { id: randUuid(), type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, em)).rejects.toThrowError(
+          new UnprocessableEntityError(
+            InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
           )
         );
       });

@@ -87,5 +87,6 @@ export enum InnovationCollaboratorStatusEnum {
 
 export enum InnovationFileContextTypeEnum {
   INNOVATION = 'INNOVATION',
-  INNOVATION_SECTION = 'INNOVATION_SECTION'
+  INNOVATION_SECTION = 'INNOVATION_SECTION',
+  INNOVATION_EVIDENCE = 'INNOVATION_EVIDENCE'
 }

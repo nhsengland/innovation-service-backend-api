@@ -2183,6 +2183,7 @@ paths:
                       enum:
                         - INNOVATION
                         - INNOVATION_SECTION
+                        - INNOVATION_EVIDENCE
                   required:
                     - id
                     - type
@@ -2308,6 +2309,7 @@ paths:
               enum:
                 - INNOVATION
                 - INNOVATION_SECTION
+                - INNOVATION_EVIDENCE
         - name: contextId
           in: query
           required: false
@@ -2380,6 +2382,7 @@ paths:
                               enum:
                                 - INNOVATION
                                 - INNOVATION_SECTION
+                                - INNOVATION_EVIDENCE
                         name:
                           type: string
                         description:
@@ -2495,6 +2498,7 @@ paths:
                         enum:
                           - INNOVATION
                           - INNOVATION_SECTION
+                          - INNOVATION_EVIDENCE
                   name:
                     type: string
                   description:
