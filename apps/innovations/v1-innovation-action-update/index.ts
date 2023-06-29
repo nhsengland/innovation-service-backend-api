@@ -33,7 +33,6 @@ class V1InnovationActionUpdate {
         .checkAssessmentType()
         .checkInnovation()
         .verify();
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {

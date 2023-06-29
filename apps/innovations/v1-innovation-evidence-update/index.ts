@@ -11,7 +11,6 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
-import type { ResponseDTO } from './transformation.dtos';
 import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationEvidenceUpdate {
@@ -36,11 +35,11 @@ class V1InnovationEvidenceUpdate {
       await innovationSectionsService.updateInnovationEvidence(
         { id: requestUser.id },
         params.innovationId,
-        params.evidenceOffset,
+        params.evidenceId,
         body
       );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({});
+      context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -51,7 +50,7 @@ class V1InnovationEvidenceUpdate {
 
 export default openApi(
   V1InnovationEvidenceUpdate.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidence/{evidenceOffset}',
+  '/v1/{innovationId}/evidence/{evidenceId}',
   {
     put: {
       description: 'Update an innovation evidence entry.',
@@ -63,32 +62,12 @@ export default openApi(
         description: 'The evidence data to update.'
       }),
       responses: {
-        200: {
-          description: 'Innovation evidence info.',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {}
-              }
-            }
-          }
-        },
-        400: {
-          description: 'Bad Request'
-        },
-        401: {
-          description: 'Unauthorized'
-        },
-        403: {
-          description: 'Forbidden'
-        },
-        404: {
-          description: 'Not found'
-        },
-        500: {
-          description: 'Internal server error'
-        }
+        204: { description: 'Success.' },
+        400: { description: 'Bad Request' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+        404: { description: 'Not found' },
+        500: { description: 'Internal server error' }
       }
     }
   }

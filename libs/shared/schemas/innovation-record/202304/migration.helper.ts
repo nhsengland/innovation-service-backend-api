@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import type * as Document202209Catalog from '../202209/catalog.types';
 import type { DocumentType202209 } from '../202209/document.types';
 import type * as Document202304Catalog from './catalog.types';
@@ -124,6 +125,7 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
       deploymentPlans: original.IMPLEMENTATION_PLAN?.deploymentPlans?.map(plan => plan.name)
     },
     evidences: original.EVIDENCE_OF_EFFECTIVENESS?.evidences?.map(evidence => ({
+      id: randomUUID(),
       evidenceSubmitType:
         evidence.evidenceType === 'OTHER'
           ? 'OTHER_EFFECTIVENESS'

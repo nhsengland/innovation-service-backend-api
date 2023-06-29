@@ -1,1 +1,3 @@
-export type ResponseDTO = Record<string, never>;
+export type ResponseDTO = {
+  id: string;
+};

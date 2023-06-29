@@ -1942,7 +1942,10 @@ paths:
             application/json:
               schema:
                 type: object
-                properties: {}
+                properties:
+                  id:
+                    type: string
+                    description: Evidence id.
         "400":
           description: Bad Request
         "401":
@@ -1953,7 +1956,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidence/{evidenceOffset}":
+  "/v1/{innovationId}/evidence/{evidenceId}":
     delete:
       description: Delete an innovation evidence entry.
       tags:
@@ -1967,20 +1970,15 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceOffset
+        - name: evidenceId
           in: path
           required: true
           schema:
-            type: integer
-            minimum: 0
+            type: string
+            format: uuid
       responses:
-        "200":
-          description: Innovation evidence info.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: {}
+        "204":
+          description: Success.
         "400":
           description: Bad Request
         "401":
@@ -2004,14 +2002,12 @@ paths:
           schema:
             type: string
             format: uuid
-            description: The innovation id.
-        - name: evidenceOffset
+        - name: evidenceId
           in: path
           required: true
           schema:
-            type: integer
-            minimum: 0
-            description: The evidence id.
+            type: string
+            format: uuid
       requestBody:
         description: The evidence data to update.
         required: true
@@ -2055,13 +2051,8 @@ paths:
                 - summary
               additionalProperties: false
       responses:
-        "200":
-          description: Innovation evidence info.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties: {}
+        "204":
+          description: Success.
         "400":
           description: Bad Request
         "401":
@@ -2072,7 +2063,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidences/{evidenceOffset}":
+  "/v1/{innovationId}/evidences/{evidenceId}":
     get:
       description: Get an innovation evidence info.
       tags:
@@ -2086,12 +2077,12 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceOffset
+        - name: evidenceId
           in: path
           required: true
           schema:
-            type: integer
-            minimum: 0
+            type: string
+            format: uuid
       responses:
         "200":
           description: Innovation section info.

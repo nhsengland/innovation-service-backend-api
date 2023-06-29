@@ -39,6 +39,7 @@ import {
 import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
+import { randomUUID } from 'crypto';
 import { EntityManager, In } from 'typeorm';
 import { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -378,6 +379,7 @@ export class InnovationSectionsService extends BaseService {
         sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' &&
         (dataToUpdate as CurrentDocumentType['EVIDENCE_OF_EFFECTIVENESS']).hasEvidence !== 'YES'
       ) {
+        // TODO: Apagar ficheiros
         await transaction.query(
           `UPDATE innovation_document
           SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
@@ -542,9 +544,9 @@ export class InnovationSectionsService extends BaseService {
   async createInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceData: CurrentEvidenceType,
+    evidenceData: Omit<CurrentEvidenceType, 'id'>,
     entityManager?: EntityManager
-  ): Promise<void> {
+  ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
@@ -565,6 +567,7 @@ export class InnovationSectionsService extends BaseService {
       const updatedAt = new Date();
 
       const evidence: CurrentEvidenceType = {
+        id: randomUUID(),
         evidenceType: evidenceData.evidenceType,
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
@@ -588,30 +591,32 @@ export class InnovationSectionsService extends BaseService {
           updatedBy: user.id
         }
       );
+
+      return { id: evidence.id };
     });
   }
 
   async updateInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceOffset: number,
+    evidenceId: string,
     evidenceData: CurrentEvidenceType
   ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
-    const evidence = document.evidences?.[evidenceOffset];
+    const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId);
+    const evidence = evidenceIndex && document.evidences?.[evidenceIndex];
 
-    if (!evidence) {
+    if (evidenceIndex === undefined || evidenceIndex === -1 || !evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
     const section = await this.sqlConnection
       .createQueryBuilder(InnovationSectionEntity, 'section')
-      .innerJoin('section.innovation', 'innovation')
-      .where('innovation.id = :innovationId', { innovationId: innovationId })
+      .select(['section.id'])
+      .where('section.innovation_id = :innovationId', { innovationId: innovationId })
       .andWhere('section.section = :sectionName', { sectionName: 'EVIDENCE_OF_EFFECTIVENESS' })
       .getOne();
-
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
@@ -627,6 +632,7 @@ export class InnovationSectionsService extends BaseService {
       }
 
       const data: CurrentEvidenceType = {
+        id: evidenceId,
         evidenceType: evidenceData.evidenceType,
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
@@ -638,7 +644,7 @@ export class InnovationSectionsService extends BaseService {
         `
         UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences[${evidenceOffset}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
+        [`$.evidences[${evidenceIndex}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
       );
 
       await transaction.update(
@@ -653,18 +659,17 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
-  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceOffset: number): Promise<void> {
+  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceId: string): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     let evidences = document.evidences;
-    const evidence = evidences?.[evidenceOffset];
+    const evidence = evidences?.find(e => e.id === evidenceId);
 
     if (!evidences || !evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
-    delete evidences[evidenceOffset];
-    evidences = evidences.filter(Boolean);
+    evidences = evidences.filter(e => e.id === evidenceId); // Remove evidence from the array
 
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
@@ -697,7 +702,7 @@ export class InnovationSectionsService extends BaseService {
 
   async getInnovationEvidenceInfo(
     innovationId: string,
-    evidenceOffset: number
+    evidenceId: string
   ): Promise<
     Omit<CurrentEvidenceType, 'files'> & {
       files: { id: string; name: string; url: string }[];
@@ -705,8 +710,7 @@ export class InnovationSectionsService extends BaseService {
   > {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
-    const evidence = document.evidences?.[evidenceOffset];
-
+    const evidence = document.evidences?.find(e => e.id === evidenceId);
     if (!evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
@@ -714,6 +718,7 @@ export class InnovationSectionsService extends BaseService {
     const files = await this.innovationFileService.getFilesByIds(evidence.files);
 
     return {
+      id: evidence.id,
       evidenceType: evidence.evidenceType,
       evidenceSubmitType: evidence.evidenceSubmitType,
       description: evidence.description,
