@@ -319,13 +319,17 @@ export class InnovationFileService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    if (
-      domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR &&
-      data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION
-    ) {
-      throw new UnprocessableEntityError(
-        InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
-      );
+    if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
+      if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION) {
+        throw new UnprocessableEntityError(
+          InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
+        );
+      }
+      if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE) {
+        throw new UnprocessableEntityError(
+          InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
+        );
+      }
     }
 
     const nFiles = await connection
