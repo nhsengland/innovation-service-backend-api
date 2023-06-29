@@ -34,9 +34,13 @@ class V1InnovationEvidenceCreate {
       const requestUser = auth.getUserInfo();
       const innovation = auth.getInnovationInfo();
 
-      await innovationSectionsService.createInnovationEvidence({ id: requestUser.id }, innovation.id, body);
+      const result = await innovationSectionsService.createInnovationEvidence(
+        { id: requestUser.id },
+        innovation.id,
+        body
+      );
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({});
+      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -62,7 +66,9 @@ export default openApi(V1InnovationEvidenceCreate.httpTrigger as AzureFunction, 
           'application/json': {
             schema: {
               type: 'object',
-              properties: {}
+              properties: {
+                id: { type: 'string', description: 'Evidence id.' }
+              }
             }
           }
         }
