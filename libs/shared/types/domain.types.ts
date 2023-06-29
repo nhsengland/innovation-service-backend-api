@@ -189,6 +189,7 @@ export type ActivityLogDBParamsType = {
   assessmentId?: string;
   sectionId?: CurrentCatalogTypes.InnovationSections;
   actionId?: string;
+  actionUserRole?: ServiceRoleEnum;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
   organisations?: string[]; // This holds the name, not id's.

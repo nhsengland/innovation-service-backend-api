@@ -1466,6 +1466,16 @@ export class InnovationsService extends BaseService {
   }> {
     const query = this.sqlConnection
       .createQueryBuilder(ActivityLogEntity, 'activityLog')
+      .select([
+        'activityLog.id',
+        'activityLog.activity',
+        'activityLog.type',
+        'activityLog.createdAt',
+        'activityLog.createdBy',
+        'activityLog.param',
+        'userRole.role'
+      ])
+      .leftJoin('activityLog.userRole', 'userRole')
       .where('activityLog.innovation_id = :innovationId', { innovationId });
 
     // Filters
@@ -1528,6 +1538,8 @@ export class InnovationsService extends BaseService {
         if (params.interveningUserId) {
           params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
         }
+
+        params.actionUserRole = item.userRole.role;
 
         return {
           activity: item.activity,
