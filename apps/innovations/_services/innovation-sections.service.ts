@@ -669,7 +669,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
-    evidences = evidences.filter(e => e.id === evidenceId); // Remove evidence from the array
+    evidences = evidences.filter(e => e.id !== evidenceId); // Remove evidence from the array
 
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
