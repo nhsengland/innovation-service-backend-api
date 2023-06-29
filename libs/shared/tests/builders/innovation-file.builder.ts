@@ -1,4 +1,4 @@
-import { rand, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
+import { rand, randNumber, randText, randUserName, randUuid } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationFileEntity } from '../../entities/innovation/innovation-file.entity';
 import type { InnovationFileContextTypeEnum } from '../../enums/innovation.enums';
@@ -27,7 +27,7 @@ export class InnovationFileBuilder extends BaseBuilder {
   constructor(entityManager: EntityManager) {
     super(entityManager);
 
-    const name = randFileName();
+    const name = randUserName() + randNumber();
     const extension = rand(['.pdf', '.xlsx', '.csv', '.docx']);
     this.file = {
       name: name,
