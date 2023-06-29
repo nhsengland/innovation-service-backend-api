@@ -604,10 +604,10 @@ export class InnovationSectionsService extends BaseService {
   ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
-    const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId);
-    const evidence = evidenceIndex && document.evidences?.[evidenceIndex];
+    const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId) ?? -1;
+    const evidence = document.evidences?.[evidenceIndex];
 
-    if (evidenceIndex === undefined || evidenceIndex === -1 || !evidence) {
+    if (evidenceIndex === -1 || !evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
