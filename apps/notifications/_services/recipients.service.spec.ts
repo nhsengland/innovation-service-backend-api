@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity, InnovationSupportEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
+import { InnovationEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationSupportStatusEnum,
@@ -139,24 +139,36 @@ describe('Notifications / _services / recipients service suite', () => {
   });
 
   describe('getInnovationCollaborators', () => {
+    const expectedCollaborators = [
+      {
+        email: scenario.users.janeInnovator.email,
+        status: InnovationCollaboratorStatusEnum.ACTIVE,
+        userId: scenario.users.janeInnovator.id
+      },
+      {
+        email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
+        status: InnovationCollaboratorStatusEnum.PENDING,
+        userId: undefined
+      },
+      {
+        email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.sebastiaoCollaborator.email,
+        status: InnovationCollaboratorStatusEnum.LEFT,
+        userId: undefined
+      },
+      {
+        email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.adamCollaborator.email,
+        status: InnovationCollaboratorStatusEnum.PENDING,
+        userId: scenario.users.adamInnovator.id
+      }
+    ];
+
     it('should return a list of innovation collaborators', async () => {
       const collaborators = await sut['getInnovationCollaborators'](
         scenario.users.johnInnovator.innovations.johnInnovation.id
       );
 
-      expect(collaborators).toHaveLength(2);
-      expect(collaborators).toMatchObject([
-        {
-          email: scenario.users.janeInnovator.email,
-          status: InnovationCollaboratorStatusEnum.ACTIVE,
-          userId: scenario.users.janeInnovator.id
-        },
-        {
-          email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
-          status: InnovationCollaboratorStatusEnum.PENDING,
-          userId: undefined
-        }
-      ]);
+      expect(collaborators).toHaveLength(4);
+      expect(collaborators).toMatchObject(expectedCollaborators);
     });
 
     it('should return an empty list if no collaborators', async () => {
@@ -189,19 +201,8 @@ describe('Notifications / _services / recipients service suite', () => {
         []
       );
 
-      expect(collaborators).toHaveLength(2);
-      expect(collaborators).toMatchObject([
-        {
-          email: scenario.users.janeInnovator.email,
-          status: InnovationCollaboratorStatusEnum.ACTIVE,
-          userId: scenario.users.janeInnovator.id
-        },
-        {
-          email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
-          status: InnovationCollaboratorStatusEnum.PENDING,
-          userId: undefined
-        }
-      ]);
+      expect(collaborators).toHaveLength(4);
+      expect(collaborators).toMatchObject(expectedCollaborators);
     });
 
     it('should support multiple status', async () => {
@@ -214,19 +215,10 @@ describe('Notifications / _services / recipients service suite', () => {
         ]
       );
 
-      expect(collaborators).toHaveLength(2);
-      expect(collaborators).toMatchObject([
-        {
-          email: scenario.users.janeInnovator.email,
-          status: InnovationCollaboratorStatusEnum.ACTIVE,
-          userId: scenario.users.janeInnovator.id
-        },
-        {
-          email: scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator.email,
-          status: InnovationCollaboratorStatusEnum.PENDING,
-          userId: undefined
-        }
-      ]);
+      expect(collaborators).toHaveLength(3);
+      expect(collaborators).toMatchObject(
+        expectedCollaborators.filter(c => c.status !== InnovationCollaboratorStatusEnum.LEFT)
+      );
     });
 
     it('should not return user id if user deleted', async () => {
@@ -329,11 +321,8 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Returns empty array if no recipients found', async () => {
-      await em.delete(InnovationSupportEntity, {
-        innovation: scenario.users.johnInnovator.innovations.johnInnovation.id
-      });
       const res = await sut.innovationAssignedRecipients(
-        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation.id,
         em
       );
       expect(res).toHaveLength(0);

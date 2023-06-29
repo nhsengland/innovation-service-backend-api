@@ -127,7 +127,6 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   async createInnovationAssessment(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { message: string },
@@ -158,12 +157,13 @@ export class InnovationAssessmentsService extends BaseService {
         InnovationAssessmentEntity.new({
           description: '', // assessment.description,
           innovation: InnovationEntity.new({ id: innovationId }),
-          assignTo: UserEntity.new({ id: user.id }),
-          createdBy: user.id,
-          updatedBy: user.id
+          assignTo: UserEntity.new({ id: domainContext.id }),
+          createdBy: domainContext.id,
+          updatedBy: domainContext.id
         })
       );
 
+      const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.threadService.createThreadOrMessage(
         user,
         domainContext,
@@ -197,7 +197,6 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   async updateInnovationAssessment(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     assessmentId: string,
@@ -250,7 +249,7 @@ export class InnovationAssessmentsService extends BaseService {
       // Merge new data with assessment record.
       const assessment = Object.entries(data).reduce((acc, item) => ({ ...acc, [item[0]]: item[1] }), dbAssessment);
 
-      assessment.updatedBy = user.id;
+      assessment.updatedBy = domainContext.id;
 
       if (data.suggestedOrganisationUnitsIds) {
         assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
@@ -268,7 +267,7 @@ export class InnovationAssessmentsService extends BaseService {
             {
               status: InnovationStatusEnum.IN_PROGRESS,
               statusUpdatedAt: new Date().toISOString(),
-              updatedBy: user.id
+              updatedBy: domainContext.id
             }
           );
 
@@ -329,7 +328,7 @@ export class InnovationAssessmentsService extends BaseService {
             {
               status: InnovationStatusEnum.NEEDS_ASSESSMENT,
               statusUpdatedAt: new Date().toISOString(),
-              updatedBy: user.id
+              updatedBy: domainContext.id
             }
           );
         }

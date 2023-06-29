@@ -5,6 +5,7 @@ import { container } from '../config/inversify.config';
 
 import { UserEntity, UserRoleEntity } from '../entities';
 import { UserStatusEnum } from '../enums';
+import { NotFoundError, UserErrorsEnum } from '../errors';
 import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
@@ -91,6 +92,7 @@ export class TestsHelper {
 
   private setupGlobalMocks(): void {
     const identityMap = this.completeScenarioBuilder.getIdentityMap();
+    const emailMap = this.completeScenarioBuilder.getEmailMap();
     // jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockImplementation(async (identityId: string) => {
     //   const user = identityMap.get(identityId);
     //   if (!user) {
@@ -104,6 +106,14 @@ export class TestsHelper {
         .map(identityId => identityMap.get(identityId))
         .filter((x): x is TestUserType => !!x)
         .map(DTOsHelper.getIdentityUserInfo);
+    });
+
+    jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockImplementation(async (email: string) => {
+      const user = emailMap.get(email);
+      if (!user) {
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+      }
+      return { ...DTOsHelper.getIdentityUserInfo(user), phone: null };
     });
   }
 }

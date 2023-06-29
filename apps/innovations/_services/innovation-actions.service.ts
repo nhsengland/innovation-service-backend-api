@@ -527,7 +527,6 @@ export class InnovationActionsService extends BaseService {
   }
 
   async updateActionAsAccessor(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
@@ -572,7 +571,7 @@ export class InnovationActionsService extends BaseService {
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
+    const result = await this.saveAction(domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
@@ -589,7 +588,6 @@ export class InnovationActionsService extends BaseService {
   }
 
   async updateActionAsNeedsAccessor(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
@@ -628,7 +626,7 @@ export class InnovationActionsService extends BaseService {
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
+    const result = await this.saveAction(domainContext, innovationId, dbAction, data, connection);
 
     // Send action status update to innovation owner
     await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
@@ -645,7 +643,6 @@ export class InnovationActionsService extends BaseService {
   }
 
   async updateActionAsInnovator(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     actionId: string,
@@ -670,7 +667,7 @@ export class InnovationActionsService extends BaseService {
 
     dbAction.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
 
-    const result = await this.saveAction(user, domainContext, innovationId, dbAction, data, connection);
+    const result = await this.saveAction(domainContext, innovationId, dbAction, data, connection);
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
       innovationId: innovationId,
@@ -702,7 +699,6 @@ export class InnovationActionsService extends BaseService {
   }
 
   private async saveAction(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     dbAction: InnovationActionEntity,
@@ -710,6 +706,7 @@ export class InnovationActionsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<InnovationActionEntity> {
     const connection = entityManager ?? this.sqlConnection.manager;
+    const user = { id: domainContext.id, identityId: domainContext.identityId };
 
     return connection.transaction(async transaction => {
       let thread;

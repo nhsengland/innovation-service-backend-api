@@ -1,13 +1,16 @@
+import { randProductDescription, randText } from '@ngneat/falso';
+import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../enums/index';
-import type { DeepPartial, EntityManager } from 'typeorm';
 import { BaseBuilder } from './base.builder';
+import type { TestOrganisationUnitType } from './organisation-unit.builder';
 
 export type TestInnovationAssessmentType = {
   id: string;
   description: string | null;
   summary: string | null;
   maturityLevel: MaturityLevelCatalogueType | null;
+  maturityLevelComment: string | null;
   finishedAt: Date | null;
   hasRegulatoryApprovals: YesPartiallyNoCatalogueType | null;
   hasRegulatoryApprovalsComment: string | null;
@@ -26,10 +29,30 @@ export type TestInnovationAssessmentType = {
 };
 
 export class InnovationAssessmentBuilder extends BaseBuilder {
+  private assessment: DeepPartial<InnovationAssessmentEntity> = {
+    description: randProductDescription(),
+    summary: randText(),
+    maturityLevel: 'READY',
+    maturityLevelComment: randText(),
+    finishedAt: null,
+    hasRegulatoryApprovals: 'YES',
+    hasRegulatoryApprovalsComment: randText(),
+    hasEvidence: 'YES',
+    hasEvidenceComment: randText(),
+    hasValidation: 'YES',
+    hasValidationComment: randText(),
+    hasProposition: 'YES',
+    hasPropositionComment: randText(),
+    hasCompetitionKnowledge: 'YES',
+    hasCompetitionKnowledgeComment: randText(),
+    hasImplementationPlan: 'YES',
+    hasImplementationPlanComment: randText(),
+    hasScaleResource: 'YES',
+    hasScaleResourceComment: randText(),
+    organisationUnits: []
+  };
 
-  private assessment: DeepPartial<InnovationAssessmentEntity> = {};
-
-  constructor(entityManager: EntityManager){
+  constructor(entityManager: EntityManager) {
     super(entityManager);
   }
 
@@ -43,7 +66,24 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
     return this;
   }
 
-  
+  setUpdatedBy(userId: string): this {
+    this.assessment.updatedBy = userId;
+    return this;
+  }
+
+  setFinishedAt(date?: Date): this {
+    this.assessment.finishedAt = date || new Date();
+    return this;
+  }
+
+  shareWith(...organisationUnits: TestOrganisationUnitType[]): this {
+    this.assessment.organisationUnits = [
+      ...(this.assessment.organisationUnits ?? []),
+      ...organisationUnits.map(unit => ({ id: unit.id }))
+    ];
+    return this;
+  }
+
   async save(): Promise<TestInnovationAssessmentType> {
     const savedAssessment = await this.getEntityManager()
       .getRepository(InnovationAssessmentEntity)
@@ -63,12 +103,13 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
       description: result.description,
       summary: result.summary,
       maturityLevel: result.maturityLevel,
+      maturityLevelComment: result.maturityLevelComment,
       finishedAt: result.finishedAt,
       hasRegulatoryApprovals: result.hasRegulatoryApprovals,
       hasRegulatoryApprovalsComment: result.hasRegulatoryApprovalsComment,
       hasEvidence: result.hasEvidence,
-      hasEvidenceComment: result.hasEvidenceComment, 
-      hasValidation: result.hasValidation, 
+      hasEvidenceComment: result.hasEvidenceComment,
+      hasValidation: result.hasValidation,
       hasValidationComment: result.hasValidationComment,
       hasProposition: result.hasProposition,
       hasPropositionComment: result.hasPropositionComment,

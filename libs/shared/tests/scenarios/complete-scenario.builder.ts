@@ -3,9 +3,11 @@ import type { DataSource } from 'typeorm';
 
 import { randSoonDate } from '@ngneat/falso';
 import {
+  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   InnovationTransferStatusEnum
 } from '../../enums/innovation.enums';
@@ -30,6 +32,7 @@ export class CompleteScenarioBuilder {
 
   private identityMap: Map<string, TestUserType>;
   private userMap: Map<string, TestUserType>;
+  private emailMap: Map<string, TestUserType>;
 
   constructor() {
     // This is set in jest.setup.ts and is used to share data between tests)
@@ -60,10 +63,12 @@ export class CompleteScenarioBuilder {
       // Organisations
       // Health Organisation has two units: Health Org Unit and Health Org AI Unit
       const healthOrg = await new OrganisationBuilder(entityManager).setName('Health Organisation').save();
+      // Has 3 accessors: Alice, Ingrid and Jaimie
       const healthOrgUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(healthOrg.id)
         .setName('Health Org Unit')
         .save();
+      // Has 3 accessors: Jaimie, Sara, Bart
       const healthOrgAiUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(healthOrg.id)
         .setName('Health Org AI Unit')
@@ -138,12 +143,16 @@ export class CompleteScenarioBuilder {
         .save();
 
       // Innovation owned by johnInnovator with janeCollaborator as ACTIVE collaborator
+      // Pending collaborators otto (user) and elisa (external)
+      // Left collaborator sebastiao
       // This innovation is shared with medtechOrg and healthOrg
       const johnInnovation = await (
         await new InnovationBuilder(entityManager)
           .setOwner(johnInnovator.id)
+          .setStatus(InnovationStatusEnum.IN_PROGRESS)
           .shareWith([healthOrg, medTechOrg])
           .addSection('INNOVATION_DESCRIPTION')
+          .addSection('EVIDENCE_OF_EFFECTIVENESS')
       ).save();
 
       // Jane Innovator specs:
@@ -157,6 +166,7 @@ export class CompleteScenarioBuilder {
       const janeCollaborator = await new InnovationCollaboratorBuilder(entityManager)
         .setUser(janeInnovator.id)
         .setEmail(janeInnovator.email)
+        .setRole()
         .setInnovation(johnInnovation.id)
         .save();
 
@@ -166,10 +176,21 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationCollaboratorStatusEnum.PENDING)
         .save();
 
+      const sebastiaoCollaborator = await new InnovationCollaboratorBuilder(entityManager)
+        .setUser(sebastiaoDeletedInnovator.id)
+        .setEmail(sebastiaoDeletedInnovator.email)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationCollaboratorStatusEnum.LEFT)
+        .save();
+
       // assessment on johnInnovation assigned to Paul (NA)
+      // completed and shared with healthOrg
       const johnInnovationAssessmentByPaul = await new InnovationAssessmentBuilder(entityManager)
         .setInnovation(johnInnovation.id)
         .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .setFinishedAt()
+        .shareWith(healthOrgUnit)
         .save();
 
       // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
@@ -195,6 +216,7 @@ export class CompleteScenarioBuilder {
         .setUpdatedBy(aliceQualifyingAccessor.id)
         .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .setSupport(johnInnovationSupportByHealthOrgUnit.id)
         .save();
 
       // action on johnInnovation created by Paul (NA)
@@ -353,6 +375,9 @@ export class CompleteScenarioBuilder {
 
       const adamInnovation = await new InnovationBuilder(entityManager)
         .setOwner(adamInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .addSection('INNOVATION_DESCRIPTION')
+        .addSection('COST_OF_INNOVATION')
         .shareWith([healthOrg])
         .save();
 
@@ -362,9 +387,45 @@ export class CompleteScenarioBuilder {
         .setInnovation(adamInnovation)
         .save();
 
+      // Adam pending collaboration to john innovation
+      const adamCollaborator = await new InnovationCollaboratorBuilder(entityManager)
+        .setUser(adamInnovator.id)
+        .setEmail(adamInnovator.email)
+        .setRole()
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationCollaboratorStatusEnum.PENDING)
+        .save();
+
+      // support on adamInnovation by HealthOrgUnit accessors (alice and jamie)
+      const adamInnovationSupportByHealthOrgUnit = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setInnovation(adamInnovation.id)
+        .setOrganisationUnit(healthOrgUnit.id)
+        .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
+        .save();
+
+      const adamInnovationActionBySean = await new InnovationActionBuilder(entityManager)
+        .setCreatedBy(seanNeedsAssessor.id)
+        .setCreatedByUserRole(seanNeedsAssessor.roles['assessmentRole']!.id)
+        .setUpdatedBy(seanNeedsAssessor.id)
+        .setUpdatedByUserRole(seanNeedsAssessor.roles['assessmentRole']!.id)
+        .setInnovationSection(adamInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .save();
+
+      const adamInnovationCompletedActionByAlice = await new InnovationActionBuilder(entityManager)
+        .setCreatedBy(aliceQualifyingAccessor.id)
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(aliceQualifyingAccessor.id)
+        .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovationSection(adamInnovation.sections.get('COST_OF_INNOVATION')!.id)
+        .setSupport(adamInnovationSupportByHealthOrgUnit.id)
+        .setStatus(InnovationActionStatusEnum.COMPLETED)
+        .save();
+
       // Otto Innovator specs:
       // This innovator has more than one innovation being supported
       // 2 innovations currently being supported
+      // 1 innovation with assessment in progress
       const ottoOctaviusInnovator = await new UserBuilder(entityManager)
         .setName('Otto Octavius')
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
@@ -390,6 +451,17 @@ export class CompleteScenarioBuilder {
         .setAccessors([jamieMadroxAccessor])
         .save();
 
+      const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(ottoOctaviusInnovator.id)
+        .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
+        .save();
+
+      const brainComputerInterfaceInnovationAssessment = await new InnovationAssessmentBuilder(entityManager)
+        .setInnovation(brainComputerInterfaceInnovation.id)
+        .setNeedsAssessor(paulNeedsAssessor.id)
+        .setUpdatedBy(paulNeedsAssessor.id)
+        .save();
+
       return {
         users: {
           // Innovators
@@ -406,7 +478,11 @@ export class CompleteScenarioBuilder {
                   },
                   supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] }
                 },
-                assessment: johnInnovationAssessmentByPaul,
+                assessment: {
+                  ...johnInnovationAssessmentByPaul,
+                  assignedTo: paulNeedsAssessor,
+                  sharedOrganisationUnits: { healthOrgUnit }
+                },
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
                   actionByPaul: johnInnovationActionByPaul
@@ -440,8 +516,13 @@ export class CompleteScenarioBuilder {
                   requestByAlice: johnInnovationExportRequestByAlice
                 },
                 collaborators: {
+                  adamCollaborator: adamCollaborator,
+                  elisaPendingCollaborator: elisaPendingCollaborator,
                   janeCollaborator: janeCollaborator,
-                  elisaPendingCollaborator: elisaPendingCollaborator
+                  sebastiaoCollaborator: sebastiaoCollaborator
+                },
+                sections: {
+                  INNOVATION_DESCRIPTION: johnInnovation.sections.get('INNOVATION_DESCRIPTION')!
                 },
                 files: {
                   sectionFileByJohn: johnInnovationSectionFileUploadedByJohn,
@@ -467,7 +548,19 @@ export class CompleteScenarioBuilder {
           adamInnovator: {
             ...adamInnovator,
             roles: { innovatorRole: adamInnovator.roles['innovatorRole']! },
-            innovations: { adamInnovation: { ...adamInnovation, transfer: adamInnovationTransferToJane } }
+            innovations: {
+              adamInnovation: {
+                ...adamInnovation,
+                transfer: adamInnovationTransferToJane,
+                actions: {
+                  adamInnovationActionByPaul: adamInnovationActionBySean,
+                  adamInnovationCompletedActionByAlice
+                },
+                supports: {
+                  adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit
+                }
+              }
+            }
           },
           sebastiaoDeletedInnovator: {
             ...sebastiaoDeletedInnovator,
@@ -484,6 +577,10 @@ export class CompleteScenarioBuilder {
               tentaclesInnovation: {
                 ...tentaclesInnovation,
                 supports: { tentaclesInnovationSupport: tentaclesInnovationSupport }
+              },
+              brainComputerInterfaceInnovation: {
+                ...brainComputerInterfaceInnovation,
+                assessmentInProgress: brainComputerInterfaceInnovationAssessment
               }
             }
           },
@@ -629,12 +726,21 @@ export class CompleteScenarioBuilder {
     return this.userMap;
   }
 
+  getEmailMap(): ReadonlyMap<string, TestUserType> {
+    if (!this.identityMap) {
+      this.loadMaps();
+    }
+    return this.emailMap;
+  }
+
   loadMaps(): void {
     this.identityMap = new Map();
     this.userMap = new Map();
+    this.emailMap = new Map();
     for (const user of Object.values(this.scenario.users)) {
       this.identityMap.set(user.identityId, user);
       this.userMap.set(user.id, user);
+      this.emailMap.set(user.email, user);
     }
   }
 }

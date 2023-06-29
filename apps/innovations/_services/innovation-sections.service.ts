@@ -208,7 +208,7 @@ export class InnovationSectionsService extends BaseService {
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.owner', 'owner')
-      .innerJoinAndSelect('innovation.document', 'document')
+      .leftJoinAndSelect('innovation.document', 'document')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -301,7 +301,6 @@ export class InnovationSectionsService extends BaseService {
   }
 
   async updateInnovationSectionInfo(
-    user: { id: string },
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: CurrentCatalogTypes.InnovationSections,
@@ -345,12 +344,12 @@ export class InnovationSectionsService extends BaseService {
         section: sectionKey,
         status: InnovationSectionStatusEnum.DRAFT,
 
-        createdBy: user.id,
+        createdBy: domainContext.id,
         updatedAt: updatedAt,
-        updatedBy: user.id
+        updatedBy: domainContext.id
       });
     } else {
-      section.updatedBy = user.id;
+      section.updatedBy = domainContext.id;
       section.updatedAt = updatedAt;
       section.status = InnovationSectionStatusEnum.DRAFT;
     }
@@ -382,13 +381,13 @@ export class InnovationSectionsService extends BaseService {
         await transaction.query(
           `UPDATE innovation_document
           SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
+          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
         );
       } else {
         await transaction.query(
           `UPDATE innovation_document
           SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
+          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
         );
       }
 

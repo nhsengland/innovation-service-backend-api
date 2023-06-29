@@ -7,10 +7,10 @@ import type { HttpService, LoggerService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 
 export const startup = async (container: Container): Promise<void> => {
-  console.log('Initializing Innovations app function');
-
   const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
   const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
+
+  logger.log('Initializing Innovations app function');
 
   try {
     logger.log('Initialization complete');

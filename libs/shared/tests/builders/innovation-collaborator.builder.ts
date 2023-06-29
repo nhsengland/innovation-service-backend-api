@@ -1,4 +1,4 @@
-import { randEmail } from '@ngneat/falso';
+import { randEmail, randRole } from '@ngneat/falso';
 import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
 import { UserEntity } from '../../entities/user/user.entity';
@@ -46,6 +46,11 @@ export class InnovationCollaboratorBuilder extends BaseBuilder {
 
   setInvitedAt(date: Date): this {
     this.collaborator.invitedAt = date;
+    return this;
+  }
+
+  setRole(role?: string): this {
+    this.collaborator.collaboratorRole = role ?? randRole();
     return this;
   }
 
