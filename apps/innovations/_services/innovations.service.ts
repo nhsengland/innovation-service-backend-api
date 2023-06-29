@@ -1508,9 +1508,7 @@ export class InnovationsService extends BaseService {
       const params = item.param as ActivityLogListParamsType;
       const p: string[] = [];
 
-      if (params.actionUserId) {
-        p.push(params.actionUserId);
-      }
+      p.push(item.createdBy);
       if (params.interveningUserId) {
         p.push(params.interveningUserId);
       }
@@ -1518,21 +1516,17 @@ export class InnovationsService extends BaseService {
       return p;
     });
 
-    const usersInfo = await this.domainService.users.getUsersList({ userIds: [...usersIds] });
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [...usersIds] });
 
     return {
       count: dbActivitiesCount,
       data: dbActivities.map(item => {
         const params = item.param as ActivityLogListParamsType;
 
-        if (params.actionUserId) {
-          params.actionUserName =
-            usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '[deleted account]';
-        }
+        params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
 
-        if (params.interveningUserId || params.interveningUserId === null) {
-          params.interveningUserName =
-            usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '[deleted account]';
+        if (params.interveningUserId) {
+          params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
         }
 
         return {

@@ -220,6 +220,14 @@ export class DomainUsersService {
     });
   }
 
+  async getUsersMap(
+    data: { userIds: string[] } | { identityIds: string[] }
+  ): Promise<Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[number]>> {
+    const res = await this.getUsersList(data);
+    const resKey = 'userIds' in data ? 'id' : 'identityId';
+    return new Map(res.map(item => [item[resKey], item]));
+  }
+
   async getUserPreferences(userId: string): Promise<{
     contactByPhone: boolean;
     contactByEmail: boolean;
