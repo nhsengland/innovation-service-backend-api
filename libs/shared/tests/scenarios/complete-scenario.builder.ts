@@ -63,12 +63,12 @@ export class CompleteScenarioBuilder {
       // Organisations
       // Health Organisation has two units: Health Org Unit and Health Org AI Unit
       const healthOrg = await new OrganisationBuilder(entityManager).setName('Health Organisation').save();
-      // Has 3 accessors: Alice, Ingrid and Jaimie
+      // Has 3 accessors: Alice (QA), Ingrid and Jaimie
       const healthOrgUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(healthOrg.id)
         .setName('Health Org Unit')
         .save();
-      // Has 3 accessors: Jaimie, Sara, Bart
+      // Has 3 accessors: Jaimie, Sara (QA), Bart (QA)
       const healthOrgAiUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(healthOrg.id)
         .setName('Health Org AI Unit')

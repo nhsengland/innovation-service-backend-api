@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
+import { InnovationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationSupportStatusEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
-import { InnovationErrorsEnum, NotFoundError } from '@notifications/shared/errors';
+import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 import { DomainInnovationsService } from '@notifications/shared/services';
 import { TestsHelper } from '@notifications/shared/tests';
 import { InnovationSupportBuilder } from '@notifications/shared/tests/builders/innovation-support.builder';
@@ -35,6 +35,7 @@ describe('Notifications / _services / recipients service suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
+    jest.clearAllMocks();
   });
 
   describe('getUsersIdentityInfo suite', () => {
@@ -538,11 +539,6 @@ describe('Notifications / _services / recipients service suite', () => {
       }
     ]);
 
-    afterEach(() => {
-      // clear statistics
-      mock.mockReset();
-    });
-
     afterAll(() => {
       mock.mockRestore();
     });
@@ -660,6 +656,119 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(res).toMatchObject([
         { ...DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'), isActive: false },
         DTOsHelper.getRecipientUser(scenario.users.seanNeedsAssessor, 'assessmentRole')
+      ]);
+    });
+  });
+
+  describe('organisationUnitInfo suite', () => {
+    it('returns the organisation unit with organisation info', async () => {
+      const res = await sut.organisationUnitInfo(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id);
+      expect(res).toMatchObject({
+        organisation: {
+          id: scenario.organisations.healthOrg.id,
+          name: scenario.organisations.healthOrg.name,
+          acronym: scenario.organisations.healthOrg.acronym
+        },
+        organisationUnit: {
+          id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+        }
+      });
+    });
+
+    it('throws an error if organisation unit not found', async () => {
+      await expect(sut.organisationUnitInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('organisationUnitsQualifyingAccessors suite', () => {
+    it('returns accessors from one organisation unit', async () => {
+      const res = await sut.organisationUnitsQualifyingAccessors([
+        scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+      ]);
+
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')]);
+    });
+
+    it('returns accessors from multiple organisation units', async () => {
+      const res = await sut.organisationUnitsQualifyingAccessors([
+        scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+        scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+      ]);
+
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.sarahQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.bartQualifyingAccessor, 'qaRole')
+      ]);
+    });
+
+    it('returns empty array if no organisation units provided', async () => {
+      const res = await sut.organisationUnitsQualifyingAccessors([]);
+      expect(res).toHaveLength(0);
+    });
+
+    it('returns empty array if no organisation units found', async () => {
+      const res = await sut.organisationUnitsQualifyingAccessors([randUuid(), randUuid()]);
+      expect(res).toHaveLength(0);
+    });
+
+    it('filters out inactive organisations', async () => {
+      await em
+        .getRepository(OrganisationUnitEntity)
+        .update(
+          { id: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id },
+          { inactivatedAt: new Date() }
+        );
+
+      const res = await sut.organisationUnitsQualifyingAccessors(
+        [
+          scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        ],
+        undefined,
+        em
+      );
+
+      expect(res).toMatchObject([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')]);
+    });
+
+    it('filters locked users by default', async () => {
+      await em.update(
+        UserRoleEntity,
+        { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        { isActive: false }
+      );
+
+      const res = await sut.organisationUnitsQualifyingAccessors(
+        [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id],
+        undefined,
+        em
+      );
+
+      expect(res).toHaveLength(0);
+    });
+
+    it('includes locked users if includeLocked', async () => {
+      await em.update(
+        UserRoleEntity,
+        { id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id },
+        { isActive: false }
+      );
+
+      const res = await sut.organisationUnitsQualifyingAccessors(
+        [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id],
+        true,
+        em
+      );
+
+      expect(res).toHaveLength(1);
+      expect(res).toMatchObject([
+        { ...DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'), isActive: false }
       ]);
     });
   });

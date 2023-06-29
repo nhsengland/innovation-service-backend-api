@@ -8,7 +8,6 @@ import {
   InnovationTransferEntity,
   NotificationEntity,
   NotificationPreferenceEntity,
-  OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
@@ -540,42 +539,53 @@ export class RecipientsService extends BaseService {
     organisation: { id: string; name: string; acronym: null | string };
     organisationUnit: { id: string; name: string; acronym: string };
   }> {
-    const dbOrganisation = await this.sqlConnection
-      .createQueryBuilder(OrganisationEntity, 'organisation')
-      .innerJoinAndSelect('organisation.organisationUnits', 'organisationUnits')
+    const dbOrganisationUnit = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')
+      .select([
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym'
+      ])
+      .innerJoin('organisationUnit.organisation', 'organisation')
       .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR })
-      .andWhere('organisationUnits.id = :organisationUnitId', { organisationUnitId })
+      .andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId })
       .getOne();
 
-    if (!dbOrganisation) {
+    if (!dbOrganisationUnit) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     return {
       organisation: {
-        id: dbOrganisation.id,
-        name: dbOrganisation.name,
-        acronym: dbOrganisation.acronym
+        id: dbOrganisationUnit.organisation.id,
+        name: dbOrganisationUnit.organisation.name,
+        acronym: dbOrganisationUnit.organisation.acronym
       },
-      organisationUnit: (await dbOrganisation.organisationUnits).map(item => ({
-        id: item.id,
-        name: item.name,
-        acronym: item.acronym
-      }))[0] ?? { id: '', name: '', acronym: '' }
+      organisationUnit: {
+        id: dbOrganisationUnit.id,
+        name: dbOrganisationUnit.name,
+        acronym: dbOrganisationUnit.acronym
+      }
     };
   }
 
   async organisationUnitsQualifyingAccessors(
     organisationUnitIds: string[],
-    includeLocked = false
+    includeLocked = false,
+    entityManager?: EntityManager
   ): Promise<RecipientType[]> {
     if (!organisationUnitIds.length) {
       return [];
     }
 
+    const em = entityManager ?? this.sqlConnection.manager;
+
     // filter out inactive organisations (this was previously like this not really sure why we'd pass ids of inactive organisations)
     const organisationUnits = (
-      await this.sqlConnection
+      await em
         .createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')
         .where('organisationUnit.id IN (:...organisationUnitIds)', { organisationUnitIds })
         .andWhere('organisationUnit.inactivated_at IS NULL')
@@ -586,11 +596,14 @@ export class RecipientsService extends BaseService {
       return [];
     }
 
-    return this.getRole({
-      roles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
-      organisationUnits: organisationUnits,
-      includeLocked: includeLocked
-    });
+    return this.getRole(
+      {
+        roles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        organisationUnits: organisationUnits,
+        includeLocked: includeLocked
+      },
+      em
+    );
   }
 
   /**
