@@ -8,6 +8,7 @@ import type { HttpService, LoggerService } from '@admin/shared/services';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AnnouncementsService } from '../_services/announcements.service';
+import { DemoService } from '../_services/demo.service';
 import { OrganisationsService } from '../_services/organisations.service';
 import { StatisticsService } from '../_services/statistics.service';
 import { SYMBOLS } from '../_services/symbols';
@@ -17,6 +18,7 @@ import { ValidationService } from '../_services/validation.service';
 
 // Specific inversify container configuration.
 container.bind<OrganisationsService>(SYMBOLS.OrganisationsService).to(OrganisationsService).inSingletonScope();
+container.bind<DemoService>(SYMBOLS.DemoService).to(DemoService).inSingletonScope();
 container.bind<StatisticsService>(SYMBOLS.StatisticsService).to(StatisticsService).inSingletonScope();
 container.bind<TermsOfUseService>(SYMBOLS.TermsOfUseService).to(TermsOfUseService).inSingletonScope();
 container.bind<UsersService>(SYMBOLS.UsersService).to(UsersService).inSingletonScope();

@@ -1038,6 +1038,18 @@ paths:
           description: Not authorized
         "500":
           description: An error occurred
+  "/v1/demo/innovation/{innovationId}":
+    post:
+      description: Create an innovation IR demo data (depends on environment)
+      operationId: v1-innovation-create-demo
+      parameters: []
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Invalid innovation payload
+        "422":
+          description: Unprocessable entity
   "/v1/organisation-unit/{unit}/statistics":
     get:
       description: Get an organisation unit statistics
