@@ -1,6 +1,5 @@
 import type { DataSource, Repository } from 'typeorm';
 
-import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import {
   AccessorOrganisationRoleEnum,
   InnovationCollaboratorStatusEnum,
@@ -15,7 +14,7 @@ import type { DomainContextType, RoleType } from '../../types';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
-import { UserRoleEntity } from '../../entities/user/user-role.entity';
+import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
@@ -202,9 +201,7 @@ export class DomainUsersService {
     return dbUsers.map(dbUser => {
       const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
       if (!identityUser) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
-          details: { context: 'S.DU.gUL' }
-        });
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
       }
 
       return {

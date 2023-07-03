@@ -4,9 +4,8 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 import { container } from '../_config';
 
 import { Audit, JwtDecoder } from '@admin/shared/decorators';
-import { GenericErrorsEnum } from '@admin/shared/errors';
-import { NotImplementedError } from '@admin/shared/errors/errors.config';
-import { JoiHelper, ResponseHelper } from '@admin/shared/helpers';
+import { GenericErrorsEnum, NotImplementedError } from '@admin/shared/errors';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@admin/shared/helpers';
 import type { AuthorizationService } from '@admin/shared/services';
 import { ActionEnum, TargetEnum } from '@admin/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
@@ -50,11 +49,9 @@ export default openApi(V1InnovationCreate.httpTrigger as AzureFunction, '/v1/dem
   post: {
     description: 'Create an innovation IR demo data (depends on environment)',
     operationId: 'v1-innovation-create-demo',
-    parameters: [],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
-      204: {
-        description: 'Success'
-      },
+      204: { description: 'Success' },
       400: { description: 'Invalid innovation payload' },
       422: { description: 'Unprocessable entity' }
     }
