@@ -34,7 +34,9 @@ export class migrateFilesFromEvidences1688052294220 implements MigrationInterfac
     let start = 0;
     while (true) {
       const fileIdsSearch = fileIds.slice(start, start + 500);
-      if (fileIdsSearch.length === 0) break;
+      if (fileIdsSearch.length === 0) {
+        break;
+      }
       start += 500;
 
       const files = await queryRunner.manager
