@@ -32,11 +32,9 @@ class V1InnovationSectionUpdate {
         .checkInnovatorType()
         .checkInnovation()
         .verify();
-      const requestUser = authInstance.getUserInfo();
       const domainContext = authInstance.getContext();
 
       const result = await innovationSectionsService.updateInnovationSectionInfo(
-        { id: requestUser.id },
         domainContext,
         params.innovationId,
         params.sectionKey,

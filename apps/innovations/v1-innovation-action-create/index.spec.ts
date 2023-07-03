@@ -2,11 +2,9 @@ import v1InnovationActionCreate from '.'; // Must be imported first to start inv
 
 import { randText, randUuid } from '@ngneat/falso';
 
-import { AzureHttpTriggerBuilder, CompleteScenarioType, TestsHelper } from '@innovations/shared/tests';
+import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 
-import { container } from '../_config';
-import type { InnovationActionsService } from '../_services/innovation-actions.service';
-import SYMBOLS from '../_services/symbols';
+import { InnovationActionsService } from '../_services/innovation-actions.service';
 
 import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
@@ -17,24 +15,21 @@ jest.mock(`@innovations/shared/decorators`, () => ({
 // MocksHelper.mockJwtDecoderDecorator('innovations');
 
 describe('Innovations / v1-innovation-action-create / index suite', () => {
-  let testsHelper: TestsHelper;
-  let scenario: CompleteScenarioType;
-  let innovationActionsService: InnovationActionsService;
+  const testsHelper = new TestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
-    testsHelper = await new TestsHelper().init();
-    scenario = testsHelper.getCompleteScenario();
-    innovationActionsService = container.get<InnovationActionsService>(SYMBOLS.InnovationActionsService);
+    await testsHelper.init();
   });
+
+  const expected: ResponseDTO = { id: randUuid() };
+  const mock = jest.spyOn(InnovationActionsService.prototype, 'createAction').mockResolvedValue({ id: expected.id });
+
   afterEach(async () => {
-    jest.restoreAllMocks();
+    mock.mockReset();
   });
 
   it('Should run function and succeed', async () => {
-    const expected: ResponseDTO = { id: randUuid() };
-
-    jest.spyOn(innovationActionsService, 'createAction').mockResolvedValue({ id: expected.id });
-
     const result = await new AzureHttpTriggerBuilder()
       .setAuth(scenario.users.johnInnovator, 'innovatorRole')
       .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id })

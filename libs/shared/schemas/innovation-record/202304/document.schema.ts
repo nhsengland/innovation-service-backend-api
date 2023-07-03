@@ -85,8 +85,9 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     keyHealthInequalities: Joi.array()
       .items(Joi.string().valid(...catalogKeyHealthInequalities))
       .min(1),
-    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo)
+    // files: Joi.array().items(Joi.string().guid()).min(1)
+    // files: Joi.array().items(Joi.string().guid()).min(1).optional() // TECH DEBT: this should be removed after evidences decision
   })
     .required()
     .min(1),
@@ -129,8 +130,9 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
           feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s)
         })
       )
-      .min(1),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+      .min(1)
+    // files: Joi.array().items(Joi.string().guid()).min(1),
+    // files: Joi.array().items(Joi.string().guid()).min(1).optional() // TECH DEBT: this should be removed after evidences decision
   })
     .required()
     .min(1),
@@ -146,8 +148,9 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
         })
       )
       .min(1),
-    otherRegulationDescription: Joi.string().max(100),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+    otherRegulationDescription: Joi.string().max(100)
+    // files: Joi.array().items(Joi.string().guid()).min(1),
+    // files: Joi.array().items(Joi.string().guid()).min(1).optional() // TECH DEBT: this should be removed after evidences decision
   })
     .required()
     .min(1),
@@ -189,8 +192,9 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     deploymentPlans: Joi.array().items(Joi.string().max(100)).min(1),
     commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
     organisationDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
-    hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+    hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure)
+    // files: Joi.array().items(Joi.string().guid()).min(1)
+    // files: Joi.array().items(Joi.string().guid()).min(1).optional() // TECH DEBT: this should be removed after evidences decision
   })
     .required()
     .min(1),

@@ -311,7 +311,7 @@ export class InnovationCollaboratorsService extends BaseService {
       }
     }
 
-    let collaboratorName = '[deleted user]';
+    let collaboratorName = collaborator.user ? '[deleted user]' : undefined;
     if (collaborator.user && collaborator.user.status !== UserStatusEnum.DELETED) {
       const collaboratorUser = await this.identityProviderService.getUserInfo(collaborator.user.identityId);
       collaboratorName = collaboratorUser.displayName;
@@ -322,7 +322,7 @@ export class InnovationCollaboratorsService extends BaseService {
       email: collaborator.email,
       status: collaborator.status,
       role: collaborator.collaboratorRole ?? undefined,
-      name: collaboratorName ?? undefined,
+      name: collaboratorName,
       innovation: {
         id: collaborator.innovation.id,
         name: collaborator.innovation.name,
@@ -359,6 +359,10 @@ export class InnovationCollaboratorsService extends BaseService {
 
     if (!collaborator) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
+    }
+
+    if (!isOwner && data.role) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_MUST_BE_OWNER);
     }
 
     if (data.status) {

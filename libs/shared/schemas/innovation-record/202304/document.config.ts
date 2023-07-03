@@ -1,11 +1,12 @@
 import type { DocumentType202304 } from './document.types';
 
+// TECH DEBT: A new config should be made after evidences decision
 export const allowFileUploads = new Set<keyof DocumentType202304>([
-  'UNDERSTANDING_OF_NEEDS',
-  'EVIDENCE_OF_EFFECTIVENESS',
-  'REGULATIONS_AND_STANDARDS',
-  'TESTING_WITH_USERS',
-  'DEPLOYMENT'
+  // 'UNDERSTANDING_OF_NEEDS',
+  'EVIDENCE_OF_EFFECTIVENESS'
+  // 'REGULATIONS_AND_STANDARDS',
+  // 'TESTING_WITH_USERS',
+  // 'DEPLOYMENT'
 ]);
 
 export const version = '202304';

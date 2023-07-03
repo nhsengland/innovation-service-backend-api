@@ -66,8 +66,9 @@ export class FileStorageService {
     }
   }
 
-  getDownloadUrl(id: string, filename: string): string {
-    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ, filename);
+  getDownloadUrl(id: string, filename: string, storageId?: string): string {
+    const storageFilename = storageId ?? `${id}${extname(filename)}`;
+    return this.getUrl(storageFilename, StoragePermissionsEnum.READ, filename);
   }
 
   getUploadUrl(id: string, filename: string): string {

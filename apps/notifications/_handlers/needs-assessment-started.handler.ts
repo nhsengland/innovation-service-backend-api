@@ -28,7 +28,7 @@ export class NeedsAssessmentStartedHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
-    if (owner) {
+    if (owner?.isActive) {
       await this.prepareEmailForInnovator(innovation.name, owner);
       await this.prepareInAppForInnovator(owner);
     }

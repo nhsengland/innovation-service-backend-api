@@ -1,21 +1,25 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
 import {
   InnovationAssessmentEntity,
   InnovationEntity,
-  InnovationReassessmentRequestEntity
+  InnovationReassessmentRequestEntity,
+  InnovationSupportEntity
 } from '@innovations/shared/entities';
-import { InnovationStatusEnum } from '@innovations/shared/enums';
+import { InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import { DomainInnovationsService, DomainUsersService, NotifierService } from '@innovations/shared/services';
+import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
+import { TestsHelper } from '@innovations/shared/tests';
+import { InnovationReassessmentRequestBuilder } from '@innovations/shared/tests/builders/innovation-reassessment-request.builder';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randText, randUuid } from '@ngneat/falso';
+import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
 import SYMBOLS from './symbols';
@@ -23,102 +27,95 @@ import SYMBOLS from './symbols';
 describe('Innovation Assessments Suite', () => {
   let sut: InnovationAssessmentsService;
 
-  let testData: TestDataType;
   let em: EntityManager;
 
-  let innovationWithAssessment: InnovationEntity;
-  let innovationWithoutAssessment: InnovationEntity;
+  const testsHelper = new TestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
     sut = container.get<InnovationAssessmentsService>(SYMBOLS.InnovationAssessmentsService);
-    await TestsLegacyHelper.init();
-    testData = TestsLegacyHelper.sampleData;
+    await testsHelper.init();
+
+    // Setup mocks
+    jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
   });
 
   beforeEach(async () => {
-    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
-
-    innovationWithAssessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
-      .setOwner(testData.baseUsers.innovator)
-      .withAssessments(testData.baseUsers.assessmentUser)
-      .build(em);
-
-    innovationWithoutAssessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
-      .setOwner(testData.baseUsers.innovator)
-      .build(em);
+    em = await testsHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    jest.restoreAllMocks();
-    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
+    await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('getInnovationAssssmentInfo', () => {
-    beforeEach(() => {
-      jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue([
-        {
-          id: testData.baseUsers.assessmentUser.id,
-          displayName: 'assessment user name'
-        }
-      ] as any);
-    });
+  const innovationWithAssessment = scenario.users.johnInnovator.innovations.johnInnovation;
+  const innovationWithoutAssessment = scenario.users.adamInnovator.innovations.adamInnovation;
+  const innovationWithAssessmentInProgress =
+    scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
 
+  describe('getInnovationAssessmentInfo', () => {
     it('should get an innovation assessment', async () => {
-      const createdAssessment = innovationWithAssessment.assessments[0]!;
+      const assessment = innovationWithAssessment.assessment;
+      const res = await sut.getInnovationAssessmentInfo(innovationWithAssessment.assessment.id);
 
-      const assessment = await sut.getInnovationAssessmentInfo(createdAssessment.id, em);
-
-      expect(assessment).toEqual({
-        id: createdAssessment.id,
-        summary: createdAssessment.summary,
-        description: createdAssessment.description,
-        finishedAt: createdAssessment.finishedAt,
-        assignTo: { id: createdAssessment.assignTo.id, name: 'assessment user name' },
-        maturityLevel: createdAssessment.maturityLevel,
-        maturityLevelComment: createdAssessment.maturityLevelComment,
-        hasRegulatoryApprovals: createdAssessment.hasRegulatoryApprovals,
-        hasRegulatoryApprovalsComment: createdAssessment.hasRegulatoryApprovalsComment,
-        hasEvidence: createdAssessment.hasEvidence,
-        hasEvidenceComment: createdAssessment.hasEvidenceComment,
-        hasValidation: createdAssessment.hasValidation,
-        hasValidationComment: createdAssessment.hasValidationComment,
-        hasProposition: createdAssessment.hasProposition,
-        hasPropositionComment: createdAssessment.hasPropositionComment,
-        hasCompetitionKnowledge: createdAssessment.hasCompetitionKnowledge,
-        hasCompetitionKnowledgeComment: createdAssessment.hasCompetitionKnowledgeComment,
-        hasImplementationPlan: createdAssessment.hasImplementationPlan,
-        hasImplementationPlanComment: createdAssessment.hasImplementationPlanComment,
-        hasScaleResource: createdAssessment.hasScaleResource,
-        hasScaleResourceComment: createdAssessment.hasScaleResourceComment,
-        suggestedOrganisations: createdAssessment.organisationUnits,
-        updatedAt: createdAssessment.updatedAt,
-        updatedBy: { id: createdAssessment.updatedBy, name: 'assessment user name' }
+      expect(res).toEqual({
+        id: assessment.id,
+        summary: assessment.summary,
+        description: assessment.description,
+        finishedAt: new Date(assessment.finishedAt!),
+        assignTo: { id: assessment.assignedTo.id, name: assessment.assignedTo.name },
+        maturityLevel: assessment.maturityLevel,
+        maturityLevelComment: assessment.maturityLevelComment,
+        hasRegulatoryApprovals: assessment.hasRegulatoryApprovals,
+        hasRegulatoryApprovalsComment: assessment.hasRegulatoryApprovalsComment,
+        hasEvidence: assessment.hasEvidence,
+        hasEvidenceComment: assessment.hasEvidenceComment,
+        hasValidation: assessment.hasValidation,
+        hasValidationComment: assessment.hasValidationComment,
+        hasProposition: assessment.hasProposition,
+        hasPropositionComment: assessment.hasPropositionComment,
+        hasCompetitionKnowledge: assessment.hasCompetitionKnowledge,
+        hasCompetitionKnowledgeComment: assessment.hasCompetitionKnowledgeComment,
+        hasImplementationPlan: assessment.hasImplementationPlan,
+        hasImplementationPlanComment: assessment.hasImplementationPlanComment,
+        hasScaleResource: assessment.hasScaleResource,
+        hasScaleResourceComment: assessment.hasScaleResourceComment,
+        suggestedOrganisations: [
+          {
+            id: scenario.organisations.healthOrg.id,
+            name: scenario.organisations.healthOrg.name,
+            acronym: scenario.organisations.healthOrg.acronym,
+            units: [
+              {
+                id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+                name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+                acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+              }
+            ]
+          }
+        ],
+        updatedAt: expect.any(Date),
+        updatedBy: { id: scenario.users.paulNeedsAssessor.id, name: scenario.users.paulNeedsAssessor.name }
       });
     });
 
-    it('should not get an innovation assessment if it does not exist', async () => {
-      let err: NotFoundError | null = null;
-      try {
-        await sut.getInnovationAssessmentInfo(randUuid(), em);
-      } catch (error) {
-        err = error as NotFoundError;
-      }
+    it('should return null finishedAt if assessment not submitted', async () => {
+      const res = await sut.getInnovationAssessmentInfo(innovationWithAssessmentInProgress.assessmentInProgress.id, em);
+      expect(res.finishedAt).toBeNull();
+    });
 
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    it('should not get an innovation assessment if it does not exist', async () => {
+      await expect(() => sut.getInnovationAssessmentInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
+      );
     });
   });
 
   describe('createInnovationAssessment', () => {
-    beforeEach(() => {
-      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
-    });
-
     it('should create an assessment', async () => {
       const assessment = await sut.createInnovationAssessment(
-        testData.baseUsers.assessmentUser,
-        testData.domainContexts.assessmentUser,
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithoutAssessment.id,
         { message: 'test assessment' },
         em
@@ -131,38 +128,25 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should not create an innovation assessment if one already exists', async () => {
-      let err: UnprocessableEntityError | null = null;
-      try {
-        await sut.createInnovationAssessment(
-          testData.baseUsers.assessmentUser,
-          testData.domainContexts.assessmentUser,
+      await expect(() =>
+        sut.createInnovationAssessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithAssessment.id,
           { message: 'test assessment' },
           em
-        );
-      } catch (error) {
-        err = error as UnprocessableEntityError;
-      }
-
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS);
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_ALREADY_EXISTS));
     });
   });
 
   describe('updateInnovationAssessment', () => {
-    beforeEach(() => {
-      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
-    });
-
     it('should update an assessment', async () => {
-      const assessment = innovationWithAssessment.assessments[0]!;
+      const assessment = innovationWithAssessment.assessment;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
-        testData.baseUsers.assessmentUser,
-        testData.domainContexts.assessmentUser,
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessment.id,
-        assessment?.id,
+        assessment.id,
         { summary: 'test update assessment' },
         em
       );
@@ -176,51 +160,38 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should not update assessment if the innovation does not exist', async () => {
-      let err: NotFoundError | null = null;
-      try {
-        await sut.updateInnovationAssessment(
-          testData.baseUsers.assessmentUser,
-          testData.domainContexts.assessmentUser,
-          randUuid(),
-          randUuid(),
-          {},
-          em
-        );
-      } catch (error) {
-        err = error as NotFoundError;
-      }
-
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+      await expect(
+        async () =>
+          await sut.updateInnovationAssessment(
+            DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+            randomUUID(),
+            innovationWithAssessment.id,
+            { summary: 'test update assessment' },
+            em
+          )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it('should not update assessment if the assessment does not exist', async () => {
-      let err: NotFoundError | null = null;
-      try {
-        await sut.updateInnovationAssessment(
-          testData.baseUsers.assessmentUser,
-          testData.domainContexts.assessmentUser,
-          innovationWithoutAssessment.id,
-          randUuid(),
-          {},
-          em
-        );
-      } catch (error) {
-        err = error as NotFoundError;
-      }
-
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+      await expect(
+        async () =>
+          await sut.updateInnovationAssessment(
+            DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+            innovationWithAssessment.id,
+            randomUUID(),
+            { summary: 'test update assessment' },
+            em
+          )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
     it('should submit an assessment', async () => {
-      const assessment = innovationWithAssessment.assessments[0]!;
+      const assessment = innovationWithAssessmentInProgress.assessmentInProgress;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
-        testData.baseUsers.assessmentUser,
-        testData.domainContexts.assessmentUser,
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovationWithAssessment.id,
-        assessment?.id,
+        assessment.id,
         { isSubmission: true },
         em
       );
@@ -234,22 +205,16 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should save a reassessment', async () => {
-      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+      await new InnovationReassessmentRequestBuilder(em)
+        .setAssessment(innovationWithAssessment.assessment)
+        .setInnovation(innovationWithAssessment)
+        .save();
 
-      const innovationWithReassessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
-        .setOwner(testData.baseUsers.innovator)
-        .withAssessments(testData.baseUsers.assessmentUser)
-        .withReassessment()
-        .setStatus(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT)
-        .build(em);
-
-      const assessment = innovationWithReassessment.assessments[0]!;
+      const assessment = innovationWithAssessment.assessment;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
-        testData.baseUsers.assessmentUser,
-        testData.domainContexts.assessmentUser,
-        innovationWithReassessment.id,
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovationWithAssessment.id,
         assessment.id,
         { isSubmission: false },
         em
@@ -257,26 +222,23 @@ describe('Innovation Assessments Suite', () => {
 
       const dbUpdatedInnovation = await em
         .getRepository(InnovationEntity)
-        .findOne({ where: { id: innovationWithReassessment.id } });
+        .findOne({ where: { id: innovationWithAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
       expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.NEEDS_ASSESSMENT);
     });
 
     it('should submit a reassessment', async () => {
-      const innovationWithReassessment = await TestsLegacyHelper.TestDataBuilder.createInnovation()
-        .setOwner(testData.baseUsers.innovator)
-        .withAssessments(testData.baseUsers.assessmentUser)
-        .withReassessment()
-        .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
-        .build(em);
+      await new InnovationReassessmentRequestBuilder(em)
+        .setAssessment(innovationWithAssessment.assessment)
+        .setInnovation(innovationWithAssessment)
+        .save();
 
-      const assessment = innovationWithReassessment.assessments[0]!;
+      const assessment = innovationWithAssessment.assessment;
 
       const updatedAssessment = await sut.updateInnovationAssessment(
-        testData.baseUsers.assessmentUser,
-        testData.domainContexts.assessmentUser,
-        innovationWithReassessment.id,
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovationWithAssessment.id,
         assessment.id,
         { isSubmission: true },
         em
@@ -284,7 +246,7 @@ describe('Innovation Assessments Suite', () => {
 
       const dbUpdatedInnovation = await em
         .getRepository(InnovationEntity)
-        .findOne({ where: { id: innovationWithReassessment.id } });
+        .findOne({ where: { id: innovationWithAssessment.id } });
 
       expect(updatedAssessment.id).toBe(assessment.id);
       expect(dbUpdatedInnovation?.status).toBe(InnovationStatusEnum.IN_PROGRESS);
@@ -293,8 +255,13 @@ describe('Innovation Assessments Suite', () => {
 
   describe('createInnovationReassessment', () => {
     it('should create a ressessment', async () => {
+      await em.update(
+        InnovationSupportEntity,
+        { innovation: { id: innovationWithAssessment.id } },
+        { status: InnovationSupportStatusEnum.COMPLETE }
+      );
       const innovationReassessment = await sut.createInnovationReassessment(
-        testData.domainContexts.assessmentUser,
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovationWithAssessment.id,
         { updatedInnovationRecord: 'YES', description: randText() },
         em
@@ -315,104 +282,68 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should not create a reassessment if the innovation has no assessment', async () => {
-      let err: UnprocessableEntityError | null = null;
-      try {
-        await sut.createInnovationReassessment(
-          testData.domainContexts.assessmentUser,
+      await expect(async () =>
+        sut.createInnovationReassessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
           innovationWithoutAssessment.id,
           { updatedInnovationRecord: 'YES', description: randText() },
           em
-        );
-      } catch (error) {
-        err = error as UnprocessableEntityError;
-      }
-
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
 
     it('should not create a reassessment if the innovation has ongoing supports', async () => {
-      let err: UnprocessableEntityError | null = null;
-
-      // not working due to datetime problems
-      // const innovationWithSupport = await TestsLegacyHelper.TestDataBuilder.createInnovation()
-      //   .setOwner(testData.baseUsers.innovator)
-      //   .withSupportsAndAccessors(testData.organisationUnit.accessor, [testData.organisationUnitUsers.accessor])
-      //   .withAssessments(testData.baseUsers.assessmentUser)
-      //   .build(em);
-
-      try {
-        await sut.createInnovationReassessment(
-          testData.domainContexts.assessmentUser,
-          testData.innovation.id,
+      await expect(async () =>
+        sut.createInnovationReassessment(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          innovationWithAssessment.id,
           { updatedInnovationRecord: 'YES', description: randText() },
           em
-        );
-      } catch (error) {
-        err = error as UnprocessableEntityError;
-      }
-
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);
-    });
-  });
-
-  describe('updateAssessor', () => {
-    it('should update the assigned assessor', async () => {
-      const newAssessor = testData.baseUsers.assessmentUser2;
-
-      const result = await sut.updateAssessor(
-        testData.domainContexts.assessmentUser,
-        innovationWithAssessment.id,
-        innovationWithAssessment.assessments[0]!.id,
-        newAssessor.id,
-        em
-      );
-
-      expect(result).toEqual({
-        assessmentId: innovationWithAssessment.assessments[0]!.id,
-        assessorId: newAssessor.id
-      });
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
     });
 
-    it('should not update assessor if the new assessor does not exist', async () => {
-      let err: NotFoundError | null = null;
-
-      try {
-        await sut.updateAssessor(
-          testData.domainContexts.assessmentUser,
+    describe('updateAssessor', () => {
+      it('should update the assigned assessor', async () => {
+        const newAssessor = scenario.users.seanNeedsAssessor;
+        const result = await sut.updateAssessor(
+          DTOsHelper.getUserRequestContext(newAssessor),
           innovationWithAssessment.id,
-          innovationWithAssessment.assessments[0]!.id,
-          randUuid(),
-          em
-        );
-      } catch (error) {
-        err = error as NotFoundError;
-      }
-
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(UserErrorsEnum.USER_SQL_NOT_FOUND);
-    });
-
-    it('should not update assessor if the innovation has no assessment', async () => {
-      let err: NotFoundError | null = null;
-
-      const newAssessor = testData.baseUsers.assessmentUser2;
-
-      try {
-        await sut.updateAssessor(
-          testData.domainContexts.assessmentUser,
-          innovationWithoutAssessment.id,
-          innovationWithAssessment.assessments[0]!.id,
+          innovationWithAssessment.assessment.id,
           newAssessor.id,
           em
         );
-      } catch (error) {
-        err = error as NotFoundError;
-      }
 
-      expect(err).toBeDefined();
-      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+        expect(result).toEqual({
+          assessmentId: innovationWithAssessment.assessment.id,
+          assessorId: newAssessor.id
+        });
+      });
+
+      it('should not update assessor if the new assessor does not exist', async () => {
+        await expect(() =>
+          sut.updateAssessor(
+            DTOsHelper.getUserRequestContext(scenario.users.seanNeedsAssessor),
+            innovationWithAssessment.id,
+            innovationWithAssessment.assessment.id,
+            randUuid(),
+            em
+          )
+        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
+      });
+
+      it('should not update assessor if the innovation has no assessment', async () => {
+        const newAssessor = scenario.users.seanNeedsAssessor;
+        await expect(() =>
+          sut.updateAssessor(
+            DTOsHelper.getUserRequestContext(newAssessor),
+            innovationWithoutAssessment.id,
+            randomUUID(),
+            newAssessor.id,
+            em
+          )
+        ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+      });
     });
   });
 });

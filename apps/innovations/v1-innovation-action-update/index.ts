@@ -33,7 +33,6 @@ class V1InnovationActionUpdate {
         .checkAssessmentType()
         .checkInnovation()
         .verify();
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
@@ -45,7 +44,6 @@ class V1InnovationActionUpdate {
         domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
       ) {
         const accessorResult = await innovationActionsService.updateActionAsAccessor(
-          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext,
           params.innovationId,
           params.actionId,
@@ -58,7 +56,6 @@ class V1InnovationActionUpdate {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
         const assessmentResult = await innovationActionsService.updateActionAsNeedsAccessor(
-          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext,
           params.innovationId,
           params.actionId,
@@ -71,7 +68,6 @@ class V1InnovationActionUpdate {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
         const innovatorResult = await innovationActionsService.updateActionAsInnovator(
-          { id: requestUser.id, identityId: requestUser.identityId },
           domainContext,
           params.innovationId,
           params.actionId,

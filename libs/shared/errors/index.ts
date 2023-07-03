@@ -13,6 +13,7 @@ export {
   NotFoundError,
   BadRequestError,
   InternalServerError,
+  NotImplementedError,
   ServiceUnavailableError,
   ConflictError,
   UnprocessableEntityError

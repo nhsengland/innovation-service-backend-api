@@ -489,12 +489,7 @@ export class DomainInnovationsService {
       userRole: {
         id: configuration.domainContext.currentRole.id
       },
-      param: {
-        actionUserId: configuration.domainContext.id,
-        actionUserRole: configuration.domainContext.currentRole.role,
-        actionUserOrganisationUnit: configuration.domainContext.organisation?.organisationUnit?.id,
-        ...params
-      }
+      param: params
     });
 
     try {

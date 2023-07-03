@@ -17,10 +17,6 @@ describe('Notifications / _handlers / lock-user suite', () => {
     scenario = testsHelper.getCompleteScenario();
   });
 
-  afterAll(() => {
-    jest.restoreAllMocks();
-  });
-
   it('Should return immediately if the user does not exist', async () => {
     const handler = new LockUserHandler(
       DTOsHelper.getUserRequestContext(scenario.users.allMighty, 'admin'),
@@ -68,7 +64,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
     );
 
     const [id1, id2] = [randUuid(), randUuid()];
-    jest.spyOn(RecipientsService.prototype, 'userInnovationsWithAssignedRecipients').mockResolvedValue([
+    jest.spyOn(RecipientsService.prototype, 'userInnovationsWithAssignedRecipients').mockResolvedValueOnce([
       {
         id: id1,
         name: 'Innovation 1',
@@ -115,7 +111,7 @@ describe('Notifications / _handlers / lock-user suite', () => {
   });
 
   it('Should remove duplicate users from the inapp recipients', async () => {
-    jest.spyOn(RecipientsService.prototype, 'userInnovationsWithAssignedRecipients').mockResolvedValue([
+    jest.spyOn(RecipientsService.prototype, 'userInnovationsWithAssignedRecipients').mockResolvedValueOnce([
       {
         id: randUuid(),
         name: 'Innovation 2',
