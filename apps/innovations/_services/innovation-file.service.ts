@@ -3,7 +3,11 @@ import { basename, extname } from 'path';
 
 import type { EntityManager } from 'typeorm';
 
-import { InnovationFileEntity, InnovationFileLegacyEntity } from '@innovations/shared/entities';
+import {
+  InnovationDocumentEntity,
+  InnovationFileEntity,
+  InnovationFileLegacyEntity
+} from '@innovations/shared/entities';
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
@@ -14,7 +18,8 @@ import {
   NotFoundError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
+import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
@@ -51,7 +56,7 @@ export class InnovationFileService extends BaseService {
     data: {
       id: string;
       storageId: string;
-      context: { id: string; type: InnovationFileContextTypeEnum };
+      context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
       name: string;
       description?: string;
       createdAt: Date;
@@ -175,12 +180,18 @@ export class InnovationFileService extends BaseService {
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
+    const evidenceNamesMap = await this.getEvidencesNamesMap(
+      files.filter(f => f.contextType === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE).map(f => f.contextId),
+      innovationId,
+      connection
+    );
+
     return {
       count,
       data: files.map(file => ({
         id: file.id,
         storageId: file.storageId,
-        context: { id: file.contextId, type: file.contextType },
+        context: { id: file.contextId, type: file.contextType, name: evidenceNamesMap.get(file.contextId) },
         name: file.name,
         ...(filters.fields?.includes('description') && { description: file.description ?? undefined }),
         createdAt: file.createdAt,
@@ -216,7 +227,7 @@ export class InnovationFileService extends BaseService {
   ): Promise<{
     id: string;
     storageId: string;
-    context: { id: string; type: InnovationFileContextTypeEnum };
+    context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
     name: string;
     description?: string;
     createdAt: Date;
@@ -267,10 +278,16 @@ export class InnovationFileService extends BaseService {
       createdByUser = await this.identityProviderService.getUserInfo(file.createdByUserRole.user.identityId);
     }
 
+    let contextName: undefined | string;
+    if (file.contextType === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE) {
+      const evidenceNamesMap = await this.getEvidencesNamesMap([file.contextId], innovationId, connection);
+      contextName = evidenceNamesMap.get(file.contextId);
+    }
+
     return {
       id: file.id,
       storageId: file.storageId,
-      context: { id: file.contextId, type: file.contextType },
+      context: { id: file.contextId, type: file.contextType, name: contextName },
       name: file.name,
       description: file.description ?? undefined,
       createdAt: file.createdAt,
@@ -424,6 +441,36 @@ export class InnovationFileService extends BaseService {
       default:
         return false;
     }
+  }
+
+  private async getEvidencesNamesMap(
+    evidenceIds: string[],
+    innovationId: string,
+    em: EntityManager
+  ): Promise<Map<string, string>> {
+    const innovationDocument = await em
+      .createQueryBuilder(InnovationDocumentEntity, 'document')
+      .where('document.id = :innovationId', { innovationId })
+      .andWhere('document.version = :version', { version: CurrentDocumentConfig.version })
+      .getOne();
+
+    if (!innovationDocument) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const evidencesMap = new Map<string, string>();
+    if (innovationDocument.document.version === CurrentDocumentConfig.version) {
+      for (const evidence of innovationDocument.document.evidences ?? []) {
+        if (evidenceIds.includes(evidence.id)) {
+          evidencesMap.set(
+            evidence.id,
+            evidence.description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${evidence.evidenceSubmitType}`)
+          );
+        }
+      }
+    }
+
+    return evidencesMap;
   }
 
   /** ---------------- */
