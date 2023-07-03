@@ -2,7 +2,7 @@ import type { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovation
 
 export type ResponseDTO = {
   id: string;
-  context: { id: string; type: InnovationFileContextTypeEnum };
+  context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
   name: string;
   description?: string;
   createdAt: Date;
