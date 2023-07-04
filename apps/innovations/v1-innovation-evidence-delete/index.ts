@@ -29,14 +29,9 @@ class V1InnovationEvidenceDelete {
         .checkInnovation()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const innovation = auth.getInnovationInfo();
 
-      await innovationSectionsService.deleteInnovationEvidence(
-        { id: requestUser.id },
-        innovation.id,
-        params.evidenceId
-      );
+      await innovationSectionsService.deleteInnovationEvidence(auth.getContext(), innovation.id, params.evidenceId);
 
       context.res = ResponseHelper.NoContent();
       return;

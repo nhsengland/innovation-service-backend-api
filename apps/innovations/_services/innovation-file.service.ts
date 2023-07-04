@@ -379,6 +379,31 @@ export class InnovationFileService extends BaseService {
     return { id: file.id };
   }
 
+  async deleteFiles(
+    domainContext: DomainContextType,
+    innovationId: string,
+    filters: { contextType?: InnovationFileContextTypeEnum; contextId?: string },
+    entityManager: EntityManager
+  ): Promise<void> {
+    const query = entityManager
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .select(['file.id'])
+      .where('file.innovation_id = :innovationId', { innovationId });
+
+    if (filters.contextType) {
+      query.andWhere('file.context_type = :contextType', { contextType: filters.contextType });
+    }
+
+    if (filters.contextId) {
+      query.andWhere('file.context_id = :contextId', { contextId: filters.contextId });
+    }
+
+    const files = await query.getMany();
+    for (const file of files) {
+      await this.deleteFile(domainContext, file.id, entityManager);
+    }
+  }
+
   async deleteFile(domainContext: DomainContextType, fileId: string, entityManager?: EntityManager): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
 

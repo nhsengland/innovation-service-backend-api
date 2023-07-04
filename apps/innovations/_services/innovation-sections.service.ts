@@ -4,7 +4,6 @@ import {
   InnovationActionEntity,
   InnovationDocumentEntity,
   InnovationEntity,
-  InnovationFileEntity,
   InnovationSectionEntity,
   UserEntity,
   UserRoleEntity
@@ -381,15 +380,12 @@ export class InnovationSectionsService extends BaseService {
         );
 
         // Delete files related with evidences for this innovation
-        const filesToDelete = await transaction
-          .createQueryBuilder(InnovationFileEntity, 'file')
-          .select(['file.id'])
-          .where('file.context_type = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE })
-          .andWhere('file.innovation_id = :innovationId', { innovationId })
-          .getMany();
-        for (const file of filesToDelete) {
-          await this.innovationFileService.deleteFile(domainContext, file.id, transaction);
-        }
+        await this.innovationFileService.deleteFiles(
+          domainContext,
+          innovationId,
+          { contextType: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
+          transaction
+        );
       } else {
         await transaction.query(
           `UPDATE innovation_document
@@ -655,7 +651,11 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
-  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceId: string): Promise<void> {
+  async deleteInnovationEvidence(
+    domainContext: DomainContextType,
+    innovationId: string,
+    evidenceId: string
+  ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     let evidences = document.evidences;
@@ -670,12 +670,15 @@ export class InnovationSectionsService extends BaseService {
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
 
+      // delete files related with the evidence
+      await this.innovationFileService.deleteFiles(domainContext, innovationId, { contextId: evidenceId }, transaction);
+
       // save the new evidences
       await transaction.query(
         `
         UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences`, JSON.stringify(evidences), user.id, updatedAt, innovationId]
+        [`$.evidences`, JSON.stringify(evidences), domainContext.id, updatedAt, innovationId]
       );
 
       //update section status to draft
@@ -684,7 +687,7 @@ export class InnovationSectionsService extends BaseService {
         { innovation: { id: innovationId }, section: 'EVIDENCE_OF_EFFECTIVENESS' },
         {
           updatedAt: updatedAt,
-          updatedBy: user.id,
+          updatedBy: domainContext.id,
           status: InnovationSectionStatusEnum.DRAFT
         }
       );
