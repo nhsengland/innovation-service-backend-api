@@ -110,8 +110,7 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
     },
     TESTING_WITH_USERS: {
       testedWithIntendedUsers: original.TESTING_WITH_USERS?.hasTests,
-      userTests: original.TESTING_WITH_USERS?.userTests,
-      files: original.TESTING_WITH_USERS?.files
+      userTests: original.TESTING_WITH_USERS?.userTests
     },
     REGULATIONS_AND_STANDARDS: original.REGULATIONS_AND_STANDARDS ?? {},
     INTELLECTUAL_PROPERTY: original.INTELLECTUAL_PROPERTY ?? {},
@@ -134,8 +133,7 @@ export const upgradeDocumentTo202304 = (original: DocumentType202209): DocumentT
           : 'COST_IMPACT_OR_ECONOMIC',
       evidenceType: evidence.clinicalEvidenceType,
       description: evidence.description,
-      summary: evidence.summary ?? '', // Don't believe this is possible but TS doesn't know that because of previous schema, if it was null then we just set it to empty string
-      files: evidence.files ?? []
+      summary: evidence.summary ?? '' // Don't believe this is possible but TS doesn't know that because of previous schema, if it was null then we just set it to empty string
     }))
   };
 };

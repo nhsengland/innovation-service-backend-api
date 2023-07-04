@@ -403,6 +403,9 @@ export class InnovationFileService extends BaseService {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE);
     }
 
+    // Delete file from blob
+    await this.fileStorageService.deleteFile(file.id, file.filename);
+
     const now = new Date();
     await connection.update(
       InnovationFileEntity,

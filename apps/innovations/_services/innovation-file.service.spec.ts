@@ -879,6 +879,7 @@ describe('Services / Innovation File service suite', () => {
 
   describe('deleteFile()', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const deleteFileMock = jest.spyOn(FileStorageService.prototype, 'deleteFile').mockResolvedValue({} as any);
 
     describe.each([
       ['innovation owner', DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')],
@@ -897,6 +898,7 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalled();
       });
 
       it.each([
@@ -927,6 +929,7 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalled();
       });
 
       it.each([
@@ -957,6 +960,7 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalled();
       });
 
       it.each([

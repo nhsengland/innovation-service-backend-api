@@ -41,8 +41,7 @@ class GetInnovationEvidenceInfo {
         evidenceType: result.evidenceType,
         evidenceSubmitType: result.evidenceSubmitType,
         description: result.description,
-        summary: result.summary,
-        files: result.files
+        summary: result.summary
       });
       return;
     } catch (error) {

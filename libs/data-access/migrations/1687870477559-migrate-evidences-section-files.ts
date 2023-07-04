@@ -12,7 +12,7 @@ export class migrateEvidencesSectionFiles1687870477559 implements MigrationInter
       .select(['role.user_id', 'role.id'])
       .where('role.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
       .getRawMany();
-    const rolesMap = new Map<string, string>(roles.map(r => [r.user_id, r.role_id]));
+    const rolesMap = new Map<string, string>(roles.map(r => [String(r.user_id).toUpperCase(), r.role_id]));
 
     const oldSectionFilesFromEvidences = await queryRunner.query(`
       SELECT f.*, i.created_by as innovation_created_by
@@ -38,7 +38,9 @@ export class migrateEvidencesSectionFiles1687870477559 implements MigrationInter
         filesize: null,
         createdAt: file.created_at,
         createdBy: file.created_by ?? file.owner_id ?? file.innovation_created_by,
-        createdByUserRole: { id: rolesMap.get(file.created_by ?? file.owner_id ?? file.innovation_created_by) },
+        createdByUserRole: {
+          id: rolesMap.get(String(file.file_created_by ?? file.owner_id ?? file.innovation_created_by).toUpperCase())
+        },
         updatedAt: file.updated_at,
         updatedBy: file.updated_by ?? file.owner_id ?? file.innovation_created_by,
         deletedAt: file.deleted_at

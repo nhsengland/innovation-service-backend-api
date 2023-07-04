@@ -8,7 +8,19 @@ import {
   UserRoleEntity
 } from '../../shared/entities';
 import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '../../shared/enums';
+import type {
+  catalogEvidenceSubmitType,
+  catalogEvidenceType
+} from '../../shared/schemas/innovation-record/202304/catalog.types';
 
+type OldEvidenceType = {
+  id: string;
+  evidenceSubmitType: catalogEvidenceSubmitType;
+  evidenceType?: catalogEvidenceType;
+  description?: string;
+  summary: string;
+  files?: string[];
+};
 export class migrateFilesFromEvidences1688052294220 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const documents = await queryRunner.manager
@@ -20,7 +32,10 @@ export class migrateFilesFromEvidences1688052294220 implements MigrationInterfac
     const fileAndEvidenceMap = new Map<string, string>();
     for (const document of documents) {
       if (document.document.version === '202304') {
-        for (const evidence of document.document.evidences ?? []) {
+        // This is needed since we took of files from the document type but in reality while running this migration they do exist
+        // Another approach would be if we created a new IR version without the files (was decided to do the changes in the current IR version)
+        const evidences: OldEvidenceType[] = document.document.evidences ?? [];
+        for (const evidence of evidences) {
           for (const file of evidence.files ?? []) {
             fileAndEvidenceMap.set(file, evidence.id);
           }
@@ -58,7 +73,7 @@ export class migrateFilesFromEvidences1688052294220 implements MigrationInterfac
       .select(['role.user_id', 'role.id'])
       .where('role.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
       .getRawMany();
-    const rolesMap = new Map<string, string>(roles.map(r => [r.user_id, r.role_id]));
+    const rolesMap = new Map<string, string>(roles.map(r => [String(r.user_id).toUpperCase(), r.role_id]));
 
     // Transform the old files to the new file structure
     const files = oldFiles.map(file =>
@@ -75,7 +90,9 @@ export class migrateFilesFromEvidences1688052294220 implements MigrationInterfac
         filesize: null,
         createdAt: file.file_created_at,
         createdBy: file.file_created_by ?? file.owner_id ?? file.innovation_created_by,
-        createdByUserRole: { id: rolesMap.get(file.file_created_by ?? file.owner_id ?? file.innovation_created_by) },
+        createdByUserRole: {
+          id: rolesMap.get(String(file.file_created_by ?? file.owner_id ?? file.innovation_created_by).toUpperCase())
+        },
         updatedAt: file.file_updated_at,
         updatedBy: file.file_updated_by ?? file.owner_id ?? file.innovation_created_by,
         deletedAt: file.file_deleted_at
