@@ -29,6 +29,7 @@ import type {
 import { BaseService } from './base.service';
 
 import { NotImplementedError } from '@innovations/shared/errors/errors.config';
+import { TranslationHelper } from '@innovations/shared/helpers';
 import type { DocumentType, DocumentTypeFromVersion } from '@innovations/shared/schemas/innovation-record';
 import {
   CurrentCatalogTypes,
@@ -36,7 +37,6 @@ import {
   CurrentDocumentType,
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
-import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
@@ -783,7 +783,7 @@ export class InnovationSectionsService extends BaseService {
   /**
    * returns the section data from the document adding the custom output format data:
    * - files: [{ id, name, url }]
-   * - evidences: [{ evidenceSubmitType, description }]
+   * - evidences: [{ id, name, summary }]
    * @param document the source document
    * @param sectionKey the section key
    * @returns section data with extra information
@@ -795,8 +795,9 @@ export class InnovationSectionsService extends BaseService {
     T[K] & {
       files?: { id: string; name: string; url: string }[];
       evidences?: {
-        evidenceSubmitType: catalogEvidenceSubmitType;
-        description: string | undefined;
+        id: string;
+        name: string;
+        summary: CurrentEvidenceType['summary'];
       }[];
     }
   > {
@@ -809,8 +810,8 @@ export class InnovationSectionsService extends BaseService {
           ? undefined
           : document.evidences?.map(evidence => ({
               id: evidence.id,
-              evidenceSubmitType: evidence.evidenceSubmitType,
-              description: evidence.description
+              name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
+              summary: evidence.summary
             }));
     }
     const sectionData = document[sectionKey];
@@ -828,5 +829,9 @@ export class InnovationSectionsService extends BaseService {
       keyof T,
       'version' | 'evidences'
     >[];
+  }
+
+  private getEvidenceName(evidenceSubmitType: CurrentEvidenceType['evidenceSubmitType'], description?: string): string {
+    return description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${evidenceSubmitType}`);
   }
 }
