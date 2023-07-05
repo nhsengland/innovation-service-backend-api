@@ -93,7 +93,6 @@ export type DocumentType202304 = {
       hasMet?: catalogYesInProgressNotYet;
     }[];
     otherRegulationDescription?: string;
-    files?: string[];
   };
   INTELLECTUAL_PROPERTY: {
     hasPatents?: catalogHasPatents;
