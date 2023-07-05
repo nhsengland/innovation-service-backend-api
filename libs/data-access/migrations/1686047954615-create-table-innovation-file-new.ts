@@ -42,7 +42,7 @@ export class createTableInnovationFileNew1686047954615 implements MigrationInter
       .select(['role.user_id', 'role.id'])
       .where('role.role = :innovatorRole', { innovatorRole: ServiceRoleEnum.INNOVATOR })
       .getRawMany();
-    const rolesMap = new Map<string, string>(roles.map(r => [r.user_id, r.role_id]));
+    const rolesMap = new Map<string, string>(roles.map(r => [String(r.user_id).toUpperCase(), r.role_id]));
 
     const oldFiles = await queryRunner.manager
       .createQueryBuilder(InnovationFileLegacyEntity, 'file')
@@ -75,7 +75,9 @@ export class createTableInnovationFileNew1686047954615 implements MigrationInter
         filesize: null,
         createdAt: file.file_created_at,
         createdBy: file.file_created_by ?? file.owner_id ?? file.innovation_created_by,
-        createdByUserRole: { id: rolesMap.get(file.file_created_by ?? file.owner_id ?? file.innovation_created_by) },
+        createdByUserRole: {
+          id: rolesMap.get(String(file.file_created_by ?? file.owner_id ?? file.innovation_created_by).toUpperCase())
+        },
         updatedAt: file.file_updated_at,
         updatedBy: file.file_updated_by ?? file.owner_id ?? file.innovation_created_by,
         deletedAt: file.file_deleted_at

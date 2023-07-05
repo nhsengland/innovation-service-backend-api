@@ -4,7 +4,6 @@ import {
   InnovationActionEntity,
   InnovationDocumentEntity,
   InnovationEntity,
-  InnovationFileLegacyEntity,
   InnovationSectionEntity,
   UserEntity,
   UserRoleEntity
@@ -12,6 +11,7 @@ import {
 import {
   ActivityEnum,
   InnovationActionStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
@@ -19,12 +19,7 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type {
-  DomainService,
-  FileStorageService,
-  IdentityProviderService,
-  NotifierService
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -40,8 +35,8 @@ import {
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
-import { EntityManager, In } from 'typeorm';
-import { InnovationFileService } from './innovation-file.service';
+import type { EntityManager } from 'typeorm';
+import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
 
 @injectable()
@@ -49,7 +44,6 @@ export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
@@ -379,11 +373,18 @@ export class InnovationSectionsService extends BaseService {
         sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' &&
         (dataToUpdate as CurrentDocumentType['EVIDENCE_OF_EFFECTIVENESS']).hasEvidence !== 'YES'
       ) {
-        // TODO: Apagar ficheiros
         await transaction.query(
           `UPDATE innovation_document
           SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
           [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
+        );
+
+        // Delete files related with evidences for this innovation
+        await this.innovationFileService.deleteFiles(
+          domainContext,
+          innovationId,
+          { contextType: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
+          transaction
         );
       } else {
         await transaction.query(
@@ -571,8 +572,7 @@ export class InnovationSectionsService extends BaseService {
         evidenceType: evidenceData.evidenceType,
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
-        summary: evidenceData.summary,
-        files: evidenceData.files
+        summary: evidenceData.summary
       };
 
       await transaction.query(
@@ -621,23 +621,15 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    const existingFiles = (await this.innovationFileService.getFilesByIds(evidence.files)).map(f => f.id);
-    const filesToDelete = existingFiles.filter(f => !evidenceData.files?.includes(f));
-
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
-
-      if (filesToDelete.length > 0) {
-        await this.domainService.innovations.deleteInnovationFiles(transaction, filesToDelete);
-      }
 
       const data: CurrentEvidenceType = {
         id: evidenceId,
         evidenceType: evidenceData.evidenceType,
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
-        summary: evidenceData.summary,
-        files: evidenceData.files
+        summary: evidenceData.summary
       };
 
       await transaction.query(
@@ -659,7 +651,11 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
-  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceId: string): Promise<void> {
+  async deleteInnovationEvidence(
+    domainContext: DomainContextType,
+    innovationId: string,
+    evidenceId: string
+  ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     let evidences = document.evidences;
@@ -674,17 +670,15 @@ export class InnovationSectionsService extends BaseService {
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
 
-      if (evidence.files && evidence.files.length > 0) {
-        //delete files
-        await transaction.delete(InnovationFileLegacyEntity, { id: In(evidence.files) });
-      }
+      // delete files related with the evidence
+      await this.innovationFileService.deleteFiles(domainContext, innovationId, { contextId: evidenceId }, transaction);
 
       // save the new evidences
       await transaction.query(
         `
         UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences`, JSON.stringify(evidences), user.id, updatedAt, innovationId]
+        [`$.evidences`, JSON.stringify(evidences), domainContext.id, updatedAt, innovationId]
       );
 
       //update section status to draft
@@ -693,21 +687,14 @@ export class InnovationSectionsService extends BaseService {
         { innovation: { id: innovationId }, section: 'EVIDENCE_OF_EFFECTIVENESS' },
         {
           updatedAt: updatedAt,
-          updatedBy: user.id,
+          updatedBy: domainContext.id,
           status: InnovationSectionStatusEnum.DRAFT
         }
       );
     });
   }
 
-  async getInnovationEvidenceInfo(
-    innovationId: string,
-    evidenceId: string
-  ): Promise<
-    Omit<CurrentEvidenceType, 'files'> & {
-      files: { id: string; name: string; url: string }[];
-    }
-  > {
+  async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<CurrentEvidenceType> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     const evidence = document.evidences?.find(e => e.id === evidenceId);
@@ -715,19 +702,12 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
-    const files = await this.innovationFileService.getFilesByIds(evidence.files);
-
     return {
       id: evidence.id,
       evidenceType: evidence.evidenceType,
       evidenceSubmitType: evidence.evidenceSubmitType,
       description: evidence.description,
-      summary: evidence.summary,
-      files: files.map(file => ({
-        id: file.id,
-        name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
-      }))
+      summary: evidence.summary
     };
   }
 
@@ -782,7 +762,6 @@ export class InnovationSectionsService extends BaseService {
 
   /**
    * returns the section data from the document adding the custom output format data:
-   * - files: [{ id, name, url }]
    * - evidences: [{ id, name, summary }]
    * @param document the source document
    * @param sectionKey the section key
@@ -793,7 +772,6 @@ export class InnovationSectionsService extends BaseService {
     sectionKey: K
   ): Promise<
     T[K] & {
-      files?: { id: string; name: string; url: string }[];
       evidences?: {
         id: string;
         name: string;
@@ -818,7 +796,6 @@ export class InnovationSectionsService extends BaseService {
 
     return {
       ...sectionData,
-      files: undefined, // TECHDEBT: This can be removed with the new IR version
       ...(evidenceData && { evidences: evidenceData })
     };
   }
