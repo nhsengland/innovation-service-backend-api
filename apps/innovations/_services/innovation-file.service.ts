@@ -405,7 +405,7 @@ export class InnovationFileService extends BaseService {
 
     const file = await connection
       .createQueryBuilder(InnovationFileEntity, 'file')
-      .select(['file.id', 'createdByRole.id', 'createdByRole.role', 'createdByUserOrgUnit.id'])
+      .select(['file.id', 'file.storageId', 'createdByRole.id', 'createdByRole.role', 'createdByUserOrgUnit.id'])
       .innerJoin('file.createdByUserRole', 'createdByRole')
       .leftJoin('createdByRole.organisationUnit', 'createdByUserOrgUnit')
       .where('file.id = :fileId', { fileId })
