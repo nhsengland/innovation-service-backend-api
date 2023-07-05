@@ -15,7 +15,7 @@ import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/te
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
+import { randAirportName, randFileName, randFutureDate, randNumber, randUrl, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -405,6 +405,18 @@ describe('Services / Innovation File service suite', () => {
         count: expect.any(Number),
         data: data
       });
+    });
+
+    it('should return an empty array when no files are found', async () => {
+      const files = await sut.getFilesList(
+        innovation.id,
+        { name: randAirportName() },
+        { take: 20, skip: 0, order: { name: 'ASC' } },
+        em
+      );
+
+      expect(files.count).toBe(0);
+      expect(files.data).toHaveLength(0);
     });
   });
 
@@ -1006,25 +1018,6 @@ describe('Services / Innovation File service suite', () => {
         name,
         url
       });
-    });
-  });
-
-  // This will be removed - its currently being used by evidences
-  describe('uploadInnovationFile', () => {
-    it('should updload an innovation file', async () => {
-      const filename = randFileName();
-      const url = randUrl();
-      jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
-
-      const file = await sut.uploadInnovationFile(
-        scenario.users.johnInnovator.id,
-        scenario.users.johnInnovator.innovations.johnInnovation.id,
-        filename,
-        randText(),
-        em
-      );
-
-      expect(file).toMatchObject({ id: expect.any(String), displayFileName: filename, url });
     });
   });
 

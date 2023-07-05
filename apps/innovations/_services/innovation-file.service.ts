@@ -1,13 +1,9 @@
 import { inject, injectable } from 'inversify';
-import { basename, extname } from 'path';
+import { extname } from 'path';
 
 import type { EntityManager } from 'typeorm';
 
-import {
-  InnovationDocumentEntity,
-  InnovationFileEntity,
-  InnovationFileLegacyEntity
-} from '@innovations/shared/entities';
+import { InnovationDocumentEntity, InnovationFileEntity } from '@innovations/shared/entities';
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
@@ -213,7 +209,7 @@ export class InnovationFileService extends BaseService {
           name: file.filename,
           size: file.filesize ?? undefined,
           extension: file.extension,
-          url: this.fileStorageService.getDownloadUrl(file.id, file.filename, file.storageId)
+          url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
         }
       }))
     };
@@ -309,7 +305,7 @@ export class InnovationFileService extends BaseService {
         name: file.filename,
         size: file.filesize ?? undefined,
         extension: file.extension,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.filename, file.storageId)
+        url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
       },
       canDelete: this.canDeleteFile(
         { role: file.createdByUserRole.role, orgUnitId: file.createdByUserRole.organisationUnit?.id },
@@ -429,7 +425,7 @@ export class InnovationFileService extends BaseService {
     }
 
     // Delete file from blob
-    await this.fileStorageService.deleteFile(file.id, file.filename);
+    await this.fileStorageService.deleteFile(file.storageId);
 
     const now = new Date();
     await connection.update(
@@ -499,62 +495,5 @@ export class InnovationFileService extends BaseService {
     }
 
     return evidencesMap;
-  }
-
-  /** ---------------- */
-  /** BELLOW IS LEGACY */
-  /** ---------------- */
-
-  /**
-   * uploads a file to the innovation
-   * @param userId the user identifier making the request
-   * @param innovationId the innovation identifier
-   * @param filename the file name
-   * @param context optional context for the file
-   * @param em optional entity manager to use for the transaction
-   * @returns the created file and the url to upload the file to
-   */
-  async uploadInnovationFile(
-    userId: string,
-    innovationId: string,
-    filename: string,
-    context: null | string,
-    entityManager?: EntityManager
-  ): Promise<{ id: string; displayFileName: string; url: string }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-    const extension = extname(filename);
-    const filenameWithoutExtension = basename(filename, extension);
-
-    const file = await connection.save(InnovationFileLegacyEntity, {
-      createdBy: userId,
-      displayFileName: filenameWithoutExtension.substring(0, 99 - extension.length) + extension, // failsafe to avoid filename too long (100 chars max)
-      innovation: { id: innovationId },
-      context
-    });
-
-    return {
-      id: file.id,
-      displayFileName: file.displayFileName,
-      url: this.fileStorageService.getUploadUrl(file.id, filename)
-    };
-  }
-
-  /**
-   * gets the files by id
-   * @param ids the file identifiers
-   * @param entityManager optional entity manager to use for the transaction
-   * @returns the files
-   */
-  async getFilesByIds(ids: undefined | string[], entityManager?: EntityManager): Promise<InnovationFileLegacyEntity[]> {
-    if (!ids?.length) {
-      return [];
-    }
-
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    return connection
-      .createQueryBuilder(InnovationFileLegacyEntity, 'file')
-      .where('file.id IN (:...ids)', { ids })
-      .getMany();
   }
 }
