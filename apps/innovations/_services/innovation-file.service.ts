@@ -442,11 +442,11 @@ export class InnovationFileService extends BaseService {
   }
 
   async getFileUploadUrl(filename: string): Promise<{ id: string; name: string; url: string }> {
-    const id = randomUUID();
+    const storageId = randomUUID() + extname(filename);
     return {
-      id: id + extname(filename),
+      id: storageId,
       name: filename,
-      url: this.fileStorageService.getUploadUrl(id, filename)
+      url: this.fileStorageService.getUploadUrl(storageId, filename)
     };
   }
 
