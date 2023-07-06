@@ -7,7 +7,12 @@ import { InnovationDocumentEntity, InnovationFileEntity } from '@innovations/sha
 import type { FileStorageService, IdentityProviderService } from '@innovations/shared/services';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
-import { InnovationFileContextTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@innovations/shared/enums';
+import {
+  InnovationFileContextTypeEnum,
+  InnovationStatusEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '@innovations/shared/enums';
 import {
   ForbiddenError,
   InnovationErrorsEnum,
@@ -16,6 +21,8 @@ import {
 } from '@innovations/shared/errors';
 import { TranslationHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
 import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
+import { allowFileUploads } from '@innovations/shared/schemas/innovation-record/202304/document.config';
+import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-record/202304/document.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
@@ -317,6 +324,7 @@ export class InnovationFileService extends BaseService {
   async createFile(
     domainContext: DomainContextType,
     innovationId: string,
+    innovationStatus: InnovationStatusEnum,
     data: {
       context: { id: string; type: InnovationFileContextTypeEnum };
       name: string;
@@ -331,6 +339,14 @@ export class InnovationFileService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
+
+    if (
+      innovationStatus === InnovationStatusEnum.CREATED &&
+      data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION &&
+      !allowFileUploads.has(data.context.id as keyof DocumentType202304)
+    ) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_FORBIDDEN_SECTION);
+    }
 
     if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
       if (data.context.type === InnovationFileContextTypeEnum.INNOVATION_SECTION) {
