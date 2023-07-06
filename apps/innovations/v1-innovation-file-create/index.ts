@@ -33,7 +33,12 @@ class V1InnovationFileCreate {
         .checkInnovation()
         .verify();
 
-      const result = await innovationFilesService.createFile(auth.getContext(), params.innovationId, body);
+      const result = await innovationFilesService.createFile(
+        auth.getContext(),
+        params.innovationId,
+        auth.getInnovationInfo().status,
+        body
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

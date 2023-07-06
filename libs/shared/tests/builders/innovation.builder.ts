@@ -14,6 +14,7 @@ import type { TestOrganisationType } from './organisation.builder';
 export type TestInnovationType = {
   id: string;
   name: string;
+  status: InnovationStatusEnum;
   ownerId: string;
   sections: Map<
     CurrentCatalogTypes.InnovationSections,
@@ -185,6 +186,7 @@ export class InnovationBuilder extends BaseBuilder {
     return {
       id: result.id,
       name: result.name,
+      status: result.status,
       ownerId: result.owner.id,
       sections: new Map(result.sections.map(s => [s['section'], s])),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
