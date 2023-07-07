@@ -24,6 +24,7 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -190,7 +191,7 @@ export class CompleteScenarioBuilder {
         .setNeedsAssessor(paulNeedsAssessor.id)
         .setUpdatedBy(paulNeedsAssessor.id)
         .setFinishedAt()
-        .shareWith(healthOrgUnit)
+        .suggestOrganisationUnits(healthOrgUnit)
         .save();
 
       // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
@@ -201,12 +202,26 @@ export class CompleteScenarioBuilder {
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
 
+      // support on johnInnovation by HealthOrgAIUnit in status FURTHER_INFO
+      const johnInnovationSupportByHealthOrgAIUnit = await new InnovationSupportBuilder(entityManager)
+        .setStatus(InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED)
+        .setInnovation(johnInnovation.id)
+        .setOrganisationUnit(healthOrgAiUnit.id)
+        .save();
+
       // support on johnInnovation by MedTechOrgUnit accessor (sam)
       const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
         .setInnovation(johnInnovation.id)
         .setOrganisationUnit(medTechOrgUnit.id)
         .setAccessors([samAccessor])
+        .save();
+
+      // support log on johnInnovation of previous UNASSIGNED support
+      const johnInnovationSupportLog = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation)
+        .setCreatedBy(aliceQualifyingAccessor)
+        .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
         .save();
 
       // action on johnInnovation created by Alice (QA)
@@ -226,6 +241,16 @@ export class CompleteScenarioBuilder {
         .setUpdatedBy(paulNeedsAssessor.id)
         .setUpdatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .save();
+
+      // action on johnInnovation created by Bart (QA)
+      const johnInnovationActionByBart = await new InnovationActionBuilder(entityManager)
+        .setCreatedBy(bartQualifyingAccessor.id)
+        .setCreatedByUserRole(bartQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(bartQualifyingAccessor.id)
+        .setUpdatedByUserRole(bartQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .setSupport(johnInnovationSupportByHealthOrgAIUnit.id)
         .save();
 
       const johnInnovationThreadByAlice = await (
@@ -476,15 +501,18 @@ export class CompleteScenarioBuilder {
                     ...johnInnovationSupportByHealthOrgUnit,
                     accessors: [aliceQualifyingAccessor, jamieMadroxAccessor]
                   },
-                  supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] }
+                  supportByHealthOrgAiUnit: { ...johnInnovationSupportByHealthOrgAIUnit },
+                  supportByMedTechOrgUnit: { ...johnInnovationSupportByMedTechOrgUnit, accessors: [samAccessor] },
+                  supportLog: johnInnovationSupportLog
                 },
                 assessment: {
                   ...johnInnovationAssessmentByPaul,
                   assignedTo: paulNeedsAssessor,
-                  sharedOrganisationUnits: { healthOrgUnit }
+                  suggestedOrganisationUnits: { healthOrgUnit }
                 },
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
+                  actionByBart: johnInnovationActionByBart,
                   actionByPaul: johnInnovationActionByPaul
                 },
                 threads: {

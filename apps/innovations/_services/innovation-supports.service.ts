@@ -351,6 +351,10 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
+    if(data.status !== InnovationSupportStatusEnum.ENGAGING && data.accessors?.length) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS)
+    }
+
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
         status: data.status,
@@ -581,7 +585,7 @@ export class InnovationSupportsService extends BaseService {
       );
 
       if (!thread.message) {
-        throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
       }
 
       await this.domainService.innovations.addActivityLog(

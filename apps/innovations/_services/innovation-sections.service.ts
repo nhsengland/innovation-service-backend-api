@@ -244,7 +244,7 @@ export class InnovationSectionsService extends BaseService {
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
-      const actionsQuery = this.sqlConnection
+      const actionsQuery = connection 
         .createQueryBuilder(InnovationActionEntity, 'actions')
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
         .andWhere('actions.status = :requestedStatus', { requestedStatus });
@@ -299,14 +299,18 @@ export class InnovationSectionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: CurrentCatalogTypes.InnovationSections,
-    dataToUpdate: { [key: string]: any }
+    dataToUpdate: { [key: string]: any },
+    entityManager?: EntityManager
   ): Promise<{ id: string | undefined }> {
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     const sectionExists = CurrentCatalogTypes.InnovationSections.find(item => item === sectionKey);
     if (!sectionExists) {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.sqlConnection
+    const innovation = await connection 
       .createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -316,7 +320,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     // We always have at most one section per sectionKey, so we can just get the first one.
-    let section = await this.sqlConnection
+    let section = await connection 
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .where('section.innovation_id = :innovationId', { innovationId })
       .andWhere('section.section = :sectionKey', { sectionKey })
@@ -367,7 +371,7 @@ export class InnovationSectionsService extends BaseService {
 
     const sectionToBeSaved = section;
 
-    return this.sqlConnection.transaction(async transaction => {
+    return connection.transaction(async transaction => {
       // Special case to clear evidences (dataToUpdate type is correct since it was previously validated by joi)
       if (
         sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' &&
@@ -553,7 +557,7 @@ export class InnovationSectionsService extends BaseService {
     // Check if innovation exists and is of current version (throws error if it doesn't)
     await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version, connection);
 
-    const section = await this.sqlConnection
+    const section = await connection 
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId: innovationId })

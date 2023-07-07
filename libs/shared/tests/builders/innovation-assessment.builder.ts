@@ -76,7 +76,7 @@ export class InnovationAssessmentBuilder extends BaseBuilder {
     return this;
   }
 
-  shareWith(...organisationUnits: TestOrganisationUnitType[]): this {
+  suggestOrganisationUnits(...organisationUnits: TestOrganisationUnitType[]): this {
     this.assessment.organisationUnits = [
       ...(this.assessment.organisationUnits ?? []),
       ...organisationUnits.map(unit => ({ id: unit.id }))
