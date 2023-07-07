@@ -4,7 +4,7 @@ export type ResponseDTO = {
   count: number;
   data: {
     id: string;
-    context: { id?: string; type: InnovationFileContextTypeEnum };
+    context: { id?: string; type: InnovationFileContextTypeEnum; name?: string };
     name: string;
     description?: string;
     createdAt: Date;

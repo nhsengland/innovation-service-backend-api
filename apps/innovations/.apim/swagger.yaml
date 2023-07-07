@@ -1367,12 +1367,6 @@ paths:
                     summaryOngoingEvidenceGathering:
                       type: string
                       maxLength: 1500
-                    files:
-                      type: array
-                      items:
-                        type: string
-                        format: uuid
-                      minItems: 1
                     needsSupportAnyArea:
                       type: array
                       items:
@@ -1673,12 +1667,6 @@ paths:
                       summary:
                         type: string
                         maxLength: 1000
-                      files:
-                        type: array
-                        items:
-                          type: string
-                          format: uuid
-                        minItems: 1
                     required:
                       - evidenceSubmitType
                       - summary
@@ -1925,12 +1913,6 @@ paths:
                 summary:
                   type: string
                   maxLength: 1000
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  minItems: 1
               required:
                 - evidenceSubmitType
                 - summary
@@ -2040,12 +2022,6 @@ paths:
                 summary:
                   type: string
                   maxLength: 1000
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: uuid
-                  minItems: 1
               required:
                 - evidenceSubmitType
                 - summary
@@ -2535,56 +2511,6 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
-  "/v1/{innovationId}/upload":
-    post:
-      operationId: v1-innovation-file-upload
-      description: Upload an innovation file.
-      tags:
-        - "[v1] Innovation"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: the innovation id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                fileName:
-                  type: string
-                  description: the file name
-                context:
-                  type: string
-                  maxLength: 100
-                  description: optional context for the file
-              required:
-                - fileName
-              additionalProperties: false
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  displayFileName:
-                    type: string
-                  url:
-                    type: string
-                    description: url for file upload
-        "400":
-          description: Invalid payload
-        "404":
-          description: Innovation not found
   "/v1/{innovationId}/files/upload-url":
     post:
       operationId: v1-innovation-file-upload-url

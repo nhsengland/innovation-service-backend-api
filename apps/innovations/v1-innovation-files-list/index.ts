@@ -41,7 +41,7 @@ class V1InnovationFilesList {
         count: result.count,
         data: result.data.map(item => ({
           id: item.id,
-          context: { id: item.context.id, type: item.context.type },
+          context: { id: item.context.id, type: item.context.type, name: item.context.name },
           name: item.name,
           description: item.description,
           createdAt: item.createdAt,

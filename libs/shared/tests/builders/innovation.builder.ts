@@ -14,6 +14,7 @@ import type { TestOrganisationType } from './organisation.builder';
 export type TestInnovationType = {
   id: string;
   name: string;
+  status: InnovationStatusEnum;
   ownerId: string;
   sections: Map<
     CurrentCatalogTypes.InnovationSections,
@@ -58,7 +59,6 @@ export class InnovationBuilder extends BaseBuilder {
       diseasesConditionsImpact: [randText()],
       estimatedCarbonReductionSavings: randBoolean() ? 'YES' : 'NO',
       estimatedCarbonReductionSavingsDescription: randText(),
-      files: [],
       howInnovationWork: randText(),
       impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
@@ -67,7 +67,6 @@ export class InnovationBuilder extends BaseBuilder {
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
       currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
-      files: [],
       needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
       summaryOngoingEvidenceGathering: randText()
     },
@@ -80,11 +79,9 @@ export class InnovationBuilder extends BaseBuilder {
       potentialPathway: randText()
     },
     TESTING_WITH_USERS: {
-      userTests: [],
-      files: []
+      userTests: []
     },
     REGULATIONS_AND_STANDARDS: {
-      files: [],
       hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
       otherRegulationDescription: randText(),
       standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }]
@@ -112,7 +109,6 @@ export class InnovationBuilder extends BaseBuilder {
     },
     DEPLOYMENT: {
       deploymentPlans: [],
-      files: [],
       hasDeployPlan: randBoolean() ? 'YES' : 'NO',
       hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
       isDeployed: randBoolean() ? 'YES' : 'NO'
@@ -190,6 +186,7 @@ export class InnovationBuilder extends BaseBuilder {
     return {
       id: result.id,
       name: result.name,
+      status: result.status,
       ownerId: result.owner.id,
       sections: new Map(result.sections.map(s => [s['section'], s])),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))

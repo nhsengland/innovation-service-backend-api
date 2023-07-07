@@ -58,14 +58,12 @@ export type DocumentType202304 = {
     carbonReductionPlan?: catalogCarbonReductionPlan; // New field.
     keyHealthInequalities?: catalogKeyHealthInequalities[]; // New field.
     completedHealthInequalitiesImpactAssessment?: catalogYesNo; // New field.
-    files?: string[];
   };
   EVIDENCE_OF_EFFECTIVENESS: {
     hasEvidence?: catalogYesNotYet;
     currentlyCollectingEvidence?: catalogYesNo;
     summaryOngoingEvidenceGathering?: string;
     needsSupportAnyArea?: catalogNeedsSupportAnyArea[];
-    files?: string[];
   };
   MARKET_RESEARCH: {
     hasMarketResearch?: catalogYesInProgressNotYet;
@@ -87,7 +85,6 @@ export type DocumentType202304 = {
       kind: string;
       feedback?: string;
     }[];
-    files?: string[]; // Moved from section 5.2.
   };
   REGULATIONS_AND_STANDARDS: {
     hasRegulationKnowledge?: catalogHasRegulationKnowledge;
@@ -96,7 +93,6 @@ export type DocumentType202304 = {
       hasMet?: catalogYesInProgressNotYet;
     }[];
     otherRegulationDescription?: string;
-    files?: string[];
   };
   INTELLECTUAL_PROPERTY: {
     hasPatents?: catalogHasPatents;
@@ -130,7 +126,6 @@ export type DocumentType202304 = {
     commercialBasis?: string; // New field.
     organisationDeploymentAffect?: string; // New field.
     hasResourcesToScale?: catalogYesNoNotSure;
-    files?: string[];
   };
   evidences?: {
     id: string;
@@ -138,6 +133,5 @@ export type DocumentType202304 = {
     evidenceType?: catalogEvidenceType; // Previous clinicalEvidenteType field.
     description?: string;
     summary: string;
-    files?: string[];
   }[];
 };

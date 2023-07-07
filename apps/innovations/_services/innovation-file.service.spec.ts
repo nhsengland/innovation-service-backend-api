@@ -2,7 +2,7 @@ import { container } from '../_config';
 
 import { MAX_FILES_ALLOWED } from '@innovations/shared/constants';
 import { InnovationFileEntity } from '@innovations/shared/entities';
-import { InnovationFileContextTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationFileContextTypeEnum, InnovationStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
   ForbiddenError,
   InnovationErrorsEnum,
@@ -15,7 +15,7 @@ import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/te
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
+import { randAirportName, randFileName, randFutureDate, randNumber, randUrl, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -406,6 +406,18 @@ describe('Services / Innovation File service suite', () => {
         data: data
       });
     });
+
+    it('should return an empty array when no files are found', async () => {
+      const files = await sut.getFilesList(
+        innovation.id,
+        { name: randAirportName() },
+        { take: 20, skip: 0, order: { name: 'ASC' } },
+        em
+      );
+
+      expect(files.count).toBe(0);
+      expect(files.data).toHaveLength(0);
+    });
   });
 
   describe('getFileInfo()', () => {
@@ -665,6 +677,7 @@ describe('Services / Innovation File service suite', () => {
           const file = await sut.createFile(
             DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
+            innovation.status,
             data,
             em
           );
@@ -687,6 +700,29 @@ describe('Services / Innovation File service suite', () => {
           });
         }
       );
+
+      it("should throw error if the section doesn't allow upload before submitting to NA", async () => {
+        const data = {
+          context: { id: 'INNOVATION_DESCRIPTION', type: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          name: randFileName(),
+          file: {
+            id: randFileName(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: 'pdf'
+          }
+        };
+
+        await expect(() =>
+          sut.createFile(
+            DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
+            innovation.id,
+            InnovationStatusEnum.CREATED,
+            data,
+            em
+          )
+        ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_FORBIDDEN_SECTION));
+      });
     });
 
     describe('When I create a file as an NA', () => {
@@ -708,7 +744,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        const file = await sut.createFile(naDomainContext, innovation.id, data, em);
+        const file = await sut.createFile(naDomainContext, innovation.id, innovation.status, data, em);
 
         const dbFile = await em
           .createQueryBuilder(InnovationFileEntity, 'file')
@@ -740,7 +776,9 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() => sut.createFile(naDomainContext, innovation.id, data, em)).rejects.toThrowError(
+        await expect(() =>
+          sut.createFile(naDomainContext, innovation.id, innovation.status, data, em)
+        ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -759,7 +797,9 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() => sut.createFile(naDomainContext, innovation.id, data, em)).rejects.toThrowError(
+        await expect(() =>
+          sut.createFile(naDomainContext, innovation.id, innovation.status, data, em)
+        ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -787,7 +827,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        const file = await sut.createFile(qaDomainContext, innovation.id, data, em);
+        const file = await sut.createFile(qaDomainContext, innovation.id, innovation.status, data, em);
 
         const dbFile = await em
           .createQueryBuilder(InnovationFileEntity, 'file')
@@ -819,7 +859,9 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, em)).rejects.toThrowError(
+        await expect(() =>
+          sut.createFile(qaDomainContext, innovation.id, innovation.status, data, em)
+        ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -838,7 +880,9 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        await expect(() => sut.createFile(qaDomainContext, innovation.id, data, em)).rejects.toThrowError(
+        await expect(() =>
+          sut.createFile(qaDomainContext, innovation.id, innovation.status, data, em)
+        ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
           )
@@ -872,13 +916,20 @@ describe('Services / Innovation File service suite', () => {
       };
 
       await expect(() =>
-        sut.createFile(DTOsHelper.getUserRequestContext(johnInnovator, 'innovatorRole'), innovation.id, data, em)
+        sut.createFile(
+          DTOsHelper.getUserRequestContext(johnInnovator, 'innovatorRole'),
+          innovation.id,
+          innovation.status,
+          data,
+          em
+        )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_MAX_ALLOWED_FILES_REACHED));
     });
   });
 
   describe('deleteFile()', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const deleteFileMock = jest.spyOn(FileStorageService.prototype, 'deleteFile').mockResolvedValue({} as any);
 
     describe.each([
       ['innovation owner', DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole')],
@@ -897,6 +948,7 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalled();
       });
 
       it.each([
@@ -927,6 +979,7 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalled();
       });
 
       it.each([
@@ -957,6 +1010,7 @@ describe('Services / Innovation File service suite', () => {
           .getOne();
 
         expect(dbFile?.deletedAt).toBeTruthy();
+        expect(deleteFileMock).toHaveBeenCalled();
       });
 
       it.each([
@@ -968,6 +1022,55 @@ describe('Services / Innovation File service suite', () => {
         await expect(() => sut.deleteFile(domainContext, fileId, em)).rejects.toThrowError(
           new ForbiddenError(InnovationErrorsEnum.INNOVATION_FILE_NO_PERMISSION_TO_DELETE)
         );
+      });
+    });
+
+    describe('deleteFiles()', () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
+
+      it('should delete all files related to the contextType INNOVATION_SECTION', async () => {
+        const nInnovationSectionFilesBefore = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
+          .getCount();
+
+        await sut.deleteFiles(
+          domainContext,
+          innovation.id,
+          { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION },
+          em
+        );
+
+        const nInnovationSectionFilesAfter = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_SECTION })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
+          .getCount();
+
+        expect(nInnovationSectionFilesBefore).toBeGreaterThan(0);
+        expect(nInnovationSectionFilesAfter).toBe(0);
+      });
+
+      it('should delete all files related to a specific contextId like for section INNOVATION_DESCRIPTION', async () => {
+        const contextId = innovation.files.sectionFileByJohn.context.id;
+        const nInnovationSectionFilesBefore = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextId = :contextId', { contextId })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
+          .getCount();
+
+        await sut.deleteFiles(domainContext, innovation.id, { contextId }, em);
+
+        const nInnovationSectionFilesAfter = await em
+          .createQueryBuilder(InnovationFileEntity, 'file')
+          .where('file.contextId = :contextId', { contextId })
+          .andWhere('file.innovation_id = :innovationId', { innovationId: innovation.id })
+          .getCount();
+
+        expect(nInnovationSectionFilesBefore).toBeGreaterThan(0);
+        expect(nInnovationSectionFilesAfter).toBe(0);
       });
     });
 
@@ -1002,25 +1105,6 @@ describe('Services / Innovation File service suite', () => {
         name,
         url
       });
-    });
-  });
-
-  // This will be removed - its currently being used by evidences
-  describe('uploadInnovationFile', () => {
-    it('should updload an innovation file', async () => {
-      const filename = randFileName();
-      const url = randUrl();
-      jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
-
-      const file = await sut.uploadInnovationFile(
-        scenario.users.johnInnovator.id,
-        scenario.users.johnInnovator.innovations.johnInnovation.id,
-        filename,
-        randText(),
-        em
-      );
-
-      expect(file).toMatchObject({ id: expect.any(String), displayFileName: filename, url });
     });
   });
 
