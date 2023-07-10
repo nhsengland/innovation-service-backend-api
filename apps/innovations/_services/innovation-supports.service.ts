@@ -351,8 +351,8 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
-    if(data.status !== InnovationSupportStatusEnum.ENGAGING && data.accessors?.length) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS)
+    if (data.status !== InnovationSupportStatusEnum.ENGAGING && data.accessors?.length) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS);
     }
 
     const result = await connection.transaction(async transaction => {
@@ -650,6 +650,161 @@ export class InnovationSupportsService extends BaseService {
     return true;
   }
 
+  // Innovation Support Summary
+  async getSupportSummariesList(
+    innovationId: string,
+    type: 'ENGAGING' | 'BEEN_ENGAGED' | 'SUGGESTED'
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      support: { status: InnovationSupportStatusEnum; start: Date; end?: Date; updatedAt: Date };
+    }[]
+  > {
+    /**
+     * First we have to gather all the sugestions: they are from two different tables InnovationAssessmentEntity
+     * and for the QA suggestion we have InnovationSupportLogEntity. Basically we fetch the information separately from each
+     * one and then join everything under the same interface
+     */
+    const suggestedByNA = await this.sqlConnection
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select(['assessment.id', 'assessment.createdAt', 'units.id', 'units.name'])
+      .leftJoin('assessment.organisationUnits', 'units')
+      .where('assessment.innovation_id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!suggestedByNA) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    const innovationSupportLogs = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportLogEntity, 'supportLog')
+      .select([
+        'supportLog.id',
+        'supportLog.type',
+        'supportLog.createdAt',
+        'supportLog.updatedAt',
+        'supportLog.innovationSupportStatus',
+        'unit.id',
+        'suggestedUnits.id',
+        'suggestedUnits.name'
+      ])
+      .leftJoin('supportLog.organisationUnit', 'unit')
+      .leftJoin('supportLog.suggestedOrganisationUnits', 'suggestedUnits')
+      .where('supportLog.innovation_id = :innovationId', { innovationId })
+      .orderBy('supportLog.created_at', 'DESC')
+      .getMany();
+
+    const unitsSuggestedByNA = suggestedByNA.organisationUnits.map(unit => ({
+      id: unit.id,
+      name: unit.name,
+      support: {
+        start: suggestedByNA.createdAt,
+        status:
+          this.getCurrentSupportStatusInfo(innovationSupportLogs, unit.id)?.status ??
+          InnovationSupportStatusEnum.UNASSIGNED,
+        updatedAt: suggestedByNA.createdAt
+      }
+    }));
+
+    const unitsSuggestedByQA = innovationSupportLogs
+      .filter(
+        l => l.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION && l.suggestedOrganisationUnits.length > 0
+      )
+      .map(log =>
+        log.suggestedOrganisationUnits.map(unit => {
+          const currentStatusInfo = this.getCurrentSupportStatusInfo(innovationSupportLogs, unit.id);
+
+          return {
+            id: unit.id,
+            name: unit.name,
+            support: {
+              start: log.createdAt,
+              status: currentStatusInfo?.status ?? InnovationSupportStatusEnum.UNASSIGNED,
+              updatedAt: currentStatusInfo?.updatedAt ?? new Date()
+            }
+          };
+        })
+      )
+      .flat();
+
+    /**
+     * Now we have to make sure that there is no duplicated units, and that we have to order it by startDate
+     * so when we start building the Map we don't accidentally "delete" the suggestion that happened first
+     */
+    const orderedSuggestion = [...unitsSuggestedByNA, ...unitsSuggestedByQA].sort(
+      (a, b) => new Date(a.support.start).getTime() - new Date(b.support.start).getTime()
+    );
+    const uniqueSuggestionsMap = new Map<
+      string,
+      {
+        id: string;
+        name: string;
+        support: { status: InnovationSupportStatusEnum; start: Date; end?: Date; updatedAt: Date };
+      }
+    >();
+    for (const unit of orderedSuggestion) {
+      if (!uniqueSuggestionsMap.has(unit.id)) {
+        uniqueSuggestionsMap.set(unit.id, unit);
+      }
+    }
+
+    const suggestedUnits = Array.from(uniqueSuggestionsMap.values());
+
+    if (type === 'ENGAGING') {
+      // Most recently started engagement at top
+      return suggestedUnits
+        .filter(u => this.isStatusEngaging(u.support.status))
+        .sort((a, b) => new Date(b.support.updatedAt).getTime() - new Date(a.support.updatedAt).getTime());
+    }
+
+    if (type === 'BEEN_ENGAGED') {
+      const units = [];
+
+      for (const unit of suggestedUnits) {
+        // If its currently engaging we don't want it in this state
+        if (this.isStatusEngaging(unit.support.status)) {
+          continue;
+        }
+
+        let wasEngaged = false;
+        for (const log of innovationSupportLogs) {
+          if (log.organisationUnit.id === unit.id && log.type === InnovationSupportLogTypeEnum.STATUS_UPDATE) {
+            if (wasEngaged) {
+              units.push({
+                id: unit.id,
+                name: unit.name,
+                support: {
+                  status: unit.support.status,
+                  start: unit.support.start,
+                  end: log.createdAt,
+                  updatedAt: unit.support.updatedAt
+                }
+              });
+              break;
+            }
+
+            if (this.isStatusEngaging(log.innovationSupportStatus)) {
+              wasEngaged = true;
+            }
+          }
+        }
+      }
+
+      // Most recently finished engagement at top
+      return units.sort((a, b) => new Date(b.support.end).getTime() - new Date(a.support.end).getTime());
+    }
+
+    // Most recently status updated at top
+    return suggestedUnits
+      .filter(
+        u =>
+          !this.isStatusEngaging(u.support.status) ||
+          !this.wasEngagedBefore(innovationSupportLogs, u.id, u.support.status)
+      )
+      .sort((a, b) => new Date(b.support.updatedAt).getTime() - new Date(a.support.updatedAt).getTime());
+  }
+
   private async fetchSupportLogs(
     innovationId: string,
     type?: InnovationSupportLogTypeEnum
@@ -671,5 +826,46 @@ export class InnovationSupportsService extends BaseService {
     supportQuery.orderBy('supports.createdAt', 'ASC');
 
     return await supportQuery.getMany();
+  }
+
+  private getCurrentSupportStatusInfo(
+    supportLogs: InnovationSupportLogEntity[], // Make sure this is ordered by createdAt DESC
+    unitId: string
+  ): { status: InnovationSupportStatusEnum; updatedAt: Date } | null {
+    const log = supportLogs.find(
+      l => l.type === InnovationSupportLogTypeEnum.STATUS_UPDATE && l.organisationUnit.id === unitId
+    );
+
+    if (!log) {
+      return null;
+    }
+
+    return {
+      status: log.innovationSupportStatus,
+      updatedAt: log.updatedAt
+    };
+  }
+
+  private wasEngagedBefore(
+    supportLogs: InnovationSupportLogEntity[],
+    unitId: string,
+    currentStatus: InnovationSupportStatusEnum
+  ): boolean {
+    if (this.isStatusEngaging(currentStatus)) {
+      return false;
+    }
+
+    return supportLogs.some(
+      log =>
+        log.organisationUnit.id === unitId &&
+        log.type === InnovationSupportLogTypeEnum.STATUS_UPDATE &&
+        this.isStatusEngaging(log.innovationSupportStatus)
+    );
+  }
+
+  private isStatusEngaging(status: InnovationSupportStatusEnum): boolean {
+    return (
+      status === InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED || status === InnovationSupportStatusEnum.ENGAGING
+    );
   }
 }
