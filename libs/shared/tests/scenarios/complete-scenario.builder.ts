@@ -147,14 +147,19 @@ export class CompleteScenarioBuilder {
       // Pending collaborators otto (user) and elisa (external)
       // Left collaborator sebastiao
       // This innovation is shared with medtechOrg and healthOrg
-      const johnInnovation = await (
-        await new InnovationBuilder(entityManager)
-          .setOwner(johnInnovator.id)
-          .setStatus(InnovationStatusEnum.IN_PROGRESS)
-          .shareWith([healthOrg, medTechOrg])
-          .addSection('INNOVATION_DESCRIPTION')
-          .addSection('EVIDENCE_OF_EFFECTIVENESS')
-      ).save();
+      const johnInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(johnInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .shareWith([healthOrg, medTechOrg])
+        .addSection('INNOVATION_DESCRIPTION')
+        .addSection('EVIDENCE_OF_EFFECTIVENESS')
+        .save();
+
+      // Innovation owner by johnInnovator with nothing
+      const johnInnovationEmpty = await new InnovationBuilder(entityManager)
+        .setOwner(johnInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
+        .save();
 
       // Jane Innovator specs:
       // Collaborator on jonhInnovation
@@ -390,6 +395,13 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovation.id)
         .save();
 
+      const johnInnovationTransferToJane = await new InnovationTransferBuilder(entityManager)
+        .setStatus(InnovationTransferStatusEnum.PENDING)
+        .setEmail(janeInnovator.email)
+        .setInnovation(johnInnovation)
+        .setCreatedBy(johnInnovator)
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -410,6 +422,7 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationTransferStatusEnum.PENDING)
         .setEmail(janeInnovator.email)
         .setInnovation(adamInnovation)
+        .setCreatedBy(adamInnovator)
         .save();
 
       // Adam pending collaboration to john innovation
@@ -494,6 +507,7 @@ export class CompleteScenarioBuilder {
             ...johnInnovator,
             roles: { innovatorRole: johnInnovator.roles['innovatorRole']! },
             innovations: {
+              johnInnovationEmpty: johnInnovationEmpty,
               johnInnovation: {
                 ...johnInnovation,
                 supports: {
@@ -562,7 +576,8 @@ export class CompleteScenarioBuilder {
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
                   innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser,
                   innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn
-                }
+                },
+                transfer: johnInnovationTransferToJane
               }
             }
           },
