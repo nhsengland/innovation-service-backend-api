@@ -5,7 +5,7 @@ import { BaseEntity } from '../base.entity';
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
 import { InnovationEntity } from './innovation.entity';
 
-import { InnovationSupportLogTypeEnum } from '../../enums/innovation.enums';
+import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
 
 @Entity('innovation_support_log')
 export class InnovationSupportLogEntity extends BaseEntity {
@@ -16,7 +16,7 @@ export class InnovationSupportLogEntity extends BaseEntity {
   type: InnovationSupportLogTypeEnum;
 
   @Column({ name: 'innovation_support_status' })
-  innovationSupportStatus: string;
+  innovationSupportStatus: InnovationSupportStatusEnum;
 
   @Column({ name: 'description' })
   description: string;
