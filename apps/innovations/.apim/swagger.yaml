@@ -3390,15 +3390,6 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: type
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - ENGAGING
-              - BEEN_ENGAGED
-              - SUGGESTED
       responses:
         "200":
           description: Success

@@ -90,3 +90,9 @@ export enum InnovationFileContextTypeEnum {
   INNOVATION_SECTION = 'INNOVATION_SECTION',
   INNOVATION_EVIDENCE = 'INNOVATION_EVIDENCE'
 }
+
+export enum InnovationSupportSummaryTypeEnum {
+  ENGAGING = 'ENGAGING',
+  BEEN_ENGAGED = 'BEEN_ENGAGED',
+  SUGGESTED = 'SUGGESTED'
+}

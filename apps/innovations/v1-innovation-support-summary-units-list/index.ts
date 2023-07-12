@@ -13,7 +13,7 @@ import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationSupportSummaryUnitsList {
   @JwtDecoder()
@@ -31,17 +31,10 @@ class V1InnovationSupportSummaryUnitsList {
         .verify();
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const result = await innovationSupportsService.getSupportSummaryUnitsList(params.innovationId, queryParams.type);
+      const result = await innovationSupportsService.getSupportSummaryUnitsList(params.innovationId);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>(
-        result.map(r => ({
-          id: r.id,
-          name: r.name,
-          support: { status: r.support.status, start: r.support.start, end: r.support.end }
-        }))
-      );
+      context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -58,7 +51,7 @@ export default openApi(
       operationId: 'v1-innovation-support-summary-units-list',
       description: 'Get support summary units list',
       tags: ['[v1] Innovation Support Summary'],
-      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
           description: 'Success',

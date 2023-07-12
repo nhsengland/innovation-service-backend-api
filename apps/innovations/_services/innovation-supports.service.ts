@@ -15,6 +15,7 @@ import {
   InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationSupportSummaryTypeEnum,
   NotifierTypeEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
@@ -43,10 +44,17 @@ import SYMBOLS from './symbols';
 type UnitSupportInformationType = {
   id: string;
   status: InnovationSupportStatusEnum;
-  updated_at: Date;
-  organisation_unit_id: string;
+  updatedAt: Date;
+  unitId: string;
+  unitName: string;
   startSupport: null | Date;
   endSupport: null | Date;
+};
+
+type SuggestedUnitType = {
+  id: string;
+  name: string;
+  support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
 };
 
 @injectable()
@@ -660,15 +668,15 @@ export class InnovationSupportsService extends BaseService {
   }
 
   // Innovation Support Summary
-  async getSupportSummaryUnitsList(
-    innovationId: string,
-    type: 'ENGAGING' | 'BEEN_ENGAGED' | 'SUGGESTED'
-  ): Promise<
-    {
-      id: string;
-      name: string;
-      support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
-    }[]
+  async getSupportSummaryUnitsList(innovationId: string): Promise<
+    Record<
+      keyof typeof InnovationSupportSummaryTypeEnum,
+      {
+        id: string;
+        name: string;
+        support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+      }[]
+    >
   > {
     const suggestedByNA = await this.sqlConnection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
@@ -699,8 +707,9 @@ export class InnovationSupportsService extends BaseService {
 
     const unitsSupportInformation: UnitSupportInformationType[] = await this.sqlConnection.query(
       `
-      SELECT s.id, s.status, s.updated_at, s.organisation_unit_id, t.startSupport, t.endSupport
+      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, t.startSupport, t.endSupport
       FROM innovation_support s
+      INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
       LEFT JOIN (
           SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support
@@ -712,84 +721,65 @@ export class InnovationSupportsService extends BaseService {
     `,
       [innovationId]
     );
-    const unitsSupportInformationMap = new Map(unitsSupportInformation.map(unit => [unit.organisation_unit_id, unit]));
+    const unitsSupportInformationMap = new Map(unitsSupportInformation.map(support => [support.unitId, support]));
 
-    const units: {
-      id: string;
-      name: string;
-      support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
-    }[] = [];
+    const suggestedIds = new Set<string>();
+    const engaging: SuggestedUnitType[] = [];
+    const beenEngaged: SuggestedUnitType[] = [];
+    const suggested: SuggestedUnitType[] = [];
 
-    if (type === 'ENGAGING') {
-      for (const unit of suggestedUnitsInfoMap.values()) {
-        const supportInfo = unitsSupportInformationMap.get(unit.id);
+    for (const support of unitsSupportInformationMap.values()) {
+      suggestedIds.add(support.unitId);
 
-        if (supportInfo && this.isStatusEngaging(supportInfo.status)) {
-          units.push({
-            id: unit.id,
-            name: unit.name,
-            support: {
-              status: supportInfo.status,
-              start: supportInfo.startSupport ?? undefined
-            }
-          });
-        }
-      }
-    }
-
-    if (type === 'BEEN_ENGAGED') {
-      for (const unit of suggestedUnitsInfoMap.values()) {
-        const supportInfo = unitsSupportInformationMap.get(unit.id);
-
-        if (
-          supportInfo &&
-          supportInfo.startSupport &&
-          supportInfo.endSupport &&
-          !this.isStatusEngaging(supportInfo.status)
-        ) {
-          units.push({
-            id: unit.id,
-            name: unit.name,
-            support: {
-              status: supportInfo.status,
-              start: supportInfo.startSupport,
-              end: supportInfo.endSupport
-            }
-          });
-        }
-      }
-    }
-
-    if (type === 'SUGGESTED') {
-      for (const unit of suggestedUnitsInfoMap.values()) {
-        const supportInfo = unitsSupportInformationMap.get(unit.id);
-
-        if (supportInfo && (supportInfo.startSupport || this.isStatusEngaging(supportInfo?.status))) {
-          continue;
-        }
-
-        units.push({
-          id: unit.id,
-          name: unit.name,
+      if (this.isStatusEngaging(support.status)) {
+        engaging.push({
+          id: support.unitId,
+          name: support.unitName,
           support: {
-            status: supportInfo?.status ?? InnovationSupportStatusEnum.UNASSIGNED,
-            start: supportInfo && supportInfo.updated_at
+            status: support.status,
+            start: support.startSupport ?? undefined
+          }
+        });
+      } else if (support.startSupport && support.endSupport) {
+        beenEngaged.push({
+          id: support.unitId,
+          name: support.unitName,
+          support: {
+            status: support.status,
+            start: support.startSupport,
+            end: support.endSupport
+          }
+        });
+      } else {
+        suggested.push({
+          id: support.unitId,
+          name: support.unitName,
+          support: {
+            status: support.status,
+            start: support.updatedAt
           }
         });
       }
     }
 
-    return units.sort((a, b) => {
-      if (!a.support.start) {
-        return 1;
-      }
+    // Since they are UNASSIGNED they don't exist on support table, we have to add them here
+    suggested.push(
+      ...Array.from(suggestedUnitsInfoMap.values())
+        .filter(u => !suggestedIds.has(u.id))
+        .map(u => ({
+          id: u.id,
+          name: u.name,
+          support: {
+            status: InnovationSupportStatusEnum.UNASSIGNED
+          }
+        }))
+    );
 
-      if (!b.support.start) {
-        return -1;
-      }
-
-      return new Date(a.support.start).getTime() - new Date(b.support.start).getTime();
-    });
+    return {
+      [InnovationSupportSummaryTypeEnum.ENGAGING]: this.sortByStartDate(engaging),
+      [InnovationSupportSummaryTypeEnum.BEEN_ENGAGED]: this.sortByStartDate(beenEngaged),
+      [InnovationSupportSummaryTypeEnum.SUGGESTED]: this.sortByStartDate(suggested)
+    };
   }
 
   private async fetchSupportLogs(
@@ -819,5 +809,19 @@ export class InnovationSupportsService extends BaseService {
     return (
       status === InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED || status === InnovationSupportStatusEnum.ENGAGING
     );
+  }
+
+  private sortByStartDate(units: SuggestedUnitType[]) {
+    return units.sort((a, b) => {
+      if (!a.support.start) {
+        return 1;
+      }
+
+      if (!b.support.start) {
+        return -1;
+      }
+
+      return new Date(a.support.start).getTime() - new Date(b.support.start).getTime();
+    });
   }
 }
