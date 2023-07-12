@@ -6,6 +6,7 @@ import { InnovationActionEntity } from '../../entities/innovation/innovation-act
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
 import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
+import { InnovationFileLegacyEntity } from '../../entities/innovation/innovation-file-legacy.entity';
 import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
@@ -39,6 +40,7 @@ import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import type { FileStorageService } from '../storage/file-storage.service';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -47,6 +49,7 @@ export class DomainInnovationsService {
 
   constructor(
     private sqlConnection: DataSource,
+    private fileStorageService: FileStorageService,
     private identityProviderService: IdentityProviderService,
     private notifierService: NotifierService
   ) {
@@ -525,6 +528,38 @@ export class DomainInnovationsService {
       contextId: item.contextId,
       params: item.params
     }));
+  }
+
+  async deleteInnovationFiles(transactionManager: EntityManager, files: string[]): Promise<void>;
+  async deleteInnovationFiles(transactionManager: EntityManager, files: InnovationFileLegacyEntity[]): Promise<void>;
+  async deleteInnovationFiles(
+    transactionManager: EntityManager,
+    files: InnovationFileLegacyEntity[] | string[]
+  ): Promise<void> {
+    if (files.length === 0) {
+      return;
+    }
+
+    if (typeof files[0] === 'string') {
+      files = await transactionManager
+        .createQueryBuilder(InnovationFileLegacyEntity, 'file')
+        .where('id IN (:...files)', { files })
+        .getMany();
+    } else {
+      // if it's not string it's InnovationFileLegacyEntity
+      files = files as InnovationFileLegacyEntity[];
+    }
+
+    for (const file of files) {
+      try {
+        await transactionManager.softDelete(InnovationFileLegacyEntity, { id: file.id });
+      } catch (error) {
+        // TODO: Log this here!
+        throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_DELETE_ERROR);
+      }
+
+      await this.fileStorageService.deleteFile(file.id, file.displayFileName);
+    }
   }
 
   async getInnovationInfo(innovationId: string): Promise<InnovationEntity | null> {

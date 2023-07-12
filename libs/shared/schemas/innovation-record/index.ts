@@ -53,6 +53,7 @@ export const createSampleDocument = (data?: {
       diseasesConditionsImpact: [randText()],
       estimatedCarbonReductionSavings: randBoolean() ? 'YES' : 'NO',
       estimatedCarbonReductionSavingsDescription: randText(),
+      files: [],
       howInnovationWork: randText(),
       impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
       keyHealthInequalities: ['NONE'],
@@ -61,6 +62,7 @@ export const createSampleDocument = (data?: {
     EVIDENCE_OF_EFFECTIVENESS: {
       hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
       currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
+      files: [],
       needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
       summaryOngoingEvidenceGathering: randText()
     },
@@ -73,9 +75,11 @@ export const createSampleDocument = (data?: {
       potentialPathway: randText()
     },
     TESTING_WITH_USERS: {
-      userTests: []
+      userTests: [],
+      files: []
     },
     REGULATIONS_AND_STANDARDS: {
+      files: [],
       hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
       otherRegulationDescription: randText(),
       standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }]
@@ -103,6 +107,7 @@ export const createSampleDocument = (data?: {
     },
     DEPLOYMENT: {
       deploymentPlans: [],
+      files: [],
       hasDeployPlan: randBoolean() ? 'YES' : 'NO',
       hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
       isDeployed: randBoolean() ? 'YES' : 'NO'

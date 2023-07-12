@@ -6,7 +6,7 @@ import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { rand, randText } from '@ngneat/falso';
+import { rand, randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSectionsService } from './innovation-sections.service';
 import SYMBOLS from './symbols';
@@ -134,7 +134,8 @@ describe('Innovation Sections Suite', () => {
           evidenceSubmitType: 'CLINICAL_OR_CARE',
           evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
           description: randText(),
-          summary: randText()
+          summary: randText(),
+          files: [randUuid()]
         },
         em
       );
@@ -154,7 +155,8 @@ describe('Innovation Sections Suite', () => {
           evidenceSubmitType: rand(allowedEvidenceTypes),
           evidenceType: 'OTHER',
           description: randText(),
-          summary: randText()
+          summary: randText(),
+          files: [randUuid()]
         },
         em
       );
