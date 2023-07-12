@@ -678,50 +678,8 @@ export class InnovationSupportsService extends BaseService {
       }[]
     >
   > {
-    const suggestedByNA = await this.sqlConnection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select(['assessment.id', 'units.id', 'units.name'])
-      .leftJoin('assessment.organisationUnits', 'units')
-      .where('assessment.innovation_id = :innovationId', { innovationId })
-      .getOne();
-
-    if (!suggestedByNA) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
-    }
-
-    const suggestedByQA = await this.sqlConnection
-      .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name'])
-      .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
-      .where('log.innovation_id = :innovationId', { innovationId })
-      .andWhere('log.type = :suggestionStatus', {
-        suggestionStatus: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
-      })
-      .getMany();
-
-    const suggestedUnitsInfo: { id: string; name: string }[] = [
-      ...suggestedByNA.organisationUnits.map(u => ({ id: u.id, name: u.name })),
-      ...suggestedByQA.map(log => log.suggestedOrganisationUnits.map(u => ({ id: u.id, name: u.name }))).flat()
-    ];
-    const suggestedUnitsInfoMap = new Map(suggestedUnitsInfo.map(u => [u.id, u]));
-
-    const unitsSupportInformation: UnitSupportInformationType[] = await this.sqlConnection.query(
-      `
-      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, t.startSupport, t.endSupport
-      FROM innovation_support s
-      INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
-      LEFT JOIN (
-          SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
-          FROM innovation_support
-          FOR SYSTEM_TIME ALL
-          WHERE innovation_id = @0 AND (status IN ('ENGAGING','FURTHER_INFO_REQUIRED'))
-          GROUP BY id
-      ) t ON t.id = s.id
-      WHERE innovation_id = @0
-    `,
-      [innovationId]
-    );
-    const unitsSupportInformationMap = new Map(unitsSupportInformation.map(support => [support.unitId, support]));
+    const suggestedUnitsInfoMap = await this.getSuggestedUnitsInfoMap(innovationId);
+    const unitsSupportInformationMap = await this.getSuggestedUnitsSupportInfoMap(innovationId);
 
     const suggestedIds = new Set<string>();
     const engaging: SuggestedUnitType[] = [];
@@ -803,6 +761,59 @@ export class InnovationSupportsService extends BaseService {
     supportQuery.orderBy('supports.createdAt', 'ASC');
 
     return await supportQuery.getMany();
+  }
+
+  private async getSuggestedUnitsInfoMap(innovationId: string): Promise<Map<string, { id: string; name: string }>> {
+    const suggestedByNA = await this.sqlConnection
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select(['assessment.id', 'units.id', 'units.name'])
+      .leftJoin('assessment.organisationUnits', 'units')
+      .where('assessment.innovation_id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!suggestedByNA) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    const suggestedByQA = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name'])
+      .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere('log.type = :suggestionStatus', {
+        suggestionStatus: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION
+      })
+      .getMany();
+
+    const suggestedUnitsInfo: { id: string; name: string }[] = [
+      ...suggestedByNA.organisationUnits.map(u => ({ id: u.id, name: u.name })),
+      ...suggestedByQA.map(log => log.suggestedOrganisationUnits.map(u => ({ id: u.id, name: u.name }))).flat()
+    ];
+
+    return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
+  }
+
+  private async getSuggestedUnitsSupportInfoMap(
+    innovationId: string
+  ): Promise<Map<string, UnitSupportInformationType>> {
+    const unitsSupportInformation: UnitSupportInformationType[] = await this.sqlConnection.query(
+      `
+      SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, t.startSupport, t.endSupport
+      FROM innovation_support s
+      INNER JOIN organisation_unit ou ON ou.id = s.organisation_unit_id
+      LEFT JOIN (
+          SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
+          FROM innovation_support
+          FOR SYSTEM_TIME ALL
+          WHERE innovation_id = @0 AND (status IN ('ENGAGING','FURTHER_INFO_REQUIRED'))
+          GROUP BY id
+      ) t ON t.id = s.id
+      WHERE innovation_id = @0
+    `,
+      [innovationId]
+    );
+
+    return new Map(unitsSupportInformation.map(support => [support.unitId, support]));
   }
 
   private isStatusEngaging(status: InnovationSupportStatusEnum): boolean {
