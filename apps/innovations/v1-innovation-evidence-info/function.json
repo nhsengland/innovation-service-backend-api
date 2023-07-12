@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/{innovationId}/evidences/{evidenceOffset}"
+      "route": "v1/{innovationId}/evidences/{evidenceId}"
     },
     {
       "type": "http",

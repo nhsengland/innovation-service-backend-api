@@ -36,21 +36,6 @@ export class ActionUpdateHandler extends BaseHandler<
 > {
   private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
-  private data: {
-    innovation?: {
-      name: string;
-      owner?: RecipientType;
-    };
-    actionInfo?: {
-      id: string;
-      displayId: string;
-      status: InnovationActionStatusEnum;
-      organisationUnit?: { id: string; name: string };
-      owner: RecipientType;
-    };
-    comment?: string;
-  } = {};
-
   constructor(
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE],
@@ -60,11 +45,18 @@ export class ActionUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
-    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    const innovationInfo = await this.recipientsService.innovationInfo(this.inputData.innovationId);
+    const owner = await this.recipientsService.getUsersRecipient(innovationInfo.ownerId, ServiceRoleEnum.INNOVATOR);
 
-    this.data.innovation = { name: innovation.name, owner: owner ?? undefined };
-    this.data.actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
+    const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
+
+    const innovation = { id: this.inputData.innovationId, name: innovationInfo.name, owner: owner };
+
+    const action = {
+      ...actionInfo,
+      status: this.inputData.action.status, // we want here the status provided when triggering the notification
+      section: this.inputData.action.section
+    };
 
     switch (this.requestUser.currentRole.role) {
       case ServiceRoleEnum.INNOVATOR:
@@ -77,18 +69,25 @@ export class ActionUpdateHandler extends BaseHandler<
             this.requestUser.id,
             this.requestUser.currentRole.role
           );
-          await this.prepareEmailForAccessorOrAssessment();
-          await this.prepareInAppForAccessorOrAssessment();
+          await this.prepareEmailForAccessorOrAssessment(innovation, action);
+          await this.prepareInAppForAccessorOrAssessment(action);
           if (requestUser) {
-            await this.prepareConfirmationEmail(requestUser);
-            await this.prepareConfirmationInApp();
+            await this.prepareConfirmationEmail(requestUser, action);
+            await this.prepareConfirmationInApp(action);
           }
-          // if action was submitted or declined by a collaborator notify owner
-          if (this.requestUser.currentRole.id !== this.data.innovation.owner?.roleId) {
-            await this.prepareEmailForInnovationOwnerFromCollaborator();
 
-            if (owner) {
-              await this.prepareInAppForInnovationOwner();
+          if (innovation.owner) {
+            await this.prepareInAppForInnovationOwner(
+              { id: innovation.id, owner: innovation.owner },
+             action 
+            );
+
+            // if action was submitted or declined by a collaborator notify owner
+            if (this.requestUser.currentRole.id !== innovation.owner.roleId) {
+              await this.prepareEmailForInnovationOwnerFromCollaborator(
+                { id: innovation.id, owner: innovation.owner },
+               action 
+              );
             }
           }
         }
@@ -100,21 +99,30 @@ export class ActionUpdateHandler extends BaseHandler<
           [
             InnovationActionStatusEnum.COMPLETED,
             InnovationActionStatusEnum.REQUESTED,
-            InnovationActionStatusEnum.CANCELLED,
+            InnovationActionStatusEnum.CANCELLED
             // InnovationActionStatusEnum.DELETED
           ].includes(this.inputData.action.status)
         ) {
-          if (owner) {
-            await this.prepareEmailForInnovationOwner();
-            await this.prepareInAppForInnovationOwner();
+          if (innovation.owner) {
+            await this.prepareEmailForInnovationOwner(
+              { id: innovation.id, owner: innovation.owner },
+             action 
+            );
+            await this.prepareInAppForInnovationOwner(
+              { id: innovation.id, owner: innovation.owner },
+             action 
+            );
           }
           // check if action was submitted by a collaborator
           if (
             this.inputData.action.previouslyUpdatedByUserRole &&
-            this.inputData.action.previouslyUpdatedByUserRole.id !== this.data.innovation.owner?.roleId &&
+            this.inputData.action.previouslyUpdatedByUserRole.id !== innovation.owner?.roleId &&
             this.inputData.action.previouslyUpdatedByUserRole.role === ServiceRoleEnum.INNOVATOR
           ) {
-            await this.prepareInAppForCollaborator();
+            await this.prepareInAppForCollaborator({
+              ...action,
+              previouslyUpdatedByUserRole: this.inputData.action.previouslyUpdatedByUserRole
+            });
           }
         }
         break;
@@ -128,11 +136,14 @@ export class ActionUpdateHandler extends BaseHandler<
 
   // Private methods.
 
-  private async prepareEmailForAccessorOrAssessment(): Promise<void> {
+  private async prepareEmailForAccessorOrAssessment(
+    innovation: { id: string; name: string },
+    action: { id: string; status: InnovationActionStatusEnum; owner: RecipientType }
+  ): Promise<void> {
     const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
     let templateId: EmailTypeEnum;
-    switch (this.data.actionInfo?.status) {
+    switch (action.status) {
       case InnovationActionStatusEnum.SUBMITTED:
         templateId = EmailTypeEnum.ACTION_SUBMITTED_TO_ACCESSOR_OR_ASSESSMENT;
         break;
@@ -144,40 +155,38 @@ export class ActionUpdateHandler extends BaseHandler<
     }
 
     const path =
-      this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
+      action.owner.role === ServiceRoleEnum.ASSESSMENT
         ? 'assessment/innovations/:innovationId/action-tracker/:actionId'
         : 'accessor/innovations/:innovationId/action-tracker/:actionId';
 
     this.emails.push({
       templateId: templateId,
-      to: this.data.actionInfo.owner,
+      to: action.owner,
       notificationPreferenceType: 'ACTION',
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         innovator_name: requestInfo.displayName,
-        innovation_name: this.data.innovation?.name ?? '',
+        innovation_name: innovation.name,
         ...(templateId === EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR_OR_ASSESSMENT && {
           declined_action_reason: this.inputData.comment ?? ''
         }),
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath(path)
           .setPathParams({
-            innovationId: this.inputData.innovationId,
-            actionId: this.inputData.action.id
+            innovationId: innovation.id,
+            actionId: action.id
           })
           .buildUrl()
       }
     });
   }
 
-  private async prepareEmailForInnovationOwner(): Promise<void> {
-    // This never happens
-    if (!this.data.innovation || !this.data.innovation.owner) {
-      return;
-    }
-
+  private async prepareEmailForInnovationOwner(
+    innovation: { id: string; owner: RecipientType },
+    action: { id: string; status: InnovationActionStatusEnum; owner: RecipientType }
+  ): Promise<void> {
     let templateId: EmailTypeEnum;
-    switch (this.data.actionInfo?.status) {
+    switch (action.status) {
       case InnovationActionStatusEnum.REQUESTED:
         templateId = EmailTypeEnum.ACTION_REQUESTED_TO_INNOVATOR;
         break;
@@ -197,34 +206,32 @@ export class ActionUpdateHandler extends BaseHandler<
     const unit_name =
       this.requestUser.currentRole.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
-        : this.requestUser?.organisation?.organisationUnit?.name ?? '';
+        : this.requestUser.organisation?.organisationUnit?.name ?? '';
 
     this.emails.push({
       templateId,
       notificationPreferenceType: 'ACTION',
-      to: this.data.innovation.owner,
+      to: innovation.owner,
       params: {
-        // display_name: '', // This will be filled by the email-listener function.
         accessor_name: accessor_name,
         unit_name: unit_name,
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({
-            innovationId: this.inputData.innovationId,
-            actionId: this.inputData.action.id
+            innovationId: innovation.id,
+            actionId: action.id
           })
           .buildUrl()
       }
     });
   }
 
-  private async prepareEmailForInnovationOwnerFromCollaborator(): Promise<void> {
-    if (!this.data.innovation || !this.data.innovation.owner) {
-      return;
-    }
-
+  private async prepareEmailForInnovationOwnerFromCollaborator(
+    innovation: { id: string; owner: RecipientType },
+    action: { id: string; status: InnovationActionStatusEnum; owner: RecipientType; organisationUnit?: { name: string }}
+  ): Promise<void> {
     let templateId: EmailTypeEnum;
-    switch (this.data.actionInfo?.status) {
+    switch (action.status) {
       case InnovationActionStatusEnum.SUBMITTED:
       case InnovationActionStatusEnum.DECLINED:
         templateId = EmailTypeEnum.ACTION_RESPONDED_BY_COLLABORATOR_TO_OWNER;
@@ -235,16 +242,16 @@ export class ActionUpdateHandler extends BaseHandler<
 
     const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
-    const actionOwnerInfo = await this.recipientsService.usersIdentityInfo(this.data.actionInfo.owner.identityId);
+    const actionOwnerInfo = await this.recipientsService.usersIdentityInfo(action.owner.identityId);
     const actionOwnerUnitName =
-      this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
+      action.owner.role === ServiceRoleEnum.ASSESSMENT
         ? 'needs assessment'
-        : this.data.actionInfo.organisationUnit?.name || '';
+        : action.organisationUnit?.name || '';
 
     this.emails.push({
       templateId,
       notificationPreferenceType: 'ACTION',
-      to: this.data.innovation.owner,
+      to: innovation.owner,
       params: {
         // display_name: '', // This will be filled by the email-listener function.
         collaborator_name: requestInfo.displayName,
@@ -253,17 +260,25 @@ export class ActionUpdateHandler extends BaseHandler<
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({
-            innovationId: this.inputData.innovationId,
-            actionId: this.inputData.action.id
+            innovationId: innovation.id,
+            actionId: action.id
           })
           .buildUrl()
       }
     });
   }
 
-  private async prepareConfirmationEmail(innovator: RecipientType): Promise<void> {
+  private async prepareConfirmationEmail(
+    innovator: RecipientType,
+    action: {
+      id: string;
+      status: InnovationActionStatusEnum;
+      owner: RecipientType;
+      organisationUnit?: { name: string };
+    }
+  ): Promise<void> {
     let templateId: EmailTypeEnum;
-    switch (this.data.actionInfo?.status) {
+    switch (action.status) {
       case InnovationActionStatusEnum.SUBMITTED:
         templateId = EmailTypeEnum.ACTION_SUBMITTED_CONFIRMATION;
         break;
@@ -274,7 +289,7 @@ export class ActionUpdateHandler extends BaseHandler<
         throw new NotFoundError(EmailErrorsEnum.EMAIL_TEMPLATE_NOT_FOUND);
     }
 
-    const actionOwnerInfo = await this.identityProviderService.getUserInfo(this.data.actionInfo.owner.identityId);
+    const actionOwnerInfo = await this.identityProviderService.getUserInfo(action.owner.identityId);
 
     this.emails.push({
       templateId,
@@ -284,26 +299,73 @@ export class ActionUpdateHandler extends BaseHandler<
         // display_name: '', // This will be filled by the email-listener function.
         accessor_name: actionOwnerInfo.displayName,
         unit_name:
-          this.data.actionInfo.owner.role === ServiceRoleEnum.ASSESSMENT
-            ? 'needs assessment'
-            : this.data.actionInfo.organisationUnit?.name || '',
+          action.owner.role === ServiceRoleEnum.ASSESSMENT ? 'needs assessment' : action.organisationUnit?.name || '',
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
           .addPath('innovator/innovations/:innovationId/action-tracker/:actionId')
           .setPathParams({
             innovationId: this.inputData.innovationId,
-            actionId: this.inputData.action.id
+            actionId: action.id
           })
           .buildUrl()
       }
     });
   }
 
-  private async prepareInAppForAccessorOrAssessment(): Promise<void> {
-    // This should never happen
-    if (!this.data.actionInfo) {
-      return;
-    }
+  private async prepareInAppForAccessorOrAssessment(action: {
+    id: string;
+    status: InnovationActionStatusEnum;
+    displayId: string;
+    section: CurrentCatalogTypes.InnovationSections;
+    owner: RecipientType;
+  }): Promise<void> {
+    this.inApp.push({
+      innovationId: this.inputData.innovationId,
+      context: {
+        type: NotificationContextTypeEnum.ACTION,
+        detail: NotificationContextDetailEnum.ACTION_UPDATE,
+        id: action.id
+      },
+      userRoleIds: [action.owner.roleId],
+      params: {
+        actionCode: action.displayId,
+        actionStatus: action.status, // We use here the supplied action status, NOT the action status from query.
+        section: action.section
+      }
+    });
+  }
 
+  private async prepareInAppForInnovationOwner(
+    innovation: { id: string; owner: RecipientType },
+    action: {
+      id: string;
+      status: InnovationActionStatusEnum;
+      displayId: string;
+      section: CurrentCatalogTypes.InnovationSections;
+    }
+  ): Promise<void> {
+    this.inApp.push({
+      innovationId: innovation.id,
+      context: {
+        type: NotificationContextTypeEnum.ACTION,
+        detail: NotificationContextDetailEnum.ACTION_UPDATE,
+        id: action.id
+      },
+      userRoleIds: [innovation.owner.roleId],
+      params: {
+        actionCode: action.displayId,
+        actionStatus: action.status, // We use here the supplied action status, NOT the action status from query.
+        section: action.section
+      }
+    });
+  }
+
+  private async prepareInAppForCollaborator(action: {
+    id: string;
+    status: InnovationActionStatusEnum;
+    displayId: string;
+    section: CurrentCatalogTypes.InnovationSections;
+    previouslyUpdatedByUserRole: { id: string };
+  }): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -311,72 +373,33 @@ export class ActionUpdateHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
         id: this.inputData.action.id
       },
-      userRoleIds: [this.data.actionInfo.owner.roleId],
+      userRoleIds: [action.previouslyUpdatedByUserRole.id],
       params: {
-        actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section
+        actionCode: action.displayId,
+        actionStatus: action.status, // We use here the supplied action status, NOT the action status from query.
+        section: action.section
       }
     });
   }
 
-  private async prepareInAppForInnovationOwner(): Promise<void> {
-    // This never happens
-    if (!this.data.innovation?.owner) {
-      return;
-    }
-
+  private async prepareConfirmationInApp(action: {
+    id: string;
+    status: InnovationActionStatusEnum;
+    displayId: string;
+    section: CurrentCatalogTypes.InnovationSections;
+  }): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
         type: NotificationContextTypeEnum.ACTION,
         detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id
-      },
-      userRoleIds: [this.data.innovation.owner.roleId],
-      params: {
-        actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section
-      }
-    });
-  }
-
-  private async prepareInAppForCollaborator(): Promise<void> {
-    // This should never happen
-    if (!this.inputData.action.previouslyUpdatedByUserRole) {
-      return;
-    }
-
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.ACTION,
-        detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id
-      },
-      userRoleIds: [this.inputData.action.previouslyUpdatedByUserRole.id],
-      params: {
-        actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section
-      }
-    });
-  }
-
-  private async prepareConfirmationInApp(): Promise<void> {
-    this.inApp.push({
-      innovationId: this.inputData.innovationId,
-      context: {
-        type: NotificationContextTypeEnum.ACTION,
-        detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: this.inputData.action.id
+        id: action.id
       },
       userRoleIds: [this.requestUser.currentRole.id],
       params: {
-        actionCode: this.data.actionInfo?.displayId || '',
-        actionStatus: this.inputData.action.status, // We use here the supplied action status, NOT the action status from query.
-        section: this.inputData.action.section
+        actionCode: action.displayId,
+        actionStatus: action.status,
+        section: action.section
       }
     });
   }

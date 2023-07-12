@@ -1,16 +1,14 @@
-import type { TestDataType } from '@innovations/shared/tests/tests-legacy.helper';
-import { TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
+import v1InnovationActionInfo from '.';
 
-import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
-import { MockBuilder } from '@innovations/shared/builders/mock.builder';
 import { InnovationActionStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum } from '@innovations/shared/errors';
-import type { ErrorDetailsType } from '@innovations/shared/types';
+import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
+import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
+import type { ErrorResponseType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
-import type { EntityManager } from 'typeorm';
-import v1InnovationActionInfo from '.';
 import { InnovationActionsService } from '../_services/innovation-actions.service';
 import type { ResponseDTO } from './transformation.dtos';
+import type { ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -18,67 +16,51 @@ jest.mock('@innovations/shared/decorators', () => ({
   })
 }));
 
-describe('v1-innovation-action-info Suite', () => {
-  let testData: TestDataType;
-  let em: EntityManager;
-  const exampleAction = {
+const testsHelper = new TestsHelper();
+const scenario = testsHelper.getCompleteScenario();
+
+beforeAll(async () => {
+  await testsHelper.init();
+});
+
+const exampleAction = {
+  id: randomUUID(),
+  displayId: 'UC01',
+  status: InnovationActionStatusEnum.COMPLETED,
+  section: 'IMPLEMENTATION_PLAN',
+  description: 'description 1',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
+  createdBy: {
     id: randomUUID(),
-    displayId: 'UC01',
-    status: InnovationActionStatusEnum.COMPLETED,
-    section: 'IMPLEMENTATION_PLAN',
-    description: 'description 1',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
-    createdBy: {
-      id: randomUUID(),
-      name: 'name 1',
-      role: ServiceRoleEnum.ACCESSOR,
-      organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
-    }
-  };
+    name: 'name 1',
+    role: ServiceRoleEnum.ACCESSOR,
+    organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
+  }
+};
+const mock = jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
 
-  beforeAll(async () => {
-    await TestsLegacyHelper.init();
-    testData = TestsLegacyHelper.sampleData;
-  });
+afterEach(() => {
+  mock.mockClear();
+});
 
-  beforeEach(async () => {
-    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
-  });
-
-  afterEach(async () => {
-    jest.resetAllMocks();
-    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
-  });
-
+describe('v1-innovation-action-info Suite', () => {
   describe('200', () => {
     it('should return an action', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
-
-      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.accessor).build(em);
-
-      jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
-
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/actions/:actionId')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id, actionId: exampleAction.id })
-        .setMethod('GET')
-        .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationActionInfo);
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          actionId: exampleAction.id
+        })
+        .call<ResponseDTO>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(exampleAction);
       expect(result.status).toBe(200);
-
-      mocks.reset();
     });
 
     it('should return an decline reason when action status is DECLINED', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
-
-      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.accessor).build(em);
-
       const expected = {
         id: randomUUID(),
         displayId: 'UC01',
@@ -97,88 +79,73 @@ describe('v1-innovation-action-info Suite', () => {
         declineReason: 'this was rejected'
       };
 
-      jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(expected as any);
+      mock.mockResolvedValueOnce(expected as any);
 
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/actions/:actionId')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id, actionId: expected.id })
-        .setMethod('GET')
-        .setAuth(testData.domainContexts.accessor)
-        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationActionInfo);
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          actionId: exampleAction.id
+        })
+        .call<ResponseDTO>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(expected);
       expect(result.status).toBe(200);
-
-      mocks.reset();
     });
   });
 
   describe('400', () => {
     it('should return error when no required params are passed', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<any>({})
+        .call<ErrorResponseType>(v1InnovationActionInfo);
 
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/actions/:actionId')
-        .setContext()
-        .setMethod('GET')
-        .setAuth(testData.domainContexts.accessor)
-        .invoke<{
-          status: number;
-          body: { error: GenericErrorsEnum; message: string; details: ErrorDetailsType[] };
-        }>(v1InnovationActionInfo);
-
-      expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
-      expect(result.body.message).toMatch('Invalid request');
+      expect(result.body).toMatchObject({
+        error: GenericErrorsEnum.INVALID_PAYLOAD,
+        message: 'Invalid request'
+      });
       expect(result.status).toBe(400);
     });
 
     it('should return error when innovationId param is not passed', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<any>({ actionId: randomUUID() })
+        .call<ErrorResponseType>(v1InnovationActionInfo);
 
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/actions/:actionId')
-        .setContext()
-        .setParams({ actionId: randomUUID() })
-        .setMethod('GET')
-        .setAuth(testData.domainContexts.accessor)
-        .invoke<{
-          status: number;
-          body: { error: GenericErrorsEnum; message: string; details: ErrorDetailsType[] };
-        }>(v1InnovationActionInfo);
-
-      expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
-      expect(result.body.message).toMatch('Invalid request');
-      expect(result.body.details[0]).toMatchObject({
-        context: {},
-        key: 'innovationId',
-        message: '"innovationId" is required',
-        type: 'any.required'
+      expect(result.body).toMatchObject({
+        error: GenericErrorsEnum.INVALID_PAYLOAD,
+        message: 'Invalid request',
+        details: [
+          {
+            context: {},
+            key: 'innovationId',
+            message: '"innovationId" is required',
+            type: 'any.required'
+          }
+        ]
       });
       expect(result.status).toBe(400);
     });
 
     it('should return error when actionId param is not passed', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<any>({ innovationId: randomUUID() })
+        .call<ErrorResponseType>(v1InnovationActionInfo);
 
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/actions/:actionId')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id })
-        .setMethod('GET')
-        .setAuth(testData.domainContexts.accessor)
-        .invoke<{
-          status: number;
-          body: { error: GenericErrorsEnum; message: string; details: ErrorDetailsType[] };
-        }>(v1InnovationActionInfo);
-
-      expect(result.body.error).toMatch(GenericErrorsEnum.INVALID_PAYLOAD);
-      expect(result.body.message).toMatch('Invalid request');
-      expect(result.body.details[0]).toMatchObject({
-        context: {},
-        key: 'actionId',
-        message: '"actionId" is required',
-        type: 'any.required'
+      expect(result.body).toMatchObject({
+        error: GenericErrorsEnum.INVALID_PAYLOAD,
+        message: 'Invalid request',
+        details: [
+          {
+            context: {},
+            key: 'actionId',
+            message: '"actionId" is required',
+            type: 'any.required'
+          }
+        ]
       });
       expect(result.status).toBe(400);
     });
@@ -186,30 +153,20 @@ describe('v1-innovation-action-info Suite', () => {
 
   describe('Access', () => {
     it.each([
-      [ServiceRoleEnum.ADMIN, 200],
-      [ServiceRoleEnum.ACCESSOR, 200],
-      [ServiceRoleEnum.ASSESSMENT, 200],
-      [ServiceRoleEnum.INNOVATOR, 200]
-    ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
-      const [user, context] = TestsLegacyHelper.getUser(userType);
-
-      const httpTestBuilder = new HttpTestBuilder();
-
-      const mocks = await new MockBuilder().mockDomainUser(user!).build(em);
-
-      jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
-
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/actions/:actionId')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id, actionId: exampleAction.id })
-        .setMethod('GET')
-        .setAuth(context!)
-        .invoke<{ status: number }>(v1InnovationActionInfo);
+      ['Admin', 200, scenario.users.allMighty],
+      ['QA', 200, scenario.users.aliceQualifyingAccessor],
+      ['NA', 200, scenario.users.paulNeedsAssessor],
+      ['Innovator', 200, scenario.users.johnInnovator]
+    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(user)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          actionId: exampleAction.id
+        })
+        .call<ResponseDTO>(v1InnovationActionInfo);
 
       expect(result.status).toBe(status);
-
-      mocks.reset();
     });
   });
 });

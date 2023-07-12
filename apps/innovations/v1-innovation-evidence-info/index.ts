@@ -34,16 +34,14 @@ class GetInnovationEvidenceInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.getInnovationEvidenceInfo(
-        params.innovationId,
-        params.evidenceOffset
-      );
+      const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceId);
+
       context.res = ResponseHelper.Ok<ResponseDTO>({
+        id: result.id,
         evidenceType: result.evidenceType,
         evidenceSubmitType: result.evidenceSubmitType,
         description: result.description,
-        summary: result.summary,
-        files: result.files
+        summary: result.summary
       });
       return;
     } catch (error) {
@@ -55,7 +53,7 @@ class GetInnovationEvidenceInfo {
 
 export default openApi(
   GetInnovationEvidenceInfo.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidences/{evidenceOffset}',
+  '/v1/{innovationId}/evidences/{evidenceId}',
   {
     get: {
       description: 'Get an innovation evidence info.',

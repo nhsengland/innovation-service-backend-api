@@ -39,10 +39,8 @@ class CreateInnovationAssessment {
         .checkAssessmentType()
         .checkInnovation({ status: [InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT] })
         .verify();
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
       const result = await innovationAssessmentsService.createInnovationAssessment(
-        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         body

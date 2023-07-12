@@ -8,7 +8,6 @@ import {
   InnovationTransferEntity,
   NotificationEntity,
   NotificationPreferenceEntity,
-  OrganisationEntity,
   OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
@@ -222,22 +221,21 @@ export class RecipientsService extends BaseService {
 
   /**
    * returns the innovation assigned recipients to an innovation/support.
-   * @param data the parameters is either:
-   *  - innovationId - to get all the users assigned to the innovation
-   *  - innovationSupportId - to get all the users assigned to the innovation support
+   * @param innovationId the innovation id
+   * @param entityManager optionally pass an entity manager
    * @returns a list of users with their email notification preferences
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
-  async innovationAssignedRecipients(
-    data: { innovationId: string } | { innovationSupportId: string }
-  ): Promise<RecipientType[]> {
-    const query = this.sqlConnection
+  async innovationAssignedRecipients(innovationId: string, entityManager?: EntityManager): Promise<RecipientType[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .select([
         'support.id',
         'organisationUnit.id',
         'organisationUnitUser.id',
-        'organisationUser.id', // there are required only for the typeOrm to work (create the hierarchical structure)
+        'organisationUser.id', // these are required only for the typeOrm to work (create the hierarchical structure)
         'user.id',
         'user.identityId',
         'user.status',
@@ -251,22 +249,10 @@ export class RecipientsService extends BaseService {
       .innerJoin('organisationUser.user', 'user')
       .innerJoin('user.serviceRoles', 'serviceRoles')
       .where('serviceRoles.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE });
-
-    if ('innovationId' in data) {
-      query.andWhere('support.innovation_id = :innovationId', { innovationId: data.innovationId });
-    } else if ('innovationSupportId' in data) {
-      query.andWhere('support.id = :innovationSupportId', {
-        innovationSupportId: data.innovationSupportId
-      });
-    }
+      .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
+      .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId });
 
     const dbInnovationSupports = await query.getMany();
-
-    // keep previous behavior throwing an error when searching for a specific support
-    if ('innovationSupportId' in data && !dbInnovationSupports.length) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
-    }
 
     const res: RecipientType[] = [];
     for (const support of dbInnovationSupports) {
@@ -295,33 +281,32 @@ export class RecipientsService extends BaseService {
       assignedUsers: RecipientType[];
     }[]
   > {
-    const dbInnovations =
-      (await this.sqlConnection
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select([
-          'innovation.id',
-          'innovation.name',
-          'support.id',
-          'organisationUnit.id',
-          'organisationUnitUser.id',
-          'organisationUser.id',
-          'user.id',
-          'user.identityId',
-          'user.status',
-          'serviceRoles.id',
-          'serviceRoles.role',
-          'serviceRoles.isActive'
-        ])
-        .innerJoin('innovation.innovationSupports', 'support')
-        .innerJoin('support.organisationUnit', 'organisationUnit')
-        .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
-        .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
-        .innerJoin('organisationUser.user', 'user')
-        .innerJoin('user.serviceRoles', 'serviceRoles')
-        .where('innovation.owner_id = :userId', { userId })
-        .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
-        .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
-        .getMany()) || [];
+    const dbInnovations = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select([
+        'innovation.id',
+        'innovation.name',
+        'support.id',
+        'organisationUnit.id',
+        'organisationUnitUser.id',
+        'organisationUser.id',
+        'user.id',
+        'user.identityId',
+        'user.status',
+        'serviceRoles.id',
+        'serviceRoles.role',
+        'serviceRoles.isActive'
+      ])
+      .innerJoin('innovation.innovationSupports', 'support')
+      .innerJoin('support.organisationUnit', 'organisationUnit')
+      .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
+      .innerJoin('organisationUser.user', 'user')
+      .innerJoin('user.serviceRoles', 'serviceRoles')
+      .where('innovation.owner_id = :userId', { userId })
+      .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .getMany();
 
     const res: Awaited<ReturnType<RecipientsService['userInnovationsWithAssignedRecipients']>> = [];
     for (const innovation of dbInnovations) {
@@ -370,7 +355,6 @@ export class RecipientsService extends BaseService {
         'role.id',
         'role.role',
         'role.isActive',
-        'support.id',
         'unit.id',
         'unit.name',
         'unit.acronym'
@@ -379,8 +363,7 @@ export class RecipientsService extends BaseService {
       // think it's too much of an error to not send notifications in those cases
       .innerJoin('action.createdByUser', 'user')
       .innerJoin('action.createdByUserRole', 'role')
-      .leftJoin('action.innovationSupport', 'support')
-      .leftJoin('support.organisationUnit', 'unit')
+      .leftJoin('role.organisationUnit', 'unit')
       .where(`action.id = :actionId`, { actionId })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
@@ -393,11 +376,11 @@ export class RecipientsService extends BaseService {
       id: dbAction.id,
       displayId: dbAction.displayId,
       status: dbAction.status,
-      ...(dbAction.innovationSupport && {
+      ...(dbAction.createdByUserRole.organisationUnit && {
         organisationUnit: {
-          id: dbAction.innovationSupport.organisationUnit.id,
-          name: dbAction.innovationSupport.organisationUnit.name,
-          acronym: dbAction.innovationSupport.organisationUnit.acronym
+          id: dbAction.createdByUserRole.organisationUnit.id,
+          name: dbAction.createdByUserRole.organisationUnit.name,
+          acronym: dbAction.createdByUserRole.organisationUnit.acronym
         }
       }),
       owner: {
@@ -410,12 +393,16 @@ export class RecipientsService extends BaseService {
     };
   }
 
-  async threadInfo(threadId: string): Promise<{
+  async threadInfo(
+    threadId: string,
+    entityManager?: EntityManager
+  ): Promise<{
     id: string;
     subject: string;
     author?: RecipientType;
   }> {
-    const dbThread = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+    const dbThread = await em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
       .select([
         'thread.id',
@@ -427,8 +414,8 @@ export class RecipientsService extends BaseService {
         'authorUserRole.role',
         'authorUserRole.isActive'
       ])
-      .leftJoin('thread.author', 'author')
-      .leftJoin('thread.authorUserRole', 'authorUserRole')
+      .innerJoin('thread.author', 'author')
+      .innerJoin('thread.authorUserRole', 'authorUserRole')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -439,16 +426,15 @@ export class RecipientsService extends BaseService {
       id: dbThread.id,
       subject: dbThread.subject,
       // In case author has been deleted, we still want to send notifications
-      ...(dbThread.author.id &&
-        dbThread.authorUserRole.id && {
-          author: {
-            userId: dbThread.author.id,
-            identityId: dbThread.author.identityId,
-            roleId: dbThread.authorUserRole.id,
-            role: dbThread.authorUserRole.role,
-            isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
-          }
-        })
+      ...(dbThread.author.status !== UserStatusEnum.DELETED && {
+        author: {
+          userId: dbThread.author.id,
+          identityId: dbThread.author.identityId,
+          roleId: dbThread.authorUserRole.id,
+          role: dbThread.authorUserRole.role,
+          isActive: dbThread.author.status === UserStatusEnum.ACTIVE && dbThread.authorUserRole.isActive
+        }
+      })
     };
   }
 
@@ -505,20 +491,20 @@ export class RecipientsService extends BaseService {
   }> {
     const dbCollaborator = await this.sqlConnection
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-      .select(['collaborator.id', 'collaborator.email', 'collaborator.status', 'collaborator.user_id'])
+      .select(['collaborator.id', 'collaborator.email', 'collaborator.status', 'user.id'])
+      .leftJoin('collaborator.user', 'user')
       .where('collaborator.id = :collaboratorId', { collaboratorId: innovationCollaboratorId })
-      // Using getRaw to avoid needless join with user which might have been deleted and create false results
-      .getRawOne();
+      .getOne();
 
     if (!dbCollaborator) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_COLLABORATOR_NOT_FOUND);
     }
 
     return {
-      collaboratorId: dbCollaborator.collaborator_id,
-      email: dbCollaborator.collaborator_email,
-      status: dbCollaborator.collaborator_status,
-      userId: dbCollaborator.user_id
+      collaboratorId: dbCollaborator.id,
+      email: dbCollaborator.email,
+      status: dbCollaborator.status,
+      userId: dbCollaborator.user?.id ?? null
     };
   }
 
@@ -536,55 +522,70 @@ export class RecipientsService extends BaseService {
   /**
    * gets the needs assessment recipients
    * @param includeLocked also include locked users (default false)
+   * @param entityManager optionally pass an entity manager
    * @returns list of recipients
    */
-  async needsAssessmentUsers(includeLocked = false): Promise<RecipientType[]> {
-    return this.getRole({
-      roles: [ServiceRoleEnum.ASSESSMENT],
-      includeLocked
-    });
+  async needsAssessmentUsers(includeLocked = false, entityManager?: EntityManager): Promise<RecipientType[]> {
+    return this.getRole(
+      {
+        roles: [ServiceRoleEnum.ASSESSMENT],
+        includeLocked
+      },
+      entityManager
+    );
   }
 
   async organisationUnitInfo(organisationUnitId: string): Promise<{
     organisation: { id: string; name: string; acronym: null | string };
     organisationUnit: { id: string; name: string; acronym: string };
   }> {
-    const dbOrganisation = await this.sqlConnection
-      .createQueryBuilder(OrganisationEntity, 'organisation')
-      .innerJoinAndSelect('organisation.organisationUnits', 'organisationUnits')
+    const dbOrganisationUnit = await this.sqlConnection
+      .createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')
+      .select([
+        'organisation.id',
+        'organisation.name',
+        'organisation.acronym',
+        'organisationUnit.id',
+        'organisationUnit.name',
+        'organisationUnit.acronym'
+      ])
+      .innerJoin('organisationUnit.organisation', 'organisation')
       .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR })
-      .andWhere('organisationUnits.id = :organisationUnitId', { organisationUnitId })
+      .andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId })
       .getOne();
 
-    if (!dbOrganisation) {
+    if (!dbOrganisationUnit) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     return {
       organisation: {
-        id: dbOrganisation.id,
-        name: dbOrganisation.name,
-        acronym: dbOrganisation.acronym
+        id: dbOrganisationUnit.organisation.id,
+        name: dbOrganisationUnit.organisation.name,
+        acronym: dbOrganisationUnit.organisation.acronym
       },
-      organisationUnit: (await dbOrganisation.organisationUnits).map(item => ({
-        id: item.id,
-        name: item.name,
-        acronym: item.acronym
-      }))[0] ?? { id: '', name: '', acronym: '' }
+      organisationUnit: {
+        id: dbOrganisationUnit.id,
+        name: dbOrganisationUnit.name,
+        acronym: dbOrganisationUnit.acronym
+      }
     };
   }
 
   async organisationUnitsQualifyingAccessors(
     organisationUnitIds: string[],
-    includeLocked = false
+    includeLocked = false,
+    entityManager?: EntityManager
   ): Promise<RecipientType[]> {
     if (!organisationUnitIds.length) {
       return [];
     }
 
+    const em = entityManager ?? this.sqlConnection.manager;
+
     // filter out inactive organisations (this was previously like this not really sure why we'd pass ids of inactive organisations)
     const organisationUnits = (
-      await this.sqlConnection
+      await em
         .createQueryBuilder(OrganisationUnitEntity, 'organisationUnit')
         .where('organisationUnit.id IN (:...organisationUnitIds)', { organisationUnitIds })
         .andWhere('organisationUnit.inactivated_at IS NULL')
@@ -595,11 +596,14 @@ export class RecipientsService extends BaseService {
       return [];
     }
 
-    return this.getRole({
-      roles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
-      organisationUnits: organisationUnits,
-      includeLocked: includeLocked
-    });
+    return this.getRole(
+      {
+        roles: [ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        organisationUnits: organisationUnits,
+        includeLocked: includeLocked
+      },
+      em
+    );
   }
 
   /**
@@ -964,7 +968,8 @@ export class RecipientsService extends BaseService {
 
     const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status']);
+      .select(['userRole.id', 'userRole.isActive', 'userRole.role', 'user.id', 'user.identityId', 'user.status'])
+      .innerJoin('userRole.user', 'user');
 
     if (userIds?.length) {
       query.where('userRole.user_id IN (:...userIds)', { userIds });
@@ -983,11 +988,12 @@ export class RecipientsService extends BaseService {
     }
 
     if (!includeLocked) {
-      query.andWhere('user.locked_at IS NULL').andWhere('userRole.is_active = 1');
+      query
+        .andWhere('user.status <> :userLocked', { userLocked: UserStatusEnum.LOCKED })
+        .andWhere('userRole.is_active = 1');
     }
 
     // join user to check the status
-    query.innerJoin('userRole.user', 'user');
     if (!withDeleted) {
       query.andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
     }

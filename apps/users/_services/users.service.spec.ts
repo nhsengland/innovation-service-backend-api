@@ -4,7 +4,10 @@ import { container } from '../_config';
 
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
-import type { TestUserOrganisationUnitType, TestUserOrganisationsType } from '@users/shared/tests/builders/user.builder';
+import type {
+  TestUserOrganisationUnitType,
+  TestUserOrganisationsType
+} from '@users/shared/tests/builders/user.builder';
 
 describe('Services / Users service suite', () => {
   let testsHelper: TestsHelper;
@@ -39,7 +42,9 @@ describe('Services / Users service suite', () => {
       MocksHelper.mockIdentityServiceGetUserInfo(scenario.users.johnInnovator);
       const user = scenario.users.johnInnovator;
       const result = await usersService.getUserById(user.id, { model: 'full' });
-      const expectedOrgs = [...Object.keys(user.organisations).map(key => user.organisations[key])].filter((item): item is TestUserOrganisationsType => !!item);
+      const expectedOrgs = [...Object.keys(user.organisations).map(key => user.organisations[key])].filter(
+        (item): item is TestUserOrganisationsType => !!item
+      );
       expect(result).toMatchObject({
         id: user.id,
         displayName: user.name,
@@ -53,12 +58,18 @@ describe('Services / Users service suite', () => {
           size: org.size,
           role: org.role,
           isShadow: org.isShadow,
-          units: [...Object.keys(org.organisationUnits).map(key => org.organisationUnits[key])].filter((item): item is TestUserOrganisationUnitType => !!item)
+          units: [...Object.keys(org.organisationUnits).map(key => org.organisationUnits[key])].filter(
+            (item): item is TestUserOrganisationUnitType => !!item
+          )
         })),
         innovations: [
           {
             id: scenario.users.johnInnovator.innovations.johnInnovation.id,
             name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          },
+          {
+            id: scenario.users.johnInnovator.innovations.johnInnovationEmpty.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovationEmpty.name
           }
         ]
       });
@@ -67,23 +78,24 @@ describe('Services / Users service suite', () => {
 
   describe('getUserPendingInnovationTransfers method suite', () => {
     it('Get a pending transfer', async () => {
-      const innovation = scenario.users.adamInnovator.innovations.adamInnovation;
+      const result = await usersService.getUserPendingInnovationTransfers(scenario.users.janeInnovator.email);
 
-      if (!innovation) {
-        throw new Error(`No innovation found`);
-      }
-      if (!innovation.transfers[0]?.email) {
-        throw new Error(`No email found`);
-      }
-
-      const result = await usersService.getUserPendingInnovationTransfers(innovation.transfers[0].email);
-
-      expect(result).toMatchObject(
-        innovation.transfers.map(t => ({
-          id: t.id,
-          innovation: { id: innovation.id, name: innovation.name }
-        }))
-      );
+      expect(result).toMatchObject([
+        {
+          id: scenario.users.johnInnovator.innovations.johnInnovation.transfer.id,
+          innovation: {
+            id: scenario.users.johnInnovator.innovations.johnInnovation.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          }
+        },
+        {
+          id: scenario.users.adamInnovator.innovations.adamInnovation.transfer.id,
+          innovation: {
+            id: scenario.users.adamInnovator.innovations.adamInnovation.id,
+            name: scenario.users.adamInnovator.innovations.adamInnovation.name
+          }
+        }
+      ]);
     });
   });
 });

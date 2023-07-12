@@ -6,8 +6,12 @@
       "direction": "in",
       "name": "req",
       "methods": ["post"],
-      "route": "v1/{innovationId}/upload"
+      "route": "v1/demo/innovation/{innovationId}"
     },
-    { "type": "http", "direction": "out", "name": "res" }
+    {
+      "type": "http",
+      "direction": "out",
+      "name": "res"
+    }
   ]
 }

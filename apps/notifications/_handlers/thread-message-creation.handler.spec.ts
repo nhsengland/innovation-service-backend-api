@@ -19,7 +19,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
   beforeEach(async () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const owner = scenario.users.johnInnovator;
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValue({
+    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
       name: innovation.name,
       ownerId: owner.id,
       ownerIdentityId: owner.identityId
@@ -29,9 +29,6 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
   });
 
-  afterEach(async () => {
-    jest.restoreAllMocks();
-  });
 
   describe('Message not sent by innovation owner or collaborator', () => {
     it('Should always email the innovation owner', async () => {
@@ -40,7 +37,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       const requestUser = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
 
       // mock thread info
-      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
         id: thread.id,
         subject: thread.subject,
         author: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)
@@ -48,7 +45,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       // mock thread intervenients without innovation owner
       jest
         .spyOn(RecipientsService.prototype, 'threadIntervenientRecipients')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
 
       const handler = new ThreadMessageCreationHandler(
         requestUser,
@@ -89,7 +86,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       const requestUser = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
 
       // mock thread info
-      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
         id: thread.id,
         subject: thread.subject,
         author: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)
@@ -97,15 +94,15 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       // mock thread intervenients without innovation owner
       jest
         .spyOn(RecipientsService.prototype, 'threadIntervenientRecipients')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
 
       // mock innovation collaborators
       jest
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
-        .mockResolvedValue([innovation.collaborators.janeCollaborator.id]);
+        .mockResolvedValueOnce([innovation.collaborators.janeCollaborator.id]);
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')]);
 
       const handler = new ThreadMessageCreationHandler(
         requestUser,
@@ -145,7 +142,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       const requestUser = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
       // mock thread info
-      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
         id: thread.id,
         subject: thread.subject,
         author: DTOsHelper.getRecipientUser(scenario.users.johnInnovator)
@@ -153,7 +150,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       // mock thread intervenients without innovation owner
       jest
         .spyOn(RecipientsService.prototype, 'threadIntervenientRecipients')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor)]);
 
       const handler = new ThreadMessageCreationHandler(
         requestUser,
@@ -197,7 +194,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       const requestUser = DTOsHelper.getUserRequestContext(scenario.users.janeInnovator, 'innovatorRole');
 
       // mock thread info
-      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
         id: thread.id,
         subject: thread.subject,
         author: DTOsHelper.getRecipientUser(scenario.users.janeInnovator)
@@ -205,15 +202,15 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       // mock thread intervenients
       jest
         .spyOn(RecipientsService.prototype, 'threadIntervenientRecipients')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.janeInnovator)]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.janeInnovator)]);
 
       // mock innovation collaborators
       jest
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
-        .mockResolvedValue([innovation.collaborators.janeCollaborator.id]);
+        .mockResolvedValueOnce([innovation.collaborators.janeCollaborator.id]);
       jest
         .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-        .mockResolvedValue([DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')]);
+        .mockResolvedValueOnce([DTOsHelper.getRecipientUser(scenario.users.janeInnovator, 'innovatorRole')]);
 
       const handler = new ThreadMessageCreationHandler(
         requestUser,
@@ -250,7 +247,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       const requestUser = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
       // mock thread info
-      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
         id: thread.id,
         subject: thread.subject,
         author: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor)
@@ -258,14 +255,14 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       // mock thread intervenients
       jest
         .spyOn(RecipientsService.prototype, 'threadIntervenientRecipients')
-        .mockResolvedValue([
+        .mockResolvedValueOnce([
           DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor),
           DTOsHelper.getRecipientUser(scenario.users.johnInnovator)
         ]);
 
       // mock innovation collaborators
-      jest.spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators').mockResolvedValue([]);
-      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValue([]);
+      jest.spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators').mockResolvedValueOnce([]);
+      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce([]);
 
       const handler = new ThreadMessageCreationHandler(
         requestUser,
@@ -306,7 +303,7 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       const requestUser = DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole');
 
       // mock thread info
-      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValue({
+      jest.spyOn(RecipientsService.prototype, 'threadInfo').mockResolvedValueOnce({
         id: thread.id,
         subject: thread.subject,
         author: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor)
@@ -314,14 +311,14 @@ describe('Notifications / _handlers / thread-message-creation suite', () => {
       // mock thread intervenients
       jest
         .spyOn(RecipientsService.prototype, 'threadIntervenientRecipients')
-        .mockResolvedValue([
+        .mockResolvedValueOnce([
           DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor),
           DTOsHelper.getRecipientUser(scenario.users.johnInnovator)
         ]);
 
       // mock innovation collaborators
-      jest.spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators').mockResolvedValue([]);
-      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValue([]);
+      jest.spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators').mockResolvedValueOnce([]);
+      jest.spyOn(RecipientsService.prototype, 'getUsersRecipient').mockResolvedValueOnce([]);
 
       const handler = new ThreadMessageCreationHandler(
         requestUser,

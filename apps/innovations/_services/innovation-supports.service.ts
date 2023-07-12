@@ -316,7 +316,6 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async createInnovationSupport(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: {
@@ -352,11 +351,15 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     }
 
+    if(data.status !== InnovationSupportStatusEnum.ENGAGING && data.accessors?.length) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS)
+    }
+
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
         status: data.status,
-        createdBy: user.id,
-        updatedBy: user.id,
+        createdBy: domainContext.id,
+        updatedBy: domainContext.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
         organisationUnitUsers: (data.accessors || []).map(item =>
@@ -366,8 +369,9 @@ export class InnovationSupportsService extends BaseService {
 
       const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
 
+      const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: user.id, identityId: user.identityId },
+        user,
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
@@ -422,7 +426,6 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async createInnovationSupportLogs(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { type: InnovationSupportLogTypeEnum; description: string; organisationUnits?: string[] },
@@ -451,8 +454,8 @@ export class InnovationSupportsService extends BaseService {
 
     const result = await connection.transaction(async transaction => {
       const supportLogObj = InnovationSupportLogEntity.new({
-        createdBy: user.id,
-        updatedBy: user.id,
+        createdBy: domainContext.id,
+        updatedBy: domainContext.id,
         innovation,
         innovationSupportStatus:
           innovationSupport && innovationSupport.status
@@ -515,7 +518,6 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async updateInnovationSupport(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     supportId: string,
@@ -556,7 +558,7 @@ export class InnovationSupportsService extends BaseService {
           await transaction
             .createQueryBuilder()
             .update(InnovationActionEntity)
-            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: user.id })
+            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: domainContext.id })
             .where({
               innovationSupport: dbSupport.id,
               status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
@@ -566,12 +568,12 @@ export class InnovationSupportsService extends BaseService {
       }
 
       dbSupport.status = data.status;
-      dbSupport.updatedBy = user.id;
+      dbSupport.updatedBy = domainContext.id;
 
       const savedSupport = await transaction.save(InnovationSupportEntity, dbSupport);
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: user.id, identityId: user.identityId },
+        { id: domainContext.id, identityId: domainContext.identityId },
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
@@ -583,7 +585,7 @@ export class InnovationSupportsService extends BaseService {
       );
 
       if (!thread.message) {
-        throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
       }
 
       await this.domainService.innovations.addActivityLog(
@@ -598,7 +600,7 @@ export class InnovationSupportsService extends BaseService {
 
       await this.domainService.innovations.addSupportLog(
         transaction,
-        { id: user.id, organisationUnitId: savedSupport.organisationUnit.id },
+        { id: domainContext.id, organisationUnitId: savedSupport.organisationUnit.id },
         { id: innovationId },
         savedSupport.status,
         {

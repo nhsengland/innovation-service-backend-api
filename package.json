@@ -11,8 +11,8 @@
     "app:watch:tsc": "tsc --w --project apps/$npm_config_app/tsconfig.json --pretty",
     "app:watch:tsc-alias": "tsc-alias -w -p apps/$npm_config_app/tsconfig.json",
     "app:watch:func-start": "func host start --script-root dist/apps/$npm_config_app --port $npm_config_port --javascript",
-    "app:test": "JEST_JUNIT_OUTPUT_DIR=coverage/$npm_config_app jest --runInBand --forceExit --passWithNoTests --reporters=default --reporters=jest-junit --silent --coverage --coverageDirectory=coverage/$npm_config_app apps/$npm_config_app",
-    "libs:test": "JEST_JUNIT_OUTPUT_DIR=coverage/libs jest --runInBand --forceExit --passWithNoTests --reporters=default --reporters=jest-junit --silent --coverage --coverageDirectory=coverage/libs libs",
+    "app:test": "JEST_JUNIT_OUTPUT_DIR=coverage/$npm_config_app jest --runInBand --forceExit --passWithNoTests --reporters=default --reporters=jest-junit --silent --coverage --coverageDirectory=coverage/$npm_config_app --collectCoverageFrom=apps/$npm_config_app/**/*.ts apps/$npm_config_app",
+    "libs:test": "JEST_JUNIT_OUTPUT_DIR=coverage/libs jest --runInBand --forceExit --passWithNoTests --reporters=default --reporters=jest-junit --silent --coverage --coverageDirectory=coverage/libs --collectCoverageFrom=libs/**/*.ts libs",
     "libs:lint": "eslint libs/**/*.ts",
     "migrations": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/migrations-connection.config.ts",
     "migrations:test": "ts-node ./node_modules/typeorm/cli.js migration:run -d libs/data-access/config/migrations-connection-test.config.ts",
@@ -22,7 +22,8 @@
     "postinstall": "node .scripts/postinstall.js",
     "prepare": "husky install",
     "prettier": "prettier -w apps/ libs/",
-    "test": "jest --runInBand --forceExit"
+    "test": "jest --runInBand --forceExit",
+    "test:coverage": "jest --runInBand --forceExit --coverage --collectCoverageFrom='apps/**/*.ts' --collectCoverageFrom='libs/**/*.ts'"
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",

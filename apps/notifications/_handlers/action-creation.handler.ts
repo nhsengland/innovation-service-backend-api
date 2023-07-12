@@ -6,7 +6,7 @@ import {
 } from '@notifications/shared/enums';
 import { BadRequestError, UserErrorsEnum } from '@notifications/shared/errors';
 import { UrlModel } from '@notifications/shared/models';
-import type { DomainService } from '@notifications/shared/services';
+import type { IdentityProviderService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -21,7 +21,7 @@ export class ActionCreationHandler extends BaseHandler<
   EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR,
   { section: string }
 > {
-  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
+  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
 
   constructor(
     requestUser: DomainContextType,
@@ -40,7 +40,7 @@ export class ActionCreationHandler extends BaseHandler<
       throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
-    const requestInfo = await this.domainService.users.getUserInfo({ userId: this.requestUser.id });
+    const requestInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const actionInfo = await this.recipientsService.actionInfoWithOwner(this.inputData.action.id);
 

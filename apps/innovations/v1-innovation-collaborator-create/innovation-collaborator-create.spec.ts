@@ -1,15 +1,12 @@
-import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests';
-
-import { HttpTestBuilder } from '@innovations/shared/builders/http-test.builder';
-import { MockBuilder } from '@innovations/shared/builders/mock.builder';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import type { GenericErrorsEnum } from '@innovations/shared/errors/errors.enums';
 import { AuthErrorsEnum } from '@innovations/shared/services/auth/authorization-validation.model';
+import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
+import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
+import type { ErrorResponseType } from '@innovations/shared/types';
 import { randEmail, randText, randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
 import { default as v1InnovationCollaboratorCreate } from '.';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
 import type { ResponseDTO } from './transformation.dtos';
+import type { BodyType, ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -17,104 +14,72 @@ jest.mock('@innovations/shared/decorators', () => ({
   })
 }));
 
+const testsHelper = new TestsHelper();
+const scenario = testsHelper.getCompleteScenario();
+
+beforeAll(async () => {
+  await testsHelper.init();
+});
+
+const expected = { id: randUuid() };
+const createCollaboratorSpy = jest
+  .spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator')
+  .mockResolvedValue(expected);
+
+afterEach(() => {
+  jest.clearAllMocks();
+});
+
 describe('v1-innovation-collaborator-create Suite', () => {
-  let testData: TestDataType;
-  let em: EntityManager;
-
-  beforeAll(async () => {
-    await TestsLegacyHelper.init();
-    testData = TestsLegacyHelper.sampleData;
-  });
-
-  beforeEach(async () => {
-    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
-  });
-
-  afterEach(async () => {
-    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
-  });
-
   describe('200', () => {
     it('should create a collaborator as a innovation owner', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
-
-      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.innovator).build(em);
-
-      const expected = { id: randUuid() };
-
-      const createCollaboratorSpy = jest
-        .spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator')
-        .mockResolvedValue(expected);
-
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/collaborators')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id })
-        .setMethod('POST')
-        .setAuth(testData.domainContexts.innovator)
-        .setBody({ email: randEmail(), role: randText() })
-        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationCollaboratorCreate);
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+        })
+        .setBody<BodyType>({ email: randEmail(), role: randText() })
+        .call<ResponseDTO>(v1InnovationCollaboratorCreate);
 
       expect(result.body).toMatchObject(expected);
       expect(result.status).toBe(200);
       expect(createCollaboratorSpy).toHaveBeenCalledTimes(1);
-
-      mocks.reset();
     });
   });
 
   describe('403', () => {
     it('should return error if the user is not the owner', async () => {
-      const httpTestBuilder = new HttpTestBuilder();
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.janeInnovator)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+        })
+        .setBody<BodyType>({ email: randEmail(), role: randText() })
+        .call<ErrorResponseType>(v1InnovationCollaboratorCreate);
 
-      const mocks = await new MockBuilder().mockDomainUser(testData.baseUsers.innovator2).build(em);
-
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/collaborators')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id })
-        .setMethod('POST')
-        .setAuth(testData.domainContexts.innovator2)
-        .setBody({ email: randEmail(), role: randText() })
-        .invoke<{ status: number; body: { error: GenericErrorsEnum; message: string } }>(
-          v1InnovationCollaboratorCreate
-        );
-
-      expect(result.body.error).toMatch(AuthErrorsEnum.AUTH_INNOVATION_UNAUTHORIZED);
+      expect(result.body.error).toMatch(AuthErrorsEnum.AUTH_INNOVATION_NOT_OWNER);
       expect(result.body.message).toMatch('Forbidden operation');
       expect(result.status).toBe(403);
-
-      mocks.reset();
     });
   });
 
   describe('Access', () => {
     it.each([
-      [ServiceRoleEnum.ADMIN, 403],
-      [ServiceRoleEnum.ACCESSOR, 403],
-      [ServiceRoleEnum.ASSESSMENT, 403],
-      [ServiceRoleEnum.INNOVATOR, 200]
-    ])('access with user %s should give %i', async (userType: ServiceRoleEnum, status: number) => {
-      const [user, context] = TestsLegacyHelper.getUser(userType);
-
-      const httpTestBuilder = new HttpTestBuilder();
-
-      const mocks = await new MockBuilder().mockDomainUser(user!).build(em);
-
-      jest.spyOn(InnovationCollaboratorsService.prototype, 'createCollaborator').mockResolvedValue({ id: randUuid() });
-
-      const result = await httpTestBuilder
-        .setUrl('/v1/:innovationId/collaborators')
-        .setContext()
-        .setParams({ innovationId: testData.innovation.id })
-        .setMethod('POST')
-        .setAuth(context!)
-        .setBody({ email: randEmail(), role: randText() })
-        .invoke<{ status: number; body: ResponseDTO }>(v1InnovationCollaboratorCreate);
+      ['Admin', 403, scenario.users.allMighty],
+      ['QA', 403, scenario.users.aliceQualifyingAccessor],
+      ['NA', 403, scenario.users.paulNeedsAssessor],
+      ['Innovator owner', 200, scenario.users.johnInnovator],
+      ['Innovator other', 403, scenario.users.janeInnovator]
+    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(user)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+        })
+        .setBody<BodyType>({ email: randEmail(), role: randText() })
+        .call<ErrorResponseType>(v1InnovationCollaboratorCreate);
 
       expect(result.status).toBe(status);
-
-      mocks.reset();
     });
   });
 });

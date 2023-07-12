@@ -50,6 +50,21 @@ variables:
   AZURE_STORAGE_QUEUE_NAME: email-notification-queue
 
 steps:
+- script: |
+    RET=0
+    for APP in $(ls apps); do
+      ! grep -E -r '@(notifications|admin|innovations|users)/shared' apps/$APP | grep -v "@$APP/shared"
+      if [ $? -eq 1 ]; then
+        RET=1
+      fi
+    done
+    ! grep -E -r '((@(notifications|admin|innovations|users)/libs))/shared' libs/shared
+    if [ $? -eq 1 ]; then
+      RET=1
+    fi
+    exit $RET
+  displayName: 'Validate if wrong imports are present'
+
 - task: PowerShell@2
   displayName: 'Wait for MSSQL Start'
   inputs:

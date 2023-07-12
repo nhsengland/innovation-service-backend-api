@@ -41,8 +41,7 @@ export const EvidenceSchema202304 = Joi.object<NonNullable<DocumentType202304['e
     .required(),
   evidenceType: Joi.string().valid(...catalogEvidenceType),
   description: Joi.string().max(50),
-  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m).required(),
-  files: Joi.array().items(Joi.string().guid()).min(1)
+  summary: Joi.string().max(TEXTAREA_LENGTH_LIMIT.m).required()
 });
 
 export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Map = {
@@ -85,8 +84,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     keyHealthInequalities: Joi.array()
       .items(Joi.string().valid(...catalogKeyHealthInequalities))
       .min(1),
-    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+    completedHealthInequalitiesImpactAssessment: Joi.string().valid(...catalogYesNo)
   })
     .required()
     .min(1),
@@ -94,7 +92,6 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     hasEvidence: Joi.string().valid(...catalogYesNotYet),
     currentlyCollectingEvidence: Joi.string().valid(...catalogYesNo),
     summaryOngoingEvidenceGathering: Joi.string().max(TEXTAREA_LENGTH_LIMIT.l),
-    files: Joi.array().items(Joi.string().guid()).min(1),
     needsSupportAnyArea: Joi.array()
       .items(Joi.string().valid(...catalogNeedsSupportAnyArea))
       .min(1)
@@ -129,8 +126,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
           feedback: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s)
         })
       )
-      .min(1),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+      .min(1)
   })
     .required()
     .min(1),
@@ -146,8 +142,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
         })
       )
       .min(1),
-    otherRegulationDescription: Joi.string().max(100),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+    otherRegulationDescription: Joi.string().max(100)
   })
     .required()
     .min(1),
@@ -189,8 +184,7 @@ export const DocumentValidationSchema202304Map: DocumentValidationSchema202304Ma
     deploymentPlans: Joi.array().items(Joi.string().max(100)).min(1),
     commercialBasis: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
     organisationDeploymentAffect: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl),
-    hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure),
-    files: Joi.array().items(Joi.string().guid()).min(1)
+    hasResourcesToScale: Joi.string().valid(...catalogYesNoNotSure)
   })
     .required()
     .min(1),

@@ -26,7 +26,7 @@ enum StoragePermissionsEnum {
 export class FileStorageService {
   constructor() {}
 
-  private getUrl(filename: string, permissions: string, displayName: string): string {
+  private getUrl(storageId: string, permissions: string, displayName: string): string {
     const starts = new Date();
     const expires = new Date(starts.getTime() + 900_000); // 15 minutes.
 
@@ -35,7 +35,7 @@ export class FileStorageService {
     // if the displayName is empty, set it to the uuid filename (ie: chinese characters will be removed by the sanitize above)
     const filenameWithoutExtension = basename(displayName, extname(displayName));
     if (!filenameWithoutExtension.match(/\w+/)) {
-      displayName = filename;
+      displayName = storageId;
     }
 
     const signature: BlobSASSignatureValues = {
@@ -44,7 +44,7 @@ export class FileStorageService {
       expiresOn: expires,
       permissions: BlobSASPermissions.parse(permissions),
       containerName: FILE_STORAGE_CONFIG.storageContainer,
-      blobName: filename,
+      blobName: storageId,
       contentDisposition: `filename=${displayName}`
     };
 
@@ -56,7 +56,9 @@ export class FileStorageService {
     try {
       const query = generateBlobSASQueryParameters(signature, storageSharedKeyCredential);
       return (
-        [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, filename].filter(Boolean).join('/') +
+        [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, storageId]
+          .filter(Boolean)
+          .join('/') +
         '?' +
         query.toString()
       );
@@ -66,25 +68,21 @@ export class FileStorageService {
     }
   }
 
-  getDownloadUrl(id: string, filename: string): string {
-    return this.getUrl(`${id}${extname(filename)}`, StoragePermissionsEnum.READ, filename);
+  getDownloadUrl(storageId: string, filename: string): string {
+    return this.getUrl(storageId, StoragePermissionsEnum.READ, filename);
   }
 
-  getUploadUrl(id: string, filename: string): string {
+  getUploadUrl(storageId: string, filename: string): string {
     return this.getUrl(
-      `${id}${extname(filename)}`,
+      storageId,
       StoragePermissionsEnum.READ + StoragePermissionsEnum.CREATE + StoragePermissionsEnum.WRITE,
       filename
     );
   }
 
-  async deleteFile(id: string, filename: string): Promise<BlobDeleteIfExistsResponse> {
+  async deleteFile(storageId: string): Promise<BlobDeleteIfExistsResponse> {
     try {
-      const url = [
-        FILE_STORAGE_CONFIG.storageBaseUrl,
-        FILE_STORAGE_CONFIG.storageContainer,
-        `${id}${extname(filename)}`
-      ]
+      const url = [FILE_STORAGE_CONFIG.storageBaseUrl, FILE_STORAGE_CONFIG.storageContainer, storageId]
         .filter(Boolean)
         .join('/');
       const storageSharedKeyCredential = new StorageSharedKeyCredential(
@@ -96,7 +94,7 @@ export class FileStorageService {
 
       if (response.errorCode && response.errorCode !== 'BlobNotFound') {
         // TODO: throw known error!
-        throw new Error(`Failed to delete the file ${filename} with errorCode: ${response.errorCode}`);
+        throw new Error(`Failed to delete the file ${storageId} with errorCode: ${response.errorCode}`);
       }
 
       return response;

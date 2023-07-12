@@ -4,7 +4,6 @@ import {
   InnovationActionEntity,
   InnovationDocumentEntity,
   InnovationEntity,
-  InnovationFileLegacyEntity,
   InnovationSectionEntity,
   UserEntity,
   UserRoleEntity
@@ -12,6 +11,7 @@ import {
 import {
   ActivityEnum,
   InnovationActionStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   NotifierTypeEnum,
@@ -19,16 +19,12 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type {
-  DomainService,
-  FileStorageService,
-  IdentityProviderService,
-  NotifierService
-} from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
 import { NotImplementedError } from '@innovations/shared/errors/errors.config';
+import { TranslationHelper } from '@innovations/shared/helpers';
 import type { DocumentType, DocumentTypeFromVersion } from '@innovations/shared/schemas/innovation-record';
 import {
   CurrentCatalogTypes,
@@ -36,11 +32,11 @@ import {
   CurrentDocumentType,
   CurrentEvidenceType
 } from '@innovations/shared/schemas/innovation-record';
-import type { catalogEvidenceSubmitType } from '@innovations/shared/schemas/innovation-record/202304/catalog.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
-import { EntityManager, In } from 'typeorm';
-import { InnovationFileService } from './innovation-file.service';
+import { randomUUID } from 'crypto';
+import type { EntityManager } from 'typeorm';
+import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
 
 @injectable()
@@ -48,7 +44,6 @@ export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
@@ -96,7 +91,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const sections = await innovation.sections;
+    const sections = innovation.sections;
 
     let openActions: { section: string; actionsCount: number }[] = [];
 
@@ -208,7 +203,7 @@ export class InnovationSectionsService extends BaseService {
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.owner', 'owner')
-      .innerJoinAndSelect('innovation.document', 'document')
+      .leftJoinAndSelect('innovation.document', 'document')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
 
@@ -249,7 +244,7 @@ export class InnovationSectionsService extends BaseService {
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
-      const actionsQuery = this.sqlConnection
+      const actionsQuery = connection 
         .createQueryBuilder(InnovationActionEntity, 'actions')
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
         .andWhere('actions.status = :requestedStatus', { requestedStatus });
@@ -301,18 +296,21 @@ export class InnovationSectionsService extends BaseService {
   }
 
   async updateInnovationSectionInfo(
-    user: { id: string },
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: CurrentCatalogTypes.InnovationSections,
-    dataToUpdate: { [key: string]: any }
+    dataToUpdate: { [key: string]: any },
+    entityManager?: EntityManager
   ): Promise<{ id: string | undefined }> {
+
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     const sectionExists = CurrentCatalogTypes.InnovationSections.find(item => item === sectionKey);
     if (!sectionExists) {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await this.sqlConnection
+    const innovation = await connection 
       .createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -321,13 +319,9 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    // This variable will hold files marked to be deleted, to be removed only inside the transaction.
-    let sectionDeletedFiles: InnovationFileLegacyEntity[] = [];
-
     // We always have at most one section per sectionKey, so we can just get the first one.
-    let section = await this.sqlConnection
+    let section = await connection 
       .createQueryBuilder(InnovationSectionEntity, 'section')
-      .leftJoinAndSelect('section.files', 'sectionFiles')
       .where('section.innovation_id = :innovationId', { innovationId })
       .andWhere('section.section = :sectionKey', { sectionKey })
       .getOne();
@@ -349,24 +343,14 @@ export class InnovationSectionsService extends BaseService {
         section: sectionKey,
         status: InnovationSectionStatusEnum.DRAFT,
 
-        createdBy: user.id,
+        createdBy: domainContext.id,
         updatedAt: updatedAt,
-        updatedBy: user.id,
-
-        files:
-          CurrentDocumentConfig.allowFileUploads.has(sectionKey) && dataToUpdate['files']
-            ? dataToUpdate['files'].map((id: string) => ({ id }))
-            : []
+        updatedBy: domainContext.id
       });
     } else {
-      section.updatedBy = user.id;
+      section.updatedBy = domainContext.id;
       section.updatedAt = updatedAt;
       section.status = InnovationSectionStatusEnum.DRAFT;
-
-      if (CurrentDocumentConfig.allowFileUploads.has(sectionKey)) {
-        sectionDeletedFiles = section.files.filter(file => !dataToUpdate['files']?.includes(file.id));
-        section.files = (dataToUpdate['files'] ?? []).map((id: string) => ({ id }));
-      }
     }
 
     let updateInnovation = false;
@@ -387,7 +371,7 @@ export class InnovationSectionsService extends BaseService {
 
     const sectionToBeSaved = section;
 
-    return this.sqlConnection.transaction(async transaction => {
+    return connection.transaction(async transaction => {
       // Special case to clear evidences (dataToUpdate type is correct since it was previously validated by joi)
       if (
         sectionKey === 'EVIDENCE_OF_EFFECTIVENESS' &&
@@ -396,13 +380,21 @@ export class InnovationSectionsService extends BaseService {
         await transaction.query(
           `UPDATE innovation_document
           SET document = JSON_MODIFY(JSON_MODIFY(document, '$.evidences', NULL), @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
+          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
+        );
+
+        // Delete files related with evidences for this innovation
+        await this.innovationFileService.deleteFiles(
+          domainContext,
+          innovationId,
+          { contextType: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE },
+          transaction
         );
       } else {
         await transaction.query(
           `UPDATE innovation_document
           SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), user.id, updatedAt, innovation.id]
+          [`$.${sectionKey}`, JSON.stringify(dataToUpdate), domainContext.id, updatedAt, innovation.id]
         );
       }
 
@@ -421,8 +413,6 @@ export class InnovationSectionsService extends BaseService {
       sectionToBeSaved.updatedAt = updatedAt;
       sectionToBeSaved.updatedAt = updatedAt;
       const sectionSaved = await transaction.save(InnovationSectionEntity, sectionToBeSaved);
-
-      await this.domainService.innovations.deleteInnovationFiles(transaction, sectionDeletedFiles);
 
       if (shouldAddActivityLog) {
         await this.domainService.innovations.addActivityLog(
@@ -458,7 +448,7 @@ export class InnovationSectionsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const sections = await dbInnovation.sections;
+    const sections = dbInnovation.sections;
     const dbSection = sections[0]; // it's always the first one, as we only have one section per sectionKey.
     if (!dbSection) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
@@ -559,15 +549,15 @@ export class InnovationSectionsService extends BaseService {
   async createInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceData: CurrentEvidenceType,
+    evidenceData: Omit<CurrentEvidenceType, 'id'>,
     entityManager?: EntityManager
-  ): Promise<void> {
+  ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
     // Check if innovation exists and is of current version (throws error if it doesn't)
     await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version, connection);
 
-    const section = await this.sqlConnection
+    const section = await connection 
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId: innovationId })
@@ -582,11 +572,11 @@ export class InnovationSectionsService extends BaseService {
       const updatedAt = new Date();
 
       const evidence: CurrentEvidenceType = {
+        id: randomUUID(),
         evidenceType: evidenceData.evidenceType,
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
-        summary: evidenceData.summary,
-        files: evidenceData.files
+        summary: evidenceData.summary
       };
 
       await transaction.query(
@@ -605,57 +595,52 @@ export class InnovationSectionsService extends BaseService {
           updatedBy: user.id
         }
       );
+
+      return { id: evidence.id };
     });
   }
 
   async updateInnovationEvidence(
     user: { id: string },
     innovationId: string,
-    evidenceOffset: number,
+    evidenceId: string,
     evidenceData: CurrentEvidenceType
   ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
-    const evidence = document.evidences?.[evidenceOffset];
+    const evidenceIndex = document.evidences?.findIndex(e => e.id === evidenceId) ?? -1;
+    const evidence = document.evidences?.[evidenceIndex];
 
-    if (!evidence) {
+    if (evidenceIndex === -1 || !evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
     const section = await this.sqlConnection
       .createQueryBuilder(InnovationSectionEntity, 'section')
-      .innerJoin('section.innovation', 'innovation')
-      .where('innovation.id = :innovationId', { innovationId: innovationId })
+      .select(['section.id'])
+      .where('section.innovation_id = :innovationId', { innovationId: innovationId })
       .andWhere('section.section = :sectionName', { sectionName: 'EVIDENCE_OF_EFFECTIVENESS' })
       .getOne();
-
     if (!section) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND);
     }
 
-    const existingFiles = (await this.innovationFileService.getFilesByIds(evidence.files)).map(f => f.id);
-    const filesToDelete = existingFiles.filter(f => !evidenceData.files?.includes(f));
-
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
 
-      if (filesToDelete.length > 0) {
-        await this.domainService.innovations.deleteInnovationFiles(transaction, filesToDelete);
-      }
-
       const data: CurrentEvidenceType = {
+        id: evidenceId,
         evidenceType: evidenceData.evidenceType,
         evidenceSubmitType: evidenceData.evidenceSubmitType,
         description: evidenceData.description,
-        summary: evidenceData.summary,
-        files: evidenceData.files
+        summary: evidenceData.summary
       };
 
       await transaction.query(
         `
         UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences[${evidenceOffset}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
+        [`$.evidences[${evidenceIndex}]`, JSON.stringify(data), user.id, updatedAt, innovationId]
       );
 
       await transaction.update(
@@ -670,33 +655,34 @@ export class InnovationSectionsService extends BaseService {
     });
   }
 
-  async deleteInnovationEvidence(user: { id: string }, innovationId: string, evidenceOffset: number): Promise<void> {
+  async deleteInnovationEvidence(
+    domainContext: DomainContextType,
+    innovationId: string,
+    evidenceId: string
+  ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
     let evidences = document.evidences;
-    const evidence = evidences?.[evidenceOffset];
+    const evidence = evidences?.find(e => e.id === evidenceId);
 
     if (!evidences || !evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
-    delete evidences[evidenceOffset];
-    evidences = evidences.filter(Boolean);
+    evidences = evidences.filter(e => e.id !== evidenceId); // Remove evidence from the array
 
     return this.sqlConnection.transaction(async transaction => {
       const updatedAt = new Date();
 
-      if (evidence.files && evidence.files.length > 0) {
-        //delete files
-        await transaction.delete(InnovationFileLegacyEntity, { id: In(evidence.files) });
-      }
+      // delete files related with the evidence
+      await this.innovationFileService.deleteFiles(domainContext, innovationId, { contextId: evidenceId }, transaction);
 
       // save the new evidences
       await transaction.query(
         `
         UPDATE innovation_document
         SET document = JSON_MODIFY(document, @0, JSON_QUERY(@1)), updated_by=@2, updated_at=@3, is_snapshot=0, description=NULL WHERE id = @4`,
-        [`$.evidences`, JSON.stringify(evidences), user.id, updatedAt, innovationId]
+        [`$.evidences`, JSON.stringify(evidences), domainContext.id, updatedAt, innovationId]
       );
 
       //update section status to draft
@@ -705,41 +691,27 @@ export class InnovationSectionsService extends BaseService {
         { innovation: { id: innovationId }, section: 'EVIDENCE_OF_EFFECTIVENESS' },
         {
           updatedAt: updatedAt,
-          updatedBy: user.id,
+          updatedBy: domainContext.id,
           status: InnovationSectionStatusEnum.DRAFT
         }
       );
     });
   }
 
-  async getInnovationEvidenceInfo(
-    innovationId: string,
-    evidenceOffset: number
-  ): Promise<
-    Omit<CurrentEvidenceType, 'files'> & {
-      files: { id: string; name: string; url: string }[];
-    }
-  > {
+  async getInnovationEvidenceInfo(innovationId: string, evidenceId: string): Promise<CurrentEvidenceType> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
-    const evidence = document.evidences?.[evidenceOffset];
-
+    const evidence = document.evidences?.find(e => e.id === evidenceId);
     if (!evidence) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EVIDENCE_NOT_FOUND);
     }
 
-    const files = await this.innovationFileService.getFilesByIds(evidence.files);
-
     return {
+      id: evidence.id,
       evidenceType: evidence.evidenceType,
       evidenceSubmitType: evidence.evidenceSubmitType,
       description: evidence.description,
-      summary: evidence.summary,
-      files: files.map(file => ({
-        id: file.id,
-        name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
-      }))
+      summary: evidence.summary
     };
   }
 
@@ -794,8 +766,7 @@ export class InnovationSectionsService extends BaseService {
 
   /**
    * returns the section data from the document adding the custom output format data:
-   * - files: [{ id, name, url }]
-   * - evidences: [{ evidenceSubmitType, description }]
+   * - evidences: [{ id, name, summary }]
    * @param document the source document
    * @param sectionKey the section key
    * @returns section data with extra information
@@ -805,10 +776,10 @@ export class InnovationSectionsService extends BaseService {
     sectionKey: K
   ): Promise<
     T[K] & {
-      files?: { id: string; name: string; url: string }[];
       evidences?: {
-        evidenceSubmitType: catalogEvidenceSubmitType;
-        description: string | undefined;
+        id: string;
+        name: string;
+        summary: CurrentEvidenceType['summary'];
       }[];
     }
   > {
@@ -820,28 +791,16 @@ export class InnovationSectionsService extends BaseService {
         sectionKey !== 'EVIDENCE_OF_EFFECTIVENESS'
           ? undefined
           : document.evidences?.map(evidence => ({
-              evidenceSubmitType: evidence.evidenceSubmitType,
-              description: evidence.description
+              id: evidence.id,
+              name: this.getEvidenceName(evidence.evidenceSubmitType, evidence.description),
+              summary: evidence.summary
             }));
     }
     const sectionData = document[sectionKey];
 
-    let files: { id: string; name: string; url: string }[] | undefined;
-    const sectionFiles: string[] = (sectionData as any).files ?? [];
-
-    // Add file URLs if needed
-    if (sectionFiles.length) {
-      files = (await this.innovationFileService.getFilesByIds(sectionFiles)).map(file => ({
-        id: file.id,
-        name: file.displayFileName,
-        url: this.fileStorageService.getDownloadUrl(file.id, file.displayFileName)
-      }));
-    }
-
     return {
       ...sectionData,
-      ...(evidenceData && { evidences: evidenceData }),
-      ...(files && { files: files })
+      ...(evidenceData && { evidences: evidenceData })
     };
   }
 
@@ -851,5 +810,9 @@ export class InnovationSectionsService extends BaseService {
       keyof T,
       'version' | 'evidences'
     >[];
+  }
+
+  private getEvidenceName(evidenceSubmitType: CurrentEvidenceType['evidenceSubmitType'], description?: string): string {
+    return description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${evidenceSubmitType}`);
   }
 }
