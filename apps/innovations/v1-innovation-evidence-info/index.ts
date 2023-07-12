@@ -34,10 +34,11 @@ class GetInnovationEvidenceInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationSectionsService.getInnovationEvidenceInfo(params.innovationId, params.evidenceId);
-
+      const result = await innovationSectionsService.getInnovationEvidenceInfo(
+        params.innovationId,
+        params.evidenceOffset
+      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        id: result.id,
         evidenceType: result.evidenceType,
         evidenceSubmitType: result.evidenceSubmitType,
         description: result.description,
@@ -54,7 +55,7 @@ class GetInnovationEvidenceInfo {
 
 export default openApi(
   GetInnovationEvidenceInfo.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidences/{evidenceId}',
+  '/v1/{innovationId}/evidences/{evidenceOffset}',
   {
     get: {
       description: 'Get an innovation evidence info.',

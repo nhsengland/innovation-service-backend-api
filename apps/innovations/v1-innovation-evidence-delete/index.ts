@@ -11,6 +11,7 @@ import { container } from '../_config';
 
 import type { InnovationSectionsService } from '../_services/innovation-sections.service';
 import SYMBOLS from '../_services/symbols';
+import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationEvidenceDelete {
@@ -35,10 +36,10 @@ class V1InnovationEvidenceDelete {
       await innovationSectionsService.deleteInnovationEvidence(
         { id: requestUser.id },
         innovation.id,
-        params.evidenceId
+        params.evidenceOffset
       );
 
-      context.res = ResponseHelper.NoContent();
+      context.res = ResponseHelper.Ok<ResponseDTO>({});
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -49,7 +50,7 @@ class V1InnovationEvidenceDelete {
 
 export default openApi(
   V1InnovationEvidenceDelete.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/evidence/{evidenceId}',
+  '/v1/{innovationId}/evidence/{evidenceOffset}',
   {
     delete: {
       description: 'Delete an innovation evidence entry.',
@@ -58,12 +59,32 @@ export default openApi(
       operationId: 'v1-innovation-evidence-delete',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
-        204: { description: 'Success.' },
-        400: { description: 'Bad Request' },
-        401: { description: 'Unauthorized' },
-        403: { description: 'Forbidden' },
-        404: { description: 'Not found' },
-        500: { description: 'Internal server error' }
+        200: {
+          description: 'Innovation evidence info.',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {}
+              }
+            }
+          }
+        },
+        400: {
+          description: 'Bad Request'
+        },
+        401: {
+          description: 'Unauthorized'
+        },
+        403: {
+          description: 'Forbidden'
+        },
+        404: {
+          description: 'Not found'
+        },
+        500: {
+          description: 'Internal server error'
+        }
       }
     }
   }

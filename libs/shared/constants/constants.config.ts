@@ -24,5 +24,3 @@ export const EXPIRATION_DATES = {
   transfers: THIRTY_DAYS_IN_MSEC,
   transfersDays: 30
 };
-
-export const MAX_FILES_ALLOWED = 50;

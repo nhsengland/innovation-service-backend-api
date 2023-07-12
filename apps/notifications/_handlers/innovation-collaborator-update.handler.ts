@@ -20,8 +20,8 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_ACCEPTED_TO_OWNER
   | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_DECLINED_TO_OWNER
   | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR
+  | EmailTypeEnum.INNOVATION_COLLABORATOR_INVITE_CANCELLED_TO_COLLABORATOR
   | EmailTypeEnum.INNOVATION_COLLABORATOR_REMOVED_TO_COLLABORATOR
-  | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OWNER
   | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_COLLABORATOR
   | EmailTypeEnum.INNOVATION_COLLABORATOR_LEAVES_TO_OTHER_COLLABORATORS,
   { collaboratorId: string }
@@ -37,9 +37,6 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   async run(): Promise<this> {
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
-    const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
-      this.inputData.innovationCollaborator.id
-    );
 
     if (
       [
@@ -49,7 +46,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
       ].includes(this.inputData.innovationCollaborator.status) &&
       owner
     ) {
-      await this.prepareNotificationToOwner(innovation, innovationCollaborator, owner);
+      await this.prepareNotificationToOwner(innovation, owner);
     }
 
     if (
@@ -59,11 +56,11 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
         InnovationCollaboratorStatusEnum.LEFT
       ].includes(this.inputData.innovationCollaborator.status)
     ) {
-      await this.prepareNotificationToCollaborator(innovation, innovationCollaborator);
+      await this.prepareNotificationToCollaborator(innovation);
     }
 
     if ([InnovationCollaboratorStatusEnum.LEFT].includes(this.inputData.innovationCollaborator.status)) {
-      await this.prepareNotificationToOtherCollaborators(innovation);
+      await this.prepareNotificationToOtherCollaborators();
     }
 
     return this;
@@ -71,13 +68,15 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
 
   async prepareNotificationToOwner(
     innovation: Awaited<ReturnType<RecipientsService['innovationInfo']>>,
-    innovationCollaborator: Awaited<ReturnType<RecipientsService['innovationCollaborationInfo']>>,
-    innovationOwner?: RecipientType,
+    owner?: RecipientType
   ): Promise<void> {
-    if (!innovationOwner) {
+    if (!owner) {
       this.logger(`Innovation owner not found for ${innovation.name}`);
       return;
     }
+    const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
+      this.inputData.innovationCollaborator.id
+    );
 
     if (!innovationCollaborator?.userId) {
       // this should never happen because the users must be registered to update the innovation collaborator status
@@ -120,7 +119,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
 
     this.emails.push({
       templateId,
-      to: innovationOwner,
+      to: owner,
       notificationPreferenceType: null,
       params: {
         collaborator_name: collaboratorInfo.displayName,
@@ -131,10 +130,13 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
   }
 
   async prepareNotificationToCollaborator(
-    innovation: Awaited<ReturnType<RecipientsService['innovationInfo']>>,
-    innovationCollaborator: Awaited<ReturnType<RecipientsService['innovationCollaborationInfo']>>,
+    innovation: Awaited<ReturnType<RecipientsService['innovationInfo']>>
   ): Promise<void> {
     const ownerInfo = await this.recipientsService.usersIdentityInfo(innovation.ownerIdentityId);
+
+    const innovationCollaborator = await this.recipientsService.innovationCollaborationInfo(
+      this.inputData.innovationCollaborator.id
+    );
 
     let templateId: EmailTypeEnum;
 
@@ -183,7 +185,7 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
           context: {
             type: NotificationContextTypeEnum.INNOVATION,
             detail: NotificationContextDetailEnum.COLLABORATOR_UPDATE,
-            id: this.inputData.innovationId 
+            id: this.inputData.innovationCollaborator.id
           },
           userRoleIds: [recipient.roleId],
           params: {
@@ -194,9 +196,8 @@ export class InnovationCollaboratorUpdateHandler extends BaseHandler<
     }
   }
 
-  async prepareNotificationToOtherCollaborators(
-    innovation: Awaited<ReturnType<RecipientsService['innovationInfo']>>,
-  ): Promise<void> {
+  async prepareNotificationToOtherCollaborators(): Promise<void> {
+    const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
     const collaboratorInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
 

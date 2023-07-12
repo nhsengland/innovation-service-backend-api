@@ -7,7 +7,7 @@ export class BaseBuilder {
     this.entityManager = entityManager;
   }
 
-  getEntityManager(): EntityManager {
+  getEntityManager() {
     return this.entityManager;
   }
 }

@@ -70,8 +70,7 @@ export class UserBuilder extends BaseBuilder {
     this.user = UserEntity.new({
       firstTimeSignInAt: randPastDate(),
       identityId: randUuid(),
-      serviceRoles: [],
-      status: UserStatusEnum.ACTIVE
+      serviceRoles: []
     });
 
     this.additionalFields = {
@@ -87,11 +86,6 @@ export class UserBuilder extends BaseBuilder {
 
   setMobilePhone(phone: string): this {
     this.additionalFields.mobilePhone = phone;
-    return this;
-  }
-
-  setStatus(status: UserStatusEnum): this {
-    this.user.status = status;
     return this;
   }
 

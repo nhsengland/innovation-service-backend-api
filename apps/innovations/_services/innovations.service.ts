@@ -1270,7 +1270,7 @@ export class InnovationsService extends BaseService {
       .where('innovations.id = :innovationId', { innovationId })
       .getOne();
 
-    const sections = innovation?.sections;
+    const sections = await innovation?.sections;
 
     if (!sections) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);
@@ -1466,16 +1466,6 @@ export class InnovationsService extends BaseService {
   }> {
     const query = this.sqlConnection
       .createQueryBuilder(ActivityLogEntity, 'activityLog')
-      .select([
-        'activityLog.id',
-        'activityLog.activity',
-        'activityLog.type',
-        'activityLog.createdAt',
-        'activityLog.createdBy',
-        'activityLog.param',
-        'userRole.role'
-      ])
-      .leftJoin('activityLog.userRole', 'userRole')
       .where('activityLog.innovation_id = :innovationId', { innovationId });
 
     // Filters
@@ -1518,7 +1508,9 @@ export class InnovationsService extends BaseService {
       const params = item.param as ActivityLogListParamsType;
       const p: string[] = [];
 
-      p.push(item.createdBy);
+      if (params.actionUserId) {
+        p.push(params.actionUserId);
+      }
       if (params.interveningUserId) {
         p.push(params.interveningUserId);
       }
@@ -1526,20 +1518,22 @@ export class InnovationsService extends BaseService {
       return p;
     });
 
-    const usersInfo = await this.domainService.users.getUsersMap({ userIds: [...usersIds] });
+    const usersInfo = await this.domainService.users.getUsersList({ userIds: [...usersIds] });
 
     return {
       count: dbActivitiesCount,
       data: dbActivities.map(item => {
         const params = item.param as ActivityLogListParamsType;
 
-        params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
-
-        if (params.interveningUserId) {
-          params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
+        if (params.actionUserId) {
+          params.actionUserName =
+            usersInfo.find(user => user.id === params.actionUserId)?.displayName ?? '[deleted account]';
         }
 
-        params.actionUserRole = item.userRole.role;
+        if (params.interveningUserId || params.interveningUserId === null) {
+          params.interveningUserName =
+            usersInfo.find(user => user.id === params.interveningUserId)?.displayName ?? '[deleted account]';
+        }
 
         return {
           activity: item.activity,

@@ -1,9 +1,11 @@
 import type { NotifierTypeEnum } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
+import type { DomainService } from '@notifications/shared/services';
+import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
-import { EmailTypeEnum, ENV } from '../_config';
+import { container, EmailTypeEnum, ENV } from '../_config';
 
 import type { Context } from '@azure/functions';
 import { BaseHandler } from './base.handler';
@@ -13,6 +15,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   EmailTypeEnum.ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST,
   Record<string, never>
 > {
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   constructor(
     requestUser: DomainContextType,
@@ -23,7 +26,9 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    const requestUserInfo = await this.recipientsService.usersIdentityInfo(this.requestUser.identityId);
+    const requestUserInfo = await this.domainService.users.getUserInfo({
+      userId: this.requestUser.id
+    });
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
     const organisationUnit = this.requestUser?.organisation?.organisationUnit?.id || '';
@@ -37,7 +42,7 @@ export class InnovationSupportStatusChangeRequestHandler extends BaseHandler<
         notificationPreferenceType: null,
         params: {
           innovation_name: innovation.name,
-          accessor_name: requestUserInfo?.displayName || 'user',
+          accessor_name: requestUserInfo.displayName,
           proposed_status: TranslationHelper.translate(`SUPPORT_STATUS.${this.inputData.proposedStatus}`).toLowerCase(),
           request_status_update_comment: this.inputData.requestStatusUpdateComment,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)

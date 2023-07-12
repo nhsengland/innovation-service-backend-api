@@ -31,9 +31,11 @@ class V1InnovationsSupportLogCreate {
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
         .verify();
+      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const result = await innovationSupportsService.createInnovationSupportLogs(
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         body

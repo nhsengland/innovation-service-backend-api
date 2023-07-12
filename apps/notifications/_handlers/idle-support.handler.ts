@@ -38,7 +38,7 @@ export class IdleSupportHandler extends BaseHandler<
     const ownerIdentities = await this.recipientsService.usersIdentityInfo(ownerIds);
 
     for (const idleSupport of idleSupports) {
-      const owner = ownerIdentities.get(idleSupport.ownerIdentityId);
+      const owner = idleSupport.ownerIdentityId ? ownerIdentities.get(idleSupport.ownerIdentityId) : undefined;
       if (!owner) {
         this.logger.error(`Innovation owner not found for innovation: ${idleSupport.innovationId}`, {});
         continue;
@@ -50,7 +50,7 @@ export class IdleSupportHandler extends BaseHandler<
         notificationPreferenceType: null,
         params: {
           innovation_name: idleSupport.innovationName,
-          innovator_name: owner.displayName,
+          innovator_name: owner.displayName ?? '',
           message_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId/threads')
             .setPathParams({

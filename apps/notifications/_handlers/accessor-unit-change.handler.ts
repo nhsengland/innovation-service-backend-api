@@ -51,6 +51,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
       to: userInfo,
       notificationPreferenceType: null,
       params: {
+        // display_name: '', // This will be filled by the email-listener function.
         old_organisation: oldUnitInfo.organisation.name,
         old_unit: oldUnitInfo.organisationUnit.name,
         new_organisation: newUnitInfo.organisation.name,
@@ -65,6 +66,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
         to: user,
         notificationPreferenceType: null,
         params: {
+          // display_name: '', // This will be filled by the email-listener function.
           user_name: userIdentityInfo.displayName,
           old_unit: oldUnitInfo.organisationUnit.name
         }
@@ -78,6 +80,7 @@ export class AccessorUnitChangeHandler extends BaseHandler<
         to: user,
         notificationPreferenceType: null,
         params: {
+          // display_name: '', // This will be filled by the email-listener function.
           user_name: userIdentityInfo.displayName,
           new_unit: newUnitInfo.organisationUnit.name
         }

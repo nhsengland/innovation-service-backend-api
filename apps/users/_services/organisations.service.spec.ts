@@ -1,38 +1,40 @@
+import type { EntityManager } from 'typeorm';
+import { randUuid } from '@ngneat/falso';
+
+import { TestDataType, TestsLegacyHelper } from '@users/shared/tests/tests-legacy.helper';
+import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+
 import { container } from '../_config';
 
-import { randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-
-import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
-import { TestsHelper } from '@users/shared/tests';
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
 
 describe('Innovation Assessments Suite', () => {
   let sut: OrganisationsService;
-
-  const testsHelper = new TestsHelper();
-  const scenario = testsHelper.getCompleteScenario();
-
+  let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
     sut = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
-    await testsHelper.init();
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await testsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await testsHelper.releaseQueryRunnerEntityManager();
+    jest.restoreAllMocks();
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('getOrganisationInfo', () => {
     it('should get the organisation info', async () => {
-      const org = scenario.organisations.healthOrg;
-      const organisationInfo = await sut.getOrganisationInfo(org.id, true, em);
+      const organisationInfo = await sut.getOrganisationInfo(testData.organisation.accessor.id, true, em);
+
+      const org = testData.organisation.accessor;
+      const unit = testData.organisationUnit.accessor;
 
       expect(organisationInfo).toStrictEqual({
         id: org.id,
@@ -40,28 +42,28 @@ describe('Innovation Assessments Suite', () => {
         acronym: org.acronym,
         organisationUnits: [
           {
-            id: org.organisationUnits.healthOrgUnit.id,
-            name: org.organisationUnits.healthOrgUnit.name,
-            acronym: org.organisationUnits.healthOrgUnit.acronym,
-            isActive: true,
-            userCount: 3
-          },
-          {
-            id: org.organisationUnits.healthOrgAiUnit.id,
-            name: org.organisationUnits.healthOrgAiUnit.name,
-            acronym: org.organisationUnits.healthOrgAiUnit.acronym,
-            isActive: true,
-            userCount: 3
+            id: unit.id,
+            name: unit.name,
+            acronym: unit.acronym,
+            isActive: !unit.inactivatedAt,
+            userCount: 2 // unit has QA and A users
           }
         ],
-        isActive: true
+        isActive: !org.inactivatedAt
       });
     });
 
     it('should not get organisation info if it does not exist', async () => {
-      await expect(() => sut.getOrganisationInfo(randUuid())).rejects.toThrowError(
-        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
-      );
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.getOrganisationInfo(randUuid());
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     });
   });
 });

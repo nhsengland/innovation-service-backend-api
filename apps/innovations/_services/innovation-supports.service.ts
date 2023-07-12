@@ -316,6 +316,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async createInnovationSupport(
+    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: {
@@ -354,8 +355,8 @@ export class InnovationSupportsService extends BaseService {
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
         status: data.status,
-        createdBy: domainContext.id,
-        updatedBy: domainContext.id,
+        createdBy: user.id,
+        updatedBy: user.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
         organisationUnitUsers: (data.accessors || []).map(item =>
@@ -365,9 +366,8 @@ export class InnovationSupportsService extends BaseService {
 
       const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
 
-      const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        user,
+        { id: user.id, identityId: user.identityId },
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
@@ -422,6 +422,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async createInnovationSupportLogs(
+    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { type: InnovationSupportLogTypeEnum; description: string; organisationUnits?: string[] },
@@ -450,8 +451,8 @@ export class InnovationSupportsService extends BaseService {
 
     const result = await connection.transaction(async transaction => {
       const supportLogObj = InnovationSupportLogEntity.new({
-        createdBy: domainContext.id,
-        updatedBy: domainContext.id,
+        createdBy: user.id,
+        updatedBy: user.id,
         innovation,
         innovationSupportStatus:
           innovationSupport && innovationSupport.status
@@ -514,6 +515,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   async updateInnovationSupport(
+    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     supportId: string,
@@ -554,7 +556,7 @@ export class InnovationSupportsService extends BaseService {
           await transaction
             .createQueryBuilder()
             .update(InnovationActionEntity)
-            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: domainContext.id })
+            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: user.id })
             .where({
               innovationSupport: dbSupport.id,
               status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
@@ -564,12 +566,12 @@ export class InnovationSupportsService extends BaseService {
       }
 
       dbSupport.status = data.status;
-      dbSupport.updatedBy = domainContext.id;
+      dbSupport.updatedBy = user.id;
 
       const savedSupport = await transaction.save(InnovationSupportEntity, dbSupport);
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: domainContext.id, identityId: domainContext.identityId },
+        { id: user.id, identityId: user.identityId },
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
@@ -596,7 +598,7 @@ export class InnovationSupportsService extends BaseService {
 
       await this.domainService.innovations.addSupportLog(
         transaction,
-        { id: domainContext.id, organisationUnitId: savedSupport.organisationUnit.id },
+        { id: user.id, organisationUnitId: savedSupport.organisationUnit.id },
         { id: innovationId },
         savedSupport.status,
         {

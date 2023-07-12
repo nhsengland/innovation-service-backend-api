@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
-import { InnovationSectionEntity } from '@innovations/shared/entities';
-import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
+import { InnovationSectionBuilder } from '@innovations/shared/builders/innovation-section.builder';
+import { InnovationBuilder } from '@innovations/shared/builders/innovation.builder';
+import { InnovationActionStatusEnum, InnovationSectionStatusEnum } from '@innovations/shared/enums';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { rand, randText, randUuid } from '@ngneat/falso';
+import { DomainUsersService } from '@innovations/shared/services';
+import { rand, randText } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSectionsService } from './innovation-sections.service';
 import SYMBOLS from './symbols';
@@ -14,154 +15,191 @@ import SYMBOLS from './symbols';
 describe('Innovation Sections Suite', () => {
   let sut: InnovationSectionsService;
 
-  const testsHelper = new TestsHelper();
-  const scenario = testsHelper.getCompleteScenario();
-
+  let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
     sut = container.get<InnovationSectionsService>(SYMBOLS.InnovationSectionsService);
-    await testsHelper.init();
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await testsHelper.getQueryRunnerEntityManager();
+    jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
+      displayName: randText()
+    } as any);
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await testsHelper.releaseQueryRunnerEntityManager();
+    jest.restoreAllMocks();
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
-  const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+  it('should list all sections as an innovator for his innovation', async () => {
+    // arrange
+    const innovation = testData.innovation;
 
-  describe('getInnovationSectionsList', () => {
-    it('should list all sections as an innovator for his innovation', async () => {
-      const sectionsList = await sut.getInnovationSectionsList(
-        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        innovation.id,
-        em
-      );
+    await TestsLegacyHelper.TestDataBuilder.createAction(
+      testData.domainContexts.accessor,
+      (
+        await innovation.sections
+      )[0]!,
+      innovation.innovationSupports[0]!
+    )
+      .setStatus(InnovationActionStatusEnum.REQUESTED)
+      .build(em);
 
-      const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
+    const sectionsList = await sut.getInnovationSectionsList(testData.domainContexts.innovator, innovation.id, em);
 
-      expect(sectionsList).toBeDefined();
-      expect(actionCount).toEqual(2);
-    });
+    const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
 
-    it('should list all sections as an accessor for an innovation', async () => {
-      const sectionsList = await sut.getInnovationSectionsList(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id,
-        em
-      );
-
-      const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
-
-      expect(sectionsList).toBeDefined();
-      expect(actionCount).toEqual(0);
-    });
+    expect(sectionsList).toBeDefined();
+    expect(actionCount).toEqual(2); // one from the database plus the one we added
   });
 
-  describe('getInnovationSectionInfo', () => {
-    it('should get submitted section info as assessment user', async () => {
-      const sectionsList = await sut.getInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        {}
-      );
+  it('should list all sections as an accessor for an innovation', async () => {
+    // arrange
+    const innovation = testData.innovation;
 
-      expect(sectionsList.id).toBeDefined();
-    });
+    await TestsLegacyHelper.TestDataBuilder.createAction(
+      testData.domainContexts.accessor,
+      (
+        await innovation.sections
+      )[0]!,
+      innovation.innovationSupports[0]!
+    )
+      .setUpdatedBy(testData.baseUsers.innovator.id)
+      .setStatus(InnovationActionStatusEnum.SUBMITTED)
+      .build(em);
 
-    it('should not get draft section info as accessor', async () => {
-      await em.update(
-        InnovationSectionEntity,
-        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
-        { status: InnovationSectionStatusEnum.DRAFT }
-      );
+    const sectionsList = await sut.getInnovationSectionsList(testData.domainContexts.accessor, innovation.id, em);
 
-      const section = await sut.getInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        {},
-        em
-      );
+    const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
 
-      expect(section.data).toBeNull();
-    });
+    expect(sectionsList).toBeDefined();
+    expect(actionCount).toEqual(1); // The DB has no record in submitted status and we added one
   });
 
-  describe('updateInnovationSectionInfo', () => {
-    it('should update a section', async () => {
-      const section = await sut.updateInnovationSectionInfo(
-        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        { summary: randText() }
-      );
+  it('should get submitted section info', async () => {
+    // arrange
+    const innovation = testData.innovation;
 
-      // assert
-      expect(section.id).toBeDefined();
-    });
+    const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
+
+    const sectionsList = await sut.getInnovationSectionInfo(
+      testData.domainContexts.assessmentUser,
+      innovation.id,
+      sectionKey,
+      {}
+    );
+
+    expect(sectionsList.id).toBeDefined();
   });
 
-  describe('submitInnovationSection', () => {
-    it('should submit a section', async () => {
-      await em.update(
-        InnovationSectionEntity,
-        { id: innovation.sections.INNOVATION_DESCRIPTION.id },
-        { status: InnovationSectionStatusEnum.DRAFT }
-      );
-      const section = await sut.submitInnovationSection(
-        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-        innovation.id,
-        'INNOVATION_DESCRIPTION',
-        em
-      );
-      // assert
-      expect(section.id).toBeDefined();
-    });
+  it('should not get draft section info as accessor', async () => {
+    // arrange
+
+    const innovation = await new InnovationBuilder().setOwner(testData.baseUsers.innovator).build(em);
+
+    const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
+    await new InnovationSectionBuilder(innovation)
+      .setSection(sectionKey)
+      .setStatus(InnovationSectionStatusEnum.DRAFT)
+      .build(em);
+
+    const section = await sut.getInnovationSectionInfo(
+      testData.domainContexts.accessor,
+      innovation.id,
+      sectionKey,
+      {},
+      em
+    );
+
+    expect(section.data).toBeNull();
   });
 
-  describe('createInnovationEvidence', () => {
-    it('should create clinical evidence', async () => {
-      await sut.createInnovationEvidence(
-        { id: scenario.users.johnInnovator.id },
-        innovation.id,
-        {
-          evidenceSubmitType: 'CLINICAL_OR_CARE',
-          evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
-          description: randText(),
-          summary: randText(),
-          files: [randUuid()]
-        },
-        em
-      );
+  it('should update a section', async () => {
+    // arrange
 
-      // assert assuming if no error is thrown then the test is successful (for now)
-    });
+    const innovator = testData.baseUsers.innovator;
+    const innovation = testData.innovation;
 
-    it('should create non-clinical evidence', async () => {
-      const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(
-        et => et !== 'CLINICAL_OR_CARE'
-      );
+    const section = await sut.updateInnovationSectionInfo(
+      { id: innovator.id },
+      testData.domainContexts.innovator,
+      innovation.id,
+      'INNOVATION_DESCRIPTION',
+      { summary: randText() }
+    );
 
-      await sut.createInnovationEvidence(
-        { id: scenario.users.johnInnovator.id },
-        innovation.id,
-        {
-          evidenceSubmitType: rand(allowedEvidenceTypes),
-          evidenceType: 'OTHER',
-          description: randText(),
-          summary: randText(),
-          files: [randUuid()]
-        },
-        em
-      );
+    // assert
+    expect(section.id).toBeDefined();
+  });
 
-      // assert assuming if no error is thrown then the test is successful (for now)
-    });
+  it('should submit a section', async () => {
+    // arrange
+
+    const innovation = await new InnovationBuilder().setOwner(testData.baseUsers.innovator).build(em);
+
+    const sectionKey = rand(CurrentCatalogTypes.InnovationSections);
+    await new InnovationSectionBuilder(innovation)
+      .setSection(sectionKey)
+      .setStatus(InnovationSectionStatusEnum.DRAFT)
+      .build(em);
+
+    const section = await sut.submitInnovationSection(testData.domainContexts.innovator, innovation.id, sectionKey, em);
+
+    // assert
+    expect(section.id).toBeDefined();
+  });
+
+  it('should create clinical evidence', async () => {
+    // arrange
+
+    const innovator = testData.baseUsers.innovator;
+    const innovation = testData.innovation;
+    const file = await TestsLegacyHelper.TestDataBuilder.addFileToInnovation(innovation, em);
+
+    await sut.createInnovationEvidence(
+      { id: innovator.id },
+      innovation.id,
+      {
+        evidenceSubmitType: 'CLINICAL_OR_CARE',
+        evidenceType: rand(Object.values(CurrentCatalogTypes.catalogEvidenceType)),
+        description: randText(),
+        summary: randText(),
+        files: [file.id]
+      },
+      em
+    );
+
+    // assert assuming if no error is thrown then the test is successful (for now)
+  });
+
+  // TODO FIX THIS TEST WHEN EVIDENCES ARE FIXED
+  it('should create non-clinical evidence', async () => {
+    // arrange
+
+    const innovator = testData.baseUsers.innovator;
+    const innovation = testData.innovation;
+    const file = await TestsLegacyHelper.TestDataBuilder.addFileToInnovation(innovation, em);
+
+    const allowedEvidenceTypes = CurrentCatalogTypes.catalogEvidenceSubmitType.filter(et => et !== 'CLINICAL_OR_CARE');
+
+    await sut.createInnovationEvidence(
+      { id: innovator.id },
+      innovation.id,
+      {
+        evidenceSubmitType: rand(allowedEvidenceTypes),
+        evidenceType: 'OTHER',
+        description: randText(),
+        summary: randText(),
+        files: [file.id]
+      },
+      em
+    );
+
+    // assert assuming if no error is thrown then the test is successful (for now)
   });
 });

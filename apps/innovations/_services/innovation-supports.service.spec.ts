@@ -1,7 +1,12 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { TestDataType, TestsLegacyHelper } from '@innovations/shared/tests/tests-legacy.helper';
 import { container } from '../_config';
 
-import { InnovationSupportEntity } from '@innovations/shared/entities';
+import {
+  InnovationEntity,
+  InnovationSupportEntity,
+  InnovationThreadEntity,
+  InnovationThreadMessageEntity
+} from '@innovations/shared/entities';
 import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import {
   InnovationErrorsEnum,
@@ -9,286 +14,318 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
-import { TestsHelper } from '@innovations/shared/tests';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import { DomainInnovationsService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import { randText, randUuid } from '@ngneat/falso';
 import { cloneDeep } from 'lodash';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
+import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 
 describe('Innovation supports service test suite', () => {
   let sut: InnovationSupportsService;
-
-  const testsHelper = new TestsHelper();
-  const scenario = testsHelper.getCompleteScenario();
-
+  let testData: TestDataType;
   let em: EntityManager;
 
   beforeAll(async () => {
     sut = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
-    await testsHelper.init();
-
-    jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-    jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
-    jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    em = await testsHelper.getQueryRunnerEntityManager();
+    em = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await testsHelper.releaseQueryRunnerEntityManager();
+    jest.restoreAllMocks();
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(em);
   });
 
   describe('getInnovationSupportsList', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    const support1 = innovation.supports.supportByHealthOrgUnit;
-    const support2 = innovation.supports.supportByMedTechOrgUnit;
+    beforeEach(() => {
+      jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue([
+        {
+          id: testData.baseUsers.accessor.id,
+          displayName: 'accessor name',
+          isActive: true
+        }
+      ] as any);
+    });
 
     it('should list the innovation supports', async () => {
-      const innovationSupports = await sut.getInnovationSupportsList(innovation.id, { fields: [] }, em);
+      const innovationSupports = await sut.getInnovationSupportsList(testData.innovation.id, { fields: [] }, em);
 
-      expect(innovationSupports).toMatchObject([
-        {
-          id: support1.id,
-          status: support1.status,
+      const dbSupports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .leftJoinAndSelect('support.organisationUnit', 'orgUnit')
+        .leftJoinAndSelect('orgUnit.organisation', 'org')
+        .where('support.id IN (:...supportIds)', {
+          supportIds: innovationSupports.map(iS => iS.id)
+        })
+        .getMany();
+
+      expect(innovationSupports).toStrictEqual(
+        dbSupports.map(support => ({
+          id: support.id,
+          status: support.status,
           organisation: {
-            id: scenario.organisations.healthOrg.id,
-            name: scenario.organisations.healthOrg.name,
-            acronym: scenario.organisations.healthOrg.acronym,
+            id: support.organisationUnit.organisation.id,
+            name: support.organisationUnit.organisation.name,
+            acronym: support.organisationUnit.organisation.acronym,
             unit: {
-              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+              id: support.organisationUnit.id,
+              name: support.organisationUnit.name,
+              acronym: support.organisationUnit.acronym
             }
           }
-        },
-        {
-          id: support2.id,
-          status: support2.status,
-          organisation: {
-            id: scenario.organisations.medTechOrg.id,
-            name: scenario.organisations.medTechOrg.name,
-            acronym: scenario.organisations.medTechOrg.acronym,
-            unit: {
-              id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
-              name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
-              acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
-            }
-          }
-        }
-      ]);
+        }))
+      );
     });
 
     it('should list the innovation supports with engaging accessors', async () => {
       const innovationSupports = await sut.getInnovationSupportsList(
-        innovation.id,
+        testData.innovation.id,
         { fields: ['engagingAccessors'] },
         em
       );
 
-      expect(innovationSupports).toMatchObject([
-        {
-          id: support1.id,
-          status: support1.status,
+      const dbSupports = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .leftJoinAndSelect('support.organisationUnit', 'orgUnit')
+        .leftJoinAndSelect('orgUnit.organisation', 'org')
+        .where('support.id IN (:...supportIds)', {
+          supportIds: innovationSupports.map(iS => iS.id)
+        })
+        .getMany();
+
+      expect(innovationSupports).toStrictEqual(
+        dbSupports.map(support => ({
+          id: support.id,
+          status: support.status,
           organisation: {
-            id: scenario.organisations.healthOrg.id,
-            name: scenario.organisations.healthOrg.name,
-            acronym: scenario.organisations.healthOrg.acronym,
+            id: support.organisationUnit.organisation.id,
+            name: support.organisationUnit.organisation.name,
+            acronym: support.organisationUnit.organisation.acronym,
             unit: {
-              id: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+              id: support.organisationUnit.id,
+              name: support.organisationUnit.name,
+              acronym: support.organisationUnit.acronym
             }
           },
           engagingAccessors: [
             {
-              id: scenario.users.aliceQualifyingAccessor.id,
-              organisationUnitUserId:
-                scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                  .organisationUnitUser.id,
-              name: scenario.users.aliceQualifyingAccessor.name
-            },
-            {
-              id: scenario.users.jamieMadroxAccessor.id,
-              organisationUnitUserId:
-                scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                  .organisationUnitUser.id,
-              name: scenario.users.jamieMadroxAccessor.name
+              id: testData.baseUsers.accessor.id,
+              organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
+              name: 'accessor name'
             }
           ]
-        },
-        {
-          id: support2.id,
-          status: support2.status,
-          organisation: {
-            id: scenario.organisations.medTechOrg.id,
-            name: scenario.organisations.medTechOrg.name,
-            acronym: scenario.organisations.medTechOrg.acronym,
-            unit: {
-              id: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
-              name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
-              acronym: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.acronym
-            }
-          },
-          engagingAccessors: [
-            {
-              id: scenario.users.samAccessor.id,
-              organisationUnitUserId:
-                scenario.users.samAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit
-                  .organisationUnitUser.id,
-              name: scenario.users.samAccessor.name
-            }
-          ]
-        }
-      ]);
+        }))
+      );
     });
 
     it('should not list the innovation supports if the innovation does not exist', async () => {
-      await expect(sut.getInnovationSupportsList(randUuid(), { fields: [] }, em)).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
-      );
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.getInnovationSupportsList(randUuid(), { fields: [] }, em);
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     });
   });
 
   describe('getInnovationSupportInfo', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    it('should get innovation support info', async () => {
-      const support = innovation.supports.supportByMedTechOrgUnit;
-      const res = await sut.getInnovationSupportInfo(support.id, em);
+    beforeEach(() => {
+      jest.spyOn(DomainUsersService.prototype, 'getUsersList').mockResolvedValue([
+        {
+          id: testData.baseUsers.accessor.id,
+          displayName: 'accessor name',
+          isActive: true
+        }
+      ] as any);
+    });
 
-      expect(res).toStrictEqual({
-        id: support.id,
-        status: support.status,
+    it('should get innovation support info', async () => {
+      const support = await sut.getInnovationSupportInfo(testData.innovation.innovationSupports[0]!.id, em);
+
+      expect(support).toStrictEqual({
+        id: testData.innovation.innovationSupports[0]?.id,
+        status: testData.innovation.innovationSupports[0]?.status,
         engagingAccessors: [
           {
-            id: scenario.users.samAccessor.id,
-            organisationUnitUserId:
-              scenario.users.samAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit.organisationUnitUser
-                .id,
-            name: scenario.users.samAccessor.name
+            id: testData.baseUsers.accessor.id,
+            organisationUnitUserId: testData.organisationUnitUsers.accessor.id,
+            name: 'accessor name'
           }
         ]
       });
     });
 
     it('should not get innovation support info if it does not exist', async () => {
-      await expect(sut.getInnovationSupportInfo(randUuid(), em)).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND)
-      );
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.getInnovationSupportInfo(randUuid(), em);
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     });
   });
 
   describe('createInnovationSupport', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    let innovationWithoutSupports: InnovationEntity;
+
+    beforeEach(async () => {
+      innovationWithoutSupports = await TestsLegacyHelper.TestDataBuilder.createInnovation()
+        .setOwner(testData.baseUsers.innovator)
+        .withAssessments(testData.baseUsers.assessmentUser)
+        .build(em);
+    });
 
     it('should create an innovation support', async () => {
+      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
+      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+
       const support = await sut.createInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole'),
-        innovation.id,
+        testData.baseUsers.accessor,
+        testData.domainContexts.accessor,
+        innovationWithoutSupports.id,
         {
           status: InnovationSupportStatusEnum.ENGAGING,
           message: randText(),
           accessors: [
             {
-              id: scenario.users.jamieMadroxAccessor.id,
-              organisationUnitUserId:
-                scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgAiUnit
-                  .organisationUnitUser.id
+              id: testData.baseUsers.accessor.id,
+              organisationUnitUserId: testData.organisationUnitUsers.accessor.id
             }
           ]
         },
         em
       );
 
-      // Todo this needs to check the support is created correctly and all other services are called correctly.
-      // this applies to the other mocks also, this was previously in the method but was actually doing nothing so
-      // commented out for now.
-      /*jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
+      const thread = InnovationThreadEntity.new({
+        innovation: innovationWithoutSupports,
+        author: testData.baseUsers.accessor
+      });
+
+      jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
         thread,
         message: InnovationThreadMessageEntity.new({ thread, author: thread.author })
-      });*/
+      });
 
       const dbSupportIds = (
         await em
           .createQueryBuilder(InnovationSupportEntity, 'support')
           .innerJoin('support.innovation', 'innovation')
-          .where('innovation.id = :innovationId', { innovationId: innovation.id })
+          .where('innovation.id = :innovationId', { innovationId: innovationWithoutSupports.id })
           .getMany()
       ).map(s => s.id);
 
       expect(dbSupportIds).toContain(support.id);
     });
 
-    it('should not create innovation support if current role missing organisation unit', async () => {
-      const context = DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole');
-      delete context.organisation?.organisationUnit;
-      await expect(() =>
-        sut.createInnovationSupport(context, innovation.id, {
-          status: InnovationSupportStatusEnum.ENGAGING,
-          message: randText(),
-          accessors: [
-            {
-              id: scenario.users.jamieMadroxAccessor.id,
-              organisationUnitUserId:
-                scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgAiUnit
-                  .organisationUnitUser.id
-            }
-          ]
-        })
-      ).rejects.toThrowError(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT)
-      );
-    });
+    it('should not create innovation support without organisation unit in domain context', async () => {
+      let err: UnprocessableEntityError | null = null;
 
-    it('should not create innovation support with invalid organisation unit in domain context', async () => {
-      const user = cloneDeep(scenario.users.jamieMadroxAccessor);
-      user.roles.aiRole.organisationUnit!.id = randUuid();
-      await expect(() =>
-        sut.createInnovationSupport(DTOsHelper.getUserRequestContext(user, 'aiRole'), innovation.id, {
-          status: InnovationSupportStatusEnum.ENGAGING,
-          message: randText(),
-          accessors: [
-            {
-              id: scenario.users.jamieMadroxAccessor.id,
-              organisationUnitUserId:
-                scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgAiUnit
-                  .organisationUnitUser.id
-            }
-          ]
-        })
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
-    });
-
-    it('should not create innovation support if there is already one with the same organisation unit', async () => {
-      await expect(() =>
-        sut.createInnovationSupport(
-          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-          innovation.id,
+      try {
+        await sut.createInnovationSupport(
+          testData.baseUsers.accessor,
+          testData.domainContexts.assessmentUser,
+          innovationWithoutSupports.id,
           {
             status: InnovationSupportStatusEnum.ENGAGING,
             message: randText(),
             accessors: [
               {
-                id: scenario.users.aliceQualifyingAccessor.id,
-                organisationUnitUserId:
-                  scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                    .organisationUnitUser.id
+                id: testData.baseUsers.accessor.id,
+                organisationUnitUserId: testData.organisationUnitUsers.accessor.id
               }
             ]
-          }
-        )
-      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS));
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
+    });
+
+    it('should not create innovation support with invalid organisation unit in domain context', async () => {
+      let err: NotFoundError | null = null;
+
+      const context = cloneDeep(testData.domainContexts.accessor);
+      context.organisation.organisationUnit.id = randUuid();
+
+      try {
+        await sut.createInnovationSupport(
+          testData.baseUsers.accessor,
+          context,
+          innovationWithoutSupports.id,
+          {
+            status: InnovationSupportStatusEnum.ENGAGING,
+            message: randText(),
+            accessors: [
+              {
+                id: testData.baseUsers.accessor.id,
+                organisationUnitUserId: testData.organisationUnitUsers.accessor.id
+              }
+            ]
+          },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+    });
+
+    it('should not create innovation support if there is already one with the same organisation unit', async () => {
+      let err: UnprocessableEntityError | null = null;
+
+      try {
+        await sut.createInnovationSupport(
+          testData.baseUsers.accessor,
+          testData.domainContexts.accessor,
+          testData.innovation.id,
+          {
+            status: InnovationSupportStatusEnum.ENGAGING,
+            message: randText(),
+            accessors: [
+              {
+                id: testData.baseUsers.accessor.id,
+                organisationUnitUserId: testData.organisationUnitUsers.accessor.id
+              }
+            ]
+          },
+          em
+        );
+      } catch (error) {
+        err = error as UnprocessableEntityError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_ALREADY_EXISTS);
     });
   });
 
   describe('updateInnovationSupport', () => {
-    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     it('should update the innovation support', async () => {
-      /* See above comment
+      jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
+      jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog').mockResolvedValue({ id: randUuid() });
+      jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+
       const thread = InnovationThreadEntity.new({
         innovation: testData.innovation,
         author: testData.baseUsers.accessor
@@ -297,13 +334,12 @@ describe('Innovation supports service test suite', () => {
         thread,
         message: InnovationThreadMessageEntity.new({ thread, author: thread.author })
       });
-      */
-      const support = innovation.supports.supportByHealthOrgUnit;
 
       const updatedSupport = await sut.updateInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        innovation.id,
-        support.id,
+        testData.baseUsers.accessor,
+        testData.domainContexts.accessor,
+        testData.innovation.id,
+        testData.innovation.innovationSupports[0]!.id,
         { status: InnovationSupportStatusEnum.COMPLETE, message: randText() },
         em
       );
@@ -311,21 +347,34 @@ describe('Innovation supports service test suite', () => {
       const dbSupport = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
         .where('support.id = :supportId', { supportId: updatedSupport.id })
-        .getOneOrFail();
+        .getOne();
 
-      expect(updatedSupport.id).toBe(support.id);
+      if (!dbSupport) {
+        throw new Error('Could not find support');
+      }
+
+      expect(updatedSupport.id).toBe(testData.innovation.innovationSupports[0]!.id);
       expect(dbSupport.status).toBe(InnovationSupportStatusEnum.COMPLETE);
     });
 
     it('should not update the innovation support if it does not exsit', async () => {
-      await expect(() =>
-        sut.updateInnovationSupport(
-          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-          innovation.id,
+      let err: NotFoundError | null = null;
+
+      try {
+        await sut.updateInnovationSupport(
+          testData.baseUsers.accessor,
+          testData.domainContexts.accessor,
+          testData.innovation.id,
           randUuid(),
-          { status: InnovationSupportStatusEnum.COMPLETE, message: randText() }
-        )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+          { status: InnovationSupportStatusEnum.COMPLETE, message: randText() },
+          em
+        );
+      } catch (error) {
+        err = error as NotFoundError;
+      }
+
+      expect(err).toBeDefined();
+      expect(err?.name).toBe(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     });
   });
 });

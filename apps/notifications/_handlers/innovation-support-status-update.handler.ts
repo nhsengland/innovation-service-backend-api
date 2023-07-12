@@ -7,7 +7,7 @@ import {
 } from '@notifications/shared/enums';
 import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
-import type { IdentityProviderService } from '@notifications/shared/services';
+import type { DomainService } from '@notifications/shared/services';
 import SHARED_SYMBOLS from '@notifications/shared/services/symbols';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 
@@ -16,7 +16,6 @@ import { container, EmailTypeEnum, ENV } from '../_config';
 import type { Context } from '@azure/functions';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
@@ -24,7 +23,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   | EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS,
   { organisationUnitName: string; supportStatus: InnovationSupportStatusEnum }
 > {
-  private identityProviderService = container.get<IdentityProviderService>(SHARED_SYMBOLS.IdentityProviderService);
+  private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
 
   private data: {
     innovation?: {
@@ -32,7 +31,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       owner: RecipientType | null;
     };
     requestUserAdditionalInfo?: {
-      displayName: string;
+      displayName?: string;
       organisation: { id: string; name: string };
       organisationUnit: { id: string; name: string };
     };
@@ -47,15 +46,9 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   async run(): Promise<this> {
-    if (!this.requestUser.organisation) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
-    }
-
-    if (!this.requestUser.organisation.organisationUnit) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-    }
-    
-    const requestUserInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
+    const requestUserInfo = await this.domainService.users.getUserInfo({
+      userId: this.requestUser.id
+    });
 
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
@@ -77,22 +70,23 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     this.data.requestUserAdditionalInfo = {
       displayName: requestUserInfo.displayName,
       organisation: {
-        id: this.requestUser.organisation.id,
-        name: this.requestUser.organisation.name
+        id: this.requestUser.organisation?.id ?? '',
+        name: this.requestUser.organisation?.name ?? ''
       },
       organisationUnit: {
-        id: this.requestUser.organisation.organisationUnit.id,
-        name: this.requestUser.organisation.organisationUnit.name
+        id: this.requestUser?.organisation?.organisationUnit?.id ?? '',
+        name: this.requestUser?.organisation?.organisationUnit?.name ?? ''
       }
     };
 
-    if (!this.data.innovation || !this.data.requestUserAdditionalInfo) {
+    // If the innovation is not found, then we don't need to send any notification. (This could probably throw an error as it should not happen, but leaving like this.)
+    if (!this.data.innovation) {
       return this;
     }
 
     if (this.inputData.innovationSupport.statusChanged) {
-      await this.prepareEmailForInnovators(innovatorRecipients, this.data.innovation, this.data.requestUserAdditionalInfo.organisation);
-      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.roleId), this.data.requestUserAdditionalInfo.organisationUnit);
+      await this.prepareEmailForInnovators(innovatorRecipients);
+      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.roleId));
 
       if (
         [
@@ -102,20 +96,20 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
           InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
         ].includes(this.inputData.innovationSupport.status)
       ) {
-        await this.prepareInAppForAssessmentWhenWaitingStatus(this.data.requestUserAdditionalInfo.organisationUnit);
+        await this.prepareInAppForAssessmentWhenWaitingStatus();
       }
     }
 
     if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.ENGAGING) {
-      await this.prepareInAppForNewAccessors(this.data.requestUserAdditionalInfo.organisationUnit);
-      await this.prepareEmailForNewAccessors(this.data.requestUserAdditionalInfo);
+      await this.prepareInAppForAccessorsWhenEngaging();
+      await this.prepareEmailForNewAccessors();
     }
 
     return this;
   }
 
   // Private methods.
-  private async prepareEmailForInnovators(recipients: RecipientType[], innovation: { name: string }, organisation: { name: string }): Promise<void> {
+  private async prepareEmailForInnovators(recipients: RecipientType[]): Promise<void> {
     // Send email only to user if email preference INSTANTLY (NotifierTypeEnum.SUPPORT).
     for (const recipient of recipients) {
       this.emails.push({
@@ -123,8 +117,9 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         notificationPreferenceType: 'SUPPORT',
         to: recipient,
         params: {
-          innovation_name: innovation.name,
-          organisation_name: organisation.name,
+          // display_name: '', // This will be filled by the email-listener function.
+          innovation_name: this.data.innovation?.name || '',
+          organisation_name: this.data.requestUserAdditionalInfo?.organisation.name || '',
           support_status: TranslationHelper.translate(
             `SUPPORT_STATUS.${this.inputData.innovationSupport.status}`
           ).toLowerCase(),
@@ -138,7 +133,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
   }
 
-  private async prepareEmailForNewAccessors(requestUserInfo: { displayName: string }): Promise<void> {
+  private async prepareEmailForNewAccessors(): Promise<void> {
     const newAssignedAccessors = (
       this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id) ?? []
     ).map(a => a.id);
@@ -157,7 +152,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         notificationPreferenceType: 'SUPPORT',
         to: recipient,
         params: {
-          qa_name: requestUserInfo.displayName, 
+          qa_name: this.data.requestUserAdditionalInfo?.displayName ?? 'qualified accessor', // what should the default be, believe it will never happen
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })
@@ -167,7 +162,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
   }
 
-  private async prepareInAppForInnovators(roleIds: string[], organisationUnit: { name: string }): Promise<void> {
+  private async prepareInAppForInnovators(roleIds: string[]): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
@@ -177,24 +172,16 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       },
       userRoleIds: roleIds,
       params: {
-        organisationUnitName: organisationUnit.name,
+        organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
       }
     });
   }
 
-  private async prepareInAppForNewAccessors(organisationUnit: { name: string }): Promise<void> {
-    const newAssignedAccessors = (
-      this.inputData.innovationSupport.newAssignedAccessors?.filter(a => a.id !== this.requestUser.id) ?? []
-    ).map(a => a.id);
-
-    const recipients = await this.recipientsService.getUsersRecipient(
-      newAssignedAccessors,
-      [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
-      {
-        organisationUnit: this.inputData.innovationSupport.organisationUnitId
-      }
-    );
+  private async prepareInAppForAccessorsWhenEngaging(): Promise<void> {
+    const assignedUsers = await this.recipientsService.innovationAssignedRecipients({
+      innovationSupportId: this.inputData.innovationSupport.id
+    });
 
     this.inApp.push({
       innovationId: this.inputData.innovationId,
@@ -203,15 +190,17 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         detail: NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
         id: this.inputData.innovationSupport.id
       },
-      userRoleIds: recipients.filter(user => user.roleId !== this.requestUser.currentRole.id).map(user => user.roleId),
+      userRoleIds: assignedUsers
+        .filter(user => user.roleId !== this.requestUser.currentRole.id)
+        .map(user => user.roleId),
       params: {
-        organisationUnitName: organisationUnit.name,
+        organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
       }
     });
   }
 
-  private async prepareInAppForAssessmentWhenWaitingStatus(organisationUnit: { name: string }): Promise<void> {
+  private async prepareInAppForAssessmentWhenWaitingStatus(): Promise<void> {
     const assessmentUsers = await this.recipientsService.needsAssessmentUsers();
 
     this.inApp.push({
@@ -223,7 +212,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
       },
       userRoleIds: assessmentUsers.map(item => item.roleId),
       params: {
-        organisationUnitName: organisationUnit.name,
+        organisationUnitName: this.data.requestUserAdditionalInfo?.organisationUnit.name || '',
         supportStatus: this.inputData.innovationSupport.status
       }
     });

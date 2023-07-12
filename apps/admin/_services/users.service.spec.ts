@@ -1,22 +1,19 @@
 import type { EntityManager } from 'typeorm';
 
-import { TestsHelper } from '@admin/shared/tests';
+import { TestDataType, TestsLegacyHelper } from '@admin/shared/tests';
 
 import { UserEntity } from '@admin/shared/entities';
 // import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
 
-import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import { container } from '../_config';
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
 
 describe('Admin / Services / Users Service', () => {
+  let testData: TestDataType;
   let entityManager: EntityManager;
 
   let usersService: UsersService;
-
-  const testsHelper = new TestsHelper();
-  const scenario = testsHelper.getCompleteScenario();
 
   beforeAll(async () => {
     // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
@@ -24,21 +21,21 @@ describe('Admin / Services / Users Service', () => {
 
     usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
-    await testsHelper.init();
+    await TestsLegacyHelper.init();
+    testData = TestsLegacyHelper.sampleData;
   });
 
   beforeEach(async () => {
-    entityManager = await testsHelper.getQueryRunnerEntityManager();
+    entityManager = await TestsLegacyHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
-    await testsHelper.releaseQueryRunnerEntityManager();
+    await TestsLegacyHelper.releaseQueryRunnerEntityManager(entityManager);
   });
 
-  const userAdminContext = DTOsHelper.getUserRequestContext(scenario.users.allMighty);
-
   it('should lock a user', async () => {
-    const userInnovator = scenario.users.johnInnovator;
+    const userAdminContext = testData.domainContexts.admin;
+    const userInnovator = testData.baseUsers.innovator;
 
     await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, entityManager);
 
@@ -51,7 +48,8 @@ describe('Admin / Services / Users Service', () => {
   });
 
   it('should unlock a user', async () => {
-    const userInnovator = scenario.users.johnInnovator;
+    const userAdminContext = testData.domainContexts.admin;
+    const userInnovator = testData.baseUsers.innovator;
 
     await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: true }, entityManager);
 

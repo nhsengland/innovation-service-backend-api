@@ -25,6 +25,7 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
     const innovator = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
 
     if (innovator) {
+      const innovatorIdentity = await this.recipientsService.usersIdentityInfo(innovator.identityId);
       const unitInfo = await this.recipientsService.organisationUnitInfo(this.inputData.unitId);
 
       this.emails.push({
@@ -32,6 +33,7 @@ export class UnitInactivationSupportStatusCompletedHandler extends BaseHandler<
         to: innovator,
         notificationPreferenceType: null,
         params: {
+          display_name: innovatorIdentity?.displayName ?? 'user', // Review what should happen if user is not found
           innovation_name: innovation.name,
           unit_name: unitInfo.organisationUnit.name,
           support_url: new UrlModel(ENV.webBaseTransactionalUrl)

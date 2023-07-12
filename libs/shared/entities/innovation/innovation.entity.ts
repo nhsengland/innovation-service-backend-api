@@ -93,9 +93,10 @@ export class InnovationEntity extends BaseEntity {
   assessments: InnovationAssessmentEntity[];
 
   @OneToMany(() => InnovationSectionEntity, record => record.innovation, {
+    lazy: true,
     cascade: ['insert', 'update']
   })
-  sections: InnovationSectionEntity[];
+  sections: Promise<InnovationSectionEntity[]>;
 
   @OneToMany(() => InnovationSupportEntity, record => record.innovation, {
     cascade: ['insert', 'update']

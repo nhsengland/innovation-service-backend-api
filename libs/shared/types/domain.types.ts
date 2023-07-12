@@ -184,12 +184,14 @@ export type OrganisationWithUnitsType = {
 // Innovation domain types.
 // // This is the type of the params column on ActivityLog table.
 export type ActivityLogDBParamsType = {
+  actionUserId: string;
+  actionUserRole: ServiceRoleEnum;
+  actionUserOrganisationUnit: string;
   interveningUserId?: string;
 
   assessmentId?: string;
   sectionId?: CurrentCatalogTypes.InnovationSections;
   actionId?: string;
-  actionUserRole?: ServiceRoleEnum;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
   organisations?: string[]; // This holds the name, not id's.

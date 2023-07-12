@@ -1,5 +1,6 @@
 import type { DataSource, Repository } from 'typeorm';
 
+import { roleEntity2RoleType } from '../../entities/user/user-role.entity';
 import {
   AccessorOrganisationRoleEnum,
   InnovationCollaboratorStatusEnum,
@@ -14,7 +15,7 @@ import type { DomainContextType, RoleType } from '../../types';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
 import { UserPreferenceEntity } from '../../entities/user/user-preference.entity';
-import { UserRoleEntity, roleEntity2RoleType } from '../../entities/user/user-role.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
@@ -201,7 +202,9 @@ export class DomainUsersService {
     return dbUsers.map(dbUser => {
       const identityUser = identityUsers.find(item => item.identityId === dbUser.identityId);
       if (!identityUser) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, { details: { context: 'S.DU.gUL' } });
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND, {
+          details: { context: 'S.DU.gUL' }
+        });
       }
 
       return {
@@ -215,14 +218,6 @@ export class DomainUsersService {
         lastLoginAt: identityUser.lastLoginAt
       };
     });
-  }
-
-  async getUsersMap(
-    data: { userIds: string[] } | { identityIds: string[] }
-  ): Promise<Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[number]>> {
-    const res = await this.getUsersList(data);
-    const resKey = 'userIds' in data ? 'id' : 'identityId';
-    return new Map(res.map(item => [item[resKey], item]));
   }
 
   async getUserPreferences(userId: string): Promise<{

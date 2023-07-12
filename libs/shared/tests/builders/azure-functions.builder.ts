@@ -2,9 +2,10 @@
 import type { AzureFunction, HttpRequest, HttpRequestParams } from '@azure/functions';
 import { randUserName, randUuid } from '@ngneat/falso';
 
-import type { AppResponse, CustomContextType } from '../../types/request.types';
 import { DTOsHelper } from '../helpers/dtos.helper';
 import { MocksHelper } from '../mocks.helper';
+import { DomainUsersService } from '../../services/domain/domain-users.service';
+import type { AppResponse, CustomContextType } from '../../types/request.types';
 
 import type { TestUserType } from './user.builder';
 
@@ -47,13 +48,12 @@ export class AzureHttpTriggerBuilder {
   // }
 
   public setAuth<T extends TestUserType>(user: T, userRoleKey?: keyof T['roles']): this {
+
     if (!userRoleKey) {
       if (Object.keys(user.roles).length === 1) {
         userRoleKey = Object.keys(user.roles)[0];
       } else {
-        throw new Error(
-          'AzureHttpTriggerBuilder::setAuth: User with more than 1 role, needs userRole parameter defined.'
-        );
+        throw new Error('AzureHttpTriggerBuilder::setAuth: User with more than 1 role, needs userRole parameter defined.');
       }
     }
 
@@ -67,7 +67,25 @@ export class AzureHttpTriggerBuilder {
       }
     };
 
+    jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValue({
+      id: user.id,
+      identityId: user.identityId,
+      email: user.email,
+      displayName: user.name,
+      roles: Object.values(user.roles),
+      phone: user.mobilePhone,
+      isActive: user.isActive,
+      lockedAt: user.lockedAt,
+      passwordResetAt: null,
+      firstTimeSignInAt: null,
+      organisations: Object.values(user.organisations).map(organisation => ({
+        ...organisation,
+        organisationUnits: Object.values(organisation.organisationUnits)
+      }))
+    });
+
     return this;
+
   }
 
   public setBody<T extends { [key: string]: any }>(body: T): this {

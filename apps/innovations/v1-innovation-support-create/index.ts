@@ -31,9 +31,15 @@ class V1InnovationSupportCreate {
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
         .verify();
+      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const result = await innovationSupportsService.createInnovationSupport(domainContext, params.innovationId, body);
+      const result = await innovationSupportsService.createInnovationSupport(
+        { id: requestUser.id, identityId: requestUser.identityId },
+        domainContext,
+        params.innovationId,
+        body
+      );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

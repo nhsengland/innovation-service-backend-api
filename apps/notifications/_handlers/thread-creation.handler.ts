@@ -158,7 +158,9 @@ export class ThreadCreationHandler extends BaseHandler<
     innovationName: string,
     thread: { id: string; subject: string }
   ): Promise<void> {
-    const assignedUsers = await this.recipientsService.innovationAssignedRecipients(this.inputData.innovationId);
+    const assignedUsers = await this.recipientsService.innovationAssignedRecipients({
+      innovationId: this.inputData.innovationId
+    });
 
     // Send emails only to users with email preference INSTANTLY.
     for (const user of assignedUsers) {

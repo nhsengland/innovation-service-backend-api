@@ -111,7 +111,7 @@ describe('Notifications / _handlers / base handler suite', () => {
           notificationPreferenceType: 'ACTION',
           params: {},
           templateId: EmailTypeEnum.ACTION_COMPLETED_TO_INNOVATOR,
-          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole')
+          to: DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'regularRole')
         },
         {
           notificationPreferenceType: 'ACTION',

@@ -15,7 +15,6 @@ import { InnovationDocumentEntity } from './innovation/innovation-document.entit
 import { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 import { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
 import { InnovationFileLegacyEntity } from './innovation/innovation-file-legacy.entity';
-import { InnovationFileEntity } from './innovation/innovation-file.entity';
 import { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 import { InnovationSectionEntity } from './innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from './innovation/innovation-support-log.entity';
@@ -33,7 +32,6 @@ export { InnovationDocumentEntity } from './innovation/innovation-document.entit
 export { InnovationEvidenceEntity } from './innovation/innovation-evidence.entity';
 export { InnovationExportRequestEntity } from './innovation/innovation-export-request.entity';
 export { InnovationFileLegacyEntity } from './innovation/innovation-file-legacy.entity';
-export { InnovationFileEntity } from './innovation/innovation-file.entity';
 export { InnovationReassessmentRequestEntity } from './innovation/innovation-reassessment-request.entity';
 export { InnovationSectionEntity } from './innovation/innovation-section.entity';
 export { InnovationSupportLogEntity } from './innovation/innovation-support-log.entity';
@@ -91,7 +89,6 @@ export const INNOVATION_ENTITIES = [
   InnovationEvidenceEntity,
   InnovationExportRequestEntity,
   InnovationFileLegacyEntity,
-  InnovationFileEntity,
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportLogEntity,

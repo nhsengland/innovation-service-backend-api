@@ -3,9 +3,6 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
-import { UserEntity, UserRoleEntity } from '../entities';
-import { UserStatusEnum } from '../enums';
-import { NotFoundError, UserErrorsEnum } from '../errors';
 import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
@@ -17,7 +14,7 @@ export class TestsHelper {
   private sqlConnection: DataSource;
   private em: EntityManager;
 
-  protected readonly completeScenarioBuilder: CompleteScenarioBuilder = new CompleteScenarioBuilder();
+  protected completeScenarioBuilder: CompleteScenarioBuilder;
 
   async init(): Promise<this> {
     this.sqlConnection = container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService).getConnection();
@@ -25,6 +22,8 @@ export class TestsHelper {
     while (!this.sqlConnection.isInitialized) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+
+    this.completeScenarioBuilder = new CompleteScenarioBuilder(this.sqlConnection);
 
     // This is set when we're running the tests and not the global setup / teardown
     if (this.completeScenarioBuilder.getScenario()) {
@@ -37,16 +36,17 @@ export class TestsHelper {
   async cleanUp(): Promise<void> {
     const query = this.sqlConnection.createQueryRunner();
     await query.query(`
+      IF OBJECTPROPERTY(OBJECT_ID('EmpSalary'), 'TableTemporalType') = 2 ALTER TABLE EmpSalary SET (SYSTEM_VERSIONING = OFF)
       EXEC sp_MSForEachTable 'IF OBJECTPROPERTY(OBJECT_ID(''?''), ''TableTemporalType'') = 2 ALTER TABLE ? SET (SYSTEM_VERSIONING = OFF)';
-      EXEC sp_MSForEachTable 'ALTER TABLE ? NOCHECK CONSTRAINT all'
-      EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; IF OBJECT_ID(''?'') NOT IN (ISNULL(OBJECT_ID(''[dbo].[Migrations]''),0)) DELETE FROM ?'
-      EXEC sp_MSForEachTable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'
+      EXEC sp_MSForEachTable "ALTER TABLE ? NOCHECK CONSTRAINT all"
+      EXEC sp_MSForEachTable "SET QUOTED_IDENTIFIER ON; DELETE FROM ?"
+      EXEC sp_MSForEachTable "ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all"
       EXEC sp_MSForEachTable 'IF OBJECTPROPERTY(OBJECT_ID(''?''), ''TableTemporalType'') = 2 ALTER TABLE ? SET (SYSTEM_VERSIONING = ON)';
     `);
   }
 
   async createCompleteScenario(): Promise<CompleteScenarioType> {
-    return this.completeScenarioBuilder.createScenario(this.sqlConnection);
+    return this.completeScenarioBuilder.createScenario();
   }
   getCompleteScenario(): CompleteScenarioType {
     return this.completeScenarioBuilder.getScenario();
@@ -78,21 +78,8 @@ export class TestsHelper {
     await this.em.queryRunner?.release();
   }
 
-  async deactivateUser(userId: string, em: EntityManager): Promise<void> {
-    await em.getRepository(UserEntity).update({ id: userId }, { status: UserStatusEnum.LOCKED });
-  }
-
-  async deleteUser(userId: string, em: EntityManager): Promise<void> {
-    await em.getRepository(UserEntity).update({ id: userId }, { status: UserStatusEnum.DELETED });
-  }
-
-  async deactivateUserRole(roleId: string, em: EntityManager): Promise<void> {
-    await em.getRepository(UserRoleEntity).update({ id: roleId }, { isActive: false });
-  }
-
   private setupGlobalMocks(): void {
     const identityMap = this.completeScenarioBuilder.getIdentityMap();
-    const emailMap = this.completeScenarioBuilder.getEmailMap();
     // jest.spyOn(IdentityProviderService.prototype, 'getUserInfo').mockImplementation(async (identityId: string) => {
     //   const user = identityMap.get(identityId);
     //   if (!user) {
@@ -106,14 +93,6 @@ export class TestsHelper {
         .map(identityId => identityMap.get(identityId))
         .filter((x): x is TestUserType => !!x)
         .map(DTOsHelper.getIdentityUserInfo);
-    });
-
-    jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockImplementation(async (email: string) => {
-      const user = emailMap.get(email);
-      if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-      return { ...DTOsHelper.getIdentityUserInfo(user), phone: null };
     });
   }
 }

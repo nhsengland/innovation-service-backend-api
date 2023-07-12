@@ -4,11 +4,11 @@ import { CurrentEvidenceSchema, CurrentEvidenceType } from '@innovations/shared/
 
 export type ParamsType = {
   innovationId: string;
-  evidenceId: string;
+  evidenceOffset: number;
 };
 export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().guid().required(),
-  evidenceId: Joi.string().guid().required()
+  innovationId: Joi.string().guid().required().description('The innovation id.'),
+  evidenceOffset: Joi.number().integer().min(0).required().description('The evidence id.')
 });
 
 export type BodyType = CurrentEvidenceType;

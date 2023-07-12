@@ -31,9 +31,11 @@ class V1InnovationSupportUpdate {
         .checkAccessorType({ organisationRole: [ServiceRoleEnum.QUALIFYING_ACCESSOR] })
         .checkInnovation()
         .verify();
+      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const result = await innovationSupportsService.updateInnovationSupport(
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         params.supportId,

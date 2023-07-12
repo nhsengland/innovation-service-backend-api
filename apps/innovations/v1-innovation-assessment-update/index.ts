@@ -45,8 +45,10 @@ class V1InnovationAssessmentUpdate {
           ]
         })
         .verify();
+      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
       const result = await innovationAssessmentsService.updateInnovationAssessment(
+        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         params.assessmentId,

@@ -75,7 +75,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     ];
 
     await this.prepareSuggestedAndSharedOrganisationEmailToQAs(emailRecipientQAIdentityIds);
-    await this.prepareSuggestedAndSharedOrganisationInAppToQAs(
+    await this.prepareSuggestedAndSharedOrganidationInAppToQAs(
       organisationUnitsSuggestedAndSharedQAs.map(user => user.roleId)
     );
 
@@ -174,7 +174,7 @@ export class NeedsAssessmentCompletedHandler extends BaseHandler<
     }
   }
 
-  async prepareSuggestedAndSharedOrganisationInAppToQAs(userRoleIds: string[]): Promise<void> {
+  async prepareSuggestedAndSharedOrganidationInAppToQAs(userRoleIds: string[]): Promise<void> {
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {

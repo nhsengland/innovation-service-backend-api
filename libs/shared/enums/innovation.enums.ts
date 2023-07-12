@@ -84,9 +84,3 @@ export enum InnovationCollaboratorStatusEnum {
   LEFT = 'LEFT',
   EXPIRED = 'EXPIRED'
 }
-
-export enum InnovationFileContextTypeEnum {
-  INNOVATION = 'INNOVATION',
-  INNOVATION_SECTION = 'INNOVATION_SECTION',
-  INNOVATION_EVIDENCE = 'INNOVATION_EVIDENCE'
-}

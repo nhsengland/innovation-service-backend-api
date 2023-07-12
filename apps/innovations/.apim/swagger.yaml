@@ -1350,6 +1350,12 @@ paths:
                       enum:
                         - YES
                         - NO
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
                   additionalProperties: false
                 EVIDENCE_OF_EFFECTIVENESS:
                   type: object
@@ -1467,6 +1473,12 @@ paths:
                             maxLength: 500
                         additionalProperties: false
                       minItems: 1
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
                   additionalProperties: false
                 REGULATIONS_AND_STANDARDS:
                   type: object
@@ -1512,6 +1524,12 @@ paths:
                     otherRegulationDescription:
                       type: string
                       maxLength: 100
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
                   additionalProperties: false
                 INTELLECTUAL_PROPERTY:
                   type: object
@@ -1643,6 +1661,12 @@ paths:
                         - YES
                         - NO
                         - NOT_SURE
+                    files:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
                   additionalProperties: false
                 evidences:
                   type: array
@@ -1942,10 +1966,7 @@ paths:
             application/json:
               schema:
                 type: object
-                properties:
-                  id:
-                    type: string
-                    description: Evidence id.
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -1956,7 +1977,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidence/{evidenceId}":
+  "/v1/{innovationId}/evidence/{evidenceOffset}":
     delete:
       description: Delete an innovation evidence entry.
       tags:
@@ -1970,15 +1991,20 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceId
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
       responses:
-        "204":
-          description: Success.
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -2002,12 +2028,14 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceId
+            description: The innovation id.
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
+            description: The evidence id.
       requestBody:
         description: The evidence data to update.
         required: true
@@ -2051,8 +2079,13 @@ paths:
                 - summary
               additionalProperties: false
       responses:
-        "204":
-          description: Success.
+        "200":
+          description: Innovation evidence info.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
         "400":
           description: Bad Request
         "401":
@@ -2063,7 +2096,7 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/evidences/{evidenceId}":
+  "/v1/{innovationId}/evidences/{evidenceOffset}":
     get:
       description: Get an innovation evidence info.
       tags:
@@ -2077,12 +2110,12 @@ paths:
           schema:
             type: string
             format: uuid
-        - name: evidenceId
+        - name: evidenceOffset
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
+            type: integer
+            minimum: 0
       responses:
         "200":
           description: Innovation section info.
@@ -2143,398 +2176,6 @@ paths:
           description: Not found
         "500":
           description: Internal server error
-  "/v1/{innovationId}/files":
-    post:
-      description: Create a new innovation file.
-      operationId: v1-innovation-file-create
-      tags:
-        - "[v1] Innovation Files"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                context:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      maxLength: 100
-                    type:
-                      type: string
-                      enum:
-                        - INNOVATION
-                        - INNOVATION_SECTION
-                        - INNOVATION_EVIDENCE
-                  required:
-                    - id
-                    - type
-                  additionalProperties: false
-                name:
-                  type: string
-                  maxLength: 100
-                description:
-                  type: string
-                  maxLength: 500
-                file:
-                  type: object
-                  properties:
-                    id:
-                      type: string
-                      maxLength: 100
-                    name:
-                      type: string
-                      maxLength: 100
-                    size:
-                      type: number
-                      format: float
-                    extension:
-                      type: string
-                      maxLength: 4
-                  required:
-                    - id
-                    - name
-                    - size
-                    - extension
-                  additionalProperties: false
-              required:
-                - context
-                - name
-                - file
-              additionalProperties: false
-      responses:
-        "200":
-          description: The innovation file has been created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                required:
-                  - id
-        "400":
-          description: The innovation file could not be created.
-        "401":
-          description: The user is not authorized to create an innovation file.
-        "403":
-          description: The user is not allowed to create an innovation file.
-        "404":
-          description: The innovation could not be found.
-        "500":
-          description: An unexpected error occurred while creating the innovation file.
-    get:
-      operationId: v1-innovation-files-list
-      description: Get innovation files list
-      tags:
-        - "[v1] Innovation Files"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: skip
-          in: query
-          required: false
-          schema:
-            type: number
-            format: float
-        - name: take
-          in: query
-          required: false
-          schema:
-            type: number
-            format: float
-            maximum: 100
-            default: 20
-        - name: order
-          in: query
-          required: false
-          schema:
-            type: object
-            properties: {}
-            additionalProperties:
-              type: string
-              enum:
-                - ASC
-                - DESC
-            default:
-              default: DESC
-        - name: name
-          in: query
-          required: false
-          schema:
-            type: string
-        - name: uploadedBy
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - ADMIN
-                - INNOVATOR
-                - ACCESSOR
-                - ASSESSMENT
-                - QUALIFYING_ACCESSOR
-        - name: contextTypes
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - INNOVATION
-                - INNOVATION_SECTION
-                - INNOVATION_EVIDENCE
-        - name: contextId
-          in: query
-          required: false
-          schema:
-            type: string
-            maxLength: 100
-        - name: organisations
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              format: uuid
-        - name: dateFilter
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: object
-              properties:
-                field:
-                  type: string
-                  enum:
-                    - createdAt
-                startDate:
-                  type: string
-                  format: date-time
-                endDate:
-                  type: string
-                  format: date-time
-              required:
-                - field
-              additionalProperties: false
-        - name: fields
-          in: query
-          required: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum:
-                - description
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                    description: The total number of records.
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        context:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                            type:
-                              type: string
-                              enum:
-                                - INNOVATION
-                                - INNOVATION_SECTION
-                                - INNOVATION_EVIDENCE
-                        name:
-                          type: string
-                        description:
-                          type: string
-                        createdAt:
-                          type: string
-                        createdBy:
-                          type: object
-                          properties:
-                            name:
-                              type: string
-                            role:
-                              type: string
-                              enum:
-                                - ADMIN
-                                - INNOVATOR
-                                - ACCESSOR
-                                - ASSESSMENT
-                                - QUALIFYING_ACCESSOR
-                            isOwner:
-                              type: boolean
-                            orgUnitName:
-                              type: string
-                        file:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              description: Storage Id
-                            name:
-                              type: string
-                            size:
-                              type: number
-                            extension:
-                              type: string
-                            url:
-                              type: string
-        "400":
-          description: The request is invalid.
-        "401":
-          description: The user is not authenticated.
-        "403":
-          description: The user is not authorized to access this resource.
-        "500":
-          description: An error occurred while processing the request.
-  "/v1/{innovationId}/files/{fileId}":
-    delete:
-      operationId: v1-innovation-file-delete
-      description: Delete an innovation file.
-      tags:
-        - "[v1] Innovation Files"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: fileId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "204":
-          description: Success.
-        "400":
-          description: Bad Request
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not found
-        "500":
-          description: Internal server error
-    get:
-      operationId: v1-innovation-file-info
-      description: Get innovation file info
-      tags:
-        - "[v1] Innovation Files"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: fileId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  context:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      type:
-                        type: string
-                        enum:
-                          - INNOVATION
-                          - INNOVATION_SECTION
-                          - INNOVATION_EVIDENCE
-                  name:
-                    type: string
-                  description:
-                    type: string
-                  createdAt:
-                    type: string
-                  createdBy:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      role:
-                        type: string
-                        enum:
-                          - ADMIN
-                          - INNOVATOR
-                          - ACCESSOR
-                          - ASSESSMENT
-                          - QUALIFYING_ACCESSOR
-                      isOwner:
-                        type: boolean
-                      orgUnitName:
-                        type: string
-                  file:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                        description: Storage Id
-                      name:
-                        type: string
-                      size:
-                        type: number
-                      extension:
-                        type: string
-                      url:
-                        type: string
-        "400":
-          description: The request is invalid.
-        "401":
-          description: The user is not authenticated.
-        "403":
-          description: The user is not authorized to access this resource.
-        "500":
-          description: An error occurred while processing the request.
   "/v1/{innovationId}/upload":
     post:
       operationId: v1-innovation-file-upload
@@ -2577,51 +2218,6 @@ paths:
                   id:
                     type: string
                   displayFileName:
-                    type: string
-                  url:
-                    type: string
-                    description: url for file upload
-        "400":
-          description: Invalid payload
-        "404":
-          description: Innovation not found
-  "/v1/{innovationId}/files/upload-url":
-    post:
-      operationId: v1-innovation-file-upload-url
-      description: Get the upload url for an innovation file.
-      tags:
-        - "[v1] Innovation Files"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filename:
-                  type: string
-                  maxLength: 100
-              required:
-                - filename
-              additionalProperties: false
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  name:
                     type: string
                   url:
                     type: string

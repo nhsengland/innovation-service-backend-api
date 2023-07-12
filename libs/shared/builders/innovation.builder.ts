@@ -1,4 +1,4 @@
-import { randCountry, randNumber, randProduct, randText, randZipCode } from '@ngneat/falso';
+import { randBoolean, randCountry, randNumber, randProduct, randText, randZipCode } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 import {
@@ -12,7 +12,7 @@ import type { OrganisationUnitUserEntity } from '../entities/organisation/organi
 import type { OrganisationUnitEntity } from '../entities/organisation/organisation-unit.entity';
 import type { UserEntity } from '../entities/user/user.entity';
 import { InnovationStatusEnum, InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '../enums';
-import { createSampleDocument, type DocumentType } from '../schemas/innovation-record';
+import type { DocumentType } from '../schemas/innovation-record';
 import type { DomainContextType } from '../types';
 import { InnovationActionBuilder } from './innovation-action.builder';
 import { InnovationAssessmentBuilder } from './innovation-assessment.builder';
@@ -37,7 +37,7 @@ export class InnovationBuilder {
   private _document: DocumentType;
 
   constructor() {
-    const sample = {
+    this.innovation = {
       name: randProduct().title,
       description: randText(),
       countryName: randCountry(),
@@ -47,8 +47,90 @@ export class InnovationBuilder {
       createdAt: new Date()
     };
 
-    this.innovation = sample;
-    this._document = createSampleDocument(sample);
+    this._document = {
+      version: '202304',
+      INNOVATION_DESCRIPTION: {
+        name: this.innovation.name!,
+        description: this.innovation.description!,
+        countryName: this.innovation.countryName,
+        postcode: this.innovation.postcode!,
+
+        areas: ['COVID_19'],
+        careSettings: ['INDUSTRY'],
+        categories: ['MEDICAL_DEVICE', 'AI'],
+        mainCategory: 'MEDICAL_DEVICE',
+        mainPurpose: 'MONITOR_CONDITION',
+        otherCareSetting: randText(),
+        otherCategoryDescription: randText()
+      },
+      UNDERSTANDING_OF_NEEDS: {
+        benefitsOrImpact: [randText()],
+        carbonReductionPlan: randBoolean() ? 'YES' : 'NO',
+        completedHealthInequalitiesImpactAssessment: randBoolean() ? 'YES' : 'NO',
+        diseasesConditionsImpact: [randText()],
+        estimatedCarbonReductionSavings: randBoolean() ? 'YES' : 'NO',
+        estimatedCarbonReductionSavingsDescription: randText(),
+        files: [],
+        howInnovationWork: randText(),
+        impactDiseaseCondition: randBoolean() ? 'YES' : 'NO',
+        keyHealthInequalities: ['NONE'],
+        problemsTackled: randBoolean() ? 'YES' : 'NO'
+      },
+      EVIDENCE_OF_EFFECTIVENESS: {
+        hasEvidence: randBoolean() ? 'YES' : 'NOT_YET',
+        currentlyCollectingEvidence: randBoolean() ? 'YES' : 'NO',
+        files: [],
+        needsSupportAnyArea: ['CONFIDENTIAL_PATIENT_DATA'],
+        summaryOngoingEvidenceGathering: randText()
+      },
+      MARKET_RESEARCH: {
+        hasMarketResearch: randBoolean() ? 'YES' : 'NOT_YET',
+        marketResearch: randText()
+      },
+      CURRENT_CARE_PATHWAY: {
+        innovationPathwayKnowledge: randBoolean() ? 'PATHWAY_EXISTS_AND_FITS' : 'NO_PATHWAY',
+        potentialPathway: randText()
+      },
+      TESTING_WITH_USERS: {
+        userTests: [],
+        files: []
+      },
+      REGULATIONS_AND_STANDARDS: {
+        files: [],
+        hasRegulationKnowledge: randBoolean() ? 'YES_ALL' : 'NO',
+        otherRegulationDescription: randText(),
+        standards: [{ type: 'CE_UKCA_CLASS_I', hasMet: 'IN_PROGRESS' }]
+      },
+      INTELLECTUAL_PROPERTY: {
+        hasOtherIntellectual: randBoolean() ? 'YES' : 'NO',
+        hasPatents: randBoolean() ? 'HAS_AT_LEAST_ONE' : 'HAS_NONE',
+        otherIntellectual: randText()
+      },
+      REVENUE_MODEL: {
+        benefittingOrganisations: randText(),
+        fundingDescription: randText(),
+        hasFunding: randBoolean() ? 'YES' : 'NO',
+        hasRevenueModel: randBoolean() ? 'YES' : 'NO',
+        otherRevenueDescription: randText(),
+        payingOrganisations: randText(),
+        revenues: []
+      },
+      COST_OF_INNOVATION: {
+        costDescription: randText(),
+        hasCostKnowledge: randBoolean() ? 'DETAILED_ESTIMATE' : 'ROUGH_IDEA',
+        patientsRange: 'NOT_SURE',
+        sellExpectations: randText(),
+        usageExpectations: randText()
+      },
+      DEPLOYMENT: {
+        deploymentPlans: [],
+        files: [],
+        hasDeployPlan: randBoolean() ? 'YES' : 'NO',
+        hasResourcesToScale: randBoolean() ? 'YES' : 'NO',
+        isDeployed: randBoolean() ? 'YES' : 'NO'
+      },
+      evidences: []
+    };
   }
 
   setOwner(owner: UserEntity): InnovationBuilder {

@@ -35,6 +35,23 @@ describe('Notifications / _handlers / action-update suite', () => {
     actionByNA = { action: innovation.actions.actionByPaul, owner: scenario.users.paulNeedsAssessor };
   });
 
+  beforeEach(() => {
+    // mock innovation info
+    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
+      name: innovation.name,
+      ownerId: scenario.users.johnInnovator.id,
+      ownerIdentityId: scenario.users.johnInnovator.identityId
+    });
+    // mock innovation owner info
+    jest
+      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
+      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+  });
+
+  // afterEach(() => {
+  //   jest.restoreAllMocks();
+  // });
+
   describe.each([
     [
       ServiceRoleEnum.ACCESSOR as const,
@@ -85,17 +102,7 @@ describe('Notifications / _handlers / action-update suite', () => {
 
       let declinedReason: string | undefined;
 
-      beforeAll(async () => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: scenario.users.johnInnovator.id,
-          ownerIdentityId: scenario.users.johnInnovator.identityId
-        });
-        // mock innovation owner info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+      beforeEach(async () => {
         // mock request user info
         jest
           .spyOn(RecipientsService.prototype, 'getUsersRecipient')
@@ -249,17 +256,7 @@ describe('Notifications / _handlers / action-update suite', () => {
 
       let declinedReason: string | undefined;
 
-      beforeAll(async () => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: scenario.users.johnInnovator.id,
-          ownerIdentityId: scenario.users.johnInnovator.identityId
-        });
-        // mock innovation owner info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+      beforeEach(async () => {
         // mock request user info
         jest
           .spyOn(RecipientsService.prototype, 'getUsersRecipient')
@@ -404,17 +401,7 @@ describe('Notifications / _handlers / action-update suite', () => {
       let action: typeof actionByQA | typeof actionByNA;
       let requestUserUnitName: string;
 
-      beforeAll(async () => {
-        // mock innovation info
-        jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-          name: innovation.name,
-          ownerId: scenario.users.johnInnovator.id,
-          ownerIdentityId: scenario.users.johnInnovator.identityId
-        });
-        // mock innovation owner info
-        jest
-          .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-          .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+      beforeEach(async () => {
         if (requestUserRoleType === ServiceRoleEnum.ACCESSOR) {
           requestTestUser = scenario.users.aliceQualifyingAccessor;
           action = actionByQA;
@@ -499,130 +486,104 @@ describe('Notifications / _handlers / action-update suite', () => {
     }
   );
 
-  it('Should send inApp to the collaborator if the action has been previously submitted by a collaborator', async () => {
-    const requestTestUser = scenario.users.aliceQualifyingAccessor;
-    const action = innovation.actions.actionByAlice;
-    const actionStatus = InnovationActionStatusEnum.COMPLETED;
+  describe('Updated action has been previously submitted by a collaborator', () => {
+    it('Should send inApp to the collaborator', async () => {
+      const requestTestUser = scenario.users.aliceQualifyingAccessor;
+      const action = innovation.actions.actionByAlice;
+      const actionStatus = InnovationActionStatusEnum.COMPLETED;
 
-    // mock innovation info
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      name: innovation.name,
-      ownerId: scenario.users.johnInnovator.id,
-      ownerIdentityId: scenario.users.johnInnovator.identityId
-    });
-    // mock innovation owner info
-    jest
-      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+      MocksHelper.mockIdentityServiceGetUserInfo(requestTestUser);
 
-    MocksHelper.mockIdentityServiceGetUserInfo(requestTestUser);
-
-    // mock action info
-    jest.spyOn(RecipientsService.prototype, 'actionInfoWithOwner').mockResolvedValueOnce({
-      id: action.id,
-      displayId: action.displayId,
-      status: actionStatus,
-      owner: DTOsHelper.getRecipientUser(requestTestUser),
-      organisationUnit: {
-        id: actionByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-        name: actionByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-        acronym: actionByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
-      }
-    });
-
-    const requestUser = DTOsHelper.getUserRequestContext(requestTestUser);
-
-    const handler = new ActionUpdateHandler(
-      requestUser,
-      {
-        innovationId: innovation.id,
-        action: {
-          ...action,
-          status: actionStatus,
-          previouslyUpdatedByUserRole: scenario.users.janeInnovator.roles.innovatorRole
+      // mock action info
+      jest.spyOn(RecipientsService.prototype, 'actionInfoWithOwner').mockResolvedValueOnce({
+        id: action.id,
+        displayId: action.displayId,
+        status: actionStatus,
+        owner: DTOsHelper.getRecipientUser(requestTestUser),
+        organisationUnit: {
+          id: actionByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          name: actionByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          acronym: actionByQA.owner.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
         }
-      },
-      MocksHelper.mockContext()
-    );
+      });
 
-    await handler.run();
+      const requestUser = DTOsHelper.getUserRequestContext(requestTestUser);
 
-    const expectedInApp = handler.inApp.find(inApp =>
-      inApp.userRoleIds.includes(scenario.users.janeInnovator.roles.innovatorRole.id)
-    );
+      const handler = new ActionUpdateHandler(
+        requestUser,
+        {
+          innovationId: innovation.id,
+          action: {
+            ...action,
+            status: actionStatus,
+            previouslyUpdatedByUserRole: scenario.users.janeInnovator.roles.innovatorRole
+          }
+        },
+        MocksHelper.mockContext()
+      );
 
-    expect(expectedInApp).toMatchObject({
-      innovationId: innovation.id,
-      context: {
-        type: NotificationContextTypeEnum.ACTION,
-        detail: NotificationContextDetailEnum.ACTION_UPDATE,
-        id: action.id
-      },
-      userRoleIds: [scenario.users.janeInnovator.roles.innovatorRole.id],
-      params: {
-        actionCode: action.displayId,
-        actionStatus: actionStatus,
-        section: action.section
-      }
+      await handler.run();
+
+      const expectedInApp = handler.inApp.find(inApp =>
+        inApp.userRoleIds.includes(scenario.users.janeInnovator.roles.innovatorRole.id)
+      );
+
+      expect(expectedInApp).toMatchObject({
+        innovationId: innovation.id,
+        context: {
+          type: NotificationContextTypeEnum.ACTION,
+          detail: NotificationContextDetailEnum.ACTION_UPDATE,
+          id: action.id
+        },
+        userRoleIds: [scenario.users.janeInnovator.roles.innovatorRole.id],
+        params: {
+          actionCode: action.displayId,
+          actionStatus: actionStatus,
+          section: action.section
+        }
+      });
     });
   });
 
-  it('Should not send any email/inApp if the reques user has an invalid type', async () => {
-    // mock innovation info
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      name: innovation.name,
-      ownerId: scenario.users.johnInnovator.id,
-      ownerIdentityId: scenario.users.johnInnovator.identityId
-    });
-    // mock innovation owner info
-    jest
-      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
-    const handler = new ActionUpdateHandler(
-      DTOsHelper.getUserRequestContext(scenario.users.allMighty),
-      {
-        innovationId: innovation.id,
-        action: {
-          ...scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice,
-          status: InnovationActionStatusEnum.CANCELLED
-        }
-      },
-      MocksHelper.mockContext()
-    );
+  describe('Action updated by invalid user type', () => {
+    it('Should not send any email/inApp', async () => {
+      const handler = new ActionUpdateHandler(
+        DTOsHelper.getUserRequestContext(scenario.users.allMighty),
+        {
+          innovationId: innovation.id,
+          action: {
+            ...scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice,
+            status: InnovationActionStatusEnum.CANCELLED,
+          }
+        },
+        MocksHelper.mockContext()
+      );
 
-    await handler.run();
+      await handler.run();
 
-    expect(handler.emails).toHaveLength(0);
-    expect(handler.inApp).toHaveLength(0);
-  });
+      expect(handler.emails).toHaveLength(0);
+      expect(handler.inApp).toHaveLength(0);
+    })
+  })
 
-  it('Should not send any email/inApp if the action is updated to an invalid status', async () => {
-    // mock innovation info
-    jest.spyOn(RecipientsService.prototype, 'innovationInfo').mockResolvedValueOnce({
-      name: innovation.name,
-      ownerId: scenario.users.johnInnovator.id,
-      ownerIdentityId: scenario.users.johnInnovator.identityId
-    });
-    // mock innovation owner info
-    jest
-      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'));
+  describe('Action updated by innovator to invalid status', () => {
+    it('Should not send any email/inApp', async () => {
+      const handler = new ActionUpdateHandler(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        {
+          innovationId: innovation.id,
+          action: {
+            ...scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice,
+            status: InnovationActionStatusEnum.CANCELLED,
+          }
+        },
+        MocksHelper.mockContext()
+      );
 
-    const handler = new ActionUpdateHandler(
-      DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-      {
-        innovationId: innovation.id,
-        action: {
-          ...scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice,
-          status: InnovationActionStatusEnum.CANCELLED
-        }
-      },
-      MocksHelper.mockContext()
-    );
+      await handler.run();
 
-    await handler.run();
-
-    expect(handler.emails).toHaveLength(0);
-    expect(handler.inApp).toHaveLength(0);
-  });
+      expect(handler.emails).toHaveLength(0);
+      expect(handler.inApp).toHaveLength(0);
+    })
+  })
 });
