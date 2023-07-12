@@ -33,7 +33,7 @@ class V1InnovationSupportSummaryUnitsList {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
-      const result = await innovationSupportsService.getSupportSummariesList(params.innovationId, queryParams.type);
+      const result = await innovationSupportsService.getSupportSummaryUnitsList(params.innovationId, queryParams.type);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(
         result.map(r => ({
