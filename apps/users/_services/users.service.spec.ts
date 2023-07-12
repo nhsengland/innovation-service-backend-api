@@ -66,6 +66,10 @@ describe('Services / Users service suite', () => {
           {
             id: scenario.users.johnInnovator.innovations.johnInnovation.id,
             name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          },
+          {
+            id: scenario.users.johnInnovator.innovations.johnInnovationEmpty.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovationEmpty.name
           }
         ]
       });
@@ -74,21 +78,22 @@ describe('Services / Users service suite', () => {
 
   describe('getUserPendingInnovationTransfers method suite', () => {
     it('Get a pending transfer', async () => {
-      const innovation = scenario.users.adamInnovator.innovations.adamInnovation;
-
-      if (!innovation) {
-        throw new Error(`No innovation found`);
-      }
-      if (!innovation.transfer.email) {
-        throw new Error(`No email found`);
-      }
-
-      const result = await usersService.getUserPendingInnovationTransfers(innovation.transfer.email);
+      const result = await usersService.getUserPendingInnovationTransfers(scenario.users.janeInnovator.email);
 
       expect(result).toMatchObject([
         {
-          id: innovation.transfer.id,
-          innovation: { id: innovation.id, name: innovation.name }
+          id: scenario.users.johnInnovator.innovations.johnInnovation.transfer.id,
+          innovation: {
+            id: scenario.users.johnInnovator.innovations.johnInnovation.id,
+            name: scenario.users.johnInnovator.innovations.johnInnovation.name
+          }
+        },
+        {
+          id: scenario.users.adamInnovator.innovations.adamInnovation.transfer.id,
+          innovation: {
+            id: scenario.users.adamInnovator.innovations.adamInnovation.id,
+            name: scenario.users.adamInnovator.innovations.adamInnovation.name
+          }
         }
       ]);
     });

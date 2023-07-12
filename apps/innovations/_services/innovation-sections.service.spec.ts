@@ -45,7 +45,7 @@ describe('Innovation Sections Suite', () => {
       const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
 
       expect(sectionsList).toBeDefined();
-      expect(actionCount).toEqual(2);
+      expect(actionCount).toEqual(3);
     });
 
     it('should list all sections as an accessor for an innovation', async () => {
@@ -68,7 +68,8 @@ describe('Innovation Sections Suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
         innovation.id,
         'INNOVATION_DESCRIPTION',
-        {}
+        {},
+        em
       );
 
       expect(sectionsList.id).toBeDefined();
@@ -99,7 +100,8 @@ describe('Innovation Sections Suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         innovation.id,
         'INNOVATION_DESCRIPTION',
-        { summary: randText() }
+        { summary: randText() },
+        em
       );
 
       // assert

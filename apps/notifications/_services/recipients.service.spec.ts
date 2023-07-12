@@ -299,25 +299,23 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Returns multiple roles if the same user support in multiple contexts', async () => {
-      // Add madrox as an accessor for the innovation in another unit
-      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      // Add madrox as an accessor for adam innovation in another unit
       await new InnovationSupportBuilder(em)
         .setStatus(InnovationSupportStatusEnum.ENGAGING)
-        .setInnovation(innovation.id)
+        .setInnovation(scenario.users.adamInnovator.innovations.adamInnovation.id)
         .setOrganisationUnit(scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id)
         .setAccessors([scenario.users.jamieMadroxAccessor])
         .save();
 
       const res = await sut.innovationAssignedRecipients(
-        scenario.users.johnInnovator.innovations.johnInnovation.id,
+        scenario.users.adamInnovator.innovations.adamInnovation.id,
         em
       );
-      expect(res).toHaveLength(4);
+      expect(res).toHaveLength(3);
       expect(res).toMatchObject([
-        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
         DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
         DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'),
-        DTOsHelper.getRecipientUser(scenario.users.samAccessor, 'accessorRole')
       ]);
     });
 
@@ -634,7 +632,7 @@ describe('Notifications / _services / recipients service suite', () => {
   describe('needsAssessmentUsers suite', () => {
     //const needsAssessmentUsers = [scenario.users.paulNeedsAssessor, scenario.users.seanNeedsAssessor];
     it('Should get a list of needs assessment recipients', async () => {
-      const res = await sut.needsAssessmentUsers();
+      const res = await sut.needsAssessmentUsers(undefined, em);
       expect(res).toHaveLength(2);
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),

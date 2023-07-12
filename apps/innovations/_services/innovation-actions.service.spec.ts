@@ -86,7 +86,7 @@ describe('Innovation Actions Suite', () => {
         await sut.createAction(
           { id: accessor.id, identityId: accessor.identityId },
           DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole'),
-          innovation.id,
+          scenario.users.adamInnovator.innovations.adamInnovation.id,
           {
             description: randText(),
             section: 'INNOVATION_DESCRIPTION'
@@ -102,7 +102,7 @@ describe('Innovation Actions Suite', () => {
       expect(err?.name).toBe('I.0040');
     });
 
-    it('should not create an action for an innovation that doesn\t exist', async () => {
+    it(`should not create an action for an innovation that doesn't exist`, async () => {
       await expect(() =>
         sut.createAction(
           { id: accessor.id, identityId: accessor.identityId },
@@ -120,7 +120,7 @@ describe('Innovation Actions Suite', () => {
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
-    it('should not create an action for a section that doesn\t exist', async () => {
+    it(`should not create an action for a section that doesn't exist`, async () => {
       // act
       let err: NotFoundError | null = null;
       try {
@@ -234,7 +234,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(4);
+      expect(actions.count).toBe(5);
     });
 
     it('should list all actions created by QA/A as a QA/A', async () => {
@@ -294,7 +294,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(2);
+      expect(actions.count).toBe(3);
       expect(actions.data).toEqual(expect.arrayContaining(expected));
     });
 
@@ -306,7 +306,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(4);
+      expect(actions.count).toBe(5);
     });
 
     it('should list all actions that match an innovation name', async () => {
@@ -435,6 +435,10 @@ describe('Innovation Actions Suite', () => {
       );
 
       expect(actions.data).toMatchObject([
+        {
+          id: innovation.actions.actionByBart.id,
+          notifications: 1
+        },
         {
           id: innovation.actions.actionByPaul.id,
           notifications: 1

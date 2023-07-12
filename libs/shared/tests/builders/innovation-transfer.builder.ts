@@ -4,6 +4,7 @@ import { InnovationTransferEntity } from '../../entities/innovation/innovation-t
 import { InnovationTransferStatusEnum } from '../../enums/innovation.enums';
 import { BaseBuilder } from './base.builder';
 import type { TestInnovationType } from './innovation.builder';
+import type { TestUserType } from './user.builder';
 
 export type TestInnovationTransferType = {
   id: string;
@@ -12,6 +13,7 @@ export type TestInnovationTransferType = {
   emailCount: number;
   finishedAt?: Date;
   ownerToCollaborator: boolean;
+  createdBy: string;
 };
 
 export class InnovationTransferBuilder extends BaseBuilder {
@@ -53,6 +55,11 @@ export class InnovationTransferBuilder extends BaseBuilder {
     return this;
   }
 
+  setCreatedBy(user: TestUserType): this {
+    this.transfer.createdBy = user.id;
+    return this;
+  }
+
   async save(): Promise<TestInnovationTransferType> {
     const savedTransfer = await this.getEntityManager().getRepository(InnovationTransferEntity).save(this.transfer);
 
@@ -71,7 +78,8 @@ export class InnovationTransferBuilder extends BaseBuilder {
       email: result.email,
       emailCount: result.emailCount,
       finishedAt: result.finishedAt,
-      ownerToCollaborator: result.ownerToCollaborator
+      ownerToCollaborator: result.ownerToCollaborator,
+      createdBy: result.createdBy
     };
   }
 }
