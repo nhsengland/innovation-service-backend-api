@@ -239,6 +239,16 @@ export class CompleteScenarioBuilder {
         .setSupport(johnInnovationSupportByHealthOrgUnit.id)
         .save();
 
+      const johnInnovationActionByAliceSubmitted = await new InnovationActionBuilder(entityManager)
+        .setCreatedBy(aliceQualifyingAccessor.id)
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(aliceQualifyingAccessor.id)
+        .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .setSupport(johnInnovationSupportByHealthOrgUnit.id)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .save();
+
       // action on johnInnovation created by Paul (NA)
       const johnInnovationActionByPaul = await new InnovationActionBuilder(entityManager)
         .setCreatedBy(paulNeedsAssessor.id)
@@ -526,6 +536,7 @@ export class CompleteScenarioBuilder {
                 },
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
+                  actionByAliceSubmitted: johnInnovationActionByAliceSubmitted,
                   actionByBart: johnInnovationActionByBart,
                   actionByPaul: johnInnovationActionByPaul
                 },
@@ -564,7 +575,8 @@ export class CompleteScenarioBuilder {
                   sebastiaoCollaborator: sebastiaoCollaborator
                 },
                 sections: {
-                  INNOVATION_DESCRIPTION: johnInnovation.sections.get('INNOVATION_DESCRIPTION')!
+                  INNOVATION_DESCRIPTION: johnInnovation.sections.get('INNOVATION_DESCRIPTION')!,
+                  EVIDENCE_OF_EFFECTIVENESS: johnInnovation.sections.get('EVIDENCE_OF_EFFECTIVENESS')!
                 },
                 files: {
                   sectionFileByJohn: johnInnovationSectionFileUploadedByJohn,

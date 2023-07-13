@@ -234,7 +234,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(5);
+      expect(actions.count).toBe(6);
     });
 
     it('should list all actions created by QA/A as a QA/A', async () => {
@@ -294,7 +294,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(3);
+      expect(actions.count).toBe(4);
       expect(actions.data).toEqual(expect.arrayContaining(expected));
     });
 
@@ -306,7 +306,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(5);
+      expect(actions.count).toBe(6);
     });
 
     it('should list all actions that match an innovation name', async () => {
@@ -408,10 +408,11 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(2);
+      expect(actions.count).toBe(3);
       expect(actions.data).toMatchObject([
         { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
-        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } }
+        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
+        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
       ]);
     });
 
@@ -441,6 +442,10 @@ describe('Innovation Actions Suite', () => {
         },
         {
           id: innovation.actions.actionByPaul.id,
+          notifications: 1
+        },
+        {
+          id: innovation.actions.actionByAliceSubmitted.id,
           notifications: 1
         },
         {

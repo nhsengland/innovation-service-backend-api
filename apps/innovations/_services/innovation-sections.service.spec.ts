@@ -58,7 +58,7 @@ describe('Innovation Sections Suite', () => {
       const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
 
       expect(sectionsList).toBeDefined();
-      expect(actionCount).toEqual(0);
+      expect(actionCount).toEqual(1);
     });
   });
 
