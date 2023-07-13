@@ -15,7 +15,7 @@ import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
 
-class V1InnovationSupportSummaryUnitsList {
+class V1InnovationSupportSummaryList {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
@@ -32,7 +32,7 @@ class V1InnovationSupportSummaryUnitsList {
 
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      const result = await innovationSupportsService.getSupportSummaryUnitsList(params.innovationId);
+      const result = await innovationSupportsService.getSupportSummaryList(params.innovationId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -44,12 +44,12 @@ class V1InnovationSupportSummaryUnitsList {
 }
 
 export default openApi(
-  V1InnovationSupportSummaryUnitsList.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/support-summary/units',
+  V1InnovationSupportSummaryList.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/support-summary',
   {
     get: {
-      operationId: 'v1-innovation-support-summary-units-list',
-      description: 'Get support summary units list',
+      operationId: 'v1-innovation-support-summary-list',
+      description: 'Get support summary list',
       tags: ['[v1] Innovation Support Summary'],
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {

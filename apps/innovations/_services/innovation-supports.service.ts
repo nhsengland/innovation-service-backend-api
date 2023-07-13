@@ -670,7 +670,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   // Innovation Support Summary
-  async getSupportSummaryUnitsList(innovationId: string): Promise<
+  async getSupportSummaryList(innovationId: string): Promise<
     Record<
       keyof typeof InnovationSupportSummaryTypeEnum,
       {
