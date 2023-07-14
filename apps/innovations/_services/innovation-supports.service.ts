@@ -887,6 +887,11 @@ export class InnovationSupportsService extends BaseService {
     return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
   }
 
+  /**
+   * This function returns the suggestions from NA assessment
+   * If unitId = undefined -> will return all the suggestions
+   * If unit != undefined -> will return an array with just the unit if it was suggested by the NA or an empty array
+   */
   private async getSuggestedUnitsByNA(
     innovationId: string,
     unitId?: string
