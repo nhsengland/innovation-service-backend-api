@@ -16,7 +16,7 @@ type SupportUpdateData = {
 type SuggestedOrganisationData = {
   type: 'SUGGESTED_ORGANISATION';
   params: {
-    suggestedByName: string;
+    suggestedByName?: string;
     message?: string;
   };
 };
