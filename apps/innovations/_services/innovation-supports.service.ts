@@ -762,7 +762,9 @@ export class InnovationSupportsService extends BaseService {
         'log.type',
         'log.createdAt',
         'log.innovationSupportStatus',
-        'log.description'
+        'log.description',
+        'unit.id',
+        'unit.name'
       ])
       .leftJoin(
         'innovation_support_log_organisation_unit',
@@ -770,6 +772,7 @@ export class InnovationSupportsService extends BaseService {
         '(suggestedUnits.innovation_support_log_id = log.id AND suggestedUnits.organisation_unit_id = :unitId)',
         { unitId }
       )
+      .innerJoin('log.organisationUnit', 'unit')
       .where('log.innovation_id = :innovationId', { innovationId })
       .andWhere(
         new Brackets(qb => {
@@ -785,7 +788,9 @@ export class InnovationSupportsService extends BaseService {
       )
       .getMany();
 
-    const createdByUserIds = new Set(unitSupportLogs.map(s => s.createdBy));
+    const naSuggestions = await this.getSuggestedUnitsByNA(innovationId, unitId);
+
+    const createdByUserIds = new Set([...unitSupportLogs.map(s => s.createdBy), ...naSuggestions.map(s => s.assignTo)]);
     const usersInfo = await this.domainService.users.getUsersMap({ userIds: Array.from(createdByUserIds.values()) });
 
     const summary: SupportSummaryUnitInfo[] = [];
@@ -823,11 +828,28 @@ export class InnovationSupportsService extends BaseService {
           },
           type: 'SUGGESTED_ORGANISATION',
           params: {
-            suggestedByName: usersInfo.get(supportLog.createdBy)?.displayName ?? '[deleted user]',
+            suggestedByName: supportLog.organisationUnit.name,
             message: supportLog.description
           }
         });
       }
+    }
+
+    // TECH DEBT: This will be changed, black tape for now.
+    for (const suggestion of naSuggestions) {
+      summary.push({
+        createdAt: suggestion.updatedAt,
+        createdBy: {
+          id: suggestion.assignTo,
+          name: usersInfo.get(suggestion.assignTo)?.displayName ?? '[deleted user]',
+          displayRole: this.domainService.users.getUserDisplayRoleInformation(
+            suggestion.assignTo,
+            ServiceRoleEnum.ASSESSMENT
+          )
+        },
+        type: 'SUGGESTED_ORGANISATION',
+        params: {}
+      });
     }
 
     return summary.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -857,17 +879,50 @@ export class InnovationSupportsService extends BaseService {
   }
 
   private async getSuggestedUnitsInfoMap(innovationId: string): Promise<Map<string, { id: string; name: string }>> {
-    const suggestedByNA = await this.sqlConnection
-      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .select(['assessment.id', 'units.id', 'units.name'])
-      .leftJoin('assessment.organisationUnits', 'units')
-      .where('assessment.innovation_id = :innovationId', { innovationId })
-      .getOne();
+    const suggestedUnitsInfo: { id: string; name: string }[] = [
+      ...(await this.getSuggestedUnitsByNA(innovationId)).map(u => ({ id: u.id, name: u.name })),
+      ...(await this.getSuggestedUnitsByQA(innovationId))
+    ];
 
-    if (!suggestedByNA) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
+  }
+
+  /**
+   * This function returns the suggestions from NA assessment
+   * If unitId = undefined -> will return all the suggestions
+   * If unit != undefined -> will return an array with just the unit if it was suggested by the NA or an empty array
+   */
+  private async getSuggestedUnitsByNA(
+    innovationId: string,
+    unitId?: string
+  ): Promise<{ id: string; name: string; assessmentId: string; updatedAt: Date; assignTo: string }[]> {
+    const query = this.sqlConnection
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select(['assessment.id', 'assessment.updatedAt', 'assignedTo.id', 'units.id', 'units.name'])
+      .leftJoin('assessment.organisationUnits', 'units')
+      .innerJoin('assessment.assignTo', 'assignedTo')
+      .where('assessment.innovation_id = :innovationId', { innovationId });
+
+    if (unitId) {
+      query.andWhere('units.id = :unitId', { unitId });
     }
 
+    const suggestedByNA = await query.getOne();
+
+    if (!suggestedByNA) {
+      return [];
+    }
+
+    return suggestedByNA.organisationUnits.map(u => ({
+      id: u.id,
+      name: u.name,
+      assessmentId: suggestedByNA.id,
+      updatedAt: suggestedByNA.updatedAt,
+      assignTo: suggestedByNA.assignTo.id
+    }));
+  }
+
+  private async getSuggestedUnitsByQA(innovationId: string): Promise<{ id: string; name: string }[]> {
     const suggestedByQA = await this.sqlConnection
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
       .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name'])
@@ -878,12 +933,7 @@ export class InnovationSupportsService extends BaseService {
       })
       .getMany();
 
-    const suggestedUnitsInfo: { id: string; name: string }[] = [
-      ...suggestedByNA.organisationUnits.map(u => ({ id: u.id, name: u.name })),
-      ...suggestedByQA.map(log => log.suggestedOrganisationUnits.map(u => ({ id: u.id, name: u.name }))).flat()
-    ];
-
-    return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
+    return suggestedByQA.map(log => log.suggestedOrganisationUnits.map(u => ({ id: u.id, name: u.name }))).flat();
   }
 
   private async getSuggestedUnitsSupportInfoMap(
