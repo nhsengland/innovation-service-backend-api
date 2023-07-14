@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In } from 'typeorm';
+import { Brackets, EntityManager, In } from 'typeorm';
 
 import {
   InnovationActionEntity,
@@ -17,6 +17,7 @@ import {
   InnovationSupportStatusEnum,
   InnovationSupportSummaryTypeEnum,
   NotifierTypeEnum,
+  ServiceRoleEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
@@ -37,6 +38,7 @@ import type {
 } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
@@ -668,7 +670,7 @@ export class InnovationSupportsService extends BaseService {
   }
 
   // Innovation Support Summary
-  async getSupportSummaryUnitsList(innovationId: string): Promise<
+  async getSupportSummaryList(innovationId: string): Promise<
     Record<
       keyof typeof InnovationSupportSummaryTypeEnum,
       {
@@ -738,6 +740,97 @@ export class InnovationSupportsService extends BaseService {
       [InnovationSupportSummaryTypeEnum.BEEN_ENGAGED]: this.sortByStartDate(beenEngaged),
       [InnovationSupportSummaryTypeEnum.SUGGESTED]: this.sortByStartDate(suggested)
     };
+  }
+
+  async getSupportSummaryUnitInfo(innovationId: string, unitId: string): Promise<SupportSummaryUnitInfo[]> {
+    const innovation = await this.sqlConnection
+      .createQueryBuilder(InnovationEntity, 'innovation')
+      .select(['innovation.id', 'owner.id'])
+      .leftJoin('innovation.owner', 'owner')
+      .where('innovation.id = :innovationId', { innovationId })
+      .getOne();
+
+    if (!innovation) {
+      throw new Error(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
+
+    const unitSupportLogs = await this.sqlConnection
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .select([
+        'log.id',
+        'log.createdBy',
+        'log.type',
+        'log.createdAt',
+        'log.innovationSupportStatus',
+        'log.description'
+      ])
+      .leftJoin(
+        'innovation_support_log_organisation_unit',
+        'suggestedUnits',
+        '(suggestedUnits.innovation_support_log_id = log.id AND suggestedUnits.organisation_unit_id = :unitId)',
+        { unitId }
+      )
+      .where('log.innovation_id = :innovationId', { innovationId })
+      .andWhere(
+        new Brackets(qb => {
+          qb.where('(log.type = :accessorSuggestion AND suggestedUnits.organisation_unit_id = :unitId )', {
+            accessorSuggestion: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
+            unitId
+          });
+          qb.orWhere('(log.type <> :accessorSuggestion AND log.organisation_unit_id = :unitId )', {
+            accessorSuggestion: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION,
+            unitId
+          });
+        })
+      )
+      .getMany();
+
+    const createdByUserIds = new Set(unitSupportLogs.map(s => s.createdBy));
+    const usersInfo = await this.domainService.users.getUsersMap({ userIds: Array.from(createdByUserIds.values()) });
+
+    const summary: SupportSummaryUnitInfo[] = [];
+    for (const supportLog of unitSupportLogs) {
+      const createdByUser = usersInfo.get(supportLog.createdBy);
+      if (supportLog.type === InnovationSupportLogTypeEnum.STATUS_UPDATE) {
+        summary.push({
+          createdAt: supportLog.createdAt,
+          createdBy: {
+            id: supportLog.createdBy,
+            name: createdByUser?.displayName ?? '[deleted user]',
+            displayRole: this.domainService.users.getUserDisplayRoleInformation(
+              supportLog.createdBy,
+              ServiceRoleEnum.QUALIFYING_ACCESSOR,
+              innovation.owner?.id
+            )
+          },
+          type: 'SUPPORT_UPDATE',
+          params: {
+            supportStatus: supportLog.innovationSupportStatus,
+            message: supportLog.description
+          }
+        });
+      } else if (supportLog.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION) {
+        summary.push({
+          createdAt: supportLog.createdAt,
+          createdBy: {
+            id: supportLog.createdBy,
+            name: createdByUser?.displayName ?? '[deleted user]',
+            displayRole: this.domainService.users.getUserDisplayRoleInformation(
+              supportLog.createdBy,
+              ServiceRoleEnum.QUALIFYING_ACCESSOR,
+              innovation.owner?.id
+            )
+          },
+          type: 'SUGGESTED_ORGANISATION',
+          params: {
+            suggestedByName: usersInfo.get(supportLog.createdBy)?.displayName ?? '[deleted user]',
+            message: supportLog.description
+          }
+        });
+      }
+    }
+
+    return summary.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   private async fetchSupportLogs(

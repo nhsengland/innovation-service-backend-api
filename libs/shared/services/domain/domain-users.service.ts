@@ -10,6 +10,7 @@ import {
   UserStatusEnum
 } from '../../enums';
 import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
+import { TranslationHelper } from '../../helpers';
 import type { DomainContextType, RoleType } from '../../types';
 
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
@@ -427,5 +428,17 @@ export class DomainUsersService {
     const dbUserRole = await query.getOne();
 
     return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
+  }
+
+  getUserDisplayRoleInformation(userId: string, role: ServiceRoleEnum, innovationOwnerId?: string): string | undefined {
+    if (role !== ServiceRoleEnum.INNOVATOR) {
+      return TranslationHelper.translate(`SERVICE_ROLES.${role}`);
+    }
+
+    if (innovationOwnerId) {
+      return userId === innovationOwnerId ? 'Owner' : 'Collaborator';
+    }
+
+    return;
   }
 }

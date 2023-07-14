@@ -3377,10 +3377,10 @@ paths:
           description: Unauthorised
         "404":
           description: Not Found
-  "/v1/{innovationId}/support-summary/units":
+  "/v1/{innovationId}/support-summary":
     get:
-      operationId: v1-innovation-support-summary-units-list
-      description: Get support summary units list
+      operationId: v1-innovation-support-summary-list
+      description: Get support summary list
       tags:
         - "[v1] Innovation Support Summary"
       parameters:
@@ -3422,6 +3422,85 @@ paths:
                           type: string
                         end:
                           type: string
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+  "/v1/{innovationId}/support-summary/units/{unitId}":
+    get:
+      operationId: v1-innovation-support-summary-unit-info
+      description: Get support summary unit info
+      tags:
+        - "[v1] Innovation Support Summary"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: unitId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    createdAt:
+                      type: string
+                    createdBy:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        displayRole:
+                          type: string
+                    type:
+                      type: string
+                    params:
+                      type: object
+                      properties:
+                        supportStatus:
+                          type: string
+                          enum:
+                            - UNASSIGNED
+                            - FURTHER_INFO_REQUIRED
+                            - WAITING
+                            - NOT_YET
+                            - ENGAGING
+                            - UNSUITABLE
+                            - WITHDRAWN
+                            - COMPLETE
+                        message:
+                          type: string
+                        title:
+                          type: string
+                        suggestedByName:
+                          type: string
+                        file:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            url:
+                              type: string
         "400":
           description: The request is invalid.
         "401":
