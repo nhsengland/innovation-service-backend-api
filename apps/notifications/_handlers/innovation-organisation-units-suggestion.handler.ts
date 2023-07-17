@@ -43,7 +43,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
       suggestedSharedOrganisationUnitsIds
     );
 
-    const hasOrganisationsSuggestedNotSharedWith = sharedOrganisationUnitsIds !== suggestedSharedOrganisationUnitsIds;
+    const hasOrganisationsSuggestedNotSharedWith = this.inputData.organisationUnitIds.length > suggestedSharedOrganisationUnitsIds.length;
 
     if (hasOrganisationsSuggestedNotSharedWith) {
       const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
@@ -98,7 +98,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
       params: {
         innovation_name: innovationName,
         data_sharing_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('accessor/innovations/:innovationId/support')
+          .addPath('innovator/innovations/:innovationId/support')
           .setPathParams({ innovationId: this.inputData.innovationId })
           .buildUrl()
       }
@@ -125,7 +125,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
         params: {
           innovation_name: innovationName,
           data_sharing_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('accessor/innovations/:innovationId/support')
+            .addPath('innovator/innovations/:innovationId/support')
             .setPathParams({ innovationId: this.inputData.innovationId })
             .buildUrl()
         }

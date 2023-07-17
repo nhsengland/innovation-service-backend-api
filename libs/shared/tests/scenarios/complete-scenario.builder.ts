@@ -113,6 +113,13 @@ export class CompleteScenarioBuilder {
         .addRole(ServiceRoleEnum.ACCESSOR, 'accessorRole', medTechOrg.id, medTechOrgUnit.id)
         .save();
 
+      // Scott QA specs
+      // Belongs to medTechOrgUnit
+      const scottQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Scott Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'accessorRole', medTechOrg.id, medTechOrgUnit.id)
+        .save();
+
       // Sarah Qualifying Accessor specs:
       // Belongs to an active organisation.
       const sarahQualifyingAccessor = await new UserBuilder(entityManager)
@@ -680,6 +687,21 @@ export class CompleteScenarioBuilder {
                     jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!,
                   healthOrgAiUnit:
                     jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
+                }
+              }
+            }
+          },
+          scottQualifyingAccessor: {
+            ...scottQualifyingAccessor,
+            roles: { accessorRole: samAccessor.roles['accessorRole']! },
+            organisations: {
+              medTechOrg: {
+                ...scottQualifyingAccessor.organisations['MedTech Organisation']!,
+                organisationUnits: {
+                  medTechOrgUnit:
+                    scottQualifyingAccessor.organisations['MedTech Organisation']!.organisationUnits[
+                      'MedTech Org Unit'
+                    ]!
                 }
               }
             }
