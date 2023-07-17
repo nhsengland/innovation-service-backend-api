@@ -474,6 +474,7 @@ export class CompleteScenarioBuilder {
       // This innovator has more than one innovation being supported
       // 2 innovations currently being supported
       // 1 innovation with assessment in progress
+      // 1 innovation created
       const ottoOctaviusInnovator = await new UserBuilder(entityManager)
         .setName('Otto Octavius')
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')

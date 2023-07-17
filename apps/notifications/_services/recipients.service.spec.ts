@@ -3,6 +3,7 @@ import { randUuid } from '@ngneat/falso';
 import { InnovationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
 import {
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
@@ -38,7 +39,7 @@ describe('Notifications / _services / recipients service suite', () => {
     jest.clearAllMocks();
   });
 
-  describe('getUsersIdentityInfo suite', () => {
+  describe('getUsersIdentityInfo', () => {
     it('Should get an identity info when passed a valid user identity id', async () => {
       const identityInfo = await sut.usersIdentityInfo(scenario.users.johnInnovator.identityId);
 
@@ -97,7 +98,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationInfo suite', () => {
+  describe('innovationInfo', () => {
     it('Should get innovation info', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
@@ -241,7 +242,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationSharedOrganisationsWithUnits suite', () => {
+  describe('innovationSharedOrganisationsWithUnits', () => {
     it('Should return not found if innovation not found', async () => {
       await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
@@ -287,7 +288,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationAssignedRecipients suite', () => {
+  describe('innovationAssignedRecipients', () => {
     it('Returns a list of recipients for the innovation', async () => {
       const res = await sut.innovationAssignedRecipients(scenario.users.johnInnovator.innovations.johnInnovation.id);
       expect(res).toHaveLength(3);
@@ -315,7 +316,7 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
         DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
-        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole')
       ]);
     });
 
@@ -369,7 +370,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('userInnovationsWithAssignedRecipients suite', () => {
+  describe('userInnovationsWithAssignedRecipients', () => {
     it('should list all user innovations with assigned recipients', async () => {
       const res = await sut.userInnovationsWithAssignedRecipients(scenario.users.ottoOctaviusInnovator.id);
       expect(res).toHaveLength(2);
@@ -396,7 +397,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('actionInfoWithOwner suite', () => {
+  describe('actionInfoWithOwner', () => {
     it('Should get action info without organisationUnit for Assessment Team', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const dbAction = dbInnovation.actions.actionByPaul;
@@ -439,7 +440,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('threadInfo suite', () => {
+  describe('threadInfo', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
     it('Returns the thread info including author', async () => {
       const threadInfo = await sut.threadInfo(thread.id);
@@ -495,7 +496,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('threadIntervenientRecipients suite', () => {
+  describe('threadIntervenientRecipients', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
     // Mock domain innovation service threadIntervenients and default reply
     const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadIntervenients').mockResolvedValue([
@@ -562,7 +563,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationTransferInfoWithOwner suite', () => {
+  describe('innovationTransferInfoWithOwner', () => {
     it('Returns the innovation transfer with owner and email', async () => {
       const transfer = scenario.users.adamInnovator.innovations.adamInnovation.transfer;
       const res = await sut.innovationTransferInfoWithOwner(transfer.id);
@@ -581,7 +582,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationCollaborationInfo suite', () => {
+  describe('innovationCollaborationInfo', () => {
     it('Returns the innovation collaboration info for an external collaborator', async () => {
       const collaboration =
         scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator;
@@ -612,7 +613,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('getInnovationActiveCollaborators suite', () => {
+  describe('getInnovationActiveCollaborators', () => {
     it('Should only get active collaborators', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
@@ -629,7 +630,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('needsAssessmentUsers suite', () => {
+  describe('needsAssessmentUsers', () => {
     //const needsAssessmentUsers = [scenario.users.paulNeedsAssessor, scenario.users.seanNeedsAssessor];
     it('Should get a list of needs assessment recipients', async () => {
       const res = await sut.needsAssessmentUsers(undefined, em);
@@ -658,7 +659,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('organisationUnitInfo suite', () => {
+  describe('organisationUnitInfo', () => {
     it('returns the organisation unit with organisation info', async () => {
       const res = await sut.organisationUnitInfo(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id);
       expect(res).toMatchObject({
@@ -682,7 +683,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('organisationUnitsQualifyingAccessors suite', () => {
+  describe('organisationUnitsQualifyingAccessors', () => {
     it('returns accessors from one organisation unit', async () => {
       const res = await sut.organisationUnitsQualifyingAccessors([
         scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
@@ -771,8 +772,76 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
+  describe('dailyDigestUsersWithCounts', () => {
+    it.skip('placeholder', () => {});
+  });
+
+  describe('incompleteInnovationRecordOwners', () => {
+    it.each([
+      ["doesn't return", '0 days', 0, 0],
+      ['returns', '30 days', 30, 1],
+      ['returns', '60 days', 60, 1],
+      ["doesn't return", '31 days', 31, 0],
+      ["doesn't return", '45 days', 45, 0]
+    ])(
+      '%s incomplete innovation records with owner if innovation incomplete for %s',
+      async (_result, _ndays, days, resLength) => {
+        const innovationDate = new Date();
+        innovationDate.setDate(innovationDate.getDate() - days - 1);
+
+        // Set innovation to created and the date to n+1 days ago (raw query because we require updating createdAt)
+        await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
+          InnovationStatusEnum.CREATED,
+          innovationDate,
+          scenario.users.johnInnovator.innovations.johnInnovation.id
+        ]);
+
+        const res = await sut.incompleteInnovationRecordOwners(em);
+        expect(res).toHaveLength(resLength);
+      }
+    );
+
+    it('returns empty array of incomplete innovation records with owner recipients if there is no owner', async () => {
+      const innovationDate = new Date();
+      innovationDate.setDate(innovationDate.getDate() - 31);
+
+      // Set innovation to created and the date to 31 days ago (raw query because we require updating createdAt)
+      await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
+        InnovationStatusEnum.CREATED,
+        innovationDate,
+        scenario.users.johnInnovator.innovations.johnInnovation.id
+      ]);
+
+      await em
+        .getRepository(InnovationEntity)
+        .update({ id: scenario.users.johnInnovator.innovations.johnInnovation.id }, { owner: null });
+
+      const res = await sut.incompleteInnovationRecordOwners(em);
+      expect(res).toHaveLength(0);
+    });
+
+    it('returns empty array of incomplete innovation records with owner recipients if the owner is inactive', async () => {
+      const innovationDate = new Date();
+      innovationDate.setDate(innovationDate.getDate() - 31);
+
+      // Set innovation to created and the date to 31 days ago (raw query because we require updating createdAt)
+      await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
+        InnovationStatusEnum.CREATED,
+        innovationDate,
+        scenario.users.johnInnovator.innovations.johnInnovation.id
+      ]);
+
+      await em
+        .getRepository(UserRoleEntity)
+        .update({ id: scenario.users.johnInnovator.roles.innovatorRole.id }, { isActive: false });
+
+      const res = await sut.incompleteInnovationRecordOwners(em);
+      expect(res).toHaveLength(0);
+    });
+  });
+
   /*
-  describe('getUsersRecipients suite', () => {
+  describe('getUsersRecipients', () => {
     it('Should get a recipient when passed a valid user', async () => {
       const recipient = await sut.getUsersRecipient(
         scenario.users.johnInnovator.id,
