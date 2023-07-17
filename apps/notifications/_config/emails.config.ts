@@ -11,6 +11,7 @@ export enum EmailTypeEnum {
   NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_OLD_NA = '6f89c296-76f5-43e5-b3fd-6d6fed40549a',
   NEEDS_ASSESSMENT_ASSESSOR_UPDATE_TO_NEW_NA = '64eb40ff-2c89-4f73-9a3f-b5e43e2916f3',
   ORGANISATION_SUGGESTION_TO_QA = '078070fd-832a-4df2-8f7b-ad616654cbbd',
+  ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR = '6b4c42b4-d6c1-4c28-807d-952f8ec0a51b',
 
   INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR = 'df3e438c-6f0d-4be3-90a6-5b19d15a6060',
   INNOVATION_SUPPORT_STATUS_UPDATE_TO_ASSIGNED_ACCESSORS = 'f63b1459-c1ee-48b3-b0da-12bb19863d19',
@@ -132,6 +133,7 @@ export type EmailTemplatesType = {
     innovation_url: string;
   };
   [EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA]: { display_name?: string; innovation_url: string };
+  [EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR]: { display_name?: string; innovation_name: string, data_sharing_url: string };
   [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR]: {
     display_name?: string;
     innovation_name: string;
