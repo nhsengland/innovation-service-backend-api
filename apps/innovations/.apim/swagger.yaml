@@ -3430,6 +3430,47 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  "/v1/{innovationId}/support-summary/progress-update":
+    post:
+      description: Create support summary progress update.
+      operationId: v1-innovation-support-summary-progress-create
+      tags:
+        - "[v1] Innovation Support Summary"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  maxLength: 100
+                description:
+                  type: string
+                  maxLength: 2000
+              required:
+                - title
+                - description
+              additionalProperties: false
+      responses:
+        "201":
+          description: Creates a new progress update
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/{innovationId}/support-summary/units/{unitId}":
     get:
       operationId: v1-innovation-support-summary-unit-info
@@ -3459,6 +3500,8 @@ paths:
                 items:
                   type: object
                   properties:
+                    id:
+                      type: string
                     createdAt:
                       type: string
                     createdBy:

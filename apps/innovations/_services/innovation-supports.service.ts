@@ -858,6 +858,49 @@ export class InnovationSupportsService extends BaseService {
     return summary.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
+  async createProgressUpdate(
+    domainContext: DomainContextType,
+    innovationId: string,
+    data: { title: string; description: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const unitId = domainContext.organisation?.organisationUnit?.id;
+    if (!unitId) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
+    }
+
+    const support = await connection
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .select(['support.id', 'support.status'])
+      .where('support.innovation_id = :innovationId', { innovationId })
+      .andWhere('support.organisation_unit_id = :unitId', { unitId })
+      .getOne();
+
+    if (!support) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+    }
+
+    if (!this.isStatusEngaging(support.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
+    }
+
+    await connection.save(
+      InnovationSupportLogEntity,
+      InnovationSupportLogEntity.new({
+        innovation: InnovationEntity.new({ id: innovationId }),
+        organisationUnit: OrganisationUnitEntity.new({ id: unitId }),
+        innovationSupportStatus: support.status,
+        description: data.description,
+        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
+        params: { title: data.title },
+        createdBy: domainContext.id,
+        updatedBy: domainContext.id
+      })
+    );
+  }
+
   private async fetchSupportLogs(
     innovationId: string,
     type?: InnovationSupportLogTypeEnum

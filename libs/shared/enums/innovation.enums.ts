@@ -58,7 +58,8 @@ export enum InnovationTransferStatusEnum {
 
 export enum InnovationSupportLogTypeEnum {
   STATUS_UPDATE = 'STATUS_UPDATE',
-  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION'
+  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION',
+  PROGRESS_UPDATE = 'PROGRESS_UPDATE'
 }
 
 export enum ThreadContextTypeEnum {

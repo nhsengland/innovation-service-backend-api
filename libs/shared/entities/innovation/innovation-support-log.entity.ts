@@ -21,6 +21,9 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @Column({ name: 'description' })
   description: string;
 
+  @Column({ name: 'params', type: 'simple-json', nullable: true })
+  params: null | { title: string };
+
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
