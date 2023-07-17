@@ -798,6 +798,7 @@ export class InnovationSupportsService extends BaseService {
       const createdByUser = usersInfo.get(supportLog.createdBy);
       if (supportLog.type === InnovationSupportLogTypeEnum.STATUS_UPDATE) {
         summary.push({
+          id: supportLog.id,
           createdAt: supportLog.createdAt,
           createdBy: {
             id: supportLog.createdBy,
@@ -816,6 +817,7 @@ export class InnovationSupportsService extends BaseService {
         });
       } else if (supportLog.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION) {
         summary.push({
+          id: supportLog.id,
           createdAt: supportLog.createdAt,
           createdBy: {
             id: supportLog.createdBy,
@@ -838,6 +840,7 @@ export class InnovationSupportsService extends BaseService {
     // TECH DEBT: This will be changed, black tape for now.
     for (const suggestion of naSuggestions) {
       summary.push({
+        id: suggestion.id,
         createdAt: suggestion.updatedAt,
         createdBy: {
           id: suggestion.assignTo,

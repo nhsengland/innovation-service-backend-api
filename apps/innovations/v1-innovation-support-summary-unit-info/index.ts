@@ -62,6 +62,7 @@ export default openApi(
                 items: {
                   type: 'object',
                   properties: {
+                    id: { type: 'string' },
                     createdAt: { type: 'string' },
                     createdBy: {
                       type: 'object',
