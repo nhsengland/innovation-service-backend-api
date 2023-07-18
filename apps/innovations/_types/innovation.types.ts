@@ -1,6 +1,7 @@
 import type {
   InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
@@ -192,4 +193,8 @@ export type InnovationDocumentType = {
     size: number;
     extension: string;
   };
+};
+
+export type InnovationDocumentTypeWithContext = InnovationDocumentType & {
+  context: { id: string; type: InnovationFileContextTypeEnum };
 };
