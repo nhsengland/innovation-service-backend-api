@@ -823,41 +823,45 @@ export class InnovationSupportsService extends BaseService {
           )
         }
       };
-      if (supportLog.type === InnovationSupportLogTypeEnum.STATUS_UPDATE) {
-        summary.push({
-          ...defaultSummary,
-          type: 'SUPPORT_UPDATE',
-          params: {
-            supportStatus: supportLog.innovationSupportStatus,
-            message: supportLog.description
-          }
-        });
-      } else if (supportLog.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION) {
-        summary.push({
-          ...defaultSummary,
-          type: 'SUGGESTED_ORGANISATION',
-          params: {
-            suggestedByName: supportLog.organisationUnit.name,
-            message: supportLog.description
-          }
-        });
-      } else if (supportLog.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE) {
-        const files = await this.innovationFileService.getFilesList(
-          innovationId,
-          { contextId: supportLog.id },
-          { skip: 0, take: 1, order: { createdAt: 'ASC' } }
-        );
-        const file = files.data[0];
+      switch (supportLog.type) {
+        case InnovationSupportLogTypeEnum.STATUS_UPDATE:
+          summary.push({
+            ...defaultSummary,
+            type: 'SUPPORT_UPDATE',
+            params: {
+              supportStatus: supportLog.innovationSupportStatus,
+              message: supportLog.description
+            }
+          });
+          break;
+        case InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION:
+          summary.push({
+            ...defaultSummary,
+            type: 'SUGGESTED_ORGANISATION',
+            params: {
+              suggestedByName: supportLog.organisationUnit.name,
+              message: supportLog.description
+            }
+          });
+          break;
+        case InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION:
+          const files = await this.innovationFileService.getFilesList(
+            innovationId,
+            { contextId: supportLog.id },
+            { skip: 0, take: 1, order: { createdAt: 'ASC' } }
+          );
+          const file = files.data[0];
 
-        summary.push({
-          ...defaultSummary,
-          type: 'PROGRESS_UPDATE',
-          params: {
-            title: supportLog.params?.title ?? '', // will always exists in type PROGRESS_UPDATE
-            message: supportLog.description,
-            ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
-          }
-        });
+          summary.push({
+            ...defaultSummary,
+            type: 'PROGRESS_UPDATE',
+            params: {
+              title: supportLog.params?.title ?? '', // will always exists in type PROGRESS_UPDATE
+              message: supportLog.description,
+              ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
+            }
+          });
+          break;
       }
     }
 
