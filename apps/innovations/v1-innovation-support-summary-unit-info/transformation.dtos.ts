@@ -1,6 +1,7 @@
 import type { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 
 export type ResponseDTO = ({
+  id: string;
   createdAt: Date;
   createdBy: { id: string; name: string; displayRole?: string };
 } & (SupportUpdateData | SuggestedOrganisationData | ProgressUpdateData))[];

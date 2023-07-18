@@ -1,8 +1,9 @@
+import { randText } from '@ngneat/falso';
+import type { RoleType } from 'libs/shared/types';
 import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
-import { BaseBuilder } from './base.builder';
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
-import { randText } from '@ngneat/falso';
+import { BaseBuilder } from './base.builder';
 import type { TestInnovationType } from './innovation.builder';
 import type { TestUserType } from './user.builder';
 
@@ -36,8 +37,9 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
     return this;
   }
 
-  setCreatedBy(user: TestUserType): this {
+  setCreatedBy(user: TestUserType, role: RoleType): this {
     this.supportLog.createdBy = user.id;
+    this.supportLog.createdByUserRole = role;
     return this;
   }
 

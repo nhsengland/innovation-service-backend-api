@@ -232,7 +232,7 @@ export class CompleteScenarioBuilder {
       // support log on johnInnovation of previous UNASSIGNED support
       const johnInnovationSupportLog = await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation)
-        .setCreatedBy(aliceQualifyingAccessor)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
         .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
         .save();
 

@@ -198,7 +198,7 @@ export class OrganisationsService extends BaseService {
       for (const support of supportsToComplete) {
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: requestUser.id, organisationUnitId: unitId },
+          { id: requestUser.id, organisationUnitId: unitId, roleId: domainContext.currentRole.id },
           { id: support.innovation.id },
           support.status,
           {

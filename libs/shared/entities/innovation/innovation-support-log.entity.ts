@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, PrimaryGe
 import { BaseEntity } from '../base.entity';
 
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+import { UserRoleEntity } from '../user/user-role.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
@@ -21,6 +22,9 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @Column({ name: 'description' })
   description: string;
 
+  @Column({ name: 'params', type: 'simple-json', nullable: true })
+  params: null | { title: string };
+
   @ManyToOne(() => InnovationEntity, { nullable: false })
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
@@ -28,6 +32,10 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
+
+  @ManyToOne(() => UserRoleEntity)
+  @JoinColumn({ name: 'created_by_user_role_id' })
+  createdByUserRole: UserRoleEntity;
 
   @ManyToMany(() => OrganisationUnitEntity, record => record.innovationSupportLogs, {
     nullable: true

@@ -2,22 +2,33 @@
 import { container } from '../_config';
 
 import {
+  InnovationActionEntity,
+  InnovationFileEntity,
+  InnovationSupportEntity,
+  InnovationSupportLogEntity,
+  InnovationThreadEntity
+} from '@innovations/shared/entities';
+import {
   InnovationActionStatusEnum,
+  InnovationFileContextTypeEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
+import {
+  InnovationErrorsEnum,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@innovations/shared/errors';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
-import { randText, randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
-import SYMBOLS from './symbols';
-import type { InnovationSupportsService } from './innovation-supports.service';
-import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { UnprocessableEntityError } from '@innovations/shared/errors';
-import { InnovationSupportEntity, InnovationThreadEntity } from '@innovations/shared/entities';
-import { InnovationActionEntity } from '@innovations/shared/entities';
+import { randFileExt, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
+import type { EntityManager } from 'typeorm';
+import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
+import SYMBOLS from './symbols';
 
 describe('Innovations / _services / innovation-supports suite', () => {
   let sut: InnovationSupportsService;
@@ -474,7 +485,9 @@ describe('Innovations / _services / innovation-supports suite', () => {
       InnovationSupportStatusEnum.UNSUITABLE,
       InnovationSupportStatusEnum.WAITING,
       InnovationSupportStatusEnum.WITHDRAWN
-    ])('should remove all assigned accessors when status is changed to %s', async (status: InnovationSupportStatusEnum) => {
+    ])(
+      'should remove all assigned accessors when status is changed to %s',
+      async (status: InnovationSupportStatusEnum) => {
         const support = await sut.updateInnovationSupport(
           DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
           innovation.id,
@@ -498,7 +511,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
           .getOne();
 
         expect(dbSupport?.organisationUnitUsers).toHaveLength(0);
-    });
+      }
+    );
 
     it(`should throw a not found error if the support doesn't exist`, async () => {
       await expect(() =>
@@ -512,20 +526,21 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND)
-      );
-    })
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+    });
 
     it(`should throw a not found error if the thread creation fails`, async () => {
-      const dbThread = await em.createQueryBuilder(InnovationThreadEntity, 'thread')
-        .where('thread.id = :threadId', { threadId: scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA.id })
+      const dbThread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .where('thread.id = :threadId', {
+          threadId: scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA.id
+        })
         .getOne();
 
       jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage').mockResolvedValue({
         thread: dbThread!,
         message: undefined
-      })
+      });
 
       await expect(() =>
         sut.updateInnovationSupport(
@@ -538,9 +553,122 @@ describe('Innovations / _services / innovation-supports suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND)
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
+    });
+  });
+
+  describe('createProgressUpdate', () => {
+    const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
+
+    it('should create a support summary when a unit is engaging without a file', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+      const data = { title: randText(), description: randText() };
+
+      await sut.createProgressUpdate(domainContext, innovationId, data, em);
+
+      const dbProgress = await em
+        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .where('log.innovation_id = :innovationId', { innovationId })
+        .andWhere('log.organisation_unit_id = :unitId', { unitId: domainContext.organisation?.organisationUnit?.id })
+        .andWhere('log.description = :description', { description: data.description })
+        .getOneOrFail();
+
+      const fileExists = await em
+        .createQueryBuilder(InnovationFileEntity, 'file')
+        .where('file.contextId = :contextId', { contextId: dbProgress.id })
+        .andWhere('file.contextType = :contextType', {
+          contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        })
+        .andWhere('file.innovation = :innovationId', { innovationId })
+        .getCount();
+
+      expect(dbProgress).toMatchObject({
+        params: { title: data.title },
+        description: data.description,
+        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE
+      });
+      expect(fileExists).toBe(0);
+    });
+
+    it('should create a support summary when a unit is engaging with a file', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+      const data = {
+        title: randText(),
+        description: randText(),
+        document: {
+          name: randFileName(),
+          file: {
+            id: randUuid(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: randFileExt()
+          }
+        }
+      };
+
+      await sut.createProgressUpdate(domainContext, innovationId, data, em);
+
+      const dbProgress = await em
+        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .where('log.innovation_id = :innovationId', { innovationId })
+        .andWhere('log.organisation_unit_id = :unitId', { unitId: domainContext.organisation?.organisationUnit?.id })
+        .andWhere('log.description = :description', { description: data.description })
+        .getOneOrFail();
+
+      const fileExists = await em
+        .createQueryBuilder(InnovationFileEntity, 'file')
+        .where('file.contextId = :contextId', { contextId: dbProgress.id })
+        .andWhere('file.contextType = :contextType', {
+          contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        })
+        .andWhere('file.innovation = :innovationId', { innovationId })
+        .getCount();
+
+      expect(dbProgress).toMatchObject({
+        params: { title: data.title },
+        description: data.description,
+        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE
+      });
+      expect(fileExists).toBe(1);
+    });
+
+    it('should throw an NotFoundError when the unitId is not present in context', async () => {
+      await expect(() =>
+        sut.createProgressUpdate(
+          DTOsHelper.getUserRequestContext(scenario.users.allMighty),
+          innovationId,
+          { title: randText(), description: randText() },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+    });
+
+    it("should throw a NotFoundError when the support doesn't exist", async () => {
+      await expect(() =>
+        sut.createProgressUpdate(
+          DTOsHelper.getUserRequestContext(scenario.users.samAccessor, 'accessorRole'),
+          scenario.users.adamInnovator.innovations.adamInnovation.id,
+          { title: randText(), description: randText() },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+    });
+
+    it('should throw an UnprocessableEntityError when the unit is not currently engaging', async () => {
+      await em.update(
+        InnovationSupportEntity,
+        { id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id },
+        { status: InnovationSupportStatusEnum.NOT_YET }
       );
-    })
+
+      await expect(() =>
+        sut.createProgressUpdate(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
+          innovationId,
+          { title: randText(), description: randText() },
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+    });
   });
 });

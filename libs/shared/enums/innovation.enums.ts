@@ -58,7 +58,8 @@ export enum InnovationTransferStatusEnum {
 
 export enum InnovationSupportLogTypeEnum {
   STATUS_UPDATE = 'STATUS_UPDATE',
-  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION'
+  ACCESSOR_SUGGESTION = 'ACCESSOR_SUGGESTION',
+  PROGRESS_UPDATE = 'PROGRESS_UPDATE'
 }
 
 export enum ThreadContextTypeEnum {
@@ -88,7 +89,8 @@ export enum InnovationCollaboratorStatusEnum {
 export enum InnovationFileContextTypeEnum {
   INNOVATION = 'INNOVATION',
   INNOVATION_SECTION = 'INNOVATION_SECTION',
-  INNOVATION_EVIDENCE = 'INNOVATION_EVIDENCE'
+  INNOVATION_EVIDENCE = 'INNOVATION_EVIDENCE',
+  INNOVATION_PROGRESS_UPDATE = 'INNOVATION_PROGRESS_UPDATE'
 }
 
 export enum InnovationSupportSummaryTypeEnum {
