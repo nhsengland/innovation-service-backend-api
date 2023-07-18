@@ -773,6 +773,7 @@ export class InnovationSupportsService extends BaseService {
         'log.createdAt',
         'log.innovationSupportStatus',
         'log.description',
+        'log.params',
         'unit.id',
         'unit.name',
         'createdByUserRole.role'
@@ -808,44 +809,59 @@ export class InnovationSupportsService extends BaseService {
     const summary: SupportSummaryUnitInfo[] = [];
     for (const supportLog of unitSupportLogs) {
       const createdByUser = usersInfo.get(supportLog.createdBy);
-      if (supportLog.type === InnovationSupportLogTypeEnum.STATUS_UPDATE) {
-        summary.push({
-          id: supportLog.id,
-          createdAt: supportLog.createdAt,
-          createdBy: {
-            id: supportLog.createdBy,
-            name: createdByUser?.displayName ?? '[deleted user]',
-            displayRole: this.domainService.users.getUserDisplayRoleInformation(
-              supportLog.createdBy,
-              supportLog.createdByUserRole.role,
-              innovation.owner?.id
-            )
-          },
-          type: 'SUPPORT_UPDATE',
-          params: {
-            supportStatus: supportLog.innovationSupportStatus,
-            message: supportLog.description
-          }
-        });
-      } else if (supportLog.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION) {
-        summary.push({
-          id: supportLog.id,
-          createdAt: supportLog.createdAt,
-          createdBy: {
-            id: supportLog.createdBy,
-            name: createdByUser?.displayName ?? '[deleted user]',
-            displayRole: this.domainService.users.getUserDisplayRoleInformation(
-              supportLog.createdBy,
-              supportLog.createdByUserRole.role,
-              innovation.owner?.id
-            )
-          },
-          type: 'SUGGESTED_ORGANISATION',
-          params: {
-            suggestedByName: supportLog.organisationUnit.name,
-            message: supportLog.description
-          }
-        });
+
+      const defaultSummary = {
+        id: supportLog.id,
+        createdAt: supportLog.createdAt,
+        createdBy: {
+          id: supportLog.createdBy,
+          name: createdByUser?.displayName ?? '[deleted user]',
+          displayRole: this.domainService.users.getUserDisplayRoleInformation(
+            supportLog.createdBy,
+            supportLog.createdByUserRole.role,
+            innovation.owner?.id
+          )
+        }
+      };
+      switch (supportLog.type) {
+        case InnovationSupportLogTypeEnum.STATUS_UPDATE:
+          summary.push({
+            ...defaultSummary,
+            type: 'SUPPORT_UPDATE',
+            params: {
+              supportStatus: supportLog.innovationSupportStatus,
+              message: supportLog.description
+            }
+          });
+          break;
+        case InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION:
+          summary.push({
+            ...defaultSummary,
+            type: 'SUGGESTED_ORGANISATION',
+            params: {
+              suggestedByName: supportLog.organisationUnit.name,
+              message: supportLog.description
+            }
+          });
+          break;
+        case InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION:
+          const files = await this.innovationFileService.getFilesList(
+            innovationId,
+            { contextId: supportLog.id },
+            { skip: 0, take: 1, order: { createdAt: 'ASC' } }
+          );
+          const file = files.data[0];
+
+          summary.push({
+            ...defaultSummary,
+            type: 'PROGRESS_UPDATE',
+            params: {
+              title: supportLog.params?.title ?? '', // will always exists in type PROGRESS_UPDATE
+              message: supportLog.description,
+              ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
+            }
+          });
+          break;
       }
     }
 

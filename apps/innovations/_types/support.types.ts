@@ -27,6 +27,6 @@ type ProgressUpdateData = {
   params: {
     title: string;
     message: string;
-    file: { id: string; name: string; url: string };
+    file?: { id: string; name: string; url: string };
   };
 };
