@@ -2151,6 +2151,7 @@ paths:
                         - INNOVATION
                         - INNOVATION_SECTION
                         - INNOVATION_EVIDENCE
+                        - INNOVATION_PROGRESS_UPDATE
                   required:
                     - id
                     - type
@@ -2277,6 +2278,7 @@ paths:
                 - INNOVATION
                 - INNOVATION_SECTION
                 - INNOVATION_EVIDENCE
+                - INNOVATION_PROGRESS_UPDATE
         - name: contextId
           in: query
           required: false
@@ -2350,6 +2352,7 @@ paths:
                                 - INNOVATION
                                 - INNOVATION_SECTION
                                 - INNOVATION_EVIDENCE
+                                - INNOVATION_PROGRESS_UPDATE
                         name:
                           type: string
                         description:
@@ -2466,6 +2469,7 @@ paths:
                           - INNOVATION
                           - INNOVATION_SECTION
                           - INNOVATION_EVIDENCE
+                          - INNOVATION_PROGRESS_UPDATE
                   name:
                     type: string
                   description:
@@ -3456,6 +3460,40 @@ paths:
                 description:
                   type: string
                   maxLength: 2000
+                document:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      maxLength: 100
+                    description:
+                      type: string
+                      maxLength: 500
+                    file:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          maxLength: 100
+                        name:
+                          type: string
+                          maxLength: 100
+                        size:
+                          type: number
+                          format: float
+                        extension:
+                          type: string
+                          maxLength: 4
+                      required:
+                        - id
+                        - name
+                        - size
+                        - extension
+                      additionalProperties: false
+                  required:
+                    - name
+                    - file
+                  additionalProperties: false
               required:
                 - title
                 - description

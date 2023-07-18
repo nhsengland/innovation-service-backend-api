@@ -8,11 +8,13 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity
+  OrganisationUnitUserEntity,
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
   InnovationActionStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationSupportSummaryTypeEnum,
@@ -40,6 +42,7 @@ import type {
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { SupportSummaryUnitInfo } from '../_types/support.types';
 import { BaseService } from './base.service';
+import type { InnovationFileService } from './innovation-file.service';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 
@@ -65,7 +68,8 @@ export class InnovationSupportsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationThreadsService)
-    private innovationThreadsService: InnovationThreadsService
+    private innovationThreadsService: InnovationThreadsService,
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
   }
@@ -413,7 +417,7 @@ export class InnovationSupportsService extends BaseService {
 
       await this.domainService.innovations.addSupportLog(
         transaction,
-        { id: user.id, organisationUnitId: organisationUnitId },
+        { id: user.id, organisationUnitId: organisationUnitId, roleId: domainContext.currentRole.id },
         { id: innovationId },
         savedSupport.status,
         {
@@ -474,6 +478,7 @@ export class InnovationSupportsService extends BaseService {
     const result = await connection.transaction(async transaction => {
       const supportLogObj = InnovationSupportLogEntity.new({
         createdBy: domainContext.id,
+        createdByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
         updatedBy: domainContext.id,
         innovation,
         innovationSupportStatus:
@@ -619,7 +624,11 @@ export class InnovationSupportsService extends BaseService {
 
       await this.domainService.innovations.addSupportLog(
         transaction,
-        { id: domainContext.id, organisationUnitId: savedSupport.organisationUnit.id },
+        {
+          id: domainContext.id,
+          organisationUnitId: savedSupport.organisationUnit.id,
+          roleId: domainContext.currentRole.id
+        },
         { id: innovationId },
         savedSupport.status,
         {
@@ -764,7 +773,8 @@ export class InnovationSupportsService extends BaseService {
         'log.innovationSupportStatus',
         'log.description',
         'unit.id',
-        'unit.name'
+        'unit.name',
+        'createdByUserRole.role'
       ])
       .leftJoin(
         'innovation_support_log_organisation_unit',
@@ -773,6 +783,7 @@ export class InnovationSupportsService extends BaseService {
         { unitId }
       )
       .innerJoin('log.organisationUnit', 'unit')
+      .innerJoin('log.createdByUserRole', 'createdByUserRole')
       .where('log.innovation_id = :innovationId', { innovationId })
       .andWhere(
         new Brackets(qb => {
@@ -805,7 +816,7 @@ export class InnovationSupportsService extends BaseService {
             name: createdByUser?.displayName ?? '[deleted user]',
             displayRole: this.domainService.users.getUserDisplayRoleInformation(
               supportLog.createdBy,
-              ServiceRoleEnum.QUALIFYING_ACCESSOR,
+              supportLog.createdByUserRole.role,
               innovation.owner?.id
             )
           },
@@ -824,7 +835,7 @@ export class InnovationSupportsService extends BaseService {
             name: createdByUser?.displayName ?? '[deleted user]',
             displayRole: this.domainService.users.getUserDisplayRoleInformation(
               supportLog.createdBy,
-              ServiceRoleEnum.QUALIFYING_ACCESSOR,
+              supportLog.createdByUserRole.role,
               innovation.owner?.id
             )
           },
@@ -861,7 +872,20 @@ export class InnovationSupportsService extends BaseService {
   async createProgressUpdate(
     domainContext: DomainContextType,
     innovationId: string,
-    data: { title: string; description: string },
+    data: {
+      title: string;
+      description: string;
+      document?: {
+        name: string;
+        description?: string;
+        file: {
+          id: string;
+          name: string;
+          size: number;
+          extension: string;
+        };
+      };
+    },
     entityManager?: EntityManager
   ): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -873,7 +897,8 @@ export class InnovationSupportsService extends BaseService {
 
     const support = await connection
       .createQueryBuilder(InnovationSupportEntity, 'support')
-      .select(['support.id', 'support.status'])
+      .select(['support.id', 'support.status', 'innovation.id', 'innovation.status'])
+      .innerJoin('support.innovation', 'innovation')
       .where('support.innovation_id = :innovationId', { innovationId })
       .andWhere('support.organisation_unit_id = :unitId', { unitId })
       .getOne();
@@ -886,19 +911,38 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
     }
 
-    await connection.save(
-      InnovationSupportLogEntity,
-      InnovationSupportLogEntity.new({
-        innovation: InnovationEntity.new({ id: innovationId }),
-        organisationUnit: OrganisationUnitEntity.new({ id: unitId }),
-        innovationSupportStatus: support.status,
-        description: data.description,
-        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
-        params: { title: data.title },
-        createdBy: domainContext.id,
-        updatedBy: domainContext.id
-      })
-    );
+    return await connection.transaction(async transaction => {
+      const savedLog = await transaction.save(
+        InnovationSupportLogEntity,
+        InnovationSupportLogEntity.new({
+          innovation: InnovationEntity.new({ id: innovationId }),
+          organisationUnit: OrganisationUnitEntity.new({ id: unitId }),
+          innovationSupportStatus: support.status,
+          description: data.description,
+          type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
+          params: { title: data.title },
+          createdBy: domainContext.id,
+          createdByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
+          updatedBy: domainContext.id
+        })
+      );
+
+      if (data.document) {
+        await this.innovationFileService.createFile(
+          domainContext,
+          innovationId,
+          support.innovation.status,
+          {
+            ...data.document,
+            context: {
+              id: savedLog.id,
+              type: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+            }
+          },
+          transaction
+        );
+      }
+    });
   }
 
   private async fetchSupportLogs(

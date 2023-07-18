@@ -444,7 +444,7 @@ export class DomainInnovationsService {
    */
   async addSupportLog(
     transactionManager: EntityManager,
-    user: { id: string; organisationUnitId: string },
+    user: { id: string; organisationUnitId: string; roleId: string },
     innovation: { id: string },
     supportStatus: InnovationSupportStatusEnum,
     supportLog: {
@@ -461,6 +461,7 @@ export class DomainInnovationsService {
       type: supportLog.type,
       suggestedOrganisationUnits: supportLog.suggestedOrganisationUnits?.map(id => OrganisationUnitEntity.new({ id })),
       createdBy: user.id,
+      createdByUserRole: UserRoleEntity.new({ id: user.roleId }),
       updatedBy: user.id
     });
 

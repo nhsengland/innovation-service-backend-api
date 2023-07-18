@@ -3,12 +3,14 @@ import { container } from '../_config';
 
 import {
   InnovationActionEntity,
+  InnovationFileEntity,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationThreadEntity
 } from '@innovations/shared/entities';
 import {
   InnovationActionStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   NotificationContextTypeEnum
@@ -22,7 +24,7 @@ import {
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randText, randUuid } from '@ngneat/falso';
+import { randFileExt, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
@@ -558,7 +560,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
   describe('createProgressUpdate', () => {
     const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
 
-    it('should create a support summary when a unit is engaging', async () => {
+    it('should create a support summary when a unit is engaging without a file', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
       const data = { title: randText(), description: randText() };
 
@@ -571,11 +573,63 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .andWhere('log.description = :description', { description: data.description })
         .getOneOrFail();
 
+      const fileExists = await em
+        .createQueryBuilder(InnovationFileEntity, 'file')
+        .where('file.contextId = :contextId', { contextId: dbProgress.id })
+        .andWhere('file.contextType = :contextType', {
+          contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        })
+        .andWhere('file.innovation = :innovationId', { innovationId })
+        .getCount();
+
       expect(dbProgress).toMatchObject({
         params: { title: data.title },
         description: data.description,
         type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE
       });
+      expect(fileExists).toBe(0);
+    });
+
+    it('should create a support summary when a unit is engaging with a file', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+      const data = {
+        title: randText(),
+        description: randText(),
+        document: {
+          name: randFileName(),
+          file: {
+            id: randUuid(),
+            name: randFileName(),
+            size: randNumber(),
+            extension: randFileExt()
+          }
+        }
+      };
+
+      await sut.createProgressUpdate(domainContext, innovationId, data, em);
+
+      const dbProgress = await em
+        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .where('log.innovation_id = :innovationId', { innovationId })
+        .andWhere('log.organisation_unit_id = :unitId', { unitId: domainContext.organisation?.organisationUnit?.id })
+        .andWhere('log.description = :description', { description: data.description })
+        .getOneOrFail();
+
+      const fileExists = await em
+        .createQueryBuilder(InnovationFileEntity, 'file')
+        .where('file.contextId = :contextId', { contextId: dbProgress.id })
+        .andWhere('file.contextType = :contextType', {
+          contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        })
+        .andWhere('file.innovation = :innovationId', { innovationId })
+        .getCount();
+
+      expect(dbProgress).toMatchObject({
+        params: { title: data.title },
+        description: data.description,
+        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE
+      });
+      expect(fileExists).toBe(1);
     });
 
     it('should throw an UnprocessableEntityError when the unitId is not present in context', async () => {
