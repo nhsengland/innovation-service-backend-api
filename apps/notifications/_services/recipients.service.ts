@@ -927,8 +927,8 @@ export class RecipientsService extends BaseService {
         userIds: userIdsArray,
         roles: rolesArray,
         includeLocked: true, // maybe make this an option but was currently used like this most of the times and the handler chooses
-        ...(extraFilters?.organisation && { organisation: [extraFilters.organisation] }),
-        ...(extraFilters?.organisationUnit && { organisationUnit: [extraFilters.organisationUnit] }),
+        ...(extraFilters?.organisation && { organisations: [extraFilters.organisation] }),
+        ...(extraFilters?.organisationUnit && { organisationUnits: [extraFilters.organisationUnit] }),
         ...(extraFilters?.withDeleted && { withDeleted: true })
       },
       em

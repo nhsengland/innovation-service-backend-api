@@ -5,6 +5,7 @@ import {
   InnovationCollaboratorStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
+  ServiceRoleEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
@@ -633,7 +634,7 @@ describe('Notifications / _services / recipients service suite', () => {
   describe('needsAssessmentUsers', () => {
     //const needsAssessmentUsers = [scenario.users.paulNeedsAssessor, scenario.users.seanNeedsAssessor];
     it('Should get a list of needs assessment recipients', async () => {
-      const res = await sut.needsAssessmentUsers(undefined, em);
+      const res = await sut.needsAssessmentUsers(undefined);
       expect(res).toHaveLength(2);
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
@@ -840,7 +841,33 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  /*
+  describe('idleSupports', () => {
+    it.skip('placeholder', () => {});
+  });
+
+  describe('getExportRequestInfo', () => {
+    const request = scenario.users.johnInnovator.innovations.johnInnovation.exportRequests.requestByAlice;
+
+    it('returns a export request with info', async () => {
+      await expect(sut.getExportRequestInfo(request.id)).resolves.toMatchObject({
+        status: request.status,
+        requestReason: request.requestReason,
+        rejectReason: request.rejectReason,
+        createdBy: {
+          id: scenario.users.aliceQualifyingAccessor.id,
+          unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          unitName: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+        }
+      });
+    });
+
+    it('throws an error if export request not found', async () => {
+      await expect(sut.getExportRequestInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND)
+      );
+    });
+  });
+
   describe('getUsersRecipients', () => {
     it('Should get a recipient when passed a valid user', async () => {
       const recipient = await sut.getUsersRecipient(
@@ -866,38 +893,119 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(recipients[1]).toMatchObject(DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole'));
     });
 
-    it('Should return null when passed a non existent role for a single user', async () => {
-      const recipient = await sut.getUsersRecipient(
-        scenario.users.johnInnovator.id,
-        ServiceRoleEnum.ACCESSOR,
-        undefined,
-        em
+    it('Should return multiple recipients when passed an array of userIds and roles', async () => {
+      const recipients = await sut.getUsersRecipient(
+        [scenario.users.aliceQualifyingAccessor.id, scenario.users.ingridAccessor.id],
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
       );
+
+      expect(recipients).toHaveLength(2);
+      expect(recipients[0]).toMatchObject(
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      );
+      expect(recipients[1]).toMatchObject(DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole'));
+    });
+
+    it('Should filter by organisation', async () => {
+      const recipients = await sut.getUsersRecipient(
+        [scenario.users.aliceQualifyingAccessor.id, scenario.users.samAccessor.id],
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        { organisation: scenario.organisations.healthOrg.id }
+      );
+
+      expect(recipients).toHaveLength(1);
+      expect(recipients[0]).toMatchObject(
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      );
+    });
+
+    it('Should filter by organisation unit', async () => {
+      const recipients = await sut.getUsersRecipient(
+        [scenario.users.jamieMadroxAccessor.id],
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        { organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id }
+      );
+
+      expect(recipients).toHaveLength(1);
+      expect(recipients[0]).toMatchObject(DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'));
+    });
+
+    it('Should include deleted if withDeleted', async () => {
+      const recipients = await sut.getUsersRecipient(
+        scenario.users.sebastiaoDeletedInnovator.id,
+        ServiceRoleEnum.INNOVATOR,
+        { withDeleted: true }
+      );
+      expect(recipients).toMatchObject(
+        DTOsHelper.getRecipientUser(scenario.users.sebastiaoDeletedInnovator, 'innovatorRole')
+      );
+    });
+
+    it("Shouldn't include deleted if not withDeleted (default)", async () => {
+      const recipients = await sut.getUsersRecipient(
+        scenario.users.sebastiaoDeletedInnovator.id,
+        ServiceRoleEnum.INNOVATOR
+      );
+      expect(recipients).toBeNull();
+    });
+
+    it('Should return null when passed a non existent role for a single user', async () => {
+      const recipient = await sut.getUsersRecipient(scenario.users.johnInnovator.id, ServiceRoleEnum.ACCESSOR);
 
       expect(recipient).toBeNull();
     });
 
-    it('It should return empty array when passed a non existent role for all users', async () => {
+    it('Should return null when passed undefined userId', async () => {
+      const recipient = await sut.getUsersRecipient(undefined, ServiceRoleEnum.ACCESSOR);
+
+      expect(recipient).toBeNull();
+    });
+
+    it('Should return empty array when passed a non existent role for all users', async () => {
       const recipients = await sut.getUsersRecipient(
         [scenario.users.johnInnovator.id, scenario.users.adamInnovator.id],
-        ServiceRoleEnum.ACCESSOR,
-        undefined,
-        em
+        ServiceRoleEnum.ACCESSOR
       );
 
       expect(recipients).toHaveLength(0);
     });
 
-    it('It should return empty array when passed an empty array of userIds', async () => {
-      const recipients = await sut.getUsersRecipient([], ServiceRoleEnum.ACCESSOR, undefined, em);
+    it('Should return empty array when passed an empty array of userIds', async () => {
+      const recipients = await sut.getUsersRecipient([], ServiceRoleEnum.ACCESSOR);
 
       expect(recipients).toHaveLength(0);
     });
   });
 
+  describe('getRole', () => {
+    // This is a private function, other tests are ensured by getUsersRecipient
+    it('Should return empty array if no filters provided', async () => {
+      const res = await sut['getRole']({});
+      expect(res).toHaveLength(0);
+    });
+  });
 
-  
+  describe('identityId2UserId', () => {
+    it('Should return the userId for a valid identityId', async () => {
+      expect(await sut.identityId2UserId(scenario.users.johnInnovator.identityId)).toBe(
+        scenario.users.johnInnovator.id
+      );
+    });
 
-  
-  */
+    it('Should return null for a non-existent identityId', async () => {
+      expect(await sut.identityId2UserId(randUuid())).toBeNull();
+    });
+  });
+
+  describe('userId2IdentityId', () => {
+    it('Should return the identityId for a valid userId', async () => {
+      expect(await sut.userId2IdentityId(scenario.users.johnInnovator.id)).toBe(
+        scenario.users.johnInnovator.identityId
+      );
+    });
+
+    it('Should return null for a non-existent userId', async () => {
+      expect(await sut.userId2IdentityId(randUuid())).toBeNull();
+    });
+  });
 });
