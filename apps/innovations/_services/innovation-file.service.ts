@@ -26,6 +26,7 @@ import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
+import type { InnovationDocumentType } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -325,17 +326,7 @@ export class InnovationFileService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     innovationStatus: InnovationStatusEnum,
-    data: {
-      context: { id: string; type: InnovationFileContextTypeEnum };
-      name: string;
-      description?: string;
-      file: {
-        id: string;
-        name: string;
-        size: number;
-        extension: string;
-      };
-    },
+    data: InnovationDocumentType & { context: { id: string; type: InnovationFileContextTypeEnum } },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;

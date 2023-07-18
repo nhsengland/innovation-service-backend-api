@@ -34,6 +34,7 @@ import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
+  InnovationDocumentType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType,
   InnovationSupportsLogType
@@ -875,16 +876,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       title: string;
       description: string;
-      document?: {
-        name: string;
-        description?: string;
-        file: {
-          id: string;
-          name: string;
-          size: number;
-          extension: string;
-        };
-      };
+      document?: InnovationDocumentType;
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -892,7 +884,7 @@ export class InnovationSupportsService extends BaseService {
 
     const unitId = domainContext.organisation?.organisationUnit?.id;
     if (!unitId) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
     const support = await connection

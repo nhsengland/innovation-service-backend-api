@@ -182,3 +182,14 @@ export type InnovationSuggestionAccessor = {
     };
   }[];
 };
+
+export type InnovationDocumentType = {
+  name: string;
+  description?: string;
+  file: {
+    id: string;
+    name: string;
+    size: number;
+    extension: string;
+  };
+};

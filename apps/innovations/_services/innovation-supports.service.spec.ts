@@ -632,7 +632,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(fileExists).toBe(1);
     });
 
-    it('should throw an UnprocessableEntityError when the unitId is not present in context', async () => {
+    it('should throw an NotFoundError when the unitId is not present in context', async () => {
       await expect(() =>
         sut.createProgressUpdate(
           DTOsHelper.getUserRequestContext(scenario.users.allMighty),
@@ -640,9 +640,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           { title: randText(), description: randText() },
           em
         )
-      ).rejects.toThrowError(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT)
-      );
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it("should throw a NotFoundError when the support doesn't exist", async () => {
