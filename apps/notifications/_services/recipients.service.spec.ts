@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
 import {
+  InnovationEntity,
+  NotificationPreferenceEntity,
+  OrganisationUnitEntity,
+  UserEntity,
+  UserRoleEntity
+} from '@notifications/shared/entities';
+import {
+  EmailNotificationPreferenceEnum,
   InnovationCollaboratorStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
@@ -1006,6 +1013,157 @@ describe('Notifications / _services / recipients service suite', () => {
 
     it('Should return null for a non-existent userId', async () => {
       expect(await sut.userId2IdentityId(randUuid())).toBeNull();
+    });
+  });
+
+  describe('usersBagToRecipients', () => {
+    it('Should return an array of recipients from a users bag of same type', async () => {
+      const res = await sut.usersBagToRecipients([
+        { id: scenario.users.johnInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        { id: scenario.users.adamInnovator.id, userType: ServiceRoleEnum.INNOVATOR }
+      ]);
+
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole')
+      ]);
+    });
+
+    it('Should return an array of recipients from a users bag of different types', async () => {
+      const res = await sut.usersBagToRecipients([
+        { id: scenario.users.johnInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        { id: scenario.users.adamInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        {
+          id: scenario.users.aliceQualifyingAccessor.id,
+          userType: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        }
+      ]);
+
+      expect(res).toHaveLength(3);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      ]);
+    });
+
+    it('Should minimize calls by grouping users by type', async () => {
+      const mock = jest.spyOn(sut, 'getUsersRecipient');
+      const res = await sut.usersBagToRecipients([
+        { id: scenario.users.johnInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        { id: scenario.users.adamInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        {
+          id: scenario.users.aliceQualifyingAccessor.id,
+          userType: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        },
+        {
+          id: scenario.users.bartQualifyingAccessor.id,
+          userType: scenario.users.bartQualifyingAccessor.roles.qaRole.role,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        },
+        {
+          id: scenario.users.sarahQualifyingAccessor.id,
+          userType: scenario.users.sarahQualifyingAccessor.roles.qaRole.role,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        },
+        {
+          id: scenario.users.samAccessor.id,
+          userType: scenario.users.samAccessor.roles.accessorRole.role,
+          organisationUnit: scenario.users.samAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+        },
+        {
+          id: scenario.users.scottQualifyingAccessor.id,
+          userType: scenario.users.scottQualifyingAccessor.roles.qaRole.role,
+          organisationUnit:
+            scenario.users.scottQualifyingAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+        }
+      ]);
+
+      expect(res).toHaveLength(7);
+      // 2 innovators, 1 qa from healthOrgUnit, 2 qa from healthOrgAiUnit, 1 a from metTechOrgUnit, 1 qa from medTechOrgUnit
+      expect(mock).toHaveBeenCalledTimes(5);
+      mock.mockRestore();
+    });
+  });
+
+  describe('getEmailPreference', () => {
+    // This is too specific to include in the scenario, don't think it will be used elsewhere
+    beforeEach(async () => {
+      await em.getRepository(NotificationPreferenceEntity).save([
+        {
+          notificationType: 'ACTION',
+          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.DAILY,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          notificationType: 'MESSAGE',
+          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.INSTANTLY,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          notificationType: 'SUPPORT',
+          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.NEVER,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          notificationType: 'ACTION',
+          userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.NEVER,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ]);
+    });
+
+    it('Should return the email preference for a valid role', async () => {
+      const res = await sut.getEmailPreferences([scenario.users.johnInnovator.roles.innovatorRole.id], em);
+      expect(res.size).toBe(1);
+      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toMatchObject({
+        ACTION: EmailNotificationPreferenceEnum.DAILY,
+        MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
+        SUPPORT: EmailNotificationPreferenceEnum.NEVER
+      });
+    });
+
+    it('Should return the email preference for multiple roles', async () => {
+      const res = await sut.getEmailPreferences(
+        [scenario.users.johnInnovator.roles.innovatorRole.id, scenario.users.adamInnovator.roles.innovatorRole.id],
+        em
+      );
+      expect(res.size).toBe(2);
+      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toEqual({
+        ACTION: EmailNotificationPreferenceEnum.DAILY,
+        MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
+        SUPPORT: EmailNotificationPreferenceEnum.NEVER
+      });
+      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
+        ACTION: EmailNotificationPreferenceEnum.NEVER
+      });
+    });
+
+    it('Should only return the preferences if they are defined', async () => {
+      const res = await sut.getEmailPreferences(
+        [scenario.users.jamieMadroxAccessor.roles.aiRole.id, scenario.users.adamInnovator.roles.innovatorRole.id],
+        em
+      );
+      expect(res.size).toBe(1);
+      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
+        ACTION: EmailNotificationPreferenceEnum.NEVER
+      });
+    });
+
+    it('Should return empty map if no roles provided', async () => {
+      const res = await sut.getEmailPreferences([]);
+      expect(res.size).toBe(0);
     });
   });
 });

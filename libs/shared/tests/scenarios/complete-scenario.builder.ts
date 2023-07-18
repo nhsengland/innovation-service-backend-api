@@ -17,6 +17,7 @@ import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.b
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
+import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
@@ -24,7 +25,6 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
-import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -117,7 +117,7 @@ export class CompleteScenarioBuilder {
       // Belongs to medTechOrgUnit
       const scottQualifyingAccessor = await new UserBuilder(entityManager)
         .setName('Scott Qualifying Accessor')
-        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'accessorRole', medTechOrg.id, medTechOrgUnit.id)
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', medTechOrg.id, medTechOrgUnit.id)
         .save();
 
       // Sarah Qualifying Accessor specs:
@@ -694,7 +694,7 @@ export class CompleteScenarioBuilder {
           },
           scottQualifyingAccessor: {
             ...scottQualifyingAccessor,
-            roles: { accessorRole: samAccessor.roles['accessorRole']! },
+            roles: { qaRole: scottQualifyingAccessor.roles['qaRole']! },
             organisations: {
               medTechOrg: {
                 ...scottQualifyingAccessor.organisations['MedTech Organisation']!,

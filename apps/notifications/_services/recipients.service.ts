@@ -1089,18 +1089,21 @@ export class RecipientsService extends BaseService {
 
   /**
    * returns a map of user roles and their preferences
-   * @param roleIds
+   * @param roleIds the role ids
+   * @param entityManager optionally pass an entity manager
    */
   async getEmailPreferences(
-    roleIds: string[]
+    roleIds: string[],
+    entityManager?: EntityManager
   ): Promise<Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
     if (!roleIds.length) {
       return new Map();
     }
 
     const res = new Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>();
-
-    const preferences = await this.sqlConnection
+    const preferences = await em
       .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
       .where('notificationPreference.user_role_id IN (:...roleIds)', { roleIds })
       .getMany();
