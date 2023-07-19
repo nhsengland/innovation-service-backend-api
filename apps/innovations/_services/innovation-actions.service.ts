@@ -6,7 +6,6 @@ import {
   InnovationEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
-  UserEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
 import {
@@ -63,7 +62,9 @@ export class InnovationActionsService extends BaseService {
       allActions?: boolean;
       fields: 'notifications'[];
     },
-    pagination: PaginationQueryParamsType<'displayId' | 'section' | 'innovationName' | 'createdAt' | 'status'>,
+    pagination: PaginationQueryParamsType<
+      'displayId' | 'section' | 'innovationName' | 'createdAt' | 'updatedAt' | 'status'
+    >,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
@@ -406,9 +407,9 @@ export class InnovationActionsService extends BaseService {
 
     let lastUpdatedByUserName = '[deleted user]';
     if (dbAction.updatedByUserRole && dbAction.updatedByUserRole.user.status !== UserStatusEnum.DELETED) {
-      lastUpdatedByUserName =
-        (await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId))?.displayName ||
-        'unknown user';
+      lastUpdatedByUserName = (
+        await this.identityProviderService.getUserInfo(dbAction.updatedByUserRole.user.identityId)
+      ).displayName;
     }
 
     return {
@@ -443,7 +444,6 @@ export class InnovationActionsService extends BaseService {
   }
 
   async createAction(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     data: { section: CurrentCatalogTypes.InnovationSections; description: string },
@@ -484,8 +484,8 @@ export class InnovationActionsService extends BaseService {
       description: data.description,
       status: InnovationActionStatusEnum.REQUESTED,
       innovationSection: InnovationSectionEntity.new({ id: innovationSection.id }),
-      createdBy: user.id,
-      updatedBy: user.id,
+      createdBy: domainContext.id,
+      updatedBy: domainContext.id,
       createdByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id }),
       updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
     });
@@ -693,6 +693,7 @@ export class InnovationActionsService extends BaseService {
       case InnovationActionStatusEnum.DECLINED:
         return `Action ${dbAction.displayId} declined`;
       // TODO this should be reviewed as this never happens in current implementation
+      /* c8 ignore next 2 */
       default:
         return `Action ${dbAction.displayId} updated`;
     }
@@ -703,12 +704,11 @@ export class InnovationActionsService extends BaseService {
     innovationId: string,
     dbAction: InnovationActionEntity,
     data: { status: InnovationActionStatusEnum; message?: string },
-    entityManager?: EntityManager
+    entityManager: EntityManager
   ): Promise<InnovationActionEntity> {
-    const connection = entityManager ?? this.sqlConnection.manager;
     const user = { id: domainContext.id, identityId: domainContext.identityId };
 
-    return connection.transaction(async transaction => {
+    return entityManager.transaction(async transaction => {
       let thread;
 
       if (data.message) {
@@ -726,17 +726,12 @@ export class InnovationActionsService extends BaseService {
       }
 
       if (data.status === InnovationActionStatusEnum.DECLINED) {
-        const actionCreatedBy = await connection
-          .createQueryBuilder(UserEntity, 'user')
-          .where('user.id = :id', { id: dbAction.createdBy })
-          .getOne();
-
         await this.domainService.innovations.addActivityLog(
           transaction,
           { innovationId, activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE, domainContext },
           {
             actionId: dbAction.id,
-            interveningUserId: actionCreatedBy?.id || '',
+            interveningUserId: dbAction.createdBy,
             comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
           }
         );

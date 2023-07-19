@@ -249,8 +249,8 @@ export class CompleteScenarioBuilder {
       const johnInnovationActionByAliceSubmitted = await new InnovationActionBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
         .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
-        .setUpdatedBy(aliceQualifyingAccessor.id)
-        .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(johnInnovator.id)
+        .setUpdatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .setSupport(johnInnovationSupportByHealthOrgUnit.id)
         .setStatus(InnovationActionStatusEnum.SUBMITTED)
@@ -510,6 +510,7 @@ export class CompleteScenarioBuilder {
       const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
         .setOwner(ottoOctaviusInnovator.id)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
+        .addSection('INNOVATION_DESCRIPTION')
         .save();
 
       const brainComputerInterfaceInnovationAssessment = await new InnovationAssessmentBuilder(entityManager)
