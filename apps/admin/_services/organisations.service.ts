@@ -252,7 +252,7 @@ export class OrganisationsService extends BaseService {
       .innerJoin('ur.user', 'user')
       .where('ur.user_id IN (:...userIds)', { userIds })
       .andWhere('ur.organisation_unit_id = :unitId', { unitId }) //ensure users have role in unit
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.LOCKED })
       .getMany();
 
     // unlock locked roles of selected users
