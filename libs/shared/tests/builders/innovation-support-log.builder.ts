@@ -14,6 +14,7 @@ export type TestInnovationSupportLogType = {
   innovationSupportStatus: string;
   createdBy: string;
   createdAt: Date;
+  params?: { title?: string };
 };
 
 export class InnovationSupportLogBuilder extends BaseBuilder {
@@ -22,6 +23,7 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
   constructor(entityManager: EntityManager) {
     super(entityManager);
     this.supportLog = {
+      type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
       innovationSupportStatus: InnovationSupportStatusEnum.UNASSIGNED,
       description: randText({ charCount: 10 })
     };
@@ -40,6 +42,17 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
   setCreatedBy(user: TestUserType, role: RoleType): this {
     this.supportLog.createdBy = user.id;
     this.supportLog.createdByUserRole = role;
+    this.supportLog.organisationUnit = role.organisationUnit;
+    return this;
+  }
+
+  setLogType(type: InnovationSupportLogTypeEnum): this {
+    this.supportLog.type = type;
+    return this;
+  }
+
+  setParams(params: { title?: string }): this {
+    this.supportLog.params = params;
     return this;
   }
 
@@ -60,7 +73,8 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
       description: savedLog.description,
       innovationSupportStatus: savedLog.innovationSupportStatus,
       createdAt: savedLog.createdAt,
-      createdBy: savedLog.createdBy
+      createdBy: savedLog.createdBy,
+      params: savedLog.params ?? undefined
     };
   }
 }
