@@ -844,7 +844,7 @@ export class InnovationSupportsService extends BaseService {
             }
           });
           break;
-        case InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION:
+        case InnovationSupportLogTypeEnum.PROGRESS_UPDATE:
           const files = await this.innovationFileService.getFilesList(
             innovationId,
             { contextId: supportLog.id },
