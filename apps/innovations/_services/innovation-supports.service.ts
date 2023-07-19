@@ -845,12 +845,7 @@ export class InnovationSupportsService extends BaseService {
           });
           break;
         case InnovationSupportLogTypeEnum.PROGRESS_UPDATE:
-          const files = await this.innovationFileService.getFilesList(
-            innovationId,
-            { contextId: supportLog.id },
-            { skip: 0, take: 1, order: { createdAt: 'ASC' } }
-          );
-          const file = files.data[0];
+          const file = await this.getProgressUpdateFile(innovationId, supportLog.id);
 
           summary.push({
             ...defaultSummary,
@@ -953,6 +948,46 @@ export class InnovationSupportsService extends BaseService {
     });
   }
 
+  async deleteProgressUpdate(
+    domainContext: DomainContextType,
+    innovationId: string,
+    progressId: string,
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbProgress = await connection
+      .createQueryBuilder(InnovationSupportLogEntity, 'log')
+      .select(['log.id', 'unit.id'])
+      .innerJoin('log.organisationUnit', 'unit')
+      .where('log.id = :progressId', { progressId })
+      .getOne();
+
+    if (!dbProgress) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND);
+    }
+
+    if (dbProgress.organisationUnit.id !== domainContext.organisation?.organisationUnit?.id) {
+      throw new UnprocessableEntityError(
+        InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_DELETE_MUST_BE_FROM_UNIT
+      );
+    }
+
+    await connection.transaction(async transaction => {
+      const file = await this.getProgressUpdateFile(innovationId, progressId);
+      if (file) {
+        await this.innovationFileService.deleteFile(domainContext, file.id, transaction);
+      }
+
+      const now = new Date();
+      await transaction.update(
+        InnovationSupportLogEntity,
+        { id: progressId },
+        { updatedAt: now, deletedAt: now, updatedBy: domainContext.id }
+      );
+    });
+  }
+
   private async fetchSupportLogs(
     innovationId: string,
     type?: InnovationSupportLogTypeEnum
@@ -974,6 +1009,15 @@ export class InnovationSupportsService extends BaseService {
     supportQuery.orderBy('supports.createdAt', 'ASC');
 
     return await supportQuery.getMany();
+  }
+
+  private async getProgressUpdateFile(innovationId: string, progressId: string) {
+    const files = await this.innovationFileService.getFilesList(
+      innovationId,
+      { contextId: progressId },
+      { skip: 0, take: 1, order: { createdAt: 'ASC' } }
+    );
+    return files.data[0];
   }
 
   private async getSuggestedUnitsInfoMap(innovationId: string): Promise<Map<string, { id: string; name: string }>> {

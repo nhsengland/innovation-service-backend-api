@@ -1,13 +1,14 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randSoonDate } from '@ngneat/falso';
+import { randSoonDate, randText } from '@ngneat/falso';
 import {
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTransferStatusEnum
 } from '../../enums/innovation.enums';
@@ -419,6 +420,32 @@ export class CompleteScenarioBuilder {
         .setCreatedBy(johnInnovator)
         .save();
 
+      // Progress updates on John innovation
+      const johnInnovationAliceProgressUpdate = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
+        .setParams({ title: randText() })
+        .save();
+
+      const johnInnovationIngridProgressUpdateWithFile = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(ingridAccessor, ingridAccessor.roles['accessorRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
+        .setParams({ title: randText() })
+        .save();
+
+      const johnInnovationProgressUpdateFileUploadedByIngrid = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovationIngridProgressUpdateWithFile.id,
+          type: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        })
+        .setCreatedByUserRole(ingridAccessor.roles['accessorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -595,9 +622,14 @@ export class CompleteScenarioBuilder {
                   innovationFileByIngrid: johnInnovationInnovationFileUploadedByIngrid,
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
                   innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser,
-                  innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn
+                  innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn,
+                  progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid
                 },
-                transfer: johnInnovationTransferToJane
+                transfer: johnInnovationTransferToJane,
+                progressUpdates: {
+                  progressUpdateByAlice: johnInnovationAliceProgressUpdate,
+                  progressUpdateByIngridWithFile: johnInnovationIngridProgressUpdateWithFile
+                }
               }
             }
           },

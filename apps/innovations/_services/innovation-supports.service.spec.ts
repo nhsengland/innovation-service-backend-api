@@ -26,6 +26,7 @@ import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randFileExt, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
+import { InnovationFileService } from './innovation-file.service';
 import type { InnovationSupportsService } from './innovation-supports.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
@@ -669,6 +670,75 @@ describe('Innovations / _services / innovation-supports suite', () => {
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING));
+    });
+  });
+
+  describe('deleteProgressUpdate', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const fileServiceDeleteSpy = jest.spyOn(InnovationFileService.prototype, 'deleteFile').mockResolvedValue();
+
+    it('should delete a progress update without a file', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+      const progressUpdate = innovation.progressUpdates.progressUpdateByAlice;
+
+      await sut.deleteProgressUpdate(domainContext, innovation.id, progressUpdate.id, em);
+
+      const dbProgress = await em
+        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .withDeleted()
+        .where('log.id = :progressId', { progressId: progressUpdate.id })
+        .getOneOrFail();
+
+      expect(dbProgress).toMatchObject({
+        deletedAt: expect.any(Date),
+        updatedBy: domainContext.id
+      });
+      expect(fileServiceDeleteSpy).toBeCalledTimes(0);
+    });
+
+    it('should delete a progress update and the associated file', async () => {
+      const domainContext = DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole');
+      const progressUpdate = innovation.progressUpdates.progressUpdateByIngridWithFile;
+
+      await sut.deleteProgressUpdate(domainContext, innovation.id, progressUpdate.id, em);
+
+      const dbProgress = await em
+        .createQueryBuilder(InnovationSupportLogEntity, 'log')
+        .withDeleted()
+        .where('log.id = :progressId', { progressId: progressUpdate.id })
+        .getOneOrFail();
+
+      expect(dbProgress).toMatchObject({
+        deletedAt: expect.any(Date),
+        updatedBy: domainContext.id
+      });
+      expect(fileServiceDeleteSpy).toBeCalledTimes(1);
+    });
+
+    it("should throw error NotFoundError if the progress update doesn't exist", async () => {
+      await expect(() =>
+        sut.deleteProgressUpdate(
+          DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole'),
+          innovation.id,
+          randUuid(),
+          em
+        )
+      ).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_UPDATE_NOT_FOUND)
+      );
+    });
+
+    it('should throw error UnprocessableEntityError if the progress update was created by other unit', async () => {
+      await expect(() =>
+        sut.deleteProgressUpdate(
+          DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole'),
+          innovation.id,
+          innovation.progressUpdates.progressUpdateByAlice.id,
+          em
+        )
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_DELETE_MUST_BE_FROM_UNIT)
+      );
     });
   });
 });

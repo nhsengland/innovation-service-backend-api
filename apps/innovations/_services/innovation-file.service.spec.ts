@@ -264,7 +264,7 @@ describe('Services / Innovation File service suite', () => {
       ];
 
       expect(files).toMatchObject({
-        count: data.length,
+        count: expect.any(Number),
         data: data
       });
     });

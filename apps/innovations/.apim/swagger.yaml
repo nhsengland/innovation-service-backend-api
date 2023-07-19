@@ -3509,6 +3509,36 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  "/v1/{innovationId}/support-summary/progress-update/{progressId}":
+    delete:
+      description: Delete support summary progress update.
+      operationId: v1-innovation-support-summary-progress-delete
+      tags:
+        - "[v1] Innovation Support Summary"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: progressId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Deletes a progress update.
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/{innovationId}/support-summary/units/{unitId}":
     get:
       operationId: v1-innovation-support-summary-unit-info
