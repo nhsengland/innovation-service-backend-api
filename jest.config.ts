@@ -23,6 +23,7 @@ const jestBaseConfig: Config = {
     '.schemas.ts',
     '.types.ts',
     '.entity.ts',
+    '.dtos?.ts',
     'libs/shared/tests',
     'libs/data-access',
     'node_modules'

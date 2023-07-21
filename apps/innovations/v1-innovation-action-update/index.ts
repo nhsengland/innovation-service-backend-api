@@ -77,7 +77,8 @@ class V1InnovationActionUpdate {
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
         return;
       }
-
+      /* c8 ignore next 2 */
+      // This will never happen since validation ensures it's one of these roles. code coverage is not aware of this.
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);

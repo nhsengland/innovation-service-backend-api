@@ -546,6 +546,12 @@ export class CompleteScenarioBuilder {
         .setUpdatedBy(paulNeedsAssessor.id)
         .save();
 
+      const powerSourceInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(ottoOctaviusInnovator.id)
+        .setStatus(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT)
+        .addSection('INNOVATION_DESCRIPTION')
+        .save();
+
       return {
         users: {
           // Innovators
@@ -677,7 +683,8 @@ export class CompleteScenarioBuilder {
               brainComputerInterfaceInnovation: {
                 ...brainComputerInterfaceInnovation,
                 assessmentInProgress: brainComputerInterfaceInnovationAssessment
-              }
+              },
+              powerSourceInnovation: powerSourceInnovation
             }
           },
           // Accessors
