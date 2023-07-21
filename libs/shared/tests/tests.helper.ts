@@ -3,8 +3,8 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
-import { UserEntity, UserRoleEntity } from '../entities';
-import { UserStatusEnum } from '../enums';
+import { InnovationEntity, InnovationSectionEntity, UserEntity, UserRoleEntity } from '../entities';
+import { InnovationSectionStatusEnum, UserStatusEnum } from '../enums';
 import { NotFoundError, UserErrorsEnum } from '../errors';
 import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
@@ -12,6 +12,7 @@ import SHARED_SYMBOLS from '../services/symbols';
 import type { TestUserType } from './builders/user.builder';
 import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
+import { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export class TestsHelper {
   private sqlConnection: DataSource;
@@ -88,6 +89,19 @@ export class TestsHelper {
 
   async deactivateUserRole(roleId: string, em: EntityManager): Promise<void> {
     await em.getRepository(UserRoleEntity).update({ id: roleId }, { isActive: false });
+  }
+
+  async submitAllInnovationSections(innovationId: string, em: EntityManager): Promise<void> {
+    const sections: Partial<InnovationSectionEntity>[] = [];
+    for (const sectionEnum of CurrentCatalogTypes.InnovationSections) {
+      sections.push({
+        status: InnovationSectionStatusEnum.SUBMITTED,
+        section: sectionEnum,
+        innovation: InnovationEntity.new({ id: innovationId })
+      });
+
+      await em.getRepository(InnovationSectionEntity).save(sections);
+    }
   }
 
   private setupGlobalMocks(): void {

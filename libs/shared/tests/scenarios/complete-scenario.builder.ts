@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randSoonDate, randText } from '@ngneat/falso';
+import { randSoonDate, randUuid, randText } from '@ngneat/falso';
 import {
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
@@ -26,6 +26,8 @@ import { InnovationBuilder } from '../builders/innovation.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
+import { NotificationBuilder } from '../builders/notification.builder';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -81,6 +83,13 @@ export class CompleteScenarioBuilder {
       const medTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
         .addToOrganisation(medTechOrg.id)
         .setName('MedTech Org Unit')
+        .save();
+
+      // innovTech Organisation has one unit: InnovTech Org Unit
+      const innovTechOrg = await new OrganisationBuilder(entityManager).setName('InnovTech Organisation').save();
+      const innovTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(innovTechOrg.id)
+        .setName('InnovTech Org Unit')
         .save();
 
       // QAs and Accessors
@@ -325,6 +334,12 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationExportRequestStatusEnum.PENDING)
         .save();
 
+      const johnInnovationExportRequestBySam = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(samAccessor.id, medTechOrgUnit.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
+
       // John Innovation Files
       // Keep in mind that createdAt order of this files matter.
       const johnInnovationSectionFileUploadedByJohn = await new InnovationFileBuilder(entityManager)
@@ -420,6 +435,21 @@ export class CompleteScenarioBuilder {
         .setCreatedBy(johnInnovator)
         .save();
 
+      const johnInnovationNotificationFromMessage = await new NotificationBuilder(entityManager)
+        .addNotificationUser(johnInnovator)
+        .setInnovation(johnInnovation.id)
+        .setContext(
+          NotificationContextTypeEnum.THREAD,
+          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
+          randUuid()
+        )
+        .save();
+      
+      const johnInnovationNotificationFromSupport = await new NotificationBuilder(entityManager)
+        .addNotificationUser(johnInnovator)
+        .setInnovation(johnInnovation.id)
+        .setContext(NotificationContextTypeEnum.SUPPORT, NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, randUuid())
+        .save()
       // Progress updates on John innovation
       const johnInnovationAliceProgressUpdate = await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation)
@@ -460,6 +490,11 @@ export class CompleteScenarioBuilder {
         .addSection('INNOVATION_DESCRIPTION')
         .addSection('COST_OF_INNOVATION')
         .shareWith([healthOrg])
+        .save();
+
+      const adamInnovationEmpty = await new InnovationBuilder(entityManager)
+        .setOwner(adamInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .save();
 
       const adamInnovationTransferToJane = await new InnovationTransferBuilder(entityManager)
@@ -608,7 +643,8 @@ export class CompleteScenarioBuilder {
                   }
                 },
                 exportRequests: {
-                  requestByAlice: johnInnovationExportRequestByAlice
+                  requestByAlice: johnInnovationExportRequestByAlice,
+                  requestBySam: johnInnovationExportRequestBySam
                 },
                 collaborators: {
                   adamCollaborator: adamCollaborator,
@@ -633,6 +669,10 @@ export class CompleteScenarioBuilder {
                   progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid
                 },
                 transfer: johnInnovationTransferToJane,
+                notifications: {
+                  notificationsFromMessage: johnInnovationNotificationFromMessage,
+                  notificationFromSupport: johnInnovationNotificationFromSupport
+                },
                 progressUpdates: {
                   progressUpdateByAlice: johnInnovationAliceProgressUpdate,
                   progressUpdateByIngridWithFile: johnInnovationIngridProgressUpdateWithFile
@@ -661,7 +701,8 @@ export class CompleteScenarioBuilder {
                 supports: {
                   adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit
                 }
-              }
+              },
+              adamInnovationEmpty: adamInnovationEmpty
             }
           },
           sebastiaoDeletedInnovator: {
@@ -817,6 +858,12 @@ export class CompleteScenarioBuilder {
             ...medTechOrg,
             organisationUnits: {
               medTechOrgUnit: medTechOrgUnit
+            }
+          },
+          innovTechOrg: {
+            ...innovTechOrg,
+            organisationUnits: {
+              innovTechOrgUnit: innovTechOrgUnit
             }
           }
         }

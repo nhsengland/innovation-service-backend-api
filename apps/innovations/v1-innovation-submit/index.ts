@@ -35,11 +35,10 @@ class V1InnovationSubmit {
         .checkInnovatorType()
         .checkInnovation()
         .verify();
-      const requestUser = auth.getUserInfo();
+
       const domainContext = auth.getContext();
 
       const result = await innovationsService.submitInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId
       );
