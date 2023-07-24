@@ -1915,6 +1915,7 @@ export class InnovationsService extends BaseService {
     conditions: {
       notificationIds: string[];
       contextTypes: string[];
+      contextDetails: string[];
       contextIds: string[];
     },
     entityManager?: EntityManager
@@ -1927,6 +1928,7 @@ export class InnovationsService extends BaseService {
       notificationIds?: string[];
       contextIds?: string[];
       contextTypes?: string[];
+      contextDetails?: string[];
       organisationUnitId?: string;
     } = { roleId: domainContext.currentRole.id, innovationId };
 
@@ -1942,6 +1944,11 @@ export class InnovationsService extends BaseService {
     if (conditions.contextIds.length > 0) {
       query.andWhere('notification.contextId IN (:...contextIds)');
       params.contextIds = conditions.contextIds;
+    }
+
+    if (conditions.contextDetails.length > 0) {
+      query.andWhere('notification.contextDetail IN (:...contextDetails)');
+      params.contextDetails = conditions.contextDetails;
     }
 
     if (conditions.contextTypes.length > 0) {
