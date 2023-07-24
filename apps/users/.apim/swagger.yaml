@@ -409,6 +409,7 @@ paths:
                       - SUPPORT
                       - ACTION
                       - THREAD
+                      - DATA_SHARING
                       - COMMENT
                   description: The context types
                   default: []
@@ -476,6 +477,7 @@ paths:
                 - SUPPORT
                 - ACTION
                 - THREAD
+                - DATA_SHARING
                 - COMMENT
             description: The context types to filter by
             default: []
@@ -535,6 +537,7 @@ paths:
                             - SUPPORT
                             - ACTION
                             - THREAD
+                            - DATA_SHARING
                             - COMMENT
                           description: The notification context type
                         contextDetail:
@@ -563,6 +566,7 @@ paths:
                             - TRANSFER_PENDING
                             - TRANSFER_EXPIRED
                             - TRANSFER_REMINDER
+                            - INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED
                           description: The notification context detail
                         contextId:
                           type: string

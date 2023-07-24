@@ -107,7 +107,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationContextTypeEnum.INNOVATION,
+        type: NotificationContextTypeEnum.DATA_SHARING,
         detail: NotificationContextDetailEnum.INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED,
         id: this.inputData.innovationId
       },
@@ -135,7 +135,7 @@ export class InnovationOrganisationUnitsSuggestionHandler extends BaseHandler<
     this.inApp.push({
       innovationId: this.inputData.innovationId,
       context: {
-        type: NotificationContextTypeEnum.INNOVATION,
+        type: NotificationContextTypeEnum.DATA_SHARING,
         detail: NotificationContextDetailEnum.INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED,
         id: this.inputData.innovationId
       },

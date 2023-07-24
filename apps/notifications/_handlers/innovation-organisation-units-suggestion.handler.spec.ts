@@ -156,7 +156,7 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
       {
         innovationId: innovation.id,
         context: {
-          type: NotificationContextTypeEnum.INNOVATION,
+          type: NotificationContextTypeEnum.DATA_SHARING,
           detail: NotificationContextDetailEnum.INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED,
           id: innovation.id
         },
@@ -166,7 +166,7 @@ describe('Notifications / _handlers / innovation-organisation-units-suggestion h
       {
         innovationId: innovation.id,
         context: {
-          type: NotificationContextTypeEnum.INNOVATION,
+          type: NotificationContextTypeEnum.DATA_SHARING,
           detail: NotificationContextDetailEnum.INNOVATION_ORGANISATION_SUGGESTION_NOT_SHARED,
           id: innovation.id
         },
