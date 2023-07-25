@@ -11,7 +11,7 @@ export type TestInnovationSupportLogType = {
   id: string;
   type: InnovationSupportLogTypeEnum;
   description: string;
-  innovationSupportStatus: string;
+  innovationSupportStatus?: string;
   createdBy: string;
   createdAt: Date;
   params?: { title?: string };
@@ -71,7 +71,7 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
       id: savedLog.id,
       type: savedLog.type,
       description: savedLog.description,
-      innovationSupportStatus: savedLog.innovationSupportStatus,
+      innovationSupportStatus: savedLog.innovationSupportStatus ?? undefined,
       createdAt: savedLog.createdAt,
       createdBy: savedLog.createdBy,
       params: savedLog.params ?? undefined

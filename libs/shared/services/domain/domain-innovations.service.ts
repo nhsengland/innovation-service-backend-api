@@ -437,32 +437,51 @@ export class DomainInnovationsService {
   }
 
   /**
-   * This is a legacy support that should be replaced by the activities log in due time.
-   * For now it is still alive and is responsible fot storing the following actions:
+   * Responsible for storing the following actions:
    * - Accessors supports update
-   * - Accessors suggesting other organisations/units.
+   * - QA suggesting other organisations/units.
+   * - NA suggesting organisations/units
+   * - Admin completing support update while inactivating units
    */
   async addSupportLog(
     transactionManager: EntityManager,
-    user: { id: string; organisationUnitId: string; roleId: string },
-    innovation: { id: string },
-    supportStatus: InnovationSupportStatusEnum,
-    supportLog: {
-      type: InnovationSupportLogTypeEnum;
+    user: { id: string; roleId: string },
+    innovationId: string,
+    params: {
       description: string;
-      suggestedOrganisationUnits: string[];
-    }
+    } & (
+      | { type: InnovationSupportLogTypeEnum.STATUS_UPDATE; supportStatus: InnovationSupportStatusEnum; unitId: string }
+      | {
+          type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION;
+          supportStatus: InnovationSupportStatusEnum;
+          unitId: string;
+          suggestedOrganisationUnits: string[];
+        }
+      | {
+          type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE;
+          supportStatus: InnovationSupportStatusEnum;
+          unitId: string;
+          params: { title: string };
+        }
+      | { type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION; suggestedOrganisationUnits: string[] }
+    )
   ): Promise<{ id: string }> {
     const supportLogData = InnovationSupportLogEntity.new({
-      innovation: InnovationEntity.new({ id: innovation.id }),
-      organisationUnit: OrganisationUnitEntity.new({ id: user.organisationUnitId }),
-      innovationSupportStatus: supportStatus,
-      description: supportLog.description,
-      type: supportLog.type,
-      suggestedOrganisationUnits: supportLog.suggestedOrganisationUnits?.map(id => OrganisationUnitEntity.new({ id })),
+      innovation: InnovationEntity.new({ id: innovationId }),
+      description: params.description,
+      type: params.type,
       createdBy: user.id,
       createdByUserRole: UserRoleEntity.new({ id: user.roleId }),
-      updatedBy: user.id
+      updatedBy: user.id,
+      ...(params.type !== InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION && {
+        organisationUnit: OrganisationUnitEntity.new({ id: params.unitId }),
+        innovationSupportStatus: params.supportStatus
+      }),
+      ...((params.type === InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION ||
+        params.type === InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION) && {
+        suggestedOrganisationUnits: params.suggestedOrganisationUnits.map(id => OrganisationUnitEntity.new({ id }))
+      }),
+      ...(params.type === InnovationSupportLogTypeEnum.PROGRESS_UPDATE && { params: params.params })
     });
 
     try {

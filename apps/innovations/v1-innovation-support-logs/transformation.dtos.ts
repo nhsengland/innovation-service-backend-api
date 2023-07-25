@@ -4,7 +4,7 @@ export type ResponseDTO = {
   id: string;
   type: InnovationSupportLogTypeEnum;
   description: string;
-  innovationSupportStatus: string;
+  innovationSupportStatus?: string;
   createdBy: string;
   createdAt: Date;
   organisationUnit: null | {
