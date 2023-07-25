@@ -8,6 +8,7 @@ export type TestOrganisationUnitType = {
   name: string;
   acronym: string;
   isShadow: boolean;
+  isActive: boolean;
 };
 
 export class OrganisationUnitBuilder extends BaseBuilder {
@@ -41,6 +42,11 @@ export class OrganisationUnitBuilder extends BaseBuilder {
     return this;
   }
 
+  setInactivatedAt(inactivatedAt: Date): this {
+    this.organisationUnit.inactivatedAt = inactivatedAt;
+    return this;
+  }
+
   async save(): Promise<TestOrganisationUnitType> {
     if (!this.organisationUnit.organisation) {
       throw new Error('Organisation unit needs to be associated to an organisation');
@@ -59,7 +65,8 @@ export class OrganisationUnitBuilder extends BaseBuilder {
       id: result.id,
       name: result.name,
       acronym: result.acronym,
-      isShadow: result.isShadow
+      isShadow: result.isShadow,
+      isActive: !result.inactivatedAt
     };
   }
 }

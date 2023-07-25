@@ -92,6 +92,16 @@ export class CompleteScenarioBuilder {
         .setName('InnovTech Org Unit')
         .save();
 
+      const inactiveEmptyOrg = await new OrganisationBuilder(entityManager)
+        .setName('Inactive Empty Organisation')
+        .setInactivatedAt(new Date())
+        .save();
+      const inactiveEmptyOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(inactiveEmptyOrg.id)
+        .setName('Inactive Empty Org Unit')
+        .setInactivatedAt(new Date())
+        .save()
+
       // QAs and Accessors
 
       // Alice Qualifying Accessor specs:
@@ -444,12 +454,16 @@ export class CompleteScenarioBuilder {
           randUuid()
         )
         .save();
-      
+
       const johnInnovationNotificationFromSupport = await new NotificationBuilder(entityManager)
         .addNotificationUser(johnInnovator)
         .setInnovation(johnInnovation.id)
-        .setContext(NotificationContextTypeEnum.SUPPORT, NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE, randUuid())
-        .save()
+        .setContext(
+          NotificationContextTypeEnum.SUPPORT,
+          NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
+          randUuid()
+        )
+        .save();
       // Progress updates on John innovation
       const johnInnovationAliceProgressUpdate = await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation)
@@ -864,6 +878,12 @@ export class CompleteScenarioBuilder {
             ...innovTechOrg,
             organisationUnits: {
               innovTechOrgUnit: innovTechOrgUnit
+            }
+          },
+          inactiveEmptyOrg: {
+            ...inactiveEmptyOrg ,
+            organisationUnits: {
+              inactiveEmptyOrgUnit: inactiveEmptyOrgUnit 
             }
           }
         }
