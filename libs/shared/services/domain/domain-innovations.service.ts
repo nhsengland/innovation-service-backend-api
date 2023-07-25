@@ -36,14 +36,7 @@ import {
 } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type {
-  ActivitiesParamsType,
-  DomainContextType,
-  SupportLogAccessorSuggestion,
-  SupportLogAssessmentSuggestion,
-  SupportLogProgressUpdate,
-  SupportLogStatusUpdate
-} from '../../types';
+import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
 
@@ -454,14 +447,7 @@ export class DomainInnovationsService {
     transactionManager: EntityManager,
     user: { id: string; roleId: string },
     innovationId: string,
-    params: {
-      description: string;
-    } & (
-      | SupportLogStatusUpdate
-      | SupportLogAccessorSuggestion
-      | SupportLogProgressUpdate
-      | SupportLogAssessmentSuggestion
-    )
+    params: SupportLogParams
   ): Promise<{ id: string }> {
     const supportLogData = InnovationSupportLogEntity.new({
       innovation: InnovationEntity.new({ id: innovationId }),

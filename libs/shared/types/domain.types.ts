@@ -312,6 +312,10 @@ export type IdentityUserInfo = {
 };
 
 // Support Log Types
+export type SupportLogParams = {
+  description: string;
+} & (SupportLogStatusUpdate | SupportLogAccessorSuggestion | SupportLogProgressUpdate | SupportLogAssessmentSuggestion);
+
 export type SupportLogStatusUpdate = {
   type: InnovationSupportLogTypeEnum.STATUS_UPDATE;
   supportStatus: InnovationSupportStatusEnum;
