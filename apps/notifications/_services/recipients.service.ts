@@ -778,6 +778,7 @@ export class RecipientsService extends BaseService {
       })
 
       // only active supports
+      .andWhere('innovation.status != :innovationStatus', { innovationStatus: InnovationStatusEnum.PAUSED })
       .andWhere('supports.status IN (:...statuses)', {
         statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
       })
