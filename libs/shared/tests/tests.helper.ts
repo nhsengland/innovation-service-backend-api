@@ -6,13 +6,13 @@ import { container } from '../config/inversify.config';
 import { InnovationEntity, InnovationSectionEntity, UserEntity, UserRoleEntity } from '../entities';
 import { InnovationSectionStatusEnum, UserStatusEnum } from '../enums';
 import { NotFoundError, UserErrorsEnum } from '../errors';
+import { CurrentCatalogTypes } from '../schemas/innovation-record';
 import { IdentityProviderService } from '../services';
 import type { SQLConnectionService } from '../services/storage/sql-connection.service';
 import SHARED_SYMBOLS from '../services/symbols';
 import type { TestUserType } from './builders/user.builder';
 import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
-import { CurrentCatalogTypes } from '../schemas/innovation-record';
 
 export class TestsHelper {
   private sqlConnection: DataSource;
@@ -42,7 +42,14 @@ export class TestsHelper {
       EXEC sp_MSForEachTable 'ALTER TABLE ? NOCHECK CONSTRAINT all'
       EXEC sp_MSForEachTable 'SET QUOTED_IDENTIFIER ON; IF OBJECT_ID(''?'') NOT IN (ISNULL(OBJECT_ID(''[dbo].[Migrations]''),0)) DELETE FROM ?'
       EXEC sp_MSForEachTable 'ALTER TABLE ? WITH CHECK CHECK CONSTRAINT all'
-      EXEC sp_MSForEachTable 'IF OBJECTPROPERTY(OBJECT_ID(''?''), ''TableTemporalType'') = 2 ALTER TABLE ? SET (SYSTEM_VERSIONING = ON)';
+      EXEC sp_MSForEachTable @COMMAND1 = 'DECLARE @Original nvarchar(max)
+        DECLARE @TableName nvarchar(max)
+        DECLARE @SQLString NVARCHAR(max);  
+        SET @Original = ''?''
+        SET @TableName = REPLACE(''?'',''_history'','''')
+        SET @SQLString = ''ALTER TABLE '' + @TableName + '' SET ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = '' +  @Original +'', History_retention_period = 7 YEAR))''
+        EXEC sp_executesql @SQLString
+      ', @WHEREAND='AND object_name(object_id) LIKE ''%_history%''';
     `);
   }
 
