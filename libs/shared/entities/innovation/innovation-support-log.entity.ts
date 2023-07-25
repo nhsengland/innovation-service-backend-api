@@ -16,8 +16,8 @@ export class InnovationSupportLogEntity extends BaseEntity {
   @Column({ name: 'type' })
   type: InnovationSupportLogTypeEnum;
 
-  @Column({ name: 'innovation_support_status' })
-  innovationSupportStatus: InnovationSupportStatusEnum;
+  @Column({ name: 'innovation_support_status', type: 'simple-enum', enum: InnovationSupportStatusEnum, nullable: true })
+  innovationSupportStatus: null | InnovationSupportStatusEnum;
 
   @Column({ name: 'description' })
   description: string;
@@ -31,7 +31,7 @@ export class InnovationSupportLogEntity extends BaseEntity {
 
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })
-  organisationUnit: OrganisationUnitEntity;
+  organisationUnit: null | OrganisationUnitEntity;
 
   @ManyToOne(() => UserRoleEntity)
   @JoinColumn({ name: 'created_by_user_role_id' })
@@ -51,7 +51,7 @@ export class InnovationSupportLogEntity extends BaseEntity {
       referencedColumnName: 'id'
     }
   })
-  suggestedOrganisationUnits: OrganisationUnitEntity[];
+  suggestedOrganisationUnits: null | OrganisationUnitEntity[];
 
   static new(data: Partial<InnovationSupportLogEntity>): InnovationSupportLogEntity {
     const instance = new InnovationSupportLogEntity();

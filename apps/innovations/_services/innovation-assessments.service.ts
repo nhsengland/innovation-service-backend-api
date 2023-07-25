@@ -11,6 +11,7 @@ import {
 import {
   ActivityEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   MaturityLevelCatalogueType,
   NotifierTypeEnum,
@@ -252,6 +253,24 @@ export class InnovationAssessmentsService extends BaseService {
       assessment.updatedBy = domainContext.id;
 
       if (data.suggestedOrganisationUnitsIds) {
+        const currentOrgSuggestionsIds = assessment.organisationUnits.map(u => u.id);
+        const newSuggestions = data.suggestedOrganisationUnitsIds.filter(
+          unitId => !currentOrgSuggestionsIds.includes(unitId)
+        );
+
+        if (newSuggestions.length > 0) {
+          await this.domainService.innovations.addSupportLog(
+            transaction,
+            { id: domainContext.id, roleId: domainContext.currentRole.id },
+            innovationId,
+            {
+              type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION,
+              description: 'NA suggested units',
+              suggestedOrganisationUnits: newSuggestions
+            }
+          );
+        }
+
         assessment.organisationUnits = data.suggestedOrganisationUnitsIds.map(id => OrganisationUnitEntity.new({ id }));
       }
 

@@ -564,35 +564,39 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it('should create a support summary when a unit is engaging without a file', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
       const data = { title: randText(), description: randText() };
+      const dbProgressId = randUuid();
+
+      supportLogSpy.mockResolvedValue({ id: dbProgressId });
 
       await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
-      const dbProgress = await em
-        .createQueryBuilder(InnovationSupportLogEntity, 'log')
-        .where('log.innovation_id = :innovationId', { innovationId })
-        .andWhere('log.organisation_unit_id = :unitId', { unitId: domainContext.organisation?.organisationUnit?.id })
-        .andWhere('log.description = :description', { description: data.description })
-        .getOneOrFail();
-
       const fileExists = await em
         .createQueryBuilder(InnovationFileEntity, 'file')
-        .where('file.contextId = :contextId', { contextId: dbProgress.id })
+        .where('file.contextId = :contextId', { contextId: dbProgressId })
         .andWhere('file.contextType = :contextType', {
           contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
         })
         .andWhere('file.innovation = :innovationId', { innovationId })
         .getCount();
 
-      expect(dbProgress).toMatchObject({
-        params: { title: data.title },
-        description: data.description,
-        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE
-      });
+      expect(supportLogSpy).toHaveBeenCalledWith(
+        em,
+        { id: domainContext.id, roleId: domainContext.currentRole.id },
+        innovationId,
+        {
+          type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
+          description: data.description,
+          supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
+          unitId: domainContext.organisation?.organisationUnit?.id,
+          params: { title: data.title }
+        }
+      );
       expect(fileExists).toBe(0);
     });
 
     it('should create a support summary when a unit is engaging with a file', async () => {
       const domainContext = DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole');
+      const dbProgressId = randUuid();
       const data = {
         title: randText(),
         description: randText(),
@@ -607,29 +611,31 @@ describe('Innovations / _services / innovation-supports suite', () => {
         }
       };
 
-      await sut.createProgressUpdate(domainContext, innovationId, data, em);
+      supportLogSpy.mockResolvedValue({ id: dbProgressId });
 
-      const dbProgress = await em
-        .createQueryBuilder(InnovationSupportLogEntity, 'log')
-        .where('log.innovation_id = :innovationId', { innovationId })
-        .andWhere('log.organisation_unit_id = :unitId', { unitId: domainContext.organisation?.organisationUnit?.id })
-        .andWhere('log.description = :description', { description: data.description })
-        .getOneOrFail();
+      await sut.createProgressUpdate(domainContext, innovationId, data, em);
 
       const fileExists = await em
         .createQueryBuilder(InnovationFileEntity, 'file')
-        .where('file.contextId = :contextId', { contextId: dbProgress.id })
+        .where('file.contextId = :contextId', { contextId: dbProgressId })
         .andWhere('file.contextType = :contextType', {
           contextType: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
         })
         .andWhere('file.innovation = :innovationId', { innovationId })
         .getCount();
 
-      expect(dbProgress).toMatchObject({
-        params: { title: data.title },
-        description: data.description,
-        type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE
-      });
+      expect(supportLogSpy).toHaveBeenCalledWith(
+        em,
+        { id: domainContext.id, roleId: domainContext.currentRole.id },
+        innovationId,
+        {
+          type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE,
+          description: data.description,
+          supportStatus: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.status,
+          unitId: domainContext.organisation?.organisationUnit?.id,
+          params: { title: data.title }
+        }
+      );
       expect(fileExists).toBe(1);
     });
 

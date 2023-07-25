@@ -198,13 +198,13 @@ export class OrganisationsService extends BaseService {
       for (const support of supportsToComplete) {
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: requestUser.id, organisationUnitId: unitId, roleId: domainContext.currentRole.id },
-          { id: support.innovation.id },
-          support.status,
+          { id: requestUser.id, roleId: domainContext.currentRole.id },
+          support.innovation.id,
           {
             type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
-            description: '',
-            suggestedOrganisationUnits: []
+            supportStatus: support.status,
+            description: 'Unit inactivated',
+            unitId
           }
         );
 
