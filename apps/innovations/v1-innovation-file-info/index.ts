@@ -22,15 +22,17 @@ class V1InnovationFileInfo {
     const innovationFileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
 
     try {
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+
       const auth = await authorizationService
         .validate(context)
+        .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
-
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       const result = await innovationFileService.getFileInfo(auth.getContext(), params.innovationId, params.fileId);
 

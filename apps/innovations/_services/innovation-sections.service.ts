@@ -244,7 +244,7 @@ export class InnovationSectionsService extends BaseService {
         ? InnovationActionStatusEnum.SUBMITTED
         : InnovationActionStatusEnum.REQUESTED;
 
-      const actionsQuery = connection 
+      const actionsQuery = connection
         .createQueryBuilder(InnovationActionEntity, 'actions')
         .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
         .andWhere('actions.status = :requestedStatus', { requestedStatus });
@@ -302,7 +302,6 @@ export class InnovationSectionsService extends BaseService {
     dataToUpdate: { [key: string]: any },
     entityManager?: EntityManager
   ): Promise<{ id: string | undefined }> {
-
     const connection = entityManager ?? this.sqlConnection.manager;
 
     const sectionExists = CurrentCatalogTypes.InnovationSections.find(item => item === sectionKey);
@@ -310,7 +309,7 @@ export class InnovationSectionsService extends BaseService {
       throw new InternalServerError(InnovationErrorsEnum.INNOVATION_SECTIONS_CONFIG_UNAVAILABLE);
     }
 
-    const innovation = await connection 
+    const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -320,7 +319,7 @@ export class InnovationSectionsService extends BaseService {
     }
 
     // We always have at most one section per sectionKey, so we can just get the first one.
-    let section = await connection 
+    let section = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .where('section.innovation_id = :innovationId', { innovationId })
       .andWhere('section.section = :sectionKey', { sectionKey })
@@ -557,7 +556,7 @@ export class InnovationSectionsService extends BaseService {
     // Check if innovation exists and is of current version (throws error if it doesn't)
     await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version, connection);
 
-    const section = await connection 
+    const section = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId: innovationId })
@@ -604,7 +603,7 @@ export class InnovationSectionsService extends BaseService {
     user: { id: string },
     innovationId: string,
     evidenceId: string,
-    evidenceData: CurrentEvidenceType
+    evidenceData: Omit<CurrentEvidenceType, 'id'>
   ): Promise<void> {
     const document = await this.getInnovationDocument(innovationId, CurrentDocumentConfig.version);
 
