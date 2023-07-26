@@ -671,7 +671,10 @@ export class InnovationSupportsService extends BaseService {
   }
 
   // Innovation Support Summary
-  async getSupportSummaryList(innovationId: string): Promise<
+  async getSupportSummaryList(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<
     Record<
       keyof typeof InnovationSupportSummaryTypeEnum,
       {
@@ -681,8 +684,10 @@ export class InnovationSupportsService extends BaseService {
       }[]
     >
   > {
-    const suggestedUnitsInfoMap = await this.getSuggestedUnitsInfoMap(innovationId);
-    const unitsSupportInformationMap = await this.getSuggestedUnitsSupportInfoMap(innovationId);
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const suggestedUnitsInfoMap = await this.getSuggestedUnitsInfoMap(innovationId, em);
+    const unitsSupportInformationMap = await this.getSuggestedUnitsSupportInfoMap(innovationId, em);
 
     const suggestedIds = new Set<string>();
     const engaging: SuggestedUnitType[] = [];
@@ -743,8 +748,14 @@ export class InnovationSupportsService extends BaseService {
     };
   }
 
-  async getSupportSummaryUnitInfo(innovationId: string, unitId: string): Promise<SupportSummaryUnitInfo[]> {
-    const innovation = await this.sqlConnection
+  async getSupportSummaryUnitInfo(
+    innovationId: string,
+    unitId: string,
+    entityManager?: EntityManager
+  ): Promise<SupportSummaryUnitInfo[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const innovation = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'owner.id'])
       .leftJoin('innovation.owner', 'owner')
@@ -752,10 +763,10 @@ export class InnovationSupportsService extends BaseService {
       .getOne();
 
     if (!innovation) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const unitSupportLogs = await this.sqlConnection
+    const unitSupportLogs = await em
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
       .select([
         'log.id',
@@ -1002,10 +1013,13 @@ export class InnovationSupportsService extends BaseService {
     return files.data[0];
   }
 
-  private async getSuggestedUnitsInfoMap(innovationId: string): Promise<Map<string, { id: string; name: string }>> {
+  private async getSuggestedUnitsInfoMap(
+    innovationId: string,
+    em: EntityManager
+  ): Promise<Map<string, { id: string; name: string }>> {
     const suggestedUnitsInfo: { id: string; name: string }[] = [
-      ...(await this.getSuggestedUnitsByNA(innovationId)).map(u => ({ id: u.id, name: u.name })),
-      ...(await this.getSuggestedUnitsByQA(innovationId))
+      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({ id: u.id, name: u.name })),
+      ...(await this.getSuggestedUnitsByQA(innovationId, em))
     ];
 
     return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
@@ -1018,20 +1032,15 @@ export class InnovationSupportsService extends BaseService {
    */
   private async getSuggestedUnitsByNA(
     innovationId: string,
-    unitId?: string
+    em: EntityManager
   ): Promise<{ id: string; name: string; assessmentId: string; updatedAt: Date; assignTo: string }[]> {
-    const query = this.sqlConnection
+    const suggestedByNA = await em
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .select(['assessment.id', 'assessment.updatedAt', 'assignedTo.id', 'units.id', 'units.name'])
       .leftJoin('assessment.organisationUnits', 'units')
       .innerJoin('assessment.assignTo', 'assignedTo')
-      .where('assessment.innovation_id = :innovationId', { innovationId });
-
-    if (unitId) {
-      query.andWhere('units.id = :unitId', { unitId });
-    }
-
-    const suggestedByNA = await query.getOne();
+      .where('assessment.innovation_id = :innovationId', { innovationId })
+      .getOne();
 
     if (!suggestedByNA) {
       return [];
@@ -1046,8 +1055,11 @@ export class InnovationSupportsService extends BaseService {
     }));
   }
 
-  private async getSuggestedUnitsByQA(innovationId: string): Promise<{ id: string; name: string }[]> {
-    const suggestedByQA = await this.sqlConnection
+  private async getSuggestedUnitsByQA(
+    innovationId: string,
+    em: EntityManager
+  ): Promise<{ id: string; name: string }[]> {
+    const suggestedByQA = await em
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
       .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name'])
       .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
@@ -1063,9 +1075,10 @@ export class InnovationSupportsService extends BaseService {
   }
 
   private async getSuggestedUnitsSupportInfoMap(
-    innovationId: string
+    innovationId: string,
+    em: EntityManager
   ): Promise<Map<string, UnitSupportInformationType>> {
-    const unitsSupportInformation: UnitSupportInformationType[] = await this.sqlConnection.query(
+    const unitsSupportInformation: UnitSupportInformationType[] = await em.query(
       `
       SELECT s.id, s.status, s.updated_at as updatedAt, ou.id as unitId, ou.name as unitName, t.startSupport, t.endSupport
       FROM innovation_support s

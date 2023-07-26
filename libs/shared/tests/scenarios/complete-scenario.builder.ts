@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randSoonDate, randUuid, randText } from '@ngneat/falso';
+import { randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
@@ -12,6 +12,7 @@ import {
   InnovationSupportStatusEnum,
   InnovationTransferStatusEnum
 } from '../../enums/innovation.enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
@@ -23,11 +24,10 @@ import { InnovationSupportBuilder } from '../builders/innovation-support.builder
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
+import { NotificationBuilder } from '../builders/notification.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
-import { NotificationBuilder } from '../builders/notification.builder';
-import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -91,6 +91,10 @@ export class CompleteScenarioBuilder {
         .addToOrganisation(innovTechOrg.id)
         .setName('InnovTech Org Unit')
         .save();
+      const innovTechHeavyOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(innovTechOrg.id)
+        .setName('InnovTech Heavy Org Unit')
+        .save();
 
       const inactiveEmptyOrg = await new OrganisationBuilder(entityManager)
         .setName('Inactive Empty Organisation')
@@ -100,7 +104,7 @@ export class CompleteScenarioBuilder {
         .addToOrganisation(inactiveEmptyOrg.id)
         .setName('Inactive Empty Org Unit')
         .setInactivatedAt(new Date())
-        .save()
+        .save();
 
       // QAs and Accessors
 
@@ -223,7 +227,7 @@ export class CompleteScenarioBuilder {
         .setNeedsAssessor(paulNeedsAssessor.id)
         .setUpdatedBy(paulNeedsAssessor.id)
         .setFinishedAt()
-        .suggestOrganisationUnits(healthOrgUnit)
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
         .save();
 
       // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
@@ -240,6 +244,17 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovation.id)
         .setOrganisationUnit(healthOrgAiUnit.id)
         .save();
+      // Add support logs from HealthOrgAIUnit to johnInnovation
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setSupportStatus(InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED)
+        .save();
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setSupportStatus(InnovationSupportStatusEnum.COMPLETE)
+        .save();
 
       // support on johnInnovation by MedTechOrgUnit accessor (sam)
       const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
@@ -251,7 +266,7 @@ export class CompleteScenarioBuilder {
 
       // support log on johnInnovation of previous UNASSIGNED support
       const johnInnovationSupportLog = await new InnovationSupportLogBuilder(entityManager)
-        .setInnovation(johnInnovation)
+        .setInnovation(johnInnovation.id)
         .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
         .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
         .save();
@@ -464,9 +479,10 @@ export class CompleteScenarioBuilder {
           randUuid()
         )
         .save();
+
       // Progress updates on John innovation
       const johnInnovationAliceProgressUpdate = await new InnovationSupportLogBuilder(entityManager)
-        .setInnovation(johnInnovation)
+        .setInnovation(johnInnovation.id)
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
         .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
         .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
@@ -474,7 +490,7 @@ export class CompleteScenarioBuilder {
         .save();
 
       const johnInnovationIngridProgressUpdateWithFile = await new InnovationSupportLogBuilder(entityManager)
-        .setInnovation(johnInnovation)
+        .setInnovation(johnInnovation.id)
         .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
         .setCreatedBy(ingridAccessor, ingridAccessor.roles['accessorRole']!)
         .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
@@ -488,6 +504,15 @@ export class CompleteScenarioBuilder {
         })
         .setCreatedByUserRole(ingridAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
+        .save();
+
+      // Alice suggested innovTechHeavyOrgUnit
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([innovTechHeavyOrgUnit.id])
         .save();
 
       // Adam Innovator specs:
@@ -877,13 +902,14 @@ export class CompleteScenarioBuilder {
           innovTechOrg: {
             ...innovTechOrg,
             organisationUnits: {
-              innovTechOrgUnit: innovTechOrgUnit
+              innovTechOrgUnit: innovTechOrgUnit,
+              innovTechHeavyOrgUnit: innovTechHeavyOrgUnit
             }
           },
           inactiveEmptyOrg: {
-            ...inactiveEmptyOrg ,
+            ...inactiveEmptyOrg,
             organisationUnits: {
-              inactiveEmptyOrgUnit: inactiveEmptyOrgUnit 
+              inactiveEmptyOrgUnit: inactiveEmptyOrgUnit
             }
           }
         }

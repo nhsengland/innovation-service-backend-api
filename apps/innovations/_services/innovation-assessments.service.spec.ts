@@ -93,6 +93,18 @@ describe('Innovation Assessments Suite', () => {
                 acronym: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
               }
             ]
+          },
+          {
+            id: scenario.organisations.innovTechOrg.id,
+            name: scenario.organisations.innovTechOrg.name,
+            acronym: scenario.organisations.innovTechOrg.acronym,
+            units: [
+              {
+                id: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.id,
+                name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+                acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym
+              }
+            ]
           }
         ],
         updatedAt: expect.any(Date),
