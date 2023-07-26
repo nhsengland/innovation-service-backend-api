@@ -16,6 +16,7 @@ export { InnovationStopSharingHandler } from './innovation-stop-sharing.handler'
 export { InnovationSubmitedHandler } from './innovation-submited.handler';
 export { InnovationSupportStatusChangeRequestHandler } from './innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './innovation-support-status-update.handler';
+export { SupportSummaryUpdateHandler } from './support-summary-update.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './innovation-transfer-ownership-completed.handler';
 export { InnovationTransferOwnershipCreationHandler } from './innovation-transfer-ownership-creation.handler';
 export { InnovationTransferOwnershipExpirationHandler } from './innovation-transfer-ownership-expiration.handler';

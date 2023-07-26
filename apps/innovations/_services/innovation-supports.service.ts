@@ -909,7 +909,7 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
     }
 
-    return await connection.transaction(async transaction => {
+    await connection.transaction(async transaction => {
       const savedLog = await this.domainService.innovations.addSupportLog(
         transaction,
         { id: domainContext.id, roleId: domainContext.currentRole.id },
@@ -938,6 +938,12 @@ export class InnovationSupportsService extends BaseService {
           transaction
         );
       }
+    });
+
+    await this.notifierService.send(domainContext, NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE, {
+      innovationId,
+      organisationUnitId: unitId,
+      supportId: support.id
     });
   }
 

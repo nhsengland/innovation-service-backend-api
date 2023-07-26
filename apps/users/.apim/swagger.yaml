@@ -558,6 +558,7 @@ paths:
                             - INNOVATION_SUBMISSION_TO_INNOVATORS
                             - INNOVATION_SUBMISSION_REASSESSMENT
                             - SUPPORT_STATUS_UPDATE
+                            - SUPPORT_SUMMARY_UPDATE
                             - INNOVATION_REASSESSMENT_REQUEST
                             - INNOVATION_STOP_SHARING
                             - INNOVATION_WITHDRAWN
