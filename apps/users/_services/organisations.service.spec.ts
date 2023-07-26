@@ -3,12 +3,12 @@ import { container } from '../_config';
 import { randEmail, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
+import { UserRoleEntity } from '@users/shared/entities';
+import { ServiceRoleEnum } from '@users/shared/enums';
 import { ConflictError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
-import { ServiceRoleEnum } from '@users/shared/enums';
-import { UserRoleEntity } from '@users/shared/entities';
 
 describe('Innovation Assessments Suite', () => {
   let sut: OrganisationsService;
@@ -92,6 +92,12 @@ describe('Innovation Assessments Suite', () => {
               name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
               acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.acronym,
               isActive: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.isActive
+            },
+            {
+              id: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id,
+              name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+              acronym: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym,
+              isActive: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.isActive
             }
           ]
         },
@@ -280,9 +286,8 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should throw an error if the user has no roles', async () => {
-
       await em.getRepository(UserRoleEntity).delete({ id: scenario.users.adamInnovator.roles.innovatorRole.id });
-      
+
       await expect(() =>
         sut.getOrganisationUnitUserByEmail(
           scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,

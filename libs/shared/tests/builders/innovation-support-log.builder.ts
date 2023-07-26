@@ -1,10 +1,11 @@
 import { randText } from '@ngneat/falso';
-import type { RoleType } from 'libs/shared/types';
 import type { DeepPartial, EntityManager } from 'typeorm';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
+import { OrganisationUnitEntity } from '../../entities/organisation/organisation-unit.entity';
+import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import type { RoleType } from '../../types';
 import { BaseBuilder } from './base.builder';
-import type { TestInnovationType } from './innovation.builder';
 import type { TestUserType } from './user.builder';
 
 export type TestInnovationSupportLogType = {
@@ -29,8 +30,8 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
     };
   }
 
-  setInnovation(innovation: TestInnovationType): this {
-    this.supportLog.innovation = { id: innovation.id };
+  setInnovation(innovationId: string): this {
+    this.supportLog.innovation = { id: innovationId };
     return this;
   }
 
@@ -41,8 +42,8 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
 
   setCreatedBy(user: TestUserType, role: RoleType): this {
     this.supportLog.createdBy = user.id;
-    this.supportLog.createdByUserRole = role;
-    this.supportLog.organisationUnit = role.organisationUnit;
+    this.supportLog.createdByUserRole = UserRoleEntity.new({ id: role.id });
+    this.supportLog.organisationUnit = OrganisationUnitEntity.new({ id: role.organisationUnit?.id });
     return this;
   }
 
@@ -53,6 +54,11 @@ export class InnovationSupportLogBuilder extends BaseBuilder {
 
   setParams(params: { title?: string }): this {
     this.supportLog.params = params;
+    return this;
+  }
+
+  setSuggestedUnits(units: string[]): this {
+    this.supportLog.suggestedOrganisationUnits = units.map(id => OrganisationUnitEntity.new({ id }));
     return this;
   }
 

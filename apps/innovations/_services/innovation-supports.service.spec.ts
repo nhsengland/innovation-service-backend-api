@@ -21,8 +21,11 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
+import { TranslationHelper } from '@innovations/shared/helpers';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
+import { InnovationSupportLogBuilder } from '@innovations/shared/tests/builders/innovation-support-log.builder';
+import { InnovationSupportBuilder } from '@innovations/shared/tests/builders/innovation-support.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randFileExt, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
@@ -347,6 +350,213 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrowError(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS)
       );
+    });
+  });
+
+  describe('getSupportSummaryList', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it('should return currently engaging units', async () => {
+      const supportSummaryList = await sut.getSupportSummaryList(innovation.id);
+
+      expect(supportSummaryList.ENGAGING).toMatchObject([
+        {
+          id: expect.any(String),
+          name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+          support: {
+            status: innovation.supports.supportByHealthOrgUnit.status,
+            start: expect.any(Date)
+          }
+        },
+        {
+          id: expect.any(String),
+          name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+          support: {
+            status: innovation.supports.supportByHealthOrgAiUnit.status,
+            start: expect.any(Date)
+          }
+        },
+        {
+          id: expect.any(String),
+          name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
+          support: {
+            status: innovation.supports.supportByMedTechOrgUnit.status,
+            start: expect.any(Date)
+          }
+        }
+      ]);
+      expect(
+        supportSummaryList.ENGAGING.every(
+          (s, i) => i === 0 || s.support.start! >= supportSummaryList.ENGAGING[i - 1]!.support.start!
+        )
+      ).toBeTruthy();
+    });
+
+    it('should return units that had been engaged', async () => {
+      await em
+        .getRepository(InnovationSupportEntity)
+        .update(
+          { id: innovation.supports.supportByHealthOrgAiUnit.id },
+          { status: InnovationSupportStatusEnum.COMPLETE }
+        );
+
+      const supportSummaryList = await sut.getSupportSummaryList(innovation.id, em);
+
+      expect(supportSummaryList.BEEN_ENGAGED).toMatchObject([
+        {
+          id: expect.any(String),
+          name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+          support: {
+            status: InnovationSupportStatusEnum.COMPLETE,
+            start: expect.any(Date),
+            end: expect.any(Date)
+          }
+        }
+      ]);
+    });
+
+    it('should return suggested units', async () => {
+      await new InnovationSupportBuilder(em)
+        .setStatus(InnovationSupportStatusEnum.NOT_YET)
+        .setInnovation(innovation.id)
+        .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
+        .save();
+      const supportSummaryList = await sut.getSupportSummaryList(innovation.id, em);
+
+      expect(supportSummaryList.SUGGESTED).toMatchObject([
+        {
+          id: expect.any(String),
+          name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+          support: {
+            status: InnovationSupportStatusEnum.NOT_YET
+          }
+        },
+        {
+          id: expect.any(String),
+          name: scenario.organisations.innovTechOrg.organisationUnits.innovTechOrgUnit.name,
+          support: {
+            status: InnovationSupportStatusEnum.UNASSIGNED
+          }
+        }
+      ]);
+    });
+
+    it("should return everything empty for innovations that haven't been on NA", async () => {
+      const supportSummaryList = await sut.getSupportSummaryList(
+        scenario.users.johnInnovator.innovations.johnInnovationEmpty.id,
+        em
+      );
+
+      expect(supportSummaryList.ENGAGING).toHaveLength(0);
+      expect(supportSummaryList.BEEN_ENGAGED).toHaveLength(0);
+      expect(supportSummaryList.SUGGESTED).toHaveLength(0);
+    });
+  });
+
+  describe('getSupportSummaryUnitInfo', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it('should return the unit information', async () => {
+      const jamieMadrox = scenario.users.jamieMadroxAccessor;
+      const alice = scenario.users.aliceQualifyingAccessor;
+      const paul = scenario.users.paulNeedsAssessor;
+      // Suggested by NA
+      const naSuggestion = await new InnovationSupportLogBuilder(em)
+        .setInnovation(innovation.id)
+        .setLogType(InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION)
+        .setCreatedBy(paul, paul.roles.assessmentRole)
+        .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
+        .save();
+      // Suggested by QA
+      const qaSuggestion = await new InnovationSupportLogBuilder(em)
+        .setInnovation(innovation.id)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setCreatedBy(alice, alice.roles.qaRole)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setSuggestedUnits([scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id])
+        .save();
+      // Update status
+      const statusUpdate = await new InnovationSupportLogBuilder(em)
+        .setInnovation(innovation.id)
+        .setLogType(InnovationSupportLogTypeEnum.STATUS_UPDATE)
+        .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .save();
+      // Create Progress Update
+      const progressUpdate = await new InnovationSupportLogBuilder(em)
+        .setInnovation(innovation.id)
+        .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(jamieMadrox, jamieMadrox.roles.aiRole)
+        .setParams({ title: randText() })
+        .save();
+
+      const unitInfo = await sut.getSupportSummaryUnitInfo(
+        innovation.id,
+        scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+        em
+      );
+
+      expect(unitInfo).toMatchObject([
+        {
+          id: progressUpdate.id,
+          createdAt: progressUpdate.createdAt,
+          createdBy: {
+            id: jamieMadrox.id,
+            name: jamieMadrox.name,
+            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
+          },
+          type: 'PROGRESS_UPDATE',
+          params: { title: progressUpdate.params?.title, message: progressUpdate.description }
+        },
+        {
+          id: statusUpdate.id,
+          createdAt: statusUpdate.createdAt,
+          createdBy: {
+            id: jamieMadrox.id,
+            name: jamieMadrox.name,
+            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${jamieMadrox.roles.aiRole.role}`)
+          },
+          type: 'SUPPORT_UPDATE',
+          params: { supportStatus: statusUpdate.innovationSupportStatus, message: statusUpdate.description }
+        },
+        {
+          id: qaSuggestion.id,
+          createdAt: qaSuggestion.createdAt,
+          createdBy: {
+            id: alice.id,
+            name: alice.name,
+            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${alice.roles.qaRole.role}`)
+          },
+          type: 'SUGGESTED_ORGANISATION',
+          params: {
+            suggestedByName: alice.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+            message: qaSuggestion.description
+          }
+        },
+        {
+          id: naSuggestion.id,
+          createdAt: naSuggestion.createdAt,
+          createdBy: {
+            id: paul.id,
+            name: paul.name,
+            displayRole: TranslationHelper.translate(`SERVICE_ROLES.${paul.roles.assessmentRole.role}`)
+          },
+          type: 'SUGGESTED_ORGANISATION',
+          params: {}
+        }
+      ]);
+      expect(unitInfo.every((s, i) => i === 0 || s.createdAt! <= unitInfo[i - 1]!.createdAt!)).toBeTruthy();
+    });
+
+    it("should throw NotFoundError when innovation doesn't exist", async () => {
+      await expect(() =>
+        sut.getSupportSummaryUnitInfo(
+          randUuid(),
+          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
   });
 
