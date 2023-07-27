@@ -552,7 +552,7 @@ export class InnovationThreadsService extends BaseService {
         'thread.subject as thread_subject',
         'thread.created_at as thread_created_at',
         'innovation.owner_id as innovation_owner_id',
-        'count.count as n_messages',
+        'info.nMessages as n_messages',
         'message.id as message_id',
         'message.created_at as message_created_at',
         'author.id as author_id',
@@ -575,20 +575,14 @@ export class InnovationThreadsService extends BaseService {
         subQuery =>
           subQuery
             .from(InnovationThreadMessageEntity, 'message')
-            .select(['message.innovation_thread_id', 'MAX(message.createdAt) as createdAt'])
+            .select([
+              'message.innovation_thread_id',
+              'MAX(message.createdAt) as latestCreatedAtMessage',
+              'COUNT(*) as nMessages'
+            ])
             .groupBy('message.innovation_thread_id'),
-        'latestMessage',
-        'latestMessage.innovation_thread_id = thread.id AND latestMessage.createdAt = message.created_at'
-      )
-      // Get the amount of messages that exists on a Thread
-      .innerJoin(
-        subQuery =>
-          subQuery
-            .from(InnovationThreadMessageEntity, 'message')
-            .select(['message.innovation_thread_id', 'COUNT(*) as count'])
-            .groupBy('message.innovation_thread_id'),
-        'count',
-        'count.innovation_thread_id = thread.id'
+        'info',
+        'info.innovation_thread_id = thread.id AND info.latestCreatedAtMessage = message.created_at'
       )
       .where('thread.innovation_id = :innovationId', { innovationId });
 
@@ -606,7 +600,7 @@ export class InnovationThreadsService extends BaseService {
           field = 'thread.createdAt';
           break;
         case 'messageCount':
-          field = 'count.count';
+          field = 'info.nMessages';
           break;
         case 'latestMessageCreatedAt':
           field = 'message.created_at';
