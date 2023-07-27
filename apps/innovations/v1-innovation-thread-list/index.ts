@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -21,7 +21,7 @@ class V1InnovationThreadCreate {
     const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
-      const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const auth = await authorizationService
@@ -32,24 +32,11 @@ class V1InnovationThreadCreate {
         .checkAdminType()
         .verify();
 
-      const domainContext = auth.getContext();
+      const result = await threadsService.getInnovationThreads(auth.getContext(), params.innovationId, queryParams);
 
-      let orderBy;
-
-      if (queryParams.order) {
-        orderBy = JSON.parse(queryParams.order);
-      }
-
-      const result = await threadsService.getInnovationThreads(
-        domainContext,
-        pathParams.innovationId,
-        queryParams.skip,
-        queryParams.take,
-        orderBy
-      );
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
-        threads: result.threads.map(thread => ({
+        data: result.data.map(thread => ({
           id: thread.id,
           subject: thread.subject,
           messageCount: thread.messageCount,
@@ -89,44 +76,7 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
     description: 'Get Innovation Threads',
     tags: ['Innovation Threads'],
     operationId: 'v1-innovation-thread-list',
-    parameters: [
-      {
-        name: 'innovationId',
-        in: 'path',
-        description: 'Innovation Id',
-        required: true,
-        schema: {
-          type: 'string'
-        }
-      },
-      {
-        name: 'skip',
-        in: 'query',
-        description: 'Skip',
-        required: false,
-        schema: {
-          type: 'number'
-        }
-      },
-      {
-        name: 'take',
-        in: 'query',
-        description: 'Take',
-        required: false,
-        schema: {
-          type: 'number'
-        }
-      },
-      {
-        name: 'order',
-        in: 'query',
-        description: 'Order',
-        required: false,
-        schema: {
-          type: 'string'
-        }
-      }
-    ],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'Success',
@@ -138,7 +88,7 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                 count: {
                   type: 'number'
                 },
-                threads: {
+                data: {
                   type: 'array',
                   items: {
                     type: 'object',

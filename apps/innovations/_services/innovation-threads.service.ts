@@ -27,6 +27,7 @@ import {
 import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
 
+import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import { BaseService } from './base.service';
 
@@ -519,16 +520,11 @@ export class InnovationThreadsService extends BaseService {
   async getInnovationThreads(
     domainContext: DomainContextType,
     innovationId: string,
-    skip = 0,
-    take = 10,
-    order?: {
-      subject?: 'ASC' | 'DESC';
-      createdAt?: 'ASC' | 'DESC';
-      messageCount?: 'ASC' | 'DESC';
-    }
+    pagination: PaginationQueryParamsType<'subject' | 'createdAt' | 'messageCount' | 'latestMessageCreatedAt'>,
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
-    threads: {
+    data: {
       id: string;
       subject: string;
       messageCount: number;
@@ -547,153 +543,121 @@ export class InnovationThreadsService extends BaseService {
       };
     }[];
   }> {
-    const messageCountQuery = this.sqlConnection
-      .createQueryBuilder()
-      .addSelect('COUNT(messagesSQ.id)', 'messageCount')
-      .from(InnovationThreadEntity, 'threadSQ')
-      .leftJoin('threadSQ.messages', 'messagesSQ')
-      .andWhere('threadSQ.id = thread.id')
-      .groupBy('messagesSQ.innovation_thread_id');
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const countQuery = this.sqlConnection
-      .createQueryBuilder()
-      .addSelect('COUNT(threadSQ.id)', 'count')
-      .from(InnovationThreadEntity, 'threadSQ')
-      .where('threadSQ.innovation_id = :innovationId', { innovationId });
-
-    const query = this.sqlConnection
+    const query = em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .distinct(false)
-      .leftJoin('thread.author', 'author')
-      .leftJoin('thread.innovation', 'innovation')
-      .select(['thread.id', 'thread.subject', 'thread.createdAt', 'innovation.owner'])
-      .addSelect(`(${messageCountQuery.getSql()})`, 'messageCount')
-      .addSelect(`(${countQuery.getSql()})`, 'count');
+      .select([
+        'thread.id as thread_id',
+        'thread.subject as thread_subject',
+        'thread.created_at as thread_created_at',
+        'innovation.owner_id as innovation_owner_id',
+        'count.count as n_messages',
+        'message.id as message_id',
+        'message.created_at as message_created_at',
+        'author.id as author_id',
+        'author.identityId as author_identity_id',
+        'author.status as author_status',
+        'role.id as role_id',
+        'role.role as role_role',
+        'unit.id as unit_id',
+        'unit.name as unit_name',
+        'unit.acronym as unit_acronym'
+      ])
+      .innerJoin('thread.innovation', 'innovation')
+      // Get the information needed about Message
+      .innerJoin('thread.messages', 'message')
+      .leftJoin('message.authorUserRole', 'role')
+      .leftJoin('message.author', 'author')
+      .leftJoin('role.organisationUnit', 'unit')
+      // Get the latest message from the Thread
+      .innerJoin(
+        subQuery =>
+          subQuery
+            .from(InnovationThreadMessageEntity, 'message')
+            .select(['message.innovation_thread_id', 'MAX(message.createdAt) as createdAt'])
+            .groupBy('message.innovation_thread_id'),
+        'latestMessage',
+        'latestMessage.innovation_thread_id = thread.id AND latestMessage.createdAt = message.created_at'
+      )
+      // Get the amount of messages that exists on a Thread
+      .innerJoin(
+        subQuery =>
+          subQuery
+            .from(InnovationThreadMessageEntity, 'message')
+            .select(['message.innovation_thread_id', 'COUNT(*) as count'])
+            .groupBy('message.innovation_thread_id'),
+        'count',
+        'count.innovation_thread_id = thread.id'
+      )
+      .where('thread.innovation_id = :innovationId', { innovationId });
 
-    query.where('thread.innovation_id = :innovationId', { innovationId });
+    // Pagination and ordering.
+    query.offset(pagination.skip);
+    query.limit(pagination.take);
 
-    if (order) {
-      if (order.createdAt) {
-        query.addOrderBy('thread.created_at', order.createdAt);
-      } else if (order.messageCount) {
-        query.addOrderBy('messageCount', order.messageCount);
-      } else if (order.subject) {
-        query.addOrderBy('thread.subject', order.subject);
-      } else {
-        query.addOrderBy('thread.created_at', 'DESC');
+    for (const [key, order] of Object.entries(pagination.order)) {
+      let field: string;
+      switch (key) {
+        case 'subject':
+          field = 'thread.subject';
+          break;
+        case 'createdAt':
+          field = 'thread.createdAt';
+          break;
+        case 'messageCount':
+          field = 'count.count';
+          break;
+        case 'latestMessageCreatedAt':
+          field = 'message.created_at';
+          break;
+        default:
+          field = 'message.created_at';
+          break;
       }
-    } else {
-      query.addOrderBy('thread.created_at', 'DESC');
+      query.addOrderBy(field, order);
     }
-
-    query.offset(skip);
-    query.limit(take);
 
     const threads = await query.getRawMany();
 
-    if (threads.length === 0) {
-      return {
-        count: 0,
-        threads: []
-      };
-    }
-
-    const threadIds = threads.map(t => t.thread_id) as string[];
-
-    const threadMessagesQuery = this.sqlConnection
-      .createQueryBuilder(InnovationThreadMessageEntity, 'messages')
-      .select([
-        'messages.id',
-        'messages.createdAt',
-        'author.id',
-        'author.identityId',
-        'author.status',
-        'thread.id',
-        'userRole.role',
-        'orgUnit.id',
-        'orgUnit.name',
-        'orgUnit.acronym'
-      ])
-      .leftJoin('messages.author', 'author')
-      .innerJoin('messages.thread', 'thread')
-      .leftJoin('messages.authorUserRole', 'userRole')
-      .leftJoin('messages.authorOrganisationUnit', 'orgUnit')
-      .where('thread.id IN (:...threadIds)', { threadIds })
-      .orderBy('messages.created_at', 'DESC');
-
-    const threadMessages = await threadMessagesQuery.getMany();
-
-    const userIds = [
-      ...new Set(
-        threadMessages
-          .filter(tm => tm.author && tm.author.status !== UserStatusEnum.DELETED)
-          .map(tm => tm.author?.identityId)
-      )
+    const authorIds = [
+      ...new Set(threads.filter(t => t.author_status !== UserStatusEnum.DELETED).map(t => t.author_identity_id))
     ];
-    const messageAuthors = await this.identityProvider.getUsersMap(userIds);
+    const authors = await this.identityProvider.getUsersMap(authorIds);
 
-    const count = threads.find(_ => true)?.count || 0;
-
-    const notificationsQuery = this.sqlConnection
-      .createQueryBuilder(NotificationEntity, 'notifications')
-      .select(['notifications.contextId'])
-      .innerJoin('notifications.notificationUsers', 'notificationUsers')
-      .where('notifications.contextId IN (:...threadIds)', { threadIds })
-      .andWhere('notificationUsers.user_role_id = :roleId', {
-        roleId: domainContext.currentRole.id
-      })
-      .andWhere('notificationUsers.read_at IS NULL');
-
-    const notifications = new Set((await notificationsQuery.getMany()).map(n => n.contextId));
-
-    const result = await Promise.all(
-      threads.map(async t => {
-        const message = threadMessages.find(tm => tm.thread.id === t.thread_id);
-
-        if (!message) {
-          throw new Error('Message not found this should never happen');
-        }
-
-        const organisationUnit = message.authorOrganisationUnit ?? undefined;
-
-        const hasUnreadNotification = notifications.has(t.thread_id);
-
-        return {
-          id: t.thread_id,
-          subject: t.thread_subject,
-          messageCount: t.messageCount,
-          createdAt: t.thread_created_at.toISOString(),
-          isNew: hasUnreadNotification ? true : false,
-          lastMessage: {
-            id: message.id,
-            createdAt: message.createdAt,
-            createdBy: {
-              id: message.author?.id,
-              name:
-                message.author && message.author.status !== UserStatusEnum.DELETED
-                  ? messageAuthors.get(message.author?.identityId)?.displayName || 'unknown user'
-                  : '[deleted user]',
-              role: message.authorUserRole?.role,
-              ...(message.authorUserRole?.role === ServiceRoleEnum.INNOVATOR && {
-                isOwner: t.owner_id === message.author.id
-              }),
-              organisationUnit: organisationUnit
-                ? {
-                    id: organisationUnit.id,
-                    name: organisationUnit.name,
-                    acronym: organisationUnit.acronym
-                  }
-                : null
-            }
-          }
-        };
-      })
+    const notifications = await this.getUnreadMessageNotifications(
+      domainContext.currentRole.id,
+      threads.map(t => t.thread_id)
     );
 
-    return {
-      count,
-      threads: result
-    };
+    const data = threads.map(t => ({
+      id: t.thread_id,
+      subject: t.thread_subject,
+      messageCount: t.n_messages,
+      createdAt: t.thread_created_at,
+      isNew: notifications.has(t.thread_id),
+      lastMessage: {
+        id: t.message_id,
+        createdAt: t.message_created_at,
+        createdBy: {
+          id: t.author_id,
+          name: authors.get(t.author_identity_id)?.displayName ?? '[deleted user]',
+          organisationUnit:
+            t.role_role !== ServiceRoleEnum.INNOVATOR && t.role_role !== ServiceRoleEnum.ASSESSMENT
+              ? { id: t.unit_id, name: t.unit_name, acronym: t.unit_acronym }
+              : null,
+          role: t.role_role,
+          isOwner: t.role_role === ServiceRoleEnum.INNOVATOR && t.innovation_owner_id === t.author_id
+        }
+      }
+    }));
+
+    const count = await em
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.innovation_id = :innovationId', { innovationId })
+      .getCount();
+
+    return { count, data };
   }
 
   /*+
@@ -850,5 +814,18 @@ export class InnovationThreadsService extends BaseService {
       messageId: threadMessage.id,
       innovationId: thread.innovation.id
     });
+  }
+
+  private async getUnreadMessageNotifications(roleId: string, threadIds: string[]): Promise<Set<string>> {
+    const notifications = await this.sqlConnection
+      .createQueryBuilder(NotificationEntity, 'notifications')
+      .select(['notifications.contextId'])
+      .innerJoin('notifications.notificationUsers', 'notificationUsers')
+      .where('notifications.contextId IN (:...threadIds)', { threadIds })
+      .andWhere('notificationUsers.user_role_id = :roleId', { roleId })
+      .andWhere('notificationUsers.read_at IS NULL')
+      .getMany();
+
+    return new Set(notifications.map(n => n.contextId));
   }
 }
