@@ -60,10 +60,11 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
         innovation_name: innovationName,
         unit_name: organisationUnitName,
         support_summary_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath(':userBasePath/innovations/:innovationId/support-summary')
+          .addPath(':userBasePath/innovations/:innovationId/support-summary?unitId=:unitId')
           .setPathParams({
             userBasePath: this.frontendBaseUrl(innovationOwner.role),
-            innovationId: this.inputData.innovationId
+            innovationId: this.inputData.innovationId,
+            unitId: this.inputData.organisationUnitId
           })
           .buildUrl()
       }
@@ -95,10 +96,11 @@ export class SupportSummaryUpdateHandler extends BaseHandler<
           innovation_name: innovationName,
           unit_name: organisationUnitName,
           support_summary_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(':userBasePath/innovations/:innovationId/support-summary')
+            .addPath(':userBasePath/innovations/:innovationId/support-summary?unitId=:unitId')
             .setPathParams({
               userBasePath: this.frontendBaseUrl(collaborator.role),
-              innovationId: this.inputData.innovationId
+              innovationId: this.inputData.innovationId,
+              unitId: this.inputData.organisationUnitId
             })
             .buildUrl()
         }

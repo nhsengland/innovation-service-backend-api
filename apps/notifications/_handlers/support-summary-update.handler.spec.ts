@@ -51,9 +51,10 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
       params: {
         unit_name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
         support_summary_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/support-summary')
+          .addPath('innovator/innovations/:innovationId/support-summary?unitId=:unitId')
           .setPathParams({
-            innovationId: innovation.id
+            innovationId: innovation.id,
+            unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
           })
           .buildUrl()
       }
@@ -192,9 +193,10 @@ describe('Notifications / _handlers / support-summary-update handler suite', () 
       params: {
         unit_name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
         support_summary_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/support-summary')
+          .addPath('innovator/innovations/:innovationId/support-summary?unitId=:unitId')
           .setPathParams({
-            innovationId: innovation.id
+            innovationId: innovation.id,
+            unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id
           })
           .buildUrl()
       }
