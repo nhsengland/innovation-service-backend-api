@@ -6,6 +6,7 @@ import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests'
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
+import { cloneDeep } from 'lodash';
 import { InnovationActionsService } from '../_services/innovation-actions.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -27,10 +28,10 @@ const exampleAction = {
   id: randomUUID(),
   displayId: 'UC01',
   status: InnovationActionStatusEnum.COMPLETED,
-  section: 'IMPLEMENTATION_PLAN',
+  section: 'INNOVATION_DESCRIPTION' as const,
   description: 'description 1',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+  createdAt: new Date(),
+  updatedAt: new Date(),
   updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
   createdBy: {
     id: randomUUID(),
@@ -39,7 +40,7 @@ const exampleAction = {
     organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
   }
 };
-const mock = jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction as any);
+const mock = jest.spyOn(InnovationActionsService.prototype, 'getActionInfo').mockResolvedValue(exampleAction);
 
 afterEach(() => {
   mock.mockClear();
@@ -90,6 +91,21 @@ describe('v1-innovation-action-info Suite', () => {
         .call<ResponseDTO>(v1InnovationActionInfo);
 
       expect(result.body).toMatchObject(expected);
+      expect(result.status).toBe(200);
+    });
+
+    it('should return isOwner = true when updatedBy is the owner of the innovation', async () => {
+      const mockRes = cloneDeep({ ...exampleAction, updatedBy: { ...exampleAction.updatedBy, isOwner: true } });
+      mock.mockResolvedValueOnce(mockRes);
+      const result = await new AzureHttpTriggerBuilder()
+        .setAuth(scenario.users.johnInnovator)
+        .setParams<ParamsType>({
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          actionId: mockRes.id
+        })
+        .call<ResponseDTO>(v1InnovationActionInfo);
+
+      expect(result.body).toMatchObject(mockRes);
       expect(result.status).toBe(200);
     });
   });

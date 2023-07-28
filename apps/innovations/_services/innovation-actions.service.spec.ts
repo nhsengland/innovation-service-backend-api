@@ -6,7 +6,8 @@ import {
   InnovationActionEntity,
   InnovationEntity,
   InnovationThreadEntity,
-  InnovationThreadMessageEntity
+  InnovationThreadMessageEntity,
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -14,7 +15,9 @@ import {
   InnovationActionStatusEnum,
   InnovationStatusEnum,
   NotificationContextTypeEnum,
-  ServiceRoleEnum
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
 } from '@innovations/shared/enums';
 import {
   ForbiddenError,
@@ -27,7 +30,7 @@ import { DomainInnovationsService, NotifierService } from '@innovations/shared/s
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
-import type { EntityManager } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import type { InnovationActionsService } from './innovation-actions.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
@@ -64,9 +67,48 @@ describe('Innovation Actions Suite', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it('should create an action', async () => {
+      const description = randText();
       const action = await sut.createAction(
-        { id: accessor.id, identityId: accessor.identityId },
         DTOsHelper.getUserRequestContext(accessor),
+        innovation.id,
+        {
+          description,
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      // assert response
+      expect(action).toMatchObject({
+        id: expect.any(String)
+      });
+
+      // assert db
+      const dbAction = await em
+        .createQueryBuilder(InnovationActionEntity, 'action')
+        .innerJoinAndSelect('action.createdByUserRole', 'createdByRole')
+        .innerJoinAndSelect('action.updatedByUserRole', 'updatedByRole')
+        .innerJoinAndSelect('action.innovationSection', 'innovationSection')
+        .where('action.id = :actionId', { actionId: action.id })
+        .getOneOrFail();
+
+      expect(dbAction).toMatchObject({
+        id: action.id,
+        description,
+        displayId: expect.any(String), // TODO: check displayId but this will hopefully change soon, if it doesn't put in a function to generate it
+        status: InnovationActionStatusEnum.REQUESTED,
+        innovationSection: { section: 'INNOVATION_DESCRIPTION' },
+        createdBy: accessor.id,
+        createdByUserRole: { id: accessor.roles.qaRole.id },
+        updatedBy: accessor.id,
+        updatedByUserRole: { id: accessor.roles.qaRole.id }
+      });
+    });
+
+    it('should sent notification', async () => {
+      const context = DTOsHelper.getUserRequestContext(accessor);
+      const action = await sut.createAction(
+        context,
         innovation.id,
         {
           description: randText(),
@@ -75,57 +117,83 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      // assert
-      expect(action.id).toBeDefined();
+      expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.ACTION_CREATION, {
+        innovationId: innovation.id,
+        action: { id: action.id, section: 'INNOVATION_DESCRIPTION' }
+      });
     });
 
-    it('should not create an action if organisation unit is not supporting innovation', async () => {
-      // act
-      let err: UnprocessableEntityError | null = null;
-      try {
-        await sut.createAction(
-          { id: accessor.id, identityId: accessor.identityId },
-          DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole'),
+    it('should add activity log', async () => {
+      const context = DTOsHelper.getUserRequestContext(accessor);
+      const description = randText();
+      const action = await sut.createAction(
+        context,
+        innovation.id,
+        {
+          description,
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      expect(activityLogSpy).toHaveBeenCalledWith(
+        expect.any(EntityManager),
+        { innovationId: innovation.id, activity: ActivityEnum.ACTION_CREATION, domainContext: context },
+        {
+          sectionId: 'INNOVATION_DESCRIPTION',
+          actionId: action.id,
+          comment: { value: description },
+          role: context.currentRole.role
+        }
+      );
+    });
+
+    it.each([
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, DTOsHelper.getUserRequestContext(scenario.users.scottQualifyingAccessor)],
+      [ServiceRoleEnum.ACCESSOR, DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole')]
+    ])('as %s should not create an action if organisation unit is not supporting innovation', async (_role, user) => {
+      await expect(() =>
+        sut.createAction(
+          user,
           scenario.users.adamInnovator.innovations.adamInnovation.id,
           {
             description: randText(),
             section: 'INNOVATION_DESCRIPTION'
           },
           em
-        );
-      } catch (error) {
-        err = error as UnprocessableEntityError;
-      }
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+    });
 
-      // assert
-      expect(err).toBeDefined();
-      expect(err?.name).toBe('I.0040');
+    it('as assessment should create an action without concern for support', async () => {
+      const action = await sut.createAction(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation.id,
+        {
+          description: randText(),
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      expect(action.id).toBeDefined();
     });
 
     it(`should not create an action for an innovation that doesn't exist`, async () => {
       await expect(() =>
-        sut.createAction(
-          { id: accessor.id, identityId: accessor.identityId },
-          DTOsHelper.getUserRequestContext(accessor),
-          randUuid(),
-          {
-            description: randText(),
-            section:
-              CurrentCatalogTypes.InnovationSections[
-                randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
-              ]!
-          },
-          em
-        )
+        sut.createAction(DTOsHelper.getUserRequestContext(accessor), randUuid(), {
+          description: randText(),
+          section:
+            CurrentCatalogTypes.InnovationSections[
+              randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
+            ]!
+        })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
     it(`should not create an action for a section that doesn't exist`, async () => {
-      // act
-      let err: NotFoundError | null = null;
-      try {
-        await sut.createAction(
-          { id: accessor.id, identityId: accessor.identityId },
+      await expect(() =>
+        sut.createAction(
           DTOsHelper.getUserRequestContext(accessor),
           innovation.id,
           {
@@ -133,20 +201,23 @@ describe('Innovation Actions Suite', () => {
             section: randText() as CurrentCatalogTypes.InnovationSections
           },
           em
-        );
-      } catch (error) {
-        err = error as NotFoundError;
-      }
-
-      // assert
-      expect(err).toBeDefined();
-      expect(err?.name).toBe('I.0031');
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND));
     });
   });
 
   describe('getActionsList', () => {
+    // TODO
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const innovation2 = scenario.users.adamInnovator.innovations.adamInnovation;
+    const allActions = [
+      innovation.actions.actionByBart,
+      innovation.actions.actionByPaul,
+      innovation.actions.actionByAliceSubmitted,
+      innovation.actions.actionByAlice,
+      innovation2.actions.adamInnovationActionByPaul,
+      innovation2.actions.adamInnovationCompletedActionByAlice
+    ];
 
     const getUnreadNotificationsMock = jest
       .spyOn(DomainInnovationsService.prototype, 'getUnreadNotifications')
@@ -169,8 +240,7 @@ describe('Innovation Actions Suite', () => {
       const actions = await sut.getActionsList(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         { innovationId: innovation.id, fields: [] },
-        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
-        em
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 }
       );
 
       expect(actions).toBeDefined();
@@ -234,7 +304,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(5);
+      expect(actions.count).toBe(allActions.length);
     });
 
     it('should list all actions created by QA/A as a QA/A', async () => {
@@ -294,7 +364,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(3);
+      expect(actions.count).toBe(4);
       expect(actions.data).toEqual(expect.arrayContaining(expected));
     });
 
@@ -306,7 +376,7 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(5);
+      expect(actions.count).toBe(allActions.length);
     });
 
     it('should list all actions that match an innovation name', async () => {
@@ -408,8 +478,9 @@ describe('Innovation Actions Suite', () => {
         em
       );
 
-      expect(actions.count).toBe(2);
+      expect(actions.count).toBe(3);
       expect(actions.data).toMatchObject([
+        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
         { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
         { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } }
       ]);
@@ -430,24 +501,144 @@ describe('Innovation Actions Suite', () => {
       const actions = await sut.getActionsList(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         { innovationId: innovation.id, fields: ['notifications'] },
-        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        { order: {}, skip: 0, take: 10 },
         em
       );
 
-      expect(actions.data).toMatchObject([
-        {
-          id: innovation.actions.actionByBart.id,
-          notifications: 1
-        },
-        {
-          id: innovation.actions.actionByPaul.id,
-          notifications: 1
-        },
-        {
-          id: innovation.actions.actionByAlice.id,
-          notifications: 1
+      expect(actions.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: innovation.actions.actionByBart.id,
+            notifications: 1
+          }),
+          expect.objectContaining({
+            id: innovation.actions.actionByPaul.id,
+            notifications: 1
+          }),
+          expect.objectContaining({
+            id: innovation.actions.actionByAliceSubmitted.id,
+            notifications: 1
+          }),
+          expect.objectContaining({
+            id: innovation.actions.actionByAlice.id,
+            notifications: 1
+          })
+        ])
+      );
+    });
+
+    it.each(['displayId', 'section', 'innovationName', 'createdAt', 'updatedAt', 'status'] as const)(
+      'should list all actions sorted by %s ASC',
+      async order => {
+        // Update the dates to make sure they are different
+        if (order === 'createdAt' || order === 'updatedAt') {
+          await em.query(`
+            UPDATE "innovation_action" SET "created_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0), "updated_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0);
+          `);
         }
-      ]);
+
+        const actions = await sut.getActionsList(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          { allActions: true, fields: [] },
+          { order: { [order]: 'ASC' }, skip: 0, take: 10 },
+          em
+        );
+
+        // This test could be improved if we improve the scenario, otherwise it will be to difficult with the current data
+        expect(actions.count).toBe(allActions.length);
+        const data = actions.data.map(a =>
+          order === 'innovationName'
+            ? a.innovation.name
+            : order === 'createdAt' || order === 'updatedAt'
+            ? a[order].toISOString()
+            : a[order]
+        );
+        expect(data).toEqual([...data].sort());
+      }
+    );
+
+    it.each(['displayId', 'section', 'innovationName', 'createdAt', 'updatedAt', 'status'] as const)(
+      'should list all actions sorted by %s DESC',
+      async order => {
+        // Update the dates to make sure they are different
+        if (order === 'createdAt' || order === 'updatedAt') {
+          await em.query(`
+            UPDATE "innovation_action" SET "created_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0), "updated_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0);
+          `);
+        }
+
+        const actions = await sut.getActionsList(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          { allActions: true, fields: [] },
+          { order: { [order]: 'DESC' }, skip: 0, take: 10 },
+          em
+        );
+
+        // This test could be improved if we improve the scenario, otherwise it will be to difficult with the current data
+        expect(actions.count).toBe(allActions.length);
+        const data = actions.data.map(a =>
+          order === 'innovationName'
+            ? a.innovation.name
+            : order === 'createdAt' || order === 'updatedAt'
+            ? a[order].toISOString()
+            : a[order]
+        );
+        expect(data).toEqual([...data].sort().reverse());
+      }
+    );
+
+    it('should order by createdAt if unknown order provided (should not happen)', async () => {
+      const actions = await sut.getActionsList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { allActions: true, fields: [] },
+        { order: { unknown: 'DESC' } as any, skip: 0, take: 10 },
+        em
+      );
+
+      // This test could be improved if we improve the scenario, otherwise it will be to difficult with the current data
+      expect(actions.count).toBe(allActions.length);
+    });
+
+    it('should return action even if created/updated by deleted user', async () => {
+      await em
+        .getRepository(UserEntity)
+        .update({ id: scenario.users.aliceQualifyingAccessor.id }, { status: UserStatusEnum.DELETED });
+      const actions = await sut.getActionsList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { allActions: true, fields: [] },
+        { order: { createdAt: 'DESC' } as any, skip: 0, take: 10 },
+        em
+      );
+
+      expect(actions.count).toBe(allActions.length);
+      expect(actions.data).toEqual(
+        expect.arrayContaining(
+          allActions.map(a =>
+            expect.objectContaining({
+              id: a.id,
+              createdBy: expect.objectContaining({
+                name: [
+                  scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice.id,
+                  scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAliceSubmitted.id,
+                  scenario.users.adamInnovator.innovations.adamInnovation.actions.adamInnovationCompletedActionByAlice
+                    .id
+                ].includes(a.id)
+                  ? '[deleted account]'
+                  : expect.not.stringMatching(/\[deleted account\]/)
+              }),
+              updatedBy: expect.objectContaining({
+                name: [
+                  scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice.id,
+                  scenario.users.adamInnovator.innovations.adamInnovation.actions.adamInnovationCompletedActionByAlice
+                    .id
+                ].includes(a.id)
+                  ? '[deleted account]'
+                  : expect.not.stringMatching(/\[deleted account\]/)
+              })
+            })
+          )
+        )
+      );
     });
   });
 
@@ -481,6 +672,23 @@ describe('Innovation Actions Suite', () => {
           })
         }
       });
+    });
+
+    it('should return updatedBy isOwner is true if status is SUBMITTED by owner', async () => {
+      const res = await sut.getActionInfo(innovation.actions.actionByAliceSubmitted.id, em);
+      expect(res.updatedBy.isOwner).toBe(true);
+    });
+
+    it('should return updatedBy isOwner is false if status is SUBMITTED by other innovator', async () => {
+      await em.getRepository(InnovationActionEntity).update(
+        { id: innovation.actions.actionByAliceSubmitted.id },
+        {
+          updatedBy: scenario.users.adamInnovator.id,
+          updatedByUserRole: { id: scenario.users.adamInnovator.roles.innovatorRole.id }
+        }
+      );
+      const res = await sut.getActionInfo(innovation.actions.actionByAliceSubmitted.id, em);
+      expect(res.updatedBy.isOwner).toBe(false);
     });
 
     it('should return declineReason of an action in status DECLINED', async () => {
@@ -521,6 +729,29 @@ describe('Innovation Actions Suite', () => {
         },
         declineReason
       });
+    });
+
+    it("shouldn't return declineReason of an action in status DECLINED but reason was not provided", async () => {
+      const action = innovation.actions.actionByPaul;
+      await em.update(
+        InnovationActionEntity,
+        { id: action.id },
+        { status: InnovationActionStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
+      );
+
+      await em.getRepository(ActivityLogEntity).save({
+        type: ActivityTypeEnum.INNOVATION_RECORD,
+        activity: ActivityEnum.ACTION_STATUS_DECLINED_UPDATE,
+        userRole: { id: scenario.users.johnInnovator.roles.innovatorRole.id },
+        param: {
+          actionId: action.id
+        },
+        innovation: { id: innovation.id }
+      });
+
+      const res = await sut.getActionInfo(action.id, em);
+
+      expect(res.declineReason).toBeUndefined();
     });
 
     it("should return error when actionId doesn't exist", async () => {
@@ -609,15 +840,9 @@ describe('Innovation Actions Suite', () => {
 
     it("should not update if action doesn't exist", async () => {
       await expect(() =>
-        sut.updateActionAsAccessor(
-          DTOsHelper.getUserRequestContext(accessor),
-          innovation.id,
-          randUuid(),
-          {
-            status: InnovationActionStatusEnum.REQUESTED
-          },
-          em
-        )
+        sut.updateActionAsAccessor(DTOsHelper.getUserRequestContext(accessor), innovation.id, randUuid(), {
+          status: InnovationActionStatusEnum.REQUESTED
+        })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND));
     });
 
@@ -797,15 +1022,9 @@ describe('Innovation Actions Suite', () => {
 
     it("should not update if action doesn't exist", async () => {
       await expect(() =>
-        sut.updateActionAsAccessor(
-          DTOsHelper.getUserRequestContext(na),
-          innovation.id,
-          randUuid(),
-          {
-            status: InnovationActionStatusEnum.REQUESTED
-          },
-          em
-        )
+        sut.updateActionAsNeedsAccessor(DTOsHelper.getUserRequestContext(na), innovation.id, randUuid(), {
+          status: InnovationActionStatusEnum.REQUESTED
+        })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND));
     });
 
@@ -813,7 +1032,7 @@ describe('Innovation Actions Suite', () => {
       await em.update(InnovationActionEntity, { id: action.id }, { status: InnovationActionStatusEnum.DECLINED });
 
       await expect(() =>
-        sut.updateActionAsAccessor(
+        sut.updateActionAsNeedsAccessor(
           DTOsHelper.getUserRequestContext(na),
           innovation.id,
           action.id,
@@ -822,14 +1041,16 @@ describe('Innovation Actions Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS));
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS)
+      );
     });
 
     it('should not be updated if the action is in SUBMITTED status and the status that is being updated is not REQUESTED/COMPLETED', async () => {
       await em.update(InnovationActionEntity, { id: action.id }, { status: InnovationActionStatusEnum.SUBMITTED });
 
       await expect(() =>
-        sut.updateActionAsAccessor(
+        sut.updateActionAsNeedsAccessor(
           DTOsHelper.getUserRequestContext(na),
           innovation.id,
           action.id,
@@ -838,21 +1059,22 @@ describe('Innovation Actions Suite', () => {
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS));
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS)
+      );
     });
 
     it('should not update if action is from an QA/A', async () => {
       await expect(() =>
-        sut.updateActionAsAccessor(
+        sut.updateActionAsNeedsAccessor(
           DTOsHelper.getUserRequestContext(na),
           innovation.id,
           innovation.actions.actionByAlice.id,
           {
             status: InnovationActionStatusEnum.CANCELLED
-          },
-          em
+          }
         )
-      ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_ACTION_FROM_DIFFERENT_UNIT));
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND));
     });
   });
 
@@ -927,31 +1149,29 @@ describe('Innovation Actions Suite', () => {
 
     it("should not update if action doesn't exist", async () => {
       await expect(() =>
-        sut.updateActionAsAccessor(
-          DTOsHelper.getUserRequestContext(innovator),
-          innovation.id,
-          randUuid(),
-          {
-            status: InnovationActionStatusEnum.REQUESTED
-          },
-          em
-        )
+        sut.updateActionAsInnovator(DTOsHelper.getUserRequestContext(innovator), innovation.id, randUuid(), {
+          status: InnovationActionStatusEnum.REQUESTED,
+          message: randText()
+        })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND));
     });
 
     it('should not be updated if the action is not in the REQUESTED status', async () => {
       await em.update(InnovationActionEntity, { id: qaAction.id }, { status: InnovationActionStatusEnum.DECLINED });
       await expect(() =>
-        sut.updateActionAsAccessor(
+        sut.updateActionAsInnovator(
           DTOsHelper.getUserRequestContext(innovator),
           innovation.id,
-          randUuid(),
+          qaAction.id,
           {
-            status: InnovationActionStatusEnum.REQUESTED
+            status: InnovationActionStatusEnum.REQUESTED,
+            message: randText()
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS));
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTION_WITH_UNPROCESSABLE_STATUS)
+      );
     });
   });
 });

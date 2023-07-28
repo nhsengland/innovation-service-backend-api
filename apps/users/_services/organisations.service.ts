@@ -19,7 +19,10 @@ export class OrganisationsService extends BaseService {
     super();
   }
 
-  async getOrganisationsList(filters: { fields?: 'organisationUnits'[]; withInactive?: boolean }): Promise<
+  async getOrganisationsList(
+    filters: { fields?: 'organisationUnits'[]; withInactive?: boolean },
+    entityManager?: EntityManager
+  ): Promise<
     {
       id: string;
       name: string;
@@ -28,7 +31,9 @@ export class OrganisationsService extends BaseService {
       organisationUnits?: { id: string; name: string; acronym: string; isActive: boolean }[];
     }[]
   > {
-    const query = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(OrganisationEntity, 'organisation')
       .where('organisation.type = :type', { type: OrganisationTypeEnum.ACCESSOR });
 

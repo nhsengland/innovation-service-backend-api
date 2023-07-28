@@ -26,7 +26,7 @@ export class SectionsSubmittedSinceAssessmentStartStatisticsHandler extends Inno
 
     const submittedSections = await statisticsService.getSubmittedSectionsSinceAssessmentStart(
       this.data.innovationId,
-      this.requestUser
+      this.domainContext
     );
 
     const sections = submittedSections;

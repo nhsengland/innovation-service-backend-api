@@ -10,6 +10,7 @@ export type TestInnovationActionType = {
   displayId: string;
   status: InnovationActionStatusEnum;
   section: CurrentCatalogTypes.InnovationSections;
+  updatedAt: Date;
 };
 
 export class InnovationActionBuilder extends BaseBuilder {
@@ -81,7 +82,8 @@ export class InnovationActionBuilder extends BaseBuilder {
       id: result.id,
       displayId: result.displayId,
       status: result.status,
-      section: result.innovationSection.section
+      section: result.innovationSection.section,
+      updatedAt: result.updatedAt
     };
   }
 }

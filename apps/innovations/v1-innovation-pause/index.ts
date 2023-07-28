@@ -37,11 +37,10 @@ class V1InnovationPause {
         .checkInnovatorType()
         .checkInnovation({ isOwner: true, status: [InnovationStatusEnum.IN_PROGRESS] })
         .verify();
-      const requestUser = auth.getUserInfo();
+
       const domainContext = auth.getContext();
 
       const result = await innovationsService.pauseInnovation(
-        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         params.innovationId,
         { message: body.message }

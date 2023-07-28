@@ -14,6 +14,8 @@ export type TestInnovationExportRequestType = {
     unitId: string;
     unitName: string;
   };
+  expiresAt: Date,
+  updatedAt: Date
 };
 
 export class InnovationExportRequestBuilder extends BaseBuilder {
@@ -75,7 +77,10 @@ export class InnovationExportRequestBuilder extends BaseBuilder {
         id: result.createdBy,
         unitId: result.organisationUnit.id,
         unitName: result.organisationUnit.name
-      }
+
+      },
+      expiresAt: result.exportExpiresAt,
+      updatedAt: result.updatedAt
     };
   }
 }

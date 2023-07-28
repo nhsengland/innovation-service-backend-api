@@ -13,6 +13,7 @@ export type TestInnovationThreadMessageType = {
   id: string;
   author: { id: string; roleId: string };
   message: string;
+  createdAt: Date;
 };
 
 export type TestInnovationThreadType = {
@@ -67,7 +68,8 @@ export class InnovationThreadBuilder extends BaseBuilder {
       savedMessages[messageToAdd[0]] = {
         id: savedMessage.id,
         author: messageToAdd[1].author,
-        message: savedMessage.message
+        message: savedMessage.message,
+        createdAt: savedMessage.createdAt
       };
     });
 

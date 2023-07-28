@@ -1,9 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { randUuid } from '@ngneat/falso';
-import { InnovationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@notifications/shared/entities';
 import {
+  InnovationEntity,
+  NotificationPreferenceEntity,
+  OrganisationUnitEntity,
+  UserEntity,
+  UserRoleEntity
+} from '@notifications/shared/entities';
+import {
+  EmailNotificationPreferenceEnum,
   InnovationCollaboratorStatusEnum,
+  InnovationStatusEnum,
   InnovationSupportStatusEnum,
+  ServiceRoleEnum,
   UserStatusEnum
 } from '@notifications/shared/enums';
 import { InnovationErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
@@ -38,7 +47,7 @@ describe('Notifications / _services / recipients service suite', () => {
     jest.clearAllMocks();
   });
 
-  describe('getUsersIdentityInfo suite', () => {
+  describe('getUsersIdentityInfo', () => {
     it('Should get an identity info when passed a valid user identity id', async () => {
       const identityInfo = await sut.usersIdentityInfo(scenario.users.johnInnovator.identityId);
 
@@ -97,7 +106,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationInfo suite', () => {
+  describe('innovationInfo', () => {
     it('Should get innovation info', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
@@ -241,7 +250,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationSharedOrganisationsWithUnits suite', () => {
+  describe('innovationSharedOrganisationsWithUnits', () => {
     it('Should return not found if innovation not found', async () => {
       await expect(() => sut.innovationSharedOrganisationsWithUnits(randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND)
@@ -287,7 +296,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationAssignedRecipients suite', () => {
+  describe('innovationAssignedRecipients', () => {
     it('Returns a list of recipients for the innovation', async () => {
       const res = await sut.innovationAssignedRecipients(scenario.users.johnInnovator.innovations.johnInnovation.id);
       expect(res).toHaveLength(3);
@@ -315,7 +324,7 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor),
         DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
-        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'),
+        DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole')
       ]);
     });
 
@@ -369,7 +378,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('userInnovationsWithAssignedRecipients suite', () => {
+  describe('userInnovationsWithAssignedRecipients', () => {
     it('should list all user innovations with assigned recipients', async () => {
       const res = await sut.userInnovationsWithAssignedRecipients(scenario.users.ottoOctaviusInnovator.id);
       expect(res).toHaveLength(2);
@@ -396,7 +405,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('actionInfoWithOwner suite', () => {
+  describe('actionInfoWithOwner', () => {
     it('Should get action info without organisationUnit for Assessment Team', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
       const dbAction = dbInnovation.actions.actionByPaul;
@@ -439,7 +448,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('threadInfo suite', () => {
+  describe('threadInfo', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
     it('Returns the thread info including author', async () => {
       const threadInfo = await sut.threadInfo(thread.id);
@@ -495,7 +504,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('threadIntervenientRecipients suite', () => {
+  describe('threadIntervenientRecipients', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
     // Mock domain innovation service threadIntervenients and default reply
     const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadIntervenients').mockResolvedValue([
@@ -562,7 +571,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationTransferInfoWithOwner suite', () => {
+  describe('innovationTransferInfoWithOwner', () => {
     it('Returns the innovation transfer with owner and email', async () => {
       const transfer = scenario.users.adamInnovator.innovations.adamInnovation.transfer;
       const res = await sut.innovationTransferInfoWithOwner(transfer.id);
@@ -581,7 +590,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('innovationCollaborationInfo suite', () => {
+  describe('innovationCollaborationInfo', () => {
     it('Returns the innovation collaboration info for an external collaborator', async () => {
       const collaboration =
         scenario.users.johnInnovator.innovations.johnInnovation.collaborators.elisaPendingCollaborator;
@@ -612,7 +621,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('getInnovationActiveCollaborators suite', () => {
+  describe('getInnovationActiveCollaborators', () => {
     it('Should only get active collaborators', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
@@ -629,10 +638,10 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('needsAssessmentUsers suite', () => {
+  describe('needsAssessmentUsers', () => {
     //const needsAssessmentUsers = [scenario.users.paulNeedsAssessor, scenario.users.seanNeedsAssessor];
     it('Should get a list of needs assessment recipients', async () => {
-      const res = await sut.needsAssessmentUsers(undefined, em);
+      const res = await sut.needsAssessmentUsers(undefined);
       expect(res).toHaveLength(2);
       expect(res).toMatchObject([
         DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole'),
@@ -658,7 +667,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('organisationUnitInfo suite', () => {
+  describe('organisationUnitInfo', () => {
     it('returns the organisation unit with organisation info', async () => {
       const res = await sut.organisationUnitInfo(scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id);
       expect(res).toMatchObject({
@@ -682,7 +691,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('organisationUnitsQualifyingAccessors suite', () => {
+  describe('organisationUnitsQualifyingAccessors', () => {
     it('returns accessors from one organisation unit', async () => {
       const res = await sut.organisationUnitsQualifyingAccessors([
         scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
@@ -771,8 +780,102 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  /*
-  describe('getUsersRecipients suite', () => {
+  describe('dailyDigestUsersWithCounts', () => {
+    it.skip('placeholder', () => {});
+  });
+
+  describe('incompleteInnovationRecordOwners', () => {
+    it.each([
+      ["doesn't return", '0 days', 0, 0],
+      ['returns', '30 days', 30, 1],
+      ['returns', '60 days', 60, 1],
+      ["doesn't return", '31 days', 31, 0],
+      ["doesn't return", '45 days', 45, 0]
+    ])(
+      '%s incomplete innovation records with owner if innovation incomplete for %s',
+      async (_result, _ndays, days, resLength) => {
+        const innovationDate = new Date();
+        innovationDate.setDate(innovationDate.getDate() - days - 1);
+
+        // Set innovation to created and the date to n+1 days ago (raw query because we require updating createdAt)
+        await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
+          InnovationStatusEnum.CREATED,
+          innovationDate,
+          scenario.users.johnInnovator.innovations.johnInnovation.id
+        ]);
+
+        const res = await sut.incompleteInnovationRecordOwners(em);
+        expect(res).toHaveLength(resLength);
+      }
+    );
+
+    it('returns empty array of incomplete innovation records with owner recipients if there is no owner', async () => {
+      const innovationDate = new Date();
+      innovationDate.setDate(innovationDate.getDate() - 31);
+
+      // Set innovation to created and the date to 31 days ago (raw query because we require updating createdAt)
+      await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
+        InnovationStatusEnum.CREATED,
+        innovationDate,
+        scenario.users.johnInnovator.innovations.johnInnovation.id
+      ]);
+
+      await em
+        .getRepository(InnovationEntity)
+        .update({ id: scenario.users.johnInnovator.innovations.johnInnovation.id }, { owner: null });
+
+      const res = await sut.incompleteInnovationRecordOwners(em);
+      expect(res).toHaveLength(0);
+    });
+
+    it('returns empty array of incomplete innovation records with owner recipients if the owner is inactive', async () => {
+      const innovationDate = new Date();
+      innovationDate.setDate(innovationDate.getDate() - 31);
+
+      // Set innovation to created and the date to 31 days ago (raw query because we require updating createdAt)
+      await em.query('UPDATE innovation SET status = @0, created_at = @1 WHERE id = @2', [
+        InnovationStatusEnum.CREATED,
+        innovationDate,
+        scenario.users.johnInnovator.innovations.johnInnovation.id
+      ]);
+
+      await em
+        .getRepository(UserRoleEntity)
+        .update({ id: scenario.users.johnInnovator.roles.innovatorRole.id }, { isActive: false });
+
+      const res = await sut.incompleteInnovationRecordOwners(em);
+      expect(res).toHaveLength(0);
+    });
+  });
+
+  describe('idleSupports', () => {
+    it.skip('placeholder', () => {});
+  });
+
+  describe('getExportRequestInfo', () => {
+    const request = scenario.users.johnInnovator.innovations.johnInnovation.exportRequests.requestByAlice;
+
+    it('returns a export request with info', async () => {
+      await expect(sut.getExportRequestInfo(request.id)).resolves.toMatchObject({
+        status: request.status,
+        requestReason: request.requestReason,
+        rejectReason: request.rejectReason,
+        createdBy: {
+          id: scenario.users.aliceQualifyingAccessor.id,
+          unitId: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+          unitName: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+        }
+      });
+    });
+
+    it('throws an error if export request not found', async () => {
+      await expect(sut.getExportRequestInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('getUsersRecipients', () => {
     it('Should get a recipient when passed a valid user', async () => {
       const recipient = await sut.getUsersRecipient(
         scenario.users.johnInnovator.id,
@@ -797,38 +900,270 @@ describe('Notifications / _services / recipients service suite', () => {
       expect(recipients[1]).toMatchObject(DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole'));
     });
 
-    it('Should return null when passed a non existent role for a single user', async () => {
-      const recipient = await sut.getUsersRecipient(
-        scenario.users.johnInnovator.id,
-        ServiceRoleEnum.ACCESSOR,
-        undefined,
-        em
+    it('Should return multiple recipients when passed an array of userIds and roles', async () => {
+      const recipients = await sut.getUsersRecipient(
+        [scenario.users.aliceQualifyingAccessor.id, scenario.users.ingridAccessor.id],
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
       );
+
+      expect(recipients).toHaveLength(2);
+      expect(recipients[0]).toMatchObject(
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      );
+      expect(recipients[1]).toMatchObject(DTOsHelper.getRecipientUser(scenario.users.ingridAccessor, 'accessorRole'));
+    });
+
+    it('Should filter by organisation', async () => {
+      const recipients = await sut.getUsersRecipient(
+        [scenario.users.aliceQualifyingAccessor.id, scenario.users.samAccessor.id],
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        { organisation: scenario.organisations.healthOrg.id }
+      );
+
+      expect(recipients).toHaveLength(1);
+      expect(recipients[0]).toMatchObject(
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      );
+    });
+
+    it('Should filter by organisation unit', async () => {
+      const recipients = await sut.getUsersRecipient(
+        [scenario.users.jamieMadroxAccessor.id],
+        [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR],
+        { organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id }
+      );
+
+      expect(recipients).toHaveLength(1);
+      expect(recipients[0]).toMatchObject(DTOsHelper.getRecipientUser(scenario.users.jamieMadroxAccessor, 'aiRole'));
+    });
+
+    it('Should include deleted if withDeleted', async () => {
+      const recipients = await sut.getUsersRecipient(
+        scenario.users.sebastiaoDeletedInnovator.id,
+        ServiceRoleEnum.INNOVATOR,
+        { withDeleted: true }
+      );
+      expect(recipients).toMatchObject(
+        DTOsHelper.getRecipientUser(scenario.users.sebastiaoDeletedInnovator, 'innovatorRole')
+      );
+    });
+
+    it("Shouldn't include deleted if not withDeleted (default)", async () => {
+      const recipients = await sut.getUsersRecipient(
+        scenario.users.sebastiaoDeletedInnovator.id,
+        ServiceRoleEnum.INNOVATOR
+      );
+      expect(recipients).toBeNull();
+    });
+
+    it('Should return null when passed a non existent role for a single user', async () => {
+      const recipient = await sut.getUsersRecipient(scenario.users.johnInnovator.id, ServiceRoleEnum.ACCESSOR);
 
       expect(recipient).toBeNull();
     });
 
-    it('It should return empty array when passed a non existent role for all users', async () => {
+    it('Should return null when passed undefined userId', async () => {
+      const recipient = await sut.getUsersRecipient(undefined, ServiceRoleEnum.ACCESSOR);
+
+      expect(recipient).toBeNull();
+    });
+
+    it('Should return empty array when passed a non existent role for all users', async () => {
       const recipients = await sut.getUsersRecipient(
         [scenario.users.johnInnovator.id, scenario.users.adamInnovator.id],
-        ServiceRoleEnum.ACCESSOR,
-        undefined,
-        em
+        ServiceRoleEnum.ACCESSOR
       );
 
       expect(recipients).toHaveLength(0);
     });
 
-    it('It should return empty array when passed an empty array of userIds', async () => {
-      const recipients = await sut.getUsersRecipient([], ServiceRoleEnum.ACCESSOR, undefined, em);
+    it('Should return empty array when passed an empty array of userIds', async () => {
+      const recipients = await sut.getUsersRecipient([], ServiceRoleEnum.ACCESSOR);
 
       expect(recipients).toHaveLength(0);
     });
   });
 
+  describe('getRole', () => {
+    // This is a private function, other tests are ensured by getUsersRecipient
+    it('Should return empty array if no filters provided', async () => {
+      const res = await sut['getRole']({});
+      expect(res).toHaveLength(0);
+    });
+  });
 
-  
+  describe('identityId2UserId', () => {
+    it('Should return the userId for a valid identityId', async () => {
+      expect(await sut.identityId2UserId(scenario.users.johnInnovator.identityId)).toBe(
+        scenario.users.johnInnovator.id
+      );
+    });
 
-  
-  */
+    it('Should return null for a non-existent identityId', async () => {
+      expect(await sut.identityId2UserId(randUuid())).toBeNull();
+    });
+  });
+
+  describe('userId2IdentityId', () => {
+    it('Should return the identityId for a valid userId', async () => {
+      expect(await sut.userId2IdentityId(scenario.users.johnInnovator.id)).toBe(
+        scenario.users.johnInnovator.identityId
+      );
+    });
+
+    it('Should return null for a non-existent userId', async () => {
+      expect(await sut.userId2IdentityId(randUuid())).toBeNull();
+    });
+  });
+
+  describe('usersBagToRecipients', () => {
+    it('Should return an array of recipients from a users bag of same type', async () => {
+      const res = await sut.usersBagToRecipients([
+        { id: scenario.users.johnInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        { id: scenario.users.adamInnovator.id, userType: ServiceRoleEnum.INNOVATOR }
+      ]);
+
+      expect(res).toHaveLength(2);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole')
+      ]);
+    });
+
+    it('Should return an array of recipients from a users bag of different types', async () => {
+      const res = await sut.usersBagToRecipients([
+        { id: scenario.users.johnInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        { id: scenario.users.adamInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        {
+          id: scenario.users.aliceQualifyingAccessor.id,
+          userType: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        }
+      ]);
+
+      expect(res).toHaveLength(3);
+      expect(res).toMatchObject([
+        DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.adamInnovator, 'innovatorRole'),
+        DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole')
+      ]);
+    });
+
+    it('Should minimize calls by grouping users by type', async () => {
+      const mock = jest.spyOn(sut, 'getUsersRecipient');
+      const res = await sut.usersBagToRecipients([
+        { id: scenario.users.johnInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        { id: scenario.users.adamInnovator.id, userType: ServiceRoleEnum.INNOVATOR },
+        {
+          id: scenario.users.aliceQualifyingAccessor.id,
+          userType: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+        },
+        {
+          id: scenario.users.bartQualifyingAccessor.id,
+          userType: scenario.users.bartQualifyingAccessor.roles.qaRole.role,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        },
+        {
+          id: scenario.users.sarahQualifyingAccessor.id,
+          userType: scenario.users.sarahQualifyingAccessor.roles.qaRole.role,
+          organisationUnit: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        },
+        {
+          id: scenario.users.samAccessor.id,
+          userType: scenario.users.samAccessor.roles.accessorRole.role,
+          organisationUnit: scenario.users.samAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+        },
+        {
+          id: scenario.users.scottQualifyingAccessor.id,
+          userType: scenario.users.scottQualifyingAccessor.roles.qaRole.role,
+          organisationUnit:
+            scenario.users.scottQualifyingAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+        }
+      ]);
+
+      expect(res).toHaveLength(7);
+      // 2 innovators, 1 qa from healthOrgUnit, 2 qa from healthOrgAiUnit, 1 a from metTechOrgUnit, 1 qa from medTechOrgUnit
+      expect(mock).toHaveBeenCalledTimes(5);
+      mock.mockRestore();
+    });
+  });
+
+  describe('getEmailPreference', () => {
+    // This is too specific to include in the scenario, don't think it will be used elsewhere
+    beforeEach(async () => {
+      await em.getRepository(NotificationPreferenceEntity).save([
+        {
+          notificationType: 'ACTION',
+          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.DAILY,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          notificationType: 'MESSAGE',
+          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.INSTANTLY,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          notificationType: 'SUPPORT',
+          userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.NEVER,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        },
+        {
+          notificationType: 'ACTION',
+          userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
+          preference: EmailNotificationPreferenceEnum.NEVER,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ]);
+    });
+
+    it('Should return the email preference for a valid role', async () => {
+      const res = await sut.getEmailPreferences([scenario.users.johnInnovator.roles.innovatorRole.id], em);
+      expect(res.size).toBe(1);
+      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toMatchObject({
+        ACTION: EmailNotificationPreferenceEnum.DAILY,
+        MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
+        SUPPORT: EmailNotificationPreferenceEnum.NEVER
+      });
+    });
+
+    it('Should return the email preference for multiple roles', async () => {
+      const res = await sut.getEmailPreferences(
+        [scenario.users.johnInnovator.roles.innovatorRole.id, scenario.users.adamInnovator.roles.innovatorRole.id],
+        em
+      );
+      expect(res.size).toBe(2);
+      expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toEqual({
+        ACTION: EmailNotificationPreferenceEnum.DAILY,
+        MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
+        SUPPORT: EmailNotificationPreferenceEnum.NEVER
+      });
+      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
+        ACTION: EmailNotificationPreferenceEnum.NEVER
+      });
+    });
+
+    it('Should only return the preferences if they are defined', async () => {
+      const res = await sut.getEmailPreferences(
+        [scenario.users.jamieMadroxAccessor.roles.aiRole.id, scenario.users.adamInnovator.roles.innovatorRole.id],
+        em
+      );
+      expect(res.size).toBe(1);
+      expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
+        ACTION: EmailNotificationPreferenceEnum.NEVER
+      });
+    });
+
+    it('Should return empty map if no roles provided', async () => {
+      const res = await sut.getEmailPreferences([]);
+      expect(res.size).toBe(0);
+    });
+  });
 });

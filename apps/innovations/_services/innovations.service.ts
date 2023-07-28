@@ -104,7 +104,8 @@ export class InnovationsService extends BaseService {
       | 'updatedAt'
       | 'assessmentStartedAt'
       | 'assessmentFinishedAt'
-    >
+    >,
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
     data: {
@@ -151,11 +152,13 @@ export class InnovationsService extends BaseService {
       statistics?: { actions: number; messages: number };
     }[];
   }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     // Innovators don't require to fetch user names (maybe make this a parameter)
     const fetchUsers = domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR;
 
     //#region Innovation query with filters
-    const innovationFetchQuery = this.sqlConnection
+    const innovationFetchQuery = connection
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select('innovations.id', 'innovations_id')
       .addSelect('innovations.name', 'innovations_name')
@@ -510,7 +513,7 @@ export class InnovationsService extends BaseService {
     let assessmentsMap = new Map<string, InnovationAssessmentEntity>(); // not exactly InnovationAssessmentEntity, but just the required fields
     let innovationsReassessmentCount = new Map<string, number>();
     if (filters.fields?.includes('assessment')) {
-      const innovationsAssessmentsQuery = this.sqlConnection
+      const innovationsAssessmentsQuery = connection
         .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
         .select('assessments.id', 'assessments_id')
         .addSelect('assessments.createdAt', 'assessments_created_at')
@@ -530,7 +533,7 @@ export class InnovationsService extends BaseService {
       // Required to count reassessments
       innovationsReassessmentCount = new Map(
         (
-          await this.sqlConnection
+          await connection
             .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessments')
             .select('innovation_id', 'innovation_id')
             .addSelect('COUNT(*)', 'reassessments_count')
@@ -546,7 +549,7 @@ export class InnovationsService extends BaseService {
     // Grab the supporting organisations for the innovations (if required)
     const supportingOrganisationsMap = new Map<string, InnovationSupportEntity[]>(); // not exactly InnovationSupportEntity, but just the required fields
     if (filters.fields?.includes('supports')) {
-      const innovationsSupportsQuery = this.sqlConnection
+      const innovationsSupportsQuery = connection
         .createQueryBuilder(InnovationSupportEntity, 'supports')
         .select('supports.id', 'supports_id')
         .addSelect('supports.status', 'supports_status')
@@ -617,7 +620,7 @@ export class InnovationsService extends BaseService {
     // Notifications.
     const notificationsMap = new Map<string, { notificationsUnread: number; actions: number; messages: number }>(); // not exactly NotificationEntity, but just the required fields
     if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
-      const notificationsQuery = this.sqlConnection
+      const notificationsQuery = connection
         .createQueryBuilder(NotificationEntity, 'notifications')
         .select('notifications.id', 'notifications_id')
         // .addSelect('notifications.type', 'notifications_type')
@@ -792,7 +795,8 @@ export class InnovationsService extends BaseService {
   async getInnovationInfo(
     domainContext: DomainContextType,
     id: string,
-    filters: { fields?: ('assessment' | 'supports')[] }
+    filters: { fields?: ('assessment' | 'supports')[] },
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
     name: string;
@@ -832,7 +836,9 @@ export class InnovationsService extends BaseService {
     collaboratorId?: string;
     createdAt: Date;
   }> {
-    const query = this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select([
         'innovation.id',
@@ -908,7 +914,7 @@ export class InnovationsService extends BaseService {
     }
 
     // Only fetch the document version and category data (maybe create a helper for this in the future)
-    const documentData = await this.sqlConnection
+    const documentData = await connection
       .createQueryBuilder(InnovationDocumentEntity, 'innovationDocument')
       .select("JSON_QUERY(document, '$.INNOVATION_DESCRIPTION.categories')", 'categories')
       .addSelect(
@@ -1051,9 +1057,12 @@ export class InnovationsService extends BaseService {
     filters: {
       innovationStatus: (InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT)[];
       assignedToMe: boolean;
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<number> {
-    const query = this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .where('innovation.status IN (:...innovationStatus)', {
@@ -1076,10 +1085,13 @@ export class InnovationsService extends BaseService {
       countryName: string;
       postcode?: string;
       website?: string;
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     // Sanity check if innovation name already exists (for the same user).
-    const repeatedNamesCount = await this.sqlConnection
+    const repeatedNamesCount = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.owner_id = :ownerId', { ownerId: domainContext.id })
       .andWhere('TRIM(LOWER(innovation.name)) = :innovationName', {
@@ -1090,7 +1102,7 @@ export class InnovationsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ALREADY_EXISTS);
     }
 
-    return this.sqlConnection.transaction(async transaction => {
+    return connection.transaction(async transaction => {
       const now = new Date();
 
       const savedInnovation = await transaction.save(
@@ -1148,9 +1160,12 @@ export class InnovationsService extends BaseService {
   }
 
   async getInnovationShares(
-    innovationId: string
+    innovationId: string,
+    entityManager?: EntityManager
   ): Promise<{ organisation: { id: string; name: string; acronym: null | string } }[]> {
-    const innovation = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'organisationShares.id', 'organisationShares.name', 'organisationShares.acronym'])
       .leftJoin('innovation.organisationShares', 'organisationShares')
@@ -1260,20 +1275,26 @@ export class InnovationsService extends BaseService {
   }
 
   async submitInnovation(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
-    innovationId: string
+    innovationId: string,
+    entityManager?: EntityManager
   ): Promise<{ id: string; status: InnovationStatusEnum }> {
-    const innovation = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovations')
       .leftJoinAndSelect('innovations.sections', 'sections')
       .where('innovations.id = :innovationId', { innovationId })
       .getOne();
 
-    const sections = innovation?.sections;
+    if (!innovation) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
+    }
 
-    if (!sections) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);
+    const sections = innovation.sections;
+
+    if (!sections.length) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_NO_SECTIONS);
     }
 
     // TODO: I believe that an error exists here.
@@ -1285,7 +1306,7 @@ export class InnovationsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTIONS_INCOMPLETE);
     }
 
-    await this.sqlConnection.transaction(async transaction => {
+    await connection.transaction(async transaction => {
       const update = transaction.update(
         InnovationEntity,
         { id: innovationId },
@@ -1293,7 +1314,7 @@ export class InnovationsService extends BaseService {
           submittedAt: new Date().toISOString(),
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
           statusUpdatedAt: new Date().toISOString(),
-          updatedBy: user.id
+          updatedBy: domainContext.id
         }
       );
 
@@ -1315,8 +1336,15 @@ export class InnovationsService extends BaseService {
     };
   }
 
-  async withdrawInnovation(context: DomainContextType, innovationId: string, reason: string): Promise<{ id: string }> {
-    const dbInnovation = await this.sqlConnection
+  async withdrawInnovation(
+    context: DomainContextType,
+    innovationId: string,
+    reason: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const dbInnovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id'])
       .where('innovations.id = :innovationId', { innovationId })
@@ -1325,7 +1353,7 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const savedInnovations = await this.sqlConnection.transaction(async transaction => {
+    const savedInnovations = await connection.transaction(async transaction => {
       return this.domainService.innovations.withdrawInnovations(
         { id: context.id, roleId: context.currentRole.id },
         [{ id: dbInnovation.id, reason }],
@@ -1342,18 +1370,19 @@ export class InnovationsService extends BaseService {
         }
       });
     }
-
     return { id: dbInnovation.id };
   }
 
   async pauseInnovation(
-    user: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
-    data: { message: string }
+    data: { message: string },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     // This query should be reviewed when using the service roles in supports instead of the organisationUnitUser
-    const dbSupports = await this.sqlConnection
+    const dbSupports = await connection
       .createQueryBuilder(InnovationSupportEntity, 'supports')
       .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
       .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
@@ -1374,7 +1403,7 @@ export class InnovationsService extends BaseService {
       }))
     );
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await connection.transaction(async transaction => {
       const sections = await transaction
         .createQueryBuilder(InnovationSectionEntity, 'section')
         .select(['section.id'])
@@ -1390,7 +1419,7 @@ export class InnovationsService extends BaseService {
         },
         {
           status: InnovationActionStatusEnum.DECLINED,
-          updatedBy: user.id,
+          updatedBy: domainContext.id,
           updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
         }
       );
@@ -1399,7 +1428,7 @@ export class InnovationsService extends BaseService {
       for (const innovationSupport of dbSupports) {
         innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
         innovationSupport.organisationUnitUsers = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
-        innovationSupport.updatedBy = user.id;
+        innovationSupport.updatedBy = domainContext.id;
         await transaction.save(InnovationSupportEntity, innovationSupport);
       }
 
@@ -1410,7 +1439,7 @@ export class InnovationsService extends BaseService {
         {
           status: InnovationStatusEnum.PAUSED,
           statusUpdatedAt: new Date().toISOString(),
-          updatedBy: user.id
+          updatedBy: domainContext.id
         }
       );
 
@@ -1420,7 +1449,7 @@ export class InnovationsService extends BaseService {
         .update({
           status: InnovationExportRequestStatusEnum.REJECTED,
           rejectReason: TranslationHelper.translate('DEFAULT_MESSAGES.EXPORT_REQUEST.STOP_SHARING'),
-          updatedBy: user.id
+          updatedBy: domainContext.id
         })
         .where(
           'innovation_id = :innovationId AND (status = :pendingStatus OR (status = :approvedStatus AND updated_at >= :expiredAt))',
@@ -1453,8 +1482,9 @@ export class InnovationsService extends BaseService {
 
   async getInnovationActivitiesLog(
     innovationId: string,
-    filters: { activityTypes?: ActivityTypeEnum; startDate?: string; endDate?: string },
-    pagination: PaginationQueryParamsType<'createdAt'>
+    filters: { activityTypes?: ActivityTypeEnum[]; startDate?: string; endDate?: string },
+    pagination: PaginationQueryParamsType<'createdAt'>,
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
     data: {
@@ -1464,7 +1494,9 @@ export class InnovationsService extends BaseService {
       params: ActivityLogListParamsType;
     }[];
   }> {
-    const query = this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
       .createQueryBuilder(ActivityLogEntity, 'activityLog')
       .select([
         'activityLog.id',
@@ -1552,13 +1584,15 @@ export class InnovationsService extends BaseService {
   }
 
   async createInnovationRecordExportRequest(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     organisationUnitId: string,
     innovationId: string,
-    data: { requestReason: string }
+    data: { requestReason: string },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    const unitPendingAndApprovedRequests = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const unitPendingAndApprovedRequests = await connection
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
       .where('request.innovation_id = :innovationId', { innovationId })
       .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
@@ -1576,12 +1610,12 @@ export class InnovationsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
     }
 
-    const request = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
+    const request = await connection.getRepository(InnovationExportRequestEntity).save({
       innovation: InnovationEntity.new({ id: innovationId }),
       status: InnovationExportRequestStatusEnum.PENDING,
       createdAt: new Date().toISOString(),
-      createdBy: requestUser.id,
-      updatedBy: requestUser.id,
+      createdBy: domainContext.id,
+      updatedBy: domainContext.id,
       organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }),
       requestReason: data.requestReason
     });
@@ -1601,8 +1635,11 @@ export class InnovationsService extends BaseService {
   async updateInnovationRecordExportRequest(
     domainContext: DomainContextType,
     exportRequestId: string,
-    data: { status: InnovationExportRequestStatusEnum; rejectReason: null | string }
+    data: { status: InnovationExportRequestStatusEnum; rejectReason: null | string },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
 
     const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
@@ -1616,7 +1653,7 @@ export class InnovationsService extends BaseService {
       }
     }
 
-    const exportRequest = await this.sqlConnection
+    const exportRequest = await connection
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.innovation', 'innovation')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
@@ -1648,7 +1685,7 @@ export class InnovationsService extends BaseService {
       }
     }
 
-    const updatedRequest = await this.sqlConnection.getRepository(InnovationExportRequestEntity).save({
+    const updatedRequest = await connection.getRepository(InnovationExportRequestEntity).save({
       ...exportRequest,
       status,
       rejectReason
@@ -1764,9 +1801,12 @@ export class InnovationsService extends BaseService {
 
   async getInnovationRecordExportRequestInfo(
     domainContext: DomainContextType,
-    exportRequestId: string
+    exportRequestId: string,
+    entityManager?: EntityManager
   ): Promise<InnovationExportRequestItemType> {
-    const requestQuery = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const requestQuery = await connection
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
@@ -1823,9 +1863,12 @@ export class InnovationsService extends BaseService {
 
   async checkInnovationRecordExportRequest(
     domainContext: DomainContextType,
-    exportRequestId: string
+    exportRequestId: string,
+    entityManager?: EntityManager
   ): Promise<{ canExport: boolean }> {
-    const query = this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
       .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
       .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
@@ -1836,19 +1879,12 @@ export class InnovationsService extends BaseService {
       domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
       domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
     ) {
-      if (!domainContext.organisation) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
-      }
 
-      if (!domainContext.organisation.organisationUnit) {
+      if (!domainContext?.organisation?.organisationUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
 
       const organisationUnitId = domainContext.organisation.organisationUnit.id;
-
-      if (!organisationUnitId) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
 
       query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
     }
@@ -1879,18 +1915,24 @@ export class InnovationsService extends BaseService {
     conditions: {
       notificationIds: string[];
       contextTypes: string[];
+      contextDetails: string[];
       contextIds: string[];
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<void> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     const params: {
       roleId: string;
       innovationId: string;
       notificationIds?: string[];
       contextIds?: string[];
       contextTypes?: string[];
+      contextDetails?: string[];
       organisationUnitId?: string;
     } = { roleId: domainContext.currentRole.id, innovationId };
-    const query = this.sqlConnection
+
+    const query = connection
       .createQueryBuilder(NotificationEntity, 'notification')
       .select('notification.id')
       .where('notification.innovation_id = :innovationId', { innovationId });
@@ -1904,12 +1946,17 @@ export class InnovationsService extends BaseService {
       params.contextIds = conditions.contextIds;
     }
 
+    if (conditions.contextDetails.length > 0) {
+      query.andWhere('notification.contextDetail IN (:...contextDetails)');
+      params.contextDetails = conditions.contextDetails;
+    }
+
     if (conditions.contextTypes.length > 0) {
       query.andWhere('notification.contextType IN (:...contextTypes)');
       params.contextTypes = conditions.contextTypes;
     }
 
-    const updateQuery = this.sqlConnection
+    const updateQuery = connection
       .createQueryBuilder(NotificationUserEntity, 'user')
       .update()
       .set({ readAt: () => 'CURRENT_TIMESTAMP' })
@@ -1920,9 +1967,12 @@ export class InnovationsService extends BaseService {
   }
 
   async getInnovationSubmissionsState(
-    innovationId: string
+    innovationId: string,
+    entityManager?: EntityManager
   ): Promise<{ submittedAllSections: boolean; submittedForNeedsAssessment: boolean }> {
-    const innovation = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+  
+    const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
       .getOne();
@@ -1931,7 +1981,7 @@ export class InnovationsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
     }
 
-    const sectionsSubmitted = await this.sqlConnection
+    const sectionsSubmitted = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .where('section.innovation_id = :innovationId', { innovationId })
       .andWhere('section.status = :status', { status: InnovationSectionStatusEnum.SUBMITTED })

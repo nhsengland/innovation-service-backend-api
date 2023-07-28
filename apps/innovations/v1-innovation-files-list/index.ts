@@ -22,15 +22,18 @@ class V1InnovationFilesList {
     const innovationFileService = container.get<InnovationFileService>(SYMBOLS.InnovationFileService);
 
     try {
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+
       await authorizationService
         .validate(context)
+        .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const { skip, take, order, ...filters } = queryParams;

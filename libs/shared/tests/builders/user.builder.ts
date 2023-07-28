@@ -130,8 +130,9 @@ export class UserBuilder extends BaseBuilder {
     }[]
   ): Promise<void> {
     const rolesPerOrg = groupBy(roles, 'organisationId');
-    for (const [org, values] of Object.entries(rolesPerOrg)) {
-      let dbOrganisationId: string | undefined = org !== 'undefined' ? org : undefined;
+
+    for (const [orgId, values] of Object.entries(rolesPerOrg)) {
+      let dbOrganisationId: string | undefined = orgId !== 'undefined' ? orgId : undefined;
       let dbOrganisationUserId: string | undefined;
 
       // Create the innovator organisation if one was not given
@@ -139,9 +140,10 @@ export class UserBuilder extends BaseBuilder {
 
       // sanity check
       if (isInnovator && (values.some(v => v.role !== ServiceRoleEnum.INNOVATOR) || values.length > 1)) {
-        throw new Error("Innovator can't have other roles nor multiple roles");
+        throw new Error("UserBuilder::saveRoles: Innovator can't have other roles nor multiple roles");
       }
 
+      // create innovator organisation
       if (!dbOrganisationId && isInnovator) {
         dbOrganisationId = (
           await this.getEntityManager().save(OrganisationEntity, {
@@ -159,12 +161,17 @@ export class UserBuilder extends BaseBuilder {
           await this.getEntityManager().save(OrganisationUserEntity, {
             organisation: { id: dbOrganisationId },
             user,
-            role: isInnovator ? InnovatorOrganisationRoleEnum.INNOVATOR_OWNER : AccessorOrganisationRoleEnum.ACCESSOR
+            role: isInnovator
+              ? InnovatorOrganisationRoleEnum.INNOVATOR_OWNER
+              : values.some(v => v.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)
+              ? AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+              : AccessorOrganisationRoleEnum.ACCESSOR
           })
         ).id;
       }
 
       for (const role of values) {
+        // Create the organisation unit user
         if (role.organisationUnitId && dbOrganisationUserId) {
           await this.getEntityManager().save(OrganisationUnitUserEntity, {
             organisationUnit: { id: role.organisationUnitId },

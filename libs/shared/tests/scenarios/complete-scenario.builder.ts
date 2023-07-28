@@ -1,30 +1,33 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randSoonDate } from '@ngneat/falso';
+import { randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
+  InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTransferStatusEnum
 } from '../../enums/innovation.enums';
+import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
+import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
+import { NotificationBuilder } from '../builders/notification.builder';
 import { OrganisationUnitBuilder } from '../builders/organisation-unit.builder';
 import { OrganisationBuilder } from '../builders/organisation.builder';
 import { TestUserType, UserBuilder } from '../builders/user.builder';
-import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 
 export type CompleteScenarioType = Awaited<ReturnType<CompleteScenarioBuilder['createScenario']>>;
 
@@ -82,6 +85,27 @@ export class CompleteScenarioBuilder {
         .setName('MedTech Org Unit')
         .save();
 
+      // innovTech Organisation has one unit: InnovTech Org Unit
+      const innovTechOrg = await new OrganisationBuilder(entityManager).setName('InnovTech Organisation').save();
+      const innovTechOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(innovTechOrg.id)
+        .setName('InnovTech Org Unit')
+        .save();
+      const innovTechHeavyOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(innovTechOrg.id)
+        .setName('InnovTech Heavy Org Unit')
+        .save();
+
+      const inactiveEmptyOrg = await new OrganisationBuilder(entityManager)
+        .setName('Inactive Empty Organisation')
+        .setInactivatedAt(new Date())
+        .save();
+      const inactiveEmptyOrgUnit = await new OrganisationUnitBuilder(entityManager)
+        .addToOrganisation(inactiveEmptyOrg.id)
+        .setName('Inactive Empty Org Unit')
+        .setInactivatedAt(new Date())
+        .save();
+
       // QAs and Accessors
 
       // Alice Qualifying Accessor specs:
@@ -111,6 +135,13 @@ export class CompleteScenarioBuilder {
       const samAccessor = await new UserBuilder(entityManager)
         .setName('Sam Accessor')
         .addRole(ServiceRoleEnum.ACCESSOR, 'accessorRole', medTechOrg.id, medTechOrgUnit.id)
+        .save();
+
+      // Scott QA specs
+      // Belongs to medTechOrgUnit
+      const scottQualifyingAccessor = await new UserBuilder(entityManager)
+        .setName('Scott Qualifying Accessor')
+        .addRole(ServiceRoleEnum.QUALIFYING_ACCESSOR, 'qaRole', medTechOrg.id, medTechOrgUnit.id)
         .save();
 
       // Sarah Qualifying Accessor specs:
@@ -196,7 +227,7 @@ export class CompleteScenarioBuilder {
         .setNeedsAssessor(paulNeedsAssessor.id)
         .setUpdatedBy(paulNeedsAssessor.id)
         .setFinishedAt()
-        .suggestOrganisationUnits(healthOrgUnit)
+        .suggestOrganisationUnits(healthOrgUnit, innovTechOrgUnit)
         .save();
 
       // support on johnInnovation by HealthOrgUnit accessors (alice and jamie)
@@ -213,6 +244,17 @@ export class CompleteScenarioBuilder {
         .setInnovation(johnInnovation.id)
         .setOrganisationUnit(healthOrgAiUnit.id)
         .save();
+      // Add support logs from HealthOrgAIUnit to johnInnovation
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setSupportStatus(InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED)
+        .save();
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setSupportStatus(InnovationSupportStatusEnum.COMPLETE)
+        .save();
 
       // support on johnInnovation by MedTechOrgUnit accessor (sam)
       const johnInnovationSupportByMedTechOrgUnit = await new InnovationSupportBuilder(entityManager)
@@ -224,8 +266,8 @@ export class CompleteScenarioBuilder {
 
       // support log on johnInnovation of previous UNASSIGNED support
       const johnInnovationSupportLog = await new InnovationSupportLogBuilder(entityManager)
-        .setInnovation(johnInnovation)
-        .setCreatedBy(aliceQualifyingAccessor)
+        .setInnovation(johnInnovation.id)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
         .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
         .save();
 
@@ -237,6 +279,16 @@ export class CompleteScenarioBuilder {
         .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .setSupport(johnInnovationSupportByHealthOrgUnit.id)
+        .save();
+
+      const johnInnovationActionByAliceSubmitted = await new InnovationActionBuilder(entityManager)
+        .setCreatedBy(aliceQualifyingAccessor.id)
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(johnInnovator.id)
+        .setUpdatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
+        .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .setSupport(johnInnovationSupportByHealthOrgUnit.id)
+        .setStatus(InnovationActionStatusEnum.SUBMITTED)
         .save();
 
       // action on johnInnovation created by Paul (NA)
@@ -303,6 +355,12 @@ export class CompleteScenarioBuilder {
 
       const johnInnovationExportRequestByAlice = await new InnovationExportRequestBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id, healthOrgUnit.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
+
+      const johnInnovationExportRequestBySam = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(samAccessor.id, medTechOrgUnit.id)
         .setInnovation(johnInnovation.id)
         .setStatus(InnovationExportRequestStatusEnum.PENDING)
         .save();
@@ -402,6 +460,61 @@ export class CompleteScenarioBuilder {
         .setCreatedBy(johnInnovator)
         .save();
 
+      const johnInnovationNotificationFromMessage = await new NotificationBuilder(entityManager)
+        .addNotificationUser(johnInnovator)
+        .setInnovation(johnInnovation.id)
+        .setContext(
+          NotificationContextTypeEnum.THREAD,
+          NotificationContextDetailEnum.THREAD_MESSAGE_CREATION,
+          randUuid()
+        )
+        .save();
+
+      const johnInnovationNotificationFromSupport = await new NotificationBuilder(entityManager)
+        .addNotificationUser(johnInnovator)
+        .setInnovation(johnInnovation.id)
+        .setContext(
+          NotificationContextTypeEnum.SUPPORT,
+          NotificationContextDetailEnum.SUPPORT_STATUS_UPDATE,
+          randUuid()
+        )
+        .save();
+
+      // Progress updates on John innovation
+      const johnInnovationAliceProgressUpdate = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
+        .setParams({ title: randText() })
+        .save();
+
+      const johnInnovationIngridProgressUpdateWithFile = await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(ingridAccessor, ingridAccessor.roles['accessorRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.PROGRESS_UPDATE)
+        .setParams({ title: randText() })
+        .save();
+
+      const johnInnovationProgressUpdateFileUploadedByIngrid = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovationIngridProgressUpdateWithFile.id,
+          type: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+        })
+        .setCreatedByUserRole(ingridAccessor.roles['accessorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      // Alice suggested innovTechHeavyOrgUnit
+      await new InnovationSupportLogBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setSupportStatus(InnovationSupportStatusEnum.ENGAGING)
+        .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
+        .setLogType(InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION)
+        .setSuggestedUnits([innovTechHeavyOrgUnit.id])
+        .save();
+
       // Adam Innovator specs:
       // 1 innovation in status 'CREATED' with transfer in status 'PENDING' to external user. The innovation is shared with
       // healthOrg
@@ -416,6 +529,11 @@ export class CompleteScenarioBuilder {
         .addSection('INNOVATION_DESCRIPTION')
         .addSection('COST_OF_INNOVATION')
         .shareWith([healthOrg])
+        .save();
+
+      const adamInnovationEmpty = await new InnovationBuilder(entityManager)
+        .setOwner(adamInnovator.id)
+        .setStatus(InnovationStatusEnum.IN_PROGRESS)
         .save();
 
       const adamInnovationTransferToJane = await new InnovationTransferBuilder(entityManager)
@@ -464,6 +582,7 @@ export class CompleteScenarioBuilder {
       // This innovator has more than one innovation being supported
       // 2 innovations currently being supported
       // 1 innovation with assessment in progress
+      // 1 innovation created
       const ottoOctaviusInnovator = await new UserBuilder(entityManager)
         .setName('Otto Octavius')
         .addRole(ServiceRoleEnum.INNOVATOR, 'innovatorRole')
@@ -492,12 +611,19 @@ export class CompleteScenarioBuilder {
       const brainComputerInterfaceInnovation = await new InnovationBuilder(entityManager)
         .setOwner(ottoOctaviusInnovator.id)
         .setStatus(InnovationStatusEnum.NEEDS_ASSESSMENT)
+        .addSection('INNOVATION_DESCRIPTION')
         .save();
 
       const brainComputerInterfaceInnovationAssessment = await new InnovationAssessmentBuilder(entityManager)
         .setInnovation(brainComputerInterfaceInnovation.id)
         .setNeedsAssessor(paulNeedsAssessor.id)
         .setUpdatedBy(paulNeedsAssessor.id)
+        .save();
+
+      const powerSourceInnovation = await new InnovationBuilder(entityManager)
+        .setOwner(ottoOctaviusInnovator.id)
+        .setStatus(InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT)
+        .addSection('INNOVATION_DESCRIPTION')
         .save();
 
       return {
@@ -526,6 +652,7 @@ export class CompleteScenarioBuilder {
                 },
                 actions: {
                   actionByAlice: johnInnovationActionByAlice,
+                  actionByAliceSubmitted: johnInnovationActionByAliceSubmitted,
                   actionByBart: johnInnovationActionByBart,
                   actionByPaul: johnInnovationActionByPaul
                 },
@@ -555,7 +682,8 @@ export class CompleteScenarioBuilder {
                   }
                 },
                 exportRequests: {
-                  requestByAlice: johnInnovationExportRequestByAlice
+                  requestByAlice: johnInnovationExportRequestByAlice,
+                  requestBySam: johnInnovationExportRequestBySam
                 },
                 collaborators: {
                   adamCollaborator: adamCollaborator,
@@ -564,7 +692,8 @@ export class CompleteScenarioBuilder {
                   sebastiaoCollaborator: sebastiaoCollaborator
                 },
                 sections: {
-                  INNOVATION_DESCRIPTION: johnInnovation.sections.get('INNOVATION_DESCRIPTION')!
+                  INNOVATION_DESCRIPTION: johnInnovation.sections.get('INNOVATION_DESCRIPTION')!,
+                  EVIDENCE_OF_EFFECTIVENESS: johnInnovation.sections.get('EVIDENCE_OF_EFFECTIVENESS')!
                 },
                 files: {
                   sectionFileByJohn: johnInnovationSectionFileUploadedByJohn,
@@ -575,9 +704,18 @@ export class CompleteScenarioBuilder {
                   innovationFileByIngrid: johnInnovationInnovationFileUploadedByIngrid,
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
                   innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser,
-                  innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn
+                  innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn,
+                  progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid
                 },
-                transfer: johnInnovationTransferToJane
+                transfer: johnInnovationTransferToJane,
+                notifications: {
+                  notificationsFromMessage: johnInnovationNotificationFromMessage,
+                  notificationFromSupport: johnInnovationNotificationFromSupport
+                },
+                progressUpdates: {
+                  progressUpdateByAlice: johnInnovationAliceProgressUpdate,
+                  progressUpdateByIngridWithFile: johnInnovationIngridProgressUpdateWithFile
+                }
               }
             }
           },
@@ -602,7 +740,8 @@ export class CompleteScenarioBuilder {
                 supports: {
                   adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit
                 }
-              }
+              },
+              adamInnovationEmpty: adamInnovationEmpty
             }
           },
           sebastiaoDeletedInnovator: {
@@ -624,7 +763,8 @@ export class CompleteScenarioBuilder {
               brainComputerInterfaceInnovation: {
                 ...brainComputerInterfaceInnovation,
                 assessmentInProgress: brainComputerInterfaceInnovationAssessment
-              }
+              },
+              powerSourceInnovation: powerSourceInnovation
             }
           },
           // Accessors
@@ -668,6 +808,21 @@ export class CompleteScenarioBuilder {
                     jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org Unit']!,
                   healthOrgAiUnit:
                     jamieMadroxAccessor.organisations['Health Organisation']!.organisationUnits['Health Org AI Unit']!
+                }
+              }
+            }
+          },
+          scottQualifyingAccessor: {
+            ...scottQualifyingAccessor,
+            roles: { qaRole: scottQualifyingAccessor.roles['qaRole']! },
+            organisations: {
+              medTechOrg: {
+                ...scottQualifyingAccessor.organisations['MedTech Organisation']!,
+                organisationUnits: {
+                  medTechOrgUnit:
+                    scottQualifyingAccessor.organisations['MedTech Organisation']!.organisationUnits[
+                      'MedTech Org Unit'
+                    ]!
                 }
               }
             }
@@ -742,6 +897,19 @@ export class CompleteScenarioBuilder {
             ...medTechOrg,
             organisationUnits: {
               medTechOrgUnit: medTechOrgUnit
+            }
+          },
+          innovTechOrg: {
+            ...innovTechOrg,
+            organisationUnits: {
+              innovTechOrgUnit: innovTechOrgUnit,
+              innovTechHeavyOrgUnit: innovTechHeavyOrgUnit
+            }
+          },
+          inactiveEmptyOrg: {
+            ...inactiveEmptyOrg,
+            organisationUnits: {
+              inactiveEmptyOrgUnit: inactiveEmptyOrgUnit
             }
           }
         }

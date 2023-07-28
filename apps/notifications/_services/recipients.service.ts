@@ -696,10 +696,16 @@ export class RecipientsService extends BaseService {
       }));
   }
 
-  async incompleteInnovationRecordOwners(): Promise<
-    { recipient: RecipientType; innovationId: string; innovationName: string }[]
-  > {
-    const dbInnovations = await this.sqlConnection
+  /**
+   * returns a list of innovations with owner that have been created but not completed more than every 30 days ago
+   * @param entityManager optionally pass an entity manager
+   * @returns list of recipient owners with innovation id and name
+   */
+  async incompleteInnovationRecordOwners(
+    entityManager?: EntityManager
+  ): Promise<{ recipient: RecipientType; innovationId: string; innovationName: string }[]> {
+    const em = entityManager ?? /* c8 ignore next */ this.sqlConnection.manager;
+    const dbInnovations = await em
       .createQueryBuilder(InnovationEntity, 'innovations')
       .select(['innovations.id', 'innovations.name', 'owner.id', 'owner.identityId', 'roles.id', 'roles.role'])
       .leftJoin('innovations.owner', 'owner')
@@ -712,14 +718,14 @@ export class RecipientsService extends BaseService {
       .getMany();
 
     return dbInnovations
-      .filter(innovation => innovation.owner)
+      .filter((innovation): innovation is InnovationEntity & { owner: UserEntity } => !!innovation.owner)
       .map(innovation => ({
         recipient: {
-          userId: innovation.owner?.id ?? '',
-          identityId: innovation.owner?.identityId ?? '',
-          roleId: innovation.owner?.serviceRoles[0]?.id ?? '',
-          role: innovation.owner?.serviceRoles[0]?.role ?? ServiceRoleEnum.INNOVATOR,
-          isActive: innovation.owner?.serviceRoles[0] ? true : false
+          userId: innovation.owner.id,
+          identityId: innovation.owner.identityId,
+          roleId: innovation.owner.serviceRoles[0]?.id ?? /* c8 ignore next */ '',
+          role: innovation.owner.serviceRoles[0]?.role ?? /* c8 ignore next */ ServiceRoleEnum.INNOVATOR,
+          isActive: innovation.owner.serviceRoles[0] ? true : /* c8 ignore next */ false
         },
         innovationId: innovation.id,
         innovationName: innovation.name
@@ -772,6 +778,7 @@ export class RecipientsService extends BaseService {
       })
 
       // only active supports
+      .andWhere('innovation.status != :innovationStatus', { innovationStatus: InnovationStatusEnum.PAUSED })
       .andWhere('supports.status IN (:...statuses)', {
         statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
       })
@@ -921,8 +928,8 @@ export class RecipientsService extends BaseService {
         userIds: userIdsArray,
         roles: rolesArray,
         includeLocked: true, // maybe make this an option but was currently used like this most of the times and the handler chooses
-        ...(extraFilters?.organisation && { organisation: [extraFilters.organisation] }),
-        ...(extraFilters?.organisationUnit && { organisationUnit: [extraFilters.organisationUnit] }),
+        ...(extraFilters?.organisation && { organisations: [extraFilters.organisation] }),
+        ...(extraFilters?.organisationUnit && { organisationUnits: [extraFilters.organisationUnit] }),
         ...(extraFilters?.withDeleted && { withDeleted: true })
       },
       em
@@ -1083,18 +1090,21 @@ export class RecipientsService extends BaseService {
 
   /**
    * returns a map of user roles and their preferences
-   * @param roleIds
+   * @param roleIds the role ids
+   * @param entityManager optionally pass an entity manager
    */
   async getEmailPreferences(
-    roleIds: string[]
+    roleIds: string[],
+    entityManager?: EntityManager
   ): Promise<Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
     if (!roleIds.length) {
       return new Map();
     }
 
     const res = new Map<string, Partial<Record<EmailNotificationType, EmailNotificationPreferenceEnum>>>();
-
-    const preferences = await this.sqlConnection
+    const preferences = await em
       .createQueryBuilder(NotificationPreferenceEntity, 'notificationPreference')
       .where('notificationPreference.user_role_id IN (:...roleIds)', { roleIds })
       .getMany();

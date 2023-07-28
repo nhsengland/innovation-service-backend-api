@@ -23,7 +23,6 @@ class V1InnovationsExportRequestsCreate {
     try {
       const auth = await authorizationService.validate(context).checkAccessorType().verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
       const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
@@ -40,7 +39,6 @@ class V1InnovationsExportRequestsCreate {
       const { requestReason } = body;
 
       const result = await innovationsService.createInnovationRecordExportRequest(
-        { id: requestUser.id, identityId: requestUser.identityId },
         domainContext,
         organisationUnitId,
         params.innovationId,

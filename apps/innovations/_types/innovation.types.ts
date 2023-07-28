@@ -1,6 +1,7 @@
 import type {
   InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
+  InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
@@ -118,7 +119,7 @@ export type InnovationSupportsLogType = {
   id: string;
   type: InnovationSupportLogTypeEnum;
   description: string;
-  innovationSupportStatus: string;
+  innovationSupportStatus?: string;
   createdBy: string;
   createdAt: Date;
   organisationUnit: null | {
@@ -181,4 +182,19 @@ export type InnovationSuggestionAccessor = {
       acronym: string | null;
     };
   }[];
+};
+
+export type InnovationDocumentType = {
+  name: string;
+  description?: string;
+  file: {
+    id: string;
+    name: string;
+    size: number;
+    extension: string;
+  };
+};
+
+export type InnovationDocumentTypeWithContext = InnovationDocumentType & {
+  context: { id: string; type: InnovationFileContextTypeEnum };
 };

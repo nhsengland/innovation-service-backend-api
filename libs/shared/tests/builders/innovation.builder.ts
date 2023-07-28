@@ -18,7 +18,7 @@ export type TestInnovationType = {
   ownerId: string;
   sections: Map<
     CurrentCatalogTypes.InnovationSections,
-    { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections }
+    { id: string; status: InnovationSectionStatusEnum; section: CurrentCatalogTypes.InnovationSections, updatedAt: Date }
   >;
   sharedOrganisations: { id: string; name: string }[];
 };
@@ -153,7 +153,7 @@ export class InnovationBuilder extends BaseBuilder {
       .getRepository(InnovationEntity)
       .save({
         ...this.innovation,
-        sections: this.innovation.sections
+        sections: this.innovation.sections,
       });
 
     await this.getEntityManager()
@@ -175,7 +175,7 @@ export class InnovationBuilder extends BaseBuilder {
       .getOne();
 
     if (!result) {
-      throw new Error('Error saving/retriving innovation information.');
+      throw new Error('InnovationBuilder::save: Error saving/retriving innovation information.');
     }
 
     // Sanity check but this requirement might actually change in the future. Builder forces owner for now
@@ -188,7 +188,7 @@ export class InnovationBuilder extends BaseBuilder {
       name: result.name,
       status: result.status,
       ownerId: result.owner.id,
-      sections: new Map(result.sections.map(s => [s['section'], s])),
+      sections: new Map(result.sections.map(s => [s['section'], { ...s, updatedAt: s.updatedAt }])),
       sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
     };
   }

@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { EntityManager, In, IsNull } from 'typeorm';
+import { EntityManager, In } from 'typeorm';
 
 import {
   InnovationActionEntity,
@@ -71,7 +71,7 @@ export class OrganisationsService extends BaseService {
         .innerJoin('user', 'u', 'ur.user_id = u.id')
         .where('r.organisation_unit_id = :orgUnitId', { orgUnitId: unitId })
         .andWhere('ur.is_active = 1')
-        .andWhere('r.lockedAt IS NULL')
+        .andWhere('r.is_active = 1')
         .andWhere('u.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
         .groupBy('ur.user_id, u.external_id')
         .having('count(*) = 1')
@@ -177,7 +177,7 @@ export class OrganisationsService extends BaseService {
       // lock all roles of unit
       await transaction.update(
         UserRoleEntity,
-        { organisationUnit: unitId, lockedAt: IsNull() },
+        { organisationUnit: unitId, isActive: true },
         { isActive: false, updatedAt: now }
       );
 
@@ -198,13 +198,13 @@ export class OrganisationsService extends BaseService {
       for (const support of supportsToComplete) {
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: requestUser.id, organisationUnitId: unitId },
-          { id: support.innovation.id },
-          support.status,
+          { id: requestUser.id, roleId: domainContext.currentRole.id },
+          support.innovation.id,
           {
             type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
-            description: '',
-            suggestedOrganisationUnits: []
+            supportStatus: support.status,
+            description: 'Unit inactivated',
+            unitId
           }
         );
 
@@ -252,7 +252,7 @@ export class OrganisationsService extends BaseService {
       .innerJoin('ur.user', 'user')
       .where('ur.user_id IN (:...userIds)', { userIds })
       .andWhere('ur.organisation_unit_id = :unitId', { unitId }) //ensure users have role in unit
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
+      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.LOCKED })
       .getMany();
 
     // unlock locked roles of selected users
@@ -394,10 +394,11 @@ export class OrganisationsService extends BaseService {
 
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('(org.name = :name OR org.acronym = :acronym) AND (org.id != :organisationId)', {
+        .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type=:type', {
           name,
           acronym,
-          organisationId
+          organisationId,
+          type: OrganisationTypeEnum.ACCESSOR
         })
         .getOne();
 

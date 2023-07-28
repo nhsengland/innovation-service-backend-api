@@ -14,7 +14,7 @@ import { container } from '../_config';
 import type { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schema';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class CreateInnovationAssessment {
   @JwtDecoder()

@@ -14,7 +14,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
-  activityTypes?: ActivityTypeEnum;
+  activityTypes?: ActivityTypeEnum[];
   startDate?: string;
   endDate?: string;
 };

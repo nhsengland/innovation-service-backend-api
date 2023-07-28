@@ -11,5 +11,5 @@ export const ParamsSchema = Joi.object<ParamsType>({
   evidenceId: Joi.string().guid().required()
 });
 
-export type BodyType = CurrentEvidenceType;
+export type BodyType = Omit<CurrentEvidenceType, 'id'>;
 export const BodySchema = CurrentEvidenceSchema.required();

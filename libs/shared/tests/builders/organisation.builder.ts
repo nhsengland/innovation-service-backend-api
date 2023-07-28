@@ -10,6 +10,7 @@ export type TestOrganisationType = {
   name: string;
   acronym: string | null;
   isShadow: boolean;
+  isActive: boolean;
   units: { [key: string]: TestOrganisationUnitType };
 };
 
@@ -43,6 +44,11 @@ export class OrganisationBuilder extends BaseBuilder {
     return this;
   }
 
+  setInactivatedAt(inactivatedAt: Date): this {
+    this.organisation.inactivatedAt = inactivatedAt;
+    return this;
+  }
+
   async save(): Promise<TestOrganisationType> {
     const savedOrganisation = await this.getEntityManager().getRepository(OrganisationEntity).save(this.organisation);
 
@@ -60,6 +66,7 @@ export class OrganisationBuilder extends BaseBuilder {
       name: result.name,
       acronym: result.acronym,
       isShadow: result.isShadow,
+      isActive: !result.inactivatedAt,
       units: {}
     };
   }

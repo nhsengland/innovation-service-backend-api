@@ -10,7 +10,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type BodyType = {
-  type: Exclude<InnovationSupportLogTypeEnum, 'ACCESSOR_SUGGESTION' | 'STATUS_UPDATE'>;
+  type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION | InnovationSupportLogTypeEnum.STATUS_UPDATE;
   description: string;
   organisationUnits: string[];
 };

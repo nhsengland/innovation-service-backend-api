@@ -32,15 +32,9 @@ class V1InnovationActionCreate {
         .checkInnovation()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const result = await innovationActionsService.createAction(
-        { id: requestUser.id, identityId: requestUser.identityId },
-        domainContext,
-        params.innovationId,
-        body
-      );
+      const result = await innovationActionsService.createAction(domainContext, params.innovationId, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

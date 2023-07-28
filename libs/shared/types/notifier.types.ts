@@ -55,6 +55,12 @@ export type NotifierTemplatesType = {
     };
   };
 
+  [NotifierTypeEnum.SUPPORT_SUMMARY_UPDATE]: {
+    innovationId: string;
+    organisationUnitId: string;
+    supportId: string;
+  };
+
   [NotifierTypeEnum.INNOVATION_ORGANISATION_UNITS_SUGGESTION]: {
     innovationId: string;
     organisationUnitIds: string[]; // Suggested organisation units.

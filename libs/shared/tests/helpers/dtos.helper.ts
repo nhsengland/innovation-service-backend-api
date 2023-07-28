@@ -28,7 +28,7 @@ export class DTOsHelper {
         id: user.id,
         identityId: user.identityId,
         currentRole: { id: role.id, role: role.role },
-        organisation: { id: role.organisation.id, name: role.organisation.name, acronym: null }
+        organisation: { id: role.organisation.id, name: role.organisation.name, acronym: role.organisation.acronym }
       };
     }
 

@@ -22,6 +22,13 @@ const TRANSLATIONS = {
     OTHER_EFFECTIVENESS: 'Other evidence of effectiveness (for example environmental or social)',
     PRE_CLINICAL: 'Pre-clinical evidence',
     REAL_WORLD: 'Real world evidence'
+  },
+  SERVICE_ROLES: {
+    ADMIN: 'Administrator',
+    ASSESSMENT: 'Needs Assessor',
+    INNOVATOR: 'Innovator',
+    ACCESSOR: 'Accessor',
+    QUALIFYING_ACCESSOR: 'Qualifying Accessor'
   }
 };
 

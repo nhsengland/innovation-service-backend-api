@@ -1,7 +1,7 @@
 import Joi from 'joi';
 
 import type { ActivityEnum } from '../enums/activity.enums';
-import type { InnovationSupportStatusEnum } from '../enums/innovation.enums';
+import type { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum } from '../enums/innovation.enums';
 import { ServiceRoleEnum } from '../enums/user.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
 
@@ -309,4 +309,34 @@ export type IdentityUserInfo = {
   isActive: boolean;
   passwordResetAt: null | Date;
   lastLoginAt: null | Date;
+};
+
+// Support Log Types
+export type SupportLogParams = {
+  description: string;
+} & (SupportLogStatusUpdate | SupportLogAccessorSuggestion | SupportLogProgressUpdate | SupportLogAssessmentSuggestion);
+
+export type SupportLogStatusUpdate = {
+  type: InnovationSupportLogTypeEnum.STATUS_UPDATE;
+  supportStatus: InnovationSupportStatusEnum;
+  unitId: string;
+};
+
+export type SupportLogAccessorSuggestion = {
+  type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION;
+  supportStatus: InnovationSupportStatusEnum;
+  unitId: string;
+  suggestedOrganisationUnits: string[];
+};
+
+export type SupportLogProgressUpdate = {
+  type: InnovationSupportLogTypeEnum.PROGRESS_UPDATE;
+  supportStatus: InnovationSupportStatusEnum;
+  unitId: string;
+  params: { title: string };
+};
+
+export type SupportLogAssessmentSuggestion = {
+  type: InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION;
+  suggestedOrganisationUnits: string[];
 };

@@ -5,7 +5,7 @@ export const TEXTAREA_LENGTH_LIMIT = {
   l: 1500,
   xl: 2000,
   xxl: 4000
-};
+} as const;
 
 export const ORGANISATIONS_LENGTH_LIMITS = {
   name: 100,
@@ -15,7 +15,7 @@ export const ORGANISATIONS_LENGTH_LIMITS = {
   size: 25,
   description: 50,
   registrationNumber: 8
-};
+} as const;
 
 export const THIRTY_DAYS_IN_MSEC = 1000 * 60 * 60 * 24 * 30;
 

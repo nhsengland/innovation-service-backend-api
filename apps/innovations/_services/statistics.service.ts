@@ -14,11 +14,12 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
-import { OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import { BaseService } from './base.service';
+import type { EntityManager } from 'typeorm';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -28,9 +29,12 @@ export class StatisticsService extends BaseService {
 
   async getActions(
     innovationId: string,
-    statuses: InnovationActionStatusEnum[]
+    statuses: InnovationActionStatusEnum[],
+    entityManager?: EntityManager
   ): Promise<{ updatedAt: Date; section: CurrentCatalogTypes.InnovationSections }[]> {
-    const openActions = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const openActions = await connection
       .createQueryBuilder(InnovationActionEntity, 'action')
       .innerJoin('action.innovationSection', 'section')
       .innerJoin('section.innovation', 'innovation')
@@ -45,9 +49,12 @@ export class StatisticsService extends BaseService {
   }
 
   async getSubmittedSections(
-    innovationId: string
+    innovationId: string,
+    entityManager?: EntityManager
   ): Promise<{ updatedAt: Date; section: CurrentCatalogTypes.InnovationSections }[]> {
-    const sections = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const sections = await connection 
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section')
@@ -62,12 +69,15 @@ export class StatisticsService extends BaseService {
 
   async getUnreadMessages(
     innovationId: string,
-    roleId: string
+    roleId: string,
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
     lastSubmittedAt: null | Date;
   }> {
-    const unreadMessages = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const unreadMessages = await connection
       .createQueryBuilder(NotificationEntity, 'notification')
       .innerJoin('notification.innovation', 'innovation')
       .innerJoin('notification.notificationUsers', 'users')
@@ -92,15 +102,18 @@ export class StatisticsService extends BaseService {
 
   async actionsToReview(
     innovationId: string,
-    domainContext: DomainContextType
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
   ): Promise<{ count: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const baseQuery = this.sqlConnection
+    const baseQuery = connection 
       .createQueryBuilder(InnovationActionEntity, 'actions')
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .innerJoin('actions.innovationSection', 'section')
@@ -122,15 +135,18 @@ export class StatisticsService extends BaseService {
 
   async getSubmittedSectionsSinceSupportStart(
     innovationId: string,
-    domainContext: DomainContextType
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
   ): Promise<{ section: CurrentCatalogTypes.InnovationSections; updatedAt: Date }[]> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     const organisationUnit = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnit) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const innovationSupport = await this.sqlConnection
+    const innovationSupport = await connection
       .createQueryBuilder(InnovationSupportEntity, 'innovationSupport')
       .innerJoin('innovationSupport.innovation', 'innovation')
       .innerJoin('innovationSupport.organisationUnit', 'organisationUnit')
@@ -143,7 +159,7 @@ export class StatisticsService extends BaseService {
 
     const supportStartedAt = innovationSupport?.updatedAt;
 
-    const sections = await this.sqlConnection
+    const sections = await connection 
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section_section')
@@ -159,19 +175,22 @@ export class StatisticsService extends BaseService {
 
   async getSubmittedSectionsSinceAssessmentStart(
     innovationId: string,
-    requestUser: DomainUserInfoType
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
   ): Promise<{ section: CurrentCatalogTypes.InnovationSections; updatedAt: Date }[]> {
-    const assessment = await this.sqlConnection
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const assessment = await connection 
       .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
       .innerJoin('assessments.assignTo', 'assignTo')
       .innerJoin('assessments.innovation', 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('assignTo.id = :userId', { userId: requestUser.id })
+      .andWhere('assignTo.id = :userId', { userId: domainContext.id })
       .getOne();
 
     const assessmentStartedAt = assessment?.updatedAt;
 
-    const sections = await this.sqlConnection
+    const sections = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoinAndSelect('section.innovation', 'innovation')
       .select('section.section', 'section_section')
@@ -187,14 +206,17 @@ export class StatisticsService extends BaseService {
 
   async getUnreadMessagesInitiatedBy(
     innovationId: string,
-    roleId: string
+    roleId: string,
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
     lastSubmittedAt: null | Date;
   }> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
     // gets unread messages on this threads
     // the context id is always the thread id regardless if the detail is a message or a reply
-    const unreadMessageThreads = await this.sqlConnection
+    const unreadMessageThreads = await connection
       .createQueryBuilder()
       .select('thread.id', 'thread_id')
       .from(NotificationUserEntity, 'users')
@@ -222,7 +244,7 @@ export class StatisticsService extends BaseService {
     // gets the latest message on the unread threads
     const latestMessage =
       unreadMessages > 0
-        ? await this.sqlConnection
+        ? await connection
             .createQueryBuilder(InnovationThreadMessageEntity, 'message')
             .where('message.thread in (:...threadIds)', {
               threadIds: [...new Set(unreadMessageThreads.map(_ => _.thread_id))]
