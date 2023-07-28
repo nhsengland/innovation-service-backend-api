@@ -2,7 +2,7 @@ import type { ServiceRoleEnum } from '@innovations/shared/enums';
 
 export type ResponseDTO = {
   count: number;
-  threads: {
+  data: {
     id: string;
     subject: string;
     messageCount: number;
