@@ -614,6 +614,10 @@ export class InnovationThreadsService extends BaseService {
 
     const threads = await query.getRawMany();
 
+    if (threads.length === 0) {
+      return { count: 0, data: [] };
+    }
+
     const authorIds = [
       ...new Set(threads.filter(t => t.author_status !== UserStatusEnum.DELETED).map(t => t.author_identity_id))
     ];
