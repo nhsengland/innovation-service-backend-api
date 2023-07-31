@@ -80,6 +80,11 @@ export class AzureHttpTriggerBuilder {
     return this;
   }
 
+  public setQuery<T extends { [key: string]: any }>(query: T): this {
+    this.request.query = query;
+    return this;
+  }
+
   public async call<T>(func: AzureFunction): Promise<AppResponse<T>> {
     await func(this.context, this.request);
     return this.context.res as AppResponse<T>;
