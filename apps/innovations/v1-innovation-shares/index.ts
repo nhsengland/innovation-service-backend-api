@@ -33,7 +33,7 @@ class V1InnovationShares {
         .checkInnovation()
         .verify();
 
-      const result = (await innovationsService.getInnovationShares(params.innovationId)) || [];
+      const result = await innovationsService.getInnovationShares(params.innovationId);
       context.res = ResponseHelper.Ok<ResponseDTO>(
         result.map(item => ({
           organisation: {

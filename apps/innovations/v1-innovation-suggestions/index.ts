@@ -23,7 +23,12 @@ class V1InnovationsSuggestionList {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService.validate(context).setInnovation(params.innovationId).checkInnovatorType().verify();
+      await authorizationService
+        .validate(context)
+        .setInnovation(params.innovationId)
+        .checkInnovatorType()
+        .checkInnovation()
+        .verify();
 
       const result = await innovationSupportsService.getInnovationSuggestions(params.innovationId);
 

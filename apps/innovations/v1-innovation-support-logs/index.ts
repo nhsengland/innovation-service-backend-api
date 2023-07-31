@@ -30,6 +30,7 @@ class V1InnovationsSupportLogList {
         .checkAccessorType()
         .checkInnovatorType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
       const result = await innovationSupportsService.getInnovationSupportLogs(params.innovationId);

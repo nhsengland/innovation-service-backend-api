@@ -22,15 +22,17 @@ class V1InnovationSupportSummaryUnitInfo {
     const innovationSupportsService = container.get<InnovationSupportsService>(SYMBOLS.InnovationSupportsService);
 
     try {
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+
       await authorizationService
         .validate(context)
+        .setInnovation(params.innovationId)
         .checkAssessmentType()
         .checkAccessorType()
         .checkInnovatorType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
-
-      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       const result = await innovationSupportsService.getSupportSummaryUnitInfo(params.innovationId, params.unitId);
 
