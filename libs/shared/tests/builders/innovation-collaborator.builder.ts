@@ -9,6 +9,7 @@ export type TestCollaboratorType = {
   id: string;
   email: string;
   status: InnovationCollaboratorStatusEnum;
+  invitedAt: Date;
 };
 
 export class InnovationCollaboratorBuilder extends BaseBuilder {
@@ -71,7 +72,8 @@ export class InnovationCollaboratorBuilder extends BaseBuilder {
     return {
       id: result.id,
       email: result.email,
-      status: result.status
+      status: result.status,
+      invitedAt: result.invitedAt
     };
   }
 }

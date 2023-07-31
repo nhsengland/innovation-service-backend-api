@@ -10,7 +10,7 @@ import { TestsHelper } from '@users/shared/tests';
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
 
-describe('Innovation Assessments Suite', () => {
+describe('Users / _services / organisations service suite', () => {
   let sut: OrganisationsService;
 
   const testsHelper = new TestsHelper();

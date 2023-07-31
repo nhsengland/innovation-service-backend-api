@@ -136,5 +136,24 @@ export class TestsHelper {
       }
       return { ...DTOsHelper.getIdentityUserInfo(user), phone: null };
     });
+
+    jest.spyOn(IdentityProviderService.prototype, 'updateUser').mockImplementation(async (
+    identityId: string,
+    _body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
+    ) => {
+      const user = identityMap.get(identityId);
+      if (!user) {
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+      }
+    });
+
+    jest.spyOn(IdentityProviderService.prototype, 'deleteUser').mockImplementation(async (
+      identityId: string
+    ) => {
+      const user = identityMap.get(identityId);
+      if (!user) {
+        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+      }
+    });
   }
 }

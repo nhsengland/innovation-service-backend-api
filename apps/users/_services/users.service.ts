@@ -70,7 +70,8 @@ export class UsersService extends BaseService {
     userId: string,
     params: {
       model: 'minimal' | 'full';
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
 
     const user = await this.domainService.users.getUserInfo({ userId });
@@ -82,7 +83,9 @@ export class UsersService extends BaseService {
       };
     }
     if (model === 'full') {
-      const innovations = await this.sqlConnection
+      const em = entityManager ?? this.sqlConnection.manager;
+
+      const innovations = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
         .select('innovation.id', 'innovation_id')
         .addSelect('innovation.name', 'innovation_name')
@@ -136,10 +139,13 @@ export class UsersService extends BaseService {
   }
 
   async getUserPendingInnovationTransfers(
-    email: string
+    email: string,
+    entityManager?: EntityManager
   ): Promise<{ id: string; innovation: { id: string; name: string } }[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
     const dbUserTransfers =
-      (await this.sqlConnection
+      (await em
         .createQueryBuilder(InnovationTransferEntity, 'innovationTransfer')
         .innerJoinAndSelect('innovationTransfer.innovation', 'innovation')
         .where('DATEDIFF(day, innovationTransfer.created_at, GETDATE()) < 31')
@@ -158,8 +164,10 @@ export class UsersService extends BaseService {
     }));
   }
 
-  async createUserInnovator(user: { identityId: string }): Promise<{ id: string }> {
-    const identityIdExists = !!(await this.sqlConnection
+  async createUserInnovator(user: { identityId: string }, entityManager?: EntityManager): Promise<{ id: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const identityIdExists = !!(await em
       .createQueryBuilder(UserEntity, 'users')
       .where('external_id = :userId', { userId: user.identityId })
       .getCount());
@@ -167,7 +175,7 @@ export class UsersService extends BaseService {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS);
     }
 
-    return this.sqlConnection.transaction(async transactionManager => {
+    return em.transaction(async transactionManager => {
       const dbUser = await transactionManager.save(
         UserEntity.new({
           identityId: user.identityId
@@ -208,7 +216,7 @@ export class UsersService extends BaseService {
       );
 
       // Accept last terms of use released.
-      const lastTermsOfUse = await this.sqlConnection
+      const lastTermsOfUse = await em
         .createQueryBuilder(TermsOfUseEntity, 'termsOfUse')
         .where('termsOfUse.touType = :type', { type: TermsOfUseTypeEnum.INNOVATOR })
         .orderBy('termsOfUse.releasedAt', 'DESC')
@@ -263,16 +271,19 @@ export class UsersService extends BaseService {
         description?: null | string;
         registrationNumber?: null | string;
       };
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
     await this.identityProviderService.updateUser(user.identityId, {
       displayName: data.displayName,
       ...(data.mobilePhone !== undefined ? { mobilePhone: data.mobilePhone } : {})
     });
 
+    const em = entityManager ?? this.sqlConnection.manager;
+
     // NOTE: Only innovators can change their organisation, we make a sanity check here.
     if (currentRole === ServiceRoleEnum.INNOVATOR) {
-      await this.sqlConnection.transaction(async transaction => {
+      await em.transaction(async transaction => {
         // If user does not have firstTimeSignInAt, it means this is the first time the user is signing in
         // Updates the firstTimeSignInAt with the current date.
         if (!user.firstTimeSignInAt) {
@@ -333,10 +344,12 @@ export class UsersService extends BaseService {
     return { id: user.id };
   }
 
-  async deleteUserInfo(userId: string, reason?: string): Promise<{ id: string }> {
-    return this.sqlConnection.transaction(async transactionManager => {
+  async deleteUserInfo(identityId: string, reason?: string, entityManager?: EntityManager): Promise<{ id: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return em.transaction(async transactionManager => {
       const user = await this.userRepository.findOne({
-        where: { identityId: userId }
+        where: { identityId: identityId }
       });
 
       if (!user) {
@@ -356,7 +369,7 @@ export class UsersService extends BaseService {
       //   );
       // }
 
-      await this.identityProviderService.deleteUser(userId);
+      await this.identityProviderService.deleteUser(identityId);
 
       user.deletedAt = new Date();
       user.deleteReason = reason || '';
@@ -376,7 +389,8 @@ export class UsersService extends BaseService {
   async getUserList(
     filters: { userTypes: ServiceRoleEnum[]; organisationUnitId?: string; onlyActive?: boolean },
     fields: 'email'[],
-    pagination: PaginationQueryParamsType<'createdAt'>
+    pagination: PaginationQueryParamsType<'createdAt'>,
+    entityManager?: EntityManager
   ): Promise<{
     count: number;
     data: {
@@ -390,7 +404,9 @@ export class UsersService extends BaseService {
   }> {
     const fieldSet = new Set(fields);
 
-    const query = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(UserEntity, 'user')
       .innerJoinAndSelect('user.serviceRoles', 'serviceRoles')
       .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
@@ -517,7 +533,8 @@ export class UsersService extends BaseService {
 
   async getCollaborationsInvitesList(
     email: string,
-    status: InnovationCollaboratorStatusEnum = InnovationCollaboratorStatusEnum.PENDING
+    status: InnovationCollaboratorStatusEnum = InnovationCollaboratorStatusEnum.PENDING,
+    entityManager?: EntityManager
   ): Promise<
     {
       id: string;
@@ -528,7 +545,9 @@ export class UsersService extends BaseService {
       };
     }[]
   > {
-    const invites = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const invites = await em
       .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
       .select(['collaborator.id', 'collaborator.invitedAt', 'innovation.id', 'innovation.name'])
       .innerJoin('collaborator.innovation', 'innovation')
