@@ -1,6 +1,7 @@
-import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import Joi from 'joi';
-import { InnovationAssessmentKPIExemption } from '../_types/innovation.types';
+
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
+import { InnovationAssessmentKPIExemption } from '@innovations/shared/types';
 
 export type ParamsType = {
   innovationId: string;

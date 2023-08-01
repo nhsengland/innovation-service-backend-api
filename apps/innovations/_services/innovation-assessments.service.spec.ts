@@ -18,10 +18,10 @@ import { DomainInnovationsService, NotifierService } from '@innovations/shared/s
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationReassessmentRequestBuilder } from '@innovations/shared/tests/builders/innovation-reassessment-request.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import type { InnovationAssessmentKPIExemptionType } from '@innovations/shared/types/assessment.types';
 import { randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
-import type { InnovationAssessmentKPIExemptionType } from '../_types/innovation.types';
 import type { InnovationAssessmentsService } from './innovation-assessments.service';
 import SYMBOLS from './symbols';
 

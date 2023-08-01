@@ -1,3 +1,4 @@
+export * from './assessment.types';
 export * from './domain.types';
 export * from './error.types';
 export * from './helper.types';

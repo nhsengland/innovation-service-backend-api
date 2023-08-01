@@ -27,10 +27,10 @@ import {
   UserErrorsEnum
 } from '@innovations/shared/errors';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
-import type { InnovationAssessmentKPIExemptionType, InnovationAssessmentType } from '../_types/innovation.types';
+import type { InnovationAssessmentType } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';

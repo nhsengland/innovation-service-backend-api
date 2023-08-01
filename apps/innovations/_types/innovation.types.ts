@@ -198,12 +198,3 @@ export type InnovationDocumentType = {
 export type InnovationDocumentTypeWithContext = InnovationDocumentType & {
   context: { id: string; type: InnovationFileContextTypeEnum };
 };
-
-export const InnovationAssessmentKPIExemption = [
-  'NO_RESPONSE',
-  'TECHNICAL_DIFFICULTIES',
-  'INCORRECT_DETAILS',
-  'SERVICE_UNAVAILABLE',
-  'CAPACITY'
-] as const;
-export type InnovationAssessmentKPIExemptionType = (typeof InnovationAssessmentKPIExemption)[number];

@@ -16,8 +16,8 @@ import { UserEntity } from '../user/user.entity';
 import { InnovationReassessmentRequestEntity } from './innovation-reassessment-request.entity';
 import { InnovationEntity } from './innovation.entity';
 
-import type { InnovationAssessmentKPIExemptionType } from 'apps/innovations/_types/innovation.types';
 import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../../shared/enums';
+import type { InnovationAssessmentKPIExemptionType } from '../../../shared/types/assessment.types';
 
 @Entity('innovation_assessment')
 export class InnovationAssessmentEntity extends BaseEntity {
