@@ -4,7 +4,7 @@ import { InnovationFileContextTypeEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randFileExt, randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
+import { randFileName, randNumber, randText, randUuid } from '@ngneat/falso';
 import { InnovationFileService } from '../_services/innovation-file.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
@@ -33,7 +33,7 @@ const sampleBody = {
     id: randUuid(),
     name: randFileName(),
     size: randNumber(),
-    extension: randFileExt()
+    extension: 'pdf'
   }
 };
 const expected = { id: randUuid() };

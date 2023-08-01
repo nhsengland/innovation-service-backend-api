@@ -13,6 +13,7 @@ import SHARED_SYMBOLS from './libs/shared/services/symbols';
   (global as any).completeScenarioData || JSON.parse(env['completeScenarioData'] as string);
 
 afterAll(async () => {
+  if (global.gc) global.gc();
   await container.get<CacheService>(SHARED_SYMBOLS.CacheService)?.destroy();
   await container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService)?.destroy();
 });

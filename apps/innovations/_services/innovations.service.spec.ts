@@ -1,7 +1,11 @@
-import { EntityManager } from 'typeorm';
-import { TestsHelper } from '@innovations/shared/tests';
-import SYMBOLS from './symbols';
-import { container } from '../_config';
+import {
+  InnovationActionEntity,
+  InnovationEntity,
+  InnovationExportRequestEntity,
+  InnovationSupportEntity,
+  NotificationUserEntity
+} from '@innovations/shared/entities';
+import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
   InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -9,7 +13,20 @@ import {
   InnovationStatusEnum,
   InnovationSupportStatusEnum
 } from '@innovations/shared/enums/innovation.enums';
+import {
+  ForbiddenError,
+  InnovationErrorsEnum,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@innovations/shared/errors';
+import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
+import { TestsHelper } from '@innovations/shared/tests';
+import { ActivityLogBuilder, TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
 import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
+import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import type { DomainContextType } from '@innovations/shared/types';
 import {
   randCompanyName,
   randCountry,
@@ -19,27 +36,10 @@ import {
   randText,
   randUuid
 } from '@ngneat/falso';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import {
-  InnovationActionEntity,
-  InnovationEntity,
-  InnovationExportRequestEntity,
-  InnovationSupportEntity,
-  NotificationUserEntity
-} from '@innovations/shared/entities';
-import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
-import {
-  ForbiddenError,
-  InnovationErrorsEnum,
-  OrganisationErrorsEnum,
-  UnprocessableEntityError
-} from '@innovations/shared/errors';
-import { NotFoundError } from '@innovations/shared/errors';
+import { EntityManager } from 'typeorm';
+import { container } from '../_config';
 import type { InnovationsService } from './innovations.service';
-import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
-import { ActivityLogBuilder, TestActivityLogType } from '@innovations/shared/tests/builders/activity-log.builder';
-import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import type { DomainContextType } from '@innovations/shared/types';
+import SYMBOLS from './symbols';
 
 describe('Innovations / _services / innovations suite', () => {
   let sut: InnovationsService;
@@ -84,11 +84,13 @@ describe('Innovations / _services / innovations suite', () => {
         innovationStatus: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT | InnovationStatusEnum.NEEDS_ASSESSMENT
       ) => {
         const innovation = scenario.users.johnInnovator.innovations.johnInnovationEmpty;
+        const pastDate = randPastDate();
+        pastDate.setDate(-30);
 
         //add an overdue assessment on johnInnovationEmpty
         await em
           .getRepository(InnovationEntity)
-          .update({ id: innovation.id }, { submittedAt: randPastDate({ years: 2 }), status: innovationStatus });
+          .update({ id: innovation.id }, { submittedAt: pastDate, status: innovationStatus });
         await new InnovationAssessmentBuilder(em)
           .setInnovation(innovation.id)
           .setNeedsAssessor(scenario.users.paulNeedsAssessor.id)
@@ -1056,7 +1058,7 @@ describe('Innovations / _services / innovations suite', () => {
 
       expect(dbNotifications.filter(n => n.readAt === null)).toHaveLength(0);
     });
-  
+
     it('should dismiss all unread notifications with given notification context details', async () => {
       await sut.dismissNotifications(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), innovation.id, {
         notificationIds: [],

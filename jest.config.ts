@@ -28,7 +28,8 @@ const jestBaseConfig: Config = {
     'libs/data-access',
     'node_modules'
   ],
-  testTimeout: 15000
+  testTimeout: 15000,
+  workerIdleMemoryLimit: '1Gb'
 };
 
 export default jestBaseConfig;
