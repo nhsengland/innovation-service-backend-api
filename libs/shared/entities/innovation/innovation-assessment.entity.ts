@@ -17,6 +17,7 @@ import { InnovationReassessmentRequestEntity } from './innovation-reassessment-r
 import { InnovationEntity } from './innovation.entity';
 
 import type { MaturityLevelCatalogueType, YesPartiallyNoCatalogueType } from '../../../shared/enums';
+import type { InnovationAssessmentKPIExemptionType } from '../../../shared/types/assessment.types';
 
 @Entity('innovation_assessment')
 export class InnovationAssessmentEntity extends BaseEntity {
@@ -94,6 +95,15 @@ export class InnovationAssessmentEntity extends BaseEntity {
 
   @Column({ name: 'has_scale_resource_comment', type: 'nvarchar', nullable: true, length: 200 })
   hasScaleResourceComment: null | string;
+
+  @Column({ name: 'exempted_reason', type: 'nvarchar', nullable: true })
+  exemptedReason: null | InnovationAssessmentKPIExemptionType;
+
+  @Column({ name: 'exempted_message', type: 'nvarchar', nullable: true })
+  exemptedMessage: null | string;
+
+  @Column({ name: 'exempted_at', type: 'datetime2', nullable: true })
+  exemptedAt: null | Date;
 
   @OneToOne(() => InnovationReassessmentRequestEntity, record => record.assessment, {
     nullable: true
