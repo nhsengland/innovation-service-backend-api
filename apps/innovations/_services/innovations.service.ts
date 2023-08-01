@@ -128,6 +128,7 @@ export class InnovationsService extends BaseService {
         finishedAt: null | Date;
         assignedTo: { name: string };
         reassessmentCount: number;
+        isExempted?: boolean;
       };
       supports?: {
         id: string;
@@ -166,7 +167,7 @@ export class InnovationsService extends BaseService {
       .addSelect('innovations.countryName', 'innovations_country_name')
       .addSelect('innovations.mainCategory', 'innovations_main_category')
       .addSelect('innovations.createdAt', 'innovations_created_at')
-      .addSelect('innovations.submittedAt', 'innovations_submitted_at')
+      .addSelect('innovations.lastAssessmentRequestAt', 'innovations_last_assessment_request_at')
       .addSelect('innovations.updatedAt', 'innovations_updated_at')
       .addSelect('innovations.status', 'innovations_status')
       .addSelect('innovations.statusUpdatedAt', 'innovations_status_updated_at')
@@ -441,7 +442,7 @@ export class InnovationsService extends BaseService {
     }
 
     if (filters.dateFilter && filters.dateFilter.length > 0) {
-      const dateFilterKeyMap = new Map([['submittedAt', 'innovations.submittedAt']]);
+      const dateFilterKeyMap = new Map([['submittedAt', 'innovations.lastAssessmentRequestAt']]);
 
       for (const dateFilter of filters.dateFilter) {
         const filterKey = dateFilterKeyMap.get(dateFilter.field);
@@ -482,7 +483,7 @@ export class InnovationsService extends BaseService {
             field = 'innovations.mainCategory';
             break;
           case 'submittedAt':
-            field = 'innovations.submittedAt';
+            field = 'innovations.lastAssessmentRequestAt';
             break;
           case 'updatedAt':
             field = 'innovations.updatedAt';
@@ -518,6 +519,7 @@ export class InnovationsService extends BaseService {
         .select('assessments.id', 'assessments_id')
         .addSelect('assessments.createdAt', 'assessments_created_at')
         .addSelect('assessments.finishedAt', 'assessments_finished_at')
+        .addSelect('assessments.exemptedAt', 'assessments_exempted_at')
         .innerJoin('assessments.innovation', 'innovation')
         .addSelect('innovation.id', 'innovation_id')
         .where('assessments.innovation_id IN (:...innovationsIds)', { innovationsIds });
@@ -714,7 +716,10 @@ export class InnovationsService extends BaseService {
                 createdAt: assessmentRaw.createdAt,
                 assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' },
                 finishedAt: assessmentRaw.finishedAt,
-                reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0
+                reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0,
+                ...(domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
+                  ? { isExempted: !!assessmentRaw.exemptedAt }
+                  : {})
               };
             } else {
               assessment = null;
@@ -727,7 +732,7 @@ export class InnovationsService extends BaseService {
             description: innovation.description,
             status: innovation.status,
             statusUpdatedAt: innovation.statusUpdatedAt,
-            submittedAt: innovation.submittedAt,
+            submittedAt: innovation.lastAssessmentRequestAt,
             updatedAt: innovation.updatedAt,
             countryName: innovation.countryName,
             postCode: innovation.postcode,
@@ -742,9 +747,9 @@ export class InnovationsService extends BaseService {
               ? {}
               : {
                   isAssessmentOverdue: !!(
-                    innovation.submittedAt &&
+                    innovation.lastAssessmentRequestAt &&
                     !assessment?.finishedAt &&
-                    DatesHelper.dateDiffInDays((innovation as any).submittedAt, new Date()) > 7
+                    DatesHelper.dateDiffInDays((innovation as any).lastAssessmentRequestAt, new Date()) > 7
                   )
                 }),
             ...(assessment && { assessment }),
@@ -846,7 +851,7 @@ export class InnovationsService extends BaseService {
         'innovation.description',
         'innovation.status',
         'innovation.statusUpdatedAt',
-        'innovation.submittedAt',
+        'innovation.lastAssessmentRequestAt',
         'innovation.countryName',
         'innovation.postcode',
         'innovation.createdAt',
@@ -1008,7 +1013,7 @@ export class InnovationsService extends BaseService {
       status: innovation.status,
       groupedStatus: innovation.innovationGroupedStatus.groupedStatus,
       statusUpdatedAt: innovation.statusUpdatedAt,
-      submittedAt: innovation.submittedAt,
+      submittedAt: innovation.lastAssessmentRequestAt,
       countryName: innovation.countryName,
       postCode: innovation.postcode,
       categories,
