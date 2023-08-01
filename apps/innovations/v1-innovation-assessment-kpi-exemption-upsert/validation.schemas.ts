@@ -18,7 +18,6 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   reason: Joi.string()
     .valid(...InnovationAssessmentKPIExemption)
-    .allow(null)
     .required(),
   message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).optional()
 }).required();
