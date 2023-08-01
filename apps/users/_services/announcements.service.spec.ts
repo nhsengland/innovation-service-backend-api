@@ -2,7 +2,6 @@ import { container } from '../_config';
 
 import { TestsHelper } from '@users/shared/tests';
 import SYMBOLS from './symbols';
-import { NotifierService } from '@users/shared/services';
 import type { EntityManager } from 'typeorm';
 import type { AnnouncementsService } from './announcements.service';
 import { AnnouncementEntity, AnnouncementUserEntity } from '@users/shared/entities';
@@ -17,8 +16,6 @@ describe('Users / _services / announcements service suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
-  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send');
-
   let em: EntityManager;
 
   beforeAll(async () => {
@@ -32,7 +29,6 @@ describe('Users / _services / announcements service suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
-    notifierSendSpy.mockReset();
   });
 
   describe('getUserRoleAnnouncements', () => {
