@@ -28,7 +28,7 @@ afterEach(() => {
 describe('v1-innovation-assessment-kpi-exemption-upsert Suite', () => {
   const innovationId = scenario.users.johnInnovator.innovations.johnInnovation.id;
   const assessmentId = scenario.users.johnInnovator.innovations.johnInnovation.assessment.id;
-  describe('201', () => {
+  describe('204', () => {
     it('should return success', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.paulNeedsAssessor)
@@ -37,7 +37,7 @@ describe('v1-innovation-assessment-kpi-exemption-upsert Suite', () => {
         .call<never>(azureFunction);
 
       expect(result.body).toBeUndefined();
-      expect(result.status).toBe(201);
+      expect(result.status).toBe(204);
       expect(mock).toHaveBeenCalledTimes(1);
     });
   });
@@ -46,7 +46,7 @@ describe('v1-innovation-assessment-kpi-exemption-upsert Suite', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
-      ['NA', 201, scenario.users.paulNeedsAssessor],
+      ['NA', 204, scenario.users.paulNeedsAssessor],
       ['Innovation owner', 403, scenario.users.johnInnovator],
       ['Innovator', 403, scenario.users.ottoOctaviusInnovator]
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
