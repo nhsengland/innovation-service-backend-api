@@ -6,7 +6,6 @@ import type { TestUserType } from '@innovations/shared/tests/builders/user.build
 import type { ErrorResponseType } from '@innovations/shared/types';
 import { randText, randUuid } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
@@ -26,25 +25,26 @@ beforeAll(async () => {
 });
 
 const expected = { id: randUuid() };
-const mock = jest.spyOn(InnovationSupportsService.prototype, 'createInnovationSupport').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationSupportsService.prototype, 'updateInnovationSupport').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-support-change-request Suite', () => {
+describe('v1-innovation-support-update', () => {
   describe('200', () => {
-    it('should return the innovation suggestions', async () => {
+    it('should update an innovation support', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          supportId: randUuid()
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
+          status: InnovationSupportStatusEnum.NOT_YET
         })
-        .call<ResponseDTO>(azureFunction);
+        .call<never>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
       expect(result.status).toBe(200);
@@ -65,11 +65,12 @@ describe('v1-innovation-support-change-request Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
+          supportId: randUuid()
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
+          status: InnovationSupportStatusEnum.NOT_YET
         })
         .call<ErrorResponseType>(azureFunction);
 

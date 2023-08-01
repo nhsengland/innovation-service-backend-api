@@ -461,7 +461,7 @@ export class InnovationThreadsService extends BaseService {
       .filter(tm => tm.author && tm.author.status !== UserStatusEnum.DELETED)
       .map(tm => tm.author.identityId);
 
-    let authors = [...new Set([...threadMessagesAuthors])];
+    const authors = [...new Set([...threadMessagesAuthors])];
 
     const authorsMap = await this.identityProvider.getUsersMap(authors);
 

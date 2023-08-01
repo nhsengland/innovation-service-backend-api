@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationTransferService } from '../_services/innovation-transfer.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType } from './validations.schema';
+import { BodySchema, BodyType } from './validation.schemas';
 
 class CreateInnovationTransfer {
   @JwtDecoder()

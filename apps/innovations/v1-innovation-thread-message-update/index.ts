@@ -24,6 +24,8 @@ class V1InnovationThreadMessageUpdate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
+      // Not checking innovation access as it is done in the service where only the person that created the message
+      // can alter it.
       const auth = await authorizationService
         .validate(context)
         .checkInnovatorType()

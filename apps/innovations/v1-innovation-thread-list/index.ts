@@ -26,10 +26,12 @@ class V1InnovationThreadCreate {
 
       const auth = await authorizationService
         .validate(context)
+        .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
       const result = await threadsService.getInnovationThreads(auth.getContext(), params.innovationId, queryParams);

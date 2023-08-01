@@ -26,9 +26,11 @@ class V1InnovationThreadMessageInfo {
 
       await authorizationService
         .validate(context)
+        .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkInnovation()
         .verify();
 
       const result = await threadsService.getThreadMessageInfo(pathParams.messageId);

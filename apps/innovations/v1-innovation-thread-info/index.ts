@@ -28,10 +28,12 @@ class V1InnovationThreadInfo {
 
       await authorizationService
         .validate(context)
+        .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
       const result = await threadsService.getThreadInfo(pathParams.threadId);

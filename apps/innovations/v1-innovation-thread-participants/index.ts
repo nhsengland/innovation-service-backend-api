@@ -3,12 +3,9 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type {
-  AuthorizationService,
-  DomainService
-} from '@innovations/shared/services';
-import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import type { AuthorizationService, DomainService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
@@ -29,10 +26,12 @@ class V1InnovationThreadParticipants {
 
       await authorizationService
         .validate(context)
+        .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
       const result = await domainService.innovations.threadIntervenients(pathParams.threadId);

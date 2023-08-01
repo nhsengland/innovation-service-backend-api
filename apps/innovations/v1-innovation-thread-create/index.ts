@@ -32,9 +32,11 @@ class V1InnovationThreadCreate {
 
       const auth = await authorizationService
         .validate(context)
+        .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
+        .checkInnovation()
         .verify();
 
       const requestUser = auth.getUserInfo();
