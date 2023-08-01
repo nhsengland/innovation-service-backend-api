@@ -30,7 +30,7 @@ import type { DomainService, NotifierService } from '@innovations/shared/service
 import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
-import type { InnovationAssessmentType } from '../_types/innovation.types';
+import type { InnovationAssessmentKPIExemptionType, InnovationAssessmentType } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
@@ -525,5 +525,35 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id };
+  }
+
+  async upsertExemption(
+    domainContext: DomainContextType,
+    assessmentId: string,
+    data: { reason: InnovationAssessmentKPIExemptionType; message?: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const assessment = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .getOne();
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    const now = new Date();
+    await em.update(
+      InnovationAssessmentEntity,
+      { id: assessmentId },
+      {
+        exemptedReason: data.reason,
+        exemptedMessage: data.message ?? null,
+        updatedAt: now,
+        updatedBy: domainContext.id,
+        ...(!assessment.exemptedAt ? { exemptedAt: now } : {}) // only update on the first "exemption request"
+      }
+    );
   }
 }
