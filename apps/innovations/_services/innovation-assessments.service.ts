@@ -420,12 +420,15 @@ export class InnovationAssessmentsService extends BaseService {
       // 5. Create an activity log for the reassessment
       // 6. Sends notifications
 
+      const now = new Date();
+
       await transaction.update(
         InnovationEntity,
         { id: assessment.innovation.id },
         {
+          lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          statusUpdatedAt: new Date().toISOString(),
+          statusUpdatedAt: now,
           updatedBy: assessment.createdBy
         }
       );

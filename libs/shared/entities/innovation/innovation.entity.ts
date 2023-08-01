@@ -57,6 +57,9 @@ export class InnovationEntity extends BaseEntity {
   @Column({ name: 'submitted_at', type: 'datetime2', nullable: true })
   submittedAt: null | Date;
 
+  @Column({ name: 'last_assessment_request_at', type: 'datetime2', nullable: true })
+  lastAssessmentRequestAt: null | Date;
+
   @Column({ name: 'other_category_description', type: 'nvarchar', nullable: true })
   otherCategoryDescription: null | string;
 

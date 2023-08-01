@@ -1307,13 +1307,15 @@ export class InnovationsService extends BaseService {
     }
 
     await connection.transaction(async transaction => {
+      const now = new Date();
       const update = transaction.update(
         InnovationEntity,
         { id: innovationId },
         {
-          submittedAt: new Date().toISOString(),
+          submittedAt: now,
+          lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          statusUpdatedAt: new Date().toISOString(),
+          statusUpdatedAt: now,
           updatedBy: domainContext.id
         }
       );
@@ -1879,7 +1881,6 @@ export class InnovationsService extends BaseService {
       domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
       domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
     ) {
-
       if (!domainContext?.organisation?.organisationUnit) {
         throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
       }
@@ -1971,7 +1972,7 @@ export class InnovationsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<{ submittedAllSections: boolean; submittedForNeedsAssessment: boolean }> {
     const connection = entityManager ?? this.sqlConnection.manager;
-  
+
     const innovation = await connection
       .createQueryBuilder(InnovationEntity, 'innovation')
       .where('innovation.id = :innovationId', { innovationId })
