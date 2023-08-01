@@ -437,7 +437,8 @@ export class InnovationAssessmentsService extends BaseService {
 
       const assessmentClone = await transaction.save(
         InnovationAssessmentEntity,
-        (({ id, finishedAt, createdAt, updatedAt, deletedAt, ...item }) => item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+        (({ id, finishedAt, createdAt, updatedAt, deletedAt, exemptedAt, exemptedReason, exemptedMessage, ...item }) =>
+          item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
       );
 
       const reassessment = await transaction.save(
@@ -558,5 +559,41 @@ export class InnovationAssessmentsService extends BaseService {
         ...(!assessment.exemptedAt ? { exemptedAt: now } : {}) // only update on the first "exemption request"
       }
     );
+  }
+
+  async getExemption(
+    assessmentId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    isExempted: boolean;
+    exemption?: {
+      reason: InnovationAssessmentKPIExemptionType;
+      message?: string;
+      exemptedAt: Date;
+    };
+  }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const assessment = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select(['assessment.id', 'assessment.exemptedReason', 'assessment.exemptedMessage', 'assessment.exemptedAt'])
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .getOne();
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    if (assessment.exemptedAt && assessment.exemptedReason) {
+      return {
+        isExempted: true,
+        exemption: {
+          reason: assessment.exemptedReason,
+          message: assessment.exemptedMessage ?? undefined,
+          exemptedAt: assessment.exemptedAt
+        }
+      };
+    } else {
+      return { isExempted: false };
+    }
   }
 }

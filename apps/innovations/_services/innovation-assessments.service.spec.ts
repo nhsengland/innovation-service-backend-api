@@ -434,4 +434,42 @@ describe('Innovation Assessments Suite', () => {
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
     });
   });
+
+  describe('getExemption', () => {
+    const assessment = scenario.users.johnInnovator.innovations.johnInnovation.assessment;
+
+    it('should return the exemption info and isExempted as true', async () => {
+      const expected = {
+        reason: 'INCORRECT_DETAILS' as InnovationAssessmentKPIExemptionType,
+        message: randText(),
+        exemptedAt: new Date()
+      };
+      await em.update(
+        InnovationAssessmentEntity,
+        { id: assessment.id },
+        { exemptedReason: expected.reason, exemptedMessage: expected.message, exemptedAt: expected.exemptedAt }
+      );
+
+      const exemption = await sut.getExemption(assessment.id, em);
+
+      expect(exemption).toStrictEqual({
+        isExempted: true,
+        exemption: expected
+      });
+    });
+
+    it('should not return the exemption info and isExempted as false', async () => {
+      const exemption = await sut.getExemption(assessment.id, em);
+
+      expect(exemption).toStrictEqual({
+        isExempted: false
+      });
+    });
+
+    it("should return a NotFoundError when an assessment doesn't exist", async () => {
+      await expect(() => sut.getExemption(randUuid(), em)).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
+      );
+    });
+  });
 });

@@ -30,6 +30,7 @@ export type ResponseDTO = {
       finishedAt: null | Date;
       assignedTo: { name: string };
       reassessmentCount: number;
+      isExempted?: boolean;
     };
     supports?: {
       id: string;
