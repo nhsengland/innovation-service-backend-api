@@ -45,6 +45,7 @@ export type TestUserType = {
   mobilePhone: null | string;
   isActive: boolean;
   lockedAt: null | Date;
+  createdAt: Date;
   roles: Record<string, RoleType>;
   organisations: Record<string, TestUserOrganisationsType>;
 };
@@ -202,6 +203,7 @@ export class UserBuilder extends BaseBuilder {
         'user.identityId',
         'user.status',
         'user.lockedAt',
+        'user.createdAt',
         'user.firstTimeSignInAt',
 
         'roles.id',
@@ -353,6 +355,7 @@ export class UserBuilder extends BaseBuilder {
       mobilePhone: this.additionalFields.mobilePhone,
       isActive: result.status === UserStatusEnum.ACTIVE,
       lockedAt: result.lockedAt,
+      createdAt: result.createdAt,
       roles: userRoles,
       organisations: organisations
     };

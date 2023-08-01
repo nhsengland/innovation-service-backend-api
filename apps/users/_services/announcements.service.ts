@@ -6,6 +6,7 @@ import type { AnnouncementTemplateType } from '@users/shared/enums';
 import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
+import { AnnouncementErrorsEnum, NotFoundError } from '@users/shared/errors';
 
 @injectable()
 export class AnnouncementsService extends BaseService {
@@ -77,6 +78,15 @@ export class AnnouncementsService extends BaseService {
     entityManager?: EntityManager
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcement = await em
+      .createQueryBuilder(AnnouncementEntity, 'announcement')
+      .where('announcement.id = :announcementId', { announcementId })
+      .getOne();
+
+    if (!announcement) {
+      throw new NotFoundError(AnnouncementErrorsEnum.ANNOUNCEMENT_NOT_FOUND);
+    }
 
     const announcementUser = await em
       .createQueryBuilder(AnnouncementUserEntity, 'announcementUser')
