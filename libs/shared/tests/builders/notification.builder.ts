@@ -10,7 +10,8 @@ export type TestNotificationType = {
   id: string;
   context: { detail: NotificationContextDetailEnum, type: NotificationContextTypeEnum, id: string };
   createdAt: Date;
-  notificationUsers: Map<string, { id: number, readAt?: Date }>
+  notificationUsers: Map<string, { id: number, readAt?: Date }>,
+  params: Record<string, unknown>
 };
 
 export class NotificationBuilder extends BaseBuilder {
@@ -93,7 +94,8 @@ export class NotificationBuilder extends BaseBuilder {
       id: result.id,
       context: { detail: result.contextDetail, type: result.contextType, id: result.contextId },
       notificationUsers: new Map(resultNotificationUsers.map(notificationUser => [notificationUser.userRole.id, { id: notificationUser.id, readAt: notificationUser.readAt }])),
-      createdAt: result.createdAt
+      createdAt: result.createdAt,
+      params: result.params
     };
   }
 }

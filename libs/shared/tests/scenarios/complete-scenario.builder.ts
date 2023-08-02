@@ -709,8 +709,15 @@ export class CompleteScenarioBuilder {
                 },
                 transfer: johnInnovationTransferToJane,
                 notifications: {
-                  notificationsFromMessage: johnInnovationNotificationFromMessage,
-                  notificationFromSupport: johnInnovationNotificationFromSupport
+                  notificationsFromMessage: { ...johnInnovationNotificationFromMessage, notificationUsers: {
+                    johnInnovator: johnInnovationNotificationFromMessage.notificationUsers.get(johnInnovator.roles['innovatorRole']!.id)!
+                  } },
+                  notificationFromSupport: {
+                    ...johnInnovationNotificationFromSupport,
+                    notificationUsers: {
+                    johnInnovator: johnInnovationNotificationFromSupport.notificationUsers.get(johnInnovator.roles['innovatorRole']!.id)!
+                    }
+                  } 
                 },
                 progressUpdates: {
                   progressUpdateByAlice: johnInnovationAliceProgressUpdate,
