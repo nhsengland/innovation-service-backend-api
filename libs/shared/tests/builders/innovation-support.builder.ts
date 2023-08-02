@@ -12,6 +12,7 @@ import type { TestUserType } from './user.builder';
 export type TestInnovationSupportType = {
   id: string;
   status: InnovationSupportStatusEnum;
+  updatedAt: Date;
 };
 
 export class InnovationSupportBuilder extends BaseBuilder {
@@ -76,7 +77,8 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
     return {
       id: result.id,
-      status: result.status
+      status: result.status,
+      updatedAt: result.updatedAt
     };
   }
 }

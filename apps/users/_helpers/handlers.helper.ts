@@ -4,12 +4,11 @@ import type { UserStatisticsEnum } from '../_enums/user.enums';
 
 export class StatisticsHandlersHelper {
   static async runHandler(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     actions: UserStatisticsEnum[]
   ): Promise<Record<string, UserStatisticsTemplateType[UserStatisticsEnum]>> {
     const handlers = actions.map(async action => {
-      const handler = await USER_STATISTICS_CONFIG[action].handler(requestUser, domainContext);
+      const handler = await USER_STATISTICS_CONFIG[action].handler(domainContext);
 
       return {
         data: { ...handler },
