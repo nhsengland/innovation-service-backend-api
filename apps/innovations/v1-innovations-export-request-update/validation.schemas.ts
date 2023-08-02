@@ -3,11 +3,11 @@ import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 import Joi from 'joi';
 
 export type BodyType = {
-  rejectReason: string;
+  rejectReason?: string;
   status: InnovationExportRequestStatusEnum;
 };
 
-export type PathParamsType = {
+export type ParamsType = {
   innovationId: string;
   requestId: string;
 };
@@ -33,7 +33,7 @@ export const BodySchema = Joi.object<BodyType>({
   })
 });
 
-export const PathParamsSchema = Joi.object<PathParamsType>({
+export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().uuid().required(),
   requestId: Joi.string().uuid().required()
 }).required();

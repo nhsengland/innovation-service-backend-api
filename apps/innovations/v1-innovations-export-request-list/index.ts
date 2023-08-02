@@ -21,12 +21,18 @@ class V1InnovationsExportRequestList {
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
-
-      const domainContext = auth.getContext();
-
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+
+      const auth = await authorizationService
+        .validate(context)
+        .setInnovation(params.innovationId)
+        .checkInnovatorType()
+        .checkAccessorType()
+        .checkInnovation()
+        .verify();
+
+      const domainContext = auth.getContext();
 
       const { skip, take, order, ...filters } = queryParams;
 

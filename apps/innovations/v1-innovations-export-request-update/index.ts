@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationsExportRequestsUpdate {
   @JwtDecoder()
@@ -21,11 +21,16 @@ class V1InnovationsExportRequestsUpdate {
     const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
 
     try {
-      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
+      const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const auth = await authorizationService
+        .validate(context)
+        .setInnovation(params.innovationId)
+        .checkInnovatorType()
+        .checkAccessorType()
+        .checkInnovation()
+        .verify();
 
       const domainContext = auth.getContext();
-
-      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
         userType: domainContext.currentRole.role
@@ -34,7 +39,7 @@ class V1InnovationsExportRequestsUpdate {
       const { rejectReason, status } = body;
 
       const result = await innovationsService.updateInnovationRecordExportRequest(domainContext, params.requestId, {
-        rejectReason,
+        rejectReason: rejectReason ?? null,
         status
       });
 

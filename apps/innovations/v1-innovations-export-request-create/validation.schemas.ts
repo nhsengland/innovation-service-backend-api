@@ -5,7 +5,7 @@ export type BodyType = {
   requestReason: string;
 };
 
-export type PathParamsType = {
+export type ParamsType = {
   innovationId: string;
 };
 
@@ -13,6 +13,6 @@ export const BodySchema = Joi.object<BodyType>({
   requestReason: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
 });
 
-export const PathParamsSchema = Joi.object<PathParamsType>({
+export const PathSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().uuid().required()
 }).required();

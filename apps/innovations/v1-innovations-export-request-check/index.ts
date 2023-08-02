@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { PathParamsSchema, PathParamsType } from './validation.schemas';
+import { ParamsType, PathParamsSchema } from './validation.schemas';
 
 class V1InnovationsExportRequestInfo {
   @JwtDecoder()
@@ -25,7 +25,7 @@ class V1InnovationsExportRequestInfo {
 
       const domainContext = auth.getContext();
 
-      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
+      const params = JoiHelper.Validate<ParamsType>(PathParamsSchema, request.params);
 
       const result = await innovationsService.checkInnovationRecordExportRequest(domainContext, params.requestId);
 

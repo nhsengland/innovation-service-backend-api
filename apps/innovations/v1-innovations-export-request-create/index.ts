@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { InnovationsService } from '../_services/innovations.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { BodySchema, BodyType, PathParamsSchema, PathParamsType } from './validation.schemas';
+import { BodySchema, BodyType, ParamsType, PathSchema } from './validation.schemas';
 
 class V1InnovationsExportRequestsCreate {
   @JwtDecoder()
@@ -25,12 +25,14 @@ class V1InnovationsExportRequestsCreate {
 
       const domainContext = auth.getContext();
 
-      const params = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
+      const params = JoiHelper.Validate<ParamsType>(PathSchema, request.params);
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
 
+      // This never happens because the user is checked to be an accessor in the validator
+      /* c8 ignore next 4 */
       if (!organisationUnitId) {
         context.res = ResponseHelper.Error(context, 'Organisation unit not found.');
         return;
