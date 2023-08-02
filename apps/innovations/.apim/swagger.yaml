@@ -808,7 +808,7 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
-  "/v1/{innovationId}/assessments/{assessmentId}/exemptions":
+  "/v1/{innovationId}/assessments/{assessmentId}/exemption":
     get:
       description: Get an assessment kpi exemption.
       operationId: v1-innovation-assessment-kpi-exemption-info
@@ -1944,7 +1944,6 @@ paths:
             items:
               type: string
               enum:
-                - isAssessmentOverdue
                 - assessment
                 - supports
                 - notifications

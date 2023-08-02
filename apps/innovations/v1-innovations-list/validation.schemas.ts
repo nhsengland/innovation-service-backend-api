@@ -12,14 +12,7 @@ import type { TypeFromArray } from '@innovations/shared/types';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
 
 const DateFilterKeys = ['submittedAt'] as const;
-const FieldsKeys = [
-  'isAssessmentOverdue',
-  'assessment',
-  'supports',
-  'notifications',
-  'statistics',
-  'groupedStatus'
-] as const;
+const FieldsKeys = ['assessment', 'supports', 'notifications', 'statistics', 'groupedStatus'] as const;
 const HasAccessThroughKeys = ['owner', 'collaborator'] as const;
 
 enum orderFields {

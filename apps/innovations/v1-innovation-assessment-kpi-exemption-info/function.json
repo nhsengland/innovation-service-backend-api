@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["get"],
-      "route": "v1/{innovationId}/assessments/{assessmentId}/exemptions"
+      "route": "v1/{innovationId}/assessments/{assessmentId}/exemption"
     },
     {
       "type": "http",
