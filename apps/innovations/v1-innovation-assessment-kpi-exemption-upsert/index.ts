@@ -45,7 +45,7 @@ class V1InnovationAssessmentKPIExemptionUpsert {
 
 export default openApi(
   V1InnovationAssessmentKPIExemptionUpsert.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/assessments/{assessmentId}/exemptions',
+  '/v1/{innovationId}/assessments/{assessmentId}/exemption',
   {
     patch: {
       description: 'Upsert an innovation assessment kpi exemption.',

@@ -9,7 +9,6 @@ import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation
 
 export type ResponseDTO = {
   count: number;
-  overdue?: number;
   data: {
     id: string;
     name: string;
@@ -23,7 +22,6 @@ export type ResponseDTO = {
     postCode: null | string;
     mainCategory: null | CurrentCatalogTypes.catalogCategory;
     otherMainCategoryDescription: null | string;
-    isAssessmentOverdue?: boolean;
     assessment?: null | {
       id: string;
       createdAt: Date;

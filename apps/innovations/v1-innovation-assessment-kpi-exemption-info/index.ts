@@ -48,7 +48,7 @@ class V1InnovationAssessmentKPIExemptionInfo {
 
 export default openApi(
   V1InnovationAssessmentKPIExemptionInfo.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/assessments/{assessmentId}/exemptions',
+  '/v1/{innovationId}/assessments/{assessmentId}/exemption',
   {
     get: {
       description: 'Get an assessment kpi exemption.',

@@ -45,7 +45,7 @@ import {
   OrganisationErrorsEnum,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
-import { DatesHelper, PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
+import { PaginationQueryParamsType, TranslationHelper } from '@innovations/shared/helpers';
 import type { DomainService, DomainUsersService, NotifierService } from '@innovations/shared/services';
 import type { ActivityLogListParamsType, DomainContextType } from '@innovations/shared/types';
 
@@ -94,7 +94,7 @@ export class InnovationsService extends BaseService {
         endDate?: Date;
       }[];
       withDeleted?: boolean;
-      fields?: ('isAssessmentOverdue' | 'assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[];
+      fields?: ('assessment' | 'supports' | 'notifications' | 'statistics' | 'groupedStatus')[];
     },
     pagination: PaginationQueryParamsType<
       | 'name'
@@ -120,7 +120,6 @@ export class InnovationsService extends BaseService {
       postCode: null | string;
       mainCategory: null | CurrentCatalogTypes.catalogCategory;
       otherMainCategoryDescription: null | string;
-      isAssessmentOverdue?: boolean;
       groupedStatus?: InnovationGroupedStatusEnum;
       assessment?: null | {
         id: string;
@@ -743,15 +742,6 @@ export class InnovationsService extends BaseService {
               groupedStatus:
                 innovationsGroupedStatus.get(innovation.id) ?? InnovationGroupedStatusEnum.RECORD_NOT_SHARED
             }),
-            ...(!filters.fields?.includes('isAssessmentOverdue')
-              ? {}
-              : {
-                  isAssessmentOverdue: !!(
-                    innovation.lastAssessmentRequestAt &&
-                    !assessment?.finishedAt &&
-                    DatesHelper.dateDiffInDays((innovation as any).lastAssessmentRequestAt, new Date()) > 7
-                  )
-                }),
             ...(assessment && { assessment }),
             ...(supports && {
               supports: supports.map(support => ({

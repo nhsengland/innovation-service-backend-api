@@ -61,7 +61,6 @@ class V1InnovationsList {
           postCode: item.postCode,
           mainCategory: item.mainCategory,
           otherMainCategoryDescription: item.otherMainCategoryDescription,
-          ...(item.isAssessmentOverdue === undefined ? {} : { isAssessmentOverdue: item.isAssessmentOverdue }),
           ...(item.assessment === undefined ? {} : { assessment: item.assessment }),
           ...(item.supports === undefined
             ? {}
