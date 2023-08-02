@@ -181,13 +181,18 @@ describe('Innovation Actions Suite', () => {
 
     it(`should not create an action for an innovation that doesn't exist`, async () => {
       await expect(() =>
-        sut.createAction(DTOsHelper.getUserRequestContext(accessor), randUuid(), {
-          description: randText(),
-          section:
-            CurrentCatalogTypes.InnovationSections[
-              randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
-            ]!
-        })
+        sut.createAction(
+          DTOsHelper.getUserRequestContext(accessor),
+          randUuid(),
+          {
+            description: randText(),
+            section:
+              CurrentCatalogTypes.InnovationSections[
+                randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
+              ]!
+          },
+          em
+        )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
     });
 
@@ -240,7 +245,8 @@ describe('Innovation Actions Suite', () => {
       const actions = await sut.getActionsList(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
         { innovationId: innovation.id, fields: [] },
-        { order: { createdAt: 'DESC' }, skip: 0, take: 10 }
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
       );
 
       expect(actions).toBeDefined();
