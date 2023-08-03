@@ -98,6 +98,8 @@ $ docker-compose -f .docker/docker-compose.yml up
 ```
 #### **Note: When running for the first time, make sure that:**
 1. Create a 2 DB's manually trought Microsoft SQL Server Managemente Studio. Create "innovationdb" and "tests" DB's.
+  1. Run the following command to allow parallel transactions in jest: `ALTER DATABASE tests SET READ_COMMITTED_SNAPSHOT ON;`
+     **Note:** you only need to run this when you create the tests database 
 2. Run migrations and seeds trought the commands:
 ``` bash
 $ npm run migrations
