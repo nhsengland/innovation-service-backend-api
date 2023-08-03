@@ -13,6 +13,7 @@ import SHARED_SYMBOLS from '../services/symbols';
 import type { TestUserType } from './builders/user.builder';
 import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
+import { randUuid } from '@ngneat/falso';
 
 export class TestsHelper {
   private sqlConnection: DataSource;
@@ -132,7 +133,7 @@ export class TestsHelper {
     jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockImplementation(async (email: string) => {
       const user = emailMap.get(email);
       if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+        return null;
       }
       return { ...DTOsHelper.getIdentityUserInfo(user), phone: null };
     });
@@ -145,6 +146,12 @@ export class TestsHelper {
       if (!user) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
       }
+    });
+
+    jest.spyOn(IdentityProviderService.prototype, 'createUser').mockImplementation(async (
+    _data: { name: string; email: string; password: string }
+    ) => {
+      return randUuid();
     });
 
     jest.spyOn(IdentityProviderService.prototype, 'deleteUser').mockImplementation(async (

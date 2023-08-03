@@ -25,9 +25,9 @@ class V1AdminUserCreate {
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-      const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-      const result = await usersService.createUser({ id: requestUser.id }, body);
+      const result = await usersService.createUser(domainContext, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

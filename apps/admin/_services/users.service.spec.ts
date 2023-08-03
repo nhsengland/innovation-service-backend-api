@@ -2,86 +2,327 @@ import type { EntityManager } from 'typeorm';
 
 import { TestsHelper } from '@admin/shared/tests';
 
-import { UserEntity } from '@admin/shared/entities';
-// import { AccessorOrganisationRoleEnum } from '@admin/shared/enums';
+import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import { container } from '../_config';
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
+import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { NotifierService } from '@admin/shared/services';
+import { randAbbreviation, randEmail, randFullName, randUuid } from '@ngneat/falso';
+import {
+  BadRequestError,
+  NotFoundError,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError,
+  UserErrorsEnum
+} from '@admin/shared/errors';
+import { OrganisationUserEntity } from '@admin/shared/entities';
 
-describe('Admin / Services / Users Service', () => {
-  let entityManager: EntityManager;
-
-  let usersService: UsersService;
+describe('Admin / _services / users service suite', () => {
+  let sut: UsersService;
 
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
-  beforeAll(async () => {
-    // jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog').mockResolvedValue();
-    // jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+  let em: EntityManager;
 
-    usersService = container.get<UsersService>(SYMBOLS.UsersService);
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+
+  beforeAll(async () => {
+    sut = container.get<UsersService>(SYMBOLS.UsersService);
 
     await testsHelper.init();
   });
 
   beforeEach(async () => {
-    entityManager = await testsHelper.getQueryRunnerEntityManager();
+    em = await testsHelper.getQueryRunnerEntityManager();
   });
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
+    notifierSendSpy.mockReset();
   });
 
   const userAdminContext = DTOsHelper.getUserRequestContext(scenario.users.allMighty);
 
-  it('should lock a user', async () => {
-    const userInnovator = scenario.users.johnInnovator;
+  describe('updateUser', () => {
+    describe('lock/unlock user', () => {
+      it('should lock a user', async () => {
+        const userInnovator = scenario.users.johnInnovator;
 
-    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, entityManager);
+        await sut.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, em);
 
-    const updatedUser = await entityManager
-      .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId: userInnovator.id })
-      .getOne();
+        const updatedUser = await em
+          .createQueryBuilder(UserEntity, 'user')
+          .where('user.id = :userId', { userId: userInnovator.id })
+          .getOne();
 
-    expect(updatedUser?.lockedAt).toBeTruthy();
+        expect(updatedUser?.lockedAt).toBeTruthy();
+      });
+
+      it('should unlock a user', async () => {
+        const userInnovator = scenario.users.johnInnovator;
+
+        await sut.updateUser(userAdminContext, userInnovator.id, { accountEnabled: true }, em);
+
+        const updatedUser = await em
+          .createQueryBuilder(UserEntity, 'user')
+          .where('user.id = :userId', { userId: userInnovator.id })
+          .getOne();
+
+        expect(updatedUser?.lockedAt).toBeNull();
+      });
+
+      it('should send a notification to locked user', async () => {
+        const userInnovator = scenario.users.johnInnovator;
+
+        await sut.updateUser(userAdminContext, userInnovator.id, { accountEnabled: false }, em);
+
+        expect(notifierSendSpy).toHaveBeenCalledWith(userAdminContext, NotifierTypeEnum.LOCK_USER, {
+          user: { identityId: userInnovator.identityId }
+        });
+      });
+    });
+
+    describe('change role of QA/A within organisation', () => {
+      it('should update a user role from QA to A', async () => {
+        const user = scenario.users.aliceQualifyingAccessor;
+
+        await sut.updateUser(
+          userAdminContext,
+          user.id,
+          {
+            role: {
+              name: AccessorOrganisationRoleEnum.ACCESSOR,
+              organisationId: user.organisations.healthOrg.id
+            }
+          },
+          em
+        );
+
+        const updatedUserRole = await em
+          .createQueryBuilder(UserRoleEntity, 'userRole')
+          .where('userRole.id = :userRoleId', { userRoleId: user.roles.qaRole.id })
+          .getOne();
+
+        const updatedOrganisationUser = await em
+          .createQueryBuilder(OrganisationUserEntity, 'orgUser')
+          .innerJoin('orgUser.user', 'user')
+          .innerJoin('orgUser.organisation', 'org')
+          .where('org.id = :orgId', { orgId: user.organisations.healthOrg.id })
+          .andWhere('user.id = :userId', { userId: user.id })
+          .getOne();
+
+        expect(updatedUserRole?.role).toBe(ServiceRoleEnum.ACCESSOR);
+        expect(updatedOrganisationUser?.role).toBe(AccessorOrganisationRoleEnum.ACCESSOR);
+
+        expect(updatedUserRole?.role).toBe(ServiceRoleEnum.ACCESSOR);
+      });
+
+      it('should update a user role from A to QA', async () => {
+        const user = scenario.users.samAccessor;
+
+        await sut.updateUser(
+          userAdminContext,
+          user.id,
+          {
+            role: {
+              name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR,
+              organisationId: user.organisations.medTechOrg.id
+            }
+          },
+          em
+        );
+
+        const updatedUserRole = await em
+          .createQueryBuilder(UserRoleEntity, 'userRole')
+          .where('userRole.id = :userRoleId', { userRoleId: user.roles.accessorRole.id })
+          .getOne();
+
+        const updatedOrganisationUser = await em
+          .createQueryBuilder(OrganisationUserEntity, 'orgUser')
+          .innerJoin('orgUser.user', 'user')
+          .innerJoin('orgUser.organisation', 'org')
+          .where('org.id = :orgId', { orgId: user.organisations.medTechOrg.id })
+          .andWhere('user.id = :userId', { userId: user.id })
+          .getOne();
+
+        expect(updatedUserRole?.role).toBe(ServiceRoleEnum.QUALIFYING_ACCESSOR);
+        expect(updatedOrganisationUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
+      });
+
+      it('should update a user role of a user with many roles within an organisation', async () => {
+        const user = scenario.users.jamieMadroxAccessor;
+
+        await sut.updateUser(
+          userAdminContext,
+          user.id,
+          {
+            role: {
+              name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR,
+              organisationId: user.organisations.healthOrg.id
+            }
+          },
+          em
+        );
+
+        const updatedUserRoles = await em
+          .createQueryBuilder(UserRoleEntity, 'userRole')
+          .innerJoin('userRole.user', 'user')
+          .where('user.id = :userId', { userId: user.id })
+          .getMany();
+
+        const updatedOrganisationUser = await em
+          .createQueryBuilder(OrganisationUserEntity, 'orgUser')
+          .innerJoin('orgUser.user', 'user')
+          .innerJoin('orgUser.organisation', 'org')
+          .where('org.id = :orgId', { orgId: user.organisations.healthOrg.id })
+          .andWhere('user.id = :userId', { userId: user.id })
+          .getOne();
+
+        updatedUserRoles.forEach(role => {
+          expect(role?.role).toBe(ServiceRoleEnum.QUALIFYING_ACCESSOR);
+        });
+        expect(updatedOrganisationUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
+      });
+
+      it(`should throw an error if the user role doesn't exist`, async () => {
+        await expect(() =>
+          sut.updateUser(
+            userAdminContext,
+            scenario.users.samAccessor.id,
+            {
+              role: {
+                name: AccessorOrganisationRoleEnum.ACCESSOR,
+                organisationId: scenario.organisations.inactiveEmptyOrg.id
+              }
+            },
+            em
+          )
+        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
+      });
+    });
+
+    it(`should throw an error if the user doesn't exist`, async () => {
+      await expect(() => sut.updateUser(userAdminContext, randUuid(), {}, em)).rejects.toThrowError(
+        new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
+      );
+    });
   });
 
-  it('should unlock a user', async () => {
-    const userInnovator = scenario.users.johnInnovator;
+  describe('createUser', () => {
+    it.each([
+      ServiceRoleEnum.ACCESSOR,
+      ServiceRoleEnum.QUALIFYING_ACCESSOR,
+      ServiceRoleEnum.INNOVATOR,
+      ServiceRoleEnum.ASSESSMENT,
+      ServiceRoleEnum.ADMIN
+    ])('should create a user %s', async userType => {
+      const organisation =
+        userType === ServiceRoleEnum.ACCESSOR || userType === ServiceRoleEnum.QUALIFYING_ACCESSOR
+          ? {
+              organisationAcronym: scenario.organisations.healthOrg.acronym,
+              organisationUnitAcronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
+            }
+          : {};
 
-    await usersService.updateUser(userAdminContext, userInnovator.id, { accountEnabled: true }, entityManager);
+      const result = await sut.createUser(
+        userAdminContext,
+        {
+          name: randFullName(),
+          email: randEmail(),
+          type: userType,
+          ...organisation,
+          role:
+            userType === ServiceRoleEnum.ACCESSOR
+              ? AccessorOrganisationRoleEnum.ACCESSOR
+              : userType === ServiceRoleEnum.QUALIFYING_ACCESSOR
+              ? AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+              : undefined
+        },
+        em
+      );
 
-    const updatedUser = await entityManager
-      .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId: userInnovator.id })
-      .getOne();
+      expect(result.id).toBeDefined();
+    });
 
-    expect(updatedUser?.lockedAt).toBeNull();
+    it.each([
+      [ServiceRoleEnum.ACCESSOR, 'organisationAcronym'],
+      [ServiceRoleEnum.ACCESSOR, 'organisationUnitAcronym'],
+      [ServiceRoleEnum.ACCESSOR, 'role'],
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'organisationAcronym'],
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'organisationUnitAcronym'],
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'role']
+    ])('should throw an error if the user type is %s and there is no %s parameter', async (userType, paramKey) => {
+      await expect(() =>
+        sut.createUser(
+          userAdminContext,
+          {
+            name: randFullName(),
+            email: randEmail(),
+            type: userType,
+            organisationAcronym: paramKey === 'organisationAcronym' ? undefined : randAbbreviation(),
+            organisationUnitAcronym: paramKey === 'organisationUnitAcronym' ? undefined : randAbbreviation(),
+            role:
+              paramKey === 'role'
+                ? undefined
+                : userType === ServiceRoleEnum.ACCESSOR
+                ? AccessorOrganisationRoleEnum.ACCESSOR
+                : AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+          },
+          em
+        )
+      ).rejects.toThrowError(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
+    });
+
+    it(`should throw an error if the organisation doesn't exist`, async () => {
+      await expect(() =>
+        sut.createUser(
+          userAdminContext,
+          {
+            name: randFullName(),
+            email: randEmail(),
+            type: ServiceRoleEnum.ACCESSOR,
+            organisationAcronym: randAbbreviation(),
+            organisationUnitAcronym: randAbbreviation(),
+            role: AccessorOrganisationRoleEnum.ACCESSOR
+          },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
+    });
+
+    it(`should throw an error if the organisation unit doesn't exist`, async () => {
+      await expect(() =>
+        sut.createUser(
+          userAdminContext,
+          {
+            name: randFullName(),
+            email: randEmail(),
+            type: ServiceRoleEnum.ACCESSOR,
+            organisationAcronym: scenario.organisations.healthOrg.acronym,
+            organisationUnitAcronym: randAbbreviation(),
+            role: AccessorOrganisationRoleEnum.ACCESSOR
+          },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+    });
+
+    it('should throw an error if the user already exists', async () => {
+      await expect(() =>
+        sut.createUser(
+          userAdminContext,
+          {
+            name: randFullName(),
+            email: scenario.users.adamInnovator.email,
+            type: ServiceRoleEnum.INNOVATOR
+          },
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
+    });
   });
-
-  // it('should change an accessor role', async () => {
-
-  //   const userAdminContext = testData.domainContexts.admin;
-  //   const userAccessor = testData.baseUsers.accessor;
-  //   const userAccessorOrganisations = await userAccessor.userOrganisations;
-
-  //   await usersService.updateUser(
-  //     userAdminContext,
-  //     userAccessor.id,
-  //     { role: { name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR, organisationId: userAccessorOrganisations[0]?.id ?? '' } },
-  //     entityManager
-  //   );
-
-  //   const updatedUser = await entityManager.createQueryBuilder(OrganisationUserEntity, 'ou')
-  //     .where('ou.user.id = :userId', { userId: userAccessor.id })
-  //     .andWhere('ou.organisation.id = :organisationId', { organisationId: userAccessorOrganisations[0]?.id })
-  //     .getOne();
-
-  //   expect(updatedUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
-
-  // });
 });
