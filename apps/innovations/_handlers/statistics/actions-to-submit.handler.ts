@@ -1,5 +1,5 @@
 import { InnovationActionStatusEnum } from '@innovations/shared/enums';
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { container } from '../../_config';
 import type {
   InnovationStatisticsParamsTemplateType,
@@ -12,11 +12,10 @@ import { InnovationsStatisticsHandler } from '../../_types/statistics-handlers.t
 
 export class ActionsToSubmitStatisticsHandler extends InnovationsStatisticsHandler {
   constructor(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]
   ) {
-    super(requestUser, domainContext, data);
+    super(domainContext, data);
   }
 
   async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.ACTIONS_TO_SUBMIT_COUNTER]> {

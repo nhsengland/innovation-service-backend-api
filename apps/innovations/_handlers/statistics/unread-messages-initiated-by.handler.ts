@@ -1,4 +1,4 @@
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 import { container } from '../../_config';
 import type {
   InnovationStatisticsParamsTemplateType,
@@ -11,11 +11,10 @@ import { InnovationsStatisticsHandler } from '../../_types/statistics-handlers.t
 
 export class UnreadMessagesThreadsInitiatedByStatisticsHandler extends InnovationsStatisticsHandler {
   constructor(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     data: InnovationStatisticsParamsTemplateType[InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]
   ) {
-    super(requestUser, domainContext, data);
+    super(domainContext, data);
   }
 
   async run(): Promise<

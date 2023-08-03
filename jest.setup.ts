@@ -14,6 +14,7 @@ import SHARED_SYMBOLS from './libs/shared/services/symbols';
 
 afterAll(async () => {
   if (global.gc) global.gc();
+  (global as any).completeScenarioData = undefined;
   await container.get<CacheService>(SHARED_SYMBOLS.CacheService)?.destroy();
   await container.get<SQLConnectionService>(SHARED_SYMBOLS.SQLConnectionService)?.destroy();
 });

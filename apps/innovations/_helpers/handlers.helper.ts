@@ -1,17 +1,16 @@
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType } from '@innovations/shared/types';
 
-import { InnovationStatisticsTemplateType, INNOVATION_STATISTICS_CONFIG } from '../_config/statistics.config';
+import { INNOVATION_STATISTICS_CONFIG, InnovationStatisticsTemplateType } from '../_config/statistics.config';
 import type { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 
 export class StatisticsHandlersHelper {
   static async runHandler(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     actions: InnovationStatisticsEnum[],
     params: { [key: string]: any }
   ): Promise<Record<string, InnovationStatisticsTemplateType[InnovationStatisticsEnum]>> {
     const handlers = actions.map(async action => {
-      const handler = await new INNOVATION_STATISTICS_CONFIG[action].handler(requestUser, domainContext, params).run();
+      const handler = await new INNOVATION_STATISTICS_CONFIG[action].handler(domainContext, params).run();
 
       return {
         data: { ...handler },
