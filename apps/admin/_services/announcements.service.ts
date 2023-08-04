@@ -21,7 +21,10 @@ export class AnnouncementsService extends BaseService {
     super();
   }
 
-  async getAnnouncementsList(pagination: PaginationQueryParamsType<never>): Promise<{
+  async getAnnouncementsList(
+    pagination: PaginationQueryParamsType<never>,
+    entityManager?: EntityManager
+  ): Promise<{
     count: number;
     data: {
       id: string;
@@ -33,7 +36,9 @@ export class AnnouncementsService extends BaseService {
       status: AnnouncementStatusEnum;
     }[];
   }> {
-    const [dbAnnouncements, dbCount] = await this.sqlConnection.manager
+    const em = entityManager ?? this.sqlConnection.manager;
+    
+    const [dbAnnouncements, dbCount] = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
@@ -62,7 +67,7 @@ export class AnnouncementsService extends BaseService {
     };
   }
 
-  async getAnnouncementInfo(announcementId: string): Promise<{
+  async getAnnouncementInfo(announcementId: string, entityManager?: EntityManager): Promise<{
     id: string;
     title: string;
     userRoles: ServiceRoleEnum[];
@@ -71,7 +76,9 @@ export class AnnouncementsService extends BaseService {
     expiresAt: null | Date;
     status: AnnouncementStatusEnum;
   }> {
-    const announcement = await this.sqlConnection.manager
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const announcement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
@@ -164,7 +171,7 @@ export class AnnouncementsService extends BaseService {
   ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const dbAnnouncement = await this.sqlConnection.manager
+    const dbAnnouncement = await em
       .createQueryBuilder(AnnouncementEntity, 'announcement')
       .select([
         'announcement.id',
@@ -198,7 +205,7 @@ export class AnnouncementsService extends BaseService {
   async deleteAnnouncement(announcementId: string, entityManager?: EntityManager): Promise<void> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const announcement = await this.getAnnouncementInfo(announcementId);
+    const announcement = await this.getAnnouncementInfo(announcementId, connection);
 
     if (announcement.status === AnnouncementStatusEnum.DONE) {
       throw new UnprocessableEntityError(AnnouncementErrorsEnum.ANNOUNCEMENT_CANT_BE_DELETED_IN_DONE_STATUS);
@@ -219,7 +226,11 @@ export class AnnouncementsService extends BaseService {
     });
   }
 
-  private validateAnnouncementBody(status: AnnouncementStatusEnum, body: unknown, curAnnouncement: { startsAt: Date }) {
+  private validateAnnouncementBody(
+    status: AnnouncementStatusEnum,
+    body: unknown,
+    curAnnouncement: { startsAt: Date }
+  ): AnnouncementActiveBodyType | AnnouncementScheduledBodyType {
     try {
       if (status === AnnouncementStatusEnum.SCHEDULED) {
         return JoiHelper.Validate<AnnouncementScheduledBodyType>(AnnouncementScheduledBodySchema, body);
