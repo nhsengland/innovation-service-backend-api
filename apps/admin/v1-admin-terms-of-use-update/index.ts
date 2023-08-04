@@ -29,9 +29,9 @@ class V1AdminTermsOfUseUpdate {
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-      const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-      const result = await toUService.updateTermsOfUse({ id: requestUser.id }, body, params.touId);
+      const result = await toUService.updateTermsOfUse(domainContext, body, params.touId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;

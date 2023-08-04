@@ -24,9 +24,9 @@ class V1AdminTermsOfUseCreate {
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
-      const requestUser = auth.getUserInfo();
+      const domainContext = auth.getContext();
 
-      const result = await toUService.createTermsOfUse({ id: requestUser.id }, body);
+      const result = await toUService.createTermsOfUse(domainContext, body);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
       return;
