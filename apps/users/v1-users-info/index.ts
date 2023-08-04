@@ -12,7 +12,7 @@ import { container } from '../_config';
 import SYMBOLS from '../_services/symbols';
 import type { UsersService } from '../_services/users.service';
 import type { ResponseDTO } from './transformation.dtos';
-import { PathParamsSchema, PathParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
 
 class V1UsersInfo {
   @JwtDecoder()
@@ -21,7 +21,7 @@ class V1UsersInfo {
     const usersService = container.get<UsersService>(SYMBOLS.UsersService);
 
     try {
-      const pathParams = JoiHelper.Validate<PathParamsType>(PathParamsSchema, request.params);
+      const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       // Only admins can get other user info (for now at least)
@@ -42,7 +42,7 @@ export default openApi(V1UsersInfo.httpTrigger as AzureFunction, '/v1/{userId}',
     operationId: 'v1-users-info',
     description: 'Get user info',
     tags: ['[v1] Users'],
-    parameters: SwaggerHelper.paramJ2S({ path: PathParamsSchema, query: QueryParamsSchema }),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
     responses: {
       200: {
         description: 'Success',

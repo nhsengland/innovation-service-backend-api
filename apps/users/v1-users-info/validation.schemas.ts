@@ -1,10 +1,10 @@
 import Joi from 'joi';
 
-export type PathParamsType = {
+export type ParamsType = {
   userId: string;
 };
 
-export const PathParamsSchema = Joi.object<PathParamsType>({
+export const ParamsSchema = Joi.object<ParamsType>({
   userId: Joi.string().uuid().required().description('The user ID')
 }).required();
 

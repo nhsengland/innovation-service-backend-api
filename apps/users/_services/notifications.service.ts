@@ -76,7 +76,7 @@ export class NotificationsService extends BaseService {
       contextDetail: NotificationContextDetailEnum;
       contextId: string;
       createdAt: Date;
-      readAt: Date;
+      readAt: Date | null;
       params: Record<string, unknown>;
     }[];
   }> {

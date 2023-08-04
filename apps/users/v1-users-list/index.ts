@@ -32,7 +32,7 @@ class V1UsersList {
         // Due to the limitations of our identity service that only allows to search by one email at a time,
         // this functions returns always a list to mimic a future search feature.
         const result = await domainService.users.getUserByEmail(queryParams.email, {
-          userRoles: queryParams.userTypes || []
+          userRoles: queryParams.userTypes
         });
         context.res = ResponseHelper.Ok<ResponseDTO>(
           result.map(item => ({
@@ -52,7 +52,7 @@ class V1UsersList {
                   units: o.organisationUnits.map(u => ({
                     id: u.id,
                     name: u.name,
-                    acronym: u.acronym ?? ''
+                    acronym: u.acronym
                   }))
                 })
               }))
@@ -66,7 +66,7 @@ class V1UsersList {
         const validation = authorizationService.validate(context).checkAdminType();
 
         //only admins can get user emails
-        if (!('email' in queryParams.fields)) {
+        if (!queryParams.fields.includes('email')) {
           // all users need to be able to list NA users for message transparency page
           if (queryParams.userTypes.length === 1 && queryParams.userTypes[0] === ServiceRoleEnum.ASSESSMENT) {
             validation.checkAssessmentType();
