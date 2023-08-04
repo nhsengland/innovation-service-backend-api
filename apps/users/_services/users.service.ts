@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import type { EntityManager, Repository } from 'typeorm';
+import type { EntityManager } from 'typeorm';
 
 import {
   InnovationCollaboratorEntity,
@@ -27,7 +27,13 @@ import {
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type { CacheConfigType, CacheService, DomainService, IdentityProviderService, NotifierService } from '@users/shared/services';
+import type {
+  CacheConfigType,
+  CacheService,
+  DomainService,
+  IdentityProviderService,
+  NotifierService
+} from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
@@ -35,8 +41,6 @@ import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
-
-  private userRepository: Repository<UserEntity>;
   private cache: CacheConfigType['IdentityUserInfo'];
 
   constructor(
@@ -47,7 +51,6 @@ export class UsersService extends BaseService {
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
   ) {
     super();
-    this.userRepository = this.sqlConnection.getRepository<UserEntity>(UserEntity);
     this.cache = cacheService.get('IdentityUserInfo');
   }
 
@@ -73,7 +76,6 @@ export class UsersService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
-
     const user = await this.domainService.users.getUserInfo({ userId });
     const model = params.model;
     if (model === 'minimal') {
@@ -342,42 +344,6 @@ export class UsersService extends BaseService {
     await this.cache.delete(user.identityId);
 
     return { id: user.id };
-  }
-
-  async deleteUserInfo(identityId: string, reason?: string, entityManager?: EntityManager): Promise<{ id: string }> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    return em.transaction(async transactionManager => {
-      const user = await this.userRepository.findOne({
-        where: { identityId: identityId }
-      });
-
-      if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
-      }
-
-      //const innovations = await this.innovationRepository.find({ where: { owner: user.id } });
-
-      // WIP!!!!!
-      // for (const innovation of innovations) {
-
-      //   await this.innovationService.archiveInnovation(
-      //     requestUser,
-      //     innovation.id,
-      //     reason,
-      //     transactionManager
-      //   );
-      // }
-
-      await this.identityProviderService.deleteUser(identityId);
-
-      user.deletedAt = new Date();
-      user.deleteReason = reason || '';
-
-      const result = await transactionManager.save(user);
-
-      return { id: result.id };
-    });
   }
 
   /**

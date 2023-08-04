@@ -10,6 +10,8 @@ export const startup = async (container: Container): Promise<void> => {
   const httpService = container.get<HttpService>(SHARED_SYMBOLS.HttpService);
   const logger = container.get<LoggerService>(SHARED_SYMBOLS.LoggerService);
 
+  logger.log('Initializing Users app function');
+
   try {
     logger.log('Initialization complete');
 

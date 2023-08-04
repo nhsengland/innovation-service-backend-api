@@ -3,6 +3,7 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
+import { randUuid } from '@ngneat/falso';
 import { InnovationEntity, InnovationSectionEntity, UserEntity, UserRoleEntity } from '../entities';
 import { InnovationSectionStatusEnum, UserStatusEnum } from '../enums';
 import { NotFoundError, UserErrorsEnum } from '../errors';
@@ -13,7 +14,6 @@ import SHARED_SYMBOLS from '../services/symbols';
 import type { TestUserType } from './builders/user.builder';
 import { DTOsHelper } from './helpers/dtos.helper';
 import { CompleteScenarioBuilder, CompleteScenarioType } from './scenarios/complete-scenario.builder';
-import { randUuid } from '@ngneat/falso';
 
 export class TestsHelper {
   private sqlConnection: DataSource;
@@ -138,25 +138,27 @@ export class TestsHelper {
       return { ...DTOsHelper.getIdentityUserInfo(user), phone: null };
     });
 
-    jest.spyOn(IdentityProviderService.prototype, 'updateUser').mockImplementation(async (
-    identityId: string,
-    _body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
-    ) => {
-      const user = identityMap.get(identityId);
-      if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-    });
+    jest
+      .spyOn(IdentityProviderService.prototype, 'updateUser')
+      .mockImplementation(
+        async (
+          identityId: string,
+          _body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
+        ) => {
+          const user = identityMap.get(identityId);
+          if (!user) {
+            throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+          }
+        }
+      );
 
-    jest.spyOn(IdentityProviderService.prototype, 'createUser').mockImplementation(async (
-    _data: { name: string; email: string; password: string }
-    ) => {
-      return randUuid();
-    });
+    jest
+      .spyOn(IdentityProviderService.prototype, 'createUser')
+      .mockImplementation(async (_data: { name: string; email: string; password: string }) => {
+        return randUuid();
+      });
 
-    jest.spyOn(IdentityProviderService.prototype, 'deleteUser').mockImplementation(async (
-      identityId: string
-    ) => {
+    jest.spyOn(IdentityProviderService.prototype, 'deleteUser').mockImplementation(async (identityId: string) => {
       const user = identityMap.get(identityId);
       if (!user) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);

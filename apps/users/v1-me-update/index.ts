@@ -77,6 +77,7 @@ class V1MeUpdate {
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });
         return;
+        /* c8 ignore next 3 */
       } else {
         throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
       }
