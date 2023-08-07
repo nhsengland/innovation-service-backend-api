@@ -1,6 +1,15 @@
-import type { InnovationExportRequestListType } from '../_types/innovation.types';
+import type { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 
 export type ResponseDTO = {
   count: number;
-  data: InnovationExportRequestListType;
+  data: {
+    id: string;
+    status: InnovationExportRequestStatusEnum;
+    createdBy: {
+      name: string;
+      displayRole?: string;
+      displayTeam?: string;
+    };
+    createdAt: Date;
+  }[];
 };

@@ -832,8 +832,8 @@ export class RecipientsService extends BaseService {
     createdBy: {
       id: string;
       // All consumers require the unit so adding it here to avoid extra queries
-      unitId: string;
-      unitName: string;
+      unitId?: string;
+      unitName?: string;
     };
   }> {
     const request = await this.sqlConnection
@@ -843,10 +843,12 @@ export class RecipientsService extends BaseService {
         'request.requestReason',
         'request.rejectReason',
         'request.createdBy',
+        'role.id',
         'unit.id',
         'unit.name'
       ])
-      .innerJoin('request.organisationUnit', 'unit')
+      .innerJoin('request.createdByUserRole', 'role')
+      .leftJoin('role.organisationUnit', 'unit')
       .where('request.id = :requestId', { requestId })
       .getOne();
 
@@ -860,8 +862,8 @@ export class RecipientsService extends BaseService {
       rejectReason: request.rejectReason,
       createdBy: {
         id: request.createdBy,
-        unitId: request.organisationUnit.id,
-        unitName: request.organisationUnit.name
+        unitId: request.createdByUserRole.organisationUnit?.id,
+        unitName: request.createdByUserRole.organisationUnit?.name
       }
     };
   }

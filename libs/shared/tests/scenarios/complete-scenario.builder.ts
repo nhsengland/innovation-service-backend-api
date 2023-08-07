@@ -354,15 +354,27 @@ export class CompleteScenarioBuilder {
       ).save();
 
       const johnInnovationExportRequestByAlice = await new InnovationExportRequestBuilder(entityManager)
-        .setCreatedBy(aliceQualifyingAccessor.id, healthOrgUnit.id)
+        .setCreatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
+
+      const johnInnovationExportRequestByIngrid = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
         .setStatus(InnovationExportRequestStatusEnum.PENDING)
         .save();
 
       const johnInnovationExportRequestBySam = await new InnovationExportRequestBuilder(entityManager)
-        .setCreatedBy(samAccessor.id, medTechOrgUnit.id)
+        .setCreatedBy(samAccessor.id, samAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
         .setStatus(InnovationExportRequestStatusEnum.PENDING)
+        .save();
+
+      const johnInnovationExportRequestByPaul = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.REJECTED)
         .save();
 
       // John Innovation Files
@@ -683,7 +695,9 @@ export class CompleteScenarioBuilder {
                 },
                 exportRequests: {
                   requestByAlice: johnInnovationExportRequestByAlice,
-                  requestBySam: johnInnovationExportRequestBySam
+                  requestByIngrid: johnInnovationExportRequestByIngrid,
+                  requestBySam: johnInnovationExportRequestBySam,
+                  requestByPaul: johnInnovationExportRequestByPaul
                 },
                 collaborators: {
                   adamCollaborator: adamCollaborator,
@@ -709,15 +723,22 @@ export class CompleteScenarioBuilder {
                 },
                 transfer: johnInnovationTransferToJane,
                 notifications: {
-                  notificationsFromMessage: { ...johnInnovationNotificationFromMessage, notificationUsers: {
-                    johnInnovator: johnInnovationNotificationFromMessage.notificationUsers.get(johnInnovator.roles['innovatorRole']!.id)!
-                  } },
+                  notificationsFromMessage: {
+                    ...johnInnovationNotificationFromMessage,
+                    notificationUsers: {
+                      johnInnovator: johnInnovationNotificationFromMessage.notificationUsers.get(
+                        johnInnovator.roles['innovatorRole']!.id
+                      )!
+                    }
+                  },
                   notificationFromSupport: {
                     ...johnInnovationNotificationFromSupport,
                     notificationUsers: {
-                    johnInnovator: johnInnovationNotificationFromSupport.notificationUsers.get(johnInnovator.roles['innovatorRole']!.id)!
+                      johnInnovator: johnInnovationNotificationFromSupport.notificationUsers.get(
+                        johnInnovator.roles['innovatorRole']!.id
+                      )!
                     }
-                  } 
+                  }
                 },
                 progressUpdates: {
                   progressUpdateByAlice: johnInnovationAliceProgressUpdate,

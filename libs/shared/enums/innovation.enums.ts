@@ -73,8 +73,7 @@ export enum InnovationExportRequestStatusEnum {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
-  CANCELLED = 'CANCELLED',
-  EXPIRED = 'EXPIRED'
+  CANCELLED = 'CANCELLED'
 }
 
 export enum InnovationCollaboratorStatusEnum {

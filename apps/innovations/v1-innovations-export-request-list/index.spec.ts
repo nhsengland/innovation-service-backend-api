@@ -4,8 +4,8 @@ import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randAbbreviation, randPastDate, randText, randUuid } from '@ngneat/falso';
-import { InnovationsService } from '../_services/innovations.service';
+import { randPastDate, randRole, randText, randUuid } from '@ngneat/falso';
+import { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 
@@ -31,42 +31,26 @@ const expected = {
     {
       id: randUuid(),
       status: InnovationExportRequestStatusEnum.APPROVED,
-      isExportable: true,
-      requestReason: randText(),
-      organisation: {
-        id: randUuid(),
-        name: randText(),
-        acronym: randAbbreviation(),
-        organisationUnit: { id: randUuid(), name: randText(), acronym: randAbbreviation() }
-      },
-      createdAt: randPastDate(),
       createdBy: {
-        id: randUuid(),
-        name: randText()
+        name: randText(),
+        displayRole: randRole(),
+        displayTeam: randText()
       },
-      updatedAt: randPastDate()
+      createdAt: randPastDate()
     },
     {
       id: randUuid(),
       status: InnovationExportRequestStatusEnum.PENDING,
-      isExportable: true,
-      requestReason: randText(),
-      organisation: {
-        id: randUuid(),
-        name: randText(),
-        acronym: randAbbreviation(),
-        organisationUnit: { id: randUuid(), name: randText(), acronym: randAbbreviation() }
-      },
-      createdAt: randPastDate(),
       createdBy: {
-        id: randUuid(),
-        name: randText()
+        name: randText(),
+        displayRole: randRole(),
+        displayTeam: randText()
       },
-      updatedAt: randPastDate()
+      createdAt: randPastDate()
     }
   ]
 };
-const mock = jest.spyOn(InnovationsService.prototype, 'getInnovationRecordExportRequests').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationExportRequestService.prototype, 'getExportRequestList').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -93,7 +77,7 @@ describe('v1-innovation-export-request-list Suite', () => {
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['A', 200, scenario.users.ingridAccessor],
-      ['NA', 403, scenario.users.paulNeedsAssessor],
+      ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]

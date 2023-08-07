@@ -2,20 +2,27 @@ import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 import Joi from 'joi';
 
-export type BodyType = {
-  rejectReason?: string;
-  status: InnovationExportRequestStatusEnum;
-};
-
 export type ParamsType = {
   innovationId: string;
   requestId: string;
 };
+export const ParamsSchema = Joi.object<ParamsType>({
+  innovationId: Joi.string().uuid().required(),
+  requestId: Joi.string().uuid().required()
+}).required();
 
+export type BodyType = {
+  status: InnovationExportRequestStatusEnum;
+  rejectReason?: string;
+};
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.when('$userType', [
     {
       is: 'ACCESSOR',
+      then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required()
+    },
+    {
+      is: 'ASSESSMENT',
       then: Joi.string().valid(InnovationExportRequestStatusEnum.CANCELLED).required()
     },
     {
@@ -32,8 +39,3 @@ export const BodySchema = Joi.object<BodyType>({
     otherwise: Joi.forbidden()
   })
 });
-
-export const ParamsSchema = Joi.object<ParamsType>({
-  innovationId: Joi.string().uuid().required(),
-  requestId: Joi.string().uuid().required()
-}).required();
