@@ -1,6 +1,7 @@
 import { InnovationStatisticsEnum } from '../_enums/innovation.enums';
 import { ActionsToReviewStatisticsHandler } from '../_handlers/statistics/actions-to-review.handler';
 import { ActionsToSubmitStatisticsHandler } from '../_handlers/statistics/actions-to-submit.handler';
+import { PendingExportRequestsStatisticsHandler } from '../_handlers/statistics/pending-export-requests.handler';
 import { SectionsSubmittedSinceAssessmentStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-assessment-start.handler';
 import { SectionsSubmittedSinceSupportStartStatisticsHandler } from '../_handlers/statistics/sections-submitted-since-support-start.handler';
 import { SectionsSubmittedStatisticsHandler } from '../_handlers/statistics/sections-submitted.handler';
@@ -34,6 +35,9 @@ export const INNOVATION_STATISTICS_CONFIG: Record<
   },
   [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: {
     handler: UnreadMessagesThreadsInitiatedByStatisticsHandler
+  },
+  [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: {
+    handler: PendingExportRequestsStatisticsHandler
   }
 };
 
@@ -75,6 +79,9 @@ export type InnovationStatisticsTemplateType = {
     count: number;
     lastSubmittedAt: null | Date;
   };
+  [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: {
+    count: number;
+  };
 };
 
 export type InnovationStatisticsParamsTemplateType = {
@@ -90,4 +97,5 @@ export type InnovationStatisticsParamsTemplateType = {
     innovationId: string;
   };
   [InnovationStatisticsEnum.UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER]: { innovationId: string };
+  [InnovationStatisticsEnum.PENDING_EXPORT_REQUESTS_COUNTER]: { innovationId: string };
 };

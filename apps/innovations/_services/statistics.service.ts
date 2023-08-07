@@ -1,6 +1,7 @@
 import {
   InnovationActionEntity,
   InnovationAssessmentEntity,
+  InnovationExportRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationThreadMessageEntity,
@@ -9,6 +10,7 @@ import {
 } from '@innovations/shared/entities';
 import {
   InnovationActionStatusEnum,
+  InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
   NotificationContextDetailEnum,
@@ -18,8 +20,8 @@ import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from 
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DomainContextType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
-import { BaseService } from './base.service';
 import type { EntityManager } from 'typeorm';
+import { BaseService } from './base.service';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -54,7 +56,7 @@ export class StatisticsService extends BaseService {
   ): Promise<{ updatedAt: Date; section: CurrentCatalogTypes.InnovationSections }[]> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const sections = await connection 
+    const sections = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section')
@@ -113,7 +115,7 @@ export class StatisticsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const baseQuery = connection 
+    const baseQuery = connection
       .createQueryBuilder(InnovationActionEntity, 'actions')
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .innerJoin('actions.innovationSection', 'section')
@@ -159,7 +161,7 @@ export class StatisticsService extends BaseService {
 
     const supportStartedAt = innovationSupport?.updatedAt;
 
-    const sections = await connection 
+    const sections = await connection
       .createQueryBuilder(InnovationSectionEntity, 'section')
       .innerJoin('section.innovation', 'innovation')
       .select('section.section', 'section_section')
@@ -180,7 +182,7 @@ export class StatisticsService extends BaseService {
   ): Promise<{ section: CurrentCatalogTypes.InnovationSections; updatedAt: Date }[]> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const assessment = await connection 
+    const assessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
       .innerJoin('assessments.assignTo', 'assignTo')
       .innerJoin('assessments.innovation', 'innovation')
@@ -258,5 +260,17 @@ export class StatisticsService extends BaseService {
       count: unreadMessages,
       lastSubmittedAt: latestMessage?.createdAt || null
     };
+  }
+
+  async getPendingExportRequests(innovationId: string, entityManager?: EntityManager): Promise<number> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const nPendingRequests = await em
+      .createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .where('request.innovation_id = :innovationId', { innovationId })
+      .andWhere('request.status = :requestStatus', { requestStatus: InnovationExportRequestStatusEnum.PENDING })
+      .getCount();
+
+    return nPendingRequests;
   }
 }
