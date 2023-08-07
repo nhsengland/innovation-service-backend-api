@@ -232,12 +232,15 @@ export class OrganisationsService extends BaseService {
   }
 
   async activateUnit(
-    requestUser: DomainContextType,
+    domainContext: DomainContextType,
     organisationId: string,
     unitId: string,
-    userIds: string[]
+    userIds: string[],
+    entityManager?: EntityManager
   ): Promise<{ unitId: string }> {
-    const unit = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const unit = await em
       .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
       .innerJoinAndSelect('org_unit.organisation', 'organisation')
       .where('org_unit.id = :unitId', { unitId })
@@ -248,7 +251,7 @@ export class OrganisationsService extends BaseService {
     }
 
     // unlocked locked users of selected users
-    const usersToUnlock = await this.sqlConnection
+    const usersToUnlock = await em
       .createQueryBuilder(UserRoleEntity, 'ur')
       .select(['ur.id', 'ur.role', 'user.id', 'user.identityId'])
       .innerJoin('ur.user', 'user')
@@ -258,7 +261,7 @@ export class OrganisationsService extends BaseService {
       .getMany();
 
     // unlock locked roles of selected users
-    const rolesToUnlock = await this.sqlConnection
+    const rolesToUnlock = await em
       .createQueryBuilder(UserRoleEntity, 'ur')
       .select(['ur.id', 'ur.role'])
       .where('ur.organisation_unit_id = :unitId', { unitId }) // ensure users have role in unit
@@ -275,14 +278,14 @@ export class OrganisationsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
     }
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await em.transaction(async transaction => {
       const now = new Date();
 
       // Activate unit
       await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
-        { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
+        { inactivatedAt: null, updatedAt: now, updatedBy: domainContext.id }
       );
 
       // activate organistion to whom unit belongs if it is inactivated
@@ -290,13 +293,13 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           OrganisationEntity,
           { id: organisationId },
-          { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
+          { inactivatedAt: null, updatedAt: now, updatedBy: domainContext.id }
         );
 
         // Just send the announcement if this is the first time the organization has been activated.
         if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
           await this.createOrganisationAnnouncement(
-            requestUser,
+            domainContext,
             unit.organisation.id,
             unit.organisation.name,
             transaction
@@ -310,13 +313,13 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserEntity,
         { id: In(usersToUnlockId) },
-        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id, status: UserStatusEnum.ACTIVE }
+        { lockedAt: null, updatedAt: now, updatedBy: domainContext.id, status: UserStatusEnum.ACTIVE }
       );
 
       await transaction.update(
         UserRoleEntity,
         { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
-        { isActive: true, updatedAt: now, updatedBy: requestUser.id }
+        { isActive: true, updatedAt: now, updatedBy: domainContext.id }
       );
 
       return { unitId };
