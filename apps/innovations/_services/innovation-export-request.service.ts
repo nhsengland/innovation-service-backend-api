@@ -3,10 +3,10 @@ import type { EntityManager } from 'typeorm';
 
 import { BaseService } from './base.service';
 
-import { InnovationExportRequestEntity } from '@innovations/shared/entities';
+import { InnovationExportRequestEntity, UserRoleEntity } from '@innovations/shared/entities';
 import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
-  BadRequestError,
+  ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError
@@ -231,6 +231,9 @@ export class InnovationExportRequestService extends BaseService {
 
     const request = await em
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
+      .select(['request.id', 'request.status', 'role.id', 'role.role', 'unit.id'])
+      .innerJoin('request.createdByUserRole', 'role')
+      .leftJoin('role.organisationUnit', 'unit')
       .where('request.id = :exportRequestId', { exportRequestId })
       .getOne();
     if (!request) {
@@ -243,17 +246,32 @@ export class InnovationExportRequestService extends BaseService {
       );
     }
 
-    if (data.status === InnovationExportRequestStatusEnum.REJECTED && !data.rejectReason) {
-      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_REJECT_REASON_REQUIRED);
+    if (!this.canUserUpdate(domainContext, request.createdByUserRole)) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_NO_PERMISSION_TO_UPDATE);
     }
-
-    // TODO: Verify if it can do the update using domainContext
-    console.log(domainContext);
 
     await em.update(
       InnovationExportRequestEntity,
       { id: exportRequestId },
-      { status: data.status, rejectReason: data.rejectReason ?? null }
+      { status: data.status, rejectReason: data.rejectReason ?? null, updatedBy: domainContext.id }
     );
+  }
+
+  private canUserUpdate(domainContext: DomainContextType, createdByUserRole: UserRoleEntity): boolean {
+    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      return true;
+    }
+    if (
+      domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT &&
+      createdByUserRole.role === ServiceRoleEnum.ASSESSMENT
+    ) {
+      return true;
+    }
+    // Means that is either a QA/A
+    if (domainContext.organisation?.organisationUnit?.id === createdByUserRole.organisationUnit?.id) {
+      return true;
+    }
+
+    return false;
   }
 }

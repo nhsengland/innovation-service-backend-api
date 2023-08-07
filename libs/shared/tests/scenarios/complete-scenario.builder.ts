@@ -371,10 +371,16 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationExportRequestStatusEnum.PENDING)
         .save();
 
-      const johnInnovationExportRequestByPaul = await new InnovationExportRequestBuilder(entityManager)
+      const johnInnovationRejectedExportRequestByPaul = await new InnovationExportRequestBuilder(entityManager)
         .setCreatedBy(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
         .setInnovation(johnInnovation.id)
         .setStatus(InnovationExportRequestStatusEnum.REJECTED)
+        .save();
+
+      const johnInnovationPendingExportRequestByPaul = await new InnovationExportRequestBuilder(entityManager)
+        .setCreatedBy(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .setStatus(InnovationExportRequestStatusEnum.PENDING)
         .save();
 
       // John Innovation Files
@@ -697,7 +703,8 @@ export class CompleteScenarioBuilder {
                   requestByAlice: johnInnovationExportRequestByAlice,
                   requestByIngrid: johnInnovationExportRequestByIngrid,
                   requestBySam: johnInnovationExportRequestBySam,
-                  requestByPaul: johnInnovationExportRequestByPaul
+                  requestByPaulRejected: johnInnovationRejectedExportRequestByPaul,
+                  requestByPaulPending: johnInnovationPendingExportRequestByPaul
                 },
                 collaborators: {
                   adamCollaborator: adamCollaborator,
