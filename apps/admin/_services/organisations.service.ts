@@ -339,11 +339,14 @@ export class OrganisationsService extends BaseService {
   async updateUnit(
     unitId: string,
     name: string,
-    acronym: string
+    acronym: string,
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
   }> {
-    return this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return em.transaction(async transaction => {
       const unit = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
         .where('org_unit.id = :unitId', { unitId })
@@ -382,11 +385,14 @@ export class OrganisationsService extends BaseService {
   async updateOrganisation(
     organisationId: string,
     name: string,
-    acronym: string
+    acronym: string,
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
   }> {
-    return this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return em.transaction(async transaction => {
       const organisation = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .innerJoinAndSelect('org.organisationUnits', 'organisationUnits')

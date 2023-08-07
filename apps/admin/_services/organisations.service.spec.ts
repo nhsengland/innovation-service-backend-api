@@ -24,7 +24,7 @@ import {
 import { UserRoleEntity } from '@admin/shared/entities';
 import { NotificationBuilder } from '@admin/shared/tests/builders/notification.builder';
 import { DomainInnovationsService, NotifierService } from '@admin/shared/services';
-import { randPastDate, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randCompanyName, randPastDate, randUuid } from '@ngneat/falso';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 import type { OrganisationsService } from './organisations.service';
 
@@ -374,8 +374,134 @@ describe('Admin / _services / organisations service suite', () => {
 
     it('should throw an error if the unit has no active QA', async () => {
       await expect(() =>
-        sut.activateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), organisation.id, unit.id, [scenario.users.adamInnovator.id], em)
+        sut.activateUnit(
+          DTOsHelper.getUserRequestContext(scenario.users.allMighty),
+          organisation.id,
+          unit.id,
+          [scenario.users.adamInnovator.id],
+          em
+        )
       ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA));
+    });
+  });
+
+  describe('updateUnit', () => {
+    const unit = scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit;
+
+    it('should update the unit name and acronym', async () => {
+      const data = {
+        name: randCompanyName(),
+        acronym: randAbbreviation()
+      };
+
+      const result = await sut.updateUnit(unit.id, data.name, data.acronym, em);
+
+      expect(result).toMatchObject({ id: unit.id });
+
+      const dbUnit = await em
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .where('unit.id = :unitId', { unitId: unit.id })
+        .getOne();
+
+      expect(dbUnit?.name).toBe(data.name);
+      expect(dbUnit?.acronym).toBe(data.acronym);
+    });
+
+    it(`should throw an error if the unit doesn't exist`, async () => {
+      await expect(() => sut.updateUnit(randUuid(), randCompanyName(), randAbbreviation(), em)).rejects.toThrowError(
+        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      );
+    });
+
+    it('should throw an error if the unit name already exists', async () => {
+      await expect(() =>
+        sut.updateUnit(
+          unit.id,
+          scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+          randAbbreviation(),
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+    });
+
+    it('should throw an error if the unit acronym already exists', async () => {
+      await expect(() =>
+        sut.updateUnit(
+          unit.id,
+          randCompanyName(),
+          scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym,
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+    });
+  });
+
+  describe('updateOrganisation', () => {
+    const organisation = scenario.organisations.healthOrg;
+
+    it('should update the organisation name and acronym', async () => {
+      const data = {
+        name: randCompanyName(),
+        acronym: randAbbreviation()
+      };
+
+      const result = await sut.updateOrganisation(organisation.id, data.name, data.acronym, em);
+
+      expect(result).toMatchObject({ id: organisation.id });
+
+      const dbOrganisation = await em
+        .createQueryBuilder(OrganisationEntity, 'organisation')
+        .where('organisation.id = :organisationId', { organisationId: organisation.id })
+        .getOne();
+
+      expect(dbOrganisation?.name).toBe(data.name);
+      expect(dbOrganisation?.acronym).toBe(data.acronym);
+    });
+
+    it('should update shadow unit', async () => {
+      //prepare shadow unit
+      const organisationWithShadow = scenario.organisations.medTechOrg;
+
+      await em
+        .getRepository(OrganisationUnitEntity)
+        .update({ id: organisationWithShadow.organisationUnits.medTechOrgUnit.id }, { isShadow: true });
+      
+      const data = {
+        name: randCompanyName(),
+        acronym: randAbbreviation()
+      };
+
+      await sut.updateOrganisation(organisationWithShadow.id, data.name, data.acronym, em);
+
+      const dbShadowUnit = await em.createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .where('unit.id = :unitId', { unitId: organisationWithShadow.organisationUnits.medTechOrgUnit.id })
+        .getOne();
+
+      expect(dbShadowUnit?.name).toBe(data.name);
+      expect(dbShadowUnit?.acronym).toBe(data.acronym);
+    });
+
+    it(`should throw an error if the organisation doesn't exist`, async () => {
+      await expect(() =>
+        sut.updateOrganisation(randUuid(), randCompanyName(), randAbbreviation(), em)
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
+    });
+
+    it('should throw an error if the organisation name already exists', async () => {
+      await expect(() =>
+        sut.updateOrganisation(organisation.id, scenario.organisations.innovTechOrg.name, randAbbreviation(), em)
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+    });
+
+    it('should throw an error if the organisation acronym already exists', async () => {
+      await expect(() =>
+        sut.updateOrganisation(
+          organisation.id,
+          randCompanyName(),
+          scenario.organisations.innovTechOrg.acronym || '',
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
     });
   });
 });
