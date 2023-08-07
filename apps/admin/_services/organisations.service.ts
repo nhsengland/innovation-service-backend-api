@@ -452,12 +452,15 @@ export class OrganisationsService extends BaseService {
       name: string;
       acronym: string;
       units?: { name: string; acronym: string }[];
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
     units: string[];
   }> {
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const result = await em.transaction(async transaction => {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .where('org.name = :name OR org.acronym = :acronym', {
@@ -515,8 +518,10 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map(u => u.id) };
   }
 
-  async createUnit(organisationId: string, name: string, acronym: string): Promise<{ id: string }> {
-    const unit = await this.sqlConnection.transaction(async transaction => {
+  async createUnit(organisationId: string, name: string, acronym: string, entityManager?: EntityManager): Promise<{ id: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const unit = await em.transaction(async transaction => {
       return this.createOrganisationUnit(organisationId, name, acronym, false, transaction);
     });
 
@@ -642,9 +647,9 @@ export class OrganisationsService extends BaseService {
     requestUserId: string,
     entityManager?: EntityManager
   ): Promise<OrganisationUserEntity> {
-    const connection = entityManager ?? this.sqlConnection.manager;
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const organisationUser = await connection
+    const organisationUser = await em 
       .createQueryBuilder(OrganisationUserEntity, 'orgUser')
       .where('orgUser.user_id = :userId', { userId })
       .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
@@ -654,7 +659,7 @@ export class OrganisationsService extends BaseService {
       return organisationUser;
     }
 
-    return await connection.save(
+    return await em.save(
       OrganisationUserEntity,
       OrganisationUserEntity.new({
         organisation: OrganisationEntity.new({ id: organisationId }),

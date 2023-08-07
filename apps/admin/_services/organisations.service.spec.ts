@@ -39,6 +39,8 @@ describe('Admin / _services / organisations service suite', () => {
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
   const supportLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addSupportLog');
 
+  const domainContext = DTOsHelper.getUserRequestContext(scenario.users.allMighty);
+
   beforeAll(async () => {
     sut = container.get<OrganisationsService>(SYMBOLS.OrganisationsService);
 
@@ -59,7 +61,7 @@ describe('Admin / _services / organisations service suite', () => {
     const unit = scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit;
 
     it('should inactivate the unit', async () => {
-      const result = await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+      const result = await sut.inactivateUnit(domainContext, unit.id, em);
 
       expect(result).toMatchObject({ unitId: unit.id });
 
@@ -72,7 +74,7 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it('should lock all user roles of unit', async () => {
-      await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+      await sut.inactivateUnit(domainContext, unit.id, em);
 
       const userRolesOfUnit = [
         scenario.users.jamieMadroxAccessor.roles.aiRole,
@@ -91,7 +93,7 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it('should lock all users whose only active role was in this unit', async () => {
-      await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+      await sut.inactivateUnit(domainContext, unit.id, em);
 
       const dbUserToLock = await em
         .createQueryBuilder(UserEntity, 'user')
@@ -109,9 +111,9 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it('should inactivate the organisation if this unit was the only active unit', async () => {
-      await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+      await sut.inactivateUnit(domainContext, unit.id, em);
       await sut.inactivateUnit(
-        DTOsHelper.getUserRequestContext(scenario.users.allMighty),
+        domainContext,
         scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id,
         em
       );
@@ -140,7 +142,7 @@ describe('Admin / _services / organisations service suite', () => {
           // prepare action
           await em.getRepository(InnovationActionEntity).update({ id: action.id }, { status: status });
 
-          await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+          await sut.inactivateUnit(domainContext, unit.id, em);
 
           const dbAction = await em
             .createQueryBuilder(InnovationActionEntity, 'action')
@@ -162,7 +164,7 @@ describe('Admin / _services / organisations service suite', () => {
             .setContext(NotificationContextTypeEnum.ACTION, NotificationContextDetailEnum.ACTION_CREATION, action.id)
             .save();
 
-          await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+          await sut.inactivateUnit(domainContext, unit.id, em);
 
           const dbNotificationUser = await em
             .createQueryBuilder(NotificationUserEntity, 'notification_user')
@@ -186,7 +188,7 @@ describe('Admin / _services / organisations service suite', () => {
           //prepare support
           await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { status: status });
 
-          await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+          await sut.inactivateUnit(domainContext, unit.id, em);
 
           const dbSupport = await em
             .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -211,7 +213,7 @@ describe('Admin / _services / organisations service suite', () => {
             )
             .save();
 
-          await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+          await sut.inactivateUnit(domainContext, unit.id, em);
 
           const dbNotificationUser = await em
             .createQueryBuilder(NotificationUserEntity, 'notification_user')
@@ -229,10 +231,10 @@ describe('Admin / _services / organisations service suite', () => {
           //prepare support
           await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { status: status });
 
-          await sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), unit.id, em);
+          await sut.inactivateUnit(domainContext, unit.id, em);
 
           expect(notifierSendSpy).toHaveBeenCalledWith(
-            DTOsHelper.getUserRequestContext(scenario.users.allMighty),
+            domainContext,
             NotifierTypeEnum.UNIT_INACTIVATION_SUPPORT_COMPLETED,
             {
               innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
@@ -245,7 +247,6 @@ describe('Admin / _services / organisations service suite', () => {
           //prepare support
           await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { status: status });
 
-          const domainContext = DTOsHelper.getUserRequestContext(scenario.users.allMighty);
           await sut.inactivateUnit(domainContext, unit.id, em);
 
           expect(supportLogSpy).toHaveBeenCalledWith(
@@ -264,9 +265,9 @@ describe('Admin / _services / organisations service suite', () => {
     );
 
     it(`should throw an error if the unit doesn't exist`, async () => {
-      await expect(() =>
-        sut.inactivateUnit(DTOsHelper.getUserRequestContext(scenario.users.allMighty), randUuid(), em)
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      await expect(() => sut.inactivateUnit(domainContext, randUuid(), em)).rejects.toThrowError(
+        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
+      );
     });
   });
 
@@ -288,7 +289,7 @@ describe('Admin / _services / organisations service suite', () => {
 
     it('should activate the unit', async () => {
       const result = await sut.activateUnit(
-        DTOsHelper.getUserRequestContext(scenario.users.allMighty),
+        domainContext,
         organisation.id,
         unit.id,
         [scenario.users.bartQualifyingAccessor.id],
@@ -309,13 +310,7 @@ describe('Admin / _services / organisations service suite', () => {
       //prepare organisation
       await em.getRepository(OrganisationEntity).update({ id: organisation.id }, { inactivatedAt: randPastDate() });
 
-      await sut.activateUnit(
-        DTOsHelper.getUserRequestContext(scenario.users.allMighty),
-        organisation.id,
-        unit.id,
-        [scenario.users.bartQualifyingAccessor.id],
-        em
-      );
+      await sut.activateUnit(domainContext, organisation.id, unit.id, [scenario.users.bartQualifyingAccessor.id], em);
 
       const dbOrganisation = await em
         .createQueryBuilder(OrganisationEntity, 'organisation')
@@ -326,13 +321,7 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it('should unlock all specified users of the unit', async () => {
-      await sut.activateUnit(
-        DTOsHelper.getUserRequestContext(scenario.users.allMighty),
-        organisation.id,
-        unit.id,
-        [userToUnlock.id],
-        em
-      );
+      await sut.activateUnit(domainContext, organisation.id, unit.id, [userToUnlock.id], em);
 
       const dbUser = await em
         .createQueryBuilder(UserEntity, 'user')
@@ -344,13 +333,7 @@ describe('Admin / _services / organisations service suite', () => {
     });
 
     it('should unlock corresponding unit role of all specified users', async () => {
-      await sut.activateUnit(
-        DTOsHelper.getUserRequestContext(scenario.users.allMighty),
-        organisation.id,
-        unit.id,
-        [userToUnlock.id],
-        em
-      );
+      await sut.activateUnit(domainContext, organisation.id, unit.id, [userToUnlock.id], em);
 
       const dbUserRole = await em
         .createQueryBuilder(UserRoleEntity, 'userRole')
@@ -362,25 +345,13 @@ describe('Admin / _services / organisations service suite', () => {
 
     it(`should throw an error if the unit doesn't exist`, async () => {
       await expect(() =>
-        sut.activateUnit(
-          DTOsHelper.getUserRequestContext(scenario.users.allMighty),
-          organisation.id,
-          randUuid(),
-          [scenario.users.bartQualifyingAccessor.id],
-          em
-        )
+        sut.activateUnit(domainContext, organisation.id, randUuid(), [scenario.users.bartQualifyingAccessor.id], em)
       ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
     it('should throw an error if the unit has no active QA', async () => {
       await expect(() =>
-        sut.activateUnit(
-          DTOsHelper.getUserRequestContext(scenario.users.allMighty),
-          organisation.id,
-          unit.id,
-          [scenario.users.adamInnovator.id],
-          em
-        )
+        sut.activateUnit(domainContext, organisation.id, unit.id, [scenario.users.adamInnovator.id], em)
       ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA));
     });
   });
@@ -465,7 +436,7 @@ describe('Admin / _services / organisations service suite', () => {
       await em
         .getRepository(OrganisationUnitEntity)
         .update({ id: organisationWithShadow.organisationUnits.medTechOrgUnit.id }, { isShadow: true });
-      
+
       const data = {
         name: randCompanyName(),
         acronym: randAbbreviation()
@@ -473,7 +444,8 @@ describe('Admin / _services / organisations service suite', () => {
 
       await sut.updateOrganisation(organisationWithShadow.id, data.name, data.acronym, em);
 
-      const dbShadowUnit = await em.createQueryBuilder(OrganisationUnitEntity, 'unit')
+      const dbShadowUnit = await em
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
         .where('unit.id = :unitId', { unitId: organisationWithShadow.organisationUnits.medTechOrgUnit.id })
         .getOne();
 
@@ -502,6 +474,161 @@ describe('Admin / _services / organisations service suite', () => {
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+    });
+  });
+
+  describe('createOrganisation', () => {
+    const data = {
+      name: randCompanyName(),
+      acronym: randAbbreviation()
+    };
+
+    it('should create the organisation', async () => {
+      const result = await sut.createOrganisation(domainContext, { ...data, units: [] }, em);
+
+      expect(result.id).toBeDefined();
+
+      const dbOrganisation = await em
+        .createQueryBuilder(OrganisationEntity, 'organisation')
+        .where('organisation.id = :organisationId', { organisationId: result.id })
+        .getOne();
+
+      expect(dbOrganisation?.name).toBe(data.name);
+      expect(dbOrganisation?.acronym).toBe(data.acronym);
+    });
+
+    it('should create a shadow unit when no units are specified', async () => {
+      const result = await sut.createOrganisation(domainContext, { ...data, units: [] }, em);
+
+      expect(result.units).toHaveLength(1);
+
+      const dbUnit = await em
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .where('unit.id = :unitId', { unitId: result.units[0] })
+        .getOne();
+
+      expect(dbUnit?.name).toBe(data.name);
+      expect(dbUnit?.acronym).toBe(data.acronym);
+    });
+
+    it('should create the units when more than 1 unit is specified', async () => {
+      const units = [
+        {
+          name: randCompanyName(),
+          acronym: randAbbreviation()
+        },
+        {
+          name: randCompanyName(),
+          acronym: randAbbreviation()
+        }
+      ];
+
+      const result = await sut.createOrganisation(domainContext, { ...data, units }, em);
+
+      expect(result.units).toHaveLength(2);
+
+      const dbUnits = await em
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .innerJoin('unit.organisation', 'organisation')
+        .where('organisation.id = :organisationId', { organisationId: result.id })
+        .getMany();
+
+      expect(dbUnits.map(unit => ({ name: unit.name, acronym: unit.acronym }))).toMatchObject(units);
+    });
+
+    it('should ignore the given unit and create a shadow unit when only 1 unit is specified', async () => {
+      const result = await sut.createOrganisation(
+        domainContext,
+        {
+          ...data,
+          units: [
+            {
+              name: randCompanyName(),
+              acronym: randAbbreviation()
+            }
+          ]
+        },
+        em
+      );
+
+      expect(result.units).toHaveLength(1);
+
+      const dbUnit = await em
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .where('unit.id = :unitId', { unitId: result.units[0] })
+        .getOne();
+
+      expect(dbUnit?.name).toBe(data.name);
+      expect(dbUnit?.acronym).toBe(data.acronym);
+    });
+
+    it('should throw an error if the organisation name already exists', async () => {
+      await expect(() =>
+        sut.createOrganisation(domainContext, {
+          name: scenario.organisations.medTechOrg.name,
+          acronym: randAbbreviation(),
+          units: []
+        })
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+    });
+
+    it('should throw an error if the organisation acronym already exists', async () => {
+      await expect(() =>
+        sut.createOrganisation(domainContext, {
+          name: randCompanyName(),
+          acronym: scenario.organisations.medTechOrg.acronym || '',
+          units: []
+        })
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_ALREADY_EXISTS));
+    });
+  });
+
+  describe('createUnit', () => {
+    const data = {
+      name: randCompanyName(),
+      acronym: randAbbreviation()
+    };
+
+    it('should create the unit', async () => {
+      const result = await sut.createUnit(scenario.organisations.healthOrg.id, data.name, data.acronym, em);
+
+      expect(result.id).toBeDefined();
+
+      const dbUnit = await em
+        .createQueryBuilder(OrganisationUnitEntity, 'unit')
+        .where('unit.id = :unitId', { unitId: result.id })
+        .getOne();
+
+      expect(dbUnit?.name).toBe(data.name);
+      expect(dbUnit?.acronym).toBe(data.acronym);
+    });
+
+    it(`should throw an error if the organisation doesn't exist`, async () => {
+      await expect(() => sut.createUnit(randUuid(), data.name, data.acronym, em)).rejects.toThrowError(
+        new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND)
+      );
+    });
+
+    it('should throw an error if the unit name already exists', async () => {
+      await expect(() =>
+        sut.createUnit(
+          scenario.organisations.healthOrg.id,
+          scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
+          data.acronym,
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
+    });
+
+    it('should throw an error if the unit acronym already exists', async () => {
+      await expect(() =>
+        sut.createUnit(
+          scenario.organisations.healthOrg.id,
+          data.name,
+          scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.acronym,
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ALREADY_EXISTS));
     });
   });
 });
