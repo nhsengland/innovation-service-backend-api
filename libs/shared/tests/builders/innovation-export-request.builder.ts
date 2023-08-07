@@ -1,8 +1,10 @@
-import type { DeepPartial, EntityManager } from 'typeorm';
-import { BaseBuilder } from './base.builder';
-import { InnovationExportRequestStatusEnum } from '../../enums/innovation.enums';
-import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
 import { randText } from '@ngneat/falso';
+import type { DeepPartial, EntityManager } from 'typeorm';
+
+import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
+import { InnovationExportRequestStatusEnum } from '../../enums/innovation.enums';
+import { TranslationHelper } from '../../helpers';
+import { BaseBuilder } from './base.builder';
 
 export type TestInnovationExportRequestType = {
   id: string;
@@ -11,18 +13,16 @@ export type TestInnovationExportRequestType = {
   rejectReason: string | null;
   createdBy: {
     id: string;
-    unitId: string;
-    unitName: string;
+    unitId?: string;
+    unitName?: string;
   };
-  expiresAt: Date,
-  updatedAt: Date
+  updatedAt: Date;
 };
 
 export class InnovationExportRequestBuilder extends BaseBuilder {
   private request: DeepPartial<InnovationExportRequestEntity> = {
     status: InnovationExportRequestStatusEnum.PENDING,
-    requestReason: randText({ charCount: 10 }),
-    rejectReason: randText({ charCount: 10 })
+    requestReason: randText({ charCount: 10 })
   };
 
   constructor(entityManager: EntityManager) {
@@ -36,31 +36,33 @@ export class InnovationExportRequestBuilder extends BaseBuilder {
 
   setStatus(status: InnovationExportRequestStatusEnum): this {
     this.request.status = status;
+    this.request.rejectReason =
+      status === InnovationExportRequestStatusEnum.REJECTED ? randText({ charCount: 10 }) : null;
     return this;
   }
 
-  setCreatedBy(userId: string, organisationUnitId: string): this {
+  setCreatedBy(userId: string, roleId: string): this {
     this.request.createdBy = userId;
     this.request.updatedBy = userId;
-    this.request.organisationUnit = { id: organisationUnitId };
+    this.request.createdByUserRole = { id: roleId };
     return this;
   }
 
   async save(): Promise<TestInnovationExportRequestType> {
-
     if (!this.request.createdBy) {
-      throw new Error(`innovationExportBuilder::save:: can't save export request without createdBy`)
+      throw new Error(`innovationExportBuilder::save:: can't save export request without createdBy`);
     }
 
-    if (!this.request.organisationUnit) {
-      throw new Error(`innovationExportBuilder::save:: can't save export request without organisation unit`)
+    if (!this.request.createdByUserRole) {
+      throw new Error(`innovationExportBuilder::save:: can't save export request without user role`);
     }
 
     const savedRequest = await this.getEntityManager().getRepository(InnovationExportRequestEntity).save(this.request);
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .innerJoinAndSelect('request.organisationUnit', 'unit')
+      .innerJoinAndSelect('request.createdByUserRole', 'userRole')
+      .leftJoinAndSelect('userRole.organisationUnit', 'unit')
       .where('request.id = :id', { id: savedRequest.id })
       .getOne();
 
@@ -75,11 +77,9 @@ export class InnovationExportRequestBuilder extends BaseBuilder {
       rejectReason: result.rejectReason,
       createdBy: {
         id: result.createdBy,
-        unitId: result.organisationUnit.id,
-        unitName: result.organisationUnit.name
-
+        unitId: result.createdByUserRole.organisationUnitId,
+        unitName: result.createdByUserRole.organisation?.name ?? TranslationHelper.translate('TEAMS.ASSESSMENT')
       },
-      expiresAt: result.exportExpiresAt,
       updatedAt: result.updatedAt
     };
   }

@@ -32,7 +32,6 @@ export type ResponseDTO = {
     lastLoginAt?: null | Date;
   };
   lastEndSupportAt: null | Date;
-  export: { canUserExport: boolean; pendingRequestsCount: number };
   assessment?: null | {
     id: string;
     createdAt: Date;

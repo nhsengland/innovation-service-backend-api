@@ -1,9 +1,9 @@
+import { UrlModel } from '@notifications/shared/models';
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
-import { InnovationRecordExportRequestHandler } from './innovation-record-export-request.handler';
-import { RecipientsService } from '../_services/recipients.service';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV, EmailTypeEnum } from '../_config';
-import { UrlModel } from '@notifications/shared/models';
+import { RecipientsService } from '../_services/recipients.service';
+import { InnovationRecordExportRequestHandler } from './innovation-record-export-request.handler';
 
 describe('Notifications / _handlers / innovation-record-export-request handler suite', () => {
   let testsHelper: TestsHelper;
@@ -32,7 +32,6 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
       ownerId: innovationOwner.id,
       ownerIdentityId: innovationOwner.identityId
     });
-
 
     jest.spyOn(RecipientsService.prototype, 'getExportRequestInfo').mockResolvedValueOnce(request);
   });

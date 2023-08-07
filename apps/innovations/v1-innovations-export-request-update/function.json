@@ -6,7 +6,7 @@
       "direction": "in",
       "name": "req",
       "methods": ["patch"],
-      "route": "v1/{innovationId}/export-requests/{requestId}/status"
+      "route": "v1/{innovationId}/export-requests/{requestId}"
     },
     {
       "type": "http",

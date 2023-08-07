@@ -2,14 +2,15 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import type { InnovationsService } from '../_services/innovations.service';
+import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
+import type { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType } from './validation.schemas';
@@ -18,7 +19,9 @@ class V1InnovationsExportRequestInfo {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
-    const innovationsService = container.get<InnovationsService>(SYMBOLS.InnovationsService);
+    const innovationExportRequestService = container.get<InnovationExportRequestService>(
+      SYMBOLS.InnovationExportRequestService
+    );
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
@@ -27,12 +30,11 @@ class V1InnovationsExportRequestInfo {
         .setInnovation(params.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
+        .checkAssessmentType()
         .checkInnovation()
         .verify();
 
-      const domainContext = auth.getContext();
-
-      const result = await innovationsService.getInnovationRecordExportRequestInfo(domainContext, params.requestId);
+      const result = await innovationExportRequestService.getExportRequestInfo(auth.getContext(), params.requestId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>(result);
       return;
@@ -50,32 +52,43 @@ export default openApi(
     get: {
       operationId: 'v1-innovations-export-request-info',
       description: 'Get export request info.',
-      tags: ['[v1] Innovations'],
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          required: true,
-          description: 'Innovation ID',
-          schema: {
-            type: 'string',
-            format: 'uuid'
+      tags: ['[v1] Innovation Export Requests'],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      responses: {
+        200: {
+          description: 'Success',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  id: { type: 'string', format: 'uuid' },
+                  status: { type: 'string', enum: Object.values(InnovationExportRequestStatusEnum) },
+                  requestReason: { type: 'string' },
+                  rejectReason: { type: 'string' },
+                  createdBy: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      displayRole: { type: 'string' },
+                      displayTeam: { type: 'string' }
+                    }
+                  },
+                  createdAt: { type: 'string', format: 'date-time' },
+                  updatedBy: {
+                    type: 'object',
+                    properties: { name: { type: 'string' } }
+                  },
+                  updatedAt: { type: 'string', format: 'date-time' }
+                }
+              }
+            }
           }
         },
-        {
-          name: 'requestId',
-          in: 'path',
-          required: true,
-          description: 'Export request ID',
-          schema: {
-            type: 'string',
-            format: 'uuid'
-          }
-        }
-      ],
-      responses: {
-        200: { description: 'Success' },
-        400: { description: 'Invalid innovation payload' }
+        400: { description: 'The request is invalid.' },
+        401: { description: 'The user is not authenticated.' },
+        403: { description: 'The user is not authorized to access this resource.' },
+        500: { description: 'An error occurred while processing the request.' }
       }
     }
   }

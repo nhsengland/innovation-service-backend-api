@@ -1,7 +1,3 @@
-import { InnovationExportRequestEntity } from '@innovations/shared/entities';
-import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
-import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-import type { DomainContextType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
 import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
@@ -27,35 +23,7 @@ export class PDFService extends BaseService {
     super();
   }
 
-  async generatePDF(
-    domainContext: DomainContextType,
-    innovationId: string,
-    docDefinition: TDocumentDefinitions
-  ): Promise<unknown> {
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      const request = await this.sqlConnection
-        .createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .innerJoinAndSelect('request.innovation', 'innovation')
-        .where('innovation.id = :innovationId', { innovationId })
-        .andWhere('request.organisation_unit_id = :organisationUnitId', {
-          organisationUnitId: domainContext.organisation?.organisationUnit?.id
-        })
-        .andWhere('request.status = :status', { status: 'APPROVED' })
-        .orderBy('request.updated_at', 'DESC')
-        .getOne();
-
-      if (!request) {
-        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
-      }
-
-      if (request.status === InnovationExportRequestStatusEnum.EXPIRED) {
-        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_EXPIRED);
-      }
-    }
-
+  async generatePDF(docDefinition: TDocumentDefinitions): Promise<unknown> {
     PdfMake.vfs = PdfFonts.pdfMake.vfs;
 
     const fontDescriptors = {

@@ -4,8 +4,8 @@ import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randAbbreviation, randPastDate, randText, randUuid } from '@ngneat/falso';
-import { InnovationsService } from '../_services/innovations.service';
+import { randPastDate, randRole, randText, randUuid } from '@ngneat/falso';
+import { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 
@@ -28,24 +28,17 @@ beforeAll(async () => {
 const expected = {
   id: randUuid(),
   status: InnovationExportRequestStatusEnum.APPROVED,
-  isExportable: true,
   requestReason: randText(),
-  organisation: {
-    id: randUuid(),
+  createdBy: {
     name: randText(),
-    acronym: randAbbreviation(),
-    organisationUnit: { id: randUuid(), name: randText(), acronym: randAbbreviation() }
+    displayRole: randRole(),
+    displayTeam: randText()
   },
   createdAt: randPastDate(),
-  createdBy: {
-    id: randUuid(),
-    name: randText()
-  },
+  updatedBy: { name: randText() },
   updatedAt: randPastDate()
 };
-const mock = jest
-  .spyOn(InnovationsService.prototype, 'getInnovationRecordExportRequestInfo')
-  .mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationExportRequestService.prototype, 'getExportRequestInfo').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -73,7 +66,7 @@ describe('v1-innovation-export-request-info Suite', () => {
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['A', 200, scenario.users.ingridAccessor],
-      ['NA', 403, scenario.users.paulNeedsAssessor],
+      ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 200, scenario.users.johnInnovator],
       ['Innovator collaborator', 200, scenario.users.janeInnovator],
       ['Innovator other', 403, scenario.users.ottoOctaviusInnovator]

@@ -15,7 +15,6 @@ import {
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
-  OrganisationUnitEntity,
   UserEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
@@ -39,7 +38,6 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
-  ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
@@ -51,11 +49,7 @@ import type { ActivityLogListParamsType, DomainContextType } from '@innovations/
 
 import { InnovationSupportLogTypeEnum } from '@innovations/shared/enums';
 import { InnovationLocationEnum } from '../_enums/innovation.enums';
-import type {
-  InnovationExportRequestItemType,
-  InnovationExportRequestListType,
-  InnovationSectionModel
-} from '../_types/innovation.types';
+import type { InnovationSectionModel } from '../_types/innovation.types';
 
 import { createDocumentFromInnovation } from '@innovations/shared/entities/innovation/innovation-document.entity';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
@@ -819,7 +813,6 @@ export class InnovationsService extends BaseService {
       lastLoginAt?: null | Date;
     };
     lastEndSupportAt: null | Date;
-    export: { canUserExport: boolean; pendingRequestsCount: number };
     assessment?: null | {
       id: string;
       createdAt: Date;
@@ -867,21 +860,6 @@ export class InnovationsService extends BaseService {
         { status: InnovationCollaboratorStatusEnum.ACTIVE, userId: domainContext.id }
       )
       .where('innovation.id = :innovationId', { innovationId: id });
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      query.leftJoinAndSelect(
-        'innovation.exportRequests',
-        'exportRequests',
-        'exportRequests.status IN (:...requestStatuses) AND exportRequests.organisation_unit_id = :organisationUnitId',
-        {
-          requestStatuses: [InnovationExportRequestStatusEnum.APPROVED, InnovationExportRequestStatusEnum.PENDING],
-          organisationUnitId: domainContext.organisation?.organisationUnit?.id
-        }
-      );
-    }
 
     // Assessment relations.
     if (filters.fields?.includes('assessment')) {
@@ -939,25 +917,6 @@ export class InnovationsService extends BaseService {
       ownerInfo = usersInfo.find(item => item.id === innovation.owner?.id);
     } else {
       usersInfo = await this.domainService.users.getUsersList({ userIds: [...assessmentUsersIds] });
-    }
-
-    // Export requests parsing.
-    const innovationExport = {
-      canUserExport: false,
-      pendingRequestsCount: (await innovation.exportRequests).filter(item => item.isRequestPending).length
-    };
-
-    switch (domainContext.currentRole.role) {
-      case ServiceRoleEnum.INNOVATOR:
-        innovationExport.canUserExport = true;
-        break;
-      case ServiceRoleEnum.ASSESSMENT:
-        innovationExport.canUserExport = false;
-        break;
-      case ServiceRoleEnum.ACCESSOR:
-      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        innovationExport.canUserExport = (await innovation.exportRequests).some(item => item.isExportActive);
-        break;
     }
 
     // Assessment parsing.
@@ -1031,7 +990,6 @@ export class InnovationsService extends BaseService {
           }
         : {}),
       lastEndSupportAt: await this.lastSupportStatusTransitionFromEngaging(innovation.id),
-      export: innovationExport,
       assessment,
       ...(!filters.fields?.includes('supports')
         ? {}
@@ -1577,321 +1535,6 @@ export class InnovationsService extends BaseService {
           params
         };
       })
-    };
-  }
-
-  async createInnovationRecordExportRequest(
-    domainContext: DomainContextType,
-    organisationUnitId: string,
-    innovationId: string,
-    data: { requestReason: string },
-    entityManager?: EntityManager
-  ): Promise<{ id: string }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const unitPendingAndApprovedRequests = await connection
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .where('request.innovation_id = :innovationId', { innovationId })
-      .andWhere('request.organisation_unit_id = :organisationUnitId', { organisationUnitId })
-      .andWhere('request.status IN (:...status)', {
-        status: [InnovationExportRequestStatusEnum.PENDING, InnovationExportRequestStatusEnum.APPROVED]
-      })
-      .getMany();
-
-    // In DB "EXPIRED" status doesn't exist, they are "PENDING" so the query above will bring some pending that are really EXPIRED
-    const pendingAndApprovedRequests = unitPendingAndApprovedRequests.filter(
-      request => request.status !== InnovationExportRequestStatusEnum.EXPIRED
-    );
-
-    if (pendingAndApprovedRequests.length > 0) {
-      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_ALREADY_EXISTS);
-    }
-
-    const request = await connection.getRepository(InnovationExportRequestEntity).save({
-      innovation: InnovationEntity.new({ id: innovationId }),
-      status: InnovationExportRequestStatusEnum.PENDING,
-      createdAt: new Date().toISOString(),
-      createdBy: domainContext.id,
-      updatedBy: domainContext.id,
-      organisationUnit: OrganisationUnitEntity.new({ id: organisationUnitId }),
-      requestReason: data.requestReason
-    });
-
-    // Create notification
-
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
-      innovationId: innovationId,
-      requestId: request.id
-    });
-
-    return {
-      id: request.id
-    };
-  }
-
-  async updateInnovationRecordExportRequest(
-    domainContext: DomainContextType,
-    exportRequestId: string,
-    data: { status: InnovationExportRequestStatusEnum; rejectReason: null | string },
-    entityManager?: EntityManager
-  ): Promise<{ id: string }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    // TODO: This will, most likely, be refactored to be a mandatory property of the requestUser object.
-
-    const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      if (!organisationUnitId) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
-    }
-
-    const exportRequest = await connection
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .innerJoinAndSelect('request.innovation', 'innovation')
-      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
-      .where('request.id = :exportRequestId', { exportRequestId })
-      .getOne();
-
-    // TODO: Integrate this in the authorization service.
-    if (!exportRequest) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
-    }
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      if (exportRequest.organisationUnit.id !== organisationUnitId) {
-        throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_FROM_DIFFERENT_UNIT);
-      }
-    }
-
-    const { status, rejectReason } = data;
-
-    // TODO: Integrate this in the joi validation.
-    if (status === InnovationExportRequestStatusEnum.REJECTED) {
-      if (!rejectReason) {
-        throw new UnprocessableEntityError(
-          InnovationErrorsEnum.INNOVATION_RECORD_EXPORT_REQUEST_REJECT_REASON_REQUIRED
-        );
-      }
-    }
-
-    const updatedRequest = await connection.getRepository(InnovationExportRequestEntity).save({
-      ...exportRequest,
-      status,
-      rejectReason
-    });
-
-    // Create notification
-    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK, {
-      innovationId: exportRequest.innovation.id,
-      requestId: updatedRequest.id
-    });
-
-    return {
-      id: updatedRequest.id
-    };
-  }
-
-  async getInnovationRecordExportRequests(
-    domainContext: DomainContextType,
-    innovationId: string,
-    filters: {
-      statuses?: InnovationExportRequestStatusEnum[];
-    },
-    pagination: PaginationQueryParamsType<'createdAt' | 'updatedAt'>
-  ): Promise<{
-    count: number;
-    data: InnovationExportRequestListType;
-  }> {
-    const query = this.sqlConnection
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .innerJoinAndSelect('request.innovation', 'innovation')
-      .where('innovation.id = :innovationId', { innovationId });
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
-
-      if (!organisationUnitId) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
-
-      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
-    }
-
-    if (filters.statuses && filters.statuses.length > 0) {
-      query.andWhere('request.status IN (:...statuses)', { statuses: filters.statuses });
-    }
-
-    query.skip(pagination.skip);
-    query.take(pagination.take);
-
-    for (const [key, order] of Object.entries(pagination.order)) {
-      let field: string;
-      switch (key) {
-        case 'updatedAt':
-          field = 'request.updatedAt';
-          break;
-        default:
-          field = 'request.createdAt';
-          break;
-      }
-      query.addOrderBy(field, order);
-    }
-
-    const [requests, count] = await query.getManyAndCount();
-
-    if (requests.length === 0) {
-      return {
-        count: 0,
-        data: []
-      };
-    }
-
-    const requestCreators = requests.map(r => r.createdBy);
-
-    const requestCreatorsNames = await this.domainService.users.getUsersList({
-      userIds: requestCreators
-    });
-
-    const retval = requests.map(r => ({
-      id: r.id,
-      status: r.status,
-      requestReason: r.requestReason,
-      rejectReason: r.rejectReason,
-      createdAt: r.createdAt,
-      createdBy: {
-        id: r.createdBy,
-        name: requestCreatorsNames.find(u => u.id === r.createdBy)?.displayName || 'unknown'
-      },
-      organisation: {
-        id: r.organisationUnit.organisation.id,
-        name: r.organisationUnit.organisation.name,
-        acronym: r.organisationUnit.organisation.acronym,
-        organisationUnit: {
-          id: r.organisationUnit.id,
-          name: r.organisationUnit.name,
-          acronym: r.organisationUnit.acronym
-        }
-      },
-      expiresAt: r.exportExpiresAt,
-      isExportable: r.status === InnovationExportRequestStatusEnum.APPROVED,
-      updatedAt: r.updatedAt
-    }));
-
-    return {
-      count,
-      data: retval
-    };
-  }
-
-  async getInnovationRecordExportRequestInfo(
-    domainContext: DomainContextType,
-    exportRequestId: string,
-    entityManager?: EntityManager
-  ): Promise<InnovationExportRequestItemType> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const requestQuery = await connection
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .where('request.id = :exportRequestId', { exportRequestId });
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
-
-      if (!organisationUnitId) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
-
-      requestQuery.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
-    }
-
-    const request = await requestQuery.getOne();
-
-    if (!request) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
-    }
-
-    const requestCreator = await this.domainService.users.getUserInfo({
-      userId: request.createdBy
-    });
-
-    return {
-      id: request.id,
-      status: request.status,
-      requestReason: request.requestReason,
-      rejectReason: request.rejectReason,
-      createdAt: request.createdAt,
-      createdBy: {
-        id: request.createdBy,
-        name: requestCreator.displayName
-      },
-      organisation: {
-        id: request.organisationUnit.organisation.id,
-        name: request.organisationUnit.organisation.name,
-        acronym: request.organisationUnit.organisation.acronym,
-        organisationUnit: {
-          id: request.organisationUnit.id,
-          name: request.organisationUnit.name,
-          acronym: request.organisationUnit.acronym
-        }
-      },
-      expiresAt: request.exportExpiresAt,
-      isExportable: request.status === InnovationExportRequestStatusEnum.APPROVED,
-      updatedAt: request.updatedAt
-    };
-  }
-
-  async checkInnovationRecordExportRequest(
-    domainContext: DomainContextType,
-    exportRequestId: string,
-    entityManager?: EntityManager
-  ): Promise<{ canExport: boolean }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const query = connection
-      .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .innerJoinAndSelect('request.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .innerJoinAndSelect('request.innovation', 'innovation')
-      .where('request.id = :exportRequestId', { exportRequestId });
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      if (!domainContext?.organisation?.organisationUnit) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
-
-      const organisationUnitId = domainContext.organisation.organisationUnit.id;
-
-      query.andWhere('organisationUnit.id = :organisationUnitId', { organisationUnitId });
-    }
-
-    const request = await query.getOne();
-    if (!request) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_EXPORT_REQUEST_NOT_FOUND);
-    }
-
-    return {
-      canExport: request.status === InnovationExportRequestStatusEnum.APPROVED
     };
   }
 

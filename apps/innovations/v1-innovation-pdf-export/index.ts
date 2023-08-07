@@ -2,9 +2,8 @@ import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService, DomainService } from '@innovations/shared/services';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
+import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
 
@@ -16,27 +15,26 @@ import { BodySchema, ParamsSchema, ParamsType, type BodyType } from './validatio
 class PostInnovationPDFExport {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
-    try {
-      const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
-      const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
-      const pdfService = container.get<PDFService>(SYMBOLS.PDFService);
+    const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
+    const pdfService = container.get<PDFService>(SYMBOLS.PDFService);
 
+    try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
-      const auth = await authorizationService.validate(context).checkInnovatorType().checkAccessorType().verify();
-
-      const domainContext = auth.getContext();
-
-      const innovation = await domainService.innovations.getInnovationInfo(params.innovationId);
-
-      if (!innovation) {
-        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-      }
+      const auth = await authorizationService
+        .validate(context)
+        .setInnovation(params.innovationId)
+        .checkInnovatorType()
+        .checkAccessorType()
+        .checkAssessmentType()
+        .checkInnovation()
+        .verify();
+      const innovation = auth.getInnovationInfo();
 
       const documentDefinition = pdfService.buildDocumentHeaderDefinition(innovation.name, body);
 
-      const pdf = await pdfService.generatePDF(domainContext, params.innovationId, documentDefinition);
+      const pdf = await pdfService.generatePDF(documentDefinition);
 
       context.res = {
         body: pdf,
@@ -58,18 +56,8 @@ export default openapi(PostInnovationPDFExport.httpTrigger as AzureFunction, '/v
     description: 'Generate PDF for an innovation',
     tags: ['[v1] Innovations'],
     operationId: 'v1-innovation-pdf',
-    parameters: [{ in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }],
-    requestBody: {
-      description: 'The thread details',
-      required: true,
-      content: {
-        'application/json': {
-          schema: {
-            type: 'object'
-          }
-        }
-      }
-    },
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+    requestBody: SwaggerHelper.bodyJ2S(ParamsSchema),
     responses: {
       200: { description: 'Ok.' },
       400: { description: 'Bad request.' }

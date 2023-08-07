@@ -1,9 +1,10 @@
+import type { Context } from '@azure/functions';
 import { NotifierTypeEnum, ServiceRoleEnum } from '@notifications/shared/enums';
+import { TranslationHelper } from '@notifications/shared/helpers';
 import { UrlModel } from '@notifications/shared/models';
 import type { DomainContextType, NotifierTemplatesType } from '@notifications/shared/types';
 import { ENV, EmailTypeEnum } from '../_config';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class InnovationRecordExportRequestHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST,
@@ -14,7 +15,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -38,7 +39,7 @@ export class InnovationRecordExportRequestHandler extends BaseHandler<
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           innovation_name: innovation.name,
-          unit_name: request.createdBy.unitName,
+          unit_name: request.createdBy.unitName ?? TranslationHelper.translate('TEAMS.ASSESSMENT'),
           accessor_name: accessorIdentity?.displayName ?? 'user', //Review what should happen if user is not found
           pdf_request_comment: request.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
