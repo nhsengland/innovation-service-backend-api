@@ -3,8 +3,9 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { InnovationExportRequestService } from '../_services/innovation-export-request.service';
+import type { ResponseDTO } from './transformation.dtos';
 import type { BodyType, ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
@@ -23,7 +24,8 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const mock = jest.spyOn(InnovationExportRequestService.prototype, 'createExportRequest').mockResolvedValue();
+const expected = { id: randUuid() };
+const mock = jest.spyOn(InnovationExportRequestService.prototype, 'createExportRequest').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -36,9 +38,9 @@ describe('v1-innovation-export-request-create Suite', () => {
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({ innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id })
         .setBody<BodyType>({ requestReason: randText() })
-        .call<never>(azureFunction);
+        .call<ResponseDTO>(azureFunction);
 
-      expect(result.body).toBeUndefined();
+      expect(result.body).toStrictEqual(expected);
       expect(result.status).toBe(201);
       expect(mock).toHaveBeenCalledTimes(1);
     });

@@ -48,14 +48,13 @@ describe('Innovations / _services / innovation export request suite', () => {
     ])('should create a export request as a %s', async (_role: string, domainContext: DomainContextType) => {
       const data = { requestReason: randText() };
 
-      await sut.createExportRequest(domainContext, innovation.id, data, em);
+      const request = await sut.createExportRequest(domainContext, innovation.id, data, em);
 
       const dbRequest = await em
         .createQueryBuilder(InnovationExportRequestEntity, 'request')
         .select(['request.id', 'request.requestReason', 'request.status', 'userRole.id'])
         .innerJoin('request.createdByUserRole', 'userRole')
-        .where('request.requestReason = :requestReason', { requestReason: data.requestReason })
-        .andWhere('request.created_by_user_role_id = :roleId', { roleId: domainContext.currentRole.id })
+        .where('request.id = :requestId', { requestId: request.id })
         .getOneOrFail();
 
       expect(dbRequest).toMatchObject({

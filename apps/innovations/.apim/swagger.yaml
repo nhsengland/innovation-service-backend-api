@@ -4466,6 +4466,13 @@ paths:
       responses:
         "201":
           description: Creates a new export request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
         "400":
           description: The request is invalid.
         "401":

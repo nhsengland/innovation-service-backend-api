@@ -38,4 +38,4 @@ export const BodySchema = Joi.object<BodyType>({
     then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required(),
     otherwise: Joi.forbidden()
   })
-});
+}).required();

@@ -27,10 +27,10 @@ export class InnovationExportRequestService extends BaseService {
     innovationId: string,
     data: { requestReason: string },
     entityManager?: EntityManager
-  ): Promise<void> {
+  ): Promise<{ id: string }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    await em.save(
+    const request = await em.save(
       InnovationExportRequestEntity,
       InnovationExportRequestEntity.verifyType({
         innovation: { id: innovationId },
@@ -41,6 +41,8 @@ export class InnovationExportRequestService extends BaseService {
         updatedBy: domainContext.id
       })
     );
+
+    return { id: request.id };
   }
 
   async getExportRequestInfo(
@@ -122,7 +124,7 @@ export class InnovationExportRequestService extends BaseService {
       },
       updatedAt: request.updatedAt,
       updatedBy: {
-        name: usersInfo.get(request.createdBy)?.displayName ?? '[deleted user]'
+        name: usersInfo.get(request.updatedBy)?.displayName ?? '[deleted user]'
       }
     };
   }
@@ -172,7 +174,7 @@ export class InnovationExportRequestService extends BaseService {
       domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
       domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
     ) {
-      query.andWhere('userRole.organisation_unit_id = :unitId', {
+      query.andWhere('unit.id = :unitId', {
         unitId: domainContext.organisation?.organisationUnit?.id
       });
     }
