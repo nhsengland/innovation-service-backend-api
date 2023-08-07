@@ -11,7 +11,7 @@ import { TermsOfUseEntity } from '@admin/shared/entities';
 import { AdminErrorsEnum } from '@admin/shared/errors/errors.enums';
 import { NotFoundError } from '@admin/shared/errors';
 
-describe('Admin / _services / announcements service suite', () => {
+describe('Admin / _services / terms-of-use service suite', () => {
   let sut: TermsOfUseService;
 
   const testsHelper = new TestsHelper();
