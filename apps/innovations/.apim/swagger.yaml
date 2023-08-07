@@ -2633,7 +2633,6 @@ paths:
               properties:
                 filename:
                   type: string
-                  maxLength: 100
               required:
                 - filename
               additionalProperties: false

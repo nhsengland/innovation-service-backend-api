@@ -15,7 +15,7 @@ import { InnovationFileBuilder, type TestFileType } from '@innovations/shared/te
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
-import { randAirportName, randFileName, randFutureDate, randNumber, randUrl, randUuid } from '@ngneat/falso';
+import { randAirportName, randFileName, randFutureDate, randNumber, randText, randUrl, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -1092,11 +1092,13 @@ describe('Services / Innovation File service suite', () => {
   });
 
   describe('getFileUploadUrl', () => {
+    const url = randUrl();
+    const mock = jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
+    afterEach(() => {
+      mock.mockClear();
+    });
     it('should return the file upload url', async () => {
       const name = randFileName();
-      const url = randUrl();
-      const mock = jest.spyOn(FileStorageService.prototype, 'getUploadUrl').mockReturnValue(url);
-
       const fileUploadUrl = await sut.getFileUploadUrl(name);
 
       expect(mock).toHaveBeenCalledTimes(1);
@@ -1105,6 +1107,14 @@ describe('Services / Innovation File service suite', () => {
         name,
         url
       });
+    });
+
+    it('should strip the filename to 100 characters if filename too big', async () => {
+      const name = randText({ charCount: 200 }) + '.pdf';
+      const fileUploadName = (await sut.getFileUploadUrl(name)).name;
+
+      expect(fileUploadName).toHaveLength(100);
+      expect(fileUploadName).toMatch(/\.pdf$/);
     });
   });
 

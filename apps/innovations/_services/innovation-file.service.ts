@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import { extname } from 'path';
+import { basename, extname } from 'path';
 
 import type { EntityManager } from 'typeorm';
 
@@ -449,7 +449,13 @@ export class InnovationFileService extends BaseService {
   }
 
   async getFileUploadUrl(filename: string): Promise<{ id: string; name: string; url: string }> {
-    const storageId = randomUUID() + extname(filename);
+    const extension = extname(filename);
+    const filenameWithoutExtension = basename(filename, extension);
+    // We must ensure that the filename gets capped to 100 characters, including the extension.
+    if (filename.length > 100) {
+      filename = filenameWithoutExtension.substring(0, 100 - extension.length) + extension;
+    }
+    const storageId = randomUUID() + extension;
     return {
       id: storageId,
       name: filename,

@@ -12,5 +12,5 @@ export type BodyType = {
   filename: string;
 };
 export const BodySchema = Joi.object<BodyType>({
-  filename: Joi.string().max(100).required()
+  filename: Joi.string().required()
 }).required();
