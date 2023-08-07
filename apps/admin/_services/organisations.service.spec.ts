@@ -27,7 +27,8 @@ describe('Admin / _services / organisations service suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('createTermsOfUse', () => {
+  describe('inactivateUnit', () => {
+    
   });
 
 });

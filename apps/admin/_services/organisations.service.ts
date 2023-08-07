@@ -26,7 +26,7 @@ import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEnti
 import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
-import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
+import type { DomainContextType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { ENV } from '../_config';
@@ -46,12 +46,14 @@ export class OrganisationsService extends BaseService {
   }
 
   async inactivateUnit(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
-    unitId: string
+    unitId: string,
+    entityManager?: EntityManager
   ): Promise<{ unitId: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
     // get the organisation to whom the unit belongs to
-    const unit = await this.sqlConnection
+    const unit = await em
       .createQueryBuilder(OrganisationUnitEntity, 'org_units')
       .where('org_units.id = :unitId', { unitId })
       .getOne();
@@ -62,7 +64,7 @@ export class OrganisationsService extends BaseService {
 
     // users for which the role in this unit is the only active role will be locked
     const usersToLock = (
-      await this.sqlConnection
+      await em
         .createQueryBuilder(UserRoleEntity, 'ur')
         .select('ur.user_id', 'userId')
         .addSelect('count(*)', 'cnt')
@@ -83,7 +85,7 @@ export class OrganisationsService extends BaseService {
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
-      await this.sqlConnection
+      await em
         .createQueryBuilder(InnovationActionEntity, 'action')
         .leftJoinAndSelect('action.innovationSupport', 'support')
         .leftJoinAndSelect('support.organisationUnit', 'unit')
@@ -99,7 +101,7 @@ export class OrganisationsService extends BaseService {
     ];
 
     //get supports to complete
-    const supportsToComplete = await this.sqlConnection
+    const supportsToComplete = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
       .leftJoinAndSelect('support.innovation', 'innovation')
@@ -113,7 +115,7 @@ export class OrganisationsService extends BaseService {
     let notificationsToMarkAsRead: NotificationEntity[] = [];
 
     if (contexts.length > 0) {
-      notificationsToMarkAsRead = await this.sqlConnection
+      notificationsToMarkAsRead = await em
         .createQueryBuilder(NotificationEntity, 'notification')
         .innerJoinAndSelect('notification.notificationUsers', 'notificationUser')
         .where('notification.context_id IN (:...contexts)', { contexts })
@@ -121,7 +123,7 @@ export class OrganisationsService extends BaseService {
         .getMany();
     }
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await em.transaction(async transaction => {
       const now = new Date();
 
       // Inactivate unit
@@ -198,7 +200,7 @@ export class OrganisationsService extends BaseService {
       for (const support of supportsToComplete) {
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: requestUser.id, roleId: domainContext.currentRole.id },
+          { id: domainContext.id, roleId: domainContext.currentRole.id },
           support.innovation.id,
           {
             type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
