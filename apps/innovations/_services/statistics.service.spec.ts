@@ -3,6 +3,7 @@ import type { EntityManager } from 'typeorm';
 
 import {
   InnovationActionStatusEnum,
+  InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
@@ -235,7 +236,10 @@ describe('Innovations / _services / innovation transfer suite', () => {
 
       const nPendingRequests = await sut.getPendingExportRequests(innovation.id, em);
 
-      expect(nPendingRequests).toBe(Object.keys(innovation.exportRequests).length);
+      expect(nPendingRequests).toBe(
+        Object.values(innovation.exportRequests).filter(r => r.status === InnovationExportRequestStatusEnum.PENDING)
+          .length
+      );
     });
   });
 });
