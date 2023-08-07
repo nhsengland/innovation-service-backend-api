@@ -23,7 +23,7 @@
     "prepare": "husky install",
     "prettier": "prettier -w apps/ libs/",
     "test": "jest --forceExit",
-    "test:coverage": "jest -w 4 --forceExit --coverage --collectCoverageFrom='apps/**/*.ts' --collectCoverageFrom='libs/**/*.ts'"
+    "test:coverage": "jest --runInBand --forceExit --coverage --collectCoverageFrom='apps/**/*.ts' --collectCoverageFrom='libs/**/*.ts'"
   },
   "dependencies": {
     "@aaronpowell/azure-functions-nodejs-openapi": "^0.4.0",

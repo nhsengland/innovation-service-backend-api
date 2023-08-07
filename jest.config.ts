@@ -24,8 +24,15 @@ const jestBaseConfig: Config = {
     '.types.ts',
     '.entity.ts',
     '.dtos?.ts',
-    'libs/shared/tests',
+    // This is mostly datatype and previous versions aren't "used"
+    'libs/shared/schemas/innovation-record',
+    // This is for migrations
     'libs/data-access',
+    // These are just used for development and testing
+    'libs/shared/tests',
+    'libs/shared/builders',
+    'v1-demo-create-innovation-document',
+    'demo.service.ts',
     'node_modules'
   ],
   testTimeout: 15000,
