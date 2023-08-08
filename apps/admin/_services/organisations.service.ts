@@ -618,8 +618,7 @@ export class OrganisationsService extends BaseService {
     // don't allow units with the same name or acronym inside the same organisation
     const unitNameOrAcronymAlreadyExists = await transaction
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .where('unit.organisation_id = :organisationId', { organisationId })
-      .andWhere('(unit.name = :name OR unit.acronym = :acronym)', { name, acronym })
+      .where('(unit.name = :name OR unit.acronym = :acronym)', { name, acronym })
       .getOne();
 
     if (unitNameOrAcronymAlreadyExists) {
