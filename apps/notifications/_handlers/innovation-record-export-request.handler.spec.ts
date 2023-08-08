@@ -1,29 +1,24 @@
 import { UrlModel } from '@notifications/shared/models';
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import { MocksHelper } from '@notifications/shared/tests';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV, EmailTypeEnum } from '../_config';
 import { RecipientsService } from '../_services/recipients.service';
+import { NotificationsTestsHelper } from '../_tests/notifications-test.helper';
 import { InnovationRecordExportRequestHandler } from './innovation-record-export-request.handler';
 
 describe('Notifications / _handlers / innovation-record-export-request handler suite', () => {
-  let testsHelper: TestsHelper;
-  let scenario: CompleteScenarioType;
+  const testsHelper = new NotificationsTestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
 
-  let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
-  let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
+  const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+  const innovationOwner = scenario.users.johnInnovator;
 
-  let request: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation']['exportRequests']['requestByAlice'];
+  const request = innovation.exportRequests.requestByAlice;
 
   let handler: InnovationRecordExportRequestHandler;
 
   beforeAll(async () => {
-    testsHelper = await new TestsHelper().init();
-    scenario = testsHelper.getCompleteScenario();
-
-    innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-    innovationOwner = scenario.users.johnInnovator;
-
-    request = innovation.exportRequests.requestByAlice;
+    await testsHelper.init();
   });
 
   beforeEach(() => {
@@ -34,20 +29,18 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
     });
 
     jest.spyOn(RecipientsService.prototype, 'getExportRequestInfo').mockResolvedValueOnce(request);
-  });
-
-  it('Should send email to innovation owner', async () => {
     jest
       .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'))
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'));
+      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'));
+    jest
+      .spyOn(RecipientsService.prototype, 'usersIdentityInfo')
+      .mockResolvedValueOnce(DTOsHelper.getIdentityUserInfo(scenario.users.aliceQualifyingAccessor));
+  });
 
+  it('Should send email to innovation owner when request created by QA', async () => {
     handler = new InnovationRecordExportRequestHandler(
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-      {
-        innovationId: innovation.id,
-        requestId: request.id
-      },
+      { innovationId: innovation.id, requestId: request.id },
       MocksHelper.mockContext()
     );
 
@@ -64,26 +57,55 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
           accessor_name: scenario.users.aliceQualifyingAccessor.name,
           pdf_request_comment: request.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/export/list')
-            .setPathParams({ innovationId: innovation.id })
+            .addPath('innovator/innovations/:innovationId/record/export-requests/:requestId')
+            .setPathParams({ innovationId: innovation.id, requestId: request.id })
             .buildUrl()
         }
       }
     ]);
   });
 
-  it('Should correct accessor name in email to innovation owner when accessor info is not found', async () => {
+  it('Should send email to innovation owner when request created by NA', async () => {
+    const requestByNa = innovation.exportRequests.requestByPaulPending;
+    jest.spyOn(RecipientsService.prototype, 'getExportRequestInfo').mockReset().mockResolvedValueOnce(requestByNa);
     jest
-      .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'))
-      .mockResolvedValueOnce(null);
+      .spyOn(RecipientsService.prototype, 'usersIdentityInfo')
+      .mockReset()
+      .mockResolvedValueOnce(DTOsHelper.getIdentityUserInfo(scenario.users.paulNeedsAssessor));
+
+    handler = new InnovationRecordExportRequestHandler(
+      DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole'),
+      { innovationId: innovation.id, requestId: requestByNa.id },
+      MocksHelper.mockContext()
+    );
+
+    await handler.run();
+
+    expect(handler.emails).toMatchObject([
+      {
+        templateId: EmailTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR,
+        to: DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'),
+        notificationPreferenceType: null,
+        params: {
+          innovation_name: innovation.name,
+          unit_name: requestByNa.createdBy.unitName,
+          accessor_name: scenario.users.paulNeedsAssessor.name,
+          pdf_request_comment: requestByNa.requestReason,
+          pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
+            .addPath('innovator/innovations/:innovationId/record/export-requests/:requestId')
+            .setPathParams({ innovationId: innovation.id, requestId: requestByNa.id })
+            .buildUrl()
+        }
+      }
+    ]);
+  });
+
+  it('Should correct request user name in email to innovation owner when request user info is not found', async () => {
+    jest.spyOn(RecipientsService.prototype, 'usersIdentityInfo').mockReset().mockResolvedValueOnce(null);
 
     handler = new InnovationRecordExportRequestHandler(
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-      {
-        innovationId: innovation.id,
-        requestId: request.id
-      },
+      { innovationId: innovation.id, requestId: request.id },
       MocksHelper.mockContext()
     );
 
@@ -100,8 +122,8 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
           accessor_name: 'user',
           pdf_request_comment: request.requestReason,
           pdf_export_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/export/list')
-            .setPathParams({ innovationId: innovation.id })
+            .addPath('innovator/innovations/:innovationId/record/export-requests/:requestId')
+            .setPathParams({ innovationId: innovation.id, requestId: request.id })
             .buildUrl()
         }
       }
@@ -111,15 +133,12 @@ describe('Notifications / _handlers / innovation-record-export-request handler s
   it('Should not send email if innovation owner is not active', async () => {
     jest
       .spyOn(RecipientsService.prototype, 'getUsersRecipient')
-      .mockResolvedValueOnce({ ...DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'), isActive: false })
-      .mockResolvedValueOnce(DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'));
+      .mockReset()
+      .mockResolvedValueOnce({ ...DTOsHelper.getRecipientUser(innovationOwner, 'innovatorRole'), isActive: false });
 
     handler = new InnovationRecordExportRequestHandler(
       DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-      {
-        innovationId: innovation.id,
-        requestId: request.id
-      },
+      { innovationId: innovation.id, requestId: request.id },
       MocksHelper.mockContext()
     );
 
