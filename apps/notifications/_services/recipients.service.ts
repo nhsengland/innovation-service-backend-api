@@ -826,6 +826,7 @@ export class RecipientsService extends BaseService {
    * @returns the exportRequest info
    */
   async getExportRequestInfo(requestId: string): Promise<{
+    id: string;
     status: InnovationExportRequestStatusEnum;
     requestReason: string;
     rejectReason: string | null;
@@ -839,6 +840,7 @@ export class RecipientsService extends BaseService {
     const request = await this.sqlConnection
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
       .select([
+        'request.id',
         'request.status',
         'request.requestReason',
         'request.rejectReason',
@@ -857,6 +859,7 @@ export class RecipientsService extends BaseService {
     }
 
     return {
+      id: request.id,
       status: request.status,
       requestReason: request.requestReason,
       rejectReason: request.rejectReason,

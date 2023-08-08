@@ -1,7 +1,7 @@
 import { container } from '../_config';
 
 import { InnovationExportRequestEntity } from '@innovations/shared/entities';
-import { InnovationExportRequestStatusEnum } from '@innovations/shared/enums';
+import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
   ForbiddenError,
   InnovationErrorsEnum,
@@ -9,6 +9,7 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import { TranslationHelper } from '@innovations/shared/helpers';
+import { NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import type { DomainContextType } from '@innovations/shared/types';
@@ -23,6 +24,8 @@ describe('Innovations / _services / innovation export request suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+
   let em: EntityManager;
 
   beforeAll(async () => {
@@ -36,6 +39,7 @@ describe('Innovations / _services / innovation export request suite', () => {
 
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
+    notifierSendSpy.mockReset();
   });
 
   describe('createExportRequest', () => {
@@ -45,25 +49,32 @@ describe('Innovations / _services / innovation export request suite', () => {
       ['QA', DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor, 'qaRole')],
       ['A', DTOsHelper.getUserRequestContext(scenario.users.ingridAccessor, 'accessorRole')],
       ['NA', DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor, 'assessmentRole')]
-    ])('should create a export request as a %s', async (_role: string, domainContext: DomainContextType) => {
-      const data = { requestReason: randText() };
+    ])(
+      'should create a export request as a %s and send a notification',
+      async (_role: string, domainContext: DomainContextType) => {
+        const data = { requestReason: randText() };
 
-      const request = await sut.createExportRequest(domainContext, innovation.id, data, em);
+        const request = await sut.createExportRequest(domainContext, innovation.id, data, em);
 
-      const dbRequest = await em
-        .createQueryBuilder(InnovationExportRequestEntity, 'request')
-        .select(['request.id', 'request.requestReason', 'request.status', 'userRole.id'])
-        .innerJoin('request.createdByUserRole', 'userRole')
-        .where('request.id = :requestId', { requestId: request.id })
-        .getOneOrFail();
+        const dbRequest = await em
+          .createQueryBuilder(InnovationExportRequestEntity, 'request')
+          .select(['request.id', 'request.requestReason', 'request.status', 'userRole.id'])
+          .innerJoin('request.createdByUserRole', 'userRole')
+          .where('request.id = :requestId', { requestId: request.id })
+          .getOneOrFail();
 
-      expect(dbRequest).toMatchObject({
-        id: expect.any(String),
-        requestReason: data.requestReason,
-        status: InnovationExportRequestStatusEnum.PENDING,
-        createdByUserRole: { id: domainContext.currentRole.id }
-      });
-    });
+        expect(dbRequest).toMatchObject({
+          id: expect.any(String),
+          requestReason: data.requestReason,
+          status: InnovationExportRequestStatusEnum.PENDING,
+          createdByUserRole: { id: domainContext.currentRole.id }
+        });
+        expect(notifierSendSpy).toHaveBeenCalledWith(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+          innovationId: innovation.id,
+          requestId: request.id
+        });
+      }
+    );
   });
 
   describe('getExportRequestInfo', () => {
@@ -285,6 +296,16 @@ describe('Innovations / _services / innovation export request suite', () => {
           rejectReason: rejectReason ?? null,
           updatedBy: domainContext.id
         });
+
+        if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+          expect(notifierSendSpy).toHaveBeenCalledWith(
+            domainContext,
+            NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK,
+            { innovationId: innovation.id, requestId }
+          );
+        } else {
+          expect(notifierSendSpy).toHaveBeenCalledTimes(0);
+        }
       }
     );
 

@@ -4,7 +4,7 @@ import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
 import { InnovationExportRequestEntity, UserRoleEntity } from '@innovations/shared/entities';
-import { InnovationExportRequestStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationExportRequestStatusEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
   ForbiddenError,
   InnovationErrorsEnum,
@@ -12,13 +12,16 @@ import {
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
-import type { DomainService } from '@innovations/shared/services';
+import type { DomainService, NotifierService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 
 @injectable()
 export class InnovationExportRequestService extends BaseService {
-  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
+  constructor(
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+  ) {
     super();
   }
 
@@ -41,6 +44,11 @@ export class InnovationExportRequestService extends BaseService {
         updatedBy: domainContext.id
       })
     );
+
+    await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_REQUEST, {
+      innovationId: innovationId,
+      requestId: request.id
+    });
 
     return { id: request.id };
   }
@@ -233,7 +241,8 @@ export class InnovationExportRequestService extends BaseService {
 
     const request = await em
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
-      .select(['request.id', 'request.status', 'role.id', 'role.role', 'unit.id'])
+      .select(['request.id', 'request.status', 'role.id', 'role.role', 'unit.id', 'innovation.id'])
+      .innerJoin('request.innovation', 'innovation')
       .innerJoin('request.createdByUserRole', 'role')
       .leftJoin('role.organisationUnit', 'unit')
       .where('request.id = :exportRequestId', { exportRequestId })
@@ -257,6 +266,13 @@ export class InnovationExportRequestService extends BaseService {
       { id: exportRequestId },
       { status: data.status, rejectReason: data.rejectReason ?? null, updatedBy: domainContext.id }
     );
+
+    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_RECORD_EXPORT_FEEDBACK, {
+        innovationId: request.innovation.id,
+        requestId: request.id
+      });
+    }
   }
 
   private canUserUpdate(domainContext: DomainContextType, createdByUserRole: UserRoleEntity): boolean {
