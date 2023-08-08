@@ -405,7 +405,7 @@ export class OrganisationsService extends BaseService {
 
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type=:type', {
+        .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type= :type', {
           name,
           acronym,
           organisationId,
@@ -463,9 +463,10 @@ export class OrganisationsService extends BaseService {
     const result = await em.transaction(async transaction => {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('org.name = :name OR org.acronym = :acronym', {
+        .where('(org.name = :name OR org.acronym = :acronym) AND org.type = :type', {
           name: data.name,
-          acronym: data.acronym
+          acronym: data.acronym,
+          type: OrganisationTypeEnum.ACCESSOR
         })
         .getOne();
 
