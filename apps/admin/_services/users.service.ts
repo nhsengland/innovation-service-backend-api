@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+import Joi from 'joi';
 import type { EntityManager } from 'typeorm';
 
 import {
@@ -17,8 +18,14 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@admin/shared/errors';
-import { CacheConfigType, CacheService, IdentityProviderService, NotifierService } from '@admin/shared/services';
-import type { DomainContextType } from '@admin/shared/types';
+import {
+  CacheConfigType,
+  CacheService,
+  DomainService,
+  IdentityProviderService,
+  NotifierService
+} from '@admin/shared/services';
+import type { DomainContextType, RoleType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { BaseService } from './base.service';
@@ -30,7 +37,8 @@ export class UsersService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService
   ) {
     super();
     this.cache = cacheService.get('IdentityUserInfo');
@@ -259,5 +267,45 @@ export class UsersService extends BaseService {
 
       return { id: user.id };
     });
+  }
+
+  async getUserInfo(
+    idOrEmail: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    id: string;
+    email: string;
+    name: string;
+    phone?: string;
+    isActive: boolean;
+    roles: (RoleType & {
+      displayTeam?: string;
+    })[];
+  }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const identifier = this.isUuid(idOrEmail) ? { userId: idOrEmail } : { email: idOrEmail };
+    const user = await this.domainService.users.getUserInfo(identifier, {}, em);
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.displayName,
+      isActive: user.isActive,
+      phone: user.phone ?? undefined,
+      roles: user.roles.map(r => ({
+        ...r,
+        displayTeam: this.domainService.users.getDisplayTeamInformation(r.role, r.organisationUnit?.name)
+      }))
+    };
+  }
+
+  private isUuid(idOrEmail: string): boolean {
+    try {
+      Joi.attempt(idOrEmail, Joi.string().guid());
+      return true;
+    } catch (_e) {
+      return false;
+    }
   }
 }

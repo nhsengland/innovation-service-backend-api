@@ -1,4 +1,4 @@
-import type { DataSource, Repository } from 'typeorm';
+import type { DataSource, EntityManager, Repository } from 'typeorm';
 
 import {
   AccessorOrganisationRoleEnum,
@@ -33,7 +33,11 @@ export class DomainUsersService {
     this.userRepository = this.sqlConnection.getRepository(UserEntity);
   }
 
-  async getUserInfo(data: { userId?: string; identityId?: string }): Promise<{
+  async getUserInfo(
+    data: { userId: string } | { identityId: string } | { email: string },
+    filters?: { organisations?: boolean },
+    entityManager?: EntityManager
+  ): Promise<{
     id: string;
     identityId: string;
     email: string;
@@ -44,7 +48,7 @@ export class DomainUsersService {
     lockedAt: null | Date;
     passwordResetAt: null | Date;
     firstTimeSignInAt: null | Date;
-    organisations: {
+    organisations?: {
       id: string;
       name: string;
       acronym: null | string;
@@ -61,20 +65,41 @@ export class DomainUsersService {
       }[];
     }[];
   }> {
-    if (!data.userId && !data.identityId) {
-      throw new InternalServerError(UserErrorsEnum.USER_INFO_EMPTY_INPUT);
-    }
+    const em = entityManager ?? this.sqlConnection.manager;
 
     // The returning data for organisations/units will be reviewed later, doubling the joins at the moment though to keep current interface
-    const query = this.userRepository
-      .createQueryBuilder('user')
+    const query = em
+      .createQueryBuilder(UserEntity, 'user')
       .select([
         'user.id',
         'user.identityId',
         'user.lockedAt',
         'user.status',
         'user.firstTimeSignInAt',
-        // These should be removed in the future and use the service roles instead
+        // Service roles
+        'serviceRoles.id',
+        'serviceRoles.role',
+        'serviceRoles.isActive',
+        'roleOrganisation.id',
+        'roleOrganisation.name',
+        'roleOrganisation.acronym',
+        'roleOrganisationUnit.id',
+        'roleOrganisationUnit.name',
+        'roleOrganisationUnit.acronym'
+      ])
+      .innerJoin('user.serviceRoles', 'serviceRoles')
+      .leftJoin('serviceRoles.organisation', 'roleOrganisation')
+      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
+      .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
+
+    if (filters?.organisations) {
+      query
+        .leftJoin('user.userOrganisations', 'userOrganisations')
+        .leftJoin('userOrganisations.organisation', 'organisation')
+        .leftJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
+        .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit');
+
+      query.addSelect([
         'userOrganisations.id',
         'userOrganisations.role',
         'organisation.id',
@@ -87,75 +112,62 @@ export class DomainUsersService {
         'userOrganisationUnits.id',
         'organisationUnit.id',
         'organisationUnit.name',
-        'organisationUnit.acronym',
-        // Service roles
-        'serviceRoles.id',
-        'serviceRoles.role',
-        'serviceRoles.isActive',
-        'roleOrganisation.id',
-        'roleOrganisation.name',
-        'roleOrganisation.acronym',
-        'roleOrganisationUnit.id',
-        'roleOrganisationUnit.name',
-        'roleOrganisationUnit.acronym'
-      ])
-      .leftJoin('user.userOrganisations', 'userOrganisations')
-      .leftJoin('userOrganisations.organisation', 'organisation')
-      .leftJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-      .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
-      .innerJoin('user.serviceRoles', 'serviceRoles')
-      .leftJoin('serviceRoles.organisation', 'roleOrganisation')
-      .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
-      .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
+        'organisationUnit.acronym'
+      ]);
+    }
 
-    if (data.userId) {
+    if ('userId' in data) {
       query.andWhere('user.id = :userId', { userId: data.userId });
-    } else if (data.identityId) {
+    } else if ('identityId' in data) {
       query.andWhere('user.external_id = :identityId', { identityId: data.identityId });
+    } else if ('email' in data) {
+      const userIdentityId = await this.getUserIdentityIdByEmail(data.email);
+      query.andWhere('user.external_id = :identityId', { identityId: userIdentityId });
     }
 
     const dbUser = await query.getOne();
-
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
-    const authUser = await this.identityProviderService.getUserInfo(dbUser.identityId);
+    const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
 
     return {
       id: dbUser.id,
-      identityId: authUser.identityId,
-      email: authUser.email,
-      displayName: authUser.displayName,
+      identityId: user.identityId,
+      email: user.email,
+      displayName: user.displayName,
       roles: dbUser.serviceRoles.map(roleEntity2RoleType),
-      phone: authUser.mobilePhone,
+      phone: user.mobilePhone,
       isActive: dbUser.status === UserStatusEnum.ACTIVE,
       lockedAt: dbUser.lockedAt,
-      passwordResetAt: authUser.passwordResetAt,
+      passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      organisations: (await dbUser.userOrganisations).map(userOrganisation => {
-        const organisation = userOrganisation.organisation;
-        const organisationUnits = userOrganisation.userOrganisationUnits;
+      ...(filters?.organisations
+        ? (await dbUser.userOrganisations).map(userOrganisation => {
+            const organisation = userOrganisation.organisation;
+            const organisationUnits = userOrganisation.userOrganisationUnits;
 
-        return {
-          id: organisation.id,
-          name: organisation.name,
-          acronym: organisation.acronym,
-          size: organisation.size,
-          role: userOrganisation.role,
-          isShadow: organisation.isShadow,
-          description: organisation.description,
-          registrationNumber: organisation.registrationNumber,
-          organisationUnits: organisationUnits.map(item => ({
-            id: item.organisationUnit.id,
-            acronym: item.organisationUnit.acronym,
-            name: item.organisationUnit.name,
-            organisationUnitUser: {
-              id: item.id
-            }
-          }))
-        };
-      })
+            return {
+              id: organisation.id,
+              name: organisation.name,
+              acronym: organisation.acronym,
+              size: organisation.size,
+              role: userOrganisation.role,
+              isShadow: organisation.isShadow,
+              description: organisation.description,
+              registrationNumber: organisation.registrationNumber,
+              organisationUnits: organisationUnits.map(item => ({
+                id: item.organisationUnit.id,
+                acronym: item.organisationUnit.acronym,
+                name: item.organisationUnit.name,
+                organisationUnitUser: {
+                  id: item.id
+                }
+              }))
+            };
+          })
+        : {})
     };
   }
 
@@ -452,5 +464,13 @@ export class DomainUsersService {
     }
 
     return;
+  }
+
+  private async getUserIdentityIdByEmail(email: string): Promise<string> {
+    const user = await this.identityProviderService.getUserInfoByEmail(email);
+    if (!user) {
+      throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+    }
+    return user.identityId;
   }
 }

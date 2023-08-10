@@ -65,6 +65,7 @@ export class UsersService extends BaseService {
   }
 
   /**
+   * TODO: This will be removed after admin add user and roles feature (minimal was already removed from FE)
    * Returns the user information from the identity provider.
    * @param userId the user identifier.
    * @returns the user information.
@@ -76,7 +77,9 @@ export class UsersService extends BaseService {
     },
     entityManager?: EntityManager
   ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
-    const user = await this.domainService.users.getUserInfo({ userId });
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const user = await this.domainService.users.getUserInfo({ userId }, { organisations: true }, em);
     const model = params.model;
     if (model === 'minimal') {
       return {
@@ -84,9 +87,8 @@ export class UsersService extends BaseService {
         displayName: user.displayName
       };
     }
-    if (model === 'full') {
-      const em = entityManager ?? this.sqlConnection.manager;
 
+    if (model === 'full') {
       const innovations = await em
         .createQueryBuilder(InnovationEntity, 'innovation')
         .select('innovation.id', 'innovation_id')
@@ -101,7 +103,9 @@ export class UsersService extends BaseService {
       }
 
       const supportMap = new Map();
-      const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
+      const supportUserId = (user.organisations ?? []).flatMap(o =>
+        o.organisationUnits.map(u => u.organisationUnitUser.id)
+      );
       if (supportUserId.length > 0) {
         const supports = await this.sqlConnection
           .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -122,7 +126,7 @@ export class UsersService extends BaseService {
         type: role.role, // see previous TODO
         lockedAt: user.lockedAt,
         innovations: innovations,
-        userOrganisations: user.organisations.map(o => ({
+        userOrganisations: (user.organisations ?? []).map(o => ({
           id: o.id,
           name: o.name,
           size: o.size,

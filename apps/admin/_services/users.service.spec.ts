@@ -4,13 +4,8 @@ import { TestsHelper } from '@admin/shared/tests';
 
 import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 
-import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { container } from '../_config';
-import SYMBOLS from './symbols';
-import type { UsersService } from './users.service';
+import { OrganisationUserEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
-import { NotifierService } from '@admin/shared/services';
-import { randAbbreviation, randEmail, randFullName, randUuid } from '@ngneat/falso';
 import {
   BadRequestError,
   NotFoundError,
@@ -18,7 +13,14 @@ import {
   UnprocessableEntityError,
   UserErrorsEnum
 } from '@admin/shared/errors';
-import { OrganisationUserEntity } from '@admin/shared/entities';
+import { TranslationHelper } from '@admin/shared/helpers';
+import { NotifierService } from '@admin/shared/services';
+import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
+import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
+import { randAbbreviation, randEmail, randFullName, randUuid } from '@ngneat/falso';
+import { container } from '../_config';
+import SYMBOLS from './symbols';
+import type { UsersService } from './users.service';
 
 describe('Admin / _services / users service suite', () => {
   let sut: UsersService;
@@ -323,6 +325,43 @@ describe('Admin / _services / users service suite', () => {
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(UserErrorsEnum.USER_ALREADY_EXISTS));
+    });
+  });
+
+  describe('getUserInfo()', () => {
+    const johnInnovator = scenario.users.johnInnovator;
+    const jamieMadroxAccessor = scenario.users.jamieMadroxAccessor;
+    const allMighty = scenario.users.allMighty;
+    const paulNeedsAssessor = scenario.users.paulNeedsAssessor;
+
+    it.each([
+      ['id', johnInnovator.id, johnInnovator],
+      ['email', johnInnovator.email, johnInnovator],
+      ['id', jamieMadroxAccessor.id, jamieMadroxAccessor],
+      ['email', jamieMadroxAccessor.email, jamieMadroxAccessor],
+      ['id', allMighty.id, allMighty],
+      ['id', paulNeedsAssessor.id, paulNeedsAssessor]
+    ])('should return user info by %s', async (_type: string, id: string, scenarioUser: TestUserType) => {
+      const user = await sut.getUserInfo(id, em);
+
+      expect(user).toMatchObject({
+        id: scenarioUser.id,
+        email: scenarioUser.email,
+        name: scenarioUser.name,
+        phone: scenarioUser.mobilePhone ?? undefined,
+        isActive: scenarioUser.isActive,
+        roles: Object.values(scenarioUser.roles).map(r => ({
+          id: r.id,
+          role: r.role,
+          ...(r.role === ServiceRoleEnum.ACCESSOR || r.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
+            ? { displayTeam: r.organisationUnit?.name }
+            : undefined),
+          ...(r.role === ServiceRoleEnum.ADMIN || r.role === ServiceRoleEnum.ASSESSMENT
+            ? { displayTeam: TranslationHelper.translate(`TEAMS.${r.role}`) }
+            : undefined),
+          isActive: r.isActive
+        }))
+      });
     });
   });
 });
