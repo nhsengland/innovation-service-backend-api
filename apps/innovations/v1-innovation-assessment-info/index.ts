@@ -31,7 +31,7 @@ class V1InnovationAssessmentInfo {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAssessmentType()
@@ -40,8 +40,9 @@ class V1InnovationAssessmentInfo {
         .checkAdminType()
         .checkInnovation()
         .verify();
+      const domainContext = auth.getContext();
 
-      const result = await innovationAssessmentsService.getInnovationAssessmentInfo(params.assessmentId);
+      const result = await innovationAssessmentsService.getInnovationAssessmentInfo(domainContext, params.assessmentId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         ...(result.reassessment === undefined ? {} : { reassessment: result.reassessment }),
