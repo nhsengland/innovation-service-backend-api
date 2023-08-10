@@ -21,6 +21,7 @@ import {
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
 import {
+  ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError,
@@ -49,6 +50,7 @@ export class InnovationAssessmentsService extends BaseService {
   }
 
   async getInnovationAssessmentInfo(
+    domainContext: DomainContextType,
     assessmentId: string,
     entityManager?: EntityManager
   ): Promise<InnovationAssessmentType> {
@@ -67,6 +69,10 @@ export class InnovationAssessmentsService extends BaseService {
       .getOne();
     if (!assessment) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    if (!assessment.finishedAt && domainContext.currentRole.role !== ServiceRoleEnum.ASSESSMENT) {
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED);
     }
 
     // Fetch users names.

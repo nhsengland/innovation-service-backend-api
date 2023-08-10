@@ -9,6 +9,7 @@ import {
 } from '@innovations/shared/entities';
 import { InnovationStatusEnum, InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import {
+  ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
   UnprocessableEntityError,
@@ -56,9 +57,18 @@ describe('Innovation Assessments Suite', () => {
     scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation;
 
   describe('getInnovationAssessmentInfo', () => {
-    it('should get an innovation assessment', async () => {
+    const naUser = DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor);
+    it.each([
+      ['QA', scenario.users.aliceQualifyingAccessor],
+      ['A', scenario.users.ingridAccessor],
+      ['NA', scenario.users.paulNeedsAssessor],
+      ['I', scenario.users.johnInnovator]
+    ])("should get an innovation assessment that's submitted as %s", async (_label, user) => {
       const assessment = innovationWithAssessment.assessment;
-      const res = await sut.getInnovationAssessmentInfo(innovationWithAssessment.assessment.id);
+      const res = await sut.getInnovationAssessmentInfo(
+        DTOsHelper.getUserRequestContext(user),
+        innovationWithAssessment.assessment.id
+      );
 
       expect(res).toEqual({
         id: assessment.id,
@@ -114,14 +124,41 @@ describe('Innovation Assessments Suite', () => {
     });
 
     it('should return null finishedAt if assessment not submitted', async () => {
-      const res = await sut.getInnovationAssessmentInfo(innovationWithAssessmentInProgress.assessmentInProgress.id, em);
+      const res = await sut.getInnovationAssessmentInfo(
+        naUser,
+        innovationWithAssessmentInProgress.assessmentInProgress.id,
+        em
+      );
       expect(res.finishedAt).toBeNull();
     });
 
     it('should not get an innovation assessment if it does not exist', async () => {
-      await expect(() => sut.getInnovationAssessmentInfo(randUuid())).rejects.toThrowError(
+      await expect(() => sut.getInnovationAssessmentInfo(naUser, randUuid())).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
       );
+    });
+
+    it('should get innovation assessment if user is a needs assessor and assessment not submitted', async () => {
+      const res = await sut.getInnovationAssessmentInfo(
+        naUser,
+        innovationWithAssessmentInProgress.assessmentInProgress.id,
+        em
+      );
+      expect(res).toBeDefined();
+    });
+
+    it.each([
+      ['QA', scenario.users.aliceQualifyingAccessor],
+      ['A', scenario.users.ingridAccessor],
+      ['I', scenario.users.johnInnovator]
+    ])('should not get an innovation assessment if user %s and assessment not submitted', async (_label, user) => {
+      await expect(
+        sut.getInnovationAssessmentInfo(
+          DTOsHelper.getUserRequestContext(user),
+          innovationWithAssessmentInProgress.assessmentInProgress.id,
+          em
+        )
+      ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED));
     });
   });
 
