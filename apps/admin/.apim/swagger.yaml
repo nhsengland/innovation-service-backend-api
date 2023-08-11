@@ -682,15 +682,13 @@ paths:
       parameters:
         - name: userIdOrEmail
           in: path
-          required: false
+          required: true
           schema:
             anyOf:
               - type: string
                 format: uuid
-                x-required: true
               - type: string
                 format: email
-                x-required: true
       responses:
         "200":
           description: Success
