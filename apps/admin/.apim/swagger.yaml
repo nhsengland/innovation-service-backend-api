@@ -673,6 +673,70 @@ paths:
           description: The user is not authorized to create a user.
         "500":
           description: An error occurred while creating the user.
+  "/v1/users/{userIdOrEmail}":
+    get:
+      operationId: v1-admin-user-info
+      description: Get user info.
+      tags:
+        - "[v1] Admin Users"
+      parameters:
+        - name: userIdOrEmail
+          in: path
+          required: false
+          schema:
+            anyOf:
+              - type: string
+                format: uuid
+                x-required: true
+              - type: string
+                format: email
+                x-required: true
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  name:
+                    type: string
+                  phone:
+                    type: string
+                  isActive:
+                    type: boolean
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        role:
+                          type: string
+                          enum:
+                            - ADMIN
+                            - INNOVATOR
+                            - ACCESSOR
+                            - ASSESSMENT
+                            - QUALIFYING_ACCESSOR
+                        displayTeam:
+                          type: string
+                        isActive:
+                          type: boolean
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/users/{userId}":
     patch:
       description: Update a user.

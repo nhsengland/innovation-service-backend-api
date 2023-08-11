@@ -17,12 +17,12 @@ import {
 } from '@innovations/shared/errors';
 import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
 
+import { NotFoundError } from '@innovations/shared/errors';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
 import { BaseService } from './base.service';
 import type { InnovationCollaboratorsService } from './innovation-collaborators.service';
 import SYMBOLS from './symbols';
-import { NotFoundError } from '@innovations/shared/errors';
 
 type TransferQueryFilterType = {
   id?: string;
@@ -158,10 +158,7 @@ export class InnovationTransferService extends BaseService {
     innovation: { id: string; name: string; owner: { name: string } };
   }> {
     const transfer = await this.buildTransferQuery(
-      {
-        id,
-        status: InnovationTransferStatusEnum.PENDING
-      },
+      { id, status: InnovationTransferStatusEnum.PENDING },
       entityManager
     ).getOne();
     if (!transfer) {

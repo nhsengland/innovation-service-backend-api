@@ -25,7 +25,7 @@ import {
   UserErrorsEnum
 } from '@innovations/shared/errors';
 import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType, DomainUserInfoType } from '@innovations/shared/types';
+import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@innovations/shared/types';
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -350,12 +350,9 @@ export class InnovationThreadsService extends BaseService {
       throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    let author: DomainUserInfoType | null = null;
+    let author: IdentityUserInfo | null = null;
     if (thread.author.status !== UserStatusEnum.DELETED) {
-      author = await this.domainService.users.getUserInfo({
-        userId: thread.author.id,
-        identityId: thread.author.identityId
-      });
+      author = await this.identityProvider.getUserInfo(thread.author.identityId);
     }
 
     return {
@@ -363,7 +360,7 @@ export class InnovationThreadsService extends BaseService {
       subject: thread.subject,
       createdAt: thread.createdAt,
       createdBy: {
-        id: author?.id ?? '',
+        id: thread.author.id,
         name: author ? author?.displayName || 'unknown user' : '[deleted user]'
       }
     };
