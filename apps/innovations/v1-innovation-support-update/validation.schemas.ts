@@ -15,7 +15,7 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type BodyType = {
   status: Exclude<InnovationSupportStatusEnum, 'UNASSIGNED' | 'WITHDRAWN'>;
   message: string;
-  accessors: { id: string; organisationUnitUserId: string }[];
+  accessors?: { id: string; organisationUnitUserId: string }[];
 };
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.string()

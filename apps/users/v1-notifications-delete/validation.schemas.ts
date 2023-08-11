@@ -1,9 +1,9 @@
 import Joi from 'joi';
 
-export type PathParamType = {
+export type ParamsType = {
   notificationId: string;
 };
 
-export const PathParamsSchema = Joi.object<PathParamType>({
+export const ParamsSchema = Joi.object<ParamsType>({
   notificationId: Joi.string().uuid().required().description('The notification ID')
 }).required();

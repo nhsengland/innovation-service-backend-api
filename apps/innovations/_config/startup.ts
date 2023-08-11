@@ -12,10 +12,9 @@ export const startup = async (container: Container): Promise<void> => {
 
   logger.log('Initializing Innovations app function');
 
-  try {
-    logger.log('Initialization complete');
-
-    if (process.env['LOCAL_MODE'] ?? false) {
+  /* c8 ignore next 17 */
+  if (process.env['LOCAL_MODE'] ?? false) {
+    try {
       console.group('Generating documentation...');
 
       const response = await httpService.getHttpInstance().get(`http://localhost:7072/api/swagger.json`);
@@ -26,9 +25,11 @@ export const startup = async (container: Container): Promise<void> => {
       );
       console.log('Documentation generated successfully');
       console.groupEnd();
+    } catch (error) {
+      // TODO: Treat this error! Should we end the process?
+      logger.error('Innovations app function was UNABLE to start', { error });
     }
-  } catch (error) {
-    // TODO: Treat this error! Should we end the process?
-    logger.error('Innovations app function was UNABLE to start', { error });
   }
+
+  logger.log('Initialization complete');
 };

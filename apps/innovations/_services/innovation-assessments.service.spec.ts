@@ -19,6 +19,7 @@ import { DomainInnovationsService, NotifierService } from '@innovations/shared/s
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationReassessmentRequestBuilder } from '@innovations/shared/tests/builders/innovation-reassessment-request.builder';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import type { InnovationAssessmentKPIExemptionType } from '@innovations/shared/types/assessment.types';
 import { randText, randUuid } from '@ngneat/falso';
 import { randomUUID } from 'crypto';
 import type { EntityManager } from 'typeorm';
@@ -393,6 +394,119 @@ describe('Innovation Assessments Suite', () => {
           )
         ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
       });
+    });
+  });
+
+  describe('upsertExemption', () => {
+    const assessment = scenario.users.johnInnovator.innovations.johnInnovation.assessment;
+    const paulNeedsAssessor = scenario.users.paulNeedsAssessor;
+
+    it('should create an exemption request for the first time', async () => {
+      const data = {
+        reason: 'TECHNICAL_DIFFICULTIES' as InnovationAssessmentKPIExemptionType,
+        message: randText()
+      };
+
+      await sut.upsertExemption(
+        DTOsHelper.getUserRequestContext(paulNeedsAssessor, 'assessmentRole'),
+        assessment.id,
+        data,
+        em
+      );
+
+      const dbAssessment = await em
+        .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+        .where('assessment.id = :assessmentId', { assessmentId: assessment.id })
+        .getOne();
+
+      expect(dbAssessment).toMatchObject({
+        exemptedReason: data.reason,
+        exemptedMessage: data.message,
+        exemptedAt: expect.any(Date),
+        updatedBy: paulNeedsAssessor.id
+      });
+    });
+
+    it("should update an exemption request and don't update the exemptedAt date", async () => {
+      const oldData = {
+        reason: 'TECHNICAL_DIFFICULTIES' as InnovationAssessmentKPIExemptionType,
+        message: randText(),
+        date: new Date()
+      };
+      await em.update(
+        InnovationAssessmentEntity,
+        { id: assessment.id },
+        { exemptedReason: oldData.reason, exemptedMessage: randText(), exemptedAt: oldData.date }
+      );
+
+      const data = { reason: 'TECHNICAL_DIFFICULTIES' as InnovationAssessmentKPIExemptionType };
+      await sut.upsertExemption(
+        DTOsHelper.getUserRequestContext(paulNeedsAssessor, 'assessmentRole'),
+        assessment.id,
+        data,
+        em
+      );
+
+      const dbAssessment = await em
+        .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+        .where('assessment.id = :assessmentId', { assessmentId: assessment.id })
+        .getOne();
+
+      expect(dbAssessment).toMatchObject({
+        exemptedReason: data.reason,
+        exemptedMessage: null,
+        exemptedAt: oldData.date,
+        updatedBy: paulNeedsAssessor.id
+      });
+    });
+
+    it("should return an NotFoundError when an assessment doesn't exist", async () => {
+      await expect(() =>
+        sut.upsertExemption(
+          DTOsHelper.getUserRequestContext(paulNeedsAssessor, 'assessmentRole'),
+          randUuid(),
+          { reason: 'SERVICE_UNAVAILABLE' },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND));
+    });
+  });
+
+  describe('getExemption', () => {
+    const assessment = scenario.users.johnInnovator.innovations.johnInnovation.assessment;
+
+    it('should return the exemption info and isExempted as true', async () => {
+      const expected = {
+        reason: 'INCORRECT_DETAILS' as InnovationAssessmentKPIExemptionType,
+        message: randText(),
+        exemptedAt: new Date()
+      };
+      await em.update(
+        InnovationAssessmentEntity,
+        { id: assessment.id },
+        { exemptedReason: expected.reason, exemptedMessage: expected.message, exemptedAt: expected.exemptedAt }
+      );
+
+      const exemption = await sut.getExemption(assessment.id, em);
+
+      expect(exemption).toStrictEqual({
+        isExempted: true,
+        exemption: expected
+      });
+    });
+
+    it('should not return the exemption info and isExempted as false', async () => {
+      const exemption = await sut.getExemption(assessment.id, em);
+
+      expect(exemption).toStrictEqual({
+        isExempted: false
+      });
+    });
+
+    it("should return a NotFoundError when an assessment doesn't exist", async () => {
+      await expect(() => sut.getExemption(randUuid(), em)).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND)
+      );
     });
   });
 });

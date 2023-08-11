@@ -10,9 +10,10 @@ import {
   UserStatusEnum
 } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
-import type { DomainContextType, DomainUserInfoType } from '@users/shared/types';
+import type { DomainContextType } from '@users/shared/types';
 
 import { BaseService } from './base.service';
+import type { EntityManager } from 'typeorm';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -20,8 +21,10 @@ export class StatisticsService extends BaseService {
     super();
   }
 
-  async waitingAssessment(): Promise<{ count: number; overdue: number }> {
-    const query = await this.sqlConnection
+  async waitingAssessment(entityManager?: EntityManager): Promise<{ count: number; overdue: number }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
@@ -29,7 +32,7 @@ export class StatisticsService extends BaseService {
       })
       .getCount();
 
-    const overdueCount = await this.sqlConnection
+    const overdueCount = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .where('innovation.status IN (:...assessmentInnovationStatus)', {
@@ -44,8 +47,13 @@ export class StatisticsService extends BaseService {
     };
   }
 
-  async assignedInnovations(userId: string): Promise<{ count: number; total: number; overdue: number }> {
-    const count = await this.sqlConnection
+  async assignedInnovations(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<{ count: number; total: number; overdue: number }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const count = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
@@ -55,7 +63,7 @@ export class StatisticsService extends BaseService {
       .andWhere('assignTo.id = :userId', { userId })
       .getCount();
 
-    const total = await this.sqlConnection
+    const total = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
@@ -65,7 +73,7 @@ export class StatisticsService extends BaseService {
 
       .getCount();
 
-    const overdueCount = await this.sqlConnection
+    const overdueCount = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .leftJoinAndSelect('innovation.assessments', 'assessments')
       .leftJoinAndSelect('assessments.assignTo', 'assignTo')
@@ -84,8 +92,8 @@ export class StatisticsService extends BaseService {
   }
 
   async innovationsAssignedToMe(
-    requestUser: DomainUserInfoType,
-    domainContext: DomainContextType
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
   ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
@@ -93,7 +101,9 @@ export class StatisticsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const { myUnitInnovationsCount, lastSubmittedAt } = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const { myUnitInnovationsCount, lastSubmittedAt } = await em
       .createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
       .select('count(*)', 'myUnitInnovationsCount')
       .addSelect('MAX(innovationSupports.updated_at)', 'lastSubmittedAt')
@@ -105,7 +115,7 @@ export class StatisticsService extends BaseService {
       })
       .getRawOne();
 
-    const myAssignedInnovationsCount = await this.sqlConnection
+    const myAssignedInnovationsCount = await em
       .createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
       .innerJoin('innovationSupports.organisationUnitUsers', 'unitUsers')
       .innerJoin('unitUsers.organisationUser', 'orgUsers')
@@ -113,7 +123,7 @@ export class StatisticsService extends BaseService {
       .where('unitUsers.organisation_unit_id = :organisationUnit', {
         organisationUnit: organisationUnit
       })
-      .andWhere('user.id = :userId', { userId: requestUser.id })
+      .andWhere('user.id = :userId', { userId: domainContext.id })
       .andWhere('innovationSupports.status = :status', {
         status: InnovationSupportStatusEnum.ENGAGING
       })
@@ -128,19 +138,21 @@ export class StatisticsService extends BaseService {
   }
 
   async actionsToReview(
-    requestUser: DomainUserInfoType,
-    domainContext: DomainContextType
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
   ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
-    const myActionsQuery = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const myActionsQuery = em
       .createQueryBuilder(InnovationActionEntity, 'actions')
       .select('actions.status', 'status')
       .addSelect('count(*)', 'count')
       .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
       .innerJoin('actions.innovationSupport', 'innovationSupport')
       .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
-      .where('actions.created_by = :userId', { userId: requestUser.id })
+      .where('actions.created_by = :userId', { userId: domainContext.id })
       .andWhere('actions.status IN (:...status)', {
         status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED]
       });
@@ -176,8 +188,8 @@ export class StatisticsService extends BaseService {
   }
 
   async innovationsToReview(
-    _requestUser: DomainUserInfoType,
-    domainContext: DomainContextType
+    domainContext: DomainContextType,
+    entityManager?: EntityManager
   ): Promise<{ count: number; lastSubmittedAt: null | Date }> {
     const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
 
@@ -185,7 +197,9 @@ export class StatisticsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
 
-    const { count, lastSubmittedAt } = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const { count, lastSubmittedAt } = await em
       .createQueryBuilder()
       .select('count(*)', 'count')
       .addSelect('MAX(lastSubmittedAt)', 'lastSubmittedAt')

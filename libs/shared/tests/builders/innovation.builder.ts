@@ -189,7 +189,7 @@ export class InnovationBuilder extends BaseBuilder {
       status: result.status,
       ownerId: result.owner.id,
       sections: new Map(result.sections.map(s => [s['section'], { ...s, updatedAt: s.updatedAt }])),
-      sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name }))
+      sharedOrganisations: result.organisationShares.map(s => ({ id: s.id, name: s.name })),
     };
   }
 }

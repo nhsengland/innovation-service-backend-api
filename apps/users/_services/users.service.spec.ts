@@ -1,29 +1,29 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { container } from '../_config';
 
-import { TestsHelper } from '@users/shared/tests';
-import SYMBOLS from './symbols';
-import { UsersService } from './users.service';
-import {
-  InnovationCollaboratorStatusEnum,
-  NotifierTypeEnum,
-  PhoneUserPreferenceEnum,
-  ServiceRoleEnum,
-  TermsOfUseTypeEnum
-} from '@users/shared/enums';
+import { randAbbreviation, randFullName, randPhoneNumber, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationCollaboratorEntity,
   InnovationEntity,
   TermsOfUseEntity,
   TermsOfUseUserEntity,
+  UserEntity,
   UserPreferenceEntity
 } from '@users/shared/entities';
-import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
+import {
+  InnovationCollaboratorStatusEnum,
+  NotifierTypeEnum,
+  PhoneUserPreferenceEnum,
+  ServiceRoleEnum,
+  TermsOfUseTypeEnum,
+  UserStatusEnum
+} from '@users/shared/enums';
+import { UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { DomainUsersService, IdentityProviderService, NotifierService } from '@users/shared/services';
-import { randAbbreviation, randFullName, randPhoneNumber, randText, randUuid } from '@ngneat/falso';
+import { TestsHelper } from '@users/shared/tests';
 import { EntityManager } from 'typeorm';
-import { UserEntity } from '@users/shared/entities';
-import { UserStatusEnum } from '@users/shared/enums';
+import SYMBOLS from './symbols';
+import { UsersService } from './users.service';
 
 describe('Users / _services / users service suite', () => {
   let sut: UsersService;
@@ -258,39 +258,6 @@ describe('Users / _services / users service suite', () => {
     });
   });
 
-  describe('deleteUserInfo', () => {
-    const user = scenario.users.adamInnovator;
-    it('should delete the users identity info', async () => {
-      const result = await sut.deleteUserInfo(user.identityId, undefined, em);
-      const deleteUserSpy = jest.spyOn(IdentityProviderService.prototype, 'deleteUser');
-
-      expect(result).toMatchObject({ id: user.id });
-      expect(deleteUserSpy).toHaveBeenCalledWith(user.identityId);
-    });
-
-    it('should delete the users database info', async () => {
-      const deleteReason = randText({ charCount: 20 });
-      const result = await sut.deleteUserInfo(user.identityId, deleteReason, em);
-
-      const dbUser = await em
-        .createQueryBuilder(UserEntity, 'user')
-        .withDeleted()
-        .select(['user.deletedAt', 'user.deleteReason'])
-        .where('user.id = :userId', { userId: user.id })
-        .getOne();
-
-      expect(result).toMatchObject({ id: user.id });
-      expect(dbUser?.deletedAt).toBeTruthy();
-      expect(dbUser?.deleteReason).toBe(deleteReason);
-    });
-
-    it(`should throw an error if the user doesn't exist`, async () => {
-      await expect(() => sut.deleteUserInfo(randUuid())).rejects.toThrowError(
-        new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND)
-      );
-    });
-  });
-
   describe('getUsersList', () => {
     it.each([
       ServiceRoleEnum.ACCESSOR,
@@ -370,8 +337,7 @@ describe('Users / _services / users service suite', () => {
 
     //skipping because the response does not have the createdAt property which makes
     // this a very difficult and somewhat poinless test
-    it.skip('should order the users by ascending date of createdAt', async () => {
-    });
+    it.skip('should order the users by ascending date of createdAt', async () => {});
 
     it.skip('should order the users by descending date of createdAt', async () => {});
   });

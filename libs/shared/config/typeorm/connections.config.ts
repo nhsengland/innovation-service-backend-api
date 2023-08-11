@@ -32,7 +32,8 @@ export const SQLDB_DEFAULT_CONNECTION: DataSourceOptions = Object.freeze({
   extra: {
     options: {
       enableArithAbort: true,
-      trustServerCertificate: true
+      trustServerCertificate: true,
+      useUCT: true
     }
   },
   cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` },
@@ -49,7 +50,7 @@ export const SQLDB_TESTS_CONNECTION: DataSourceOptions = Object.freeze({
   entities: [...GENERAL_ENTITIES, ...INNOVATION_ENTITIES, ...ORGANISATION_ENTITIES, ...USER_ENTITIES, ...VIEW_ENTITIES],
   namingStrategy: new TypeORMCustomStrategy(),
   synchronize: false,
-  extra: { options: { enableArithAbort: true, trustServerCertificate: true } },
+  extra: { options: { enableArithAbort: true, trustServerCertificate: true, useUTC: true } },
   migrations: [`${join(__dirname, '..', '..')}/data-access/migrations/*.ts`],
   migrationsTableName: 'Migrations',
   cli: { migrationsDir: `${join(__dirname, '..', '..')}/data-access/migrations` }

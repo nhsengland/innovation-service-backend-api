@@ -430,13 +430,25 @@ export class DomainUsersService {
     return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
   }
 
-  getUserDisplayRoleInformation(userId: string, role: ServiceRoleEnum, innovationOwnerId?: string): string | undefined {
+  getDisplayRoleInformation(userId: string, role: ServiceRoleEnum, innovationOwnerId?: string): string | undefined {
     if (role !== ServiceRoleEnum.INNOVATOR) {
       return TranslationHelper.translate(`SERVICE_ROLES.${role}`);
     }
 
     if (innovationOwnerId) {
       return userId === innovationOwnerId ? 'Owner' : 'Collaborator';
+    }
+
+    return;
+  }
+
+  getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string): string | undefined {
+    if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+      return unitName;
+    }
+
+    if (role === ServiceRoleEnum.ASSESSMENT || role === ServiceRoleEnum.ADMIN) {
+      return TranslationHelper.translate(`TEAMS.${role}`);
     }
 
     return;

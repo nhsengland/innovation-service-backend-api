@@ -5,8 +5,8 @@
       "type": "httpTrigger",
       "direction": "in",
       "name": "req",
-      "methods": ["head"],
-      "route": "v1/{innovationId}/export-requests"
+      "methods": ["get"],
+      "route": "v1/{innovationId}/assessments/{assessmentId}/exemption"
     },
     {
       "type": "http",

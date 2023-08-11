@@ -61,8 +61,8 @@ export enum EmailTypeEnum {
   QA_A_IDLE_SUPPORT = '420a22ac-b052-4180-8a48-daf787db3f7f',
 
   INNOVATION_RECORD_EXPORT_REQUEST_TO_INNOVATOR = '783f53f1-6df9-4549-968e-9977648e03f1',
-  INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR = 'bfb0b9b9-3bd2-40de-9b98-aa3431832e1e',
-  INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR = '4e0c8775-0ae8-4c03-bf0f-4ae3273ffa87',
+  INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR = 'bfb0b9b9-3bd2-40de-9b98-aa3431832e1e',
+  INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR = '4e0c8775-0ae8-4c03-bf0f-4ae3273ffa87',
 
   ACCESSOR_TO_QA_SUPPORT_CHANGE_REQUEST = '09ad791a-faa2-4c51-ba9c-3198430e6f5f',
 
@@ -135,7 +135,11 @@ export type EmailTemplatesType = {
     innovation_url: string;
   };
   [EmailTypeEnum.ORGANISATION_SUGGESTION_TO_QA]: { display_name?: string; innovation_url: string };
-  [EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR]: { display_name?: string; innovation_name: string, data_sharing_url: string };
+  [EmailTypeEnum.ORGANISATION_SUGGESTION_NOT_SHARED_TO_INNOVATOR]: {
+    display_name?: string;
+    innovation_name: string;
+    data_sharing_url: string;
+  };
   [EmailTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE_TO_INNOVATOR]: {
     display_name?: string;
     innovation_name: string;
@@ -153,7 +157,7 @@ export type EmailTemplatesType = {
     display_name?: string;
     innovation_name: string;
     unit_name: string;
-    support_summary_url: string
+    support_summary_url: string;
   };
   [EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR]: {
     display_name?: string;
@@ -343,13 +347,13 @@ export type EmailTemplatesType = {
     pdf_request_comment: string;
     pdf_export_url: string;
   };
-  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_ACCESSOR]: {
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_APPROVED_TO_REQUEST_CREATOR]: {
     display_name?: string;
     innovation_name: string;
     innovator_name: string;
     innovation_url: string;
   };
-  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_ACCESSOR]: {
+  [EmailTypeEnum.INNOVATION_RECORD_EXPORT_REJECTED_TO_REQUEST_CREATOR]: {
     display_name?: string;
     innovation_name: string;
     innovator_name: string;

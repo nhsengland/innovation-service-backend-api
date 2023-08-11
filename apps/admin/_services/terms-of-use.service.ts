@@ -7,6 +7,7 @@ import type { PaginationQueryParamsType } from '@admin/shared/helpers';
 import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
+import type { DomainContextType } from '@admin/shared/types';
 
 @injectable()
 export class TermsOfUseService extends BaseService {
@@ -15,23 +16,26 @@ export class TermsOfUseService extends BaseService {
   }
 
   async createTermsOfUse(
-    requestUser: { id: string },
+    domainContext: DomainContextType,
     touPayload: {
       name: string;
       touType: TermsOfUseTypeEnum;
       summary?: string;
       releasedAt?: Date;
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    return await this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return await em.transaction(async transaction => {
       const savedToU = await transaction.save(
         TermsOfUseEntity,
         TermsOfUseEntity.new({
           name: touPayload.name,
           touType: touPayload.touType,
           summary: touPayload.summary || '',
-          createdBy: requestUser.id,
-          updatedBy: requestUser.id,
+          createdBy: domainContext.id,
+          updatedBy: domainContext.id,
           releasedAt: touPayload.releasedAt || null
         })
       );
@@ -41,16 +45,19 @@ export class TermsOfUseService extends BaseService {
   }
 
   async updateTermsOfUse(
-    requestUser: { id: string },
+    domainContext: DomainContextType,
     touPayload: {
       name: string;
       touType: TermsOfUseTypeEnum;
       summary?: string;
       releasedAt?: Date;
     },
-    touId: string
+    touId: string,
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    await this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    await em.transaction(async transaction => {
       await transaction.update(
         TermsOfUseEntity,
         { id: touId },
@@ -58,7 +65,7 @@ export class TermsOfUseService extends BaseService {
           name: touPayload.name,
           touType: touPayload.touType,
           summary: touPayload.summary || '',
-          updatedBy: requestUser.id,
+          updatedBy: domainContext.id,
           releasedAt: touPayload.releasedAt || null
         }
       );
@@ -145,7 +152,7 @@ export class TermsOfUseService extends BaseService {
     const tou = await em.createQueryBuilder(TermsOfUseEntity, 'tou').where('tou.id = :id', { id }).getOne();
 
     if (!tou) {
-      throw new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USER_NOT_FOUND);
+      throw new NotFoundError(AdminErrorsEnum.ADMIN_TERMS_OF_USE_NOT_FOUND);
     }
 
     return {

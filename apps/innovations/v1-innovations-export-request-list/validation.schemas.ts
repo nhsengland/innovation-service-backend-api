@@ -17,7 +17,6 @@ export const ParamsSchema = Joi.object<ParamsType>({
 export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   statuses?: InnovationExportRequestStatusEnum[];
 };
-
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
   orderKeys: Object.keys(orderFields)
 })

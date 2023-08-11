@@ -826,27 +826,31 @@ export class RecipientsService extends BaseService {
    * @returns the exportRequest info
    */
   async getExportRequestInfo(requestId: string): Promise<{
+    id: string;
     status: InnovationExportRequestStatusEnum;
     requestReason: string;
     rejectReason: string | null;
     createdBy: {
       id: string;
       // All consumers require the unit so adding it here to avoid extra queries
-      unitId: string;
-      unitName: string;
+      unitId?: string;
+      unitName?: string;
     };
   }> {
     const request = await this.sqlConnection
       .createQueryBuilder(InnovationExportRequestEntity, 'request')
       .select([
+        'request.id',
         'request.status',
         'request.requestReason',
         'request.rejectReason',
         'request.createdBy',
+        'role.id',
         'unit.id',
         'unit.name'
       ])
-      .innerJoin('request.organisationUnit', 'unit')
+      .innerJoin('request.createdByUserRole', 'role')
+      .leftJoin('role.organisationUnit', 'unit')
       .where('request.id = :requestId', { requestId })
       .getOne();
 
@@ -855,13 +859,14 @@ export class RecipientsService extends BaseService {
     }
 
     return {
+      id: request.id,
       status: request.status,
       requestReason: request.requestReason,
       rejectReason: request.rejectReason,
       createdBy: {
         id: request.createdBy,
-        unitId: request.organisationUnit.id,
-        unitName: request.organisationUnit.name
+        unitId: request.createdByUserRole.organisationUnit?.id,
+        unitName: request.createdByUserRole.organisationUnit?.name
       }
     };
   }

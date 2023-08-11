@@ -3,6 +3,7 @@ import { injectable } from 'inversify';
 import { InnovationEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum } from '@admin/shared/enums';
 import { BaseService } from './base.service';
+import type { EntityManager } from 'typeorm';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -18,9 +19,12 @@ export class StatisticsService extends BaseService {
    */
   async getOrganisationUnitInnovationCounters(
     organisationUnitId: string,
-    onlyOpen = true
+    onlyOpen = true,
+    entityManager?: EntityManager
   ): Promise<{ [k in InnovationSupportStatusEnum]?: number }> {
-    const query = this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select('count(1)', 'count')
       .addSelect('supports.status', 'status')

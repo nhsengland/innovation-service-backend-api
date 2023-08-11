@@ -28,7 +28,7 @@ import {
   UserErrorsEnum
 } from '@innovations/shared/errors';
 import type { DomainService, NotifierService } from '@innovations/shared/services';
-import type { DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType, InnovationAssessmentKPIExemptionType } from '@innovations/shared/types';
 
 import { InnovationHelper } from '../_helpers/innovation.helper';
 import type { InnovationAssessmentType } from '../_types/innovation.types';
@@ -426,12 +426,15 @@ export class InnovationAssessmentsService extends BaseService {
       // 5. Create an activity log for the reassessment
       // 6. Sends notifications
 
+      const now = new Date();
+
       await transaction.update(
         InnovationEntity,
         { id: assessment.innovation.id },
         {
+          lastAssessmentRequestAt: now,
           status: InnovationStatusEnum.WAITING_NEEDS_ASSESSMENT,
-          statusUpdatedAt: new Date().toISOString(),
+          statusUpdatedAt: now,
           updatedBy: assessment.createdBy
         }
       );
@@ -440,7 +443,8 @@ export class InnovationAssessmentsService extends BaseService {
 
       const assessmentClone = await transaction.save(
         InnovationAssessmentEntity,
-        (({ id, finishedAt, createdAt, updatedAt, deletedAt, ...item }) => item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+        (({ id, finishedAt, createdAt, updatedAt, deletedAt, exemptedAt, exemptedReason, exemptedMessage, ...item }) =>
+          item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
       );
 
       const reassessment = await transaction.save(
@@ -531,5 +535,71 @@ export class InnovationAssessmentsService extends BaseService {
     });
 
     return { assessmentId: updatedAssessment.id, assessorId: updatedAssessment.newAssessor.id };
+  }
+
+  async upsertExemption(
+    domainContext: DomainContextType,
+    assessmentId: string,
+    data: { reason: InnovationAssessmentKPIExemptionType; message?: string },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const assessment = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .getOne();
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    const now = new Date();
+    await em.update(
+      InnovationAssessmentEntity,
+      { id: assessmentId },
+      {
+        exemptedReason: data.reason,
+        exemptedMessage: data.message ?? null,
+        updatedAt: now,
+        updatedBy: domainContext.id,
+        ...(!assessment.exemptedAt ? { exemptedAt: now } : {}) // only update on the first "exemption request"
+      }
+    );
+  }
+
+  async getExemption(
+    assessmentId: string,
+    entityManager?: EntityManager
+  ): Promise<{
+    isExempted: boolean;
+    exemption?: {
+      reason: InnovationAssessmentKPIExemptionType;
+      message?: string;
+      exemptedAt: Date;
+    };
+  }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const assessment = await em
+      .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .select(['assessment.id', 'assessment.exemptedReason', 'assessment.exemptedMessage', 'assessment.exemptedAt'])
+      .where('assessment.id = :assessmentId', { assessmentId })
+      .getOne();
+    if (!assessment) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
+    }
+
+    if (assessment.exemptedAt && assessment.exemptedReason) {
+      return {
+        isExempted: true,
+        exemption: {
+          reason: assessment.exemptedReason,
+          message: assessment.exemptedMessage ?? undefined,
+          exemptedAt: assessment.exemptedAt
+        }
+      };
+    } else {
+      return { isExempted: false };
+    }
   }
 }

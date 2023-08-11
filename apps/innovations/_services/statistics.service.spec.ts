@@ -1,20 +1,23 @@
+import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
-import type { StatisticsService } from './statistics.service';
-import { TestsHelper } from '@innovations/shared/tests';
-import SYMBOLS from './symbols';
-import { container } from '../_config';
+
 import {
   InnovationActionStatusEnum,
+  InnovationExportRequestStatusEnum,
+  InnovationSectionStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
-import { InnovationSectionStatusEnum } from '@innovations/shared/enums';
-import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
-import { NotificationBuilder } from '@innovations/shared/tests/builders/notification.builder';
-import { randUuid } from '@ngneat/falso';
 import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { TestsHelper } from '@innovations/shared/tests';
+import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
+import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
+import { NotificationBuilder } from '@innovations/shared/tests/builders/notification.builder';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+
+import { container } from '../_config';
+import type { StatisticsService } from './statistics.service';
+import SYMBOLS from './symbols';
 
 describe('Innovations / _services / innovation transfer suite', () => {
   let sut: StatisticsService;
@@ -224,6 +227,19 @@ describe('Innovations / _services / innovation transfer suite', () => {
         count: 1,
         lastSubmittedAt: new Date(thread.messages.aliceMessage.createdAt)
       });
+    });
+  });
+
+  describe('getPendingExportRequests', () => {
+    it('should get pending request for the given innovation', async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+      const nPendingRequests = await sut.getPendingExportRequests(innovation.id, em);
+
+      expect(nPendingRequests).toBe(
+        Object.values(innovation.exportRequests).filter(r => r.status === InnovationExportRequestStatusEnum.PENDING)
+          .length
+      );
     });
   });
 });

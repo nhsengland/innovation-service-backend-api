@@ -1,7 +1,7 @@
 resources:
   containers:
     - container: mssql
-      image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+      image: mcr.microsoft.com/mssql/server:2022-latest
       ports:
         - 1433:1433
       env:
@@ -45,7 +45,7 @@ variables:
   DB_TESTS_PWD:  Pass@word
   DB_TESTS_NAME: tests
   ADMIN_OID: 00000000-0000-0000-0000-000000000000
-  APPINSIGHTS_INSTRUMENTATIONKEY: 00000000-0000-0000-0000-000000000000
+  APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://uksouth-0.in.applicationinsights.azure.com/;LiveEndpoint=https://uksouth.livediagnostics.monitor.azure.com/"
   AZURE_STORAGE_CONNECTIONSTRING: DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;
   AZURE_STORAGE_QUEUE_NAME: email-notification-queue
 
@@ -76,6 +76,7 @@ steps:
 
 - script: |
     sqlcmd -S localhost -U sa -P Pass@word -p -Q "CREATE DATABASE tests;"
+    sqlcmd -S localhost -U sa -P Pass@word -p -Q "ALTER DATABASE tests SET READ_COMMITTED_SNAPSHOT ON;"
     sqlcmd -S localhost -U sa -P Pass@word -p -Q "SELECT @@VERSION;"
   displayName: 'Setup SQL Container'
 

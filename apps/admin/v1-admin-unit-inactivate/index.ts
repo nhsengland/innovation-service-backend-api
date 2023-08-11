@@ -25,10 +25,9 @@ class V1AdminUnitInactivate {
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const result = await organisationsService.inactivateUnit(requestUser, domainContext, params.organisationUnitId);
+      const result = await organisationsService.inactivateUnit(domainContext, params.organisationUnitId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ unitId: result.unitId });
       return;

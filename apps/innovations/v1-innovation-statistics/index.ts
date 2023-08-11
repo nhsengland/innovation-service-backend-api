@@ -2,7 +2,7 @@ import { mapOpenApi3 as openapi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -32,10 +32,9 @@ class GetInnovationStatistics {
         .checkInnovation()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const stats = await StatisticsHandlersHelper.runHandler(requestUser, domainContext, query.statistics, {
+      const stats = await StatisticsHandlersHelper.runHandler(domainContext, query.statistics, {
         innovationId: params.innovationId
       });
 
@@ -53,7 +52,7 @@ export default openapi(GetInnovationStatistics.httpTrigger as AzureFunction, '/v
     description: 'Get an innovation statistics',
     tags: ['[v1] Innovation Statistics'],
     operationId: 'v1-innovation-statistics',
-    parameters: [{ in: 'path', name: 'innovationId', required: true, schema: { type: 'string' } }],
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QuerySchema }),
     responses: {
       200: { description: 'Ok.' },
       400: { description: 'Bad request.' }

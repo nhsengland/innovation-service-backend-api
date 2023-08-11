@@ -12,7 +12,7 @@ export class NotificationUserEntity extends BaseEntity {
   id: number;
 
   @Column({ name: 'read_at', type: 'datetime2', nullable: true })
-  readAt: Date;
+  readAt: Date | null;
 
   @ManyToOne(() => NotificationEntity)
   @JoinColumn({ name: 'notification_id' })

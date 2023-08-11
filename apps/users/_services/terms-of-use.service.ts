@@ -5,6 +5,7 @@ import { ServiceRoleEnum, TermsOfUseTypeEnum } from '@users/shared/enums';
 import { BadRequestError, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 
 import { BaseService } from './base.service';
+import type { EntityManager } from 'typeorm';
 
 @injectable()
 export class TermsOfUseService extends BaseService {
@@ -14,7 +15,8 @@ export class TermsOfUseService extends BaseService {
 
   async getActiveTermsOfUseInfo(
     user: { id: string },
-    currentRole: ServiceRoleEnum | ''
+    currentRole: ServiceRoleEnum | '',
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
     name: string;
@@ -37,7 +39,9 @@ export class TermsOfUseService extends BaseService {
         throw new BadRequestError(UserErrorsEnum.USER_TYPE_INVALID);
     }
 
-    const dbTermsOfUse = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbTermsOfUse = await em
       .createQueryBuilder(TermsOfUseEntity, 'termsOfUse')
       .select('termsOfUse.id', 'id')
       .addSelect('termsOfUse.name', 'name')
@@ -73,10 +77,16 @@ export class TermsOfUseService extends BaseService {
 
   async acceptActiveTermsOfUse(
     requestUser: { id: string },
-    currentRole: ServiceRoleEnum | ''
+    currentRole: ServiceRoleEnum | '',
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    const dbTermsOfUse = await this.getActiveTermsOfUseInfo(requestUser, currentRole);
 
+    const em = entityManager ?? this.sqlConnection.manager;
+    
+    const dbTermsOfUse = await this.getActiveTermsOfUseInfo(requestUser, currentRole, em);
+
+    // when terms of use haven't been released the above function already throws a not found error
+    /*c8 ignore next 4*/
     if (!dbTermsOfUse.releasedAt) {
       throw new UnprocessableEntityError(UserErrorsEnum.USER_TERMS_OF_USE_INVALID, {
         message: 'Unreleased terms of use'
@@ -89,7 +99,7 @@ export class TermsOfUseService extends BaseService {
       });
     }
 
-    await this.sqlConnection.getRepository(TermsOfUseUserEntity).save(
+    await em.getRepository(TermsOfUseUserEntity).save(
       TermsOfUseUserEntity.new({
         termsOfUse: TermsOfUseEntity.new({ id: dbTermsOfUse.id }),
         user: UserEntity.new({ id: requestUser.id }),

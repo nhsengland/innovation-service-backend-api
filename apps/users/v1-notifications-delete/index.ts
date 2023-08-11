@@ -12,7 +12,7 @@ import { container } from '../_config';
 import type { NotificationsService } from '../_services/notifications.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { PathParamsSchema, PathParamType } from './validation.schemas';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1UserNotificationsDelete {
   @JwtDecoder()
@@ -29,7 +29,7 @@ class V1UserNotificationsDelete {
         .verify();
       const domainContext = authInstance.getContext();
 
-      const queryParams = JoiHelper.Validate<PathParamType>(PathParamsSchema, request.params);
+      const queryParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
       await notificationsService.deleteUserNotification(domainContext.currentRole.id, queryParams.notificationId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
@@ -48,7 +48,7 @@ export default openApi(V1UserNotificationsDelete.httpTrigger as AzureFunction, '
     description: 'Returns the id of the deleted notification',
     operationId: 'v1-notifications-delete',
     tags: ['[v1] Notifications'],
-    parameters: SwaggerHelper.paramJ2S({ path: PathParamsSchema }),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       200: {
         description: 'Success',

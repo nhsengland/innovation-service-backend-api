@@ -3,6 +3,7 @@ import { container } from '@innovations/shared/config/inversify.config';
 import { InnovationActionsService } from '../_services/innovation-actions.service';
 import { InnovationAssessmentsService } from '../_services/innovation-assessments.service';
 import { InnovationCollaboratorsService } from '../_services/innovation-collaborators.service';
+import { InnovationExportRequestService } from '../_services/innovation-export-request.service';
 import { InnovationFileService } from '../_services/innovation-file.service';
 import { InnovationSectionsService } from '../_services/innovation-sections.service';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
@@ -42,6 +43,10 @@ container
 container
   .bind<InnovationCollaboratorsService>(SYMBOLS.InnovationCollaboratorsService)
   .to(InnovationCollaboratorsService)
+  .inSingletonScope();
+container
+  .bind<InnovationExportRequestService>(SYMBOLS.InnovationExportRequestService)
+  .to(InnovationExportRequestService)
   .inSingletonScope();
 container.bind<InnovationsService>(SYMBOLS.InnovationsService).to(InnovationsService).inSingletonScope();
 container.bind<PDFService>(SYMBOLS.PDFService).to(PDFService).inSingletonScope();

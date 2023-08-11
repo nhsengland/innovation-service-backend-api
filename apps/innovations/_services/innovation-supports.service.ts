@@ -822,7 +822,7 @@ export class InnovationSupportsService extends BaseService {
         createdBy: {
           id: supportLog.createdBy,
           name: createdByUser?.displayName ?? '[deleted user]',
-          displayRole: this.domainService.users.getUserDisplayRoleInformation(
+          displayRole: this.domainService.users.getDisplayRoleInformation(
             supportLog.createdBy,
             supportLog.createdByUserRole.role,
             innovation.owner?.id

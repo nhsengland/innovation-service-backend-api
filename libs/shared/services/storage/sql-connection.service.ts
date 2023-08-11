@@ -25,6 +25,8 @@ export class SQLConnectionService {
   }
 
   async destroy(): Promise<void> {
-    await this.connection?.destroy();
+    if (this.connection?.isInitialized) {
+      await this.connection?.destroy();
+    }
   }
 }

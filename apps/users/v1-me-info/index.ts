@@ -48,16 +48,16 @@ class V1MeInfo {
       // TODO: Improve this endpoint together with FE in order to separate the responsibility
       // of a user request from a user role request.
       if (userRoles.length === 1 && userRoles[0]!.role !== ServiceRoleEnum.ADMIN) {
-        const userRole = requestUser.roles[0]!;
+        const userRole = userRoles[0]!;
 
         termsOfUseAccepted = (await termsOfUseService.getActiveTermsOfUseInfo({ id: requestUser.id }, userRole.role))
           .isAccepted;
-        hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
-        hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
         hasAnnouncements = (await announcementsService.getUserRoleAnnouncements(userRole.id)).length > 0;
 
         if (userRole.role === ServiceRoleEnum.INNOVATOR) {
           userPreferences = await domainService.users.getUserPreferences(requestUser.id);
+          hasInnovationTransfers = (await usersService.getUserPendingInnovationTransfers(requestUser.email)).length > 0;
+          hasInnovationCollaborations = (await usersService.getCollaborationsInvitesList(requestUser.email)).length > 0;
         }
       }
 

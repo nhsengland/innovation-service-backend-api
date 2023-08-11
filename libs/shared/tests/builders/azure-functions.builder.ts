@@ -19,6 +19,9 @@ export class AzureHttpTriggerBuilder {
     params: {},
     query: {},
     user: null,
+    get: () => {
+      throw new Error('Function not implemented.');
+    },
     parseFormBody: () => {
       throw new Error('Function not implemented.');
     }

@@ -3,6 +3,7 @@ import type { DataSource, EntityManager } from 'typeorm';
 
 import { container } from '../config/inversify.config';
 
+import { randUuid } from '@ngneat/falso';
 import { InnovationEntity, InnovationSectionEntity, UserEntity, UserRoleEntity } from '../entities';
 import { InnovationSectionStatusEnum, UserStatusEnum } from '../enums';
 import { NotFoundError, UserErrorsEnum } from '../errors';
@@ -132,24 +133,32 @@ export class TestsHelper {
     jest.spyOn(IdentityProviderService.prototype, 'getUserInfoByEmail').mockImplementation(async (email: string) => {
       const user = emailMap.get(email);
       if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+        return null;
       }
       return { ...DTOsHelper.getIdentityUserInfo(user), phone: null };
     });
 
-    jest.spyOn(IdentityProviderService.prototype, 'updateUser').mockImplementation(async (
-    identityId: string,
-    _body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
-    ) => {
-      const user = identityMap.get(identityId);
-      if (!user) {
-        throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
-      }
-    });
+    jest
+      .spyOn(IdentityProviderService.prototype, 'updateUser')
+      .mockImplementation(
+        async (
+          identityId: string,
+          _body: { displayName?: string; mobilePhone?: string | null; accountEnabled?: boolean }
+        ) => {
+          const user = identityMap.get(identityId);
+          if (!user) {
+            throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);
+          }
+        }
+      );
 
-    jest.spyOn(IdentityProviderService.prototype, 'deleteUser').mockImplementation(async (
-      identityId: string
-    ) => {
+    jest
+      .spyOn(IdentityProviderService.prototype, 'createUser')
+      .mockImplementation(async (_data: { name: string; email: string; password: string }) => {
+        return randUuid();
+      });
+
+    jest.spyOn(IdentityProviderService.prototype, 'deleteUser').mockImplementation(async (identityId: string) => {
       const user = identityMap.get(identityId);
       if (!user) {
         throw new NotFoundError(UserErrorsEnum.USER_IDENTITY_PROVIDER_NOT_FOUND);

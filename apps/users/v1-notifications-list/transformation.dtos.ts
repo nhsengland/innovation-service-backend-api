@@ -13,7 +13,7 @@ export type ResponseDTO = {
     contextDetail: NotificationContextDetailEnum;
     contextId: string;
     createdAt: Date;
-    readAt: Date;
+    readAt: Date | null;
     params: Record<string, unknown>; // used to be NotificationParamsType in legacy API;
   }[];
 };

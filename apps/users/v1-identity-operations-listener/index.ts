@@ -34,7 +34,7 @@ class V1IdentityOperationsQueueListener {
       context.res = { done: true };
       return;
     } catch (error) {
-      context.log.error('ERROR: Unexpected error parsing idendity operation: ', JSON.stringify(error));
+      context.log.error('ERROR: Unexpected error parsing identity operation: ', JSON.stringify(error));
       throw error;
     }
   }

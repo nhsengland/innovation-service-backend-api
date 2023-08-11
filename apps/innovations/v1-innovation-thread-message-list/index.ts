@@ -26,16 +26,19 @@ class V1InnovationThreadMessageList {
 
       const auth = await authorizationService
         .validate(context)
+        .setInnovation(pathParams.innovationId)
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
         .checkAdminType()
+        .checkInnovation()
         .verify();
 
       const domainContext = auth.getContext();
 
       let orderBy;
 
+      // TODO change this to pagination schema
       if (queryParams.order) {
         orderBy = JSON.parse(queryParams.order);
       }

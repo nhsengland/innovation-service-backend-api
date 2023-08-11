@@ -26,7 +26,7 @@ import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEnti
 import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
-import type { DomainContextType, DomainUserInfoType } from '@admin/shared/types';
+import type { DomainContextType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { ENV } from '../_config';
@@ -46,12 +46,14 @@ export class OrganisationsService extends BaseService {
   }
 
   async inactivateUnit(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
-    unitId: string
+    unitId: string,
+    entityManager?: EntityManager
   ): Promise<{ unitId: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
     // get the organisation to whom the unit belongs to
-    const unit = await this.sqlConnection
+    const unit = await em
       .createQueryBuilder(OrganisationUnitEntity, 'org_units')
       .where('org_units.id = :unitId', { unitId })
       .getOne();
@@ -62,7 +64,7 @@ export class OrganisationsService extends BaseService {
 
     // users for which the role in this unit is the only active role will be locked
     const usersToLock = (
-      await this.sqlConnection
+      await em
         .createQueryBuilder(UserRoleEntity, 'ur')
         .select('ur.user_id', 'userId')
         .addSelect('count(*)', 'cnt')
@@ -83,7 +85,7 @@ export class OrganisationsService extends BaseService {
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
-      await this.sqlConnection
+      await em
         .createQueryBuilder(InnovationActionEntity, 'action')
         .leftJoinAndSelect('action.innovationSupport', 'support')
         .leftJoinAndSelect('support.organisationUnit', 'unit')
@@ -99,7 +101,7 @@ export class OrganisationsService extends BaseService {
     ];
 
     //get supports to complete
-    const supportsToComplete = await this.sqlConnection
+    const supportsToComplete = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
       .leftJoinAndSelect('support.innovation', 'innovation')
@@ -113,7 +115,7 @@ export class OrganisationsService extends BaseService {
     let notificationsToMarkAsRead: NotificationEntity[] = [];
 
     if (contexts.length > 0) {
-      notificationsToMarkAsRead = await this.sqlConnection
+      notificationsToMarkAsRead = await em
         .createQueryBuilder(NotificationEntity, 'notification')
         .innerJoinAndSelect('notification.notificationUsers', 'notificationUser')
         .where('notification.context_id IN (:...contexts)', { contexts })
@@ -121,7 +123,7 @@ export class OrganisationsService extends BaseService {
         .getMany();
     }
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await em.transaction(async transaction => {
       const now = new Date();
 
       // Inactivate unit
@@ -198,7 +200,7 @@ export class OrganisationsService extends BaseService {
       for (const support of supportsToComplete) {
         await this.domainService.innovations.addSupportLog(
           transaction,
-          { id: requestUser.id, roleId: domainContext.currentRole.id },
+          { id: domainContext.id, roleId: domainContext.currentRole.id },
           support.innovation.id,
           {
             type: InnovationSupportLogTypeEnum.STATUS_UPDATE,
@@ -230,12 +232,15 @@ export class OrganisationsService extends BaseService {
   }
 
   async activateUnit(
-    requestUser: DomainContextType,
+    domainContext: DomainContextType,
     organisationId: string,
     unitId: string,
-    userIds: string[]
+    userIds: string[],
+    entityManager?: EntityManager
   ): Promise<{ unitId: string }> {
-    const unit = await this.sqlConnection
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const unit = await em
       .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
       .innerJoinAndSelect('org_unit.organisation', 'organisation')
       .where('org_unit.id = :unitId', { unitId })
@@ -246,7 +251,7 @@ export class OrganisationsService extends BaseService {
     }
 
     // unlocked locked users of selected users
-    const usersToUnlock = await this.sqlConnection
+    const usersToUnlock = await em
       .createQueryBuilder(UserRoleEntity, 'ur')
       .select(['ur.id', 'ur.role', 'user.id', 'user.identityId'])
       .innerJoin('ur.user', 'user')
@@ -256,7 +261,7 @@ export class OrganisationsService extends BaseService {
       .getMany();
 
     // unlock locked roles of selected users
-    const rolesToUnlock = await this.sqlConnection
+    const rolesToUnlock = await em
       .createQueryBuilder(UserRoleEntity, 'ur')
       .select(['ur.id', 'ur.role'])
       .where('ur.organisation_unit_id = :unitId', { unitId }) // ensure users have role in unit
@@ -273,14 +278,14 @@ export class OrganisationsService extends BaseService {
       throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_ACTIVATE_NO_QA);
     }
 
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const result = await em.transaction(async transaction => {
       const now = new Date();
 
       // Activate unit
       await transaction.update(
         OrganisationUnitEntity,
         { id: unitId },
-        { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
+        { inactivatedAt: null, updatedAt: now, updatedBy: domainContext.id }
       );
 
       // activate organistion to whom unit belongs if it is inactivated
@@ -288,13 +293,13 @@ export class OrganisationsService extends BaseService {
         await transaction.update(
           OrganisationEntity,
           { id: organisationId },
-          { inactivatedAt: null, updatedAt: now, updatedBy: requestUser.id }
+          { inactivatedAt: null, updatedAt: now, updatedBy: domainContext.id }
         );
 
         // Just send the announcement if this is the first time the organization has been activated.
         if (DatesHelper.isDateEqual(unit.organisation.createdAt, unit.organisation.inactivatedAt)) {
           await this.createOrganisationAnnouncement(
-            requestUser,
+            domainContext,
             unit.organisation.id,
             unit.organisation.name,
             transaction
@@ -308,13 +313,13 @@ export class OrganisationsService extends BaseService {
       await transaction.update(
         UserEntity,
         { id: In(usersToUnlockId) },
-        { lockedAt: null, updatedAt: now, updatedBy: requestUser.id, status: UserStatusEnum.ACTIVE }
+        { lockedAt: null, updatedAt: now, updatedBy: domainContext.id, status: UserStatusEnum.ACTIVE }
       );
 
       await transaction.update(
         UserRoleEntity,
         { id: In(rolesToUnlock.map(r => r.id)), organisationUnit: unitId },
-        { isActive: true, updatedAt: now, updatedBy: requestUser.id }
+        { isActive: true, updatedAt: now, updatedBy: domainContext.id }
       );
 
       return { unitId };
@@ -334,11 +339,14 @@ export class OrganisationsService extends BaseService {
   async updateUnit(
     unitId: string,
     name: string,
-    acronym: string
+    acronym: string,
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
   }> {
-    return this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return em.transaction(async transaction => {
       const unit = await transaction
         .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
         .where('org_unit.id = :unitId', { unitId })
@@ -377,11 +385,14 @@ export class OrganisationsService extends BaseService {
   async updateOrganisation(
     organisationId: string,
     name: string,
-    acronym: string
+    acronym: string,
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
   }> {
-    return this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return em.transaction(async transaction => {
       const organisation = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
         .innerJoinAndSelect('org.organisationUnits', 'organisationUnits')
@@ -394,7 +405,7 @@ export class OrganisationsService extends BaseService {
 
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type=:type', {
+        .where('(org.name = :name OR org.acronym = :acronym) AND org.id != :organisationId AND org.type= :type', {
           name,
           acronym,
           organisationId,
@@ -441,17 +452,21 @@ export class OrganisationsService extends BaseService {
       name: string;
       acronym: string;
       units?: { name: string; acronym: string }[];
-    }
+    },
+    entityManager?: EntityManager
   ): Promise<{
     id: string;
     units: string[];
   }> {
-    const result = await this.sqlConnection.transaction(async transaction => {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const result = await em.transaction(async transaction => {
       const orgNameOrAcronymAlreadyExists = await transaction
         .createQueryBuilder(OrganisationEntity, 'org')
-        .where('org.name = :name OR org.acronym = :acronym', {
+        .where('(org.name = :name OR org.acronym = :acronym) AND org.type = :type', {
           name: data.name,
-          acronym: data.acronym
+          acronym: data.acronym,
+          type: OrganisationTypeEnum.ACCESSOR
         })
         .getOne();
 
@@ -504,8 +519,10 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map(u => u.id) };
   }
 
-  async createUnit(organisationId: string, name: string, acronym: string): Promise<{ id: string }> {
-    const unit = await this.sqlConnection.transaction(async transaction => {
+  async createUnit(organisationId: string, name: string, acronym: string, entityManager?: EntityManager): Promise<{ id: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const unit = await em.transaction(async transaction => {
       return this.createOrganisationUnit(organisationId, name, acronym, false, transaction);
     });
 
@@ -602,8 +619,7 @@ export class OrganisationsService extends BaseService {
     // don't allow units with the same name or acronym inside the same organisation
     const unitNameOrAcronymAlreadyExists = await transaction
       .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .where('unit.organisation_id = :organisationId', { organisationId })
-      .andWhere('(unit.name = :name OR unit.acronym = :acronym)', { name, acronym })
+      .where('(unit.name = :name OR unit.acronym = :acronym)', { name, acronym })
       .getOne();
 
     if (unitNameOrAcronymAlreadyExists) {
@@ -631,9 +647,9 @@ export class OrganisationsService extends BaseService {
     requestUserId: string,
     entityManager?: EntityManager
   ): Promise<OrganisationUserEntity> {
-    const connection = entityManager ?? this.sqlConnection.manager;
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const organisationUser = await connection
+    const organisationUser = await em 
       .createQueryBuilder(OrganisationUserEntity, 'orgUser')
       .where('orgUser.user_id = :userId', { userId })
       .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
@@ -643,7 +659,7 @@ export class OrganisationsService extends BaseService {
       return organisationUser;
     }
 
-    return await connection.save(
+    return await em.save(
       OrganisationUserEntity,
       OrganisationUserEntity.new({
         organisation: OrganisationEntity.new({ id: organisationId }),

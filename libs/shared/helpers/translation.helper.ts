@@ -29,6 +29,10 @@ const TRANSLATIONS = {
     INNOVATOR: 'Innovator',
     ACCESSOR: 'Accessor',
     QUALIFYING_ACCESSOR: 'Qualifying Accessor'
+  },
+  TEAMS: {
+    ADMIN: 'Service administrators',
+    ASSESSMENT: 'Needs Assessment team'
   }
 };
 

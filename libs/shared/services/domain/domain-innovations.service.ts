@@ -598,6 +598,20 @@ export class DomainInnovationsService {
       .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
       .getMany();
 
+    // Get the non active collaborators so that we can filter them out as intervenients
+    const nonActiveCollaborators = new Set(
+      (
+        await connection
+          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
+          .select(['collaborator.user_id'])
+          .where('collaborator.innovation_id = :innovationId', { innovationId: thread.innovation.id })
+          .andWhere('collaborator.status != :collaboratorStatus', {
+            collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE
+          })
+          .getRawMany()
+      ).map(c => c.user_id)
+    );
+
     const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
     const duplicateSet = new Set<string>();
 
@@ -607,7 +621,7 @@ export class DomainInnovationsService {
 
     for (const message of messages) {
       // filter duplicates based on roleId
-      if (!duplicateSet.has(message.authorUserRole.id)) {
+      if (!duplicateSet.has(message.authorUserRole.id) && !nonActiveCollaborators.has(message.author.id)) {
         duplicateSet.add(message.authorUserRole.id);
 
         participants.push({

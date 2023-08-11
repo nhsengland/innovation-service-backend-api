@@ -57,6 +57,7 @@ describe('v1-innovation-support-logs-create Suite', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
+      ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 403, scenario.users.johnInnovator],
       ['Innovator collaborator', 403, scenario.users.janeInnovator],

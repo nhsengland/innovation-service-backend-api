@@ -120,7 +120,7 @@ export class UsersService extends BaseService {
   }
 
   async createUser(
-    requestUser: { id: string },
+    domainContext: DomainContextType,
     data: {
       name: string;
       email: string;
@@ -128,7 +128,8 @@ export class UsersService extends BaseService {
       organisationAcronym?: string | null;
       organisationUnitAcronym?: string | null;
       role?: AccessorOrganisationRoleEnum | null;
-    }
+    },
+    enitityManager?: EntityManager
   ): Promise<{ id: string }> {
     if (
       (data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
@@ -140,8 +141,10 @@ export class UsersService extends BaseService {
     let organisation: OrganisationEntity | null;
     let unit: OrganisationUnitEntity | null;
 
+    const em = enitityManager ?? this.sqlConnection.manager;
+
     if (data.organisationAcronym) {
-      organisation = await this.sqlConnection
+      organisation = await em
         .createQueryBuilder(OrganisationEntity, 'organisation')
         .where('organisation.acronym = :acronym', { acronym: data.organisationAcronym })
         .getOne();
@@ -151,7 +154,7 @@ export class UsersService extends BaseService {
       }
 
       if (data.organisationUnitAcronym) {
-        unit = await this.sqlConnection
+        unit = await em
           .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
           .innerJoin('org_unit.organisation', 'org')
           .where('org.id = :orgId', { orgId: organisation.id })
@@ -174,7 +177,7 @@ export class UsersService extends BaseService {
     if (b2cUser) {
       identityId = b2cUser.identityId;
       // user exists in b2c, check if it also exists in DB
-      const user = await this.sqlConnection
+      const user = await em
         .createQueryBuilder(UserEntity, 'user')
         .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
         .getOne();
@@ -193,13 +196,13 @@ export class UsersService extends BaseService {
       identityId = iId;
     }
 
-    return await this.sqlConnection.transaction(async transaction => {
+    return await em.transaction(async transaction => {
       const user = await transaction.save(
         UserEntity,
         UserEntity.new({
           identityId: identityId,
-          createdBy: requestUser.id,
-          updatedBy: requestUser.id
+          createdBy: domainContext.id,
+          updatedBy: domainContext.id
         })
       );
 
@@ -221,8 +224,8 @@ export class UsersService extends BaseService {
             organisation,
             user,
             role: data.role,
-            createdBy: requestUser.id,
-            updatedBy: requestUser.id
+            createdBy: domainContext.id,
+            updatedBy: domainContext.id
           })
         );
 
@@ -231,8 +234,8 @@ export class UsersService extends BaseService {
           OrganisationUnitUserEntity.new({
             organisationUnit: unit,
             organisationUser: orgUser,
-            createdBy: requestUser.id,
-            updatedBy: requestUser.id
+            createdBy: domainContext.id,
+            updatedBy: domainContext.id
           })
         );
 
@@ -243,7 +246,7 @@ export class UsersService extends BaseService {
             role: ServiceRoleEnum[data.role],
             organisation: organisation,
             organisationUnit: unit,
-            createdBy: requestUser.id,
+            createdBy: domainContext.id,
             isActive: !organisation.inactivatedAt
           })
         );

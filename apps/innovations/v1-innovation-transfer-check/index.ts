@@ -8,7 +8,7 @@ import { container } from '../_config';
 import type { InnovationTransferService } from '../_services/innovation-transfer.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
-import { ParamsSchema, ParamsType } from './validations.schema';
+import { ParamsSchema, ParamsType } from './validation.schemas';
 
 class V1InnovationTransferCheck {
   static async httpTrigger(context: Context, request: HttpRequest): Promise<void> {

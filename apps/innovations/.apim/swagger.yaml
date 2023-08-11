@@ -808,6 +808,103 @@ paths:
           description: The innovation does not exist.
         "500":
           description: An error occurred while creating the innovation assessment.
+  "/v1/{innovationId}/assessments/{assessmentId}/exemption":
+    get:
+      description: Get an assessment kpi exemption.
+      operationId: v1-innovation-assessment-kpi-exemption-info
+      tags:
+        - "[v1] Innovation Assessment"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  isExempted:
+                    type: boolean
+                  exemption:
+                    type: object
+                    properties:
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      exemptedAt:
+                        type: string
+                        format: date-time
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+    patch:
+      description: Upsert an innovation assessment kpi exemption.
+      operationId: v1-innovation-assessment-kpi-exemption-upsert
+      tags:
+        - "[v1] Innovation Assessment"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: assessmentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - NO_RESPONSE
+                    - TECHNICAL_DIFFICULTIES
+                    - INCORRECT_DETAILS
+                    - SERVICE_UNAVAILABLE
+                    - CAPACITY
+                message:
+                  type: string
+                  maxLength: 2000
+              required:
+                - reason
+              additionalProperties: false
+      responses:
+        "204":
+          description: Creates or updates the kpi exemption
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/collaborators/{collaboratorId}/check":
     get:
       description: Check collaborator
@@ -1847,7 +1944,6 @@ paths:
             items:
               type: string
               enum:
-                - isAssessmentOverdue
                 - assessment
                 - supports
                 - notifications
@@ -2537,7 +2633,6 @@ paths:
               properties:
                 filename:
                   type: string
-                  maxLength: 100
               required:
                 - filename
               additionalProperties: false
@@ -2671,18 +2766,25 @@ paths:
         - "[v1] Innovations"
       operationId: v1-innovation-pdf
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
-        description: The thread details
         required: true
         content:
           application/json:
             schema:
               type: object
+              properties:
+                innovationId:
+                  type: string
+                  format: uuid
+              required:
+                - innovationId
+              additionalProperties: false
       responses:
         "200":
           description: Ok.
@@ -3082,11 +3184,28 @@ paths:
         - "[v1] Innovation Statistics"
       operationId: v1-innovation-statistics
       parameters:
-        - in: path
-          name: innovationId
+        - name: innovationId
+          in: path
           required: true
           schema:
             type: string
+            format: uuid
+        - name: statistics
+          in: query
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - SECTIONS_SUBMITTED_COUNTER
+                - ACTIONS_TO_SUBMIT_COUNTER
+                - UNREAD_MESSAGES_COUNTER
+                - ACTIONS_TO_REVIEW_COUNTER
+                - SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER
+                - SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER
+                - UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER
+                - PENDING_EXPORT_REQUESTS_COUNTER
       responses:
         "200":
           description: Ok.
@@ -4335,110 +4454,267 @@ paths:
                     type: string
                     description: Innovation ID
   "/v1/{innovationId}/export-requests":
-    head:
-      operationId: v1-innovations-export-request-check
-      description: Get export request info.
-      tags:
-        - "[v1] Innovations"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          description: Innovation ID
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Success
-        "403":
-          description: Forbidden
     post:
       operationId: v1-innovations-export-requests-create
       description: Create export request.
+      tags:
+        - "[v1] Innovation Export Requests"
       parameters:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                requestReason:
+                  type: string
+                  maxLength: 500
+              required:
+                - requestReason
+              additionalProperties: false
       responses:
-        "200":
-          description: Success
+        "201":
+          description: Creates a new export request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
         "400":
-          description: Invalid innovation payload
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
     get:
       operationId: v1-innovations-export-request-list
       description: Get export requests from a innovation.
       tags:
-        - "[v1] Innovations"
+        - "[v1] Innovation Export Requests"
       parameters:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+        - name: take
+          in: query
+          required: false
+          schema:
+            type: number
+            format: float
+            maximum: 100
+            default: 20
+        - name: order
+          in: query
+          required: false
+          schema:
+            type: object
+            properties: {}
+            additionalProperties:
+              type: string
+              enum:
+                - ASC
+                - DESC
+            default:
+              default: DESC
+        - name: statuses
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum:
+                - PENDING
+                - APPROVED
+                - REJECTED
+                - CANCELLED
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        status:
+                          type: string
+                          enum:
+                            - PENDING
+                            - APPROVED
+                            - REJECTED
+                            - CANCELLED
+                        createdBy:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            displayRole:
+                              type: string
+                            displayTeam:
+                              type: string
+                        createdAt:
+                          type: string
+                          format: date-time
         "400":
-          description: Invalid innovation payload
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/{innovationId}/export-requests/{requestId}":
     get:
       operationId: v1-innovations-export-request-info
       description: Get export request info.
       tags:
-        - "[v1] Innovations"
+        - "[v1] Innovation Export Requests"
       parameters:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
         - name: requestId
           in: path
           required: true
-          description: Export request ID
           schema:
             type: string
             format: uuid
       responses:
         "200":
           description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum:
+                      - PENDING
+                      - APPROVED
+                      - REJECTED
+                      - CANCELLED
+                  requestReason:
+                    type: string
+                  rejectReason:
+                    type: string
+                  createdBy:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      displayRole:
+                        type: string
+                      displayTeam:
+                        type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  updatedBy:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                  updatedAt:
+                    type: string
+                    format: date-time
         "400":
-          description: Invalid innovation payload
-  "/v1/{innovationId}/export-requests/{requestId}/status":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
     patch:
-      operationId: v1-innovations-export-requests-update-status
-      description: updates export request status
+      operationId: v1-innovations-export-request-update
+      description: Patch export request status
       tags:
-        - "[v1] Innovations"
+        - "[v1] Innovation Export Requests"
       parameters:
         - name: innovationId
           in: path
           required: true
-          description: Innovation ID
           schema:
             type: string
             format: uuid
         - name: requestId
           in: path
           required: true
-          description: Export request ID
           schema:
             type: string
             format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  oneOf:
+                    - type: string
+                      enum:
+                        - CANCELLED
+                      x-required: true
+                    - type: string
+                      enum:
+                        - REJECTED
+                        - APPROVED
+                      x-required: true
+                rejectReason:
+                  oneOf:
+                    - type: string
+                      maxLength: 500
+                      x-required: true
+              additionalProperties: false
       responses:
-        "200":
-          description: Success
+        "204":
+          description: Export request was successfully updated
         "400":
-          description: Invalid innovation payload
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   /v1/overdue-assessments:
     get:
       operationId: v1-innovations-overdue-assessments

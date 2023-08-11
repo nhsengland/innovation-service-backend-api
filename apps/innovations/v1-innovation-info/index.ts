@@ -80,7 +80,6 @@ class V1InnovationInfo {
               }
             }),
         lastEndSupportAt: result.lastEndSupportAt,
-        export: result.export,
         ...(result.assessment === undefined ? {} : { assessment: result.assessment }),
         ...(result.supports === undefined
           ? {}
