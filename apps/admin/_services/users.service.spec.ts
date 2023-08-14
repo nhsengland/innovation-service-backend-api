@@ -5,7 +5,7 @@ import { TestsHelper } from '@admin/shared/tests';
 import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 
 import { OrganisationUserEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum } from '@admin/shared/enums';
+import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   NotFoundError,
@@ -17,7 +17,7 @@ import { TranslationHelper } from '@admin/shared/helpers';
 import { NotifierService } from '@admin/shared/services';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { randAbbreviation, randEmail, randFullName, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { container } from '../_config';
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
@@ -362,6 +362,103 @@ describe('Admin / _services / users service suite', () => {
           isActive: r.isActive
         }))
       });
+    });
+  });
+
+  describe('addRole()', () => {
+    const aliceQualifyingAccessor = scenario.users.aliceQualifyingAccessor;
+    const ingridAccessor = scenario.users.ingridAccessor;
+
+    it.each([
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, aliceQualifyingAccessor],
+      [ServiceRoleEnum.ACCESSOR, ingridAccessor]
+    ])('should create a %s role to an existing user', async (userRole: any, user: TestUserType) => {
+      const healthOrg = scenario.organisations.healthOrg;
+
+      const role = await sut.addDbRole(
+        userAdminContext,
+        user.id,
+        {
+          role: userRole,
+          orgId: healthOrg.id,
+          unitId: healthOrg.organisationUnits.healthOrgAiUnit.id
+        },
+        em
+      );
+
+      const dbRole = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .innerJoinAndSelect('role.user', 'user')
+        .where('role.id = :roleId', { roleId: role.id })
+        .getOneOrFail();
+
+      expect(dbRole).toMatchObject({
+        role: userRole,
+        organisationId: healthOrg.id,
+        organisationUnitId: healthOrg.organisationUnits.healthOrgAiUnit.id,
+        user: { id: user.id },
+        createdBy: userAdminContext.id,
+        updatedBy: userAdminContext.id
+      });
+    });
+
+    it.each([
+      [ServiceRoleEnum.ADMIN],
+      [ServiceRoleEnum.ASSESSMENT],
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR],
+      [ServiceRoleEnum.ACCESSOR]
+    ])('should create a %s role to a new user', async (userRole: any) => {
+      const user = await em.getRepository(UserEntity).save({
+        firstTimeSignInAt: randPastDate(),
+        identityId: randUuid(),
+        serviceRoles: [],
+        status: UserStatusEnum.ACTIVE,
+        name: randText()
+      });
+      const healthOrg = scenario.organisations.healthOrg;
+      const isAccessor = userRole === ServiceRoleEnum.QUALIFYING_ACCESSOR || userRole === ServiceRoleEnum.ACCESSOR;
+
+      const role = await sut.addDbRole(
+        userAdminContext,
+        user.id,
+        {
+          role: userRole,
+          ...(isAccessor
+            ? {
+                orgId: healthOrg.id,
+                unitId: healthOrg.organisationUnits.healthOrgAiUnit.id
+              }
+            : {})
+        },
+        em
+      );
+
+      const dbRole = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .select(['role', 'user.id'])
+        .innerJoin('role.user', 'user')
+        .where('role.id = :roleId', { roleId: role.id })
+        .getOneOrFail();
+
+      expect(dbRole).toMatchObject({
+        role: userRole,
+        organisationId: isAccessor ? healthOrg.id : null,
+        organisationUnitId: isAccessor ? healthOrg.organisationUnits.healthOrgAiUnit.id : null,
+        user: { id: user.id },
+        createdBy: userAdminContext.id,
+        updatedBy: userAdminContext.id
+      });
+    });
+
+    it("should return NotFoundError if unit doesn't exist", async () => {
+      await expect(() =>
+        sut.addDbRole(
+          userAdminContext,
+          aliceQualifyingAccessor.id,
+          { role: ServiceRoleEnum.ACCESSOR, orgId: randUuid(), unitId: randUuid() },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
   });
 });

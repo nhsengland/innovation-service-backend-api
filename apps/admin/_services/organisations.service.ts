@@ -8,8 +8,6 @@ import {
   NotificationUserEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity,
-  OrganisationUserEntity,
   UserEntity,
   UserRoleEntity
 } from '@admin/shared/entities';
@@ -33,6 +31,7 @@ import { ENV } from '../_config';
 import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
 import SYMBOLS from './symbols';
+import type { UsersService } from './users.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -40,7 +39,8 @@ export class OrganisationsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
-    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
+    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService,
+    @inject(SYMBOLS.UsersService) private usersService: UsersService
   ) {
     super();
   }
@@ -519,7 +519,12 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map(u => u.id) };
   }
 
-  async createUnit(organisationId: string, name: string, acronym: string, entityManager?: EntityManager): Promise<{ id: string }> {
+  async createUnit(
+    organisationId: string,
+    name: string,
+    acronym: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const unit = await em.transaction(async transaction => {
@@ -529,6 +534,7 @@ export class OrganisationsService extends BaseService {
     return { id: unit.id };
   }
 
+  // TODO: Remove this function after FE changes the implementation to use /user/roles
   async createUnitUser(
     domainContext: DomainContextType,
     organisationUnitId: string,
@@ -566,38 +572,16 @@ export class OrganisationsService extends BaseService {
     }
     // End Validations
 
-    await connection.transaction(async transaction => {
-      const organisationUser = await this.getOrCreateOrganisationUser(
-        unit.organisation.id,
-        userId,
-        data.role,
-        domainContext.id,
-        transaction
-      );
-
-      await transaction.save(
-        OrganisationUnitUserEntity,
-        OrganisationUnitUserEntity.new({
-          organisationUnit: unit,
-          organisationUser: organisationUser,
-          createdBy: domainContext.id,
-          updatedBy: domainContext.id
-        })
-      );
-
-      await transaction.save(
-        UserRoleEntity,
-        UserRoleEntity.new({
-          user: UserEntity.new({ id: userId }),
-          role: data.role,
-          organisation: unit.organisation,
-          organisationUnit: unit,
-          createdBy: domainContext.id,
-          updatedBy: domainContext.id,
-          isActive: !unit.inactivatedAt
-        })
-      );
-    });
+    await this.usersService.addDbRole(
+      domainContext,
+      userId,
+      {
+        role: data.role,
+        orgId: unit.organisation.id,
+        unitId: unit.id
+      },
+      connection
+    );
   }
 
   private async createOrganisationUnit(
@@ -638,37 +622,6 @@ export class OrganisationsService extends BaseService {
     );
 
     return savedUnit;
-  }
-
-  private async getOrCreateOrganisationUser(
-    organisationId: string,
-    userId: string,
-    role: ServiceRoleEnum,
-    requestUserId: string,
-    entityManager?: EntityManager
-  ): Promise<OrganisationUserEntity> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const organisationUser = await em 
-      .createQueryBuilder(OrganisationUserEntity, 'orgUser')
-      .where('orgUser.user_id = :userId', { userId })
-      .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
-      .getOne();
-
-    if (organisationUser) {
-      return organisationUser;
-    }
-
-    return await em.save(
-      OrganisationUserEntity,
-      OrganisationUserEntity.new({
-        organisation: OrganisationEntity.new({ id: organisationId }),
-        user: UserEntity.new({ id: userId }),
-        role: role as any,
-        createdBy: requestUserId,
-        updatedBy: requestUserId
-      })
-    );
   }
 
   private async createOrganisationAnnouncement(

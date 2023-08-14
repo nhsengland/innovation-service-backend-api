@@ -735,6 +735,74 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  "/v1/users/{userId}/roles":
+    post:
+      description: Create user roles.
+      operationId: v1-admin-user-roles-create
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum:
+                          - ACCESSOR
+                          - QUALIFYING_ACCESSOR
+                          - ADMIN
+                          - ASSESSMENT
+                      orgId:
+                        oneOf:
+                          - type: string
+                            format: uuid
+                            x-required: true
+                      unitId:
+                        oneOf:
+                          - type: string
+                            format: uuid
+                            x-required: true
+                    required:
+                      - role
+                    additionalProperties: false
+                  minItems: 1
+              required:
+                - roles
+              additionalProperties: false
+      responses:
+        "201":
+          description: The created roles.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The role id.
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/users/{userId}":
     patch:
       description: Update a user.

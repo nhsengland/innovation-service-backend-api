@@ -214,55 +214,22 @@ export class UsersService extends BaseService {
         })
       );
 
-      // admin type
-      if (data.type === ServiceRoleEnum.ADMIN) {
-        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum.ADMIN }));
+      // TODO: This will be changed to a for or a call to `addRoles` when the new implementation is done
+      if (data.type === ServiceRoleEnum.ADMIN || data.type === ServiceRoleEnum.ASSESSMENT) {
+        await this.addDbRole(domainContext, user.id, { role: data.type }, transaction);
       }
 
-      // accessor type
       if (
         (data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
         organisation &&
-        unit &&
-        data.role
+        unit
       ) {
-        const orgUser = await transaction.save(
-          OrganisationUserEntity,
-          OrganisationUserEntity.new({
-            organisation,
-            user,
-            role: data.role,
-            createdBy: domainContext.id,
-            updatedBy: domainContext.id
-          })
+        await this.addDbRole(
+          domainContext,
+          user.id,
+          { role: data.type, orgId: organisation.id, unitId: unit.id },
+          transaction
         );
-
-        await transaction.save(
-          OrganisationUnitUserEntity,
-          OrganisationUnitUserEntity.new({
-            organisationUnit: unit,
-            organisationUser: orgUser,
-            createdBy: domainContext.id,
-            updatedBy: domainContext.id
-          })
-        );
-
-        await transaction.save(
-          UserRoleEntity,
-          UserRoleEntity.new({
-            user,
-            role: ServiceRoleEnum[data.role],
-            organisation: organisation,
-            organisationUnit: unit,
-            createdBy: domainContext.id,
-            isActive: !organisation.inactivatedAt
-          })
-        );
-      }
-
-      // needs assessor type
-      if (data.type === ServiceRoleEnum.ASSESSMENT) {
-        await transaction.save(UserRoleEntity, UserRoleEntity.new({ user, role: ServiceRoleEnum.ASSESSMENT }));
       }
 
       return { id: user.id };
@@ -298,6 +265,130 @@ export class UsersService extends BaseService {
         displayTeam: this.domainService.users.getDisplayTeamInformation(r.role, r.organisationUnit?.name)
       }))
     };
+  }
+
+  async addRoles(
+    domainContext: DomainContextType,
+    userId: string,
+    data: Parameters<UsersService['addDbRole']>[2][],
+    entityManager?: EntityManager
+  ): Promise<{ id: string }[]> {
+    const roles = [];
+    for (const cur of data) {
+      // TODO: Add validation call and a transaction could be important as-well.
+      const role = await this.addDbRole(domainContext, userId, cur, entityManager);
+      roles.push(role);
+    }
+    return roles;
+  }
+
+  /**
+   * TODO: transform into private and adapt the unit tests to use the addRoles as entrypoint
+   * This is a dumb method, it just creates roles from the given data, validations MUST be done before
+   * ADMIN and ASSESSMENT -> Just role
+   * ACCESSOR and QUALIFYING ACCESSOR -> Role, OrgUser, OrgUnitUser
+   */
+  async addDbRole(
+    domainContext: DomainContextType,
+    userId: string,
+    data:
+      | { role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR; orgId: string; unitId: string }
+      | { role: ServiceRoleEnum.ADMIN | ServiceRoleEnum.ASSESSMENT },
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    return await em.transaction(async transaction => {
+      let role: null | UserRoleEntity = null;
+
+      if (data.role === ServiceRoleEnum.ADMIN || data.role === ServiceRoleEnum.ASSESSMENT) {
+        role = await transaction.save(
+          UserRoleEntity,
+          UserRoleEntity.new({
+            user: UserEntity.new({ id: userId }),
+            role: data.role,
+            isActive: true,
+            createdBy: domainContext.id,
+            updatedBy: domainContext.id
+          })
+        );
+      }
+
+      if (data.role === ServiceRoleEnum.ACCESSOR || data.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+        const unit = await transaction
+          .createQueryBuilder(OrganisationUnitEntity, 'unit')
+          .select(['unit.id', 'unit.inactivatedAt'])
+          .where('unit.id = :unitId', { unitId: data.unitId })
+          .getOne();
+        if (!unit) {
+          throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+        }
+
+        const organisationUser = await this.getOrCreateOrganisationUser(
+          data.orgId,
+          userId,
+          data.role,
+          domainContext.id,
+          transaction
+        );
+
+        await transaction.save(
+          OrganisationUnitUserEntity,
+          OrganisationUnitUserEntity.new({
+            organisationUnit: unit,
+            organisationUser: organisationUser,
+            createdBy: domainContext.id,
+            updatedBy: domainContext.id
+          })
+        );
+
+        role = await transaction.save(
+          UserRoleEntity,
+          UserRoleEntity.new({
+            user: UserEntity.new({ id: userId }),
+            role: data.role,
+            organisation: OrganisationEntity.new({ id: data.orgId }),
+            organisationUnit: unit,
+            createdBy: domainContext.id,
+            updatedBy: domainContext.id,
+            isActive: !unit.inactivatedAt
+          })
+        );
+      }
+
+      return { id: role!.id };
+    });
+  }
+
+  private async getOrCreateOrganisationUser(
+    organisationId: string,
+    userId: string,
+    role: ServiceRoleEnum,
+    requestUserId: string,
+    entityManager?: EntityManager
+  ): Promise<OrganisationUserEntity> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const organisationUser = await em
+      .createQueryBuilder(OrganisationUserEntity, 'orgUser')
+      .where('orgUser.user_id = :userId', { userId })
+      .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
+      .getOne();
+
+    if (organisationUser) {
+      return organisationUser;
+    }
+
+    return await em.save(
+      OrganisationUserEntity,
+      OrganisationUserEntity.new({
+        organisation: OrganisationEntity.new({ id: organisationId }),
+        user: UserEntity.new({ id: userId }),
+        role: role as any,
+        createdBy: requestUserId,
+        updatedBy: requestUserId
+      })
+    );
   }
 
   private isUuid(idOrEmail: string): boolean {
