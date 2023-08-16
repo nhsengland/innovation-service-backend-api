@@ -91,7 +91,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
               innovation_name: innovation.name,
               innovator_name: innovationOwner.name,
               innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath(':userBasePath/innovations/:innovationId')
+                .addPath(':userBasePath/innovations/:innovationId/record')
                 .setPathParams({
                   userBasePath: recipient.role === ServiceRoleEnum.ASSESSMENT ? 'assessment' : 'accessor',
                   innovationId: innovation.id
@@ -124,7 +124,7 @@ describe('Notifications / _handlers / innovation-record-export-feedback handler 
               innovation_name: innovation.name,
               innovator_name: 'user',
               innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-                .addPath(':userBasePath/innovations/:innovationId')
+                .addPath(':userBasePath/innovations/:innovationId/record')
                 .setPathParams({
                   userBasePath: recipient.role === ServiceRoleEnum.ASSESSMENT ? 'assessment' : 'accessor',
                   innovationId: innovation.id

@@ -44,7 +44,7 @@ export class InnovationRecordExportFeedbackHandler extends BaseHandler<
           innovation_name: innovation.name,
           innovator_name: ownerIdentity?.displayName ?? 'user', // Review what should happen if user is not found
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath(':userBasePath/innovations/:innovationId')
+            .addPath(':userBasePath/innovations/:innovationId/record')
             .setPathParams({
               userBasePath: this.frontendBaseUrl(requestCreator.role),
               innovationId: this.inputData.innovationId
