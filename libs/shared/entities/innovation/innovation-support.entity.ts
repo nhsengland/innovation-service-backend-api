@@ -34,6 +34,7 @@ export class InnovationSupportEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
+  // TODO: Replace with UserRoleEntity
   @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
     nullable: true
   })

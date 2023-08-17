@@ -402,6 +402,22 @@ export class DomainUsersService {
     return result;
   }
 
+  async getUserRoles(userId: string): Promise<RoleType[]> {
+
+    const dbRoles = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'userRole')
+      .leftJoinAndSelect('userRole.organisationUnit', 'unit')
+      .leftJoinAndSelect('unit.organisation', 'organisation')
+      .innerJoinAndSelect('userRole.user', 'user')
+      .where('user.id = :userId', { userId })
+      .getMany()
+
+    const roles: RoleType[] = [];
+
+    dbRoles.forEach(role => roles.push(roleEntity2RoleType(role)))
+
+    return roles;
+  }
+
   /**
    * given a user and role retrieves the full role type
    * @param userId the user id

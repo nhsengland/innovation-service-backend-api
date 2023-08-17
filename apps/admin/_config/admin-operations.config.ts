@@ -1,53 +1,54 @@
-import { ServiceRoleEnum } from '@admin/shared/enums';
+import Joi, { Schema } from 'joi';
+import type { AdminValidationsTemplatesType } from '../types/validation.types';
+import type { ValidationsHandler } from '../_handlers/validations/validations.handler';
+import { LockUserValidationsHandler } from '../_handlers/validations/lock-user-validations.handler';
+import { InactivateUserRoleValidationsHandler } from '../_handlers/validations/inactivate-user-role-validations.handler';
 
-export const AdminOperationType = {
-  LOCK_USER: 'LOCK_USER',
-  UPDATE_USER_ROLE: 'UPDATE_USER_ROLE',
-  CHANGE_UNIT: 'CHANGE_UNIT'
-} as const;
-export type AdminOperationType = (typeof AdminOperationType)[keyof typeof AdminOperationType];
+export enum AdminOperationEnum {
+  LOCK_USER = 'LOCK_USER',
+  INACTIVATE_USER_ROLE = 'INACTIVATE_USER_ROLE',
+}
 
-export const AdminRuleType = {
-  AssessmentUserIsNotTheOnlyOne: 'AssessmentUserIsNotTheOnlyOne',
-  LastQualifyingAccessorUserOnOrganisationUnit: 'LastQualifyingAccessorUserOnOrganisationUnit',
-  LastUserOnOrganisationUnit: 'LastUserOnOrganisationUnit',
-  NoInnovationsSupportedOnlyByThisUser: 'NoInnovationsSupportedOnlyByThisUser'
-} as const;
-export type AdminRuleType = (typeof AdminRuleType)[keyof typeof AdminRuleType];
+export enum ValidationRuleEnum {
+  AssessmentUserIsNotTheOnlyOne = 'AssessmentUserIsNotTheOnlyOne',
+  LastQualifyingAccessorUserOnOrganisationUnit = 'LastQualifyingAccessorUserOnOrganisationUnit',
+  NoInnovationsSupportedOnlyByThisUser = 'NoInnovationsSupportedOnlyByThisUser'
+}
 
 export type ValidationResult = {
-  rule: AdminRuleType;
+  rule: ValidationRuleEnum;
   valid: boolean;
-  data?: {
-    supports?: { count: number; innovations: { id: string; name: string }[] };
-  };
 };
 
-export const AdminOperationsRulesMapper: Record<
-  AdminOperationType,
-  { [userTypeKey in ServiceRoleEnum]?: AdminRuleType[] }
-> = {
-  LOCK_USER: {
-    [ServiceRoleEnum.ASSESSMENT]: [AdminRuleType.AssessmentUserIsNotTheOnlyOne],
-    [ServiceRoleEnum.QUALIFYING_ACCESSOR]: [
-      AdminRuleType.LastQualifyingAccessorUserOnOrganisationUnit,
-      AdminRuleType.LastUserOnOrganisationUnit,
-      AdminRuleType.NoInnovationsSupportedOnlyByThisUser
-    ],
-    [ServiceRoleEnum.ACCESSOR]: [
-      AdminRuleType.LastUserOnOrganisationUnit,
-      AdminRuleType.NoInnovationsSupportedOnlyByThisUser
-    ]
+export const ADMIN_OPERATIONS_CONFIG: {
+  [key in AdminOperationEnum]: {
+    handler: {
+      new (...args: any[]): ValidationsHandler<AdminOperationEnum>;
+    };
+    joiDefinition: Schema;
+  };
+} = {
+  [AdminOperationEnum.LOCK_USER]: {
+    handler: LockUserValidationsHandler,
+    joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.LOCK_USER]>({
+      userId: Joi.string().guid().required()
+    }).required()
   },
 
-  UPDATE_USER_ROLE: {
-    [ServiceRoleEnum.ACCESSOR]: [AdminRuleType.LastUserOnOrganisationUnit]
+  [AdminOperationEnum.INACTIVATE_USER_ROLE]: {
+    handler: InactivateUserRoleValidationsHandler,
+    joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.INACTIVATE_USER_ROLE]>({
+      userId: Joi.string().guid().required(),
+      userRoleId: Joi.string().guid().required()
+    }).required()
   },
+};
 
-  CHANGE_UNIT: {
-    [ServiceRoleEnum.ACCESSOR]: [
-      AdminRuleType.NoInnovationsSupportedOnlyByThisUser,
-      AdminRuleType.LastUserOnOrganisationUnit
-    ]
-  }
+export const handlerHelper = async <T extends AdminOperationEnum>(
+  operation: T,
+  inputData: AdminValidationsTemplatesType[T]
+): Promise<ValidationResult[]> => {
+  const res = await new ADMIN_OPERATIONS_CONFIG[operation].handler(inputData).run();
+
+  return res;
 };

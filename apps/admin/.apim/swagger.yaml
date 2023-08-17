@@ -874,16 +874,6 @@ paths:
             type: string
             format: uuid
             description: Id of the user.
-        - name: operation
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - LOCK_USER
-              - UPDATE_USER_ROLE
-              - CHANGE_UNIT
-            description: Type of the operation to validate.
       responses:
         "200":
           description: OK
