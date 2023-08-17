@@ -33,19 +33,96 @@ afterEach(() => {
 
 describe('v1-admin-user-create Suite', () => {
   describe('200', () => {
-    it('should create a user', async () => {
+    it.each([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT] as const)(
+      'should create a user with role %s',
+      async role => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(scenario.users.allMighty)
+          .setBody<BodyType>({
+            email: randEmail(),
+            name: randFullName(),
+            role: role
+          })
+          .call<never>(azureFunction);
+
+        expect(result.body).toStrictEqual(expected);
+        expect(result.status).toBe(200);
+        expect(mock).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it.each([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR] as const)(
+      'should create a user with role %s',
+      async role => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(scenario.users.allMighty)
+          .setBody<BodyType>({
+            email: randEmail(),
+            name: randFullName(),
+            role: role,
+            organisationId: randUuid(),
+            unitIds: [randUuid(), randUuid()]
+          })
+          .call<never>(azureFunction);
+
+        expect(result.body).toStrictEqual(expected);
+        expect(result.status).toBe(200);
+        expect(mock).toHaveBeenCalledTimes(1);
+      }
+    );
+  });
+
+  describe('400', () => {
+    it.each([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT] as const)(
+      `should fail if role is %s and org/unit present`,
+      async role => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(scenario.users.allMighty)
+          .setBody<BodyType>({
+            email: randEmail(),
+            name: randFullName(),
+            role: role,
+            organisationId: randUuid(),
+            unitIds: [randUuid()]
+          } as any)
+          .call<never>(azureFunction);
+
+        expect(result.status).toBe(400);
+        expect(mock).toHaveBeenCalledTimes(0);
+      }
+    );
+
+    it.each([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR] as const)(
+      `should fail if role is %s and org/unit missing`,
+      async (role: any) => {
+        const result = await new AzureHttpTriggerBuilder()
+          .setAuth(scenario.users.allMighty)
+          .setBody<BodyType>({
+            email: randEmail(),
+            name: randFullName(),
+            role: role
+          })
+          .call<never>(azureFunction);
+
+        expect(result.status).toBe(400);
+        expect(mock).toHaveBeenCalledTimes(0);
+      }
+    );
+
+    it('should fail if units is empty and role is A/QA', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
         .setBody<BodyType>({
           email: randEmail(),
           name: randFullName(),
-          type: ServiceRoleEnum.ADMIN
+          role: ServiceRoleEnum.ACCESSOR,
+          organisationId: randUuid(),
+          unitIds: []
         })
         .call<never>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
-      expect(result.status).toBe(200);
-      expect(mock).toHaveBeenCalledTimes(1);
+      expect(result.status).toBe(400);
+      expect(mock).toHaveBeenCalledTimes(0);
     });
   });
 
@@ -62,7 +139,7 @@ describe('v1-admin-user-create Suite', () => {
         .setBody<BodyType>({
           email: randEmail(),
           name: randFullName(),
-          type: ServiceRoleEnum.ADMIN
+          role: ServiceRoleEnum.ADMIN
         })
         .call<ErrorResponseType>(azureFunction);
 

@@ -1,4 +1,5 @@
 import { ServiceRoleEnum } from '@admin/shared/enums';
+import { CreateRolesSchema, type CreateRolesType } from '@admin/shared/types';
 import Joi from 'joi';
 
 export type ParamsType = {
@@ -8,48 +9,11 @@ export const ParamsSchema = Joi.object<ParamsType>({
   userId: Joi.string().guid().required()
 }).required();
 
-export type BodyType = {
-  roles: (
-    | { role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR; orgId: string; unitId: string }
-    | { role: ServiceRoleEnum.ADMIN | ServiceRoleEnum.ASSESSMENT }
-  )[];
-};
-export const BodySchema = Joi.object<BodyType>({
-  roles: Joi.array()
-    .items(
-      Joi.object({
-        role: Joi.string()
-          .valid(
-            ServiceRoleEnum.ACCESSOR,
-            ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            ServiceRoleEnum.ADMIN,
-            ServiceRoleEnum.ASSESSMENT
-          )
-          .required(),
-        orgId: Joi.when('role', [
-          {
-            is: ServiceRoleEnum.ACCESSOR,
-            then: Joi.string().guid().required()
-          },
-          {
-            is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            then: Joi.string().guid().required(),
-            otherwise: Joi.forbidden()
-          }
-        ]),
-        unitId: Joi.when('role', [
-          {
-            is: ServiceRoleEnum.ACCESSOR,
-            then: Joi.string().guid().required()
-          },
-          {
-            is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            then: Joi.string().guid().required(),
-            otherwise: Joi.forbidden()
-          }
-        ])
-      })
-    )
-    .min(1)
+export type BodyType = CreateRolesType & { role: Exclude<CreateRolesType['role'], ServiceRoleEnum.ADMIN> };
+
+export const BodySchema = CreateRolesSchema.fork('role', schema =>
+  schema
+    .valid(ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR)
     .required()
-});
+    .description('Role of the user.')
+);

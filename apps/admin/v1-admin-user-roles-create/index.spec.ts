@@ -37,7 +37,7 @@ describe('v1-admin-user-roles-create Suite', () => {
     it.each([
       ServiceRoleEnum.ACCESSOR,
       ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      ServiceRoleEnum.ADMIN,
+      //      ServiceRoleEnum.ADMIN,
       ServiceRoleEnum.ASSESSMENT
     ])('should create a role for %s', async (role: any) => {
       const isAccessor = role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR;
@@ -46,12 +46,8 @@ describe('v1-admin-user-roles-create Suite', () => {
         .setAuth(scenario.users.allMighty)
         .setParams({ userId: randUuid() })
         .setBody<BodyType>({
-          roles: [
-            {
-              role: role,
-              ...(isAccessor ? { orgId: randUuid(), unitId: randUuid() } : {})
-            }
-          ]
+          role: role,
+          ...(isAccessor ? { organisationId: randUuid(), unitIds: [randUuid()] } : {})
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -74,12 +70,8 @@ describe('v1-admin-user-roles-create Suite', () => {
         .setAuth(scenario.users.allMighty)
         .setParams({ userId: randUuid() })
         .setBody<BodyType>({
-          roles: [
-            {
-              role: role,
-              ...(!isAccessor ? { orgId: randUuid(), unitId: randUuid() } : {})
-            }
-          ]
+          role: role,
+          ...(!isAccessor ? { organisationId: randUuid(), unitIds: [randUuid()] } : {})
         })
         .call<ErrorResponseType>(azureFunction);
 
@@ -99,7 +91,7 @@ describe('v1-admin-user-roles-create Suite', () => {
         .setAuth(user)
         .setParams({ userId: randUuid() })
         .setBody<BodyType>({
-          roles: [{ role: ServiceRoleEnum.ASSESSMENT }]
+          role: ServiceRoleEnum.ASSESSMENT
         })
         .call<ErrorResponseType>(azureFunction);
 

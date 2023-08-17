@@ -26,7 +26,7 @@ class V1AdminUserRolesCreate {
 
       const auth = await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await usersService.addRoles(auth.getContext(), params.userId, body.roles);
+      const result = await usersService.addRoles(auth.getContext(), params.userId, body);
 
       context.res = ResponseHelper.Created<ResponseDTO>(result);
       return;

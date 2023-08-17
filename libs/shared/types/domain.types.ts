@@ -13,6 +13,39 @@ export type RoleType = {
   organisationUnit?: { id: string; name: string; acronym: string };
 };
 
+export type CreateRolesType =
+  | { role: ServiceRoleEnum.ASSESSMENT | ServiceRoleEnum.ADMIN }
+  | {
+      role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR;
+      organisationId: string;
+      unitIds: string[];
+    };
+
+export const CreateRolesSchema = Joi.object<CreateRolesType>({
+  role: Joi.string()
+    .valid(
+      ServiceRoleEnum.ADMIN,
+      ServiceRoleEnum.ASSESSMENT,
+      ServiceRoleEnum.ACCESSOR,
+      ServiceRoleEnum.QUALIFYING_ACCESSOR
+    )
+    .required()
+    .description('Role of the user.')
+})
+  .when('.role', {
+    is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
+    then: Joi.object({
+      organisationId: Joi.string().guid().required().description('Id of the organisation.').required(),
+      unitIds: Joi.array()
+        .items(Joi.string().guid())
+        .required()
+        .description('Ids of the organisation units.')
+        .required()
+        .min(1)
+    })
+  })
+  .required();
+
 // User domain types.
 export type DomainUserInfoType = {
   id: string;

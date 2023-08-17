@@ -13,7 +13,9 @@ import {
 import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  GenericErrorsEnum,
   NotFoundError,
+  NotImplementedError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
   UserErrorsEnum
@@ -25,7 +27,7 @@ import {
   IdentityProviderService,
   NotifierService
 } from '@admin/shared/services';
-import type { DomainContextType, RoleType } from '@admin/shared/types';
+import type { CreateRolesType, DomainContextType, RoleType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { BaseService } from './base.service';
@@ -132,46 +134,30 @@ export class UsersService extends BaseService {
     data: {
       name: string;
       email: string;
-      type: ServiceRoleEnum;
-      organisationAcronym?: string | null;
-      organisationUnitAcronym?: string | null;
-      role?: AccessorOrganisationRoleEnum | null;
-    },
-    enitityManager?: EntityManager
+    } & CreateRolesType,
+    entityManager?: EntityManager
   ): Promise<{ id: string }> {
-    if (
-      (data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
-      (!data.organisationAcronym || !data.organisationUnitAcronym || !data.role)
-    ) {
-      throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
-    }
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    let organisation: OrganisationEntity | null;
-    let unit: OrganisationUnitEntity | null;
-
-    const em = enitityManager ?? this.sqlConnection.manager;
-
-    if (data.organisationAcronym) {
-      organisation = await em
-        .createQueryBuilder(OrganisationEntity, 'organisation')
-        .where('organisation.acronym = :acronym', { acronym: data.organisationAcronym })
-        .getOne();
-
-      if (!organisation) {
-        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    // pre validations for "accessors" roles (avoid creating b2c users if invalid data)
+    if (data.role === ServiceRoleEnum.ACCESSOR || data.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+      if (!data.unitIds.length) {
+        throw new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
       }
-
-      if (data.organisationUnitAcronym) {
-        unit = await em
-          .createQueryBuilder(OrganisationUnitEntity, 'org_unit')
-          .innerJoin('org_unit.organisation', 'org')
-          .where('org.id = :orgId', { orgId: organisation.id })
-          .andWhere('org_unit.acronym = :acronym', { acronym: data.organisationUnitAcronym })
-          .getOne();
-
-        if (!unit) {
-          throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-        }
+      // validate units in org
+      const dbUnits = new Set(
+        (
+          await em
+            .createQueryBuilder(OrganisationUnitEntity, 'unit')
+            .select(['unit.id'])
+            .where('unit.organisation_id = :orgId', { orgId: data.organisationId })
+            .getMany()
+        ).map(u => u.id)
+      );
+      if (data.unitIds.some(id => !dbUnits.has(id))) {
+        throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND, {
+          details: { unitIds: data.unitIds }
+        });
       }
     }
 
@@ -214,22 +200,8 @@ export class UsersService extends BaseService {
         })
       );
 
-      // TODO: This will be changed to a for or a call to `addRoles` when the new implementation is done
-      if (data.type === ServiceRoleEnum.ADMIN || data.type === ServiceRoleEnum.ASSESSMENT) {
-        await this.addDbRole(domainContext, user.id, { role: data.type }, transaction);
-      }
-
-      if (
-        (data.type === ServiceRoleEnum.ACCESSOR || data.type === ServiceRoleEnum.QUALIFYING_ACCESSOR) &&
-        organisation &&
-        unit
-      ) {
-        await this.addDbRole(
-          domainContext,
-          user.id,
-          { role: data.type, orgId: organisation.id, unitId: unit.id },
-          transaction
-        );
+      for (const role of this.createRolesType2Db(data)) {
+        await this.addDbRole(domainContext, user.id, role, transaction);
       }
 
       return { id: user.id };
@@ -270,16 +242,22 @@ export class UsersService extends BaseService {
   async addRoles(
     domainContext: DomainContextType,
     userId: string,
-    data: Parameters<UsersService['addDbRole']>[2][],
+    data: CreateRolesType & { role: Exclude<CreateRolesType['role'], ServiceRoleEnum.ADMIN> },
     entityManager?: EntityManager
   ): Promise<{ id: string }[]> {
-    const roles = [];
-    for (const cur of data) {
-      // TODO: Add validation call and a transaction could be important as-well.
-      const role = await this.addDbRole(domainContext, userId, cur, entityManager);
-      roles.push(role);
+    if (data.role === ServiceRoleEnum.ASSESSMENT) {
+      console.log('Admin role is not allowed to be added to a user');
     }
-    return roles;
+    // TODO: Add validation call
+    const em = entityManager ?? this.sqlConnection.manager;
+    return em.transaction(async transaction => {
+      const roles = [];
+      for (const role of this.createRolesType2Db(data)) {
+        const roleId = await this.addDbRole(domainContext, userId, role, transaction);
+        roles.push(roleId);
+      }
+      return roles;
+    });
   }
 
   /**
@@ -294,14 +272,13 @@ export class UsersService extends BaseService {
     data:
       | { role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR; orgId: string; unitId: string }
       | { role: ServiceRoleEnum.ADMIN | ServiceRoleEnum.ASSESSMENT },
-    entityManager?: EntityManager
+    transaction: EntityManager
   ): Promise<{ id: string }> {
-    const em = entityManager ?? this.sqlConnection.manager;
+    let role: UserRoleEntity;
 
-    return await em.transaction(async transaction => {
-      let role: null | UserRoleEntity = null;
-
-      if (data.role === ServiceRoleEnum.ADMIN || data.role === ServiceRoleEnum.ASSESSMENT) {
+    switch (data.role) {
+      case ServiceRoleEnum.ADMIN:
+      case ServiceRoleEnum.ASSESSMENT:
         role = await transaction.save(
           UserRoleEntity,
           UserRoleEntity.new({
@@ -312,13 +289,14 @@ export class UsersService extends BaseService {
             updatedBy: domainContext.id
           })
         );
-      }
-
-      if (data.role === ServiceRoleEnum.ACCESSOR || data.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+        break;
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR: {
         const unit = await transaction
           .createQueryBuilder(OrganisationUnitEntity, 'unit')
           .select(['unit.id', 'unit.inactivatedAt'])
           .where('unit.id = :unitId', { unitId: data.unitId })
+          .andWhere('unit.organisation_id = :organisationId', { organisationId: data.orgId }) // ensure that the unit belongs to the organisation
           .getOne();
         if (!unit) {
           throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
@@ -354,10 +332,26 @@ export class UsersService extends BaseService {
             isActive: !unit.inactivatedAt
           })
         );
+        break;
       }
+      default:
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR);
+    }
 
-      return { id: role!.id };
-    });
+    return { id: role.id };
+  }
+
+  /**
+   * converts the CreateRolesType into an array of roles to be saved in the database
+   * @param data the create roles type
+   * @returns array of roles to add to db
+   */
+  private createRolesType2Db(data: CreateRolesType): Parameters<UsersService['addDbRole']>[2][] {
+    if (data.role === ServiceRoleEnum.ACCESSOR || data.role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
+      return data.unitIds.map(unitId => ({ role: data.role, orgId: data.organisationId, unitId }));
+    } else {
+      return [{ role: data.role }];
+    }
   }
 
   private async getOrCreateOrganisationUser(

@@ -17,7 +17,7 @@ import { TranslationHelper } from '@admin/shared/helpers';
 import { NotifierService } from '@admin/shared/services';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import { randAbbreviation, randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
+import { randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { container } from '../_config';
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
@@ -215,69 +215,93 @@ describe('Admin / _services / users service suite', () => {
   });
 
   describe('createUser', () => {
-    it.each([
-      ServiceRoleEnum.ACCESSOR,
-      ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      ServiceRoleEnum.INNOVATOR,
-      ServiceRoleEnum.ASSESSMENT,
-      ServiceRoleEnum.ADMIN
-    ])('should create a user %s', async userType => {
-      const organisation =
-        userType === ServiceRoleEnum.ACCESSOR || userType === ServiceRoleEnum.QUALIFYING_ACCESSOR
-          ? {
-              organisationAcronym: scenario.organisations.healthOrg.acronym,
-              organisationUnitAcronym: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.acronym
-            }
-          : {};
-
+    it.each([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN] as const)('should create a %s user', async userType => {
       const result = await sut.createUser(
         userAdminContext,
         {
           name: randFullName(),
           email: randEmail(),
-          type: userType,
-          ...organisation,
-          role:
-            userType === ServiceRoleEnum.ACCESSOR
-              ? AccessorOrganisationRoleEnum.ACCESSOR
-              : userType === ServiceRoleEnum.QUALIFYING_ACCESSOR
-              ? AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
-              : undefined
+          role: userType
         },
         em
       );
 
       expect(result.id).toBeDefined();
+      const roles = await em
+        .createQueryBuilder(UserRoleEntity, 'role')
+        .where('role.user.id = :userId', { userId: result.id })
+        .getMany();
+      expect(roles).toHaveLength(1);
+      expect(roles[0]?.role).toBe(userType);
     });
 
-    it.each([
-      [ServiceRoleEnum.ACCESSOR, 'organisationAcronym'],
-      [ServiceRoleEnum.ACCESSOR, 'organisationUnitAcronym'],
-      [ServiceRoleEnum.ACCESSOR, 'role'],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'organisationAcronym'],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'organisationUnitAcronym'],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, 'role']
-    ])('should throw an error if the user type is %s and there is no %s parameter', async (userType, paramKey) => {
-      await expect(() =>
-        sut.createUser(
+    it.each([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR] as const)(
+      'should create a %s user',
+      async userType => {
+        const result = await sut.createUser(
           userAdminContext,
           {
             name: randFullName(),
             email: randEmail(),
-            type: userType,
-            organisationAcronym: paramKey === 'organisationAcronym' ? undefined : randAbbreviation(),
-            organisationUnitAcronym: paramKey === 'organisationUnitAcronym' ? undefined : randAbbreviation(),
-            role:
-              paramKey === 'role'
-                ? undefined
-                : userType === ServiceRoleEnum.ACCESSOR
-                ? AccessorOrganisationRoleEnum.ACCESSOR
-                : AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
+            role: userType,
+            organisationId: scenario.organisations.healthOrg.id,
+            unitIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id]
           },
           em
-        )
-      ).rejects.toThrowError(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
-    });
+        );
+
+        expect(result.id).toBeDefined();
+        const roles = await em
+          .createQueryBuilder(UserRoleEntity, 'role')
+          .where('role.user.id = :userId', { userId: result.id })
+          .getMany();
+        expect(roles).toHaveLength(1);
+        expect(roles[0]).toMatchObject({
+          role: userType,
+          organisationId: scenario.organisations.healthOrg.id,
+          organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+        });
+      }
+    );
+
+    it.each([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR] as const)(
+      'should create a user with %s user with multiple units',
+      async userType => {
+        const result = await sut.createUser(
+          userAdminContext,
+          {
+            name: randFullName(),
+            email: randEmail(),
+            role: userType,
+            organisationId: scenario.organisations.healthOrg.id,
+            unitIds: [
+              scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+              scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+            ]
+          },
+          em
+        );
+
+        expect(result.id).toBeDefined();
+        const roles = await em
+          .createQueryBuilder(UserRoleEntity, 'role')
+          .where('role.user.id = :userId', { userId: result.id })
+          .getMany();
+        expect(roles).toHaveLength(2);
+        expect(roles).toMatchObject([
+          {
+            role: userType,
+            organisationId: scenario.organisations.healthOrg.id,
+            organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+          },
+          {
+            role: userType,
+            organisationId: scenario.organisations.healthOrg.id,
+            organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+          }
+        ]);
+      }
+    );
 
     it(`should throw an error if the organisation doesn't exist`, async () => {
       await expect(() =>
@@ -286,32 +310,49 @@ describe('Admin / _services / users service suite', () => {
           {
             name: randFullName(),
             email: randEmail(),
-            type: ServiceRoleEnum.ACCESSOR,
-            organisationAcronym: randAbbreviation(),
-            organisationUnitAcronym: randAbbreviation(),
-            role: AccessorOrganisationRoleEnum.ACCESSOR
+            role: ServiceRoleEnum.ACCESSOR,
+            organisationId: randUuid(),
+            unitIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id]
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
+      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
 
-    it(`should throw an error if the organisation unit doesn't exist`, async () => {
+    it(`should throw an error if the organisation units is empty and role A/QA`, async () => {
       await expect(() =>
         sut.createUser(
           userAdminContext,
           {
             name: randFullName(),
             email: randEmail(),
-            type: ServiceRoleEnum.ACCESSOR,
-            organisationAcronym: scenario.organisations.healthOrg.acronym,
-            organisationUnitAcronym: randAbbreviation(),
-            role: AccessorOrganisationRoleEnum.ACCESSOR
+            role: ServiceRoleEnum.ACCESSOR,
+            organisationId: randUuid(),
+            unitIds: []
           },
           em
         )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      ).rejects.toThrowError(new BadRequestError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
     });
+
+    it.each([[[randUuid()]], [[scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id, randUuid()]]])(
+      `should throw an error if any organisation unit doesn't exist`,
+      async unitIds => {
+        await expect(() =>
+          sut.createUser(
+            userAdminContext,
+            {
+              name: randFullName(),
+              email: randEmail(),
+              role: ServiceRoleEnum.ACCESSOR,
+              organisationId: randUuid(),
+              unitIds: unitIds
+            },
+            em
+          )
+        ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+      }
+    );
 
     it('should throw an error if the user already exists', async () => {
       await expect(() =>
@@ -320,7 +361,7 @@ describe('Admin / _services / users service suite', () => {
           {
             name: randFullName(),
             email: scenario.users.adamInnovator.email,
-            type: ServiceRoleEnum.INNOVATOR
+            role: ServiceRoleEnum.ASSESSMENT
           },
           em
         )
