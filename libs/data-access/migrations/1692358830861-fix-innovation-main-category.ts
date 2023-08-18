@@ -11,7 +11,7 @@ export class fixInnovationMainCategory1692358830861 implements MigrationInterfac
     `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {
+  public async down(): Promise<void> {
     // Do nothing
   }
 }
