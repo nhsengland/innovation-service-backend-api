@@ -268,6 +268,87 @@ export class UsersService extends BaseService {
   }
 
   /**
+   * update the user role
+   * @param domainContext the context of who is making the request
+   * @param roleId the roleId being updated
+   * @param data the data to update, all optional
+   *   - enabled: enable or disable the role
+   * @param entityManager optional entity manager to use for the transaction
+   */
+  async updateUserRole(
+    domainContext: DomainContextType,
+    userId: string,
+    roleId: string,
+    data: { enabled?: boolean },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    // Force a transaction to exist so that all is done in a single transaction
+    if (!entityManager) {
+      return this.sqlConnection.transaction(transaction => {
+        return this.updateUserRole(domainContext, userId, roleId, data, transaction);
+      });
+    }
+    if (data.enabled !== undefined) {
+      await (data.enabled
+        ? this.enableRole(domainContext, userId, roleId, entityManager)
+        : this.disableRole(domainContext, userId, roleId, entityManager));
+    }
+  }
+
+  /**
+   * disables a user role and the user if it was the last role
+   * @param domainContext
+   * @param roleId
+   * @param transaction
+   */
+  async disableRole(
+    domainContext: DomainContextType,
+    userId: string,
+    roleId: string,
+    transaction: EntityManager
+  ): Promise<void> {
+    await transaction.update(UserRoleEntity, { id: roleId }, { isActive: false, updatedBy: domainContext.id });
+
+    const role = await transaction
+      .createQueryBuilder(UserRoleEntity, 'role')
+      .select(['role.id'])
+      .where('role.user_id = :userId', { userId })
+      .andWhere('role.isActive = :isActive', { isActive: true })
+      .getOne();
+
+    // if there's not active role disable the user
+    if (!role) {
+      await this.updateUser(domainContext, userId, { accountEnabled: false }, transaction);
+    }
+  }
+
+  /**
+   * enables a user role and the user if it was locked
+   * @param domainContext the context of who is making the request
+   * @param roleId the roleId being updated
+   * @param transaction the transaction entity manager to use
+   */
+  async enableRole(
+    domainContext: DomainContextType,
+    userId: string,
+    roleId: string,
+    transaction: EntityManager
+  ): Promise<void> {
+    await transaction.update(UserRoleEntity, { id: roleId }, { isActive: true, updatedBy: domainContext.id });
+
+    const user = await transaction
+      .createQueryBuilder(UserEntity, 'user')
+      .select(['user.id'])
+      .where('user.id = :userId', { userId })
+      .andWhere('user.status = :status', { status: UserStatusEnum.LOCKED })
+      .getOne();
+
+    if (user) {
+      await this.updateUser(domainContext, user.id, { accountEnabled: true }, transaction);
+    }
+  }
+
+  /**
    * TODO: transform into private and adapt the unit tests to use the addRoles as entrypoint
    * This is a dumb method, it just creates roles from the given data, validations MUST be done before
    * ADMIN and ASSESSMENT -> Just role

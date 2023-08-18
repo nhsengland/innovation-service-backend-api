@@ -7,6 +7,6 @@ export type BodyType = {
 } & CreateRolesType;
 
 export const BodySchema = Joi.object<BodyType>({
-  name: Joi.string().required().description('Name of the user.'),
-  email: Joi.string().email().required().description('Email of the user.')
+  name: Joi.string().max(100).required().description('Name of the user.'),
+  email: Joi.string().max(100).email().required().description('Email of the user.')
 }).concat(CreateRolesSchema as any);

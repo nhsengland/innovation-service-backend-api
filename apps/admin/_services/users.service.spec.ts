@@ -22,7 +22,7 @@ import { randEmail, randFullName, randPastDate, randText, randUuid } from '@ngne
 import { container } from '../_config';
 import * as AdminOperationsConfig from '../_config/admin-operations.config';
 import SYMBOLS from './symbols';
-import type { UsersService } from './users.service';
+import { UsersService } from './users.service';
 
 describe('Admin / _services / users service suite', () => {
   let sut: UsersService;
@@ -576,6 +576,90 @@ describe('Admin / _services / users service suite', () => {
           em
         )
       ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+    });
+  });
+
+  describe('updateUserRole', () => {
+    let enableRoleSpy: jest.SpyInstance;
+    let disableRoleSpy: jest.SpyInstance;
+    beforeAll(() => {
+      enableRoleSpy = jest.spyOn(UsersService.prototype, 'enableRole').mockResolvedValue();
+      disableRoleSpy = jest.spyOn(UsersService.prototype, 'disableRole').mockResolvedValue();
+    });
+
+    beforeEach(() => {
+      enableRoleSpy.mockClear();
+      disableRoleSpy.mockClear();
+    });
+
+    afterAll(() => {
+      enableRoleSpy.mockRestore();
+      disableRoleSpy.mockRestore();
+    });
+
+    describe('enable', () => {
+      it('should enable user if enabled is true', async () => {
+        await sut.updateUserRole(userAdminContext, randUuid(), randUuid(), { enabled: true }, em);
+        expect(enableRoleSpy).toHaveBeenCalledTimes(1);
+        expect(disableRoleSpy).toHaveBeenCalledTimes(0);
+      });
+
+      it('should disable user if enabled is false', async () => {
+        await sut.updateUserRole(userAdminContext, randUuid(), randUuid(), { enabled: false }, em);
+        expect(enableRoleSpy).toHaveBeenCalledTimes(0);
+        expect(disableRoleSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it("shouldn't do anything if enable is undefined", async () => {
+        await sut.updateUserRole(userAdminContext, randUuid(), randUuid(), {}, em);
+        expect(enableRoleSpy).toHaveBeenCalledTimes(0);
+        expect(disableRoleSpy).toHaveBeenCalledTimes(0);
+      });
+    });
+  });
+
+  describe('enableRole', () => {
+    const user = scenario.users.aliceQualifyingAccessor;
+    it('should enable the role', async () => {
+      await em.update(UserRoleEntity, user.roles.qaRole.id, { isActive: false });
+      await sut.enableRole(userAdminContext, user.id, user.roles.qaRole.id, em);
+      const role = await em.getRepository(UserRoleEntity).findOneByOrFail({ id: user.roles.qaRole.id });
+      expect(role.isActive).toBe(true);
+    });
+
+    it('should enable the user if he was disabled', async () => {
+      await em.update(UserRoleEntity, user.roles.qaRole.id, { isActive: false });
+      await em.update(UserEntity, user.id, {
+        lockedAt: new Date(),
+        status: UserStatusEnum.LOCKED
+      });
+      await sut.enableRole(userAdminContext, user.id, user.roles.qaRole.id, em);
+      const role = await em.getRepository(UserRoleEntity).findOneByOrFail({ id: user.roles.qaRole.id });
+      const userDb = await em.getRepository(UserEntity).findOneByOrFail({ id: user.id });
+      expect(role.isActive).toBe(true);
+      expect(userDb.lockedAt).toBeNull();
+      expect(userDb.status).toBe(UserStatusEnum.ACTIVE);
+    });
+  });
+
+  describe('disableRole', () => {
+    const user = scenario.users.jamieMadroxAccessor;
+    it('should disable the role', async () => {
+      await sut.disableRole(userAdminContext, user.id, user.roles.aiRole.id, em);
+      const role = await em.getRepository(UserRoleEntity).findOneByOrFail({ id: user.roles.aiRole.id });
+      expect(role.isActive).toBe(false);
+    });
+
+    it('should lock the user if it was the last active role', async () => {
+      await em.update(UserRoleEntity, user.roles.healthAccessorRole.id, {
+        isActive: false
+      });
+      await sut.disableRole(userAdminContext, user.id, user.roles.aiRole.id, em);
+      const role = await em.getRepository(UserRoleEntity).findOneByOrFail({ id: user.roles.aiRole.id });
+      const userDb = await em.getRepository(UserEntity).findOneByOrFail({ id: user.id });
+      expect(role.isActive).toBe(false);
+      expect(userDb.lockedAt).toBeDefined();
+      expect(userDb.status).toBe(UserStatusEnum.LOCKED);
     });
   });
 });

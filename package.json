@@ -22,7 +22,7 @@
     "postinstall": "node .scripts/postinstall.js",
     "prepare": "husky install",
     "prettier": "prettier -w apps/ libs/",
-    "test": "jest --forceExit -w 1",
+    "test": "jest --forceExit --runInBand",
     "test:coverage": "jest --runInBand --forceExit --coverage --collectCoverageFrom='apps/**/*.ts' --collectCoverageFrom='libs/**/*.ts'"
   },
   "dependencies": {
