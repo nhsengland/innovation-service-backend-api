@@ -1,12 +1,14 @@
+import { ServiceRoleEnum } from '@admin/shared/enums';
 import Joi, { Schema } from 'joi';
-import type { AdminValidationsTemplatesType } from '../types/validation.types';
-import type { ValidationsHandler } from '../_handlers/validations/validations.handler';
-import { LockUserValidationsHandler } from '../_handlers/validations/lock-user-validations.handler';
 import { InactivateUserRoleValidationsHandler } from '../_handlers/validations/inactivate-user-role-validations.handler';
+import { LockUserValidationsHandler } from '../_handlers/validations/lock-user-validations.handler';
+import type { ValidationsHandler } from '../_handlers/validations/validations.handler';
+import type { AdminValidationsTemplatesType } from '../types/validation.types';
 
 export enum AdminOperationEnum {
   LOCK_USER = 'LOCK_USER',
   INACTIVATE_USER_ROLE = 'INACTIVATE_USER_ROLE',
+  ADD_USER_ROLE = 'ADD_USER_ROLE'
 }
 
 export enum ValidationRuleEnum {
@@ -42,9 +44,20 @@ export const ADMIN_OPERATIONS_CONFIG: {
       userRoleId: Joi.string().guid().required()
     }).required()
   },
+
+  [AdminOperationEnum.ADD_USER_ROLE]: {
+    handler: undefined as any,
+    joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ADD_USER_ROLE]>({
+      userId: Joi.string().guid().required(),
+      role: Joi.string()
+        .valid(...Object.values(ServiceRoleEnum))
+        .required(),
+      organisationId: Joi.string().guid().optional()
+    }).required()
+  }
 };
 
-export const handlerHelper = async <T extends AdminOperationEnum>(
+export const validationsHelper = async <T extends AdminOperationEnum>(
   operation: T,
   inputData: AdminValidationsTemplatesType[T]
 ): Promise<ValidationResult[]> => {

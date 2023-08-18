@@ -4,8 +4,8 @@ import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
 import { randUuid } from '@ngneat/falso';
-import type { ParamsType, QueryParamsType } from './validation.schemas';
 import * as AdminOperationsConfig from '../_config/admin-operations.config';
+import type { ParamsType, QueryParamsType } from './validation.schemas';
 
 jest.mock('@admin/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -24,7 +24,7 @@ beforeAll(async () => {
 });
 
 const expected = [{ rule: AdminOperationsConfig.ValidationRuleEnum.AssessmentUserIsNotTheOnlyOne, valid: true }];
-const mock = jest.spyOn(AdminOperationsConfig, 'handlerHelper').mockResolvedValue(expected);
+const mock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();

@@ -9,9 +9,9 @@ import type { CustomContextType } from '@admin/shared/types';
 import { container } from '../_config';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
+import { validationsHelper } from '../_config/admin-operations.config';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
-import { handlerHelper } from '../_config/admin-operations.config';
 
 class V1AdminValidate {
   @JwtDecoder()
@@ -24,7 +24,7 @@ class V1AdminValidate {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const res = await handlerHelper(queryParams.operation, {
+      const res = await validationsHelper(queryParams.operation, {
         userId: params.userId,
         ...(queryParams.roleId && { userRoleId: queryParams.roleId })
       });

@@ -30,6 +30,7 @@ import {
 import type { CreateRolesType, DomainContextType, RoleType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
+import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
 import { BaseService } from './base.service';
 
 @injectable()
@@ -242,13 +243,19 @@ export class UsersService extends BaseService {
   async addRoles(
     domainContext: DomainContextType,
     userId: string,
-    data: CreateRolesType & { role: Exclude<CreateRolesType['role'], ServiceRoleEnum.ADMIN> },
+    data: CreateRolesType,
     entityManager?: EntityManager
   ): Promise<{ id: string }[]> {
-    if (data.role === ServiceRoleEnum.ASSESSMENT) {
-      console.log('Admin role is not allowed to be added to a user');
+    const validations = await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
+      userId,
+      role: data.role,
+      ...('organisationId' in data && { organisationId: data.organisationId })
+    });
+
+    if (validations.length) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { validations } });
     }
-    // TODO: Add validation call
+
     const em = entityManager ?? this.sqlConnection.manager;
     return em.transaction(async transaction => {
       const roles = [];

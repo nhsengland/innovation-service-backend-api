@@ -8,6 +8,7 @@ import { OrganisationUserEntity } from '@admin/shared/entities';
 import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
+  GenericErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
   UnprocessableEntityError,
@@ -19,6 +20,7 @@ import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
 import { randEmail, randFullName, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { container } from '../_config';
+import * as AdminOperationsConfig from '../_config/admin-operations.config';
 import SYMBOLS from './symbols';
 import type { UsersService } from './users.service';
 
@@ -403,6 +405,80 @@ describe('Admin / _services / users service suite', () => {
           isActive: r.isActive
         }))
       });
+    });
+  });
+
+  describe('addRoles', () => {
+    const validationMock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue([]);
+
+    afterEach(() => {
+      validationMock.mockClear();
+    });
+
+    afterAll(() => {
+      validationMock.mockRestore();
+    });
+
+    it('should add one role if assessment', async () => {
+      const res = await sut.addRoles(
+        userAdminContext,
+        scenario.users.aliceQualifyingAccessor.id,
+        {
+          role: ServiceRoleEnum.ASSESSMENT
+        },
+        em
+      );
+
+      expect(res.length).toBe(1);
+    });
+
+    it('should add one role if accessor with one unit', async () => {
+      const res = await sut.addRoles(
+        userAdminContext,
+        scenario.users.paulNeedsAssessor.id,
+        {
+          role: ServiceRoleEnum.ACCESSOR,
+          organisationId: scenario.organisations.healthOrg.id,
+          unitIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id]
+        },
+        em
+      );
+
+      expect(res.length).toBe(1);
+    });
+
+    it('should add multiple roles if accessor with multiple units', async () => {
+      const res = await sut.addRoles(
+        userAdminContext,
+        scenario.users.paulNeedsAssessor.id,
+        {
+          role: ServiceRoleEnum.ACCESSOR,
+          organisationId: scenario.organisations.healthOrg.id,
+          unitIds: [
+            scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+            scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
+          ]
+        },
+        em
+      );
+
+      expect(res.length).toBe(2);
+    });
+
+    it('should throw error if validation fails', async () => {
+      validationMock.mockResolvedValueOnce([{ valid: false, rule: 'test' as any }]); // TODO fix once we have the right rule
+      await expect(() =>
+        sut.addRoles(
+          userAdminContext,
+          scenario.users.johnInnovator.id,
+          {
+            role: ServiceRoleEnum.ACCESSOR,
+            organisationId: scenario.organisations.healthOrg.id,
+            unitIds: [scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id]
+          },
+          em
+        )
+      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
