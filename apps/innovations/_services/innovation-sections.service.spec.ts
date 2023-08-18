@@ -103,12 +103,10 @@ describe('Innovation Sections Suite', () => {
         { summary: randText() },
         em
       );
-
-      // assert
       expect(section.id).toBeDefined();
     });
 
-    it.each(['name', 'description', 'countryName', 'postcode', 'mainCategory', 'otherCategoryDescription'] as const)(
+    it.each(['name', 'description', 'countryName', 'postcode', 'mainCategory'] as const)(
       'should update the innovation entity if %s is specified',
       async field => {
         const newValue = randText();
@@ -121,11 +119,37 @@ describe('Innovation Sections Suite', () => {
         );
 
         const innovationDb = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
-
-        // assert
         expect(innovationDb[field]).toEqual(newValue);
       }
     );
+
+    it('should update the innovation entity other category if mainCategory is OTHER', async () => {
+      const newValue = randText();
+      await sut.updateInnovationSectionInfo(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovation.id,
+        'INNOVATION_DESCRIPTION',
+        { mainCategory: 'OTHER', otherCategoryDescription: newValue },
+        em
+      );
+
+      const innovationDb = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
+      expect(innovationDb.otherCategoryDescription).toEqual(newValue);
+    });
+
+    it('should not update the innovation entity other category if mainCategory is not OTHER', async () => {
+      const newValue = randText();
+      await sut.updateInnovationSectionInfo(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        innovation.id,
+        'INNOVATION_DESCRIPTION',
+        { mainCategory: 'AI', otherCategoryDescription: newValue },
+        em
+      );
+
+      const innovationDb = await em.getRepository(InnovationEntity).findOneByOrFail({ id: innovation.id });
+      expect(innovationDb.otherCategoryDescription).toBeNull();
+    });
   });
 
   describe('submitInnovationSection', () => {
