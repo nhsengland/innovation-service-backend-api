@@ -404,6 +404,8 @@ export class InnovationSectionsService extends BaseService {
           description: innovation.description,
           countryName: innovation.countryName,
           postcode: innovation.postcode,
+          mainCategory: innovation.mainCategory,
+          otherCategoryDescription: innovation.otherCategoryDescription,
           updatedBy: innovation.updatedBy,
           updatedAt: updatedAt
         });
