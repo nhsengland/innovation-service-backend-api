@@ -3,12 +3,13 @@ import { injectable } from 'inversify';
 import { InnovationEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 
-import { ValidationRuleEnum, type ValidationResult } from '../_config/admin-operations.config';
+import { ValidationRuleEnum } from '../_config/admin-operations.config';
 
 import { BaseService } from './base.service';
 import { NotFoundError } from '@admin/shared/errors';
 import { UserErrorsEnum } from '@admin/shared/errors';
 import type { EntityManager } from 'typeorm';
+import type { ValidationResult } from '../types/validation.types';
 
 @injectable()
 export class ValidationService extends BaseService {
@@ -35,7 +36,10 @@ export class ValidationService extends BaseService {
   /**
    * Is VALID if there's any other active qualifying accessors on the user organisation unit of the role, excluding the user being checked.
    */
-  async checkIfLastQualifyingAccessorUserOnOrganisationUnit(userRoleId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+  async checkIfLastQualifyingAccessorUserOnOrganisationUnit(
+    userRoleId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const role = await em
@@ -65,7 +69,10 @@ export class ValidationService extends BaseService {
   /**
    * Returns VALID if there's NO innovations being supported only by this (accessor) user.
    */
-  async checkIfNoInnovationsSupportedOnlyByThisUser(userRoleId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+  async checkIfNoInnovationsSupportedOnlyByThisUser(
+    userRoleId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const role = await em
@@ -104,7 +111,70 @@ export class ValidationService extends BaseService {
 
     return {
       rule: ValidationRuleEnum.NoInnovationsSupportedOnlyByThisUser,
-      valid: innovationSupportedOnlyByUser.length === 0,
+      valid: innovationSupportedOnlyByUser.length === 0
     };
+  }
+
+  private roleTypeToValidationRule(role: ServiceRoleEnum): ValidationRuleEnum {
+    switch (role) {
+      case ServiceRoleEnum.ADMIN:
+        return ValidationRuleEnum.UserHasAnyAdminRole;
+      case ServiceRoleEnum.INNOVATOR:
+        return ValidationRuleEnum.UserHasAnyInnovatorRole;
+      case ServiceRoleEnum.ASSESSMENT:
+        return ValidationRuleEnum.UserHasAnyAssessmentRole;
+      case ServiceRoleEnum.ACCESSOR:
+        return ValidationRuleEnum.UserHasAnyAccessorRole;
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return ValidationRuleEnum.UserHasAnyQualifyingAccessorRole;
+    }
+  }
+
+  async checkIfUserHasAnyRole(
+    userId: string,
+    roles: ServiceRoleEnum[],
+    entityManager?: EntityManager
+  ): Promise<ValidationResult[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    // inactive roles are also taken into account
+    const userRoles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoin('userRole.user', 'user')
+      .where('user.id = :userId', { userId })
+      .andWhere('userRole.role IN (:...roles)', { roles })
+      .getMany();
+
+    const validations: ValidationResult[] = [];
+
+    for (const role of roles) {
+      validations.push({
+        rule: this.roleTypeToValidationRule(role),
+        valid: !userRoles.some(r => r.role === role)
+      });
+    }
+
+    return validations;
+  }
+
+  async checkIfUserHasAnyAccessorRoleInOtherOrganisation(
+    userId: string,
+    organisationId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const otherOrganisationRoles = await em.createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoin('userRole.organisationUnit', 'unit')
+      .innerJoin('unit.organisation', 'org')
+      .innerJoin('userRole.user', 'user')
+      .where('org.id != organisationId', { organisationId })
+      .andWhere('user.id = :userId', { userId })
+      .getCount();
+    
+    return {
+      rule: ValidationRuleEnum.CheckIfUserHasAnyAccessorRoleInOtherOrganisation,
+      valid: otherOrganisationRoles > 0
+    }
   }
 }

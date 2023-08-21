@@ -1,7 +1,8 @@
-import { GenericErrorsEnum, NotImplementedError } from '@admin/shared/errors';
-import type { AdminOperationEnum, ValidationResult } from 'apps/admin/_config/admin-operations.config';
-import type { AdminValidationsTemplatesType } from 'apps/admin/types/validation.types';
+import type { AdminOperationEnum } from 'apps/admin/_config/admin-operations.config';
 import { ValidationsHandler } from './validations.handler';
+import type { AdminValidationsTemplatesType, ValidationResult } from 'apps/admin/types/validation.types';
+import { ServiceRoleEnum } from '@admin/shared/enums/user.enums';
+import { BadRequestError, GenericErrorsEnum } from '@admin/shared/errors';
 
 export class AddRoleValidationsHandler extends ValidationsHandler<AdminOperationEnum.ADD_USER_ROLE> {
   constructor(inputData: AdminValidationsTemplatesType[AdminOperationEnum.ADD_USER_ROLE]) {
@@ -9,6 +10,56 @@ export class AddRoleValidationsHandler extends ValidationsHandler<AdminOperation
   }
 
   async run(): Promise<ValidationResult[]> {
-    throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR);
+    switch (this.data.role) {
+      case ServiceRoleEnum.ASSESSMENT:
+        this.validations.push(
+          ...(await this.validationsService.checkIfUserHasAnyRole(this.data.userId, [
+            ServiceRoleEnum.ADMIN,
+            ServiceRoleEnum.INNOVATOR,
+            ServiceRoleEnum.ASSESSMENT
+          ]))
+        );
+        break;
+      case ServiceRoleEnum.ACCESSOR:
+        if (!this.data.organisationId) {
+          throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+        }
+
+        this.validations.push(
+          ...(await this.validationsService.checkIfUserHasAnyRole(this.data.userId, [
+            ServiceRoleEnum.ADMIN,
+            ServiceRoleEnum.INNOVATOR,
+            ServiceRoleEnum.QUALIFYING_ACCESSOR
+          ]))
+        );
+        this.validations.push(
+          await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
+            this.data.userId,
+            this.data.organisationId
+          )
+        );
+        break;
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        if (!this.data.organisationId) {
+          throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+        }
+
+        this.validations.push(
+          ...(await this.validationsService.checkIfUserHasAnyRole(this.data.userId, [
+            ServiceRoleEnum.ADMIN,
+            ServiceRoleEnum.INNOVATOR,
+            ServiceRoleEnum.ACCESSOR
+          ]))
+        );
+        this.validations.push(
+          await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
+            this.data.userId,
+            this.data.organisationId
+          )
+        );
+        break;
+    }
+
+    return this.validations;
   }
 }

@@ -1,7 +1,7 @@
 import { container } from '../../_config';
-import type { AdminOperationEnum, ValidationResult } from 'apps/admin/_config/admin-operations.config';
+import type { AdminOperationEnum } from 'apps/admin/_config/admin-operations.config';
 import { ValidationsHandler } from './validations.handler';
-import type { AdminValidationsTemplatesType } from 'apps/admin/types/validation.types';
+import type { AdminValidationsTemplatesType, ValidationResult } from 'apps/admin/types/validation.types';
 import type { DomainService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { ServiceRoleEnum } from '@admin/shared/enums/user.enums';

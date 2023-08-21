@@ -1,9 +1,9 @@
 
-import type { AdminOperationEnum, ValidationResult } from 'apps/admin/_config/admin-operations.config';
+import type { AdminOperationEnum } from 'apps/admin/_config/admin-operations.config';
 import { container } from '../../_config';
 
 import { SYMBOLS } from '../../_services/symbols';
-import type { AdminValidationsTemplatesType } from 'apps/admin/types/validation.types';
+import type { AdminValidationsTemplatesType, ValidationResult } from 'apps/admin/types/validation.types';
 import type { ValidationService } from 'apps/admin/_services/validation.service';
 
 export abstract class ValidationsHandler<AdminOperation extends AdminOperationEnum> {

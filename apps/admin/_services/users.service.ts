@@ -252,7 +252,7 @@ export class UsersService extends BaseService {
       ...('organisationId' in data && { organisationId: data.organisationId })
     });
 
-    if (validations.length) {
+    if (validations.some(v => v.valid === false)) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { validations } });
     }
 
