@@ -36,7 +36,7 @@ describe('v1-admin-validate Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
         .setParams<ParamsType>({ userId: randUuid() })
-        .setQuery<QueryParamsType>({ operation: AdminOperationsConfig.AdminOperationEnum.INACTIVATE_USER_ROLE })
+        .setQuery<QueryParamsType>({ operation: AdminOperationsConfig.AdminOperationEnum.INACTIVATE_USER_ROLE, roleId: randUuid() })
         .call<never>(azureFunction);
 
       expect(result.body).toStrictEqual({ validations: expected });
@@ -56,7 +56,7 @@ describe('v1-admin-validate Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({ userId: randUuid() })
-        .setQuery<QueryParamsType>({ operation: AdminOperationsConfig.AdminOperationEnum.INACTIVATE_USER_ROLE })
+        .setQuery<QueryParamsType>({ operation: AdminOperationsConfig.AdminOperationEnum.INACTIVATE_USER_ROLE, roleId: randUuid() })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);

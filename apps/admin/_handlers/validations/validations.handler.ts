@@ -1,21 +1,21 @@
-
-import type { AdminOperationEnum } from 'apps/admin/_config/admin-operations.config';
 import { container } from '../../_config';
 
+import type { ValidationService } from '../../_services/validation.service';
+import type { AdminOperationEnum } from '../../_config/admin-operations.config';
 import { SYMBOLS } from '../../_services/symbols';
-import type { AdminValidationsTemplatesType, ValidationResult } from 'apps/admin/types/validation.types';
-import type { ValidationService } from 'apps/admin/_services/validation.service';
+import type { AdminValidationsTemplatesType, ValidationResult } from '../../types/validation.types';
 
 export abstract class ValidationsHandler<AdminOperation extends AdminOperationEnum> {
   data: AdminValidationsTemplatesType[AdminOperation];
   validations: ValidationResult[];
-  validationsService: ValidationService;
+  
+  protected validationsService = container.get<ValidationService>(SYMBOLS.ValidationService);
 
   constructor(data: AdminValidationsTemplatesType[AdminOperation]) {
     this.data = data;
     this.validations = [];
-    this.validationsService = container.get<ValidationService>(SYMBOLS.ValidationService);
   }
 
   abstract run(): Promise<ValidationResult[]>;
 }
+

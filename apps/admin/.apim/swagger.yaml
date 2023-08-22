@@ -621,41 +621,44 @@ paths:
               properties:
                 name:
                   type: string
+                  maxLength: 100
                   description: Name of the user.
                 email:
                   type: string
                   format: email
+                  maxLength: 100
                   description: Email of the user.
-                type:
-                  type: string
-                  enum:
-                    - ADMIN
-                    - ACCESSOR
-                    - ASSESSMENT
-                    - QUALIFYING_ACCESSOR
-                  description: Type of the user.
-                organisationAcronym:
-                  type: string
-                  maxLength: 10
-                  nullable: true
-                  description: Acronym of the organisation.
-                organisationUnitAcronym:
-                  type: string
-                  maxLength: 10
-                  nullable: true
-                  description: Acronym of the organisation unit.
                 role:
                   type: string
                   enum:
+                    - ADMIN
+                    - ASSESSMENT
                     - ACCESSOR
                     - QUALIFYING_ACCESSOR
-                  nullable: true
-                  description: Role of the user within the organisation.
+                  description: Role of the user.
               required:
                 - name
                 - email
-                - type
+                - role
               additionalProperties: false
+              oneOf:
+                - type: object
+                  properties:
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                    unitIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                      description: Ids of the organisation units.
+                  required:
+                    - organisationId
+                    - unitIds
+                  additionalProperties: false
       responses:
         "200":
           description: The user has been created.
@@ -735,6 +738,54 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  "/v1/users/{userId}/roles/{roleId}":
+    patch:
+      description: Update user role.
+      operationId: v1-admin-user-role-update
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+              additionalProperties: false
+      responses:
+        "204":
+          description: Updated the user role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The role id.
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
   "/v1/users/{userId}/roles":
     post:
       description: Create user roles.
@@ -753,35 +804,35 @@ paths:
             schema:
               type: object
               properties:
-                roles:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      role:
-                        type: string
-                        enum:
-                          - ACCESSOR
-                          - QUALIFYING_ACCESSOR
-                          - ADMIN
-                          - ASSESSMENT
-                      orgId:
-                        oneOf:
-                          - type: string
-                            format: uuid
-                            x-required: true
-                      unitId:
-                        oneOf:
-                          - type: string
-                            format: uuid
-                            x-required: true
-                    required:
-                      - role
-                    additionalProperties: false
-                  minItems: 1
+                role:
+                  type: string
+                  enum:
+                    - ADMIN
+                    - ASSESSMENT
+                    - ACCESSOR
+                    - QUALIFYING_ACCESSOR
+                  description: Role of the user.
               required:
-                - roles
+                - role
               additionalProperties: false
+              oneOf:
+                - type: object
+                  properties:
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                    unitIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                      description: Ids of the organisation units.
+                  required:
+                    - organisationId
+                    - unitIds
+                  additionalProperties: false
       responses:
         "201":
           description: The created roles.

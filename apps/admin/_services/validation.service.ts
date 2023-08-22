@@ -168,12 +168,12 @@ export class ValidationService extends BaseService {
       .innerJoin('userRole.organisationUnit', 'unit')
       .innerJoin('unit.organisation', 'org')
       .innerJoin('userRole.user', 'user')
-      .where('org.id != organisationId', { organisationId })
+      .where('org.id != :organisationId', { organisationId })
       .andWhere('user.id = :userId', { userId })
       .getCount();
     
     return {
-      rule: ValidationRuleEnum.CheckIfUserHasAnyAccessorRoleInOtherOrganisation,
+      rule: ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation,
       valid: otherOrganisationRoles > 0
     }
   }

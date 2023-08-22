@@ -1,11 +1,12 @@
 
-import type { AdminOperationEnum } from 'apps/admin/_config/admin-operations.config';
-import { ValidationsHandler } from './validations.handler';
-import type { AdminValidationsTemplatesType, ValidationResult } from 'apps/admin/types/validation.types';
+import { container } from '../../_config';
+import type { AdminValidationsTemplatesType, ValidationResult } from '../../types/validation.types';
 import type { DomainService } from '@admin/shared/services';
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import { container } from '../../_config';
 import { ServiceRoleEnum } from '@admin/shared/enums';
+import type { AdminOperationEnum } from '../../_config/admin-operations.config';
+
+import { ValidationsHandler } from './validations.handler';
 
 export class InactivateUserRoleValidationsHandler extends ValidationsHandler<AdminOperationEnum.INACTIVATE_USER_ROLE> {
   private domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);

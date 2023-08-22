@@ -1,8 +1,8 @@
-import type { AdminOperationEnum } from 'apps/admin/_config/admin-operations.config';
-import { ValidationsHandler } from './validations.handler';
-import type { AdminValidationsTemplatesType, ValidationResult } from 'apps/admin/types/validation.types';
+import type { AdminValidationsTemplatesType, ValidationResult } from '../../types/validation.types';
 import { ServiceRoleEnum } from '@admin/shared/enums/user.enums';
 import { BadRequestError, GenericErrorsEnum } from '@admin/shared/errors';
+import { ValidationsHandler } from './validations.handler';
+import type { AdminOperationEnum } from '../../_config/admin-operations.config';
 
 export class AddRoleValidationsHandler extends ValidationsHandler<AdminOperationEnum.ADD_USER_ROLE> {
   constructor(inputData: AdminValidationsTemplatesType[AdminOperationEnum.ADD_USER_ROLE]) {

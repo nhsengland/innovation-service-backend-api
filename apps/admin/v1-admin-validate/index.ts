@@ -12,6 +12,7 @@ import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { validationsHelper } from '../_config/admin-operations.config';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { ValidationHandlersHelper } from '../_handlers/validations/validations.handlers.helper';
 
 class V1AdminValidate {
   @JwtDecoder()
@@ -21,13 +22,16 @@ class V1AdminValidate {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const data = {
+        userId: params.userId,
+        ...(queryParams.roleId && { userRoleId: queryParams.roleId }),
+        ...(queryParams.role && { role: queryParams.role, organisationId: queryParams.organisationId })
+      };
+      JoiHelper.Validate(ValidationHandlersHelper.handlerJoiDefinition(queryParams.operation), data);
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const res = await validationsHelper(queryParams.operation, {
-        userId: params.userId,
-        ...(queryParams.roleId && { userRoleId: queryParams.roleId })
-      });
+      const res = await validationsHelper(queryParams.operation, data);
       context.res = ResponseHelper.Ok<ResponseDTO>({ validations: res });
 
       return;

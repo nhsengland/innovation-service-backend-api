@@ -1,9 +1,11 @@
 import { ServiceRoleEnum } from '@admin/shared/enums';
 import Joi, { Schema } from 'joi';
-import { InactivateUserRoleValidationsHandler } from '../_handlers/validations/inactivate-user-role-validations.handler';
-import { AddRoleValidationsHandler } from '../_handlers/validations/add-role-validations.handler';
-import type { ValidationsHandler } from '../_handlers/validations/validations.handler';
-import { LockUserValidationsHandler } from '../_handlers/validations/lock-user-validations.handler';
+import {
+  type ValidationsHandler,
+  LockUserValidationsHandler,
+  InactivateUserRoleValidationsHandler,
+  AddRoleValidationsHandler,
+} from '../_handlers/validations';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../types/validation.types';
 
 export enum AdminOperationEnum {
@@ -21,7 +23,7 @@ export enum ValidationRuleEnum {
   UserHasAnyAssessmentRole = 'UserHasAnyAssessmentRole',
   UserHasAnyAccessorRole = 'UserHasAnyAccessorRole',
   UserHasAnyQualifyingAccessorRole = 'UserHasAnyQualifyingAccessorRole',
-  CheckIfUserHasAnyAccessorRoleInOtherOrganisation = 'CheckIfUserHasAnyAccessorRoleInOtherOrganisation'
+  UserHasAnyAccessorRoleInOtherOrganisation = 'UserHasAnyAccessorRoleInOtherOrganisation'
 }
 
 
