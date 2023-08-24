@@ -21,7 +21,7 @@ export const QueryParamsSchema = Joi.object<QueryParamsType>({
     .required()
     .description('Type of the operation to validate.'),
   roleId: Joi.alternatives().conditional('operation', {
-    is: Joi.string().valid(AdminOperationEnum.INACTIVATE_USER_ROLE),
+    is: Joi.string().valid(AdminOperationEnum.INACTIVATE_USER_ROLE, AdminOperationEnum.ACTIVATE_USER_ROLE),
     then: Joi.string().guid().required()
   }),
   role: Joi.alternatives().conditional('operation', {
