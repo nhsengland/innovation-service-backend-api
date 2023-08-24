@@ -32,6 +32,7 @@ import type { CreateRolesType, DomainContextType, RoleType } from '@admin/shared
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
 import { BaseService } from './base.service';
+import type { ValidationResult } from '../types/validation.types';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -246,11 +247,23 @@ export class UsersService extends BaseService {
     data: CreateRolesType,
     entityManager?: EntityManager
   ): Promise<{ id: string }[]> {
-    const validations = await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
-      userId,
-      role: data.role,
-      ...('organisationId' in data && { organisationId: data.organisationId })
-    });
+
+    const validations: ValidationResult[] = [];
+
+    if ('unitIds' in data) {
+      for(const unitId in data.unitIds) {
+        validations.push(...await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
+          userId,
+          role: data.role,
+          organisationUnitId: unitId
+        }))
+      }
+    } else {
+      validations.push(...await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
+        userId,
+        role: data.role
+      }))
+    }
 
     if (validations.some(v => v.valid === false)) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { validations } });
