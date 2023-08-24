@@ -13,7 +13,7 @@ import type { Context } from '@azure/functions';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
 
-export class InnovationSubmitedHandler extends BaseHandler<
+export class InnovationSubmittedHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUBMITED,
   | EmailTypeEnum.INNOVATION_SUBMITED_CONFIRMATION_TO_INNOVATOR
   | EmailTypeEnum.INNOVATION_SUBMITTED_TO_ALL_INNOVATORS

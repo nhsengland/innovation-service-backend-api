@@ -13,7 +13,7 @@ export { InnovationReassessmentRequestHandler } from './innovation-reassessment-
 export { InnovationRecordExportFeedbackHandler } from './innovation-record-export-feedback.handler';
 export { InnovationRecordExportRequestHandler } from './innovation-record-export-request.handler';
 export { InnovationStopSharingHandler } from './innovation-stop-sharing.handler';
-export { InnovationSubmitedHandler } from './innovation-submited.handler';
+export { InnovationSubmittedHandler } from './innovation-submitted.handler';
 export { InnovationSupportStatusChangeRequestHandler } from './innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './innovation-support-status-update.handler';
 export { SupportSummaryUpdateHandler } from './support-summary-update.handler';
