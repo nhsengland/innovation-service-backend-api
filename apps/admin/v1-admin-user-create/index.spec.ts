@@ -32,7 +32,7 @@ afterEach(() => {
 });
 
 describe('v1-admin-user-create Suite', () => {
-  describe('200', () => {
+  describe('201', () => {
     it.each([ServiceRoleEnum.ADMIN, ServiceRoleEnum.ASSESSMENT] as const)(
       'should create a user with role %s',
       async role => {
@@ -46,7 +46,7 @@ describe('v1-admin-user-create Suite', () => {
           .call<never>(azureFunction);
 
         expect(result.body).toStrictEqual(expected);
-        expect(result.status).toBe(200);
+        expect(result.status).toBe(201);
         expect(mock).toHaveBeenCalledTimes(1);
       }
     );
@@ -66,7 +66,7 @@ describe('v1-admin-user-create Suite', () => {
           .call<never>(azureFunction);
 
         expect(result.body).toStrictEqual(expected);
-        expect(result.status).toBe(200);
+        expect(result.status).toBe(201);
         expect(mock).toHaveBeenCalledTimes(1);
       }
     );
@@ -128,7 +128,7 @@ describe('v1-admin-user-create Suite', () => {
 
   describe('Access', () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
+      ['Admin', 201, scenario.users.allMighty],
       ['QA', 403, scenario.users.aliceQualifyingAccessor],
       ['A', 403, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
