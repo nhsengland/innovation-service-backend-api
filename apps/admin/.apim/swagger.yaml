@@ -738,6 +738,39 @@ paths:
           description: The user is not authorized to access this resource.
         "500":
           description: An error occurred while processing the request.
+  "/v1/users/{userId}/innovations":
+    get:
+      description: Retrieves the user owned innovations.
+      operationId: v1-admin-user-innovations
+      tags:
+        - "[v1] Innovations owned by user"
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    collaboratorsCount:
+                      type: number
+                    expirationTransferDate:
+                      type: string
+        "400":
+          description: Bad request
   "/v1/users/{userId}/roles/{roleId}":
     patch:
       description: Update user role.
