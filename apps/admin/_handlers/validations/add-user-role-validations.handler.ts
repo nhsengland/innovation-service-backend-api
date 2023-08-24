@@ -4,13 +4,20 @@ import { BadRequestError, GenericErrorsEnum } from '@admin/shared/errors';
 import { ValidationsHandler } from './validations.handler';
 import type { AdminOperationEnum } from '../../_config/admin-operations.config';
 
-export class AddRoleValidationsHandler extends ValidationsHandler<AdminOperationEnum.ADD_USER_ROLE> {
+export class AddUserRoleValidationsHandler extends ValidationsHandler<AdminOperationEnum.ADD_USER_ROLE> {
   constructor(inputData: AdminValidationsTemplatesType[AdminOperationEnum.ADD_USER_ROLE]) {
     super(inputData);
   }
 
   async run(): Promise<ValidationResult[]> {
     switch (this.data.role) {
+      case ServiceRoleEnum.ADMIN:
+      case ServiceRoleEnum.INNOVATOR:
+        this.validations.push(
+          ...(await this.validationsService.checkIfUserHasAnyRole(this.data.userId, Object.values(ServiceRoleEnum)))
+        );
+        break;
+
       case ServiceRoleEnum.ASSESSMENT:
         this.validations.push(
           ...(await this.validationsService.checkIfUserHasAnyRole(this.data.userId, [

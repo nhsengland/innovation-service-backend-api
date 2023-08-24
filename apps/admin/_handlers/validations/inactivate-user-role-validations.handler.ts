@@ -1,4 +1,3 @@
-
 import { container } from '../../_config';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../../types/validation.types';
 import type { DomainService } from '@admin/shared/services';

@@ -4,13 +4,15 @@ import {
   type ValidationsHandler,
   LockUserValidationsHandler,
   InactivateUserRoleValidationsHandler,
-  AddRoleValidationsHandler,
+  ActivateUserRoleValidationsHandler,
+  AddUserRoleValidationsHandler
 } from '../_handlers/validations';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../types/validation.types';
 
 export enum AdminOperationEnum {
   LOCK_USER = 'LOCK_USER',
   INACTIVATE_USER_ROLE = 'INACTIVATE_USER_ROLE',
+  ACTIVATE_USER_ROLE = 'ACTIVATE_USER_ROLE',
   ADD_USER_ROLE = 'ADD_USER_ROLE'
 }
 
@@ -23,9 +25,9 @@ export enum ValidationRuleEnum {
   UserHasAnyAssessmentRole = 'UserHasAnyAssessmentRole',
   UserHasAnyAccessorRole = 'UserHasAnyAccessorRole',
   UserHasAnyQualifyingAccessorRole = 'UserHasAnyQualifyingAccessorRole',
-  UserHasAnyAccessorRoleInOtherOrganisation = 'UserHasAnyAccessorRoleInOtherOrganisation'
+  UserHasAnyAccessorRoleInOtherOrganisation = 'UserHasAnyAccessorRoleInOtherOrganisation',
+  OrganisationUnitIsActive = 'OrganisationUnitIsActive'
 }
-
 
 export const ADMIN_OPERATIONS_CONFIG: {
   [key in AdminOperationEnum]: {
@@ -50,12 +52,20 @@ export const ADMIN_OPERATIONS_CONFIG: {
     }).required()
   },
 
+  [AdminOperationEnum.ACTIVATE_USER_ROLE]: {
+    handler: ActivateUserRoleValidationsHandler,
+    joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ACTIVATE_USER_ROLE]>({
+      userId: Joi.string().guid().required(),
+      userRoleId: Joi.string().guid().required()
+    }).required()
+  },
+
   [AdminOperationEnum.ADD_USER_ROLE]: {
-    handler: AddRoleValidationsHandler,
+    handler: AddUserRoleValidationsHandler,
     joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ADD_USER_ROLE]>({
       userId: Joi.string().guid().required(),
       role: Joi.string()
-        .valid(ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR)
+        .valid(...Object.values(ServiceRoleEnum))
         .required(),
       organisationId: Joi.alternatives().conditional('role', {
         is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),

@@ -133,17 +133,23 @@ export class ValidationService extends BaseService {
   async checkIfUserHasAnyRole(
     userId: string,
     roles: ServiceRoleEnum[],
+    ignoreRoleId?: string,
     entityManager?: EntityManager
   ): Promise<ValidationResult[]> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     // inactive roles are also taken into account
-    const userRoles = await em
+    const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
       .innerJoin('userRole.user', 'user')
       .where('user.id = :userId', { userId })
       .andWhere('userRole.role IN (:...roles)', { roles })
-      .getMany();
+
+    if (ignoreRoleId) {
+      query.andWhere('userRole.id != :userRoleId', { userRoleId: ignoreRoleId })
+    }
+
+    const userRoles = await query.getMany();
 
     const validations: ValidationResult[] = [];
 
@@ -174,7 +180,28 @@ export class ValidationService extends BaseService {
     
     return {
       rule: ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation,
-      valid: otherOrganisationRoles > 0
+      valid: otherOrganisationRoles === 0
+    }
+  }
+
+  async checkIfUnitIsActive(
+    userRoleId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const role = await em.createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoinAndSelect('userRole.organisationUnit', 'unit')
+      .andWhere('userRole.id = :userRoleId', { userRoleId })
+      .getOne();
+
+    if (!role) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+
+    return {
+      rule: ValidationRuleEnum.OrganisationUnitIsActive,
+      valid: !role.organisationUnit?.inactivatedAt 
     }
   }
 }
