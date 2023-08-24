@@ -39,12 +39,14 @@ export class AddUserRoleValidationsHandler extends ValidationsHandler<AdminOpera
             ServiceRoleEnum.QUALIFYING_ACCESSOR
           ]))
         );
+
         this.validations.push(
           await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
             this.data.userId,
             this.data.organisationUnitId
           )
         );
+
         this.validations.push(
           await this.validationsService.checkIfUserAlreadyHasRoleInUnit(this.data.userId, this.data.organisationUnitId)
         );
@@ -61,11 +63,16 @@ export class AddUserRoleValidationsHandler extends ValidationsHandler<AdminOpera
             ServiceRoleEnum.ACCESSOR
           ]))
         );
+
         this.validations.push(
           await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
             this.data.userId,
             this.data.organisationUnitId
           )
+        );
+
+        this.validations.push(
+          await this.validationsService.checkIfUserAlreadyHasRoleInUnit(this.data.userId, this.data.organisationUnitId)
         );
         break;
     }

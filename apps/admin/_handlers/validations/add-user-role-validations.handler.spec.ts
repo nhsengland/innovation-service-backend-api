@@ -75,6 +75,12 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
         handler.validations.some(v => v.rule === ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation)
       ).toBeTruthy();
     });
+
+    it('should check if user already has a role in the same unit', async () => {
+      expect(
+        handler.validations.some(v => v.rule === ValidationRuleEnum.UserAlreadyHasRoleInUnit)
+      ).toBeTruthy();
+    });
   });
 
   describe('Adding QUALIFYING_ACCESSOR role', () => {
@@ -98,6 +104,12 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
     it('should check if user has any ACCESSOR or QUALIFYING_ACCESSOR role in any other organisation', async () => {
       expect(
         handler.validations.some(v => v.rule === ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation)
+      ).toBeTruthy();
+    });
+
+    it('should check if user already has a role in the same unit', async () => {
+      expect(
+        handler.validations.some(v => v.rule === ValidationRuleEnum.UserAlreadyHasRoleInUnit)
       ).toBeTruthy();
     });
   });
