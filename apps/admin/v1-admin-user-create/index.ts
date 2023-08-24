@@ -29,7 +29,7 @@ class V1AdminUserCreate {
 
       const result = await usersService.createUser(domainContext, body);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });
+      context.res = ResponseHelper.Created<ResponseDTO>({ id: result.id });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -45,7 +45,7 @@ export default openApi(V1AdminUserCreate.httpTrigger as AzureFunction, '/v1/user
     parameters: [],
     requestBody: SwaggerHelper.bodyJ2S(BodySchema, { description: 'The user to be created.' }),
     responses: {
-      '200': {
+      '201': {
         description: 'The user has been created.',
         content: {
           'application/json': {

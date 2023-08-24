@@ -1,11 +1,11 @@
 import { ServiceRoleEnum } from '@admin/shared/enums';
 import Joi, { Schema } from 'joi';
 import {
-  type ValidationsHandler,
-  LockUserValidationsHandler,
-  InactivateUserRoleValidationsHandler,
   ActivateUserRoleValidationsHandler,
-  AddUserRoleValidationsHandler
+  AddUserRoleValidationsHandler,
+  InactivateUserRoleValidationsHandler,
+  LockUserValidationsHandler,
+  type ValidationsHandler
 } from '../_handlers/validations';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../types/validation.types';
 
@@ -69,7 +69,7 @@ export const ADMIN_OPERATIONS_CONFIG: {
         .required(),
       organisationId: Joi.alternatives().conditional('role', {
         is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
-        then: Joi.string().guid().required
+        then: Joi.string().guid().required()
       })
     }).required()
   }
