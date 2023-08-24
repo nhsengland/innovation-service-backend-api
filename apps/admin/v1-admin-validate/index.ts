@@ -25,7 +25,7 @@ class V1AdminValidate {
       const data = {
         userId: params.userId,
         ...(queryParams.roleId && { userRoleId: queryParams.roleId }),
-        ...(queryParams.role && { role: queryParams.role, organisationId: queryParams.organisationId })
+        ...(queryParams.role && { role: queryParams.role, organisationUnitId: queryParams.organisationUnitId })
       };
       JoiHelper.Validate(ValidationHandlersHelper.handlerJoiDefinition(queryParams.operation), data);
 

@@ -26,6 +26,7 @@ export enum ValidationRuleEnum {
   UserHasAnyAccessorRole = 'UserHasAnyAccessorRole',
   UserHasAnyQualifyingAccessorRole = 'UserHasAnyQualifyingAccessorRole',
   UserHasAnyAccessorRoleInOtherOrganisation = 'UserHasAnyAccessorRoleInOtherOrganisation',
+  UserAlreadyHasRoleInUnit = 'UserAlreadyHasRoleInUnit',
   OrganisationUnitIsActive = 'OrganisationUnitIsActive'
 }
 
@@ -67,7 +68,7 @@ export const ADMIN_OPERATIONS_CONFIG: {
       role: Joi.string()
         .valid(...Object.values(ServiceRoleEnum))
         .required(),
-      organisationId: Joi.alternatives().conditional('role', {
+      organisationUnitId: Joi.alternatives().conditional('role', {
         is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
         then: Joi.string().guid().required()
       })

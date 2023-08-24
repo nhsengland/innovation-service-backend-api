@@ -28,7 +28,7 @@ export class AddUserRoleValidationsHandler extends ValidationsHandler<AdminOpera
         );
         break;
       case ServiceRoleEnum.ACCESSOR:
-        if (!this.data.organisationId) {
+        if (!this.data.organisationUnitId) {
           throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
         }
 
@@ -42,12 +42,15 @@ export class AddUserRoleValidationsHandler extends ValidationsHandler<AdminOpera
         this.validations.push(
           await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
             this.data.userId,
-            this.data.organisationId
+            this.data.organisationUnitId
           )
+        );
+        this.validations.push(
+          await this.validationsService.checkIfUserAlreadyHasRoleInUnit(this.data.userId, this.data.organisationUnitId)
         );
         break;
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-        if (!this.data.organisationId) {
+        if (!this.data.organisationUnitId) {
           throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
         }
 
@@ -61,7 +64,7 @@ export class AddUserRoleValidationsHandler extends ValidationsHandler<AdminOpera
         this.validations.push(
           await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
             this.data.userId,
-            this.data.organisationId
+            this.data.organisationUnitId
           )
         );
         break;

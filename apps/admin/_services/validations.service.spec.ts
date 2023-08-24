@@ -279,7 +279,7 @@ describe('Admin / _services / validations service suite', () => {
     it('should return valid if the user has no QA/A role in other organisations', async () => {
       const validation = await sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
         scenario.users.paulNeedsAssessor.id,
-        scenario.organisations.healthOrg.id
+        scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
       );
 
       expect(validation).toMatchObject({
@@ -291,7 +291,7 @@ describe('Admin / _services / validations service suite', () => {
     it('should return invalid if the user has a QA role in other organisations', async () => {
       const validation = await sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
         scenario.users.aliceQualifyingAccessor.id,
-        scenario.organisations.medTechOrg.id
+        scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
       );
 
       expect(validation).toMatchObject({
@@ -303,13 +303,19 @@ describe('Admin / _services / validations service suite', () => {
     it('should return invalid if the user has an ACCESSOR role in other organisations', async () => {
       const validation = await sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
         scenario.users.samAccessor.id,
-        scenario.organisations.innovTechOrg.id
+        scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id
       );
 
       expect(validation).toMatchObject({
         rule: ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation,
         valid: false
       });
+    });
+
+    it(`should throw an error if the unit doesn't exist`, async () => {
+      await expect(() =>
+        sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(scenario.users.adamInnovator.id, randUuid())
+      ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND));
     });
   });
 
@@ -344,6 +350,32 @@ describe('Admin / _services / validations service suite', () => {
       await expect(() => sut.checkIfUnitIsActive(randUuid())).rejects.toThrowError(
         new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND)
       );
+    });
+  });
+
+  describe('checkIfUserAlreadyHasRoleInUnit', () => {
+    it('should return valid if the user has no role in the unit', async () => {
+      const validation = await sut.checkIfUserAlreadyHasRoleInUnit(
+        scenario.users.aliceQualifyingAccessor.id,
+        scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+      );
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
+        valid: true
+      });
+    });
+
+    it('should return invalid if the user has a role in the unit', async () => {
+      const validation = await sut.checkIfUserAlreadyHasRoleInUnit(
+        scenario.users.aliceQualifyingAccessor.id,
+        scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+      );
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
+        valid: false
+      });
     });
   });
 });

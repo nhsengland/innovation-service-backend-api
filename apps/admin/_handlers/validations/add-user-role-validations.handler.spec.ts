@@ -57,7 +57,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
       handler = new AddUserRoleValidationsHandler({
         userId: scenario.users.adamInnovator.id,
         role: ServiceRoleEnum.ACCESSOR,
-        organisationId: scenario.organisations.healthOrg.id
+        organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
       });
       await handler.run();
     });
@@ -82,7 +82,7 @@ describe('Admin / _handlers / validations / add-user-role suite', () => {
       handler = new AddUserRoleValidationsHandler({
         userId: scenario.users.adamInnovator.id,
         role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-        organisationId: scenario.organisations.healthOrg.id
+        organisationUnitId: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id
       });
       await handler.run();
     });

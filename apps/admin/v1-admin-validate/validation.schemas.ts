@@ -13,7 +13,7 @@ export type QueryParamsType = {
   operation: AdminOperationEnum;
   roleId?: string;
   role?: ServiceRoleEnum;
-  organisationId?: string;
+  organisationUnitId?: string;
 };
 export const QueryParamsSchema = Joi.object<QueryParamsType>({
   operation: Joi.string()
@@ -30,7 +30,7 @@ export const QueryParamsSchema = Joi.object<QueryParamsType>({
       .valid(ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR)
       .required()
   }),
-  organisationId: Joi.alternatives().conditional('role', {
+  organisationUnitId: Joi.alternatives().conditional('role', {
     is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
     then: Joi.string()
       .guid()
