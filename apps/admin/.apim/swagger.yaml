@@ -660,7 +660,7 @@ paths:
                     - unitIds
                   additionalProperties: false
       responses:
-        "200":
+        "201":
           description: The user has been created.
           content:
             application/json:
