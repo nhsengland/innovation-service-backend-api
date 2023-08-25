@@ -251,7 +251,7 @@ export class UsersService extends BaseService {
     const validations: ValidationResult[] = [];
 
     if ('unitIds' in data) {
-      for(const unitId in data.unitIds) {
+      for(const unitId of data.unitIds) {
         validations.push(...await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
           userId,
           role: data.role,
