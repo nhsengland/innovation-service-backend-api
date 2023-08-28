@@ -3464,24 +3464,6 @@ paths:
                 required:
                   - id
   "/v1/{innovationId}/support-logs":
-    get:
-      description: Get support logs list of an Innovation
-      operationId: v1-innovation-support-logs
-      tags:
-        - Innovation Support
-      parameters:
-        - in: path
-          name: innovationId
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: OK
-        "400":
-          description: Bad Request
-        "404":
-          description: Not Found
     post:
       description: Create support logs for an Innovation
       operationId: v1-innovation-support-logs-create

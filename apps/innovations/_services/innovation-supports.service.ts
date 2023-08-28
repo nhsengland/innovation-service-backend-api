@@ -34,8 +34,7 @@ import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
   InnovationDocumentType,
   InnovationSuggestionAccessor,
-  InnovationSuggestionsType,
-  InnovationSupportsLogType
+  InnovationSuggestionsType
 } from '../_types/innovation.types';
 
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -162,57 +161,6 @@ export class InnovationSupportsService extends BaseService {
         ...(engagingAccessors === undefined ? {} : { engagingAccessors })
       };
     });
-  }
-
-  async getInnovationSupportLogs(innovationId: string): Promise<InnovationSupportsLogType[]> {
-    const supportLogs = await this.fetchSupportLogs(innovationId);
-
-    const usersIds = supportLogs.map(item => item.createdBy);
-    const usersInfo = await this.domainService.users.getUsersList({ userIds: [...usersIds] });
-    const userNames: { [key: string]: string } = usersInfo.reduce((map: { [key: string]: string }, obj) => {
-      map[obj.id] = obj.displayName;
-      return map;
-    }, {});
-
-    const response: InnovationSupportsLogType[] = supportLogs.map(log => {
-      const rec: InnovationSupportsLogType = {
-        id: log.id,
-        type: log.type,
-        description: log.description,
-        innovationSupportStatus: log.innovationSupportStatus ?? undefined,
-        createdBy: userNames[log.createdBy] ?? '',
-        createdAt: log.createdAt,
-        organisationUnit: log.organisationUnit
-          ? {
-              id: log.organisationUnit.id,
-              name: log.organisationUnit.name,
-              acronym: log.organisationUnit.acronym,
-              organisation: {
-                id: log.organisationUnit.organisation.id,
-                name: log.organisationUnit.organisation.name,
-                acronym: log.organisationUnit.organisation.acronym
-              }
-            }
-          : null
-      };
-
-      if (log.suggestedOrganisationUnits && log.suggestedOrganisationUnits.length > 0) {
-        rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
-          id: orgUnit.id,
-          name: orgUnit.name,
-          acronym: orgUnit.acronym,
-          organisation: {
-            id: orgUnit.organisation.id,
-            name: orgUnit.organisation.name,
-            acronym: orgUnit.organisation.acronym
-          }
-        }));
-      }
-
-      return rec;
-    });
-
-    return response;
   }
 
   async getInnovationSuggestions(innovationId: string): Promise<InnovationSuggestionsType> {
