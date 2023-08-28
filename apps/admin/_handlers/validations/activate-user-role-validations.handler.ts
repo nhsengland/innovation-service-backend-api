@@ -16,7 +16,7 @@ export class ActivateUserRoleValidationsHandler extends ValidationsHandler<Admin
   }
 
   async run(): Promise<ValidationResult[]> {
-    const role = await this.domainService.users.getUserRole(this.data.userId, this.data.userRoleId);
+    const role = await this.domainService.users.getUserRole(this.data.userId, this.data.userRoleId, false);
 
     if (!role) {
       throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
