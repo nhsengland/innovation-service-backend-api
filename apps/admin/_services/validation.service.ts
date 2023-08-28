@@ -1,12 +1,12 @@
 import { injectable } from 'inversify';
 
-import { InnovationEntity, OrganisationEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { InnovationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 
 import { ValidationRuleEnum } from '../_config/admin-operations.config';
 
 import { BaseService } from './base.service';
-import { NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
+import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
 import { UserErrorsEnum } from '@admin/shared/errors';
 import type { EntityManager } from 'typeorm';
 import type { ValidationResult } from '../types/validation.types';
@@ -164,22 +164,28 @@ export class ValidationService extends BaseService {
 
   async checkIfUserHasAnyAccessorRoleInOtherOrganisation(
     userId: string,
-    organisationUnitId: string,
+    organisationUnitIds: string[],
     entityManager?: EntityManager
   ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const organisation = await em.createQueryBuilder(OrganisationEntity, 'organisation')
-      .innerJoin('organisation.organisationUnits', 'unit')
-      .where('unit.id = :organisationUnitId', { organisationUnitId })
-      .getOne();
+    const units = await em.createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .innerJoinAndSelect('unit.organisation', 'organisation')
+      .where('unit.id IN (:...organisationUnitIds)', { organisationUnitIds })
+      .getMany();
 
-    if (!organisation) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
+    if (!units.length) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND);
+    }
+
+    // all units should be from the same organisation
+    const organisationIds = [...new Set(units.map(u => u.organisation.id))];
+    if (organisationIds.length > 1) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
     }
 
     const otherOrganisationRoles = await em.createQueryBuilder(UserRoleEntity, 'userRole')
-      .where('userRole.organisation_id != :organisationId', { organisationId: organisation.id })
+      .where('userRole.organisation_id != :organisationId', { organisationId: organisationIds[0] })
       .andWhere('userRole.user_id = :userId', { userId })
       .getCount();
     
@@ -210,17 +216,17 @@ export class ValidationService extends BaseService {
     }
   }
 
-  async checkIfUserAlreadyHasRoleInUnit(userId: string, organisationUnitId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+  async checkIfUserAlreadyHasRoleInUnit(userId: string, organisationUnitIds: string[], entityManager?: EntityManager): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const role = await em.createQueryBuilder(UserRoleEntity, 'userRole')
       .where('userRole.user_id = :userId', { userId })
-      .andWhere('userRole.organisation_unit_id = :organisationUnitId', { organisationUnitId })
-      .getOne();
+      .andWhere('userRole.organisation_unit_id IN (:...organisationUnitIds)', { organisationUnitIds })
+      .getMany();
 
     return {
       rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
-      valid: !role
+      valid: !role.length
     }
   }
 }

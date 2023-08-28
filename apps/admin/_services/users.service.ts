@@ -247,23 +247,15 @@ export class UsersService extends BaseService {
     data: CreateRolesType,
     entityManager?: EntityManager
   ): Promise<{ id: string }[]> {
-
     const validations: ValidationResult[] = [];
 
-    if ('unitIds' in data) {
-      for(const unitId of data.unitIds) {
-        validations.push(...await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
-          userId,
-          role: data.role,
-          organisationUnitId: unitId
-        }))
-      }
-    } else {
-      validations.push(...await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
+    validations.push(
+      ...(await validationsHelper(AdminOperationEnum.ADD_USER_ROLE, {
         userId,
-        role: data.role
+        role: data.role,
+        ...('unitIds' in data && { organisationUnitIds: data.unitIds })
       }))
-    }
+    );
 
     if (validations.some(v => v.valid === false)) {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD, { details: { validations } });

@@ -61,7 +61,7 @@ export class ActivateUserRoleValidationsHandler extends ValidationsHandler<Admin
         this.validations.push(
           await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
             this.data.userId,
-            role.organisationUnit.id
+            [role.organisationUnit.id]
           )
         );
         this.validations.push(await this.validationsService.checkIfUnitIsActive(role.id));
@@ -83,7 +83,7 @@ export class ActivateUserRoleValidationsHandler extends ValidationsHandler<Admin
         this.validations.push(
           await this.validationsService.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
             this.data.userId,
-            role.organisationUnit.id
+            [role.organisationUnit.id]
           )
         );
         this.validations.push(await this.validationsService.checkIfUnitIsActive(role.id));
