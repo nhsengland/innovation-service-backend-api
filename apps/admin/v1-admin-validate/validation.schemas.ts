@@ -1,6 +1,7 @@
 import Joi from 'joi';
 import { AdminOperationEnum } from '../_config/admin-operations.config';
 import { ServiceRoleEnum } from '@admin/shared/enums';
+import { JoiHelper } from '@admin/shared/helpers';
 
 export type ParamsType = {
   userId: string;
@@ -32,6 +33,6 @@ export const QueryParamsSchema = Joi.object<QueryParamsType>({
   }),
   organisationUnitIds: Joi.alternatives().conditional('role', {
     is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
-    then: Joi.array().items(Joi.string().guid()).required()
+    then: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().guid()).required()
   })
 }).required();
