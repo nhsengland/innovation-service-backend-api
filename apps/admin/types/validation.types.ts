@@ -26,4 +26,8 @@ export type AdminValidationsTemplatesType = {
     role: ServiceRoleEnum,
     organisationUnitIds?: string[]
   };
+
+  [AdminOperationEnum.ADD_ANY_USER_ROLE]: {
+    userId: string;
+  };
 }

@@ -5,6 +5,7 @@ import {
   AddUserRoleValidationsHandler,
   InactivateUserRoleValidationsHandler,
   LockUserValidationsHandler,
+  AddAnyUserRoleValidationsHandler,
   type ValidationsHandler
 } from '../_handlers/validations';
 import type { AdminValidationsTemplatesType, ValidationResult } from '../types/validation.types';
@@ -13,7 +14,8 @@ export enum AdminOperationEnum {
   LOCK_USER = 'LOCK_USER',
   INACTIVATE_USER_ROLE = 'INACTIVATE_USER_ROLE',
   ACTIVATE_USER_ROLE = 'ACTIVATE_USER_ROLE',
-  ADD_USER_ROLE = 'ADD_USER_ROLE'
+  ADD_USER_ROLE = 'ADD_USER_ROLE',
+  ADD_ANY_USER_ROLE = 'ADD_ANY_USER_ROLE'
 }
 
 export enum ValidationRuleEnum {
@@ -27,7 +29,9 @@ export enum ValidationRuleEnum {
   UserHasAnyQualifyingAccessorRole = 'UserHasAnyQualifyingAccessorRole',
   UserHasAnyAccessorRoleInOtherOrganisation = 'UserHasAnyAccessorRoleInOtherOrganisation',
   UserAlreadyHasRoleInUnit = 'UserAlreadyHasRoleInUnit',
-  OrganisationUnitIsActive = 'OrganisationUnitIsActive'
+  OrganisationUnitIsActive = 'OrganisationUnitIsActive',
+  UserIsAccessorInAllUnitsOfOrg = 'UserIsAccessorInAllUnitsOfOrg',
+  UserCanHaveAssessmentOrAccessorRole = 'UserCanHaveAssessmentOrAccessorRole'
 }
 
 export const ADMIN_OPERATIONS_CONFIG: {
@@ -72,6 +76,13 @@ export const ADMIN_OPERATIONS_CONFIG: {
         is: Joi.string().valid(ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR),
         then: Joi.array().items(Joi.string().guid()).required()
       })
+    }).required()
+  },
+
+  [AdminOperationEnum.ADD_ANY_USER_ROLE]: {
+    handler: AddAnyUserRoleValidationsHandler,
+    joiDefinition: Joi.object<AdminValidationsTemplatesType[AdminOperationEnum.ADD_ANY_USER_ROLE]>({
+      userId: Joi.string().guid().required()
     }).required()
   }
 };

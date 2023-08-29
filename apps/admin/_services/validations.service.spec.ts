@@ -301,10 +301,9 @@ describe('Admin / _services / validations service suite', () => {
     });
 
     it('should return invalid if the user has an ACCESSOR role in other organisations', async () => {
-      const validation = await sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(
-        scenario.users.samAccessor.id,
-        [scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id]
-      );
+      const validation = await sut.checkIfUserHasAnyAccessorRoleInOtherOrganisation(scenario.users.samAccessor.id, [
+        scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id
+      ]);
 
       expect(validation).toMatchObject({
         rule: ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation,
@@ -355,10 +354,9 @@ describe('Admin / _services / validations service suite', () => {
 
   describe('checkIfUserAlreadyHasRoleInUnit', () => {
     it('should return valid if the user has no role in the unit', async () => {
-      const validation = await sut.checkIfUserAlreadyHasRoleInUnit(
-        scenario.users.aliceQualifyingAccessor.id,
-        [scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id]
-      );
+      const validation = await sut.checkIfUserAlreadyHasRoleInUnit(scenario.users.aliceQualifyingAccessor.id, [
+        scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.id
+      ]);
 
       expect(validation).toMatchObject({
         rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
@@ -367,13 +365,95 @@ describe('Admin / _services / validations service suite', () => {
     });
 
     it('should return invalid if the user has a role in the unit', async () => {
-      const validation = await sut.checkIfUserAlreadyHasRoleInUnit(
-        scenario.users.aliceQualifyingAccessor.id,
-        [scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id]
-      );
+      const validation = await sut.checkIfUserAlreadyHasRoleInUnit(scenario.users.aliceQualifyingAccessor.id, [
+        scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+      ]);
 
       expect(validation).toMatchObject({
         rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
+        valid: false
+      });
+    });
+  });
+
+  describe('checkIfUserIsAccessorInAllUnitsOfOrg', () => {
+    it('should return valid if the user has no role in the unit', async () => {
+      const validation = await sut.checkIfUserIsAccessorInAllUnitsOfOrg(scenario.users.johnInnovator.id, em);
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+        valid: true
+      });
+    });
+
+    it(`should return valid if the user has a role in some of the organisation's units`, async () => {
+      const validation = await sut.checkIfUserIsAccessorInAllUnitsOfOrg(scenario.users.aliceQualifyingAccessor.id, em);
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+        valid: true
+      });
+    });
+
+    it(`should return false if the user has a role in all of the organisation's units`, async () => {
+      const validation = await sut.checkIfUserIsAccessorInAllUnitsOfOrg(scenario.users.jamieMadroxAccessor.id, em);
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+        valid: false
+      });
+    });
+  });
+
+  describe('checkIfUserCanHaveAssessmentOrAccessorRole', () => {
+    it('should return valid if the user has no QA/A role', async () => {
+      const validation = await sut.checkIfUserCanHaveAssessmentOrAccessorRole(scenario.users.paulNeedsAssessor.id, em);
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: true
+      });
+    });
+
+    it(`should return valid if the user has no ASSESSMENT role`, async () => {
+      const validation = await sut.checkIfUserCanHaveAssessmentOrAccessorRole(
+        scenario.users.aliceQualifyingAccessor.id,
+        em
+      );
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: true
+      });
+    });
+
+    it.each([
+      [ServiceRoleEnum.ADMIN, scenario.users.allMighty.id],
+      [ServiceRoleEnum.INNOVATOR, scenario.users.adamInnovator.id]
+    ])(`should return false if the user is %s`, async (_roleType, userId) => {
+      const validation = await sut.checkIfUserCanHaveAssessmentOrAccessorRole(userId, em);
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: false
+      });
+    });
+
+    it(`should return false if the user has an ASSESSMENT role and is QA/A in all units of org`, async () => {
+      await em
+        .getRepository(UserRoleEntity)
+        .save({
+          user: UserEntity.new({ id: scenario.users.jamieMadroxAccessor.id }),
+          role: ServiceRoleEnum.ASSESSMENT
+        });
+
+      const validation = await sut.checkIfUserCanHaveAssessmentOrAccessorRole(
+        scenario.users.jamieMadroxAccessor.id,
+        em
+      );
+
+      expect(validation).toMatchObject({
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
         valid: false
       });
     });

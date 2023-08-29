@@ -142,10 +142,10 @@ export class ValidationService extends BaseService {
     const query = em
       .createQueryBuilder(UserRoleEntity, 'userRole')
       .where('userRole.user_id = :userId', { userId })
-      .andWhere('userRole.role IN (:...roles)', { roles })
+      .andWhere('userRole.role IN (:...roles)', { roles });
 
     if (ignoreRoleId) {
-      query.andWhere('userRole.id != :userRoleId', { userRoleId: ignoreRoleId })
+      query.andWhere('userRole.id != :userRoleId', { userRoleId: ignoreRoleId });
     }
 
     const userRoles = await query.getMany();
@@ -169,7 +169,8 @@ export class ValidationService extends BaseService {
   ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const units = await em.createQueryBuilder(OrganisationUnitEntity, 'unit')
+    const units = await em
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
       .innerJoinAndSelect('unit.organisation', 'organisation')
       .where('unit.id IN (:...organisationUnitIds)', { organisationUnitIds })
       .getMany();
@@ -184,24 +185,23 @@ export class ValidationService extends BaseService {
       throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
     }
 
-    const otherOrganisationRoles = await em.createQueryBuilder(UserRoleEntity, 'userRole')
+    const otherOrganisationRoles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
       .where('userRole.organisation_id != :organisationId', { organisationId: organisationIds[0] })
       .andWhere('userRole.user_id = :userId', { userId })
       .getCount();
-    
+
     return {
       rule: ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation,
       valid: otherOrganisationRoles === 0
-    }
+    };
   }
 
-  async checkIfUnitIsActive(
-    userRoleId: string,
-    entityManager?: EntityManager
-  ): Promise<ValidationResult> {
+  async checkIfUnitIsActive(userRoleId: string, entityManager?: EntityManager): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const role = await em.createQueryBuilder(UserRoleEntity, 'userRole')
+    const role = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
       .innerJoinAndSelect('userRole.organisationUnit', 'unit')
       .where('userRole.id = :userRoleId', { userRoleId })
       .getOne();
@@ -212,21 +212,91 @@ export class ValidationService extends BaseService {
 
     return {
       rule: ValidationRuleEnum.OrganisationUnitIsActive,
-      valid: !role.organisationUnit?.inactivatedAt 
-    }
+      valid: !role.organisationUnit?.inactivatedAt
+    };
   }
 
-  async checkIfUserAlreadyHasRoleInUnit(userId: string, organisationUnitIds: string[], entityManager?: EntityManager): Promise<ValidationResult> {
+  async checkIfUserAlreadyHasRoleInUnit(
+    userId: string,
+    organisationUnitIds: string[],
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
     const em = entityManager ?? this.sqlConnection.manager;
 
-    const role = await em.createQueryBuilder(UserRoleEntity, 'userRole')
+    const roles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
       .where('userRole.user_id = :userId', { userId })
       .andWhere('userRole.organisation_unit_id IN (:...organisationUnitIds)', { organisationUnitIds })
       .getMany();
 
     return {
       rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
-      valid: !role.length
+      valid: !roles.length
+    };
+  }
+
+  async checkIfUserIsAccessorInAllUnitsOfOrg(userId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const roles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoin('userRole.organisationUnit', 'unit')
+      .innerJoin('unit.organisation', 'organisation')
+      .where('userRole.user_id = :userId', { userId })
+      .andWhere('userRole.role IN (:...accessorRoles)', {
+        accessorRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
+      })
+      .getMany();
+
+    if (!roles.length) {
+      return {
+        rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+        valid: true
+      };
     }
+
+    const units = await em
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .where('unit.organisation_id = :orgId', { orgId: roles[0]?.organisationId })
+      .getMany();
+
+    return {
+      rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+      valid: roles.length !== units.length
+    };
+  }
+
+  async checkIfUserCanHaveAssessmentOrAccessorRole(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const roles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.user_id = :userId', { userId })
+      .getMany();
+
+    if (roles.some(r => r.role === ServiceRoleEnum.ADMIN || r.role === ServiceRoleEnum.INNOVATOR)) {
+      return {
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: false
+      };
+    }
+
+    const canHaveAccessorRole = await this.checkIfUserIsAccessorInAllUnitsOfOrg(userId, em);
+    const hasAssessmentRole = roles.some(r => r.role === ServiceRoleEnum.ASSESSMENT);
+
+    if (!canHaveAccessorRole.valid && hasAssessmentRole) {
+      return {
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: false
+      };
+    }
+
+    return {
+      rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+      valid: true
+    };
   }
 }
