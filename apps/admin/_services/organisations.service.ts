@@ -20,8 +20,8 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
-import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
-import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { DatesHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
@@ -31,7 +31,6 @@ import { ENV } from '../_config';
 import type { AnnouncementsService } from './announcements.service';
 import { BaseService } from './base.service';
 import SYMBOLS from './symbols';
-import type { UsersService } from './users.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
@@ -39,8 +38,7 @@ export class OrganisationsService extends BaseService {
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProviderService: IdentityProviderService,
-    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService,
-    @inject(SYMBOLS.UsersService) private usersService: UsersService
+    @inject(SYMBOLS.AnnouncementsService) private announcementsService: AnnouncementsService
   ) {
     super();
   }
@@ -532,56 +530,6 @@ export class OrganisationsService extends BaseService {
     });
 
     return { id: unit.id };
-  }
-
-  // TODO: Remove this function after FE changes the implementation to use /user/roles
-  async createUnitUser(
-    domainContext: DomainContextType,
-    organisationUnitId: string,
-    userId: string,
-    data: { role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR },
-    entityManager?: EntityManager
-  ): Promise<void> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    // Start Validations
-    const unit = await connection
-      .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .select(['organisation.id', 'organisation.inactivatedAt', 'unit.id', 'unit.inactivatedAt'])
-      .innerJoin('unit.organisation', 'organisation')
-      .where('unit.id = :organisationUnitId', { organisationUnitId })
-      .getOne();
-    if (!unit) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND);
-    }
-
-    const roles = await connection
-      .createQueryBuilder(UserRoleEntity, 'role')
-      .select(['role.id', 'role.role', 'organisation.id', 'unit.id'])
-      .leftJoin('role.organisation', 'organisation')
-      .leftJoin('role.organisationUnit', 'unit')
-      .where('role.user_id = :userId', { userId })
-      .getMany();
-    if (!roles.length) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
-    }
-
-    const { userRole } = ValidationsHelper.canAddUserToUnit(roles, unit.organisation.id, organisationUnitId);
-    if (userRole && userRole !== data.role) {
-      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_MISMATCH_ROLE);
-    }
-    // End Validations
-
-    await this.usersService.addDbRole(
-      domainContext,
-      userId,
-      {
-        role: data.role,
-        orgId: unit.organisation.id,
-        unitId: unit.id
-      },
-      connection
-    );
   }
 
   private async createOrganisationUnit(
