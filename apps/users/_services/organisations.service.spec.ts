@@ -1,11 +1,9 @@
 import { container } from '../_config';
 
-import { randEmail, randUuid } from '@ngneat/falso';
+import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import { UserRoleEntity } from '@users/shared/entities';
-import { ServiceRoleEnum } from '@users/shared/enums';
-import { ConflictError, NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import type { OrganisationsService } from './organisations.service';
 import SYMBOLS from './symbols';
@@ -247,89 +245,6 @@ describe('Users / _services / organisations service suite', () => {
       await expect(() => sut.getOrganisationUnitInfo(randUuid())).rejects.toThrowError(
         new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND)
       );
-    });
-  });
-
-  describe('getOrganisationUnitUserByEmail', () => {
-    it.each([
-      [ServiceRoleEnum.ACCESSOR, scenario.users.ingridAccessor],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, scenario.users.aliceQualifyingAccessor]
-    ])('should get the user info for ', async (userType, user) => {
-      const result = await sut.getOrganisationUnitUserByEmail(
-        scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-        user.email,
-        em
-      );
-
-      expect(result).toMatchObject({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: userType
-      });
-    });
-
-    it(`should throw an error if the user doesn't exist`, async () => {
-      await expect(() =>
-        sut.getOrganisationUnitUserByEmail(
-          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-          randEmail(),
-          em
-        )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND));
-    });
-
-    it(`should throw an error if the organisation doesn't exist`, async () => {
-      await expect(() =>
-        sut.getOrganisationUnitUserByEmail(randUuid(), scenario.users.aliceQualifyingAccessor.email, em)
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND));
-    });
-
-    it('should throw an error if the user has no roles', async () => {
-      await em.getRepository(UserRoleEntity).delete({ id: scenario.users.adamInnovator.roles.innovatorRole.id });
-
-      await expect(() =>
-        sut.getOrganisationUnitUserByEmail(
-          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-          scenario.users.adamInnovator.email,
-          em
-        )
-      ).rejects.toThrowError(new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND));
-    });
-
-    it.each([
-      [ServiceRoleEnum.INNOVATOR, scenario.users.adamInnovator],
-      [ServiceRoleEnum.ADMIN, scenario.users.allMighty]
-    ])(`should throw an error if the user is %s`, async (_userType, user) => {
-      await expect(() =>
-        sut.getOrganisationUnitUserByEmail(
-          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-          user.email,
-          em
-        )
-      ).rejects.toThrowError(
-        new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_CANT_BE_INNOVATOR_OR_ADMIN)
-      );
-    });
-
-    it(`should throw an error if the user is from another organisation`, async () => {
-      await expect(() =>
-        sut.getOrganisationUnitUserByEmail(
-          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-          scenario.users.samAccessor.email,
-          em
-        )
-      ).rejects.toThrowError(new ConflictError(OrganisationErrorsEnum.ORGANISATION_USER_FROM_OTHER_ORG));
-    });
-
-    it(`should throw an error if the user already exists in the organisation unit`, async () => {
-      await expect(() =>
-        sut.getOrganisationUnitUserByEmail(
-          scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
-          scenario.users.bartQualifyingAccessor.email,
-          em
-        )
-      ).rejects.toThrowError(new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_ALREADY_EXISTS));
     });
   });
 });
