@@ -3,7 +3,7 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randBoolean, randFullName, randNumber, randPastDate, randText, randUuid } from '@ngneat/falso';
+import { randBoolean, randNumber, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { InnovationThreadsService } from '../_services/innovation-threads.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -30,19 +30,11 @@ const expected = {
     {
       id: randUuid(),
       subject: randText(),
-      createdBy: {
-        id: randUuid(),
-        name: randFullName(),
-        displayTeam: randText()
-      },
+      createdBy: { id: randUuid(), displayTeam: randText() },
       lastMessage: {
         id: randUuid(),
         createdAt: randPastDate(),
-        createdBy: {
-          id: randUuid(),
-          name: randFullName(),
-          displayTeam: randText()
-        }
+        createdBy: { id: randUuid(), displayTeam: randText() }
       },
       hasUnreadNotifications: randBoolean(),
       messageCount: randNumber()
@@ -50,18 +42,11 @@ const expected = {
     {
       id: randUuid(),
       subject: randText(),
-      createdBy: {
-        id: randUuid(),
-        name: randFullName(),
-        displayTeam: randText()
-      },
+      createdBy: { id: randUuid(), displayTeam: randText() },
       lastMessage: {
         id: randUuid(),
         createdAt: randPastDate(),
-        createdBy: {
-          id: randUuid(),
-          name: randFullName()
-        }
+        createdBy: { id: randUuid(), displayTeam: randText() }
       },
       hasUnreadNotifications: randBoolean(),
       messageCount: randNumber()
