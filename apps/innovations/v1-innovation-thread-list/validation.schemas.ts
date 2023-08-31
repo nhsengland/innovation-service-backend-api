@@ -1,9 +1,8 @@
 import { JoiHelper, type PaginationQueryParamsType } from '@innovations/shared/helpers';
 import Joi from 'joi';
 
-enum orderFields {
+enum OrderFields {
   'subject' = 'subject',
-  'createdAt' = 'createdAt',
   'messageCount' = 'messageCount',
   'latestMessageCreatedAt' = 'latestMessageCreatedAt'
 }
@@ -13,7 +12,11 @@ export const ParamsSchema = Joi.object<ParamsType>({
   innovationId: Joi.string().guid().required()
 });
 
-export type QueryParamsType = PaginationQueryParamsType<orderFields>;
+export type QueryParamsType = PaginationQueryParamsType<OrderFields> & {
+  subject?: string;
+};
 export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
-  orderKeys: Object.keys(orderFields)
-}).required();
+  orderKeys: Object.keys(OrderFields)
+})
+  .append({ subject: Joi.string().max(50).optional() })
+  .required();

@@ -14,7 +14,7 @@ export type QueryParamsType = PaginationQueryParamsType<orderFields> & {
   fields: 'email'[];
 };
 
-export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields) })
+export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({ orderKeys: Object.keys(orderFields), maxTake: 500 })
   .append<QueryParamsType>({
     userTypes: JoiHelper.AppCustomJoi()
       .stringArray()

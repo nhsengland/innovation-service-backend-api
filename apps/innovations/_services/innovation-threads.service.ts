@@ -268,31 +268,6 @@ export class InnovationThreadsService extends BaseService {
     };
   }
 
-  async getThread(
-    //requestUser: DomainUserInfoType,
-    threadId: string
-  ): Promise<InnovationThreadEntity> {
-    const thread = await this.sqlConnection
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .innerJoinAndSelect('thread.author', 'author')
-      .innerJoinAndSelect('thread.innovation', 'messages')
-      .where('thread.id = :threadId', { threadId })
-      .getOne();
-
-    if (!thread) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
-    }
-
-    // await this.validationService
-    //   .checkInnovation(requestUser, thread.innovation.id)
-    //   .checkQualifyingAccessor()
-    //   .checkAccessor()
-    //   .checkInnovationOwner()
-    //   .validate();
-
-    return thread;
-  }
-
   async updateThreadMessage(
     requestUser: DomainUserInfoType,
     messageId: string,
@@ -337,20 +312,17 @@ export class InnovationThreadsService extends BaseService {
       name: string;
     };
   }> {
-    let thread: InnovationThreadEntity;
-
-    try {
-      thread = await this.sqlConnection
-        .createQueryBuilder(InnovationThreadEntity, 'thread')
-        .select(['thread.id', 'thread.subject', 'thread.createdAt', 'author.id', 'author.identityId', 'author.status'])
-        .leftJoin('thread.author', 'author')
-        .where('thread.id = :threadId', { threadId })
-        .getOneOrFail();
-    } catch (error) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    const thread = await this.sqlConnection
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .select(['thread.id', 'thread.subject', 'thread.createdAt', 'author.id', 'author.identityId', 'author.status'])
+      .leftJoin('thread.author', 'author')
+      .where('thread.id = :threadId', { threadId })
+      .getOne();
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    let author: IdentityUserInfo | null = null;
+    let author: null | IdentityUserInfo = null;
     if (thread.author.status !== UserStatusEnum.DELETED) {
       author = await this.identityProvider.getUserInfo(thread.author.identityId);
     }
@@ -514,33 +486,43 @@ export class InnovationThreadsService extends BaseService {
     };
   }
 
-  async getInnovationThreads(
+  async getThreadList(
     domainContext: DomainContextType,
     innovationId: string,
-    pagination: PaginationQueryParamsType<'subject' | 'createdAt' | 'messageCount' | 'latestMessageCreatedAt'>,
+    filters: {
+      subject?: string;
+    },
+    pagination: PaginationQueryParamsType<'subject' | 'messageCount' | 'latestMessageCreatedAt'>,
     entityManager?: EntityManager
   ): Promise<{
     count: number;
     data: {
       id: string;
       subject: string;
-      messageCount: number;
-      createdAt: Date;
-      isNew: boolean;
+      createdBy: { id: string; displayTeam?: string };
       lastMessage: {
         id: string;
         createdAt: Date;
-        createdBy: {
-          id: string;
-          name: string;
-          organisationUnit: null | { id: string; name: string; acronym: string };
-          role: ServiceRoleEnum;
-          isOwner?: boolean;
-        };
+        createdBy: { id: string; displayTeam?: string };
       };
+      messageCount: number;
+      hasUnreadNotifications: boolean;
     }[];
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
+
+    const countQuery = em
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.innovation_id = :innovationId', { innovationId });
+
+    if (filters.subject) {
+      countQuery.andWhere('thread.subject LIKE :subject', { subject: `%${filters.subject}%` });
+    }
+
+    const count = await countQuery.getCount();
+    if (count === 0) {
+      return { count, data: [] };
+    }
 
     const query = em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
@@ -548,25 +530,28 @@ export class InnovationThreadsService extends BaseService {
         'thread.id as thread_id',
         'thread.subject as thread_subject',
         'thread.created_at as thread_created_at',
+        'threadAuthorRole.user_id as thread_author_id',
+        'threadAuthorRole.id as thread_author_role_id',
+        'threadAuthorRole.role as thread_author_role_role',
+        'threadAuthorUnit.id as thread_author_unit_id',
+        'threadAuthorUnit.name as thread_author_unit_name',
         'innovation.owner_id as innovation_owner_id',
         'info.nMessages as n_messages',
         'message.id as message_id',
         'message.created_at as message_created_at',
-        'author.id as author_id',
-        'author.identityId as author_identity_id',
-        'author.status as author_status',
-        'role.id as role_id',
-        'role.role as role_role',
-        'unit.id as unit_id',
-        'unit.name as unit_name',
-        'unit.acronym as unit_acronym'
+        'messageAuthorRole.user_id as message_author_id',
+        'messageAuthorRole.id as message_author_role_id',
+        'messageAuthorRole.role as message_author_role_role',
+        'messageAuthorUnit.id as message_author_unit_id',
+        'messageAuthorUnit.name as message_author_unit_name'
       ])
       .innerJoin('thread.innovation', 'innovation')
+      .leftJoin('thread.authorUserRole', 'threadAuthorRole')
+      .leftJoin('threadAuthorRole.organisationUnit', 'threadAuthorUnit')
       // Get the information needed about Message
       .innerJoin('thread.messages', 'message')
-      .leftJoin('message.authorUserRole', 'role')
-      .leftJoin('message.author', 'author')
-      .leftJoin('role.organisationUnit', 'unit')
+      .leftJoin('message.authorUserRole', 'messageAuthorRole')
+      .leftJoin('messageAuthorRole.organisationUnit', 'messageAuthorUnit')
       // Get the latest message from the Thread
       .innerJoin(
         subQuery =>
@@ -583,6 +568,10 @@ export class InnovationThreadsService extends BaseService {
       )
       .where('thread.innovation_id = :innovationId', { innovationId });
 
+    if (filters.subject) {
+      query.andWhere('thread.subject LIKE :subject', { subject: `%${filters.subject}%` });
+    }
+
     // Pagination and ordering.
     query.offset(pagination.skip);
     query.limit(pagination.take);
@@ -592,9 +581,6 @@ export class InnovationThreadsService extends BaseService {
       switch (key) {
         case 'subject':
           field = 'thread.subject';
-          break;
-        case 'createdAt':
-          field = 'thread.createdAt';
           break;
         case 'messageCount':
           field = 'info.nMessages';
@@ -611,48 +597,38 @@ export class InnovationThreadsService extends BaseService {
 
     const threads = await query.getRawMany();
 
-    if (threads.length === 0) {
-      return { count: 0, data: [] };
-    }
-
-    const authorIds = [
-      ...new Set(threads.filter(t => t.author_status !== UserStatusEnum.DELETED).map(t => t.author_identity_id))
-    ];
-    const authors = await this.identityProvider.getUsersMap(authorIds);
-
     const notifications = await this.getUnreadMessageNotifications(
       domainContext.currentRole.id,
       threads.map(t => t.thread_id)
     );
 
-    const data = threads.map(t => ({
-      id: t.thread_id,
-      subject: t.thread_subject,
-      messageCount: t.n_messages,
-      createdAt: t.thread_created_at,
-      isNew: notifications.has(t.thread_id),
-      lastMessage: {
-        id: t.message_id,
-        createdAt: t.message_created_at,
+    return {
+      count,
+      data: threads.map(t => ({
+        id: t.thread_id,
+        subject: t.thread_subject,
+        messageCount: t.n_messages,
+        hasUnreadNotifications: notifications.has(t.thread_id),
+        lastMessage: {
+          id: t.message_id,
+          createdAt: t.message_created_at,
+          createdBy: {
+            id: t.message_author_id,
+            displayTeam: this.domainService.users.getDisplayTeamInformation(
+              t.message_author_role_role,
+              t.message_author_unit_name
+            )
+          }
+        },
         createdBy: {
-          id: t.author_id,
-          name: authors.get(t.author_identity_id)?.displayName ?? '[deleted user]',
-          organisationUnit:
-            t.role_role !== ServiceRoleEnum.INNOVATOR && t.role_role !== ServiceRoleEnum.ASSESSMENT
-              ? { id: t.unit_id, name: t.unit_name, acronym: t.unit_acronym }
-              : null,
-          role: t.role_role,
-          isOwner: t.role_role === ServiceRoleEnum.INNOVATOR && t.innovation_owner_id === t.author_id
+          id: t.thread_author_id,
+          displayTeam: this.domainService.users.getDisplayTeamInformation(
+            t.thread_author_role_role,
+            t.thread_author_unit_name
+          )
         }
-      }
-    }));
-
-    const count = await em
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .where('thread.innovation_id = :innovationId', { innovationId })
-      .getCount();
-
-    return { count, data };
+      }))
+    };
   }
 
   /*+

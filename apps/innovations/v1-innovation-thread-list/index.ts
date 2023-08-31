@@ -34,33 +34,29 @@ class V1InnovationThreadCreate {
         .checkInnovation()
         .verify();
 
-      const result = await threadsService.getInnovationThreads(auth.getContext(), params.innovationId, queryParams);
+      const { skip, take, order, ...filters } = queryParams;
+
+      const result = await threadsService.getThreadList(auth.getContext(), params.innovationId, filters, queryParams);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
         data: result.data.map(thread => ({
           id: thread.id,
           subject: thread.subject,
-          messageCount: thread.messageCount,
-          createdAt: thread.createdAt,
-          isNew: thread.isNew,
+          createdBy: {
+            id: thread.createdBy.id,
+            displayTeam: thread.createdBy.displayTeam
+          },
           lastMessage: {
             id: thread.lastMessage.id,
             createdAt: thread.lastMessage.createdAt,
             createdBy: {
               id: thread.lastMessage.createdBy.id,
-              name: thread.lastMessage.createdBy.name,
-              type: thread.lastMessage.createdBy.role,
-              ...(thread.lastMessage.createdBy.isOwner !== undefined && {
-                isOwner: thread.lastMessage.createdBy.isOwner
-              }),
-              organisationUnit: {
-                id: thread.lastMessage.createdBy.organisationUnit?.id ?? '', // if the organisationUnit exists, then all props are ensured to exist
-                name: thread.lastMessage.createdBy.organisationUnit?.name ?? '', // if the organisationUnit exists, then all props are ensured to exist
-                acronym: thread.lastMessage.createdBy.organisationUnit?.acronym ?? '' // if the organisationUnit exists, then all props are ensured to exist
-              }
+              displayTeam: thread.lastMessage.createdBy.displayTeam
             }
-          }
+          },
+          hasUnreadNotifications: thread.hasUnreadNotifications,
+          messageCount: thread.messageCount
         }))
       });
 
@@ -95,56 +91,27 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                   items: {
                     type: 'object',
                     properties: {
-                      id: {
-                        type: 'string'
-                      },
-                      subject: {
-                        type: 'string'
-                      },
-                      messageCount: {
-                        type: 'number'
-                      },
-                      createdAt: {
-                        type: 'string'
-                      },
-                      isNew: {
-                        type: 'boolean'
+                      id: { type: 'string' },
+                      subject: { type: 'string' },
+                      messageCount: { type: 'number' },
+                      hasUnreadNotifications: { type: 'boolean' },
+                      createdBy: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          displayTeam: { type: 'string' }
+                        }
                       },
                       lastMessage: {
                         type: 'object',
                         properties: {
-                          id: {
-                            type: 'string'
-                          },
-                          createdAt: {
-                            type: 'string'
-                          },
+                          id: { type: 'string' },
+                          createdAt: { type: 'string' },
                           createdBy: {
                             type: 'object',
                             properties: {
-                              id: {
-                                type: 'string'
-                              },
-                              name: {
-                                type: 'string'
-                              },
-                              type: {
-                                type: 'string'
-                              },
-                              organisationUnit: {
-                                type: 'object',
-                                properties: {
-                                  id: {
-                                    type: 'string'
-                                  },
-                                  name: {
-                                    type: 'string'
-                                  },
-                                  acronym: {
-                                    type: 'string'
-                                  }
-                                }
-                              }
+                              id: { type: 'string' },
+                              displayTeam: { type: 'string' }
                             }
                           }
                         }
@@ -157,18 +124,10 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
           }
         }
       },
-      401: {
-        description: 'Unauthorized'
-      },
-      403: {
-        description: 'Forbidden'
-      },
-      404: {
-        description: 'Not Found'
-      },
-      500: {
-        description: 'Internal Server Error'
-      }
+      401: { description: 'Unauthorized' },
+      403: { description: 'Forbidden' },
+      404: { description: 'Not Found' },
+      500: { description: 'Internal Server Error' }
     }
   }
 });
