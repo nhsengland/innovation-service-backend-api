@@ -1,20 +1,9 @@
 import azureFunction from '.';
 
-import { ServiceRoleEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import {
-  randAbbreviation,
-  randBoolean,
-  randCompanyName,
-  randFullName,
-  randNumber,
-  randPastDate,
-  randText,
-  randUuid
-} from '@ngneat/falso';
-import { omit } from 'lodash';
+import { randBoolean, randFullName, randNumber, randPastDate, randText, randUuid } from '@ngneat/falso';
 import { InnovationThreadsService } from '../_services/innovation-threads.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -41,43 +30,46 @@ const expected = {
     {
       id: randUuid(),
       subject: randText(),
-      messageCount: randNumber(),
-      createdAt: randPastDate(),
-      isNew: randBoolean(),
+      createdBy: {
+        id: randUuid(),
+        name: randFullName(),
+        displayTeam: randText()
+      },
       lastMessage: {
         id: randUuid(),
         createdAt: randPastDate(),
         createdBy: {
           id: randUuid(),
           name: randFullName(),
-          organisationUnit: { id: randUuid(), name: randCompanyName(), acronym: randAbbreviation() },
-          role: ServiceRoleEnum.ACCESSOR,
-          isOwner: false
+          displayTeam: randText()
         }
-      }
+      },
+      hasUnreadNotifications: randBoolean(),
+      messageCount: randNumber()
     },
     {
       id: randUuid(),
       subject: randText(),
-      messageCount: randNumber(),
-      createdAt: randPastDate(),
-      isNew: randBoolean(),
+      createdBy: {
+        id: randUuid(),
+        name: randFullName(),
+        displayTeam: randText()
+      },
       lastMessage: {
         id: randUuid(),
         createdAt: randPastDate(),
         createdBy: {
           id: randUuid(),
-          name: randFullName(),
-          organisationUnit: null,
-          role: ServiceRoleEnum.INNOVATOR,
-          isOwner: true
+          name: randFullName()
         }
-      }
+      },
+      hasUnreadNotifications: randBoolean(),
+      messageCount: randNumber()
     }
   ]
 };
 
-const mock = jest.spyOn(InnovationThreadsService.prototype, 'getInnovationThreads').mockResolvedValue(expected);
+const mock = jest.spyOn(InnovationThreadsService.prototype, 'getThreadList').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -93,28 +85,7 @@ describe('v1-innovation-thread-list Suite', () => {
         })
         .call<ResponseDTO>(azureFunction);
 
-      expect(result.body).toStrictEqual({
-        count: expected.count,
-        data: expected.data.map(thread => ({
-          ...thread,
-          lastMessage: {
-            ...thread.lastMessage,
-            createdBy: {
-              ...omit(thread.lastMessage.createdBy, 'role'),
-              type: thread.lastMessage.createdBy.role,
-              ...(thread.lastMessage.createdBy.organisationUnit
-                ? { organisationUnit: thread.lastMessage.createdBy.organisationUnit }
-                : {
-                    organisationUnit: {
-                      id: '',
-                      name: '',
-                      acronym: ''
-                    }
-                  })
-            }
-          }
-        }))
-      });
+      expect(result.body).toStrictEqual(expected);
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });

@@ -1,23 +1,23 @@
-import type { ServiceRoleEnum } from '@innovations/shared/enums';
-
 export type ResponseDTO = {
   count: number;
   data: {
     id: string;
     subject: string;
-    messageCount: number;
-    createdAt: Date;
-    isNew: boolean;
+    createdBy: {
+      id: string;
+      name: string;
+      displayTeam?: string;
+    };
     lastMessage: {
       id: string;
       createdAt: Date;
       createdBy: {
         id: string;
         name: string;
-        type: ServiceRoleEnum;
-        isOwner?: boolean;
-        organisationUnit: null | { id: string; name: string; acronym: string };
+        displayTeam?: string;
       };
     };
+    messageCount: number;
+    hasUnreadNotifications: boolean;
   }[];
 };

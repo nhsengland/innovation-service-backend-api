@@ -3835,6 +3835,12 @@ paths:
                 - DESC
             default:
               default: DESC
+        - name: subject
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 50
       responses:
         "200":
           description: Success
