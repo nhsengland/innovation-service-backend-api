@@ -45,7 +45,6 @@ class V1InnovationThreadCreate {
           subject: thread.subject,
           createdBy: {
             id: thread.createdBy.id,
-            name: thread.createdBy.name,
             displayTeam: thread.createdBy.displayTeam
           },
           lastMessage: {
@@ -53,7 +52,6 @@ class V1InnovationThreadCreate {
             createdAt: thread.lastMessage.createdAt,
             createdBy: {
               id: thread.lastMessage.createdBy.id,
-              name: thread.lastMessage.createdBy.name,
               displayTeam: thread.lastMessage.createdBy.displayTeam
             }
           },
@@ -101,7 +99,6 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                         type: 'object',
                         properties: {
                           id: { type: 'string' },
-                          name: { type: 'string' },
                           displayTeam: { type: 'string' }
                         }
                       },
@@ -114,7 +111,6 @@ export default openApi(V1InnovationThreadCreate.httpTrigger as AzureFunction, '/
                             type: 'object',
                             properties: {
                               id: { type: 'string' },
-                              name: { type: 'string' },
                               displayTeam: { type: 'string' }
                             }
                           }

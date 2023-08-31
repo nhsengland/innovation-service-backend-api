@@ -3,19 +3,11 @@ export type ResponseDTO = {
   data: {
     id: string;
     subject: string;
-    createdBy: {
-      id: string;
-      name: string;
-      displayTeam?: string;
-    };
+    createdBy: { id: string; displayTeam?: string };
     lastMessage: {
       id: string;
       createdAt: Date;
-      createdBy: {
-        id: string;
-        name: string;
-        displayTeam?: string;
-      };
+      createdBy: { id: string; displayTeam?: string };
     };
     messageCount: number;
     hasUnreadNotifications: boolean;

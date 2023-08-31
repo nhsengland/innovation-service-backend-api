@@ -3862,10 +3862,15 @@ paths:
                           type: string
                         messageCount:
                           type: number
-                        createdAt:
-                          type: string
-                        isNew:
+                        hasUnreadNotifications:
                           type: boolean
+                        createdBy:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            displayTeam:
+                              type: string
                         lastMessage:
                           type: object
                           properties:
@@ -3878,19 +3883,8 @@ paths:
                               properties:
                                 id:
                                   type: string
-                                name:
+                                displayTeam:
                                   type: string
-                                type:
-                                  type: string
-                                organisationUnit:
-                                  type: object
-                                  properties:
-                                    id:
-                                      type: string
-                                    name:
-                                      type: string
-                                    acronym:
-                                      type: string
         "401":
           description: Unauthorized
         "403":

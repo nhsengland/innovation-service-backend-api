@@ -499,19 +499,11 @@ export class InnovationThreadsService extends BaseService {
     data: {
       id: string;
       subject: string;
-      createdBy: {
-        id: string;
-        name: string;
-        displayTeam?: string;
-      };
+      createdBy: { id: string; displayTeam?: string };
       lastMessage: {
         id: string;
         createdAt: Date;
-        createdBy: {
-          id: string;
-          name: string;
-          displayTeam?: string;
-        };
+        createdBy: { id: string; displayTeam?: string };
       };
       messageCount: number;
       hasUnreadNotifications: boolean;
@@ -538,9 +530,7 @@ export class InnovationThreadsService extends BaseService {
         'thread.id as thread_id',
         'thread.subject as thread_subject',
         'thread.created_at as thread_created_at',
-        'threadAuthor.id as thread_author_id',
-        'threadAuthor.identityId as thread_author_identity_id',
-        'threadAuthor.status as thread_author_status',
+        'threadAuthorRole.user_id as thread_author_id',
         'threadAuthorRole.id as thread_author_role_id',
         'threadAuthorRole.role as thread_author_role_role',
         'threadAuthorUnit.id as thread_author_unit_id',
@@ -549,23 +539,18 @@ export class InnovationThreadsService extends BaseService {
         'info.nMessages as n_messages',
         'message.id as message_id',
         'message.created_at as message_created_at',
-        'messageAuthor.id as message_author_id',
-        'messageAuthor.identityId as message_author_identity_id',
-        'messageAuthor.status as message_author_status',
+        'messageAuthorRole.user_id as message_author_id',
         'messageAuthorRole.id as message_author_role_id',
         'messageAuthorRole.role as message_author_role_role',
         'messageAuthorUnit.id as message_author_unit_id',
-        'messageAuthorUnit.name as message_author_unit_name',
-        'messageAuthorUnit.acronym as message_author_unit_acronym'
+        'messageAuthorUnit.name as message_author_unit_name'
       ])
       .innerJoin('thread.innovation', 'innovation')
-      .leftJoin('thread.author', 'threadAuthor')
       .leftJoin('thread.authorUserRole', 'threadAuthorRole')
       .leftJoin('threadAuthorRole.organisationUnit', 'threadAuthorUnit')
       // Get the information needed about Message
       .innerJoin('thread.messages', 'message')
       .leftJoin('message.authorUserRole', 'messageAuthorRole')
-      .leftJoin('message.author', 'messageAuthor')
       .leftJoin('messageAuthorRole.organisationUnit', 'messageAuthorUnit')
       // Get the latest message from the Thread
       .innerJoin(
@@ -612,16 +597,6 @@ export class InnovationThreadsService extends BaseService {
 
     const threads = await query.getRawMany();
 
-    const authorIds = [
-      ...new Set(
-        threads.filter(t => t.message_author_status !== UserStatusEnum.DELETED).map(t => t.message_author_identity_id)
-      ),
-      ...new Set(
-        threads.filter(t => t.thread_author_status !== UserStatusEnum.DELETED).map(t => t.thread_author_identity_id)
-      )
-    ];
-    const authors = await this.identityProvider.getUsersMap(authorIds);
-
     const notifications = await this.getUnreadMessageNotifications(
       domainContext.currentRole.id,
       threads.map(t => t.thread_id)
@@ -639,7 +614,6 @@ export class InnovationThreadsService extends BaseService {
           createdAt: t.message_created_at,
           createdBy: {
             id: t.message_author_id,
-            name: authors.get(t.message_author_identity_id)?.displayName ?? '[deleted user]',
             displayTeam: this.domainService.users.getDisplayTeamInformation(
               t.message_author_role_role,
               t.message_author_unit_name
@@ -648,7 +622,6 @@ export class InnovationThreadsService extends BaseService {
         },
         createdBy: {
           id: t.thread_author_id,
-          name: authors.get(t.message_author_identity_id)?.displayName ?? '[deleted user]',
           displayTeam: this.domainService.users.getDisplayTeamInformation(
             t.thread_author_role_role,
             t.thread_author_unit_name
