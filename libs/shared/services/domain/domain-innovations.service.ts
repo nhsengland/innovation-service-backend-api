@@ -580,14 +580,14 @@ export class DomainInnovationsService {
         'followerOrganisationUnit.id', 'followerOrganisationUnit.acronym'
       ])
       .innerJoin('thread.innovation', 'innovation')
-      .leftJoin('innovation.collaborators', 'collaborator')
       .innerJoin('innovation.owner', 'innovationOwner')
       .innerJoin('innovationOwner.serviceRoles', 'innovationOwnerRole')
-      .innerJoin('collaborator.user', 'collaboratorUser')
-      .innerJoin('collaboratorUser.serviceRoles', 'collaboratorUserRole')
+      .leftJoin('innovation.collaborators', 'collaborator')
+      .leftJoin('collaborator.user', 'collaboratorUser')
+      .leftJoin('collaboratorUser.serviceRoles', 'collaboratorUserRole')
       .leftJoin('thread.followers', 'followerUserRole')
       .leftJoin('followerUserRole.organisationUnit', 'followerOrganisationUnit')
-      .innerJoin('followerUserRole.user', 'followerUser')
+      .leftJoin('followerUserRole.user', 'followerUser')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
