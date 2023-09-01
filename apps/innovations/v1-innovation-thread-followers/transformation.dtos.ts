@@ -1,7 +1,7 @@
 import type { ServiceRoleEnum } from '@innovations/shared/enums';
 
 export type ResponseDTO = {
-  participants: {
+  followers: {
     id: string;
     name: string;
     type: ServiceRoleEnum | undefined;

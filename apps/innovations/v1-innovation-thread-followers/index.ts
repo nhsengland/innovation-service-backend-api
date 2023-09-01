@@ -14,7 +14,7 @@ import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
 import { ParamsSchema } from './validation.schemas';
 
-class V1InnovationThreadParticipants {
+class V1InnovationThreadFollowers {
   @JwtDecoder()
   @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
@@ -34,18 +34,18 @@ class V1InnovationThreadParticipants {
         .checkInnovation()
         .verify();
 
-      const result = await domainService.innovations.threadIntervenients(pathParams.threadId);
+      const result = await domainService.innovations.threadFollowers(pathParams.threadId);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        participants: result.map(participant => ({
-          id: participant.id,
-          name: participant?.name ?? '',
-          type: participant.userRole.role,
-          ...(participant.isOwner !== undefined && { isOwner: participant.isOwner }),
-          organisationUnit: participant.organisationUnit
+        followers: result.map(follower => ({
+          id: follower.id,
+          name: follower?.name ?? '',
+          type: follower.userRole.role,
+          isOwner: follower.isOwner,
+          organisationUnit: follower.organisationUnit
             ? {
-                id: participant.organisationUnit.id,
-                acronym: participant.organisationUnit.acronym
+                id: follower.organisationUnit.id,
+                acronym: follower.organisationUnit.acronym
               }
             : null
         }))
@@ -59,14 +59,14 @@ class V1InnovationThreadParticipants {
 }
 
 export default openApi(
-  V1InnovationThreadParticipants.httpTrigger as AzureFunction,
-  '/v1/{innovationId}/threads/{threadId}/participants',
+  V1InnovationThreadFollowers.httpTrigger as AzureFunction,
+  '/v1/{innovationId}/threads/{threadId}/followers',
   {
     get: {
-      summary: 'Get Innovation Thread Participants',
-      description: 'Get Innovation Thread Participants',
+      summary: 'Get Innovation Thread Followers',
+      description: 'Get Innovation Thread Followers',
       tags: ['Innovation Thread'],
-      operationId: 'v1-innovation-thread-participants',
+      operationId: 'v1-innovation-thread-followers',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {

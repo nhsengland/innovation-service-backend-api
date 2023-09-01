@@ -34,7 +34,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
 
     // Fetch all thread intervenients, excluding the request user.
     const threadIntervenientUsers = (
-      await this.recipientsService.threadIntervenientRecipients(this.inputData.threadId)
+      await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)
     ).filter(item => item.userId !== this.requestUser.id);
 
     const ownerIncluded = threadIntervenientUsers.find(u => u.userId === owner?.userId);

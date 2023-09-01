@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
@@ -40,6 +40,20 @@ export class InnovationThreadEntity extends BaseEntity {
   @ManyToOne(() => UserRoleEntity, { nullable: false })
   @JoinColumn({ name: 'author_user_role_id' })
   authorUserRole: UserRoleEntity;
+
+  @ManyToMany(() => UserRoleEntity, { nullable: false })
+  @JoinTable({
+    name: 'innovation_thread_follower',
+    joinColumn: {
+      name: 'innovation_thread_id',
+      referencedColumnName: 'id'
+    },
+    inverseJoinColumn: {
+      name: 'user_role_id',
+      referencedColumnName: 'id'
+    }
+  })
+  followers: UserRoleEntity[];
 
   static new(data: Partial<InnovationThreadEntity>): InnovationThreadEntity {
     const instance = new InnovationThreadEntity();

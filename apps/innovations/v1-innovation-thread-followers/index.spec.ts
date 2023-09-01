@@ -45,15 +45,15 @@ const expected = [
   }
 ];
 
-const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadIntervenients').mockResolvedValue(expected);
+const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadFollowers').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-thread-participants Suite', () => {
+describe('v1-innovation-thread-followers Suite', () => {
   describe('200', () => {
-    it('should return the threads participants', async () => {
+    it('should return the thread followers', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
@@ -63,15 +63,15 @@ describe('v1-innovation-thread-participants Suite', () => {
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual({
-        participants: expected.map(participant => ({
-          id: participant.id,
-          name: participant?.name ?? '',
-          type: participant.userRole.role,
-          ...(participant.isOwner !== undefined && { isOwner: participant.isOwner }),
-          organisationUnit: participant.organisationUnit
+        followers: expected.map(follower=> ({
+          id: follower.id,
+          name: follower?.name ?? '',
+          type: follower.userRole.role,
+          ...(follower.isOwner !== undefined && { isOwner: follower.isOwner }),
+          organisationUnit: follower.organisationUnit
             ? {
-                id: participant.organisationUnit.id,
-                acronym: participant.organisationUnit.acronym
+                id: follower.organisationUnit.id,
+                acronym: follower.organisationUnit.acronym
               }
             : null
         }))

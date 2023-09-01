@@ -9,7 +9,6 @@ import { InnovationExportRequestEntity } from '../../entities/innovation/innovat
 import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
-import { InnovationThreadMessageEntity } from '../../entities/innovation/innovation-thread-message.entity';
 import { InnovationThreadEntity } from '../../entities/innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
@@ -36,9 +35,10 @@ import {
 } from '../../enums';
 import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
 import { TranslationHelper } from '../../helpers';
-import type { ActivitiesParamsType, DomainContextType, SupportLogParams } from '../../types';
+import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
+import type { UserEntity } from 'libs/shared/entities';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -548,7 +548,7 @@ export class DomainInnovationsService {
    * @param entityManager
    * @returns object with user info and organisation unit
    */
-  async threadIntervenients(
+  async threadFollowers(
     threadId: string,
     withUserNames = true,
     entityManager?: EntityManager
@@ -563,13 +563,31 @@ export class DomainInnovationsService {
       organisationUnit: { id: string; acronym: string } | null;
     }[]
   > {
-    const connection = entityManager ?? this.sqlConnection.manager;
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    const thread = await connection
+    const thread = await em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .select(['thread.id', 'innovation.id', 'owner.id'])
+      .select([
+        'thread.id',
+        'innovation.id',
+        'innovationOwner.id', 'innovationOwner.identityId',
+        'innovationOwnerRole.id', 'innovationOwnerRole.role', 'innovationOwnerRole.isActive',
+        'collaborator.status',
+        'collaboratorUser.id', 'collaboratorUser.identityId',
+        'collaboratorUserRole.id', 'collaboratorUserRole.role', 'collaboratorUserRole.isActive',
+        'followerUser.id', 'followerUser.identityId',
+        'followerUserRole.id', 'followerUserRole.role', 'followerUserRole.isActive',
+        'followerOrganisationUnit.id', 'followerOrganisationUnit.acronym'
+      ])
       .innerJoin('thread.innovation', 'innovation')
-      .leftJoin('innovation.owner', 'owner')
+      .leftJoin('innovation.collaborators', 'collaborator')
+      .innerJoin('innovation.owner', 'innovationOwner')
+      .innerJoin('innovationOwner.serviceRoles', 'innovationOwnerRole')
+      .innerJoin('collaborator.user', 'collaboratorUser')
+      .innerJoin('collaboratorUser.serviceRoles', 'collaboratorUserRole')
+      .leftJoin('thread.followers', 'followerUserRole')
+      .leftJoin('followerUserRole.organisationUnit', 'followerOrganisationUnit')
+      .innerJoin('followerUserRole.user', 'followerUser')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -577,73 +595,71 @@ export class DomainInnovationsService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    const messages = await connection
-      .createQueryBuilder(InnovationThreadMessageEntity, 'threadMessage')
-      .select([
-        'threadMessage.id',
-        'author.id',
-        'author.identityId',
-        'author.status',
-        'authorRole.id',
-        'authorRole.role',
-        'authorRole.isActive',
-        'organisationUnit.id',
-        'organisationUnit.acronym'
-      ])
-      .innerJoin('threadMessage.author', 'author')
-      .innerJoin('threadMessage.authorUserRole', 'authorRole')
-      .leftJoin('authorRole.organisationUnit', 'organisationUnit')
-      .where('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .andWhere('threadMessage.deleted_at IS NULL')
-      .andWhere('threadMessage.innovation_thread_id = :threadId', { threadId })
-      .getMany();
+    // for correct typing when mapping instead of using type assertions
+    const collaboratorIsUser = (collaboratorUser: UserEntity | null): collaboratorUser is UserEntity => {
+      return !!collaboratorUser;
+    };
 
-    // Get the non active collaborators so that we can filter them out as intervenients
-    const nonActiveCollaborators = new Set(
-      (
-        await connection
-          .createQueryBuilder(InnovationCollaboratorEntity, 'collaborator')
-          .select(['collaborator.user_id'])
-          .where('collaborator.innovation_id = :innovationId', { innovationId: thread.innovation.id })
-          .andWhere('collaborator.status != :collaboratorStatus', {
-            collaboratorStatus: InnovationCollaboratorStatusEnum.ACTIVE
-          })
-          .getRawMany()
-      ).map(c => c.user_id)
-    );
+    const collaboratorUsers = thread.innovation.collaborators
+      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
+      .map(c => c.user)
+      .filter(collaboratorIsUser)
+      .filter(u => u.id !== thread.innovation.owner?.id);
 
-    const participants: Awaited<ReturnType<DomainInnovationsService['threadIntervenients']>> = [];
-    const duplicateSet = new Set<string>();
+    const usersInfo: Map<string, IdentityUserInfo> = withUserNames
+      ? await this.identityProviderService.getUsersMap([
+          ...(thread.innovation.owner ? [thread.innovation.owner.identityId] : []),
+          ...collaboratorUsers.map(u => u.identityId),
+          ...thread.followers.map(f => f.user.identityId)
+        ])
+      : new Map();
 
-    const authorIds = messages.filter(m => m.author.status !== UserStatusEnum.DELETED).map(m => m.author.identityId);
+    const followers: Awaited<ReturnType<DomainInnovationsService['threadFollowers']>> = [];
 
-    const usersInfo = withUserNames ? await this.identityProviderService.getUsersMap(authorIds) : new Map();
-
-    for (const message of messages) {
-      // filter duplicates based on roleId
-      if (!duplicateSet.has(message.authorUserRole.id) && !nonActiveCollaborators.has(message.author.id)) {
-        duplicateSet.add(message.authorUserRole.id);
-
-        participants.push({
-          id: message.author.id,
-          identityId: message.author.identityId,
-          name: usersInfo.get(message.author.identityId)?.displayName,
-          locked: message.author.status === UserStatusEnum.LOCKED || !message.authorUserRole.isActive,
-          userRole: { id: message.authorUserRole.id, role: message.authorUserRole.role },
-          ...(message.authorUserRole.role === ServiceRoleEnum.INNOVATOR && {
-            isOwner: message.author.id === thread.innovation.owner?.id
-          }),
-          organisationUnit: message.authorUserRole.organisationUnit
-            ? {
-                id: message.authorUserRole.organisationUnit.id,
-                acronym: message.authorUserRole.organisationUnit.acronym
-              }
-            : null
-        });
-      }
+    //always push owner into followers
+    if (thread.innovation.owner && thread.innovation.owner.serviceRoles[0] ) {
+      followers.push({
+        id: thread.innovation.owner.id,
+        identityId: thread.innovation.owner.identityId,
+        name: usersInfo.get(thread.innovation.owner.identityId)?.displayName,
+        locked: !thread.innovation.owner.serviceRoles[0].isActive,
+        isOwner: true,
+        userRole: { id: thread.innovation.owner.serviceRoles[0].id, role: ServiceRoleEnum.INNOVATOR },
+        organisationUnit: null
+      });
     }
 
-    return participants;
+    //always push collaborator users into followers
+    collaboratorUsers.forEach(collaboratorUser => {
+      followers.push({
+        id: collaboratorUser.id,
+        identityId: collaboratorUser.identityId,
+        name: usersInfo.get(collaboratorUser.identityId)?.displayName,
+        locked: !collaboratorUser.serviceRoles[0]?.isActive,
+        isOwner: false,
+        userRole: { id: collaboratorUser.serviceRoles[0]!.id, role: ServiceRoleEnum.INNOVATOR }, //assuming innovators can only have 1 role
+        organisationUnit: null
+      });
+    });
+
+    followers.push(
+      ...thread.followers.map(followerRole => ({
+        id: followerRole.user.id,
+        identityId: followerRole.user.identityId,
+        name: usersInfo.get(followerRole.user.identityId)?.displayName,
+        locked: !followerRole.isActive,
+        isOwner: false,
+        userRole: {
+          id: followerRole.id,
+          role: followerRole.role
+        },
+        organisationUnit: followerRole.organisationUnit
+          ? { id: followerRole.organisationUnit.id, acronym: followerRole.organisationUnit.acronym }
+          : null
+      }))
+    );
+
+    return followers;
   }
 
   async getInnovationsGroupedStatus(filters: {

@@ -442,8 +442,8 @@ export class RecipientsService extends BaseService {
    * Fetch a thread intervenient users.
    * We only need to go by the thread messages because the first one, has also the thread author.
    */
-  async threadIntervenientRecipients(threadId: string): Promise<RecipientType[]> {
-    const intervenients = await this.domainService.innovations.threadIntervenients(threadId, false);
+  async threadFollowerRecipients(threadId: string): Promise<RecipientType[]> {
+    const intervenients = await this.domainService.innovations.threadFollowers(threadId, false);
 
     return intervenients.map(item => ({
       userId: item.id,
