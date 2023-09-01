@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import type { EntityManager } from 'typeorm';
+import type { EntityManager, SelectQueryBuilder } from 'typeorm';
 
 import {
   InnovationEntity,
@@ -491,6 +491,7 @@ export class InnovationThreadsService extends BaseService {
     innovationId: string,
     filters: {
       subject?: string;
+      following?: boolean;
     },
     pagination: PaginationQueryParamsType<'subject' | 'messageCount' | 'latestMessageCreatedAt'>,
     entityManager?: EntityManager
@@ -517,6 +518,10 @@ export class InnovationThreadsService extends BaseService {
 
     if (filters.subject) {
       countQuery.andWhere('thread.subject LIKE :subject', { subject: `%${filters.subject}%` });
+    }
+
+    if (filters.following) {
+      this.isFollowingThread(countQuery, domainContext.currentRole.id);
     }
 
     const count = await countQuery.getCount();
@@ -570,6 +575,10 @@ export class InnovationThreadsService extends BaseService {
 
     if (filters.subject) {
       query.andWhere('thread.subject LIKE :subject', { subject: `%${filters.subject}%` });
+    }
+
+    if (filters.following) {
+      this.isFollowingThread(query, domainContext.currentRole.id);
     }
 
     // Pagination and ordering.
@@ -798,5 +807,18 @@ export class InnovationThreadsService extends BaseService {
       .getMany();
 
     return new Set(notifications.map(n => n.contextId));
+  }
+
+  private isFollowingThread(query: SelectQueryBuilder<InnovationThreadEntity>, userRoleId: string) {
+    query.andWhere(
+      `
+      thread.id IN (
+        SELECT innovation_thread_id
+        FROM innovation_thread_follower
+        WHERE user_role_id = :userRoleId
+      )
+    `,
+      { userRoleId }
+    );
   }
 }

@@ -22,7 +22,6 @@ class V1InnovationThreadCreate {
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
-      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
 
       const auth = await authorizationService
         .validate(context)
@@ -33,10 +32,14 @@ class V1InnovationThreadCreate {
         .checkAdminType()
         .checkInnovation()
         .verify();
+      const domainContext = auth.getContext();
 
+      const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query, {
+        userType: domainContext.currentRole.role
+      });
       const { skip, take, order, ...filters } = queryParams;
 
-      const result = await threadsService.getThreadList(auth.getContext(), params.innovationId, filters, queryParams);
+      const result = await threadsService.getThreadList(domainContext, params.innovationId, filters, queryParams);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         count: result.count,
