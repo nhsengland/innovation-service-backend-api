@@ -71,7 +71,10 @@ export class InnovationAssessmentsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_FOUND);
     }
 
-    if (!assessment.finishedAt && domainContext.currentRole.role !== ServiceRoleEnum.ASSESSMENT) {
+    if (
+      !assessment.finishedAt &&
+      ![ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role)
+    ) {
       throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_ASSESSMENT_NOT_SUBMITTED);
     }
 
