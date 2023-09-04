@@ -18,6 +18,7 @@ import {
   InnovationSupportStatusEnum,
   InnovationSupportSummaryTypeEnum,
   NotifierTypeEnum,
+  ServiceRoleEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
@@ -99,8 +100,8 @@ export class InnovationSupportsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId });
 
     if (filters.fields.includes('engagingAccessors')) {
-      query.leftJoinAndSelect('supports.userRoles', 'userRole')
-      query.leftJoinAndSelect('userRole.user', 'user')
+      query.leftJoinAndSelect('supports.userRoles', 'userRole');
+      query.leftJoinAndSelect('userRole.user', 'user');
       // query.leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser');
       // query.leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser');
       // query.leftJoinAndSelect('organisationUser.user', 'user');
@@ -125,11 +126,7 @@ export class InnovationSupportsService extends BaseService {
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
         .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
-        .flatMap(support =>
-          support.userRoles
-            .filter(item => item.isActive)
-            .map(item => item.user.id)
-        );
+        .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
     }
@@ -141,7 +138,7 @@ export class InnovationSupportsService extends BaseService {
         engagingAccessors = support.userRoles
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
-            userRoleId: supportUserRole.id, 
+            userRoleId: supportUserRole.id,
             name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || ''
           }))
           .filter(authUser => authUser.name);
@@ -801,17 +798,19 @@ export class InnovationSupportsService extends BaseService {
           });
           break;
         case InnovationSupportLogTypeEnum.PROGRESS_UPDATE:
-          const file = await this.getProgressUpdateFile(innovationId, supportLog.id);
+          {
+            const file = await this.getProgressUpdateFile(innovationId, supportLog.id);
 
-          summary.push({
-            ...defaultSummary,
-            type: 'PROGRESS_UPDATE',
-            params: {
-              title: supportLog.params?.title ?? '', // will always exists in type PROGRESS_UPDATE
-              message: supportLog.description,
-              ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
-            }
-          });
+            summary.push({
+              ...defaultSummary,
+              type: 'PROGRESS_UPDATE',
+              params: {
+                title: supportLog.params?.title ?? '', // will always exists in type PROGRESS_UPDATE
+                message: supportLog.description,
+                ...(file ? { file: { id: file.id, name: file.name, url: file.file.url } } : {})
+              }
+            });
+          }
           break;
         case InnovationSupportLogTypeEnum.ASSESSMENT_SUGGESTION:
           summary.push({
@@ -960,12 +959,23 @@ export class InnovationSupportsService extends BaseService {
     return await supportQuery.getMany();
   }
 
-  private async getProgressUpdateFile(innovationId: string, progressId: string) {
+  private async getProgressUpdateFile(innovationId: string, progressId: string) 
+  : Promise<{
+      id: string;
+      storageId: string;
+      context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
+      name: string;
+      description?: string;
+      createdAt: Date;
+      createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
+      file: { name: string; size?: number; extension: string; url: string };
+  } | undefined> {
     const files = await this.innovationFileService.getFilesList(
       innovationId,
       { contextId: progressId },
       { skip: 0, take: 1, order: { createdAt: 'ASC' } }
     );
+
     return files.data[0];
   }
 

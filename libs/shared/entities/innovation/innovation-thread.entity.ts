@@ -41,7 +41,7 @@ export class InnovationThreadEntity extends BaseEntity {
   @JoinColumn({ name: 'author_user_role_id' })
   authorUserRole: UserRoleEntity;
 
-  @ManyToMany(() => UserRoleEntity, { nullable: false })
+  @ManyToMany(() => UserRoleEntity, role => role.threadsFollowed, { nullable: false })
   @JoinTable({
     name: 'innovation_thread_follower',
     joinColumn: {

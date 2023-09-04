@@ -106,12 +106,13 @@ export class InnovationThreadsService extends BaseService {
     innovationId: string,
     subject: string,
     message: string,
-    sendNotification: boolean
+    sendNotification: boolean,
+    followerUserRoleIds: string[]
   ): Promise<{
     thread: InnovationThreadEntity;
     messageCount: number;
   }> {
-    return this.createThread(
+    const thread = await this.createThread(
       requestUser,
       domainContext,
       innovationId,
@@ -123,6 +124,28 @@ export class InnovationThreadsService extends BaseService {
       undefined,
       true
     );
+
+    await this.addFollowersToThread(thread.thread.id, followerUserRoleIds);
+
+    return thread;
+  }
+
+  async addFollowersToThread(threadId: string, followerUserRoleIds: string[]): Promise<void> {
+    const thread = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.id = :threadId', { threadId })
+      .getOne();
+
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    const followerEntities: UserRoleEntity[] = [];
+
+    followerUserRoleIds.forEach(userRoleId => {
+      followerEntities.push(UserRoleEntity.new({ id: userRoleId }))
+    });
+
+    await this.sqlConnection.getRepository(InnovationThreadEntity).update({ id: thread.id }, { followers: followerEntities })
   }
 
   async createThread(
