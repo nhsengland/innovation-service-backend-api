@@ -86,7 +86,7 @@ export class InnovationSupportsService extends BaseService {
         acronym: string | null;
         unit: { id: string; name: string; acronym: string | null };
       };
-      engagingAccessors?: { id: string; organisationUnitUserId: string; name: string }[];
+      engagingAccessors?: { id: string; name: string }[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -133,13 +133,12 @@ export class InnovationSupportsService extends BaseService {
     }
 
     return innovationSupports.map(support => {
-      let engagingAccessors: { id: string; organisationUnitUserId: string; name: string }[] | undefined = undefined;
+      let engagingAccessors: { id: string; name: string }[] | undefined = undefined;
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.organisationUnitUsers
           .map(su => ({
             id: su.organisationUser.user.id,
-            organisationUnitUserId: su.id,
             name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
           }))
           .filter(authUser => authUser.name);
@@ -1058,7 +1057,7 @@ export class InnovationSupportsService extends BaseService {
     );
   }
 
-  private sortByStartDate(units: SuggestedUnitType[]) {
+  private sortByStartDate(units: SuggestedUnitType[]): SuggestedUnitType[] {
     return units.sort((a, b) => {
       if (!a.support.start) {
         return 1;

@@ -5,6 +5,7 @@ import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 export type BodyType = {
   subject: string;
   message: string;
+  followers?: string[]
 };
 export const BodySchema = Joi.object<BodyType>({
   subject: Joi.string().max(200).required(),
