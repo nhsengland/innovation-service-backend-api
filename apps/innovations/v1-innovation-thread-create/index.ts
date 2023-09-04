@@ -48,7 +48,8 @@ class V1InnovationThreadCreate {
         pathParams.innovationId,
         body.subject,
         body.message,
-        true
+        true,
+        body.followerUserRoleIds
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
