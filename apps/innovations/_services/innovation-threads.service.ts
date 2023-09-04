@@ -809,7 +809,7 @@ export class InnovationThreadsService extends BaseService {
     return new Set(notifications.map(n => n.contextId));
   }
 
-  private isFollowingThread(query: SelectQueryBuilder<InnovationThreadEntity>, userRoleId: string) {
+  private isFollowingThread(query: SelectQueryBuilder<InnovationThreadEntity>, userRoleId: string): void {
     query.andWhere(
       `
       thread.id IN (
