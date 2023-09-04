@@ -17,6 +17,7 @@ import { InnovationEntity } from './innovation.entity';
 import { InnovationActionEntity } from './innovation-action.entity';
 
 import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import { UserRoleEntity } from '../user/user-role.entity';
 
 @Entity('innovation_support')
 export class InnovationSupportEntity extends BaseEntity {
@@ -34,7 +35,23 @@ export class InnovationSupportEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
-  // TODO: Replace with UserRoleEntity
+  @ManyToMany(() => UserRoleEntity, userRole => userRole.innovationSupports, {
+    nullable: true
+  })
+  @JoinTable({
+    name: 'innovation_support_user',
+    joinColumn: {
+      name: 'innovation_support_id',
+      referencedColumnName: 'id'
+    },
+    inverseJoinColumn: {
+      name: 'user_role_id',
+      referencedColumnName: 'id'
+    }
+  })
+  userRoles: UserRoleEntity[];
+
+  // TODO: remove
   @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
     nullable: true
   })

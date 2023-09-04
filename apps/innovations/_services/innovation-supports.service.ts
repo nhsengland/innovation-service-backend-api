@@ -86,7 +86,7 @@ export class InnovationSupportsService extends BaseService {
         acronym: string | null;
         unit: { id: string; name: string; acronym: string | null };
       };
-      engagingAccessors?: { id: string; name: string }[];
+      engagingAccessors?: { id: string; userRoleId: string; name: string }[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -99,9 +99,11 @@ export class InnovationSupportsService extends BaseService {
       .where('innovation.id = :innovationId', { innovationId });
 
     if (filters.fields.includes('engagingAccessors')) {
-      query.leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser');
-      query.leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser');
-      query.leftJoinAndSelect('organisationUser.user', 'user');
+      query.leftJoinAndSelect('supports.userRoles', 'userRole')
+      query.leftJoinAndSelect('userRole.user', 'user')
+      // query.leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser');
+      // query.leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser');
+      // query.leftJoinAndSelect('organisationUser.user', 'user');
     }
 
     const innovation = await query.getOne();
@@ -124,22 +126,23 @@ export class InnovationSupportsService extends BaseService {
       const assignedAccessorsIds = innovationSupports
         .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
         .flatMap(support =>
-          support.organisationUnitUsers
-            .filter(item => item.organisationUser.user.status === UserStatusEnum.ACTIVE)
-            .map(item => item.organisationUser.user.id)
+          support.userRoles
+            .filter(item => item.isActive)
+            .map(item => item.user.id)
         );
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
     }
 
     return innovationSupports.map(support => {
-      let engagingAccessors: { id: string; name: string }[] | undefined = undefined;
+      let engagingAccessors: { id: string; userRoleId: string; name: string }[] | undefined = undefined;
 
       if (filters.fields.includes('engagingAccessors')) {
-        engagingAccessors = support.organisationUnitUsers
-          .map(su => ({
-            id: su.organisationUser.user.id,
-            name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
+        engagingAccessors = support.userRoles
+          .map(supportUserRole => ({
+            id: supportUserRole.user.id,
+            userRoleId: supportUserRole.id, 
+            name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || ''
           }))
           .filter(authUser => authUser.name);
       }
