@@ -3,7 +3,7 @@ import {
   InnovationEntity,
   InnovationSupportEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity
+  UserRoleEntity
 } from '../../entities';
 import { InnovationSupportStatusEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
@@ -22,7 +22,7 @@ export class InnovationSupportBuilder extends BaseBuilder {
     super(entityManager);
     this.support = InnovationSupportEntity.new({
       status: InnovationSupportStatusEnum.UNASSIGNED,
-      organisationUnitUsers: []
+      userRoles: []
     });
   }
 
@@ -43,22 +43,18 @@ export class InnovationSupportBuilder extends BaseBuilder {
 
   setAccessors(accessors: TestUserType[]): this {
     for (const accessor of accessors) {
-      let organisationUnitUserId: string | undefined = undefined;
-      Object.values(accessor.organisations).forEach(organisation => {
-        const validUnit = Object.values(organisation.organisationUnits).find(
-          unit => unit.id === this.support.organisationUnit.id
-        );
-        if (validUnit) {
-          organisationUnitUserId = validUnit.organisationUnitUser.id;
-        }
-      });
-      if (!organisationUnitUserId) {
+
+      const validRole = Object.values(accessor.roles).find(
+        role => role.organisationUnit?.id === this.support.organisationUnit.id
+      );
+
+      if (!validRole) {
         throw new Error(
-          'InnovationSupportBuilder::setAccessors: accessor does not have a valid organisationUnitUser in the specified organistaion unit of the support.'
+          'InnovationSupportBuilder::setAccessors: accessor does not have a valid role in the specified organistaion unit of the support.'
         );
       }
 
-      this.support.organisationUnitUsers.push(OrganisationUnitUserEntity.new({ id: organisationUnitUserId }));
+      this.support.userRoles.push(UserRoleEntity.new({ id: validRole.id }));
     }
     return this;
   }

@@ -12,7 +12,6 @@ import {
 import { BaseEntity } from '../base.entity';
 
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
-import { OrganisationUnitUserEntity } from '../organisation/organisation-unit-user.entity';
 import { InnovationEntity } from './innovation.entity';
 import { InnovationActionEntity } from './innovation-action.entity';
 
@@ -52,21 +51,21 @@ export class InnovationSupportEntity extends BaseEntity {
   userRoles: UserRoleEntity[];
 
   // TODO: remove
-  @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
-    nullable: true
-  })
-  @JoinTable({
-    name: 'innovation_support_user',
-    joinColumn: {
-      name: 'innovation_support_id',
-      referencedColumnName: 'id'
-    },
-    inverseJoinColumn: {
-      name: 'organisation_unit_user_id',
-      referencedColumnName: 'id'
-    }
-  })
-  organisationUnitUsers: OrganisationUnitUserEntity[];
+  // @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
+  //   nullable: true
+  // })
+  // @JoinTable({
+  //   name: 'innovation_support_user',
+  //   joinColumn: {
+  //     name: 'innovation_support_id',
+  //     referencedColumnName: 'id'
+  //   },
+  //   inverseJoinColumn: {
+  //     name: 'organisation_unit_user_id',
+  //     referencedColumnName: 'id'
+  //   }
+  // })
+  // organisationUnitUsers: OrganisationUnitUserEntity[];
 
   @OneToMany(() => InnovationActionEntity, record => record.innovationSupport, { lazy: true })
   actions: Promise<InnovationActionEntity[]>;

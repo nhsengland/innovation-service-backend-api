@@ -152,16 +152,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
           engagingAccessors: [
             {
               id: scenario.users.aliceQualifyingAccessor.id,
-              organisationUnitUserId:
-                scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                  .organisationUnitUser.id,
+              userRoleId:
+                scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
               name: scenario.users.aliceQualifyingAccessor.name
             },
             {
               id: scenario.users.jamieMadroxAccessor.id,
-              organisationUnitUserId:
-                scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                  .organisationUnitUser.id,
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
               name: scenario.users.jamieMadroxAccessor.name
             }
           ]
@@ -197,9 +194,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
           engagingAccessors: [
             {
               id: scenario.users.samAccessor.id,
-              organisationUnitUserId:
-                scenario.users.samAccessor.organisations.medTechOrg.organisationUnits.medTechOrgUnit
-                  .organisationUnitUser.id,
+              userRoleId:
+                scenario.users.samAccessor.roles.accessorRole.id,
               name: scenario.users.samAccessor.name
             }
           ]
@@ -225,16 +221,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
         engagingAccessors: [
           {
             id: scenario.users.aliceQualifyingAccessor.id,
-            organisationUnitUserId:
-              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                .organisationUnitUser.id,
+            userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
             name: scenario.users.aliceQualifyingAccessor.name
           },
           {
             id: scenario.users.jamieMadroxAccessor.id,
-            organisationUnitUserId:
-              scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                .organisationUnitUser.id,
+            userRoleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id,
             name: scenario.users.jamieMadroxAccessor.name
           }
         ]
@@ -261,9 +253,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
           accessors: [
             {
               id: scenario.users.jamieMadroxAccessor.id,
-              organisationUnitUserId:
-                scenario.users.jamieMadroxAccessor.organisations.healthOrg.organisationUnits.healthOrgAiUnit
-                  .organisationUnitUser.id
+              userRoleId:
+                scenario.users.jamieMadroxAccessor.roles.aiRole.id
             }
           ]
         },
@@ -339,9 +330,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
             accessors: [
               {
                 id: scenario.users.aliceQualifyingAccessor.id,
-                organisationUnitUserId:
-                  scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                    .organisationUnitUser.id
+                userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id
               }
             ]
           },
@@ -611,9 +600,8 @@ describe('Innovations / _services / innovation-supports suite', () => {
           accessors: [
             {
               id: scenario.users.ingridAccessor.id,
-              organisationUnitUserId:
-                scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit
-                  .organisationUnitUser.id
+              userRoleId:
+                scenario.users.ingridAccessor.roles.accessorRole.id
             }
           ]
         },
@@ -626,13 +614,13 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
       const dbSupport = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
-        .select(['support.id', 'orgUnitUser.id'])
-        .innerJoin('support.organisationUnitUsers', 'orgUnitUser')
+        .select(['support.id', 'userRole.id'])
+        .innerJoin('support.userRoles', 'userRole')
         .where('support.id = :supportId', { supportId: support.id })
         .getOne();
 
-      expect(dbSupport?.organisationUnitUsers.map(u => u.id)).toContain(
-        scenario.users.ingridAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.organisationUnitUser.id
+      expect(dbSupport?.userRoles.map(u => u.id)).toContain(
+        scenario.users.ingridAccessor.roles.accessorRole.id
       );
     });
 
@@ -716,12 +704,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
         const dbSupport = await em
           .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select(['support.id', 'orgUnitUser.id'])
-          .leftJoin('support.organisationUnitUsers', 'orgUnitUser')
+          .select(['support.id', 'userRole.id'])
+          .leftJoin('support.userRoles', 'userRole')
           .where('support.id = :supportId', { supportId: support.id })
           .getOne();
 
-        expect(dbSupport?.organisationUnitUsers).toHaveLength(0);
+        expect(dbSupport?.userRoles).toHaveLength(0);
       }
     );
 

@@ -19,7 +19,6 @@ import {
   UserRoleEntity
 } from '@innovations/shared/entities';
 import {
-  AccessorOrganisationRoleEnum,
   ActivityEnum,
   ActivityTypeEnum,
   InnovationActionStatusEnum,
@@ -29,7 +28,6 @@ import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
-  InnovatorOrganisationRoleEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -137,7 +135,7 @@ export class InnovationsService extends BaseService {
             acronym: string;
             users?: {
               name: string;
-              role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum;
+              role: ServiceRoleEnum
             }[];
           };
         };
@@ -569,11 +567,9 @@ export class InnovationsService extends BaseService {
 
       if (fetchUsers) {
         innovationsSupportsQuery
-          .leftJoin('supports.organisationUnitUsers', 'organisationUnitUsers')
-          .addSelect('organisationUnitUsers.id', 'organisationUnitUsers_id')
-          .leftJoin('organisationUnitUsers.organisationUser', 'organisationUser')
-          .addSelect('organisationUser.role', 'organisationUser_role')
-          .leftJoin('organisationUser.user', 'user')
+          .leftJoin('supports.userRoles', 'userRole')
+          .addSelect('userRole.id', 'userRole_id')
+          .leftJoin('userRole.user', 'user')
           .addSelect('user.id', 'user_id')
           .addSelect('user.status', 'user_status');
       }
@@ -596,9 +592,9 @@ export class InnovationsService extends BaseService {
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
           s.flatMap(support =>
-            support.organisationUnitUsers
-              .filter(item => item.organisationUser.user.status !== UserStatusEnum.DELETED)
-              .map(item => item.organisationUser.user.id)
+            support.userRoles
+              .filter(item => item.user.status !== UserStatusEnum.DELETED)
+              .map(item => item.user.id)
           )
         )
       );
@@ -751,11 +747,11 @@ export class InnovationsService extends BaseService {
                     name: support.organisationUnit.name,
                     acronym: support.organisationUnit.acronym,
                     // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
-                    ...((support.organisationUnitUsers ?? []).length > 0 && {
-                      users: support.organisationUnitUsers
+                    ...((support.userRoles ?? []).length > 0 && {
+                      users: support.userRoles
                         .map(su => ({
-                          name: usersInfo.get(su.organisationUser.user.id)?.displayName || '',
-                          role: su.organisationUser.role
+                          name: usersInfo.get(su.user.id)?.displayName || '',
+                          role: su.role
                         }))
                         .filter(authUser => authUser.name)
                     })
@@ -1336,25 +1332,19 @@ export class InnovationsService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    // This query should be reviewed when using the service roles in supports instead of the organisationUnitUser
     const dbSupports = await connection
       .createQueryBuilder(InnovationSupportEntity, 'supports')
-      .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
-      .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('organisationUser.user', 'user')
+      .innerJoinAndSelect('supports.userRoles', 'userRole')
+      .innerJoinAndSelect('userRole.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
       .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
 
     const previousAssignedAccessors = dbSupports.flatMap(support =>
-      support.organisationUnitUsers.map(item => ({
-        id: item.organisationUser.user.id,
-        organisationUnitId: item.organisationUnit.id,
-        userType:
-          item.organisationUser.role === AccessorOrganisationRoleEnum.ACCESSOR
-            ? ServiceRoleEnum.ACCESSOR
-            : ServiceRoleEnum.QUALIFYING_ACCESSOR
+      support.userRoles.map(item => ({
+        id: item.user.id,
+        organisationUnitId: item.organisationUnitId,
+        userType: item.role 
       }))
     );
 
@@ -1382,7 +1372,7 @@ export class InnovationsService extends BaseService {
       // Update all support to UNASSIGNED.
       for (const innovationSupport of dbSupports) {
         innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-        innovationSupport.organisationUnitUsers = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
+        innovationSupport.userRoles = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
         innovationSupport.updatedBy = domainContext.id;
         await transaction.save(InnovationSupportEntity, innovationSupport);
       }

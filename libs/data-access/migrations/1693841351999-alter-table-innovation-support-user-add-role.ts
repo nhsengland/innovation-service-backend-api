@@ -36,6 +36,20 @@ export class alterTableInnovationSupportUserAddRole1693841351999 implements Migr
       ALTER COLUMN user_role_id uniqueidentifier NOT NULL
       `
     );
+
+    // change primary key constraint
+    await queryRunner.query(
+      `
+      ALTER TABLE innovation_support_user
+      DROP CONSTRAINT pk_innovation_support_user_innovation_support_id_organisation_unit_user_id
+
+      ALTER TABLE "innovation_support_user"
+      ALTER COLUMN organisation_unit_user_id uniqueidentifier NULL
+
+      ALTER TABLE innovation_support_user
+      ADD CONSTRAINT pk_innovation_support_user_innovation_support_id_user_role_id PRIMARY KEY (innovation_support_id, user_role_id)
+      `
+    )
   }
 
   async down(queryRunner: QueryRunner): Promise<void> {

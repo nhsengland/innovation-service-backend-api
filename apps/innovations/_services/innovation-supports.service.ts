@@ -8,7 +8,7 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity
+  UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -240,7 +240,7 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<{
     id: string;
     status: InnovationSupportStatusEnum;
-    engagingAccessors: { id: string; organisationUnitUserId: string; name: string }[];
+    engagingAccessors: { id: string; userRoleId: string; name: string }[];
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
@@ -249,9 +249,8 @@ export class InnovationSupportsService extends BaseService {
       .innerJoinAndSelect('support.innovation', 'innovation')
       .innerJoinAndSelect('support.organisationUnit', 'orgUnit')
       .innerJoinAndSelect('orgUnit.organisation', 'org')
-      .leftJoinAndSelect('support.organisationUnitUsers', 'orgUnitUser')
-      .leftJoinAndSelect('orgUnitUser.organisationUser', 'orgUser')
-      .leftJoinAndSelect('orgUser.user', 'user')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
+      .leftJoinAndSelect('userRole.user', 'user')
       .where('support.id = :innovationSupportId', { innovationSupportId })
       .getOne();
 
@@ -261,9 +260,9 @@ export class InnovationSupportsService extends BaseService {
 
     // Fetch users names.
 
-    const assignedAccessorsIds = innovationSupport.organisationUnitUsers
-      .filter(item => item.organisationUser.user.status === UserStatusEnum.ACTIVE)
-      .map(item => item.organisationUser.user.id);
+    const assignedAccessorsIds = innovationSupport.userRoles
+      .filter(item => item.user.status === UserStatusEnum.ACTIVE)
+      .map(item => item.user.id);
     const usersInfo = await this.domainService.users.getUsersList({
       userIds: assignedAccessorsIds
     });
@@ -271,11 +270,11 @@ export class InnovationSupportsService extends BaseService {
     return {
       id: innovationSupport.id,
       status: innovationSupport.status,
-      engagingAccessors: innovationSupport.organisationUnitUsers
+      engagingAccessors: innovationSupport.userRoles
         .map(su => ({
-          id: su.organisationUser.user.id,
-          organisationUnitUserId: su.id,
-          name: usersInfo.find(item => item.id === su.organisationUser.user.id)?.displayName || ''
+          id: su.user.id,
+          userRoleId: su.id,
+          name: usersInfo.find(item => item.id === su.user.id)?.displayName || ''
         }))
         .filter(authUser => authUser.name)
     };
@@ -287,7 +286,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       status: InnovationSupportStatusEnum;
       message: string;
-      accessors?: { id: string; organisationUnitUserId: string }[];
+      accessors?: { id: string; userRoleId: string }[];
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -328,8 +327,8 @@ export class InnovationSupportsService extends BaseService {
         updatedBy: domainContext.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
-        organisationUnitUsers: (data.accessors || []).map(item =>
-          OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId })
+        userRoles: (data.accessors || []).map(item =>
+          UserRoleEntity.new({ id: item.userRoleId })
         )
       });
 
@@ -488,7 +487,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       status: InnovationSupportStatusEnum;
       message: string;
-      accessors?: { id: string; organisationUnitUserId: string }[];
+      accessors?: { id: string; userRoleId: string }[];
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -497,25 +496,25 @@ export class InnovationSupportsService extends BaseService {
     const dbSupport = await connection
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('support.organisationUnitUsers', 'organisationUnitUsers')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
       .where('support.id = :supportId ', { supportId })
       .getOne();
     if (!dbSupport) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    const previousUsersOrganisationUnitUsersIds = new Set(dbSupport.organisationUnitUsers.map(item => item.id));
+    const previousUsersRoleIds = new Set(dbSupport.userRoles.map(item => item.id));
     const previousStatus = dbSupport.status;
 
     const result = await connection.transaction(async transaction => {
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
-        dbSupport.organisationUnitUsers = (data.accessors || []).map(item =>
-          OrganisationUnitUserEntity.new({ id: item.organisationUnitUserId })
+        dbSupport.userRoles = (data.accessors || []).map(item =>
+          UserRoleEntity.new({ id: item.userRoleId })
         );
       } else {
         // In the case that previous support was ENGAGING, cleanup several relations!
 
-        dbSupport.organisationUnitUsers = [];
+        dbSupport.userRoles= [];
 
         // Cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
         if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
@@ -588,7 +587,7 @@ export class InnovationSupportsService extends BaseService {
         newAssignedAccessors:
           data.status === InnovationSupportStatusEnum.ENGAGING
             ? (data.accessors ?? [])
-                .filter(item => !previousUsersOrganisationUnitUsersIds.has(item.organisationUnitUserId))
+                .filter(item => !previousUsersRoleIds.has(item.userRoleId))
                 .map(item => ({ id: item.id }))
             : []
       }
