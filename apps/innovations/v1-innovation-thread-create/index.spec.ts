@@ -50,7 +50,8 @@ describe('v1-innovation-thread-create Suite', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          subject: randText()
+          subject: randText(),
+          followerUserRoleIds: [randUuid()]
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -86,7 +87,8 @@ describe('v1-innovation-thread-create Suite', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          subject: randText()
+          subject: randText(),
+          followerUserRoleIds: [randUuid()]
         })
         .call<ErrorResponseType>(azureFunction);
 

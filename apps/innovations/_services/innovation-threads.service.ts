@@ -139,13 +139,7 @@ export class InnovationThreadsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    const followerEntities: UserRoleEntity[] = [];
-
-    followerUserRoleIds.forEach(userRoleId => {
-      followerEntities.push(UserRoleEntity.new({ id: userRoleId }))
-    });
-
-    await this.sqlConnection.getRepository(InnovationThreadEntity).update({ id: thread.id }, { followers: followerEntities })
+    await this.sqlConnection.getRepository(InnovationThreadEntity).update({ id: thread.id }, { followers: followerUserRoleIds.map(roleId => UserRoleEntity.new({ id: roleId })) })
   }
 
   async createThread(
