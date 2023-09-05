@@ -102,9 +102,6 @@ export class InnovationSupportsService extends BaseService {
     if (filters.fields.includes('engagingAccessors')) {
       query.leftJoinAndSelect('supports.userRoles', 'userRole');
       query.leftJoinAndSelect('userRole.user', 'user');
-      // query.leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser');
-      // query.leftJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser');
-      // query.leftJoinAndSelect('organisationUser.user', 'user');
     }
 
     const innovation = await query.getOne();
