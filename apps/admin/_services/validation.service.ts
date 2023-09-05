@@ -90,10 +90,9 @@ export class ValidationService extends BaseService {
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'innovation.name'])
       .innerJoin('innovation.innovationSupports', 'supports')
-      .innerJoin('supports.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoin('supports.userRoles', 'userRole')
       .innerJoin('supports.organisationUnit', 'organisationUnit')
-      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
-      .innerJoin('organisationUser.user', 'user')
+      .innerJoin('userRole.user', 'user')
       .where('organisationUnit.id = :organisationUnitId', { organisationUnitId: role.organisationUnit?.id })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .andWhere('supports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
@@ -101,9 +100,8 @@ export class ValidationService extends BaseService {
         `NOT EXISTS(
             SELECT 1 FROM innovation_support s
             INNER JOIN innovation_support_user u on s.id = u.innovation_support_id
-            INNER JOIN organisation_unit_user ous on ous.id = u.organisation_unit_user_id
-            INNER JOIN organisation_user ou on ou.id = ous.organisation_user_id
-            WHERE s.id = supports.id and ou.user_id != :innerUserId and s.deleted_at IS NULL
+            INNER JOIN user_role ur on ur.id = u.user_role_id
+            WHERE s.id = supports.id and ur.user_id != :innerUserId and s.deleted_at IS NULL
           )`,
         { innerUserId: role.user.id }
       )

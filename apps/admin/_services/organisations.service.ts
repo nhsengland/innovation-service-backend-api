@@ -103,7 +103,7 @@ export class OrganisationsService extends BaseService {
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
       .leftJoinAndSelect('support.innovation', 'innovation')
-      .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
       .where('unit.id = :unitId', { unitId })
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
       .getMany();

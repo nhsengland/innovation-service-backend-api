@@ -117,10 +117,9 @@ export class StatisticsService extends BaseService {
 
     const myAssignedInnovationsCount = await em
       .createQueryBuilder(InnovationSupportEntity, 'innovationSupports')
-      .innerJoin('innovationSupports.organisationUnitUsers', 'unitUsers')
-      .innerJoin('unitUsers.organisationUser', 'orgUsers')
-      .innerJoin('orgUsers.user', 'user')
-      .where('unitUsers.organisation_unit_id = :organisationUnit', {
+      .innerJoin('innovationSupports.userRoles', 'userRole')
+      .innerJoin('userRole.user', 'user')
+      .where('userRole.organisation_unit_id = :organisationUnit', {
         organisationUnit: organisationUnit
       })
       .andWhere('user.id = :userId', { userId: domainContext.id })
