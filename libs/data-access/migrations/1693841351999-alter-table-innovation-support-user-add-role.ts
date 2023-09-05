@@ -37,7 +37,7 @@ export class alterTableInnovationSupportUserAddRole1693841351999 implements Migr
       `
     );
 
-    // change primary key constraint
+    // change constraints
     await queryRunner.query(
       `
       ALTER TABLE innovation_support_user
@@ -48,6 +48,14 @@ export class alterTableInnovationSupportUserAddRole1693841351999 implements Migr
 
       ALTER TABLE innovation_support_user
       ADD CONSTRAINT pk_innovation_support_user_innovation_support_id_user_role_id PRIMARY KEY (innovation_support_id, user_role_id)
+
+      DROP INDEX "idx_innovation_support_user_organisation_unit_user_id" ON "innovation_support_user"
+
+      ALTER TABLE "innovation_support_user"
+      DROP CONSTRAINT "fk_innovation_support_user_organisation_unit_user_organisation_unit_user_id"
+
+      ALTER TABLE "innovation_support_user"
+      DROP COLUMN organisation_unit_user_id
       `
     )
   }

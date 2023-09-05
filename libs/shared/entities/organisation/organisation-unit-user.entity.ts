@@ -19,9 +19,6 @@ export class OrganisationUnitUserEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_user_id' })
   organisationUser: OrganisationUserEntity;
 
-  // @ManyToMany(() => InnovationSupportEntity, record => record.organisationUnitUsers)
-  // innovationSupports: InnovationSupportEntity[];
-
   static new(data: Partial<OrganisationUnitUserEntity>): OrganisationUnitUserEntity {
     const instance = new OrganisationUnitUserEntity();
     Object.assign(instance, data);

@@ -50,23 +50,6 @@ export class InnovationSupportEntity extends BaseEntity {
   })
   userRoles: UserRoleEntity[];
 
-  // TODO: remove
-  // @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
-  //   nullable: true
-  // })
-  // @JoinTable({
-  //   name: 'innovation_support_user',
-  //   joinColumn: {
-  //     name: 'innovation_support_id',
-  //     referencedColumnName: 'id'
-  //   },
-  //   inverseJoinColumn: {
-  //     name: 'organisation_unit_user_id',
-  //     referencedColumnName: 'id'
-  //   }
-  // })
-  // organisationUnitUsers: OrganisationUnitUserEntity[];
-
   @OneToMany(() => InnovationActionEntity, record => record.innovationSupport, { lazy: true })
   actions: Promise<InnovationActionEntity[]>;
 
