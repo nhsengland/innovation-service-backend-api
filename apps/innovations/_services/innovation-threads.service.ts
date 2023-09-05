@@ -160,9 +160,10 @@ export class InnovationThreadsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    await this.sqlConnection
-      .getRepository(InnovationThreadEntity)
-      .update({ id: thread.id }, { followers: followerUserRoleIds.map(roleId => UserRoleEntity.new({ id: roleId })) });
+    await entityManager.getRepository(InnovationThreadEntity).save({
+      id: thread.id,
+      followers: followerUserRoleIds.map(roleId => ({ id: roleId }))
+    });
   }
 
   async createThread(
