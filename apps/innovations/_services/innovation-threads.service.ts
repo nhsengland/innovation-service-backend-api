@@ -107,11 +107,27 @@ export class InnovationThreadsService extends BaseService {
     subject: string,
     message: string,
     sendNotification: boolean,
-    followerUserRoleIds: string[]
+    followerUserRoleIds: string[],
+    entityManager?: EntityManager
   ): Promise<{
     thread: InnovationThreadEntity;
     messageCount: number;
   }> {
+    if (!entityManager) {
+      return this.sqlConnection.transaction(t =>
+        this.createEditableThread(
+          requestUser,
+          domainContext,
+          innovationId,
+          subject,
+          message,
+          sendNotification,
+          followerUserRoleIds,
+          t
+        )
+      );
+    }
+
     const thread = await this.createThread(
       requestUser,
       domainContext,
@@ -121,17 +137,22 @@ export class InnovationThreadsService extends BaseService {
       sendNotification,
       undefined,
       undefined,
-      undefined,
+      entityManager,
       true
     );
 
-    await this.addFollowersToThread(thread.thread.id, followerUserRoleIds);
+    await this.addFollowersToThread(thread.thread.id, followerUserRoleIds, entityManager);
 
     return thread;
   }
 
-  async addFollowersToThread(threadId: string, followerUserRoleIds: string[]): Promise<void> {
-    const thread = await this.sqlConnection.createQueryBuilder(InnovationThreadEntity, 'thread')
+  async addFollowersToThread(
+    threadId: string,
+    followerUserRoleIds: string[],
+    entityManager: EntityManager
+  ): Promise<void> {
+    const thread = await entityManager
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -139,7 +160,9 @@ export class InnovationThreadsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    await this.sqlConnection.getRepository(InnovationThreadEntity).update({ id: thread.id }, { followers: followerUserRoleIds.map(roleId => UserRoleEntity.new({ id: roleId })) })
+    await this.sqlConnection
+      .getRepository(InnovationThreadEntity)
+      .update({ id: thread.id }, { followers: followerUserRoleIds.map(roleId => UserRoleEntity.new({ id: roleId })) });
   }
 
   async createThread(
