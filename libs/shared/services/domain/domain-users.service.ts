@@ -143,31 +143,31 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      ...(filters?.organisations
-        ? (await dbUser.userOrganisations).map(userOrganisation => {
-            const organisation = userOrganisation.organisation;
-            const organisationUnits = userOrganisation.userOrganisationUnits;
+      ...(filters?.organisations && {
+        organisations: (await dbUser.userOrganisations).map(userOrganisation => {
+          const organisation = userOrganisation.organisation;
+          const organisationUnits = userOrganisation.userOrganisationUnits;
 
-            return {
-              id: organisation.id,
-              name: organisation.name,
-              acronym: organisation.acronym,
-              size: organisation.size,
-              role: userOrganisation.role,
-              isShadow: organisation.isShadow,
-              description: organisation.description,
-              registrationNumber: organisation.registrationNumber,
-              organisationUnits: organisationUnits.map(item => ({
-                id: item.organisationUnit.id,
-                acronym: item.organisationUnit.acronym,
-                name: item.organisationUnit.name,
-                organisationUnitUser: {
-                  id: item.id
-                }
-              }))
-            };
-          })
-        : {})
+          return {
+            id: organisation.id,
+            name: organisation.name,
+            acronym: organisation.acronym,
+            size: organisation.size,
+            role: userOrganisation.role,
+            isShadow: organisation.isShadow,
+            description: organisation.description,
+            registrationNumber: organisation.registrationNumber,
+            organisationUnits: organisationUnits.map(item => ({
+              id: item.organisationUnit.id,
+              acronym: item.organisationUnit.acronym,
+              name: item.organisationUnit.name,
+              organisationUnitUser: {
+                id: item.id
+              }
+            }))
+          };
+        })
+      })
     };
   }
 
@@ -403,17 +403,17 @@ export class DomainUsersService {
   }
 
   async getUserRoles(userId: string): Promise<RoleType[]> {
-
-    const dbRoles = await this.sqlConnection.createQueryBuilder(UserRoleEntity, 'userRole')
+    const dbRoles = await this.sqlConnection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
       .leftJoinAndSelect('userRole.organisationUnit', 'unit')
       .leftJoinAndSelect('unit.organisation', 'organisation')
       .innerJoinAndSelect('userRole.user', 'user')
       .where('user.id = :userId', { userId })
-      .getMany()
+      .getMany();
 
     const roles: RoleType[] = [];
 
-    dbRoles.forEach(role => roles.push(roleEntity2RoleType(role)))
+    dbRoles.forEach(role => roles.push(roleEntity2RoleType(role)));
 
     return roles;
   }
