@@ -60,15 +60,6 @@ export class alterTableInnovationSupportUserAddRole1693841351999 implements Migr
     )
   }
 
-  async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      ALTER TABLE innovation_support_user
-      DROP COLUMN user_role_id
-    `);
-
-    await queryRunner.query(`
-      ALTER TABLE innovation_support_user
-      DROP CONSTRAINT "fk_innovation_support_user_user_role_id" 
-    `);
+  async down(_queryRunner: QueryRunner): Promise<void> {
   }
 }
