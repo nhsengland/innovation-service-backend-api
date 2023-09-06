@@ -113,6 +113,11 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity;
     messageCount: number;
   }> {
+
+    if (!followerUserRoleIds.length && domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_WITHOUT_FOLLOWERS)
+    }
+
     if (!entityManager) {
       return this.sqlConnection.transaction(t =>
         this.createEditableThread(
