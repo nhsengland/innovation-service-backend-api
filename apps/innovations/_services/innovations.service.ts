@@ -1372,7 +1372,7 @@ export class InnovationsService extends BaseService {
       // Update all support to UNASSIGNED.
       for (const innovationSupport of dbSupports) {
         innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-        innovationSupport.userRoles = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
+        innovationSupport.userRoles = []; //TODO: refactor this. Delete from innovation_support_user table directly
         innovationSupport.updatedBy = domainContext.id;
         await transaction.save(InnovationSupportEntity, innovationSupport);
       }
