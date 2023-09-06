@@ -404,13 +404,12 @@ export class InnovationsService extends BaseService {
 
       if ([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
         innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
-        innovationFetchQuery.innerJoin('supports.organisationUnitUsers', 'supportingUnitUsers');
-        innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
-        innovationFetchQuery.innerJoin('supportingOrganisationUser.user', 'supportingUsers');
+        innovationFetchQuery.innerJoin('supports.userRoles', 'userRole');
+        innovationFetchQuery.innerJoin('userRole.user', 'supportingUsers');
         innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', {
           supportingUserId: user.id
         });
-        innovationFetchQuery.andWhere('supportingUnitUsers.organisation_unit_id = :orgUnitId', {
+        innovationFetchQuery.andWhere('userRole.organisation_unit_id = :orgUnitId', {
           orgUnitId: domainContext.organisation?.organisationUnit?.id
         });
       }
