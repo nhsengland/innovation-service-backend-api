@@ -53,9 +53,6 @@ export class alterTableInnovationSupportUserAddRole1693841351999 implements Migr
 
       ALTER TABLE "innovation_support_user"
       DROP CONSTRAINT "fk_innovation_support_user_organisation_unit_user_organisation_unit_user_id"
-
-      ALTER TABLE "innovation_support_user"
-      DROP COLUMN organisation_unit_user_id
       `
     )
   }
