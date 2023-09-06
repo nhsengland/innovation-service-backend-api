@@ -106,12 +106,29 @@ export class InnovationThreadsService extends BaseService {
     innovationId: string,
     subject: string,
     message: string,
-    sendNotification: boolean
+    sendNotification: boolean,
+    followerUserRoleIds: string[],
+    entityManager?: EntityManager
   ): Promise<{
     thread: InnovationThreadEntity;
     messageCount: number;
   }> {
-    return this.createThread(
+    if (!entityManager) {
+      return this.sqlConnection.transaction(t =>
+        this.createEditableThread(
+          requestUser,
+          domainContext,
+          innovationId,
+          subject,
+          message,
+          sendNotification,
+          followerUserRoleIds,
+          t
+        )
+      );
+    }
+
+    const thread = await this.createThread(
       requestUser,
       domainContext,
       innovationId,
@@ -120,9 +137,33 @@ export class InnovationThreadsService extends BaseService {
       sendNotification,
       undefined,
       undefined,
-      undefined,
+      entityManager,
       true
     );
+
+    await this.addFollowersToThread(thread.thread.id, followerUserRoleIds, entityManager);
+
+    return thread;
+  }
+
+  async addFollowersToThread(
+    threadId: string,
+    followerUserRoleIds: string[],
+    entityManager: EntityManager
+  ): Promise<void> {
+    const thread = await entityManager
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.id = :threadId', { threadId })
+      .getOne();
+
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    await entityManager.getRepository(InnovationThreadEntity).save({
+      id: thread.id,
+      followers: followerUserRoleIds.map(roleId => ({ id: roleId }))
+    });
   }
 
   async createThread(
@@ -809,7 +850,7 @@ export class InnovationThreadsService extends BaseService {
     return new Set(notifications.map(n => n.contextId));
   }
 
-  private isFollowingThread(query: SelectQueryBuilder<InnovationThreadEntity>, userRoleId: string) {
+  private isFollowingThread(query: SelectQueryBuilder<InnovationThreadEntity>, userRoleId: string): void {
     query.andWhere(
       `
       thread.id IN (

@@ -191,10 +191,8 @@ export class DomainInnovationsService {
       .leftJoinAndSelect('innovations.owner', 'owner')
       .leftJoinAndSelect('owner.serviceRoles', 'roles')
       .leftJoinAndSelect('innovations.innovationSupports', 'supports')
-      .leftJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUsers')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnitUsers.organisationUser', 'organisationUsers')
-      .leftJoinAndSelect('organisationUsers.user', 'users')
+      .leftJoinAndSelect('supports.userRoles', 'userRoles')
+      .leftJoinAndSelect('userRoles.user', 'users')
       .where('innovations.id IN (:...innovationIds)', {
         innovationIds: innovations.map(item => item.id)
       })
@@ -377,13 +375,13 @@ export class DomainInnovationsService {
 
         affectedUsers.push(
           ...dbInnovation.innovationSupports.flatMap(item =>
-            item.organisationUnitUsers
-              .filter(su => su.organisationUser.user.status !== UserStatusEnum.DELETED)
+            item.userRoles
+              .filter(su => su.user.status !== UserStatusEnum.DELETED)
               .map(su => ({
-                userId: su.organisationUser.user.id,
-                userType: su.organisationUser.role as unknown as ServiceRoleEnum,
-                organisationId: item.organisationUnit.organisationId,
-                organisationUnitId: item.organisationUnit.id
+                userId: su.user.id,
+                userType: su.role as unknown as ServiceRoleEnum,
+                organisationId: su.organisationId,
+                organisationUnitId: su.organisationUnitId
               }))
           )
         );
@@ -391,7 +389,7 @@ export class DomainInnovationsService {
         // Update all supports to UNASSIGNED AND delete them.
         for (const innovationSupport of dbInnovation.innovationSupports) {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-          innovationSupport.organisationUnitUsers = [];
+          innovationSupport.userRoles= [];
           innovationSupport.updatedBy = userId;
           innovationSupport.deletedAt = new Date();
           await em.save(InnovationSupportEntity, innovationSupport);

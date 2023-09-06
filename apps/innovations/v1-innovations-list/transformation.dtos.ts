@@ -1,9 +1,8 @@
 import type {
-  AccessorOrganisationRoleEnum,
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
-  InnovatorOrganisationRoleEnum
+  ServiceRoleEnum
 } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 
@@ -45,7 +44,7 @@ export type ResponseDTO = {
           // Users only exists while a support is ENGAGING.
           users?: {
             name: string;
-            role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum;
+            role: ServiceRoleEnum
           }[];
         };
       };

@@ -50,19 +50,13 @@ describe('v1-innovation-thread-create Suite', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          subject: randText()
+          subject: randText(),
+          followerUserRoleIds: [randUuid()]
         })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual({
-        thread: {
           id: expected.thread.id,
-          subject: expected.thread.subject,
-          createdBy: {
-            id: expected.thread.createdBy
-          },
-          createdAt: expected.thread.createdAt
-        }
       });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
@@ -86,7 +80,8 @@ describe('v1-innovation-thread-create Suite', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          subject: randText()
+          subject: randText(),
+          followerUserRoleIds: [randUuid()]
         })
         .call<ErrorResponseType>(azureFunction);
 
