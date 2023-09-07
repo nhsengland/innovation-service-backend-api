@@ -135,7 +135,7 @@ export class InnovationsService extends BaseService {
             acronym: string;
             users?: {
               name: string;
-              role: ServiceRoleEnum
+              role: ServiceRoleEnum;
             }[];
           };
         };
@@ -591,9 +591,7 @@ export class InnovationsService extends BaseService {
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
           s.flatMap(support =>
-            support.userRoles
-              .filter(item => item.user.status !== UserStatusEnum.DELETED)
-              .map(item => item.user.id)
+            support.userRoles.filter(item => item.user.status !== UserStatusEnum.DELETED).map(item => item.user.id)
           )
         )
       );
@@ -812,7 +810,7 @@ export class InnovationsService extends BaseService {
       id: string;
       createdAt: Date;
       finishedAt: null | Date;
-      assignedTo: { id: string; name: string };
+      assignedTo?: { id: string; name: string; userRoleId: string };
       reassessmentCount: number;
     };
     supports?: { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
@@ -860,12 +858,16 @@ export class InnovationsService extends BaseService {
     if (filters.fields?.includes('assessment')) {
       query.leftJoin('innovation.assessments', 'innovationAssessments');
       query.leftJoin('innovationAssessments.assignTo', 'assignTo');
+      query.leftJoin('assignTo.serviceRoles', 'assignToRoles', 'assignToRoles.role = :assessmentRole', {
+        assessmentRole: ServiceRoleEnum.ASSESSMENT
+      });
       query.addSelect([
         'innovationAssessments.id',
         'innovationAssessments.createdAt',
         'innovationAssessments.finishedAt',
         'assignTo.id',
-        'assignTo.status'
+        'assignTo.status',
+        'assignToRoles.id'
       ]);
     }
 
@@ -922,7 +924,7 @@ export class InnovationsService extends BaseService {
           id: string;
           createdAt: Date;
           finishedAt: null | Date;
-          assignedTo: { id: string; name: string };
+          assignedTo?: { id: string; name: string; userRoleId: string };
           reassessmentCount: number;
         };
 
@@ -935,14 +937,16 @@ export class InnovationsService extends BaseService {
           this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
         }
 
+        const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo.id && item.isActive);
+
         if (innovation.assessments[0]) {
           // ... but if exists, on this list, we show information about one of them.
-          const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo.id && item.isActive);
           assessment = {
             id: innovation.assessments[0].id,
             createdAt: innovation.assessments[0].createdAt,
             finishedAt: innovation.assessments[0].finishedAt,
-            assignedTo: { id: assignTo?.id ?? '', name: assignTo?.displayName ?? '' },
+            ...(assignTo &&
+              assignTo.roles[0] && { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }),
             reassessmentCount: (await innovation.reassessmentRequests).length
           };
         }
@@ -1343,7 +1347,7 @@ export class InnovationsService extends BaseService {
       support.userRoles.map(item => ({
         id: item.user.id,
         organisationUnitId: item.organisationUnitId,
-        userType: item.role 
+        userType: item.role
       }))
     );
 
