@@ -946,7 +946,7 @@ export class InnovationsService extends BaseService {
             createdAt: innovation.assessments[0].createdAt,
             finishedAt: innovation.assessments[0].finishedAt,
             ...(assignTo &&
-              assignTo.roles[0] && { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }),
+              assignTo.roles[0] && { assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id } }),
             reassessmentCount: (await innovation.reassessmentRequests).length
           };
         }
