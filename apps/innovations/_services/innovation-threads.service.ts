@@ -113,9 +113,8 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity;
     messageCount: number;
   }> {
-
     if (!followerUserRoleIds.length && domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
-      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_WITHOUT_FOLLOWERS)
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_WITHOUT_FOLLOWERS);
     }
 
     if (!entityManager) {
@@ -145,6 +144,14 @@ export class InnovationThreadsService extends BaseService {
       entityManager,
       true
     );
+
+    // This if might change in the future if we allow innovators/collaborators to manually follow threads
+    if (
+      domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR &&
+      !followerUserRoleIds.includes(domainContext.currentRole.id)
+    ) {
+      followerUserRoleIds.push(domainContext.currentRole.id);
+    }
 
     await this.addFollowersToThread(thread.thread.id, followerUserRoleIds, entityManager);
 
@@ -811,20 +818,21 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity,
     entityManager: EntityManager
   ): Promise<void> {
-      const messages = await entityManager.createQueryBuilder(InnovationThreadMessageEntity, 'message')
-        .where('message.innovation_thread_id = :threadId', { threadId: thread.id })
-        .getMany();
+    const messages = await entityManager
+      .createQueryBuilder(InnovationThreadMessageEntity, 'message')
+      .where('message.innovation_thread_id = :threadId', { threadId: thread.id })
+      .getMany();
 
-      const sortedMessagesAsc = messages.sort(
-        (a: { createdAt: string | number | Date }, b: { createdAt: string | number | Date }) => {
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        }
-      );
-      const firstMessage = sortedMessagesAsc.find((_: any) => true); // a thread always have at least 1 message
-
-      if (!firstMessage) {
-        throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+    const sortedMessagesAsc = messages.sort(
+      (a: { createdAt: string | number | Date }, b: { createdAt: string | number | Date }) => {
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
+    );
+    const firstMessage = sortedMessagesAsc.find((_: any) => true); // a thread always have at least 1 message
+
+    if (!firstMessage) {
+      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+    }
     await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_CREATION, {
       threadId: thread.id,
       messageId: firstMessage.id,
