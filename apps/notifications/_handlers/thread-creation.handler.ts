@@ -10,8 +10,8 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { EmailTypeEnum, ENV } from '../_config';
 
 import type { Context } from '@azure/functions';
-import { BaseHandler } from './base.handler';
 import type { RecipientType } from '../_services/recipients.service';
+import { BaseHandler } from './base.handler';
 
 export class ThreadCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_CREATION,
@@ -32,25 +32,23 @@ export class ThreadCreationHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
 
-    const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
-
-    const recipientIds = collaboratorIds;
-    if (innovation.ownerId) {
-      recipientIds.push(innovation.ownerId);
-    }
-    const innovatorRecipients = await this.recipientsService.getUsersRecipient(recipientIds, ServiceRoleEnum.INNOVATOR);
+    const followers = (await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)).filter(
+      f => f.userId !== this.requestUser.id
+    );
+    const innovatorRecipients = followers.filter(f => f.role === ServiceRoleEnum.INNOVATOR);
+    const otherRecipients = followers.filter(f => f.role !== ServiceRoleEnum.INNOVATOR);
 
     switch (this.requestUser.currentRole.role) {
       case ServiceRoleEnum.ASSESSMENT:
       case ServiceRoleEnum.ACCESSOR:
       case ServiceRoleEnum.QUALIFYING_ACCESSOR:
         await this.prepareNotificationForInnovationOwnerAndCollaboratorsFromAssignedUser(innovatorRecipients);
-        await this.prepareNotificationForFollowers(innovation.name, innovatorRecipients, thread);
+        await this.prepareNotificationForFollowers(innovation.name, otherRecipients, thread);
         break;
 
       case ServiceRoleEnum.INNOVATOR: {
         await this.prepareNotificationForOwnerAndCollaboratorsFromInnovator(innovation, thread, innovatorRecipients);
-        await this.prepareNotificationForFollowers(innovation.name, innovatorRecipients, thread);
+        await this.prepareNotificationForFollowers(innovation.name, otherRecipients, thread);
         break;
       }
 
@@ -111,11 +109,8 @@ export class ThreadCreationHandler extends BaseHandler<
   private async prepareNotificationForOwnerAndCollaboratorsFromInnovator(
     innovation: { name: string; ownerId?: string },
     thread: { id: string; subject: string },
-    innovatorRecipients: RecipientType[]
+    recipients: RecipientType[]
   ): Promise<void> {
-    // filter request user
-    const recipients = innovatorRecipients.filter(r => r.roleId !== this.requestUser.currentRole.id);
-
     for (const recipient of recipients) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR,
@@ -151,14 +146,9 @@ export class ThreadCreationHandler extends BaseHandler<
 
   private async prepareNotificationForFollowers(
     innovationName: string,
-    innovatorRecipients: RecipientType[],
+    followers: RecipientType[],
     thread: { id: string; subject: string }
   ): Promise<void> {
-    //remove innovators
-    const followers = (await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)).filter(
-      follower => !innovatorRecipients.some(recipient => recipient.roleId === follower.roleId) && follower.isActive
-    );
-
     // Send emails only to users with email preference INSTANTLY.
     for (const user of followers) {
       this.emails.push({
