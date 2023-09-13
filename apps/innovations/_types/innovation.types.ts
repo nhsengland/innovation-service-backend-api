@@ -25,7 +25,7 @@ export type InnovationAssessmentType = {
   summary: null | string;
   description: null | string;
   finishedAt: null | Date;
-  assignTo: { id: string; name: string };
+  assignTo?: { id: string; name: string };
   maturityLevel: null | MaturityLevelCatalogueType;
   maturityLevelComment: null | string;
   hasRegulatoryApprovals: null | YesPartiallyNoCatalogueType;

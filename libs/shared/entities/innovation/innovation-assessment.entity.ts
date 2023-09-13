@@ -114,9 +114,9 @@ export class InnovationAssessmentEntity extends BaseEntity {
   @JoinColumn({ name: 'innovation_id' })
   innovation: InnovationEntity;
 
-  @ManyToOne(() => UserEntity, { nullable: false })
+  @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'assign_to_id' })
-  assignTo: UserEntity;
+  assignTo: UserEntity | null;
 
   @ManyToMany(() => OrganisationUnitEntity, record => record.innovationAssessments, {
     nullable: true

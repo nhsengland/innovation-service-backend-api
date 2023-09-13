@@ -25,7 +25,7 @@ export type ResponseDTO = {
       id: string;
       createdAt: Date;
       finishedAt: null | Date;
-      assignedTo: { name: string };
+      assignedTo?: { name: string };
       reassessmentCount: number;
       isExempted?: boolean;
     };
@@ -44,7 +44,7 @@ export type ResponseDTO = {
           // Users only exists while a support is ENGAGING.
           users?: {
             name: string;
-            role: ServiceRoleEnum
+            role: ServiceRoleEnum;
           }[];
         };
       };

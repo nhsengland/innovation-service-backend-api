@@ -117,7 +117,7 @@ export class InnovationsService extends BaseService {
         id: string;
         createdAt: Date;
         finishedAt: null | Date;
-        assignedTo: { name: string };
+        assignedTo?: { name: string };
         reassessmentCount: number;
         isExempted?: boolean;
       };
@@ -586,7 +586,12 @@ export class InnovationsService extends BaseService {
     let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
     if (fetchUsers) {
       const assessmentUsersIds = new Set(
-        [...assessmentsMap.values()].filter(a => a.assignTo.status !== UserStatusEnum.DELETED).map(a => a.assignTo.id)
+        [...assessmentsMap.values()]
+          .filter(
+            (a): a is InnovationAssessmentEntity & { assignTo: { id: string } } =>
+              a.assignTo?.status !== UserStatusEnum.DELETED
+          )
+          .map(a => a.assignTo.id)
       );
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
@@ -688,7 +693,7 @@ export class InnovationsService extends BaseService {
                 id: string;
                 createdAt: Date;
                 finishedAt: null | Date;
-                assignedTo: { name: string };
+                assignedTo?: { name: string };
                 reassessmentCount: number;
               };
           const supports = supportingOrganisationsMap.get(innovation.id);
@@ -700,7 +705,9 @@ export class InnovationsService extends BaseService {
               assessment = {
                 id: assessmentRaw.id,
                 createdAt: assessmentRaw.createdAt,
-                assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' },
+                ...(assessmentRaw.assignTo && {
+                  assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' }
+                }),
                 finishedAt: assessmentRaw.finishedAt,
                 reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0,
                 ...(domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
@@ -898,7 +905,10 @@ export class InnovationsService extends BaseService {
     // Fetch users names.
     const assessmentUsersIds = filters.fields?.includes('assessment')
       ? innovation.assessments
-          ?.filter(assessment => assessment.assignTo.status !== UserStatusEnum.DELETED)
+          ?.filter(
+            (assessment): assessment is InnovationAssessmentEntity & { assignTo: { id: string } } =>
+              assessment.assignTo?.status !== UserStatusEnum.DELETED
+          )
           .map(assessment => assessment.assignTo.id)
       : [];
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
@@ -937,7 +947,7 @@ export class InnovationsService extends BaseService {
           this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
         }
 
-        const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo.id && item.isActive);
+        const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo?.id && item.isActive);
 
         if (innovation.assessments[0]) {
           // ... but if exists, on this list, we show information about one of them.
@@ -946,7 +956,9 @@ export class InnovationsService extends BaseService {
             createdAt: innovation.assessments[0].createdAt,
             finishedAt: innovation.assessments[0].finishedAt,
             ...(assignTo &&
-              assignTo.roles[0] && { assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id } }),
+              assignTo.roles[0] && {
+                assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
+              }),
             reassessmentCount: (await innovation.reassessmentRequests).length
           };
         }

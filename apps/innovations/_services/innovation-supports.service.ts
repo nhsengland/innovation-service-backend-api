@@ -327,9 +327,7 @@ export class InnovationSupportsService extends BaseService {
         updatedBy: domainContext.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
-        userRoles: (data.accessors || []).map(item =>
-          UserRoleEntity.new({ id: item.userRoleId })
-        )
+        userRoles: (data.accessors || []).map(item => UserRoleEntity.new({ id: item.userRoleId }))
       });
 
       const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
@@ -508,13 +506,11 @@ export class InnovationSupportsService extends BaseService {
 
     const result = await connection.transaction(async transaction => {
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
-        dbSupport.userRoles = (data.accessors || []).map(item =>
-          UserRoleEntity.new({ id: item.userRoleId })
-        );
+        dbSupport.userRoles = (data.accessors || []).map(item => UserRoleEntity.new({ id: item.userRoleId }));
       } else {
         // In the case that previous support was ENGAGING, cleanup several relations!
 
-        dbSupport.userRoles= [];
+        dbSupport.userRoles = [];
 
         // Cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
         if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
@@ -955,17 +951,22 @@ export class InnovationSupportsService extends BaseService {
     return await supportQuery.getMany();
   }
 
-  private async getProgressUpdateFile(innovationId: string, progressId: string) 
-  : Promise<{
-      id: string;
-      storageId: string;
-      context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
-      name: string;
-      description?: string;
-      createdAt: Date;
-      createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
-      file: { name: string; size?: number; extension: string; url: string };
-  } | undefined> {
+  private async getProgressUpdateFile(
+    innovationId: string,
+    progressId: string
+  ): Promise<
+    | {
+        id: string;
+        storageId: string;
+        context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
+        name: string;
+        description?: string;
+        createdAt: Date;
+        createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
+        file: { name: string; size?: number; extension: string; url: string };
+      }
+    | undefined
+  > {
     const files = await this.innovationFileService.getFilesList(
       innovationId,
       { contextId: progressId },
@@ -995,7 +996,7 @@ export class InnovationSupportsService extends BaseService {
   private async getSuggestedUnitsByNA(
     innovationId: string,
     em: EntityManager
-  ): Promise<{ id: string; name: string; assessmentId: string; updatedAt: Date; assignTo: string }[]> {
+  ): Promise<{ id: string; name: string; assessmentId: string; updatedAt: Date; assignTo?: string }[]> {
     const suggestedByNA = await em
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .select(['assessment.id', 'assessment.updatedAt', 'assignedTo.id', 'units.id', 'units.name'])
@@ -1013,7 +1014,7 @@ export class InnovationSupportsService extends BaseService {
       name: u.name,
       assessmentId: suggestedByNA.id,
       updatedAt: suggestedByNA.updatedAt,
-      assignTo: suggestedByNA.assignTo.id
+      assignTo: suggestedByNA.assignTo?.id
     }));
   }
 

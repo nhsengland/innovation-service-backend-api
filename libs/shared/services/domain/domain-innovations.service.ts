@@ -1,5 +1,6 @@
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
 
+import type { UserEntity } from 'libs/shared/entities';
 import { EXPIRATION_DATES } from '../../constants';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
 import { InnovationActionEntity } from '../../entities/innovation/innovation-action.entity';
@@ -38,7 +39,6 @@ import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
 import type { NotifierService } from '../integrations/notifier.service';
-import type { UserEntity } from 'libs/shared/entities';
 
 export class DomainInnovationsService {
   innovationRepository: Repository<InnovationEntity>;
@@ -249,7 +249,7 @@ export class DomainInnovationsService {
             .andWhere('assignedUser.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
             .getOne();
 
-          if (assignedNa) {
+          if (assignedNa && assignedNa.assignTo) {
             affectedUsers.push({
               userId: assignedNa.assignTo.id,
               userType: ServiceRoleEnum.ASSESSMENT
@@ -389,7 +389,7 @@ export class DomainInnovationsService {
         // Update all supports to UNASSIGNED AND delete them.
         for (const innovationSupport of dbInnovation.innovationSupports) {
           innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-          innovationSupport.userRoles= [];
+          innovationSupport.userRoles = [];
           innovationSupport.updatedBy = userId;
           innovationSupport.deletedAt = new Date();
           await em.save(InnovationSupportEntity, innovationSupport);
@@ -568,14 +568,24 @@ export class DomainInnovationsService {
       .select([
         'thread.id',
         'innovation.id',
-        'innovationOwner.id', 'innovationOwner.identityId',
-        'innovationOwnerRole.id', 'innovationOwnerRole.role', 'innovationOwnerRole.isActive',
+        'innovationOwner.id',
+        'innovationOwner.identityId',
+        'innovationOwnerRole.id',
+        'innovationOwnerRole.role',
+        'innovationOwnerRole.isActive',
         'collaborator.status',
-        'collaboratorUser.id', 'collaboratorUser.identityId',
-        'collaboratorUserRole.id', 'collaboratorUserRole.role', 'collaboratorUserRole.isActive',
-        'followerUser.id', 'followerUser.identityId',
-        'followerUserRole.id', 'followerUserRole.role', 'followerUserRole.isActive',
-        'followerOrganisationUnit.id', 'followerOrganisationUnit.acronym'
+        'collaboratorUser.id',
+        'collaboratorUser.identityId',
+        'collaboratorUserRole.id',
+        'collaboratorUserRole.role',
+        'collaboratorUserRole.isActive',
+        'followerUser.id',
+        'followerUser.identityId',
+        'followerUserRole.id',
+        'followerUserRole.role',
+        'followerUserRole.isActive',
+        'followerOrganisationUnit.id',
+        'followerOrganisationUnit.acronym'
       ])
       .innerJoin('thread.innovation', 'innovation')
       .innerJoin('innovation.owner', 'innovationOwner')
@@ -615,7 +625,7 @@ export class DomainInnovationsService {
     const followers: Awaited<ReturnType<DomainInnovationsService['threadFollowers']>> = [];
 
     //always push owner into followers
-    if (thread.innovation.owner && thread.innovation.owner.serviceRoles[0] ) {
+    if (thread.innovation.owner && thread.innovation.owner.serviceRoles[0]) {
       followers.push({
         id: thread.innovation.owner.id,
         identityId: thread.innovation.owner.identityId,

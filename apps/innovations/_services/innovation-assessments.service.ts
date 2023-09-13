@@ -58,7 +58,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     const assessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
-      .innerJoinAndSelect('assessment.assignTo', 'assignTo')
+      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnit')
       .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
       // Deleted assessments are necessary for history / activity log purposes.
@@ -80,7 +80,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     // Fetch users names.
     const usersInfo = await this.domainService.users.getUsersList({
-      userIds: [assessment.assignTo.id, assessment.updatedBy]
+      userIds: [...(assessment.assignTo ? [assessment.assignTo.id] : []), assessment.updatedBy]
     });
 
     return {
@@ -96,10 +96,12 @@ export class InnovationAssessmentsService extends BaseService {
       summary: assessment.summary,
       description: assessment.description,
       finishedAt: assessment.finishedAt,
-      assignTo: {
-        id: assessment.assignTo.id,
-        name: usersInfo.find(user => user.id === assessment.assignTo.id)?.displayName || ''
-      },
+      ...(assessment.assignTo && {
+        assignTo: {
+          id: assessment.assignTo.id,
+          name: usersInfo.find(user => user.id === assessment.assignTo?.id)?.displayName || ''
+        }
+      }),
       maturityLevel: assessment.maturityLevel,
       maturityLevelComment: assessment.maturityLevelComment,
       hasRegulatoryApprovals: assessment.hasRegulatoryApprovals,
@@ -412,7 +414,7 @@ export class InnovationAssessmentsService extends BaseService {
     const assessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
       .innerJoinAndSelect('assessment.innovation', 'innovation')
-      .innerJoinAndSelect('assessment.assignTo', 'assignTo')
+      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
       .where('innovation.id = :innovationId', { innovationId })
       .orderBy('assessment.createdAt', 'DESC') // Not needed, but it doesn't do any harm.
@@ -446,8 +448,18 @@ export class InnovationAssessmentsService extends BaseService {
 
       const assessmentClone = await transaction.save(
         InnovationAssessmentEntity,
-        (({ id, finishedAt, createdAt, updatedAt, deletedAt, exemptedAt, exemptedReason, exemptedMessage, ...item }) =>
-          item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
+        (({
+          id,
+          finishedAt,
+          createdAt,
+          updatedAt,
+          deletedAt,
+          assignTo,
+          exemptedAt,
+          exemptedReason,
+          exemptedMessage,
+          ...item
+        }) => item)(assessment) // Clones assessment variable, without some keys (id, finishedAt, ...).
       );
 
       const reassessment = await transaction.save(
@@ -533,7 +545,7 @@ export class InnovationAssessmentsService extends BaseService {
     await this.notifierService.send(domainContext, NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE, {
       innovationId,
       assessmentId: updatedAssessment.id,
-      previousAssessor: { id: previousAssessor.id },
+      ...(previousAssessor && { previousAssessor: { id: previousAssessor.id } }),
       newAssessor: { id: newAssessor.id }
     });
 
