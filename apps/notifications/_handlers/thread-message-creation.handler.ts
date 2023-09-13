@@ -35,20 +35,11 @@ export class ThreadMessageCreationHandler extends BaseHandler<
       await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)
     ).filter(item => item.userId !== this.requestUser.id);
 
-    // exclude all assessment users
-    const recipients = threadFollowerRecipients.filter(i => i.role !== ServiceRoleEnum.ASSESSMENT);
-
-    // if thread author is an assessment user and the request user is an innovator, push the author back into the thread
-    if (
-      thread.author &&
-      thread.author.role === ServiceRoleEnum.ASSESSMENT &&
-      this.requestUser.currentRole.role === ServiceRoleEnum.INNOVATOR
-    ) {
-      recipients.push(thread.author);
-    }
+    // exclude all assessment users from emails
+    const emailRecipients = threadFollowerRecipients.filter(i => i.role !== ServiceRoleEnum.ASSESSMENT);
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const recipient of recipients) {
+    for (const recipient of emailRecipients) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
         notificationPreferenceType: 'MESSAGE',
