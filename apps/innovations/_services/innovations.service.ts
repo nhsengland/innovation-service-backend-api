@@ -589,7 +589,7 @@ export class InnovationsService extends BaseService {
         [...assessmentsMap.values()]
           .filter(
             (a): a is InnovationAssessmentEntity & { assignTo: { id: string } } =>
-              a.assignTo?.status !== UserStatusEnum.DELETED
+              a.assignTo != null && a.assignTo?.status !== UserStatusEnum.DELETED
           )
           .map(a => a.assignTo.id)
       );
@@ -907,7 +907,7 @@ export class InnovationsService extends BaseService {
       ? innovation.assessments
           ?.filter(
             (assessment): assessment is InnovationAssessmentEntity & { assignTo: { id: string } } =>
-              assessment.assignTo?.status !== UserStatusEnum.DELETED
+              assessment.assignTo != null && assessment.assignTo?.status !== UserStatusEnum.DELETED
           )
           .map(assessment => assessment.assignTo.id)
       : [];
