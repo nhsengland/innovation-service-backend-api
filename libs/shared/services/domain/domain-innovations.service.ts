@@ -573,7 +573,7 @@ export class DomainInnovationsService {
         'innovationOwnerRole.id',
         'innovationOwnerRole.role',
         'innovationOwnerRole.isActive',
-        'collaborator.status',
+        'collaborator.id',
         'collaboratorUser.id',
         'collaboratorUser.identityId',
         'collaboratorUserRole.id',
@@ -588,14 +588,14 @@ export class DomainInnovationsService {
         'followerOrganisationUnit.acronym'
       ])
       .innerJoin('thread.innovation', 'innovation')
-      .innerJoin('innovation.owner', 'innovationOwner')
-      .innerJoin('innovationOwner.serviceRoles', 'innovationOwnerRole')
-      .leftJoin('innovation.collaborators', 'collaborator')
-      .leftJoin('collaborator.user', 'collaboratorUser')
+      .leftJoin('innovation.owner', 'innovationOwner', "innovationOwner.status <> 'DELETED'")
+      .leftJoin('innovationOwner.serviceRoles', 'innovationOwnerRole')
+      .leftJoin('innovation.collaborators', 'collaborator', "collaborator.status = 'ACTIVE'")
+      .leftJoin('collaborator.user', 'collaboratorUser', "collaboratorUser.status <> 'DELETED'")
       .leftJoin('collaboratorUser.serviceRoles', 'collaboratorUserRole')
       .leftJoin('thread.followers', 'followerUserRole')
       .leftJoin('followerUserRole.organisationUnit', 'followerOrganisationUnit')
-      .leftJoin('followerUserRole.user', 'followerUser')
+      .leftJoin('followerUserRole.user', 'followerUser', "followerUser.status <> 'DELETED'")
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
@@ -609,7 +609,6 @@ export class DomainInnovationsService {
     };
 
     const collaboratorUsers = thread.innovation.collaborators
-      .filter(c => c.status === InnovationCollaboratorStatusEnum.ACTIVE)
       .map(c => c.user)
       .filter(collaboratorIsUser)
       .filter(u => u.id !== thread.innovation.owner?.id);
