@@ -87,7 +87,7 @@ export class InnovationSupportsService extends BaseService {
         acronym: string | null;
         unit: { id: string; name: string; acronym: string | null };
       };
-      engagingAccessors?: { id: string; userRoleId: string; name: string }[];
+      engagingAccessors?: { id: string; userRoleId: string; name: string, isActive: boolean }[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -129,14 +129,15 @@ export class InnovationSupportsService extends BaseService {
     }
 
     return innovationSupports.map(support => {
-      let engagingAccessors: { id: string; userRoleId: string; name: string }[] | undefined = undefined;
+      let engagingAccessors: { id: string; userRoleId: string; name: string, isActive: boolean }[] | undefined = undefined;
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.userRoles
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
-            name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || ''
+            name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || '',
+            isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
       }

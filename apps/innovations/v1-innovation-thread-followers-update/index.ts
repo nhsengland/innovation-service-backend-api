@@ -3,7 +3,7 @@ import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { Audit, JwtDecoder } from '@innovations/shared/decorators';
 import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
-import type { AuthorizationService, DomainService } from '@innovations/shared/services';
+import type { AuthorizationService } from '@innovations/shared/services';
 import { ActionEnum, TargetEnum } from '@innovations/shared/services/integrations/audit.service';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -12,17 +12,20 @@ import { container } from '../_config';
 
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
-import { ParamsSchema } from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema } from './validation.schemas';
+import type { InnovationThreadsService } from '../_services/innovation-threads.service';
+import SYMBOLS from '../_services/symbols';
 
-class V1InnovationThreadFollowers {
+class V1InnovationThreadFollowersUpdate {
   @JwtDecoder()
-  @Audit({ action: ActionEnum.READ, target: TargetEnum.THREAD, identifierParam: 'threadId' })
+  @Audit({ action: ActionEnum.UPDATE, target: TargetEnum.THREAD, identifierParam: 'threadId' })
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
-    const domainService = container.get<DomainService>(SHARED_SYMBOLS.DomainService);
+    const threadsService = container.get<InnovationThreadsService>(SYMBOLS.InnovationThreadsService);
 
     try {
       const pathParams = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
+      const body = JoiHelper.Validate<BodyType>(BodySchema, request.body);
 
       await authorizationService
         .validate(context)
@@ -30,26 +33,13 @@ class V1InnovationThreadFollowers {
         .checkInnovatorType()
         .checkAccessorType()
         .checkAssessmentType()
-        .checkAdminType()
         .checkInnovation()
         .verify();
 
-      const result = await domainService.innovations.threadFollowers(pathParams.threadId);
+      const result = await threadsService.addFollowersToThread(pathParams.threadId, body.followerUserRoleIds);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        followers: result.map(follower => ({
-          id: follower.id,
-          name: follower?.name ?? '',
-          isLocked: follower.locked,
-          isOwner: follower.isOwner,
-          role: { id: follower.userRole.id, role: follower.userRole.role },
-          organisationUnit: follower.organisationUnit
-            ? {
-                id: follower.organisationUnit.id,
-                acronym: follower.organisationUnit.acronym
-              }
-            : null
-        }))
+        threadId: result.threadId
       });
       return;
     } catch (error) {
@@ -60,15 +50,16 @@ class V1InnovationThreadFollowers {
 }
 
 export default openApi(
-  V1InnovationThreadFollowers.httpTrigger as AzureFunction,
+  V1InnovationThreadFollowersUpdate.httpTrigger as AzureFunction,
   '/v1/{innovationId}/threads/{threadId}/followers',
   {
-    get: {
-      summary: 'Get Innovation Thread Followers',
-      description: 'Get Innovation Thread Followers',
+    patch: {
+      summary: 'Update Innovation Thread Followers',
+      description: 'Update Innovation Thread Followers',
       tags: ['Innovation Thread'],
-      operationId: 'v1-innovation-thread-followers',
+      operationId: 'v1-innovation-thread-followers-update',
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
+      requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
         200: {
           description: 'Success',

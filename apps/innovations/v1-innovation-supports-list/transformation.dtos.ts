@@ -9,5 +9,5 @@ export type ResponseDTO = {
     acronym: string;
     unit: { id: string; name: string; acronym: string };
   };
-  engagingAccessors?: { id: string; userRoleId: string, name: string }[];
+  engagingAccessors?: { id: string; userRoleId: string, name: string, isActive: boolean }[];
 }[];

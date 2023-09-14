@@ -4,7 +4,7 @@ import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randAbbreviation, randCompanyName, randFullName, randUuid } from '@ngneat/falso';
+import { randAbbreviation, randBoolean, randCompanyName, randFullName, randUuid } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -45,7 +45,7 @@ const expected = [
       acronym: randAbbreviation(),
       unit: { id: randUuid(), name: randCompanyName(), acronym: randAbbreviation() }
     },
-    engagingAccessors: [{ id: randUuid(), userRoleId: randUuid(), name: randFullName() }]
+    engagingAccessors: [{ id: randUuid(), userRoleId: randUuid(), name: randFullName(), isActive: randBoolean() }]
   }
 ];
 

@@ -1,13 +1,11 @@
 import azureFunction from '.';
 
-import { ServiceRoleEnum } from '@innovations/shared/enums';
-import { DomainInnovationsService } from '@innovations/shared/services';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randAbbreviation, randBoolean, randFullName, randUuid } from '@ngneat/falso';
-import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
+import { randUuid } from '@ngneat/falso';
+import type { BodyType, ParamsType } from './validation.schemas';
+import { InnovationThreadsService } from '../_services/innovation-threads.service';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -25,58 +23,28 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = [
-  {
-    id: randUuid(),
-    identityId: randUuid(),
-    locked: randBoolean(),
-    isOwner: true,
-    userRole: { id: randUuid(), role: ServiceRoleEnum.INNOVATOR },
-    organisationUnit: null
-  },
-  {
-    id: randUuid(),
-    identityId: randUuid(),
-    name: randFullName(),
-    locked: randBoolean(),
-    isOwner: false,
-    userRole: { id: randUuid(), role: ServiceRoleEnum.ACCESSOR },
-    organisationUnit: { id: randUuid(), acronym: randAbbreviation() }
-  }
-];
-
-const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadFollowers').mockResolvedValue(expected);
+const expected = { threadId: randUuid() };
+const mock = jest.spyOn(InnovationThreadsService.prototype, 'addFollowersToThread').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-thread-followers Suite', () => {
+describe('v1-innovation-thread-followers-update', () => {
   describe('200', () => {
-    it('should return the thread followers', async () => {
+    it('should update the followers of an innovation thread', async () => {
       const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.aliceQualifyingAccessor)
+        .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           threadId: randUuid()
         })
-        .call<ResponseDTO>(azureFunction);
+        .setBody<BodyType>({
+          followerUserRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id]
+        })
+        .call<never>(azureFunction);
 
-      expect(result.body).toStrictEqual({
-        followers: expected.map(follower => ({
-          id: follower.id,
-          name: follower?.name ?? '',
-          ...(follower.isOwner !== undefined && { isOwner: follower.isOwner }),
-          isLocked: follower.locked,
-          role: follower.userRole,
-          organisationUnit: follower.organisationUnit
-            ? {
-                id: follower.organisationUnit.id,
-                acronym: follower.organisationUnit.acronym
-              }
-            : null
-        }))
-      });
+      expect(result.body).toStrictEqual(expected);
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
@@ -84,7 +52,7 @@ describe('v1-innovation-thread-followers Suite', () => {
 
   describe('Access', () => {
     it.each([
-      ['Admin', 200, scenario.users.allMighty],
+      ['Admin', 403, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['A', 200, scenario.users.ingridAccessor],
       ['NA', 200, scenario.users.paulNeedsAssessor],
@@ -97,6 +65,9 @@ describe('v1-innovation-thread-followers Suite', () => {
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           threadId: randUuid()
+        })
+        .setBody<BodyType>({
+          followerUserRoleIds: [scenario.users.aliceQualifyingAccessor.roles.qaRole.id]
         })
         .call<ErrorResponseType>(azureFunction);
 

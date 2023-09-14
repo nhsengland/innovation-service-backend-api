@@ -165,21 +165,65 @@ export class InnovationThreadsService extends BaseService {
   async addFollowersToThread(
     threadId: string,
     followerUserRoleIds: string[],
-    entityManager: EntityManager
-  ): Promise<void> {
-    const thread = await entityManager
+    entityManager?: EntityManager
+  ): Promise<{ threadId: string }> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const dbThread = await em
       .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .leftJoinAndSelect('thread.followers', 'followerUserRole')
       .where('thread.id = :threadId', { threadId })
       .getOne();
 
-    if (!thread) {
+    if (!dbThread) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    await entityManager.getRepository(InnovationThreadEntity).save({
-      id: thread.id,
-      followers: followerUserRoleIds.map(roleId => ({ id: roleId }))
+    //remove duplicates
+    const uniqueFollowerRoleIds = [...new Set(followerUserRoleIds)];
+
+    await em.save(InnovationThreadEntity, {
+      ...dbThread,
+      followers: [...dbThread.followers, ...uniqueFollowerRoleIds.map(urId => UserRoleEntity.new({ id: urId }))]
     });
+
+    return { threadId: dbThread.id };
+  }
+
+  async unfollowThread(
+    domainContext: DomainContextType,
+    threadId: string,
+    entityManager?: EntityManager
+  ): Promise<{ threadId: string }> {
+    const manager = entityManager ?? this.sqlConnection.manager;
+
+    const dbThread = await manager
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .leftJoinAndSelect('thread.followers', 'follower')
+      .where('thread.id = :threadId', { threadId })
+      .getOne();
+
+    if (!dbThread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    if (!dbThread.followers.map(ur => ur.id).includes(domainContext.currentRole.id)) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER);
+    }
+
+    if (domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
+      throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_INNOVATORS_CANNOT_UNFOLLOW);
+    }
+
+    await manager
+      .createQueryBuilder()
+      .delete()
+      .from('innovation_thread_follower')
+      .where('innovation_thread_id = :threadId', { threadId: dbThread.id })
+      .andWhere('user_role_id = :userRoleId', { userRoleId: domainContext.currentRole.id })
+      .execute()
+
+    return { threadId };
   }
 
   async createThread(
