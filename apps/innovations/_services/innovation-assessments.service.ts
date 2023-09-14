@@ -249,6 +249,7 @@ export class InnovationAssessmentsService extends BaseService {
 
     const dbAssessment = await connection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessment')
+      .leftJoinAndSelect('assessment.assignTo', 'assignTo')
       .leftJoinAndSelect('assessment.organisationUnits', 'organisationUnits')
       .leftJoinAndSelect('assessment.reassessmentRequest', 'reassessmentRequest')
       .where('assessment.id = :assessmentId', { assessmentId })
@@ -262,6 +263,10 @@ export class InnovationAssessmentsService extends BaseService {
       const assessment = Object.entries(data).reduce((acc, item) => ({ ...acc, [item[0]]: item[1] }), dbAssessment);
 
       assessment.updatedBy = domainContext.id;
+      // if assessment doesn't have an assigned assessor, assign the current user.
+      if (!assessment.assignTo) {
+        assessment.assignTo = UserEntity.new({ id: domainContext.id });
+      }
 
       if (data.suggestedOrganisationUnitsIds) {
         const currentOrgSuggestionsIds = assessment.organisationUnits.map(u => u.id);
