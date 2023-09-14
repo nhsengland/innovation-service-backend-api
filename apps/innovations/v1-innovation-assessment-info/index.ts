@@ -49,7 +49,7 @@ class V1InnovationAssessmentInfo {
         summary: result.summary,
         description: result.description,
         finishedAt: result.finishedAt,
-        assignTo: { id: result.assignTo.id, name: result.assignTo.name },
+        ...(result.assignTo && { assignTo: { id: result.assignTo.id, name: result.assignTo.name } }),
         maturityLevel: result.maturityLevel,
         maturityLevelComment: result.maturityLevelComment,
         hasRegulatoryApprovals: result.hasRegulatoryApprovals,

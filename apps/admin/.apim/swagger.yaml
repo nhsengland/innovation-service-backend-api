@@ -5,35 +5,6 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-admin-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
-  "/v1/users/{userId}/delete":
-    patch:
-      description: Delete an admin user.
-      operationId: v1-admin-delete
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: Id of the admin user.
-      responses:
-        "200":
-          description: The admin account has been deleted.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: The user id.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to delete an admin account.
-        "500":
-          description: An error occurred while deleting the admin account.
   /v1/health:
     get:
       summary: Get admin health
@@ -560,17 +531,224 @@ paths:
           description: The organisation unit does not exist.
         "500":
           description: An error occurred while updating the organisation unit.
-  "/v1/units/{organisationUnitId}/users/{userId}":
+  /v1/users:
     post:
-      description: Create unit user.
-      operationId: v1-admin-unit-user-create
+      description: Create a user.
+      operationId: v1-admin-user-create
+      parameters: []
+      requestBody:
+        description: The user to be created.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Name of the user.
+                email:
+                  type: string
+                  format: email
+                  maxLength: 100
+                  description: Email of the user.
+                role:
+                  type: string
+                  enum:
+                    - ADMIN
+                    - ASSESSMENT
+                    - ACCESSOR
+                    - QUALIFYING_ACCESSOR
+                  description: Role of the user.
+              required:
+                - name
+                - email
+                - role
+              additionalProperties: false
+              oneOf:
+                - type: object
+                  properties:
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                    unitIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                      description: Ids of the organisation units.
+                  required:
+                    - organisationId
+                    - unitIds
+                  additionalProperties: false
+      responses:
+        "201":
+          description: The user has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The user id.
+        "400":
+          description: Bad request.
+        "401":
+          description: The user is not authorized to create a user.
+        "500":
+          description: An error occurred while creating the user.
+  "/v1/users/{userIdOrEmail}":
+    get:
+      operationId: v1-admin-user-info
+      description: Get user info.
+      tags:
+        - "[v1] Admin Users"
       parameters:
-        - name: organisationUnitId
+        - name: userIdOrEmail
+          in: path
+          required: true
+          schema:
+            anyOf:
+              - type: string
+                format: uuid
+              - type: string
+                format: email
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  email:
+                    type: string
+                  name:
+                    type: string
+                  phone:
+                    type: string
+                  isActive:
+                    type: boolean
+                  roles:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        role:
+                          type: string
+                          enum:
+                            - ADMIN
+                            - INNOVATOR
+                            - ACCESSOR
+                            - ASSESSMENT
+                            - QUALIFYING_ACCESSOR
+                        displayTeam:
+                          type: string
+                        isActive:
+                          type: boolean
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+  "/v1/users/{userId}/innovations":
+    get:
+      description: Retrieves the user owned innovations.
+      operationId: v1-admin-user-innovations
+      tags:
+        - "[v1] Innovations owned by user"
+      parameters:
+        - name: userId
           in: path
           required: true
           schema:
             type: string
             format: uuid
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    collaboratorsCount:
+                      type: number
+                    expirationTransferDate:
+                      type: string
+        "400":
+          description: Bad request
+  "/v1/users/{userId}/roles/{roleId}":
+    patch:
+      description: Update user role.
+      operationId: v1-admin-user-role-update
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+              additionalProperties: false
+      responses:
+        "204":
+          description: Updated the user role
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The role id.
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+  "/v1/users/{userId}/roles":
+    post:
+      description: Create user roles.
+      operationId: v1-admin-user-roles-create
+      parameters:
         - name: userId
           in: path
           required: true
@@ -587,92 +765,53 @@ paths:
                 role:
                   type: string
                   enum:
+                    - ADMIN
+                    - ASSESSMENT
                     - ACCESSOR
                     - QUALIFYING_ACCESSOR
+                  description: Role of the user.
               required:
                 - role
               additionalProperties: false
+              oneOf:
+                - type: object
+                  properties:
+                    organisationId:
+                      type: string
+                      format: uuid
+                      description: Id of the organisation.
+                    unitIds:
+                      type: array
+                      items:
+                        type: string
+                        format: uuid
+                      minItems: 1
+                      description: Ids of the organisation units.
+                  required:
+                    - organisationId
+                    - unitIds
+                  additionalProperties: false
       responses:
-        "204":
-          description: The user as been added to the unit.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to create an organisation unit.
-        "404":
-          description: The user doesn't exist on the service.
-        "409":
-          description: The user is from other other organisation or already exists in the
-            unit.
-        "500":
-          description: An error occurred while creating the organisation unit.
-  /v1/users:
-    post:
-      description: Create a user.
-      operationId: v1-admin-user-create
-      parameters: []
-      requestBody:
-        description: The user to be created.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: Name of the user.
-                email:
-                  type: string
-                  format: email
-                  description: Email of the user.
-                type:
-                  type: string
-                  enum:
-                    - ADMIN
-                    - ACCESSOR
-                    - ASSESSMENT
-                    - QUALIFYING_ACCESSOR
-                  description: Type of the user.
-                organisationAcronym:
-                  type: string
-                  maxLength: 10
-                  nullable: true
-                  description: Acronym of the organisation.
-                organisationUnitAcronym:
-                  type: string
-                  maxLength: 10
-                  nullable: true
-                  description: Acronym of the organisation unit.
-                role:
-                  type: string
-                  enum:
-                    - ACCESSOR
-                    - QUALIFYING_ACCESSOR
-                  nullable: true
-                  description: Role of the user within the organisation.
-              required:
-                - name
-                - email
-                - type
-              additionalProperties: false
-      responses:
-        "200":
-          description: The user has been created.
+        "201":
+          description: The created roles.
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: The user id.
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: The role id.
         "400":
-          description: Bad request.
+          description: The request is invalid.
         "401":
-          description: The user is not authorized to create a user.
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
         "500":
-          description: An error occurred while creating the user.
+          description: An error occurred while processing the request.
   "/v1/users/{userId}":
     patch:
       description: Update a user.
@@ -744,16 +883,6 @@ paths:
             type: string
             format: uuid
             description: Id of the user.
-        - name: operation
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - LOCK_USER
-              - UPDATE_USER_ROLE
-              - CHANGE_UNIT
-            description: Type of the operation to validate.
       responses:
         "200":
           description: OK

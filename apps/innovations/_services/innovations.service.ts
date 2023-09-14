@@ -19,7 +19,6 @@ import {
   UserRoleEntity
 } from '@innovations/shared/entities';
 import {
-  AccessorOrganisationRoleEnum,
   ActivityEnum,
   ActivityTypeEnum,
   InnovationActionStatusEnum,
@@ -29,7 +28,6 @@ import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
-  InnovatorOrganisationRoleEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -119,7 +117,7 @@ export class InnovationsService extends BaseService {
         id: string;
         createdAt: Date;
         finishedAt: null | Date;
-        assignedTo: { name: string };
+        assignedTo?: { name: string };
         reassessmentCount: number;
         isExempted?: boolean;
       };
@@ -137,7 +135,7 @@ export class InnovationsService extends BaseService {
             acronym: string;
             users?: {
               name: string;
-              role: AccessorOrganisationRoleEnum | InnovatorOrganisationRoleEnum;
+              role: ServiceRoleEnum;
             }[];
           };
         };
@@ -406,13 +404,12 @@ export class InnovationsService extends BaseService {
 
       if ([ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR].includes(domainContext.currentRole.role)) {
         innovationFetchQuery.innerJoin('innovations.innovationSupports', 'supports');
-        innovationFetchQuery.innerJoin('supports.organisationUnitUsers', 'supportingUnitUsers');
-        innovationFetchQuery.innerJoin('supportingUnitUsers.organisationUser', 'supportingOrganisationUser');
-        innovationFetchQuery.innerJoin('supportingOrganisationUser.user', 'supportingUsers');
+        innovationFetchQuery.innerJoin('supports.userRoles', 'userRole');
+        innovationFetchQuery.innerJoin('userRole.user', 'supportingUsers');
         innovationFetchQuery.andWhere('supportingUsers.id = :supportingUserId', {
           supportingUserId: user.id
         });
-        innovationFetchQuery.andWhere('supportingUnitUsers.organisation_unit_id = :orgUnitId', {
+        innovationFetchQuery.andWhere('userRole.organisation_unit_id = :orgUnitId', {
           orgUnitId: domainContext.organisation?.organisationUnit?.id
         });
       }
@@ -569,11 +566,9 @@ export class InnovationsService extends BaseService {
 
       if (fetchUsers) {
         innovationsSupportsQuery
-          .leftJoin('supports.organisationUnitUsers', 'organisationUnitUsers')
-          .addSelect('organisationUnitUsers.id', 'organisationUnitUsers_id')
-          .leftJoin('organisationUnitUsers.organisationUser', 'organisationUser')
-          .addSelect('organisationUser.role', 'organisationUser_role')
-          .leftJoin('organisationUser.user', 'user')
+          .leftJoin('supports.userRoles', 'userRole')
+          .addSelect('userRole.id', 'userRole_id')
+          .leftJoin('userRole.user', 'user')
           .addSelect('user.id', 'user_id')
           .addSelect('user.status', 'user_status');
       }
@@ -591,14 +586,17 @@ export class InnovationsService extends BaseService {
     let usersInfo = new Map<string, Awaited<ReturnType<DomainUsersService['getUsersList']>>[0]>();
     if (fetchUsers) {
       const assessmentUsersIds = new Set(
-        [...assessmentsMap.values()].filter(a => a.assignTo.status !== UserStatusEnum.DELETED).map(a => a.assignTo.id)
+        [...assessmentsMap.values()]
+          .filter(
+            (a): a is InnovationAssessmentEntity & { assignTo: { id: string } } =>
+              a.assignTo != null && a.assignTo?.status !== UserStatusEnum.DELETED
+          )
+          .map(a => a.assignTo.id)
       );
       const supportingUsersIds = new Set(
         [...supportingOrganisationsMap.values()].flatMap(s =>
           s.flatMap(support =>
-            support.organisationUnitUsers
-              .filter(item => item.organisationUser.user.status !== UserStatusEnum.DELETED)
-              .map(item => item.organisationUser.user.id)
+            support.userRoles.filter(item => item.user.status !== UserStatusEnum.DELETED).map(item => item.user.id)
           )
         )
       );
@@ -695,7 +693,7 @@ export class InnovationsService extends BaseService {
                 id: string;
                 createdAt: Date;
                 finishedAt: null | Date;
-                assignedTo: { name: string };
+                assignedTo?: { name: string };
                 reassessmentCount: number;
               };
           const supports = supportingOrganisationsMap.get(innovation.id);
@@ -707,7 +705,9 @@ export class InnovationsService extends BaseService {
               assessment = {
                 id: assessmentRaw.id,
                 createdAt: assessmentRaw.createdAt,
-                assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' },
+                ...(assessmentRaw.assignTo && {
+                  assignedTo: { name: usersInfo.get(assessmentRaw.assignTo?.id)?.displayName ?? '' }
+                }),
                 finishedAt: assessmentRaw.finishedAt,
                 reassessmentCount: innovationsReassessmentCount.get(innovation.id) ?? 0,
                 ...(domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT
@@ -751,11 +751,11 @@ export class InnovationsService extends BaseService {
                     name: support.organisationUnit.name,
                     acronym: support.organisationUnit.acronym,
                     // Users are only returned only for ENGAGING supports status, returning nothing on all other cases.
-                    ...((support.organisationUnitUsers ?? []).length > 0 && {
-                      users: support.organisationUnitUsers
+                    ...((support.userRoles ?? []).length > 0 && {
+                      users: support.userRoles
                         .map(su => ({
-                          name: usersInfo.get(su.organisationUser.user.id)?.displayName || '',
-                          role: su.organisationUser.role
+                          name: usersInfo.get(su.user.id)?.displayName || '',
+                          role: su.role
                         }))
                         .filter(authUser => authUser.name)
                     })
@@ -817,7 +817,7 @@ export class InnovationsService extends BaseService {
       id: string;
       createdAt: Date;
       finishedAt: null | Date;
-      assignedTo: { id: string; name: string };
+      assignedTo?: { id: string; name: string; userRoleId: string };
       reassessmentCount: number;
     };
     supports?: { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];
@@ -865,12 +865,16 @@ export class InnovationsService extends BaseService {
     if (filters.fields?.includes('assessment')) {
       query.leftJoin('innovation.assessments', 'innovationAssessments');
       query.leftJoin('innovationAssessments.assignTo', 'assignTo');
+      query.leftJoin('assignTo.serviceRoles', 'assignToRoles', 'assignToRoles.role = :assessmentRole', {
+        assessmentRole: ServiceRoleEnum.ASSESSMENT
+      });
       query.addSelect([
         'innovationAssessments.id',
         'innovationAssessments.createdAt',
         'innovationAssessments.finishedAt',
         'assignTo.id',
-        'assignTo.status'
+        'assignTo.status',
+        'assignToRoles.id'
       ]);
     }
 
@@ -901,7 +905,10 @@ export class InnovationsService extends BaseService {
     // Fetch users names.
     const assessmentUsersIds = filters.fields?.includes('assessment')
       ? innovation.assessments
-          ?.filter(assessment => assessment.assignTo.status !== UserStatusEnum.DELETED)
+          ?.filter(
+            (assessment): assessment is InnovationAssessmentEntity & { assignTo: { id: string } } =>
+              assessment.assignTo != null && assessment.assignTo?.status !== UserStatusEnum.DELETED
+          )
           .map(assessment => assessment.assignTo.id)
       : [];
     const categories = documentData.categories ? JSON.parse(documentData.categories) : [];
@@ -927,7 +934,7 @@ export class InnovationsService extends BaseService {
           id: string;
           createdAt: Date;
           finishedAt: null | Date;
-          assignedTo: { id: string; name: string };
+          assignedTo?: { id: string; name: string; userRoleId: string };
           reassessmentCount: number;
         };
 
@@ -940,14 +947,18 @@ export class InnovationsService extends BaseService {
           this.logger.error(`Innovation ${innovation.id} with ${innovation.assessments.length} assessments detected`);
         }
 
+        const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo?.id && item.isActive);
+
         if (innovation.assessments[0]) {
           // ... but if exists, on this list, we show information about one of them.
-          const assignTo = usersInfo.find(item => item.id === innovation.assessments[0]?.assignTo.id && item.isActive);
           assessment = {
             id: innovation.assessments[0].id,
             createdAt: innovation.assessments[0].createdAt,
             finishedAt: innovation.assessments[0].finishedAt,
-            assignedTo: { id: assignTo?.id ?? '', name: assignTo?.displayName ?? '' },
+            ...(assignTo &&
+              assignTo.roles[0] && {
+                assignedTo: { id: assignTo.id, name: assignTo.displayName, userRoleId: assignTo.roles[0].id }
+              }),
             reassessmentCount: (await innovation.reassessmentRequests).length
           };
         }
@@ -1336,25 +1347,19 @@ export class InnovationsService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    // This query should be reviewed when using the service roles in supports instead of the organisationUnitUser
     const dbSupports = await connection
       .createQueryBuilder(InnovationSupportEntity, 'supports')
-      .innerJoinAndSelect('supports.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoinAndSelect('organisationUnitUser.organisationUser', 'organisationUser')
-      .innerJoinAndSelect('organisationUnitUser.organisationUnit', 'organisationUnit')
-      .innerJoinAndSelect('organisationUser.user', 'user')
+      .innerJoinAndSelect('supports.userRoles', 'userRole')
+      .innerJoinAndSelect('userRole.user', 'user')
       .where('supports.innovation_id = :innovationId', { innovationId })
       .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
       .getMany();
 
     const previousAssignedAccessors = dbSupports.flatMap(support =>
-      support.organisationUnitUsers.map(item => ({
-        id: item.organisationUser.user.id,
-        organisationUnitId: item.organisationUnit.id,
-        userType:
-          item.organisationUser.role === AccessorOrganisationRoleEnum.ACCESSOR
-            ? ServiceRoleEnum.ACCESSOR
-            : ServiceRoleEnum.QUALIFYING_ACCESSOR
+      support.userRoles.map(item => ({
+        id: item.user.id,
+        organisationUnitId: item.organisationUnitId,
+        userType: item.role
       }))
     );
 
@@ -1382,7 +1387,7 @@ export class InnovationsService extends BaseService {
       // Update all support to UNASSIGNED.
       for (const innovationSupport of dbSupports) {
         innovationSupport.status = InnovationSupportStatusEnum.UNASSIGNED;
-        innovationSupport.organisationUnitUsers = []; // To be able to save many-to-many relations, the full entity must me saved. That's why we are saving this part with different code.
+        innovationSupport.userRoles = []; //TODO: refactor this. Delete from innovation_support_user table directly
         innovationSupport.updatedBy = domainContext.id;
         await transaction.save(InnovationSupportEntity, innovationSupport);
       }

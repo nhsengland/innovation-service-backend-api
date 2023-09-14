@@ -27,7 +27,7 @@ import {
   InnovationRecordExportFeedbackHandler,
   InnovationRecordExportRequestHandler,
   InnovationStopSharingHandler,
-  InnovationSubmitedHandler,
+  InnovationSubmittedHandler,
   InnovationSupportStatusChangeRequestHandler,
   InnovationSupportStatusUpdateHandler,
   InnovationTransferOwnershipCompletedHandler,
@@ -79,7 +79,7 @@ export const NOTIFICATIONS_CONFIG: {
   },
 
   [NotifierTypeEnum.INNOVATION_SUBMITED]: {
-    handler: InnovationSubmitedHandler,
+    handler: InnovationSubmittedHandler,
     joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.INNOVATION_SUBMITED]>({
       innovationId: Joi.string().guid().required()
     }).required()

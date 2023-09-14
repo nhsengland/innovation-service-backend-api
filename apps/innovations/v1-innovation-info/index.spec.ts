@@ -199,7 +199,7 @@ describe('v1-innovation-info Suite', () => {
         ...expected,
         assessment: {
           id: randUuid(),
-          assignedTo: { id: randUuid(), name: randFullName() },
+          assignedTo: { id: randUuid(), name: randFullName(), userRoleId: randUuid() },
           createdAt: randPastDate(),
           finishedAt: randPastDate(),
           reassessmentCount: randNumber()

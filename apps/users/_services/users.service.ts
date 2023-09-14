@@ -3,8 +3,6 @@ import type { EntityManager } from 'typeorm';
 
 import {
   InnovationCollaboratorEntity,
-  InnovationEntity,
-  InnovationSupportEntity,
   InnovationTransferEntity,
   OrganisationEntity,
   OrganisationUserEntity,
@@ -27,15 +25,8 @@ import {
 } from '@users/shared/enums';
 import { NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import type { PaginationQueryParamsType } from '@users/shared/helpers';
-import type {
-  CacheConfigType,
-  CacheService,
-  DomainService,
-  IdentityProviderService,
-  NotifierService
-} from '@users/shared/services';
+import type { CacheConfigType, CacheService, IdentityProviderService, NotifierService } from '@users/shared/services';
 import SHARED_SYMBOLS from '@users/shared/services/symbols';
-import type { MinimalInfoDTO, UserFullInfoDTO } from '../_types/users.types';
 
 import { BaseService } from './base.service';
 
@@ -45,7 +36,6 @@ export class UsersService extends BaseService {
 
   constructor(
     @inject(SHARED_SYMBOLS.CacheService) cacheService: CacheService,
-    @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService)
     private identityProviderService: IdentityProviderService,
     @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
@@ -62,82 +52,6 @@ export class UsersService extends BaseService {
   async existsUserByEmail(email: string): Promise<boolean> {
     const authUser = await this.identityProviderService.getUserInfoByEmail(email);
     return !!authUser;
-  }
-
-  /**
-   * Returns the user information from the identity provider.
-   * @param userId the user identifier.
-   * @returns the user information.
-   */
-  async getUserById(
-    userId: string,
-    params: {
-      model: 'minimal' | 'full';
-    },
-    entityManager?: EntityManager
-  ): Promise<MinimalInfoDTO | UserFullInfoDTO> {
-    const user = await this.domainService.users.getUserInfo({ userId });
-    const model = params.model;
-    if (model === 'minimal') {
-      return {
-        id: user.id,
-        displayName: user.displayName
-      };
-    }
-    if (model === 'full') {
-      const em = entityManager ?? this.sqlConnection.manager;
-
-      const innovations = await em
-        .createQueryBuilder(InnovationEntity, 'innovation')
-        .select('innovation.id', 'innovation_id')
-        .addSelect('innovation.name', 'innovation_name')
-        .where('innovation.owner_id = :userId', { userId: user.id })
-        .getMany();
-
-      // TODO this is picking only the first for now and will be changed when admin supports more than one role
-      const role = user.roles[0];
-      if (!role) {
-        throw new UnprocessableEntityError(UserErrorsEnum.USER_TYPE_INVALID);
-      }
-
-      const supportMap = new Map();
-      const supportUserId = user.organisations.flatMap(o => o.organisationUnits.map(u => u.organisationUnitUser.id));
-      if (supportUserId.length > 0) {
-        const supports = await this.sqlConnection
-          .createQueryBuilder(InnovationSupportEntity, 'support')
-          .select('organisationUnitUsers.id', 'organisationUnitUsers_id')
-          .addSelect('COUNT(support.id)', 'support_count')
-          .innerJoin('support.organisationUnitUsers', 'organisationUnitUsers')
-          .where('organisationUnitUsers.id IN (:...supportUserId)', { supportUserId })
-          .groupBy('organisationUnitUsers.id')
-          .getRawMany();
-        supports.forEach(s => supportMap.set(s.organisationUnitUsers_id, s.support_count));
-      }
-
-      return {
-        id: user.id,
-        email: user.email,
-        phone: user.phone,
-        displayName: user.displayName,
-        type: role.role, // see previous TODO
-        lockedAt: user.lockedAt,
-        innovations: innovations,
-        userOrganisations: user.organisations.map(o => ({
-          id: o.id,
-          name: o.name,
-          size: o.size,
-          role: o.role,
-          isShadow: o.isShadow,
-          units: o.organisationUnits.map(u => ({
-            id: u.id,
-            name: u.name,
-            acronym: u.acronym,
-            supportCount: supportMap.get(u.organisationUnitUser.id)
-          }))
-        }))
-      };
-    }
-    throw new UnprocessableEntityError(UserErrorsEnum.USER_MODEL_INVALID);
   }
 
   async getUserPendingInnovationTransfers(

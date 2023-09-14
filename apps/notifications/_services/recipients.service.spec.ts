@@ -504,10 +504,10 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('threadIntervenientRecipients', () => {
+  describe('threadFollowerRecipients', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
-    // Mock domain innovation service threadIntervenients and default reply
-    const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadIntervenients').mockResolvedValue([
+    // Mock domain innovation service threadFollowers and default reply
+    const mock = jest.spyOn(DomainInnovationsService.prototype, 'threadFollowers').mockResolvedValue([
       {
         id: scenario.users.johnInnovator.id,
         identityId: scenario.users.johnInnovator.identityId,
@@ -551,7 +551,7 @@ describe('Notifications / _services / recipients service suite', () => {
     });
 
     it('Fetches thread intervenients from domain services and maps to recipients type', async () => {
-      const res = await sut.threadIntervenientRecipients(thread.id);
+      const res = await sut.threadFollowerRecipients(thread.id);
 
       expect(mock).toHaveBeenCalledTimes(1);
       expect(mock).toHaveBeenCalledWith(thread.id, false);
@@ -565,7 +565,7 @@ describe('Notifications / _services / recipients service suite', () => {
     it('Throws an error if thread not found', async () => {
       mock.mockRejectedValueOnce(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
 
-      await expect(sut.threadIntervenientRecipients(thread.id)).rejects.toThrowError(
+      await expect(sut.threadFollowerRecipients(thread.id)).rejects.toThrowError(
         new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND)
       );
     });

@@ -45,7 +45,7 @@ const expected = [
       acronym: randAbbreviation(),
       unit: { id: randUuid(), name: randCompanyName(), acronym: randAbbreviation() }
     },
-    engagingAccessors: [{ id: randUuid(), organisationUnitUserId: randUuid(), name: randFullName() }]
+    engagingAccessors: [{ id: randUuid(), userRoleId: randUuid(), name: randFullName() }]
   }
 ];
 

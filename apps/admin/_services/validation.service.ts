@@ -1,17 +1,15 @@
 import { injectable } from 'inversify';
 
-import { InnovationEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
+import { InnovationEntity, OrganisationUnitEntity, UserEntity, UserRoleEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
-import { GenericErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
 
-import {
-  AdminOperationType,
-  AdminOperationsRulesMapper,
-  AdminRuleType,
-  ValidationResult
-} from '../_config/admin-operations.config';
+import { ValidationRuleEnum } from '../_config/admin-operations.config';
 
 import { BaseService } from './base.service';
+import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@admin/shared/errors';
+import { UserErrorsEnum } from '@admin/shared/errors';
+import type { EntityManager } from 'typeorm';
+import type { ValidationResult } from '../types/validation.types';
 
 @injectable()
 export class ValidationService extends BaseService {
@@ -19,56 +17,12 @@ export class ValidationService extends BaseService {
     super();
   }
 
-  async validate(operation: AdminOperationType, userId: string): Promise<ValidationResult[]> {
-    const dbUserRoles = await this.sqlConnection
-      .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['user.id', 'userRole.role'])
-      .innerJoin('userRole.user', 'user')
-      .where('userRole.user_id = :userId', { userId })
-      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
-      .getMany();
-
-    const result: ValidationResult[] = [];
-    const roles = [...new Set(dbUserRoles.map(item => item.role))]; // Removes duplicated.
-
-    for (const role of roles) {
-      const rules = AdminOperationsRulesMapper[operation][role] || [];
-
-      for (const rule of rules) {
-        switch (rule) {
-          case AdminRuleType.AssessmentUserIsNotTheOnlyOne:
-            result.push(await this.checkIfAssessmentUserIsNotTheOnlyOne(userId));
-            break;
-
-          case AdminRuleType.LastQualifyingAccessorUserOnOrganisationUnit:
-            result.push(await this.checkIfLastQualifyingAccessorUserOnOrganisationUnit(userId));
-            break;
-
-          case AdminRuleType.LastUserOnOrganisationUnit:
-            result.push(await this.checkIfLastUserOnOrganisationUnit(userId));
-            break;
-
-          case AdminRuleType.NoInnovationsSupportedOnlyByThisUser:
-            result.push(await this.checkIfNoInnovationsSupportedOnlyByThisUser(userId));
-            break;
-
-          default: // This will never happens in runtime, but will NOT compile when missing items exists.
-            const unknownType: never = rule;
-            throw new UnprocessableEntityError(GenericErrorsEnum.INTERNAL_TYPING_ERROR, {
-              details: { type: unknownType }
-            });
-        }
-      }
-    }
-
-    return result;
-  }
-
   /**
    * Is VALID if there's any other active assessment role user on the platform, excluding the user being checked.
    */
-  private async checkIfAssessmentUserIsNotTheOnlyOne(userId: string): Promise<ValidationResult> {
-    const dbUsersCount = await this.sqlConnection
+  async checkIfAssessmentUserIsNotTheOnlyOne(userId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+    const dbUsersCount = await em
       .createQueryBuilder(UserEntity, 'user')
       .innerJoin('user.serviceRoles', 'userRoles')
       .where('userRoles.role = :userRole', { userRole: ServiceRoleEnum.ASSESSMENT })
@@ -76,112 +30,271 @@ export class ValidationService extends BaseService {
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getCount();
 
-    return { rule: 'AssessmentUserIsNotTheOnlyOne', valid: dbUsersCount > 0 };
+    return { rule: ValidationRuleEnum.AssessmentUserIsNotTheOnlyOne, valid: dbUsersCount > 0 };
   }
 
   /**
-   * Is VALID if there's any other active qualifying accessors on the user organisation units, excluding the user being checked.
+   * Is VALID if there's any other active qualifying accessors on the user organisation unit of the role, excluding the user being checked.
    */
-  private async checkIfLastQualifyingAccessorUserOnOrganisationUnit(userId: string): Promise<ValidationResult> {
-    let dbResult: { organisationUnitId: string; numberOfUsers: number }[] = [];
+  async checkIfLastQualifyingAccessorUserOnOrganisationUnit(
+    userRoleId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    dbResult = await this.sqlConnection
+    const role = await em
       .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.organisation_unit_id AS organisationUnitId', 'COUNT(userRole.id) AS numberOfUsers'])
-      .innerJoin('userRole.user', 'user')
-      .innerJoin(
-        subQuery =>
-          subQuery
-            .from(UserRoleEntity, 'subQ_UserRole')
-            .where('subQ_UserRole.user_id = :userId AND subQ_UserRole.role IN (:...subQUserRoles)', {
-              userId,
-              subQUserRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR]
-            }),
-        'userOrganisationUnits',
-        'userOrganisationUnits.organisation_unit_id = userRole.organisation_unit_id'
-      )
-      .where('userRole.role IN (:...userRoles) ', {
-        userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR]
-      })
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
-      .groupBy('userRole.organisation_unit_id')
-      .getRawMany();
+      .select(['userRole.id', 'organisationUnit.id'])
+      .innerJoin('userRole.organisationUnit', 'organisationUnit')
+      .where('userRole.id = :userRoleId', { userRoleId: userRoleId })
+      .getOne();
+
+    if (!role) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+
+    const numberOfUsers = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoin('userRole.organisationUnit', 'organisationUnit')
+      .where('organisationUnit.id = :organisationUnitId', { organisationUnitId: role.organisationUnit?.id })
+      .andWhere('userRole.role = :roleType', { roleType: ServiceRoleEnum.QUALIFYING_ACCESSOR })
+      .getCount();
 
     return {
-      rule: 'LastQualifyingAccessorUserOnOrganisationUnit',
-      valid: dbResult.every(item => item.numberOfUsers > 1)
-    };
-  }
-
-  /**
-   * Is VALID if there's any other active user on it's organisation units.
-   */
-  private async checkIfLastUserOnOrganisationUnit(userId: string): Promise<ValidationResult> {
-    let dbResult: { organisationUnitId: string; numberOfUsers: number }[] = [];
-
-    dbResult = await this.sqlConnection
-      .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['userRole.organisation_unit_id AS organisationUnitId', 'COUNT(userRole.id) AS numberOfUsers'])
-      .innerJoin('userRole.user', 'user')
-      .innerJoin(
-        subQuery =>
-          subQuery
-            .from(UserRoleEntity, 'subQ_UserRole')
-            .where('subQ_UserRole.user_id = :userId AND subQ_UserRole.role IN (:...userRoles)', {
-              userId,
-              userRoles: [ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ACCESSOR]
-            }),
-        'userOrganisationUnits',
-        'userOrganisationUnits.organisation_unit_id = userRole.organisation_unit_id'
-      )
-      .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
-      .groupBy('userRole.organisation_unit_id')
-      .getRawMany();
-
-    return {
-      rule: 'LastUserOnOrganisationUnit',
-      valid: dbResult.every(item => item.numberOfUsers > 1)
+      rule: ValidationRuleEnum.LastQualifyingAccessorUserOnOrganisationUnit,
+      valid: numberOfUsers > 1
     };
   }
 
   /**
    * Returns VALID if there's NO innovations being supported only by this (accessor) user.
    */
-  private async checkIfNoInnovationsSupportedOnlyByThisUser(userId: string): Promise<ValidationResult> {
-    const innovationSupportedOnlyByUser = await this.sqlConnection
+  async checkIfNoInnovationsSupportedOnlyByThisUser(
+    userRoleId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const role = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoinAndSelect('userRole.organisationUnit', 'organisationUnit')
+      .innerJoinAndSelect('userRole.user', 'user')
+      .where('userRole.id = :userRoleId', { userRoleId: userRoleId })
+      .getOne();
+
+    if (!role) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+
+    const innovationSupportedOnlyByUser = await em
       .createQueryBuilder(InnovationEntity, 'innovation')
       .select(['innovation.id', 'innovation.name'])
       .innerJoin('innovation.innovationSupports', 'supports')
-      .innerJoin('supports.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
-      .innerJoin('organisationUser.user', 'user')
-      .where('organisationUser.user_id = :userId', { userId })
+      .innerJoin('supports.userRoles', 'userRole')
+      .innerJoin('supports.organisationUnit', 'organisationUnit')
+      .innerJoin('userRole.user', 'user')
+      .where('organisationUnit.id = :organisationUnitId', { organisationUnitId: role.organisationUnit?.id })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .andWhere('supports.status = :status', { status: InnovationSupportStatusEnum.ENGAGING })
       .andWhere(
         `NOT EXISTS(
             SELECT 1 FROM innovation_support s
             INNER JOIN innovation_support_user u on s.id = u.innovation_support_id
-            INNER JOIN organisation_unit_user ous on ous.id = u.organisation_unit_user_id
-            INNER JOIN organisation_user ou on ou.id = ous.organisation_user_id
-            WHERE s.id = supports.id and ou.user_id != :innerUserId and s.deleted_at IS NULL
+            INNER JOIN user_role ur on ur.id = u.user_role_id
+            WHERE s.id = supports.id and ur.user_id != :innerUserId and s.deleted_at IS NULL
           )`,
-        { innerUserId: userId }
+        { innerUserId: role.user.id }
       )
       .getMany();
 
     return {
-      rule: 'NoInnovationsSupportedOnlyByThisUser',
-      valid: innovationSupportedOnlyByUser.length === 0,
-      data: {
-        supports: {
-          count: innovationSupportedOnlyByUser.length,
-          innovations: innovationSupportedOnlyByUser.map(item => ({
-            id: item.id,
-            name: item.name
-          }))
-        }
-      }
+      rule: ValidationRuleEnum.NoInnovationsSupportedOnlyByThisUser,
+      valid: innovationSupportedOnlyByUser.length === 0
+    };
+  }
+
+  private roleTypeToValidationRule(role: ServiceRoleEnum): ValidationRuleEnum {
+    switch (role) {
+      case ServiceRoleEnum.ADMIN:
+        return ValidationRuleEnum.UserHasAnyAdminRole;
+      case ServiceRoleEnum.INNOVATOR:
+        return ValidationRuleEnum.UserHasAnyInnovatorRole;
+      case ServiceRoleEnum.ASSESSMENT:
+        return ValidationRuleEnum.UserHasAnyAssessmentRole;
+      case ServiceRoleEnum.ACCESSOR:
+        return ValidationRuleEnum.UserHasAnyAccessorRole;
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return ValidationRuleEnum.UserHasAnyQualifyingAccessorRole;
+    }
+  }
+
+  async checkIfUserHasAnyRole(
+    userId: string,
+    roles: ServiceRoleEnum[],
+    ignoreRoleId?: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    // inactive roles are also taken into account
+    const query = em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.user_id = :userId', { userId })
+      .andWhere('userRole.role IN (:...roles)', { roles });
+
+    if (ignoreRoleId) {
+      query.andWhere('userRole.id != :userRoleId', { userRoleId: ignoreRoleId });
+    }
+
+    const userRoles = await query.getMany();
+
+    const validations: ValidationResult[] = [];
+
+    for (const role of roles) {
+      validations.push({
+        rule: this.roleTypeToValidationRule(role),
+        valid: !userRoles.some(r => r.role === role)
+      });
+    }
+
+    return validations;
+  }
+
+  async checkIfUserHasAnyAccessorRoleInOtherOrganisation(
+    userId: string,
+    organisationUnitIds: string[],
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const units = await em
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .innerJoinAndSelect('unit.organisation', 'organisation')
+      .where('unit.id IN (:...organisationUnitIds)', { organisationUnitIds })
+      .getMany();
+
+    if (!units.length) {
+      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND);
+    }
+
+    // all units should be from the same organisation
+    const organisationIds = [...new Set(units.map(u => u.organisation.id))];
+    if (organisationIds.length > 1) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+    }
+
+    const otherOrganisationRoles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.organisation_id != :organisationId', { organisationId: organisationIds[0] })
+      .andWhere('userRole.user_id = :userId', { userId })
+      .getCount();
+
+    return {
+      rule: ValidationRuleEnum.UserHasAnyAccessorRoleInOtherOrganisation,
+      valid: otherOrganisationRoles === 0
+    };
+  }
+
+  async checkIfUnitIsActive(userRoleId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const role = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoinAndSelect('userRole.organisationUnit', 'unit')
+      .where('userRole.id = :userRoleId', { userRoleId })
+      .getOne();
+
+    if (!role) {
+      throw new NotFoundError(UserErrorsEnum.USER_ROLE_NOT_FOUND);
+    }
+
+    return {
+      rule: ValidationRuleEnum.OrganisationUnitIsActive,
+      valid: !role.organisationUnit?.inactivatedAt
+    };
+  }
+
+  async checkIfUserAlreadyHasRoleInUnit(
+    userId: string,
+    organisationUnitIds: string[],
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const roles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.user_id = :userId', { userId })
+      .andWhere('userRole.organisation_unit_id IN (:...organisationUnitIds)', { organisationUnitIds })
+      .getMany();
+
+    return {
+      rule: ValidationRuleEnum.UserAlreadyHasRoleInUnit,
+      valid: !roles.length
+    };
+  }
+
+  async checkIfUserIsAccessorInAllUnitsOfOrg(userId: string, entityManager?: EntityManager): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const roles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .innerJoin('userRole.organisationUnit', 'unit')
+      .innerJoin('unit.organisation', 'organisation')
+      .where('userRole.user_id = :userId', { userId })
+      .andWhere('userRole.role IN (:...accessorRoles)', {
+        accessorRoles: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR]
+      })
+      .getMany();
+
+    if (!roles.length) {
+      return {
+        rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+        valid: true
+      };
+    }
+
+    const units = await em
+      .createQueryBuilder(OrganisationUnitEntity, 'unit')
+      .where('unit.organisation_id = :orgId', { orgId: roles[0]?.organisationId })
+      .getMany();
+
+    return {
+      rule: ValidationRuleEnum.UserIsAccessorInAllUnitsOfOrg,
+      valid: roles.length !== units.length
+    };
+  }
+
+  async checkIfUserCanHaveAssessmentOrAccessorRole(
+    userId: string,
+    entityManager?: EntityManager
+  ): Promise<ValidationResult> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const roles = await em
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.user_id = :userId', { userId })
+      .getMany();
+
+    if (roles.some(r => r.role === ServiceRoleEnum.ADMIN || r.role === ServiceRoleEnum.INNOVATOR)) {
+      return {
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: false
+      };
+    }
+
+    const canHaveAccessorRole = await this.checkIfUserIsAccessorInAllUnitsOfOrg(userId, em);
+    const hasAssessmentRole = roles.some(r => r.role === ServiceRoleEnum.ASSESSMENT);
+
+    if (!canHaveAccessorRole.valid && hasAssessmentRole) {
+      return {
+        rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+        valid: false
+      };
+    }
+
+    return {
+      rule: ValidationRuleEnum.UserCanHaveAssessmentOrAccessorRole,
+      valid: true
     };
   }
 }

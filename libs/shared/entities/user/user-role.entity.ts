@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn, RelationId } from 'typeorm';
 
 import type { ServiceRoleEnum } from '../../enums/user.enums';
 import { GenericErrorsEnum, InternalServerError } from '../../errors';
@@ -8,6 +8,8 @@ import { BaseEntity } from '../base.entity';
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
 import { OrganisationEntity } from '../organisation/organisation.entity';
 import { UserEntity } from './user.entity';
+import { InnovationSupportEntity } from '../innovation/innovation-support.entity';
+import { InnovationThreadEntity } from '../innovation/innovation-thread.entity';
 
 @Entity('user_role')
 export class UserRoleEntity extends BaseEntity {
@@ -37,6 +39,12 @@ export class UserRoleEntity extends BaseEntity {
   @ManyToOne(() => OrganisationUnitEntity, { nullable: true })
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity | null;
+
+  @ManyToMany(() => InnovationSupportEntity, support => support.userRoles)
+  innovationSupports: InnovationSupportEntity[];
+
+  @ManyToMany(() => InnovationThreadEntity, thread => thread.followers)
+  threadsFollowed: InnovationThreadEntity[];
 
   static new(data: Partial<UserRoleEntity>): UserRoleEntity {
     const instance = new UserRoleEntity();

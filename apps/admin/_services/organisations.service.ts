@@ -8,8 +8,6 @@ import {
   NotificationUserEntity,
   OrganisationEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity,
-  OrganisationUserEntity,
   UserEntity,
   UserRoleEntity
 } from '@admin/shared/entities';
@@ -22,8 +20,8 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
-import { ConflictError, NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
-import { DatesHelper, ValidationsHelper } from '@admin/shared/helpers';
+import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { DatesHelper } from '@admin/shared/helpers';
 import { UrlModel } from '@admin/shared/models';
 import type { DomainService, IdentityProviderService, NotifierService } from '@admin/shared/services';
 import type { DomainContextType } from '@admin/shared/types';
@@ -105,7 +103,7 @@ export class OrganisationsService extends BaseService {
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
       .leftJoinAndSelect('support.innovation', 'innovation')
-      .leftJoinAndSelect('support.organisationUnitUsers', 'assignedUsers')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
       .where('unit.id = :unitId', { unitId })
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
       .getMany();
@@ -519,7 +517,12 @@ export class OrganisationsService extends BaseService {
     return { id: result.id, units: result.units.map(u => u.id) };
   }
 
-  async createUnit(organisationId: string, name: string, acronym: string, entityManager?: EntityManager): Promise<{ id: string }> {
+  async createUnit(
+    organisationId: string,
+    name: string,
+    acronym: string,
+    entityManager?: EntityManager
+  ): Promise<{ id: string }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const unit = await em.transaction(async transaction => {
@@ -527,77 +530,6 @@ export class OrganisationsService extends BaseService {
     });
 
     return { id: unit.id };
-  }
-
-  async createUnitUser(
-    domainContext: DomainContextType,
-    organisationUnitId: string,
-    userId: string,
-    data: { role: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR },
-    entityManager?: EntityManager
-  ): Promise<void> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    // Start Validations
-    const unit = await connection
-      .createQueryBuilder(OrganisationUnitEntity, 'unit')
-      .select(['organisation.id', 'organisation.inactivatedAt', 'unit.id', 'unit.inactivatedAt'])
-      .innerJoin('unit.organisation', 'organisation')
-      .where('unit.id = :organisationUnitId', { organisationUnitId })
-      .getOne();
-    if (!unit) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNITS_NOT_FOUND);
-    }
-
-    const roles = await connection
-      .createQueryBuilder(UserRoleEntity, 'role')
-      .select(['role.id', 'role.role', 'organisation.id', 'unit.id'])
-      .leftJoin('role.organisation', 'organisation')
-      .leftJoin('role.organisationUnit', 'unit')
-      .where('role.user_id = :userId', { userId })
-      .getMany();
-    if (!roles.length) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
-    }
-
-    const { userRole } = ValidationsHelper.canAddUserToUnit(roles, unit.organisation.id, organisationUnitId);
-    if (userRole && userRole !== data.role) {
-      throw new ConflictError(OrganisationErrorsEnum.ORGANISATION_UNIT_USER_MISMATCH_ROLE);
-    }
-    // End Validations
-
-    await connection.transaction(async transaction => {
-      const organisationUser = await this.getOrCreateOrganisationUser(
-        unit.organisation.id,
-        userId,
-        data.role,
-        domainContext.id,
-        transaction
-      );
-
-      await transaction.save(
-        OrganisationUnitUserEntity,
-        OrganisationUnitUserEntity.new({
-          organisationUnit: unit,
-          organisationUser: organisationUser,
-          createdBy: domainContext.id,
-          updatedBy: domainContext.id
-        })
-      );
-
-      await transaction.save(
-        UserRoleEntity,
-        UserRoleEntity.new({
-          user: UserEntity.new({ id: userId }),
-          role: data.role,
-          organisation: unit.organisation,
-          organisationUnit: unit,
-          createdBy: domainContext.id,
-          updatedBy: domainContext.id,
-          isActive: !unit.inactivatedAt
-        })
-      );
-    });
   }
 
   private async createOrganisationUnit(
@@ -638,37 +570,6 @@ export class OrganisationsService extends BaseService {
     );
 
     return savedUnit;
-  }
-
-  private async getOrCreateOrganisationUser(
-    organisationId: string,
-    userId: string,
-    role: ServiceRoleEnum,
-    requestUserId: string,
-    entityManager?: EntityManager
-  ): Promise<OrganisationUserEntity> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const organisationUser = await em 
-      .createQueryBuilder(OrganisationUserEntity, 'orgUser')
-      .where('orgUser.user_id = :userId', { userId })
-      .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
-      .getOne();
-
-    if (organisationUser) {
-      return organisationUser;
-    }
-
-    return await em.save(
-      OrganisationUserEntity,
-      OrganisationUserEntity.new({
-        organisation: OrganisationEntity.new({ id: organisationId }),
-        user: UserEntity.new({ id: userId }),
-        role: role as any,
-        createdBy: requestUserId,
-        updatedBy: requestUserId
-      })
-    );
   }
 
   private async createOrganisationAnnouncement(

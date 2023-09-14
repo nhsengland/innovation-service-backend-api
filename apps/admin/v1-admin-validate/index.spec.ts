@@ -4,8 +4,7 @@ import { AzureHttpTriggerBuilder, TestsHelper } from '@admin/shared/tests';
 import type { TestUserType } from '@admin/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@admin/shared/types';
 import { randUuid } from '@ngneat/falso';
-import { AdminRuleType } from '../_config/admin-operations.config';
-import { ValidationService } from '../_services/validation.service';
+import * as AdminOperationsConfig from '../_config/admin-operations.config';
 import type { ParamsType, QueryParamsType } from './validation.schemas';
 
 jest.mock('@admin/shared/decorators', () => ({
@@ -24,8 +23,8 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = [{ rule: AdminRuleType.AssessmentUserIsNotTheOnlyOne, valid: true }];
-const mock = jest.spyOn(ValidationService.prototype, 'validate').mockResolvedValue(expected);
+const expected = [{ rule: AdminOperationsConfig.ValidationRuleEnum.AssessmentUserIsNotTheOnlyOne, valid: true }];
+const mock = jest.spyOn(AdminOperationsConfig, 'validationsHelper').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -37,7 +36,7 @@ describe('v1-admin-validate Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.allMighty)
         .setParams<ParamsType>({ userId: randUuid() })
-        .setQuery<QueryParamsType>({ operation: 'UPDATE_USER_ROLE' })
+        .setQuery<QueryParamsType>({ operation: AdminOperationsConfig.AdminOperationEnum.INACTIVATE_USER_ROLE, roleId: randUuid() })
         .call<never>(azureFunction);
 
       expect(result.body).toStrictEqual({ validations: expected });
@@ -57,7 +56,7 @@ describe('v1-admin-validate Suite', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({ userId: randUuid() })
-        .setQuery<QueryParamsType>({ operation: 'UPDATE_USER_ROLE' })
+        .setQuery<QueryParamsType>({ operation: AdminOperationsConfig.AdminOperationEnum.INACTIVATE_USER_ROLE, roleId: randUuid() })
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);

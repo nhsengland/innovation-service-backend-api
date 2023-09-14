@@ -4,8 +4,8 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
   NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE,
@@ -16,7 +16,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.NEEDS_ASSESSMENT_ASSESSOR_UPDATE],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -24,7 +24,7 @@ export class NeedsAssessmentAssessorUpdateHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
 
     const previousAssessor = await this.recipientsService.getUsersRecipient(
-      this.inputData.previousAssessor.id,
+      this.inputData.previousAssessor?.id,
       ServiceRoleEnum.ASSESSMENT
     );
 

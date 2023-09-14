@@ -9,9 +9,9 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum, ENV } from '../_config';
 
+import type { Context } from '@azure/functions';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import type { Context } from '@azure/functions';
 
 export class ThreadMessageCreationHandler extends BaseHandler<
   NotifierTypeEnum.THREAD_MESSAGE_CREATION,
@@ -30,34 +30,16 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
 
-    const owner = await this.recipientsService.getUsersRecipient(innovation.ownerId, ServiceRoleEnum.INNOVATOR);
+    // Fetch all thread followers, excluding the request user.
+    const threadFollowerRecipients = (
+      await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)
+    ).filter(item => item.userId !== this.requestUser.id && item.isActive);
 
-    // Fetch all thread intervenients, excluding the request user.
-    const threadIntervenientUsers = (
-      await this.recipientsService.threadIntervenientRecipients(this.inputData.threadId)
-    ).filter(item => item.userId !== this.requestUser.id);
-
-    const ownerIncluded = threadIntervenientUsers.find(u => u.userId === owner?.userId);
-
-    // ensure innovation owner is included when he's not the request user
-    if (owner && !ownerIncluded && owner.userId !== this.requestUser.id) {
-      threadIntervenientUsers.push(owner);
-    }
-
-    // exclude all assessment users
-    const recipients = threadIntervenientUsers.filter(i => i.role !== ServiceRoleEnum.ASSESSMENT);
-
-    // if thread author is an assessment user and the request user is an innovator, push the author back into the thread
-    if (
-      thread.author &&
-      thread.author.role === ServiceRoleEnum.ASSESSMENT &&
-      this.requestUser.currentRole.role === ServiceRoleEnum.INNOVATOR
-    ) {
-      recipients.push(thread.author);
-    }
+    // exclude all assessment users from emails
+    const emailRecipients = threadFollowerRecipients.filter(i => i.role !== ServiceRoleEnum.ASSESSMENT);
 
     // Send emails only to users with email preference INSTANTLY.
-    for (const recipient of recipients) {
+    for (const recipient of emailRecipients) {
       this.emails.push({
         templateId: EmailTypeEnum.THREAD_MESSAGE_CREATION_TO_ALL,
         notificationPreferenceType: 'MESSAGE',
@@ -78,7 +60,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
       });
     }
 
-    await this.pushInAppNotifications(threadIntervenientUsers, thread);
+    await this.pushInAppNotifications(threadFollowerRecipients, thread);
 
     return this;
   }
@@ -89,15 +71,6 @@ export class ThreadMessageCreationHandler extends BaseHandler<
   ): Promise<void> {
     // Review this seems to be the only place where locked users are considered for in-app notifications
     const inAppRecipientsRoleIds = threadIntervenientUsers.filter(item => item.isActive).map(item => item.roleId);
-
-    // Always include collaborators in the notification center recipients
-    // Owner should already be included when this function is called
-    const collaboratorIds = await this.recipientsService.getInnovationActiveCollaborators(this.inputData.innovationId);
-    const collaborators = await this.recipientsService.getUsersRecipient(collaboratorIds, ServiceRoleEnum.INNOVATOR);
-
-    inAppRecipientsRoleIds.push(
-      ...collaborators.filter(c => c.roleId !== this.requestUser.currentRole.id).map(c => c.roleId)
-    );
 
     if (inAppRecipientsRoleIds.length > 0) {
       this.inApp.push({

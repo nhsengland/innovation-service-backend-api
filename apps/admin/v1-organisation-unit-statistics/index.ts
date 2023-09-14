@@ -9,7 +9,7 @@ import type { CustomContextType } from '@admin/shared/types';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { container } from '../_config';
-import { handlerHelper } from '../_config/statistics.config';
+import { statisticsHelper } from '../_config/statistics.config';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QuerySchema, QueryType } from './validation.schemas';
 
@@ -25,7 +25,7 @@ class GetOrganisationUnitStatistics {
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const res = await handlerHelper(query.statistics, { organisationUnitId: params.unit });
+      const res = await statisticsHelper(query.statistics, { organisationUnitId: params.unit });
       context.res = ResponseHelper.Ok<ResponseDTO>(res);
 
       return;

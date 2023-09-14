@@ -37,7 +37,7 @@ export const ADMIN_STATISTICS_TYPES = Object.keys(ADMIN_STATISTICS_CONFIG);
  * @param payload the payload required to produce those statistics
  * @returns dictionary of statistics and their responses
  */
-export const handlerHelper = async <T extends ADMIN_STATISTICS_TYPES>(
+export const statisticsHelper = async <T extends ADMIN_STATISTICS_TYPES>(
   statistics: T[],
   payload: UnionToIntersection<StatisticsPayload<T>>
 ): Promise<{ [k in T]: StatisticsResponse<k> }> => {

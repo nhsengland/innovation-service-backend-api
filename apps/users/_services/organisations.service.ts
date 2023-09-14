@@ -1,21 +1,15 @@
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
-import { OrganisationTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@users/shared/enums';
+import { OrganisationTypeEnum, UserStatusEnum } from '@users/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
-import { ValidationsHelper } from '@users/shared/helpers';
-import type { IdentityProviderService } from '@users/shared/services';
-import SHARED_SYMBOLS from '@users/shared/services/symbols';
 
 import { BaseService } from './base.service';
 
 @injectable()
 export class OrganisationsService extends BaseService {
-  constructor(
-    @inject(SHARED_SYMBOLS.IdentityProviderService)
-    private identityProviderService: IdentityProviderService
-  ) {
+  constructor() {
     super();
   }
 
@@ -112,20 +106,16 @@ export class OrganisationsService extends BaseService {
     }
 
     const organisationUnits = await Promise.all(
-      (
-        await organisation.organisationUnits
-      ).map(async unit => ({
+      (await organisation.organisationUnits).map(async unit => ({
         id: unit.id,
         name: unit.name,
         acronym: unit.acronym,
         isActive: !unit.inactivatedAt,
         userCount: onlyActiveUsers
-          ? (
-              await unit.organisationUnitUsers
-            ).filter(unitUser => unitUser.organisationUser.user.status === UserStatusEnum.ACTIVE).length
-          : (
-              await unit.organisationUnitUsers
+          ? (await unit.organisationUnitUsers).filter(
+              unitUser => unitUser.organisationUser.user.status === UserStatusEnum.ACTIVE
             ).length
+          : (await unit.organisationUnitUsers).length
       }))
     );
 
@@ -172,57 +162,6 @@ export class OrganisationsService extends BaseService {
       acronym: unit.acronym,
       isActive: !unit.inactivatedAt,
       canActivate: hasQualifyingAccessor
-    };
-  }
-
-  async getOrganisationUnitUserByEmail(
-    organisationUnitId: string,
-    email: string,
-    entityManager?: EntityManager
-  ): Promise<{ id: string; name: string; email: string; role: null | ServiceRoleEnum }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const b2cUser = await this.identityProviderService.getUserInfoByEmail(email);
-    if (!b2cUser) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
-    }
-
-    const organisation = await connection
-      .createQueryBuilder(OrganisationEntity, 'organisation')
-      .select(['organisation.id'])
-      .innerJoin('organisation.organisationUnits', 'organisationUnits')
-      .where('organisationUnits.id = :organisationUnitId', { organisationUnitId })
-      .getOne();
-    if (!organisation) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
-    }
-
-    // Get user and roles
-    const roles = await connection
-      .createQueryBuilder(UserRoleEntity, 'userRole')
-      .select(['user.id', 'userRole.id', 'userRole.role', 'organisation.id', 'unit.id'])
-      .innerJoin('userRole.user', 'user')
-      .leftJoin('userRole.organisation', 'organisation')
-      .leftJoin('userRole.organisationUnit', 'unit')
-      .where('user.identityId = :identityId', { identityId: b2cUser.identityId })
-      .andWhere('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED })
-      .getMany();
-    if (!roles.length) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
-    }
-
-    const { userId, userRole } = ValidationsHelper.canAddUserToUnit(roles, organisation.id, organisationUnitId);
-
-    // Not required
-    if (!userId) {
-      throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_USER_NOT_FOUND);
-    }
-
-    return {
-      id: userId,
-      name: b2cUser.displayName,
-      email: b2cUser.email,
-      role: userRole === ServiceRoleEnum.ACCESSOR || userRole === ServiceRoleEnum.QUALIFYING_ACCESSOR ? userRole : null
     };
   }
 }

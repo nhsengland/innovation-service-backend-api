@@ -1,5 +1,5 @@
 import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
-import { InnovationSubmitedHandler } from './innovation-submited.handler';
+import { InnovationSubmittedHandler } from './innovation-submitted.handler';
 import { RecipientsService } from '../_services/recipients.service';
 import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { ENV, EmailTypeEnum } from '../_config';
@@ -10,7 +10,7 @@ describe('Notifications / _handlers / innovation-submitted handler suite', () =>
   let testsHelper: TestsHelper;
   let scenario: CompleteScenarioType;
 
-  let handler: InnovationSubmitedHandler;
+  let handler: InnovationSubmittedHandler;
 
   let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
   let innovationOwner: CompleteScenarioType['users']['johnInnovator'];
@@ -46,7 +46,7 @@ describe('Notifications / _handlers / innovation-submitted handler suite', () =>
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
         .mockResolvedValueOnce([scenario.users.janeInnovator.id]);
 
-      handler = new InnovationSubmitedHandler(
+      handler = new InnovationSubmittedHandler(
         DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
         {
           innovationId: innovation.id
@@ -186,7 +186,7 @@ describe('Notifications / _handlers / innovation-submitted handler suite', () =>
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
         .mockResolvedValueOnce([scenario.users.janeInnovator.id, scenario.users.adamInnovator.id]);
 
-      handler = new InnovationSubmitedHandler(
+      handler = new InnovationSubmittedHandler(
         DTOsHelper.getUserRequestContext(scenario.users.adamInnovator, 'innovatorRole'),
         {
           innovationId: innovation.id
@@ -334,7 +334,7 @@ describe('Notifications / _handlers / innovation-submitted handler suite', () =>
         .spyOn(RecipientsService.prototype, 'getInnovationActiveCollaborators')
         .mockResolvedValueOnce([scenario.users.janeInnovator.id]);
 
-      handler = new InnovationSubmitedHandler(
+      handler = new InnovationSubmittedHandler(
         DTOsHelper.getUserRequestContext(innovationOwner, 'innovatorRole'),
         {
           innovationId: innovation.id

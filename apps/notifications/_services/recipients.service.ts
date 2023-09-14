@@ -234,21 +234,17 @@ export class RecipientsService extends BaseService {
       .select([
         'support.id',
         'organisationUnit.id',
-        'organisationUnitUser.id',
-        'organisationUser.id', // these are required only for the typeOrm to work (create the hierarchical structure)
+        'userRole.id',
+        'userRole.role',
+        'userRole.isActive',
         'user.id',
         'user.identityId',
-        'user.status',
-        'serviceRoles.id',
-        'serviceRoles.role',
-        'serviceRoles.isActive'
+        'user.status'
       ])
-      .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
+      .innerJoin('support.userRoles', 'userRole')
       .innerJoin('support.organisationUnit', 'organisationUnit')
-      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
-      .innerJoin('organisationUser.user', 'user')
-      .innerJoin('user.serviceRoles', 'serviceRoles')
-      .where('serviceRoles.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
+      .innerJoin('userRole.user', 'user')
+      .where('userRole.organisation_unit_id = organisationUnit.id') // Only get the role for the organisation unit
       .andWhere('user.status != :userDeleted', { userDeleted: UserStatusEnum.DELETED }) // Filter deleted users
       .andWhere('support.innovation_id = :innovationId', { innovationId: innovationId });
 
@@ -256,17 +252,15 @@ export class RecipientsService extends BaseService {
 
     const res: RecipientType[] = [];
     for (const support of dbInnovationSupports) {
-      for (const organisationUnitUser of support.organisationUnitUsers) {
-        const user = organisationUnitUser.organisationUser.user;
-        const role = user?.serviceRoles[0];
+      for (const userRole of support.userRoles) {
         // This will always be true because of the inner join, but just in case
-        if (role) {
+        if (userRole) {
           res.push({
-            roleId: role.id,
-            role: role.role,
-            userId: user.id,
-            identityId: user.identityId,
-            isActive: role.isActive && user.status === UserStatusEnum.ACTIVE
+            roleId: userRole.id,
+            role: userRole.role,
+            userId: userRole.user.id,
+            identityId: userRole.user.identityId,
+            isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE
           });
         }
       }
@@ -288,23 +282,19 @@ export class RecipientsService extends BaseService {
         'innovation.name',
         'support.id',
         'organisationUnit.id',
-        'organisationUnitUser.id',
-        'organisationUser.id',
+        'userRole.id',
+        'userRole.role',
+        'userRole.isActive',
         'user.id',
         'user.identityId',
-        'user.status',
-        'serviceRoles.id',
-        'serviceRoles.role',
-        'serviceRoles.isActive'
+        'user.status'
       ])
       .innerJoin('innovation.innovationSupports', 'support')
       .innerJoin('support.organisationUnit', 'organisationUnit')
-      .innerJoin('support.organisationUnitUsers', 'organisationUnitUser')
-      .innerJoin('organisationUnitUser.organisationUser', 'organisationUser')
-      .innerJoin('organisationUser.user', 'user')
-      .innerJoin('user.serviceRoles', 'serviceRoles')
+      .innerJoin('support.userRoles', 'userRole')
+      .innerJoin('userRole.user', 'user')
       .where('innovation.owner_id = :userId', { userId })
-      .andWhere('serviceRoles.organisation_unit_id = organisationUnit.id')
+      .andWhere('userRole.organisation_unit_id = organisationUnit.id')
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getMany();
 
@@ -312,17 +302,15 @@ export class RecipientsService extends BaseService {
     for (const innovation of dbInnovations) {
       const assignedUsers: RecipientType[] = [];
       for (const support of innovation.innovationSupports) {
-        for (const unitUser of support.organisationUnitUsers) {
-          const user = unitUser.organisationUser.user;
-          const role = user.serviceRoles[0];
+        for (const userRole of support.userRoles) {
           // This will always be true because of the inner join, but just in case
-          if (role) {
+          if (userRole) {
             assignedUsers.push({
-              roleId: role.id,
-              role: role.role,
-              userId: user.id,
-              identityId: user.identityId,
-              isActive: role.isActive && user.status === UserStatusEnum.ACTIVE
+              roleId: userRole.id,
+              role: userRole.role,
+              userId: userRole.user.id,
+              identityId: userRole.user.identityId,
+              isActive: userRole.isActive && userRole.user.status === UserStatusEnum.ACTIVE
             });
           }
         }
@@ -442,8 +430,8 @@ export class RecipientsService extends BaseService {
    * Fetch a thread intervenient users.
    * We only need to go by the thread messages because the first one, has also the thread author.
    */
-  async threadIntervenientRecipients(threadId: string): Promise<RecipientType[]> {
-    const intervenients = await this.domainService.innovations.threadIntervenients(threadId, false);
+  async threadFollowerRecipients(threadId: string): Promise<RecipientType[]> {
+    const intervenients = await this.domainService.innovations.threadFollowers(threadId, false);
 
     return intervenients.map(item => ({
       userId: item.id,

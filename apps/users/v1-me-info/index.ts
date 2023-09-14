@@ -26,7 +26,11 @@ class V1MeInfo {
     const announcementsService = container.get<AnnouncementsService>(SYMBOLS.AnnouncementsService);
 
     try {
-      const requestUser = await domainService.users.getUserInfo({ identityId: context.auth.user.identityId });
+      // TODO: The org flag will be removed when we take organisations from the FE
+      const requestUser = await domainService.users.getUserInfo(
+        { identityId: context.auth.user.identityId },
+        { organisations: true }
+      );
       const userRoles = requestUser.roles.filter(role => role.isActive);
 
       let termsOfUseAccepted = true;
@@ -77,7 +81,7 @@ class V1MeInfo {
         hasInnovationTransfers,
         hasInnovationCollaborations,
         hasAnnouncements,
-        organisations: requestUser.organisations
+        organisations: requestUser.organisations! // will exist since we call the userInfo with organisation flag
       });
       return;
     } catch (error) {

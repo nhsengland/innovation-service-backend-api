@@ -4,7 +4,6 @@ import { container } from '../_config';
 import { randAbbreviation, randFullName, randPhoneNumber, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationCollaboratorEntity,
-  InnovationEntity,
   TermsOfUseEntity,
   TermsOfUseUserEntity,
   UserEntity,
@@ -19,7 +18,7 @@ import {
   UserStatusEnum
 } from '@users/shared/enums';
 import { UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
-import { DomainUsersService, IdentityProviderService, NotifierService } from '@users/shared/services';
+import { IdentityProviderService, NotifierService } from '@users/shared/services';
 import { TestsHelper } from '@users/shared/tests';
 import { EntityManager } from 'typeorm';
 import SYMBOLS from './symbols';
@@ -47,56 +46,6 @@ describe('Users / _services / users service suite', () => {
   afterEach(async () => {
     await testsHelper.releaseQueryRunnerEntityManager();
     notifierSendSpy.mockReset();
-  });
-
-  describe('getUserById', () => {
-    const user = scenario.users.adamInnovator;
-
-    it('should get user with minimal info', async () => {
-      const result = await sut.getUserById(user.id, { model: 'minimal' });
-
-      expect(result).toMatchObject({
-        id: user.id,
-        displayName: user.name
-      });
-    });
-
-    it('should get user with full info', async () => {
-      const result = await sut.getUserById(user.id, { model: 'full' }, em);
-
-      expect(result).toMatchObject({
-        id: user.id,
-        email: user.email,
-        phone: user.mobilePhone,
-        displayName: user.name,
-        type: ServiceRoleEnum.INNOVATOR,
-        lockedAt: user.lockedAt,
-        innovations: [
-          InnovationEntity.new({ id: user.innovations.adamInnovation.id }),
-          InnovationEntity.new({ id: user.innovations.adamInnovationEmpty.id })
-        ]
-      });
-    });
-
-    it('should throw an error if the user has no roles', async () => {
-      jest.spyOn(DomainUsersService.prototype, 'getUserInfo').mockResolvedValueOnce({
-        id: user.id,
-        identityId: user.identityId,
-        email: user.email,
-        displayName: user.name,
-        roles: [],
-        phone: user.mobilePhone,
-        isActive: true,
-        lockedAt: null,
-        passwordResetAt: null,
-        firstTimeSignInAt: new Date(),
-        organisations: []
-      });
-
-      await expect(() => sut.getUserById(user.id, { model: 'full' }, em)).rejects.toThrowError(
-        new UnprocessableEntityError(UserErrorsEnum.USER_TYPE_INVALID)
-      );
-    });
   });
 
   describe('getUserPendingInnoavtionTranfers', () => {

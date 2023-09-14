@@ -353,6 +353,33 @@ describe('Innovation Assessments Suite', () => {
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT));
     });
 
+    it.each(['finishedAt', 'assignTo', 'exemptedAt', 'exemptedReason', 'exemptedMessage'] as const)(
+      'should not include field %s from previous assessment',
+      async field => {
+        await em.update(
+          InnovationSupportEntity,
+          { innovation: { id: innovationWithAssessment.id } },
+          { status: InnovationSupportStatusEnum.COMPLETE }
+        );
+        const innovationReassessment = await sut.createInnovationReassessment(
+          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+          innovationWithAssessment.id,
+          { updatedInnovationRecord: 'YES', description: randText() },
+          em
+        );
+
+        const bdReassessment = await em
+          .createQueryBuilder(InnovationReassessmentRequestEntity, 'reassessment')
+          .leftJoinAndSelect('reassessment.assessment', 'assessment')
+          .where('reassessment.id = :reassessmentId', {
+            reassessmentId: innovationReassessment.reassessment.id
+          })
+          .getOne();
+
+        expect(bdReassessment?.assessment[field]).toBeFalsy(); // assignTo is undefined others are null
+      }
+    );
+
     describe('updateAssessor', () => {
       it('should update the assigned assessor', async () => {
         const newAssessor = scenario.users.seanNeedsAssessor;

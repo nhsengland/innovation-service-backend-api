@@ -629,31 +629,6 @@ paths:
           description: The user is not authorized to get this information.
         "500":
           description: An error occurred while getting this information.
-  "/v1/units/{organisationUnitId}/user":
-    get:
-      description: Get organisation unit user info.
-      operationId: v1-organisation-unit-user
-      parameters:
-        - name: organisationUnitId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Success.
-        "400":
-          description: Bad request.
-        "401":
-          description: The user is not authorized to get this information.
-        "404":
-          description: The user doesn't exist on the IS.
-        "409":
-          description: The user is from other other organisation or already exists in the
-            unit.
-        "500":
-          description: An error occurred while getting this information.
   /v1/organisations:
     get:
       description: Retrieves organisations list
@@ -706,43 +681,6 @@ paths:
                   id:
                     type: string
                     description: Unique identifier for user object
-  "/v1/{userId}":
-    get:
-      operationId: v1-users-info
-      description: Get user info
-      tags:
-        - "[v1] Users"
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            description: The user ID
-        - name: model
-          in: query
-          required: false
-          schema:
-            type: string
-            enum:
-              - minimal
-              - full
-            description: The model to use for the response
-            default: minimal
-      responses:
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: Unique identifier for user object
-        "403":
-          description: Forbidden
   /v1/statistics:
     get:
       description: Get an user statistics

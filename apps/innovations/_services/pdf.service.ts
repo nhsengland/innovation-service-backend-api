@@ -3,18 +3,15 @@ import PdfPrinter from 'pdfmake';
 import PdfMake from 'pdfmake/build/pdfmake';
 import PdfFonts from 'pdfmake/build/vfs_fonts';
 import type { TDocumentDefinitions } from 'pdfmake/interfaces';
+
 import {
   buildDocumentFooterDefinition,
   buildDocumentHeaderDefinition,
   buildDocumentStylesDefinition,
   buildDocumentTOCDefinition
 } from '../_helpers/innovation.pdf.styles';
-import type {
-  InnovationAllSectionsType,
-  InnovationExportSectionAnswerType,
-  InnovationExportSectionItemType,
-  InnovationExportSectionType
-} from '../_types/innovation.types';
+import type { InnovationAllSectionsType, InnovationExportSectionAnswerType } from '../_types/innovation.types';
+
 import { BaseService } from './base.service';
 
 @injectable()
@@ -58,7 +55,7 @@ export class PDFService extends BaseService {
     };
 
     let sectionNumber = 1;
-    body.forEach((entry: { title: string; sections: InnovationExportSectionType[] }) => {
+    body.forEach(entry => {
       documentDefinition.content.push({
         text: `${sectionNumber}. ${entry.title}`,
         style: 'sectionTitle',
@@ -71,7 +68,7 @@ export class PDFService extends BaseService {
 
       let subSectionNumber = 1;
 
-      entry.sections.forEach((section: InnovationExportSectionItemType) => {
+      entry.sections.forEach(section => {
         documentDefinition.content.push({
           text: `${sectionNumber}.${subSectionNumber} ${section.section}`,
           style: 'subheader',

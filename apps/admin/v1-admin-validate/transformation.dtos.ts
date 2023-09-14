@@ -1,4 +1,4 @@
-import type { ValidationResult } from '../_config/admin-operations.config';
+import type { ValidationResult } from "../types/validation.types";
 
 export type ResponseDTO = {
   validations: ValidationResult[];

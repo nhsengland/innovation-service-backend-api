@@ -9,26 +9,31 @@ import type { CustomContextType } from '@admin/shared/types';
 import { container } from '../_config';
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
-import SYMBOLS from '../_services/symbols';
-import type { ValidationService } from '../_services/validation.service';
+import { validationsHelper } from '../_config/admin-operations.config';
 import type { ResponseDTO } from './transformation.dtos';
 import { ParamsSchema, ParamsType, QueryParamsSchema, QueryParamsType } from './validation.schemas';
+import { ValidationHandlersHelper } from '../_handlers/validations/validations.handlers.helper';
 
 class V1AdminValidate {
   @JwtDecoder()
   static async httpTrigger(context: CustomContextType, request: HttpRequest): Promise<void> {
     const authorizationService = container.get<AuthorizationService>(SHARED_SYMBOLS.AuthorizationService);
-    const validationService = container.get<ValidationService>(SYMBOLS.ValidationService);
 
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
       const queryParams = JoiHelper.Validate<QueryParamsType>(QueryParamsSchema, request.query);
+      const data = {
+        userId: params.userId,
+        ...(queryParams.roleId && { userRoleId: queryParams.roleId }),
+        ...(queryParams.role && { role: queryParams.role, organisationUnitIds: queryParams.organisationUnitIds })
+      };
+      JoiHelper.Validate(ValidationHandlersHelper.handlerJoiDefinition(queryParams.operation), data);
 
       await authorizationService.validate(context).checkAdminType().verify();
 
-      const result = await validationService.validate(queryParams.operation, params.userId);
+      const res = await validationsHelper(queryParams.operation, data);
+      context.res = ResponseHelper.Ok<ResponseDTO>({ validations: res });
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({ validations: result });
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -41,7 +46,7 @@ export default openApi(V1AdminValidate.httpTrigger as AzureFunction, '/v1/users/
   get: {
     description: 'Get validation information.',
     operationId: 'v1-admin-validate',
-    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema, query: QueryParamsSchema }),
+    parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
     responses: {
       '200': {
         description: 'OK',

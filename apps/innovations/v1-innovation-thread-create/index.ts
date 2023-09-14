@@ -48,18 +48,12 @@ class V1InnovationThreadCreate {
         pathParams.innovationId,
         body.subject,
         body.message,
-        true
+        true,
+        body.followerUserRoleIds
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-        thread: {
           id: result.thread.id,
-          subject: result.thread.subject,
-          createdBy: {
-            id: result.thread.createdBy
-          },
-          createdAt: result.thread.createdAt
-        }
       });
       return;
     } catch (error) {

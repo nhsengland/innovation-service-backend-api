@@ -12,11 +12,11 @@ import {
 import { BaseEntity } from '../base.entity';
 
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
-import { OrganisationUnitUserEntity } from '../organisation/organisation-unit-user.entity';
 import { InnovationEntity } from './innovation.entity';
 import { InnovationActionEntity } from './innovation-action.entity';
 
 import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
+import { UserRoleEntity } from '../user/user-role.entity';
 
 @Entity('innovation_support')
 export class InnovationSupportEntity extends BaseEntity {
@@ -34,7 +34,7 @@ export class InnovationSupportEntity extends BaseEntity {
   @JoinColumn({ name: 'organisation_unit_id' })
   organisationUnit: OrganisationUnitEntity;
 
-  @ManyToMany(() => OrganisationUnitUserEntity, record => record.innovationSupports, {
+  @ManyToMany(() => UserRoleEntity, userRole => userRole.innovationSupports, {
     nullable: true
   })
   @JoinTable({
@@ -44,11 +44,11 @@ export class InnovationSupportEntity extends BaseEntity {
       referencedColumnName: 'id'
     },
     inverseJoinColumn: {
-      name: 'organisation_unit_user_id',
+      name: 'user_role_id',
       referencedColumnName: 'id'
     }
   })
-  organisationUnitUsers: OrganisationUnitUserEntity[];
+  userRoles: UserRoleEntity[];
 
   @OneToMany(() => InnovationActionEntity, record => record.innovationSupport, { lazy: true })
   actions: Promise<InnovationActionEntity[]>;
