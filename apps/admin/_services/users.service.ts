@@ -31,8 +31,8 @@ import type { CreateRolesType, DomainContextType, RoleType } from '@admin/shared
 
 import SHARED_SYMBOLS from '@admin/shared/services/symbols';
 import { AdminOperationEnum, validationsHelper } from '../_config/admin-operations.config';
-import { BaseService } from './base.service';
 import type { ValidationResult } from '../types/validation.types';
+import { BaseService } from './base.service';
 
 @injectable()
 export class UsersService extends BaseService {
@@ -88,6 +88,11 @@ export class UsersService extends BaseService {
             status: data.accountEnabled === false ? UserStatusEnum.LOCKED : UserStatusEnum.ACTIVE
           }
         );
+
+        // if user is locked then lock all user roles
+        if (data.accountEnabled === false) {
+          await transaction.update(UserRoleEntity, { user: { id: dbUser.id } }, { isActive: false });
+        }
 
         await this.identityProviderService.updateUserAsync(dbUser.identityId, {
           accountEnabled: data.accountEnabled

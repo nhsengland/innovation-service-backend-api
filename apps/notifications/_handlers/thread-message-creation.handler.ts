@@ -33,7 +33,7 @@ export class ThreadMessageCreationHandler extends BaseHandler<
     // Fetch all thread followers, excluding the request user.
     const threadFollowerRecipients = (
       await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)
-    ).filter(item => item.userId !== this.requestUser.id);
+    ).filter(item => item.userId !== this.requestUser.id && item.isActive);
 
     // exclude all assessment users from emails
     const emailRecipients = threadFollowerRecipients.filter(i => i.role !== ServiceRoleEnum.ASSESSMENT);

@@ -33,7 +33,7 @@ export class ThreadCreationHandler extends BaseHandler<
     const thread = await this.recipientsService.threadInfo(this.inputData.threadId);
 
     const followers = (await this.recipientsService.threadFollowerRecipients(this.inputData.threadId)).filter(
-      f => f.userId !== this.requestUser.id
+      f => f.userId !== this.requestUser.id && f.isActive
     );
     const innovatorRecipients = followers.filter(f => f.role === ServiceRoleEnum.INNOVATOR);
     const otherRecipients = followers.filter(f => f.role !== ServiceRoleEnum.INNOVATOR);

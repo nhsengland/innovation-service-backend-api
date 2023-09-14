@@ -63,11 +63,12 @@ describe('v1-innovation-thread-followers Suite', () => {
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual({
-        followers: expected.map(follower=> ({
+        followers: expected.map(follower => ({
           id: follower.id,
           name: follower?.name ?? '',
           type: follower.userRole.role,
           ...(follower.isOwner !== undefined && { isOwner: follower.isOwner }),
+          isLocked: follower.locked,
           organisationUnit: follower.organisationUnit
             ? {
                 id: follower.organisationUnit.id,

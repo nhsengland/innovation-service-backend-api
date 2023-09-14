@@ -806,6 +806,11 @@ export class InnovationThreadsService extends BaseService {
 
     const thread = await this.threadCreateTransaction(transaction, threadObj, requestUser, domainContext, innovation);
 
+    // add thread author as follower
+    if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {
+      await this.addFollowersToThread(thread.id, [domainContext.currentRole.id], transaction);
+    }
+
     const messages = await thread.messages;
     return {
       thread,

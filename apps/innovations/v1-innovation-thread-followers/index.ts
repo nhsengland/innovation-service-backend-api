@@ -41,6 +41,7 @@ class V1InnovationThreadFollowers {
           id: follower.id,
           name: follower?.name ?? '',
           type: follower.userRole.role,
+          isLocked: follower.locked,
           isOwner: follower.isOwner,
           organisationUnit: follower.organisationUnit
             ? {
