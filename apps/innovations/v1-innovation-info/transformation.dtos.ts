@@ -28,8 +28,8 @@ export type ResponseDTO = {
     contactByPhone?: boolean;
     contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null;
     mobilePhone?: null | string;
-    organisations: null | { name: string; size: null | string }[];
     lastLoginAt?: null | Date;
+    organisations: null | { name: string; size: null | string }[];
   };
   lastEndSupportAt: null | Date;
   assessment?: null | {

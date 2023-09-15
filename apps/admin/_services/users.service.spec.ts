@@ -4,8 +4,7 @@ import { TestsHelper } from '@admin/shared/tests';
 
 import { UserEntity, UserRoleEntity } from '@admin/shared/entities';
 
-import { OrganisationUserEntity } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   GenericErrorsEnum,
@@ -99,7 +98,7 @@ describe('Admin / _services / users service suite', () => {
           user.id,
           {
             role: {
-              name: AccessorOrganisationRoleEnum.ACCESSOR,
+              name: ServiceRoleEnum.ACCESSOR,
               organisationId: user.organisations.healthOrg.id
             }
           },
@@ -111,16 +110,6 @@ describe('Admin / _services / users service suite', () => {
           .where('userRole.id = :userRoleId', { userRoleId: user.roles.qaRole.id })
           .getOne();
 
-        const updatedOrganisationUser = await em
-          .createQueryBuilder(OrganisationUserEntity, 'orgUser')
-          .innerJoin('orgUser.user', 'user')
-          .innerJoin('orgUser.organisation', 'org')
-          .where('org.id = :orgId', { orgId: user.organisations.healthOrg.id })
-          .andWhere('user.id = :userId', { userId: user.id })
-          .getOne();
-
-        expect(updatedUserRole?.role).toBe(ServiceRoleEnum.ACCESSOR);
-        expect(updatedOrganisationUser?.role).toBe(AccessorOrganisationRoleEnum.ACCESSOR);
 
         expect(updatedUserRole?.role).toBe(ServiceRoleEnum.ACCESSOR);
       });
@@ -133,7 +122,7 @@ describe('Admin / _services / users service suite', () => {
           user.id,
           {
             role: {
-              name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR,
+              name: ServiceRoleEnum.QUALIFYING_ACCESSOR,
               organisationId: user.organisations.medTechOrg.id
             }
           },
@@ -145,16 +134,7 @@ describe('Admin / _services / users service suite', () => {
           .where('userRole.id = :userRoleId', { userRoleId: user.roles.accessorRole.id })
           .getOne();
 
-        const updatedOrganisationUser = await em
-          .createQueryBuilder(OrganisationUserEntity, 'orgUser')
-          .innerJoin('orgUser.user', 'user')
-          .innerJoin('orgUser.organisation', 'org')
-          .where('org.id = :orgId', { orgId: user.organisations.medTechOrg.id })
-          .andWhere('user.id = :userId', { userId: user.id })
-          .getOne();
-
         expect(updatedUserRole?.role).toBe(ServiceRoleEnum.QUALIFYING_ACCESSOR);
-        expect(updatedOrganisationUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
       });
 
       it('should update a user role of a user with many roles within an organisation', async () => {
@@ -165,7 +145,7 @@ describe('Admin / _services / users service suite', () => {
           user.id,
           {
             role: {
-              name: AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR,
+              name: ServiceRoleEnum.QUALIFYING_ACCESSOR,
               organisationId: user.organisations.healthOrg.id
             }
           },
@@ -178,18 +158,9 @@ describe('Admin / _services / users service suite', () => {
           .where('user.id = :userId', { userId: user.id })
           .getMany();
 
-        const updatedOrganisationUser = await em
-          .createQueryBuilder(OrganisationUserEntity, 'orgUser')
-          .innerJoin('orgUser.user', 'user')
-          .innerJoin('orgUser.organisation', 'org')
-          .where('org.id = :orgId', { orgId: user.organisations.healthOrg.id })
-          .andWhere('user.id = :userId', { userId: user.id })
-          .getOne();
-
         updatedUserRoles.forEach(role => {
           expect(role?.role).toBe(ServiceRoleEnum.QUALIFYING_ACCESSOR);
         });
-        expect(updatedOrganisationUser?.role).toBe(AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR);
       });
 
       it(`should throw an error if the user role doesn't exist`, async () => {
@@ -199,13 +170,13 @@ describe('Admin / _services / users service suite', () => {
             scenario.users.samAccessor.id,
             {
               role: {
-                name: AccessorOrganisationRoleEnum.ACCESSOR,
+                name: ServiceRoleEnum.ACCESSOR,
                 organisationId: scenario.organisations.inactiveEmptyOrg.id
               }
             },
             em
           )
-        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS));
+        ).rejects.toThrowError(new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND));
       });
     });
 

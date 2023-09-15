@@ -5,12 +5,10 @@ import type { EntityManager } from 'typeorm';
 import {
   OrganisationEntity,
   OrganisationUnitEntity,
-  OrganisationUnitUserEntity,
-  OrganisationUserEntity,
   UserEntity,
   UserRoleEntity
 } from '@admin/shared/entities';
-import { AccessorOrganisationRoleEnum, NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
+import { NotifierTypeEnum, ServiceRoleEnum, UserStatusEnum } from '@admin/shared/enums';
 import {
   BadRequestError,
   GenericErrorsEnum,
@@ -60,19 +58,24 @@ export class UsersService extends BaseService {
     userId: string,
     data: {
       accountEnabled?: boolean;
-      role?: { name: AccessorOrganisationRoleEnum; organisationId: string };
+      role?: { name: ServiceRoleEnum.ACCESSOR | ServiceRoleEnum.QUALIFYING_ACCESSOR; organisationId: string };
     },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const sqlConnection = entityManager ?? this.sqlConnection.manager;
 
-    const dbUser = await sqlConnection
+    const dbUserQuery = sqlConnection
       .createQueryBuilder(UserEntity, 'user')
       .select(['user.id', 'user.identityId'])
       .innerJoin('user.serviceRoles', 'userRoles')
       .leftJoin('userRoles.organisation', 'organisation')
       .where('user.id = :userId', { userId })
-      .getOne();
+
+    if (data.role?.organisationId) {
+      dbUserQuery.andWhere('organisation.id = :organisationId', { organisationId: data.role.organisationId })
+    }
+
+    const dbUser = await dbUserQuery.getOne();
 
     if (!dbUser) {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
@@ -100,25 +103,11 @@ export class UsersService extends BaseService {
       }
 
       if (data.role) {
-        const organisationUser = await transaction
-          .createQueryBuilder(OrganisationUserEntity, 'organisationUser')
-          .where('organisationUser.organisation_id = :organisationId', {
-            organisationId: data.role.organisationId
-          })
-          .andWhere('organisationUser.user_id = :userId', { userId })
-          .getOne();
-
-        if (!organisationUser) {
-          throw new NotFoundError(UserErrorsEnum.USER_INVALID_ACCESSOR_PARAMETERS);
-        }
-
-        await transaction.update(OrganisationUserEntity, { id: organisationUser.id }, { role: data.role.name });
-
         // TODO: IMPROVE THE SERVICE ROLE INFERENCE
         await transaction.update(
           UserRoleEntity,
           { user: { id: userId }, organisation: { id: data.role.organisationId } },
-          { role: ServiceRoleEnum[data.role.name] }
+          { role: data.role.name }
         );
       }
 
@@ -400,24 +389,6 @@ export class UsersService extends BaseService {
           throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
         }
 
-        const organisationUser = await this.getOrCreateOrganisationUser(
-          data.orgId,
-          userId,
-          data.role,
-          domainContext.id,
-          transaction
-        );
-
-        await transaction.save(
-          OrganisationUnitUserEntity,
-          OrganisationUnitUserEntity.new({
-            organisationUnit: unit,
-            organisationUser: organisationUser,
-            createdBy: domainContext.id,
-            updatedBy: domainContext.id
-          })
-        );
-
         role = await transaction.save(
           UserRoleEntity,
           UserRoleEntity.new({
@@ -450,37 +421,6 @@ export class UsersService extends BaseService {
     } else {
       return [{ role: data.role }];
     }
-  }
-
-  private async getOrCreateOrganisationUser(
-    organisationId: string,
-    userId: string,
-    role: ServiceRoleEnum,
-    requestUserId: string,
-    entityManager?: EntityManager
-  ): Promise<OrganisationUserEntity> {
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const organisationUser = await em
-      .createQueryBuilder(OrganisationUserEntity, 'orgUser')
-      .where('orgUser.user_id = :userId', { userId })
-      .andWhere('orgUser.organisation_id = :organisationId', { organisationId })
-      .getOne();
-
-    if (organisationUser) {
-      return organisationUser;
-    }
-
-    return await em.save(
-      OrganisationUserEntity,
-      OrganisationUserEntity.new({
-        organisation: OrganisationEntity.new({ id: organisationId }),
-        user: UserEntity.new({ id: userId }),
-        role: role as any,
-        createdBy: requestUserId,
-        updatedBy: requestUserId
-      })
-    );
   }
 
   private isUuid(idOrEmail: string): boolean {

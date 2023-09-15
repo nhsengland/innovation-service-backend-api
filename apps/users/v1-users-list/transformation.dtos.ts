@@ -30,7 +30,6 @@ type UserListResponseDTO = {
     roles: UserRoleEntity[];
     lockedAt: Date | null;
     email?: string;
-    organisationUnitUserId?: string;
   }[];
 };
 

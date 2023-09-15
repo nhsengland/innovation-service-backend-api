@@ -1,6 +1,4 @@
 import type {
-  AccessorOrganisationRoleEnum,
-  InnovatorOrganisationRoleEnum,
   PhoneUserPreferenceEnum
 } from '@users/shared/enums';
 import type { RoleType } from '@users/shared/types';
@@ -25,7 +23,6 @@ export type ResponseDTO = {
     id: string;
     acronym: string | null;
     name: string;
-    role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
     isShadow: boolean;
     size: null | string;
     description: null | string;

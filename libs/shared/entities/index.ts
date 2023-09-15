@@ -45,13 +45,9 @@ export { InnovationUserTestEntity } from './innovation/innovation-user-test.enti
 export { InnovationEntity } from './innovation/innovation.entity';
 
 // Organisation.
-import { OrganisationUnitUserEntity } from './organisation/organisation-unit-user.entity';
 import { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
-import { OrganisationUserEntity } from './organisation/organisation-user.entity';
 import { OrganisationEntity } from './organisation/organisation.entity';
-export { OrganisationUnitUserEntity } from './organisation/organisation-unit-user.entity';
 export { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
-export { OrganisationUserEntity } from './organisation/organisation-user.entity';
 export { OrganisationEntity } from './organisation/organisation.entity';
 
 // User.
@@ -103,9 +99,7 @@ export const INNOVATION_ENTITIES = [
   InnovationEntity
 ];
 export const ORGANISATION_ENTITIES = [
-  OrganisationUnitUserEntity,
   OrganisationUnitEntity,
-  OrganisationUserEntity,
   OrganisationEntity
 ];
 export const USER_ENTITIES = [

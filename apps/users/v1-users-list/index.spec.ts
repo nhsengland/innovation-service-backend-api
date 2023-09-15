@@ -31,7 +31,6 @@ const usersList = {
       lockedAt: null,
       roles: [] as any,
       email: randEmail(),
-      organisationUnitUserId: randUuid()
     }
   ]
 };

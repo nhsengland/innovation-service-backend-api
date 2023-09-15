@@ -2,7 +2,7 @@ import { injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 
 import { OrganisationEntity, OrganisationUnitEntity, UserRoleEntity } from '@users/shared/entities';
-import { OrganisationTypeEnum, UserStatusEnum } from '@users/shared/enums';
+import { OrganisationTypeEnum } from '@users/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@users/shared/errors';
 
 import { BaseService } from './base.service';
@@ -87,23 +87,34 @@ export class OrganisationsService extends BaseService {
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisationQuery = connection
+    const organisation = await connection
       .createQueryBuilder(OrganisationEntity, 'organisation')
       .leftJoinAndSelect('organisation.organisationUnits', 'unit')
-      .leftJoinAndSelect('unit.organisationUnitUsers', 'unitUsers')
-      .where('organisation.id = :organisationId', { organisationId });
-
-    if (onlyActiveUsers) {
-      organisationQuery
-        .leftJoinAndSelect('unitUsers.organisationUser', 'orgUser')
-        .leftJoinAndSelect('orgUser.user', 'user');
-    }
-
-    const organisation = await organisationQuery.getOne();
+      .where('organisation.id = :organisationId', { organisationId })
+      .getOne();
 
     if (!organisation) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_NOT_FOUND);
     }
+
+    const organisationUserRoles = await connection
+      .createQueryBuilder(UserRoleEntity, 'userRole')
+      .where('userRole.organisation_id = :organisationId', { organisationId: organisation.id })
+      .getMany();
+
+    const unitUserCounts = onlyActiveUsers ?
+     new Map(
+      (await organisation.organisationUnits).map(u => [
+        u.id,
+        organisationUserRoles.filter(ur => ur.organisationUnitId === u.id && ur.isActive).length
+      ])
+    ) :
+     new Map(
+      (await organisation.organisationUnits).map(u => [
+        u.id,
+        organisationUserRoles.filter(ur => ur.organisationUnitId === u.id).length
+      ])
+    );
 
     const organisationUnits = await Promise.all(
       (await organisation.organisationUnits).map(async unit => ({
@@ -111,11 +122,7 @@ export class OrganisationsService extends BaseService {
         name: unit.name,
         acronym: unit.acronym,
         isActive: !unit.inactivatedAt,
-        userCount: onlyActiveUsers
-          ? (await unit.organisationUnitUsers).filter(
-              unitUser => unitUser.organisationUser.user.status === UserStatusEnum.ACTIVE
-            ).length
-          : (await unit.organisationUnitUsers).length
+        userCount: unitUserCounts.get(unit.id)!
       }))
     );
 

@@ -808,9 +808,9 @@ export class InnovationsService extends BaseService {
       contactByPhoneTimeframe: PhoneUserPreferenceEnum | null;
       contactDetails: string | null;
       mobilePhone: null | string;
-      organisations: { name: string; size: null | string }[];
       isActive: boolean;
       lastLoginAt?: null | Date;
+      organisations: { name: string; size: null | string }[];
     };
     lastEndSupportAt: null | Date;
     assessment?: null | {
@@ -840,7 +840,9 @@ export class InnovationsService extends BaseService {
         'innovation.createdAt',
         'innovationOwner.id',
         'innovationOwner.status',
-        'userOrganisations.id',
+        'innovationOwnerUserRole.id',
+        'innovationOwnerOrganisation.name',
+        'innovationOwnerOrganisation.size',
         'organisation.isShadow',
         'organisation.name',
         'organisation.size',
@@ -849,8 +851,8 @@ export class InnovationsService extends BaseService {
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
-      .leftJoin('innovationOwner.userOrganisations', 'userOrganisations')
-      .leftJoin('userOrganisations.organisation', 'organisation')
+      .leftJoin('innovationOwner.serviceRoles', 'innovationOwnerUserRole')
+      .leftJoin('innovationOwnerUserRole.organisation', 'innovationOwnerOrganisation')
       .leftJoin('innovation.reassessmentRequests', 'reassessmentRequests')
       .innerJoin('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
       .leftJoin(
@@ -991,12 +993,12 @@ export class InnovationsService extends BaseService {
               mobilePhone: ownerInfo?.mobilePhone ?? '',
               isActive: !!ownerInfo?.isActive,
               lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-              organisations: ((await innovation.owner?.userOrganisations) ?? [])
-                .filter(item => !item.organisation.isShadow)
-                .map(item => ({
-                  name: item.organisation.name,
-                  size: item.organisation.size
-                }))
+              organisations: [
+                {
+                  name: innovation.owner.serviceRoles[0]?.organisation?.name || '', 
+                  size: innovation.owner.serviceRoles[0]?.organisation?.size || ''
+                }
+              ]
             }
           }
         : {}),
