@@ -189,7 +189,8 @@ describe('Innovation Collaborators Suite', () => {
             status: jane.status,
             email: jane.email,
             role: expect.any(String),
-            name: scenario.users.janeInnovator.name
+            name: scenario.users.janeInnovator.name,
+            isActive: scenario.users.janeInnovator.isActive
           },
           { id: elisa.id, status: elisa.status, email: elisa.email }
         ])

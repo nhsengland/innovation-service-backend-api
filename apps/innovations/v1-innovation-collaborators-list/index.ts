@@ -55,7 +55,7 @@ class V1InnovationCollaboratorsList {
             domainContext.currentRole.role
           ) && { email: collaborator.email }),
           ...(collaborator.role && { role: collaborator.role }),
-          ...(collaborator.name && { name: collaborator.name })
+          ...(collaborator.name && { name: collaborator.name, isActive: collaborator.isActive })
         }))
       });
       return;

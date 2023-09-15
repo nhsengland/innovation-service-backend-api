@@ -128,6 +128,7 @@ export class InnovationCollaboratorsService extends BaseService {
     data: {
       id: string;
       name?: string;
+      isActive?: boolean;
       role?: string;
       email: string;
       status: InnovationCollaboratorStatusEnum;
@@ -238,7 +239,8 @@ export class InnovationCollaboratorsService extends BaseService {
       email: collaborator.email,
       status: collaborator.status,
       ...(collaborator.userId && {
-        name: usersInfoMap.get(collaborator.userId)?.displayName ?? ''
+        name: usersInfoMap.get(collaborator.userId)?.displayName ?? '',
+        isActive: usersInfoMap.get(collaborator.userId)?.isActive ?? false
       }),
       ...(collaborator.collaboratorRole && { role: collaborator.collaboratorRole })
     }));
