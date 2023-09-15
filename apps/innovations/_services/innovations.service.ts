@@ -843,9 +843,6 @@ export class InnovationsService extends BaseService {
         'innovationOwnerUserRole.id',
         'innovationOwnerOrganisation.name',
         'innovationOwnerOrganisation.size',
-        'organisation.isShadow',
-        'organisation.name',
-        'organisation.size',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
         'collaborator.id'
