@@ -90,17 +90,10 @@ export class DomainUsersService {
 
     if (filters?.organisations) {
       query.addSelect([
-        'roleOrganisation.id',
-        'roleOrganisation.name',
-        'roleOrganisation.acronym',
         'roleOrganisation.size',
         'roleOrganisation.isShadow',
         'roleOrganisation.description',
-        'roleOrganisation.registrationNumber',
-        'roleOrganisationUnit.id',
-        'roleOrganisationUnit.id',
-        'roleOrganisationUnit.name',
-        'roleOrganisationUnit.acronym'
+        'roleOrganisation.registrationNumber'
       ]);
     }
 
@@ -175,7 +168,7 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      ...filters?.organisations && { organisations: [...organisationsMap.values()] }
+      ...(filters?.organisations && { organisations: [...organisationsMap.values()] })
     };
   }
 
