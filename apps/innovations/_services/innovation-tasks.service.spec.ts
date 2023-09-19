@@ -1,0 +1,1110 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { container } from '../_config';
+
+import {
+  ActivityLogEntity,
+  InnovationEntity,
+  InnovationTaskEntity,
+  InnovationThreadEntity,
+  InnovationThreadMessageEntity,
+  UserEntity
+} from '@innovations/shared/entities';
+import {
+  ActivityEnum,
+  ActivityTypeEnum,
+  InnovationStatusEnum,
+  InnovationTaskStatusEnum,
+  NotificationContextTypeEnum,
+  NotifierTypeEnum,
+  ServiceRoleEnum,
+  UserStatusEnum
+} from '@innovations/shared/enums';
+import {
+  ForbiddenError,
+  InnovationErrorsEnum,
+  NotFoundError,
+  UnprocessableEntityError
+} from '@innovations/shared/errors';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
+import { TestsHelper } from '@innovations/shared/tests';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import { randNumber, randText, randUuid } from '@ngneat/falso';
+import { EntityManager } from 'typeorm';
+import type { InnovationTasksService } from './innovation-tasks.service';
+import { InnovationThreadsService } from './innovation-threads.service';
+import SYMBOLS from './symbols';
+
+describe('Innovation Tasks Suite', () => {
+  let sut: InnovationTasksService;
+
+  let em: EntityManager;
+
+  const testsHelper = new TestsHelper();
+  const scenario = testsHelper.getCompleteScenario();
+
+  // Setup global mocks for these tests
+  const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
+  const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
+
+  beforeAll(async () => {
+    sut = container.get<InnovationTasksService>(SYMBOLS.InnovationTasksService);
+    await testsHelper.init();
+  });
+
+  beforeEach(async () => {
+    em = await testsHelper.getQueryRunnerEntityManager();
+  });
+
+  afterEach(async () => {
+    await testsHelper.releaseQueryRunnerEntityManager();
+    activityLogSpy.mockReset();
+    notifierSendSpy.mockReset();
+  });
+
+  describe('createTask', () => {
+    const accessor = scenario.users.aliceQualifyingAccessor;
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it('should create a task', async () => {
+      const description = randText();
+      const task = await sut.createTask(
+        DTOsHelper.getUserRequestContext(accessor),
+        innovation.id,
+        {
+          description,
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      // assert response
+      expect(task).toMatchObject({
+        id: expect.any(String)
+      });
+
+      // assert db
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'task')
+        .innerJoinAndSelect('task.createdByUserRole', 'createdByRole')
+        .innerJoinAndSelect('task.updatedByUserRole', 'updatedByRole')
+        .innerJoinAndSelect('task.innovationSection', 'innovationSection')
+        .where('task.id = :taskId', { taskId: task.id })
+        .getOneOrFail();
+
+      expect(dbTask).toMatchObject({
+        id: task.id,
+        displayId: expect.any(String), // TODO: check displayId but this will hopefully change soon, if it doesn't put in a function to generate it
+        status: InnovationTaskStatusEnum.OPEN,
+        innovationSection: { section: 'INNOVATION_DESCRIPTION' },
+        createdBy: accessor.id,
+        createdByUserRole: { id: accessor.roles.qaRole.id },
+        updatedBy: accessor.id,
+        updatedByUserRole: { id: accessor.roles.qaRole.id }
+      });
+    });
+
+    it('should sent notification', async () => {
+      const context = DTOsHelper.getUserRequestContext(accessor);
+      const task = await sut.createTask(
+        context,
+        innovation.id,
+        {
+          description: randText(),
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      expect(notifierSendSpy).toHaveBeenCalledWith(context, NotifierTypeEnum.TASK_CREATION, {
+        innovationId: innovation.id,
+        task: { id: task.id, section: 'INNOVATION_DESCRIPTION' }
+      });
+    });
+
+    it('should add activity log', async () => {
+      const context = DTOsHelper.getUserRequestContext(accessor);
+      const description = randText();
+      const task = await sut.createTask(
+        context,
+        innovation.id,
+        {
+          description,
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      expect(activityLogSpy).toHaveBeenCalledWith(
+        expect.any(EntityManager),
+        { innovationId: innovation.id, activity: ActivityEnum.TASK_CREATION, domainContext: context },
+        {
+          sectionId: 'INNOVATION_DESCRIPTION',
+          taskId: task.id,
+          comment: { value: description },
+          role: context.currentRole.role
+        }
+      );
+    });
+
+    it.each([
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, DTOsHelper.getUserRequestContext(scenario.users.scottQualifyingAccessor)],
+      [ServiceRoleEnum.ACCESSOR, DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole')]
+    ])('as %s should not create a task if organisation unit is not supporting innovation', async (_role, user) => {
+      await expect(() =>
+        sut.createTask(
+          user,
+          scenario.users.adamInnovator.innovations.adamInnovation.id,
+          {
+            description: randText(),
+            section: 'INNOVATION_DESCRIPTION'
+          },
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND));
+    });
+
+    it('as assessment should create a task without concern for support', async () => {
+      const task = await sut.createTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        scenario.users.ottoOctaviusInnovator.innovations.brainComputerInterfaceInnovation.id,
+        {
+          description: randText(),
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      expect(task.id).toBeDefined();
+    });
+
+    it(`should not create a task for an innovation that doesn't exist`, async () => {
+      await expect(() =>
+        sut.createTask(
+          DTOsHelper.getUserRequestContext(accessor),
+          randUuid(),
+          {
+            description: randText(),
+            section:
+              CurrentCatalogTypes.InnovationSections[
+                randNumber({ min: 0, max: CurrentCatalogTypes.InnovationSections.length - 1 })
+              ]!
+          },
+          em
+        )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND));
+    });
+
+    it(`should not create a task for a section that doesn't exist`, async () => {
+      await expect(() =>
+        sut.createTask(
+          DTOsHelper.getUserRequestContext(accessor),
+          innovation.id,
+          {
+            description: randText(),
+            section: randText() as CurrentCatalogTypes.InnovationSections
+          },
+          em
+        )
+      ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND));
+    });
+  });
+
+  describe('getTasksList', () => {
+    // TODO
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const innovation2 = scenario.users.adamInnovator.innovations.adamInnovation;
+    const allTasks = [
+      innovation.tasks.taskByBart,
+      innovation.tasks.taskByPaul,
+      innovation.tasks.taskByAliceOpen,
+      innovation.tasks.taskByAlice,
+      innovation2.tasks.adamInnovationTaskBySean,
+      innovation2.tasks.adamInnovationDoneTask
+    ];
+
+    const getUnreadNotificationsMock = jest
+      .spyOn(DomainInnovationsService.prototype, 'getUnreadNotifications')
+      .mockImplementation((_userId, contextIds) => {
+        return Promise.resolve(
+          contextIds.map(contextId => ({
+            contextId,
+            contextType: NotificationContextTypeEnum.TASK,
+            id: randUuid(),
+            params: {}
+          }))
+        );
+      });
+
+    afterAll(() => {
+      getUnreadNotificationsMock.mockRestore();
+    });
+
+    it('should list all tasks as an innovator for his innovation', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        { innovationId: innovation.id, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks).toBeDefined();
+    });
+
+    it('should list all tasks created by NA as a NA', async () => {
+      const naTask = innovation.tasks.taskByPaul;
+      const naTask2 = innovation2.tasks.adamInnovationTaskBySean;
+
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(2);
+      expect(tasks.data).toEqual(
+        expect.arrayContaining([
+          {
+            id: naTask.id,
+            displayId: naTask.displayId,
+            description: expect.any(String),
+            innovation: { id: innovation.id, name: innovation.name },
+            status: naTask.status,
+            section: naTask.section,
+            createdAt: expect.any(Date),
+            updatedAt: expect.any(Date),
+            updatedBy: { name: scenario.users.paulNeedsAssessor.name, role: ServiceRoleEnum.ASSESSMENT },
+            createdBy: {
+              id: scenario.users.paulNeedsAssessor.id,
+              name: scenario.users.paulNeedsAssessor.name,
+              role: ServiceRoleEnum.ASSESSMENT
+            }
+          },
+          {
+            id: naTask2.id,
+            displayId: naTask2.displayId,
+            description: expect.any(String),
+            innovation: { id: innovation2.id, name: innovation2.name },
+            status: naTask2.status,
+            section: naTask2.section,
+            createdAt: expect.any(Date),
+            updatedAt: expect.any(Date),
+            updatedBy: { name: scenario.users.seanNeedsAssessor.name, role: ServiceRoleEnum.ASSESSMENT },
+            createdBy: {
+              id: scenario.users.seanNeedsAssessor.id,
+              name: scenario.users.seanNeedsAssessor.name,
+              role: ServiceRoleEnum.ASSESSMENT
+            }
+          }
+        ])
+      );
+    });
+
+    it('should list all tasks created by NA and QA/A as a NA', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { allTasks: true, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(allTasks.length);
+    });
+
+    it('should list all tasks created by QA/A as a QA/A', async () => {
+      const task = innovation.tasks.taskByAlice;
+      const task2 = innovation2.tasks.adamInnovationDoneTask;
+      const expected = [
+        {
+          id: task.id,
+          displayId: task.displayId,
+          description: expect.any(String),
+          innovation: { id: innovation.id, name: innovation.name },
+          status: task.status,
+          section: task.section,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          updatedBy: { name: scenario.users.aliceQualifyingAccessor.name, role: ServiceRoleEnum.QUALIFYING_ACCESSOR },
+          createdBy: {
+            id: scenario.users.aliceQualifyingAccessor.id,
+            name: scenario.users.aliceQualifyingAccessor.name,
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+            organisationUnit: {
+              id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              acronym:
+                scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym,
+              name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            }
+          }
+        },
+        {
+          id: task2.id,
+          displayId: task2.displayId,
+          description: expect.any(String),
+          innovation: { id: innovation2.id, name: innovation2.name },
+          status: task2.status,
+          section: task2.section,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          updatedBy: { name: scenario.users.adamInnovator.name, role: ServiceRoleEnum.INNOVATOR },
+          createdBy: {
+            id: scenario.users.aliceQualifyingAccessor.id,
+            name: scenario.users.aliceQualifyingAccessor.name,
+            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
+            organisationUnit: {
+              id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              acronym:
+                scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym,
+              name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+            }
+          }
+        }
+      ];
+
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        { fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(4);
+      expect(tasks.data).toEqual(expect.arrayContaining(expected));
+    });
+
+    it('should list all tasks created by NA and QA/A as a QA/A', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        { allTasks: true, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(allTasks.length);
+    });
+
+    it('should list all tasks that match an innovation name', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { innovationName: innovation.name, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(1);
+    });
+
+    it('should list no tasks that match an innovation name when no match', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { innovationName: randText(), fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(0);
+      expect(tasks.data).toHaveLength(0);
+    });
+
+    it('should list all tasks from an innovation in status NEEDS_ASSESSMENT', async () => {
+      await em
+        .getRepository(InnovationEntity)
+        .update({ id: innovation.id }, { status: InnovationStatusEnum.NEEDS_ASSESSMENT });
+
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { innovationStatus: [InnovationStatusEnum.NEEDS_ASSESSMENT], fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(1);
+      expect(tasks.data[0]).toHaveProperty('id', innovation.tasks.taskByPaul.id);
+    });
+
+    it('should list all tasks that are for section INNOVATION_DESCRIPTION', async () => {
+      const task2 = scenario.users.adamInnovator.innovations.adamInnovation.tasks.adamInnovationTaskBySean;
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { sections: ['INNOVATION_DESCRIPTION'], fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(2);
+      expect(tasks.data.filter(a => a.section === 'INNOVATION_DESCRIPTION').map(a => a.id)).toEqual(
+        expect.arrayContaining([innovation.tasks.taskByPaul.id, task2.id])
+      );
+    });
+
+    it('should list all tasks that are in COMPLETED status', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        { status: [InnovationTaskStatusEnum.DONE], fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(2);
+      expect(tasks.data).toMatchObject([
+        {
+          id: innovation2.tasks.adamInnovationDoneTask.id,
+          status: InnovationTaskStatusEnum.DONE
+        },
+        {
+          id: innovation.tasks.taskByAlice.id,
+          status: InnovationTaskStatusEnum.DONE
+        }
+      ]);
+    });
+
+    it('should list all tasks that are created by me as a NA', async () => {
+      const expected = innovation.tasks.taskByPaul;
+
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { createdByMe: true, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(1);
+      expect(tasks.data).toMatchObject([
+        {
+          id: expected.id,
+          createdBy: { id: scenario.users.paulNeedsAssessor.id, role: ServiceRoleEnum.ASSESSMENT }
+        }
+      ]);
+    });
+
+    it('should list all tasks that are created by me as a QA/A', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        { createdByMe: true, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(3);
+      expect(tasks.data).toMatchObject([
+        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
+        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
+        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } }
+      ]);
+    });
+
+    it('should list all tasks that are created by me as a QA/A (none)', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+        { createdByMe: true, fields: [] },
+        { order: { createdAt: 'DESC' }, skip: 0, take: 10 },
+        em
+      );
+      expect(tasks.count).toBe(0);
+      expect(tasks.data).toHaveLength(0);
+    });
+
+    it('should list all tasks as an innovator for his innovation with unread notifications', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
+        { innovationId: innovation.id, fields: ['notifications'] },
+        { order: {}, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: innovation.tasks.taskByBart.id,
+            notifications: 1
+          }),
+          expect.objectContaining({
+            id: innovation.tasks.taskByPaul.id,
+            notifications: 1
+          }),
+          expect.objectContaining({
+            id: innovation.tasks.taskByAliceOpen.id,
+            notifications: 1
+          }),
+          expect.objectContaining({
+            id: innovation.tasks.taskByAlice.id,
+            notifications: 1
+          })
+        ])
+      );
+    });
+
+    it.each(['displayId', 'section', 'innovationName', 'createdAt', 'updatedAt', 'status'] as const)(
+      'should list all tasks sorted by %s ASC',
+      async order => {
+        // Update the dates to make sure they are different
+        if (order === 'createdAt' || order === 'updatedAt') {
+          await em.query(`
+            UPDATE "innovation_task" SET "created_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0), "updated_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0);
+          `);
+        }
+
+        const tasks = await sut.getTasksList(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          { allTasks: true, fields: [] },
+          { order: { [order]: 'ASC' }, skip: 0, take: 10 },
+          em
+        );
+
+        // This test could be improved if we improve the scenario, otherwise it will be to difficult with the current data
+        expect(tasks.count).toBe(allTasks.length);
+        const data = tasks.data.map(a =>
+          order === 'innovationName'
+            ? a.innovation.name
+            : order === 'createdAt' || order === 'updatedAt'
+            ? a[order].toISOString()
+            : a[order]
+        );
+        expect(data).toEqual([...data].sort());
+      }
+    );
+
+    it.each(['displayId', 'section', 'innovationName', 'createdAt', 'updatedAt', 'status'] as const)(
+      'should list all tasks sorted by %s DESC',
+      async order => {
+        // Update the dates to make sure they are different
+        if (order === 'createdAt' || order === 'updatedAt') {
+          await em.query(`
+            UPDATE "innovation_task" SET "created_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0), "updated_at" = DATEADD(day, (ABS(CHECKSUM(NEWID())) % 65530), 0);
+          `);
+        }
+
+        const tasks = await sut.getTasksList(
+          DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+          { allTasks: true, fields: [] },
+          { order: { [order]: 'DESC' }, skip: 0, take: 10 },
+          em
+        );
+
+        // This test could be improved if we improve the scenario, otherwise it will be to difficult with the current data
+        expect(tasks.count).toBe(allTasks.length);
+        const data = tasks.data.map(a =>
+          order === 'innovationName'
+            ? a.innovation.name
+            : order === 'createdAt' || order === 'updatedAt'
+            ? a[order].toISOString()
+            : a[order]
+        );
+        expect(data).toEqual([...data].sort().reverse());
+      }
+    );
+
+    it('should order by createdAt if unknown order provided (should not happen)', async () => {
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { allTasks: true, fields: [] },
+        { order: { unknown: 'DESC' } as any, skip: 0, take: 10 },
+        em
+      );
+
+      // This test could be improved if we improve the scenario, otherwise it will be to difficult with the current data
+      expect(tasks.count).toBe(allTasks.length);
+    });
+
+    it('should return task even if created/updated by deleted user', async () => {
+      await em
+        .getRepository(UserEntity)
+        .update({ id: scenario.users.aliceQualifyingAccessor.id }, { status: UserStatusEnum.DELETED });
+      const tasks = await sut.getTasksList(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        { allTasks: true, fields: [] },
+        { order: { createdAt: 'DESC' } as any, skip: 0, take: 10 },
+        em
+      );
+
+      expect(tasks.count).toBe(allTasks.length);
+      expect(tasks.data).toEqual(
+        expect.arrayContaining(
+          allTasks.map(a =>
+            expect.objectContaining({
+              id: a.id,
+              createdBy: expect.objectContaining({
+                name: [
+                  scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAlice.id,
+                  scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAliceOpen.id,
+                  scenario.users.adamInnovator.innovations.adamInnovation.tasks.adamInnovationDoneTask.id
+                ].includes(a.id)
+                  ? '[deleted account]'
+                  : expect.not.stringMatching(/\[deleted account\]/)
+              }),
+              updatedBy: expect.objectContaining({
+                name: [scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAlice.id].includes(a.id)
+                  ? '[deleted account]'
+                  : expect.not.stringMatching(/\[deleted account\]/)
+              })
+            })
+          )
+        )
+      );
+    });
+  });
+
+  describe('getTaskInfo', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+
+    it.each([
+      [ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.tasks.taskByAlice, scenario.users.aliceQualifyingAccessor],
+      [ServiceRoleEnum.ASSESSMENT, innovation.tasks.taskByPaul, scenario.users.paulNeedsAssessor]
+    ])('should return information about a task created by %s', async (role, task, user) => {
+      const res = await sut.getTaskInfo(task.id, em);
+
+      expect(res).toMatchObject({
+        id: task.id,
+        displayId: task.displayId,
+        status: task.status,
+        section: 'INNOVATION_DESCRIPTION',
+        description: expect.any(String),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        updatedBy: { name: user.name, role: role },
+        createdBy: {
+          id: user.id,
+          name: user.name,
+          ...(role !== ServiceRoleEnum.ASSESSMENT && {
+            organisationUnit: {
+              id: user.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
+              name: user.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
+              acronym: user.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
+            }
+          })
+        }
+      });
+    });
+
+    it('should return updatedBy isOwner is true if status is SUBMITTED by owner', async () => {
+      const res = await sut.getTaskInfo(innovation.tasks.taskByAliceOpen.id, em);
+      expect(res.updatedBy.isOwner).toBe(true);
+    });
+
+    it('should return updatedBy isOwner is false if status is SUBMITTED by other innovator', async () => {
+      await em.getRepository(InnovationTaskEntity).update(
+        { id: innovation.tasks.taskByAliceOpen.id },
+        {
+          updatedBy: scenario.users.adamInnovator.id,
+          updatedByUserRole: { id: scenario.users.adamInnovator.roles.innovatorRole.id }
+        }
+      );
+      const res = await sut.getTaskInfo(innovation.tasks.taskByAliceOpen.id, em);
+      expect(res.updatedBy.isOwner).toBe(false);
+    });
+
+    it('should return declineReason of a task in status DECLINED', async () => {
+      const task = innovation.tasks.taskByPaul;
+      await em.update(
+        InnovationTaskEntity,
+        { id: task.id },
+        { status: InnovationTaskStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
+      );
+
+      const declineReason = randText();
+      await em.getRepository(ActivityLogEntity).save({
+        type: ActivityTypeEnum.INNOVATION_RECORD,
+        activity: ActivityEnum.TASK_STATUS_DECLINED_UPDATE,
+        userRole: { id: scenario.users.johnInnovator.roles.innovatorRole.id },
+        param: {
+          comment: { value: declineReason },
+          taskId: task.id
+        },
+        innovation: { id: innovation.id }
+      });
+
+      const res = await sut.getTaskInfo(task.id, em);
+
+      expect(res).toMatchObject({
+        id: task.id,
+        displayId: task.displayId,
+        status: InnovationTaskStatusEnum.DECLINED,
+        section: 'INNOVATION_DESCRIPTION',
+        description: expect.any(String),
+        createdAt: expect.any(Date),
+        updatedAt: expect.any(Date),
+        updatedBy: { name: scenario.users.paulNeedsAssessor.name, role: ServiceRoleEnum.ASSESSMENT },
+        createdBy: {
+          id: scenario.users.paulNeedsAssessor.id,
+          name: scenario.users.paulNeedsAssessor.name,
+          role: ServiceRoleEnum.ASSESSMENT
+        },
+        declineReason
+      });
+    });
+
+    it("shouldn't return declineReason of a task in status DECLINED but reason was not provided", async () => {
+      const task = innovation.tasks.taskByPaul;
+      await em.update(
+        InnovationTaskEntity,
+        { id: task.id },
+        { status: InnovationTaskStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
+      );
+
+      await em.getRepository(ActivityLogEntity).save({
+        type: ActivityTypeEnum.INNOVATION_RECORD,
+        activity: ActivityEnum.TASK_STATUS_DECLINED_UPDATE,
+        userRole: { id: scenario.users.johnInnovator.roles.innovatorRole.id },
+        param: {
+          taskId: task.id
+        },
+        innovation: { id: innovation.id }
+      });
+
+      const res = await sut.getTaskInfo(task.id, em);
+
+      expect(res.declineReason).toBeUndefined();
+    });
+
+    it("should return error when taskId doesn't exist", async () => {
+      await expect(() => sut.getTaskInfo(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND)
+      );
+    });
+  });
+
+  describe('updateTaskAsAccessor', () => {
+    const accessor = scenario.users.aliceQualifyingAccessor;
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const task = innovation.tasks.taskByAliceOpen;
+
+    it('should update task from status OPEN to CANCELLED', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.OPEN });
+
+      const updateTask = await sut.updateTaskAsAccessor(
+        DTOsHelper.getUserRequestContext(accessor),
+        innovation.id,
+        task.id,
+        {
+          status: InnovationTaskStatusEnum.CANCELLED
+        },
+        em
+      );
+
+      const dbtask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(task.id);
+      expect(dbtask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
+    });
+
+    it('should update task from status DONE to OPEN', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.DONE });
+
+      const updateTask = await sut.updateTaskAsAccessor(
+        DTOsHelper.getUserRequestContext(accessor),
+        innovation.id,
+        task.id,
+        {
+          status: InnovationTaskStatusEnum.OPEN
+        },
+        em
+      );
+
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(task.id);
+      expect(dbTask!.status).toBe(InnovationTaskStatusEnum.OPEN);
+    });
+
+    it("should not update if task doesn't exist", async () => {
+      await expect(() =>
+        sut.updateTaskAsAccessor(DTOsHelper.getUserRequestContext(accessor), innovation.id, randUuid(), {
+          status: InnovationTaskStatusEnum.OPEN
+        })
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+    });
+
+    it('should not be updated if the task is not in the DONE AND OPEN status', async () => {
+      await em.update(
+        InnovationTaskEntity,
+        { id: task.id },
+        { status: InnovationTaskStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
+      );
+
+      await expect(() =>
+        sut.updateTaskAsAccessor(
+          DTOsHelper.getUserRequestContext(accessor),
+          innovation.id,
+          task.id,
+          {
+            status: InnovationTaskStatusEnum.OPEN
+          },
+          em
+        )
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
+      );
+    });
+
+    it('should update if the task is created by someone on his organisation unit', async () => {
+      const res = await sut.updateTaskAsAccessor(
+        DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
+        innovation.id,
+        task.id,
+        {
+          status: InnovationTaskStatusEnum.CANCELLED
+        },
+        em
+      );
+
+      expect(res.id).toBe(task.id);
+    });
+
+    it('should not be update if the task is not created by someone on his organisation unit', async () => {
+      await expect(() =>
+        sut.updateTaskAsAccessor(
+          DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'aiRole'),
+          innovation.id,
+          task.id,
+          {
+            status: InnovationTaskStatusEnum.CANCELLED
+          },
+          em
+        )
+      ).rejects.toThrowError(new ForbiddenError(InnovationErrorsEnum.INNOVATION_TASK_FROM_DIFFERENT_UNIT));
+    });
+  });
+
+  describe('updateTaskAsNeedsAccessor', () => {
+    const na = scenario.users.paulNeedsAssessor;
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const task = innovation.tasks.taskByPaul;
+
+    it('should update task from status OPEN to CANCELLED', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.OPEN });
+
+      const updateTask = await sut.updateTaskAsNeedsAccessor(
+        DTOsHelper.getUserRequestContext(na),
+        innovation.id,
+        task.id,
+        {
+          status: InnovationTaskStatusEnum.CANCELLED
+        },
+        em
+      );
+
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(task.id);
+      expect(dbTask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
+    });
+
+    it('should update task from status DONE to OPEN', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.DONE });
+
+      const updateTask = await sut.updateTaskAsNeedsAccessor(
+        DTOsHelper.getUserRequestContext(na),
+        innovation.id,
+        task.id,
+        {
+          status: InnovationTaskStatusEnum.OPEN
+        },
+        em
+      );
+
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(task.id);
+      expect(dbTask!.status).toBe(InnovationTaskStatusEnum.OPEN);
+    });
+
+    it('should update task from status OPEN to CANCELLED OPEN by other NA', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.OPEN });
+
+      const updateTask = await sut.updateTaskAsNeedsAccessor(
+        DTOsHelper.getUserRequestContext(scenario.users.seanNeedsAssessor),
+        innovation.id,
+        task.id,
+        {
+          status: InnovationTaskStatusEnum.CANCELLED
+        },
+        em
+      );
+
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(task.id);
+      expect(dbTask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
+    });
+
+    it("should not update if task doesn't exist", async () => {
+      await expect(() =>
+        sut.updateTaskAsNeedsAccessor(DTOsHelper.getUserRequestContext(na), innovation.id, randUuid(), {
+          status: InnovationTaskStatusEnum.OPEN
+        })
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+    });
+
+    it('should not be updated if the task is not in the OPEN AND DONE status', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.DECLINED });
+
+      await expect(() =>
+        sut.updateTaskAsNeedsAccessor(
+          DTOsHelper.getUserRequestContext(na),
+          innovation.id,
+          task.id,
+          {
+            status: InnovationTaskStatusEnum.OPEN
+          },
+          em
+        )
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
+      );
+    });
+
+    it('should not be updated if the task is in DONE status and the status that is being updated is not OPEN', async () => {
+      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.DONE });
+
+      await expect(() =>
+        sut.updateTaskAsNeedsAccessor(
+          DTOsHelper.getUserRequestContext(na),
+          innovation.id,
+          task.id,
+          {
+            status: InnovationTaskStatusEnum.CANCELLED
+          },
+          em
+        )
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
+      );
+    });
+
+    it('should not update if task is from an QA/A', async () => {
+      await expect(() =>
+        sut.updateTaskAsNeedsAccessor(
+          DTOsHelper.getUserRequestContext(na),
+          innovation.id,
+          innovation.tasks.taskByAlice.id,
+          {
+            status: InnovationTaskStatusEnum.CANCELLED
+          }
+        )
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+    });
+  });
+
+  describe('updateTaskAsInnovator', () => {
+    const createThreadOrMessageSpy = jest
+      .spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage')
+      .mockResolvedValue({
+        thread: new InnovationThreadEntity(),
+        message: new InnovationThreadMessageEntity()
+      });
+
+    afterEach(() => {
+      createThreadOrMessageSpy.mockReset();
+    });
+
+    const innovator = scenario.users.johnInnovator;
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const naTask = innovation.tasks.taskByPaul;
+    const qaTask = innovation.tasks.taskByAlice;
+
+    it('should update task from status OPEN to DECLINED from a NA task', async () => {
+      await em.update(InnovationTaskEntity, { id: naTask.id }, { status: InnovationTaskStatusEnum.OPEN });
+
+      const updateTask = await sut.updateTaskAsInnovator(
+        DTOsHelper.getUserRequestContext(innovator),
+        innovation.id,
+        naTask.id,
+        {
+          status: InnovationTaskStatusEnum.DECLINED,
+          message: randText()
+        },
+        em
+      );
+
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(createThreadOrMessageSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(naTask.id);
+      expect(dbTask!.status).toBe(InnovationTaskStatusEnum.DECLINED);
+    });
+
+    it('should update task from status REQUESTED to DECLINED from a QA task', async () => {
+      await em.update(InnovationTaskEntity, { id: qaTask.id }, { status: InnovationTaskStatusEnum.OPEN });
+
+      const updateTask = await sut.updateTaskAsInnovator(
+        DTOsHelper.getUserRequestContext(innovator),
+        innovation.id,
+        qaTask.id,
+        {
+          status: InnovationTaskStatusEnum.DECLINED,
+          message: randText()
+        },
+        em
+      );
+
+      const dbTask = await em
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.id = :taskId', { taskId: updateTask.id })
+        .getOne();
+
+      expect(activityLogSpy).toHaveBeenCalled();
+      expect(notifierSendSpy).toHaveBeenCalled();
+      expect(createThreadOrMessageSpy).toHaveBeenCalled();
+      expect(updateTask.id).toBe(qaTask.id);
+      expect(dbTask!.status).toBe(InnovationTaskStatusEnum.DECLINED);
+    });
+
+    it("should not update if task doesn't exist", async () => {
+      await expect(() =>
+        sut.updateTaskAsInnovator(DTOsHelper.getUserRequestContext(innovator), innovation.id, randUuid(), {
+          status: InnovationTaskStatusEnum.OPEN,
+          message: randText()
+        })
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
+    });
+
+    it('should not be updated if the task is not in the REQUESTED status', async () => {
+      await em.update(InnovationTaskEntity, { id: qaTask.id }, { status: InnovationTaskStatusEnum.DECLINED });
+      await expect(() =>
+        sut.updateTaskAsInnovator(
+          DTOsHelper.getUserRequestContext(innovator),
+          innovation.id,
+          qaTask.id,
+          {
+            status: InnovationTaskStatusEnum.DONE,
+            message: randText()
+          },
+          em
+        )
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
+      );
+    });
+  });
+});

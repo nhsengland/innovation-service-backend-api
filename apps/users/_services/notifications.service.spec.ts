@@ -1,14 +1,14 @@
 import { container } from '../_config';
 
+import { randUuid } from '@ngneat/falso';
+import { NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
+import { EmailNotificationPreferenceEnum, NotificationContextTypeEnum } from '@users/shared/enums';
+import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
-import SYMBOLS from './symbols';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
 import type { NotificationsService } from './notifications.service';
-import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
-import { EmailNotificationPreferenceEnum, NotificationContextTypeEnum } from '@users/shared/enums';
-import { NotificationPreferenceEntity, NotificationUserEntity } from '@users/shared/entities';
-import { GenericErrorsEnum, NotFoundError, UnprocessableEntityError, UserErrorsEnum } from '@users/shared/errors';
-import { randUuid } from '@ngneat/falso';
+import SYMBOLS from './symbols';
 
 describe('Users / _services / notifications service suite', () => {
   let sut: NotificationsService;
@@ -362,7 +362,7 @@ describe('Users / _services / notifications service suite', () => {
     it('should get the email preferences for the specified role', async () => {
       //create preference
       await em.getRepository(NotificationPreferenceEntity).save({
-        notificationType: 'ACTION',
+        notificationType: 'TASK',
         preference: EmailNotificationPreferenceEnum.DAILY,
         userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
         createdAt: new Date(),
@@ -373,7 +373,7 @@ describe('Users / _services / notifications service suite', () => {
 
       expect(result).toMatchObject([
         {
-          notificationType: 'ACTION',
+          notificationType: 'TASK',
           preference: EmailNotificationPreferenceEnum.DAILY
         },
         {
@@ -394,7 +394,7 @@ describe('Users / _services / notifications service suite', () => {
         scenario.users.adamInnovator.roles.innovatorRole.id,
         [
           {
-            notificationType: 'ACTION',
+            notificationType: 'TASK',
             preference: EmailNotificationPreferenceEnum.DAILY
           }
         ],
@@ -406,7 +406,7 @@ describe('Users / _services / notifications service suite', () => {
         .where('notificationPreference.userRoleId = :userRoleId', {
           userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id
         })
-        .andWhere('notificationPreference.notificationType = :notificationType', { notificationType: 'ACTION' })
+        .andWhere('notificationPreference.notificationType = :notificationType', { notificationType: 'TASK' })
         .getOne();
 
       expect(dbPreference?.preference).toBe(EmailNotificationPreferenceEnum.DAILY);

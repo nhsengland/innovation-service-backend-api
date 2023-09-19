@@ -283,8 +283,8 @@ export class NotificationsService extends BaseService {
     const userPreferencesMap = new Map(userPreferences.map(p => [p.notificationType, p.preference]));
     return [
       {
-        notificationType: 'ACTION',
-        preference: userPreferencesMap.get('ACTION') ?? EmailNotificationPreferenceEnum.INSTANTLY
+        notificationType: 'TASK',
+        preference: userPreferencesMap.get('TASK') ?? EmailNotificationPreferenceEnum.INSTANTLY
       },
       {
         notificationType: 'SUPPORT',

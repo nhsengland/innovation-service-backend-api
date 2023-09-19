@@ -2,8 +2,8 @@ import { inject, injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
 import {
-  InnovationActionEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
@@ -12,9 +12,9 @@ import {
   UserRoleEntity
 } from '@admin/shared/entities';
 import {
-  InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
   ServiceRoleEnum,
@@ -79,12 +79,12 @@ export class OrganisationsService extends BaseService {
     ).map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }));
 
     // only want to clear actions with these statuses
-    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
+    const actionStatusToClear = [InnovationTaskStatusEnum.OPEN];
 
     //get id of actions to clear issued by the unit users
     const actionsToClear = (
       await em
-        .createQueryBuilder(InnovationActionEntity, 'action')
+        .createQueryBuilder(InnovationTaskEntity, 'action')
         .leftJoinAndSelect('action.innovationSupport', 'support')
         .leftJoinAndSelect('support.organisationUnit', 'unit')
         .where('unit.id = :unitId', { unitId })
@@ -130,9 +130,9 @@ export class OrganisationsService extends BaseService {
       // Clear actions issued by unit
       if (actionsToClear.length > 0) {
         await transaction.update(
-          InnovationActionEntity,
+          InnovationTaskEntity,
           { id: In(actionsToClear) },
-          { status: InnovationActionStatusEnum.DELETED }
+          { status: InnovationTaskStatusEnum.CANCELLED }
         );
       }
 
@@ -217,7 +217,7 @@ export class OrganisationsService extends BaseService {
     });
 
     // lock users in identity provider asynchronously
-    // using idendity-ops-queue
+    // using identity-ops-queue
     if (usersToLock.length > 0) {
       for (const user of usersToLock) {
         await this.identityProviderService.updateUserAsync(user.identityId, {
@@ -286,7 +286,7 @@ export class OrganisationsService extends BaseService {
         { inactivatedAt: null, updatedAt: now, updatedBy: domainContext.id }
       );
 
-      // activate organistion to whom unit belongs if it is inactivated
+      // activate organisation to whom unit belongs if it is inactivated
       if (unit.organisation.inactivatedAt !== null) {
         await transaction.update(
           OrganisationEntity,

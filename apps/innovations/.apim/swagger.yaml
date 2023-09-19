@@ -5,332 +5,6 @@ servers:
   - url: https://nhse-${ENV}-innovation-service-innovation-functions.azurewebsites.net/api
 openapi: 3.0.3
 paths:
-  "/v1/{innovationId}/actions":
-    post:
-      description: Create a new innovation action.
-      operationId: v1-innovation-action-create
-      tags:
-        - "[v1] Innovation Actions"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        description: The innovation action to create.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                section:
-                  type: string
-                  enum:
-                    - INNOVATION_DESCRIPTION
-                    - UNDERSTANDING_OF_NEEDS
-                    - EVIDENCE_OF_EFFECTIVENESS
-                    - MARKET_RESEARCH
-                    - CURRENT_CARE_PATHWAY
-                    - TESTING_WITH_USERS
-                    - REGULATIONS_AND_STANDARDS
-                    - INTELLECTUAL_PROPERTY
-                    - REVENUE_MODEL
-                    - COST_OF_INNOVATION
-                    - DEPLOYMENT
-                  description: The section key.
-                description:
-                  type: string
-                  maxLength: 500
-                  description: The description of the action.
-              required:
-                - section
-                - description
-              additionalProperties: false
-      responses:
-        "200":
-          description: The innovation action has been created.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: The innovation action id.
-                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
-                required:
-                  - id
-        "400":
-          description: The innovation action could not be created.
-        "401":
-          description: The user is not authorized to create an innovation action.
-        "403":
-          description: The user is not allowed to create an innovation action.
-        "404":
-          description: The innovation could not be found.
-        "500":
-          description: An unexpected error occurred while creating the innovation action.
-  "/v1/{innovationId}/actions/{actionId}":
-    get:
-      description: Get an innovation action.
-      operationId: v1-innovation-action-info
-      tags:
-        - "[v1] Innovation Actions"
-      parameters:
-        - name: innovationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: actionId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: The innovation action.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    format: uuid
-                  displayId:
-                    type: string
-                  status:
-                    type: string
-                    enum:
-                      - DRAFT
-                      - SUBMITTED
-                      - APPROVED
-                      - REJECTED
-                  description:
-                    type: string
-                  section:
-                    type: string
-                  createdAt:
-                    type: string
-                    format: date-time
-                  createdBy:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                      organisationUnit:
-                        type: string
-        "401":
-          description: Unauthorized
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-    put:
-      description: Update an innovation action.
-      operationId: v1-innovation-action-update
-      tags:
-        - "[v1] Innovation Actions"
-      parameters:
-        - name: innovationId
-          in: path
-          description: The innovation id.
-          required: true
-          schema:
-            type: string
-        - name: actionId
-          in: path
-          description: The innovation action id.
-          required: true
-          schema:
-            type: string
-      requestBody:
-        description: The innovation action data.
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  description: The name of the action.
-                description:
-                  type: string
-                  description: The description of the action.
-                status:
-                  type: string
-                  description: The status of the action.
-                assignee:
-                  type: string
-                  description: The assignee of the action.
-                dueDate:
-                  type: string
-                  description: The due date of the action.
-                comment:
-                  type: string
-                  description: The comment of the action.
-      responses:
-        "200":
-          description: The innovation action has been updated.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  id:
-                    type: string
-                    description: The innovation action id.
-                  name:
-                    type: string
-                    description: The name of the action.
-                  description:
-                    type: string
-                    description: The description of the action.
-                  status:
-                    type: string
-                    description: The status of the action.
-                  assignee:
-                    type: string
-                    description: The assignee of the action.
-                  dueDate:
-                    type: string
-                    description: The due date of the action.
-                  comment:
-                    type: string
-                    description: The comment of the action.
-                  createdAt:
-                    type: string
-                    description: The date when the action was created.
-                  updatedAt:
-                    type: string
-                    description: The date when the action was updated.
-        "400":
-          description: The innovation action data is invalid.
-        "401":
-          description: The user is not authorized to update the innovation action.
-        "404":
-          description: The innovation action does not exist.
-        "500":
-          description: An error occurred while updating the innovation action.
-  /v1/actions:
-    get:
-      description: Get a list of innovation actions.
-      operationId: v1-innovation-actions-list
-      tags:
-        - "[v1] Innovation Actions"
-      parameters:
-        - name: skip
-          in: query
-          required: false
-          description: The number of records to skip.
-          schema:
-            type: integer
-            minimum: 0
-        - name: take
-          in: query
-          required: false
-          description: The number of records to take.
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-        - name: order
-          in: query
-          required: false
-          description: The order of the records.
-          schema:
-            type: string
-        - name: status
-          in: query
-          required: false
-          description: The status of the action.
-          schema:
-            type: string
-        - name: section
-          in: query
-          required: false
-          description: The section of the action.
-          schema:
-            type: string
-        - name: innovationId
-          in: query
-          required: false
-          description: The innovation id of the action.
-          schema:
-            type: string
-        - name: innovationName
-          in: query
-          required: false
-          description: The innovation name of the action.
-          schema:
-            type: string
-      responses:
-        "200":
-          description: The list of innovation actions.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  count:
-                    type: integer
-                    description: The total number of records.
-                  data:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: The id of the action.
-                        displayId:
-                          type: string
-                          description: The display id of the action.
-                        status:
-                          type: string
-                          description: The status of the action.
-                        description:
-                          type: string
-                          description: The description of the action.
-                        section:
-                          type: string
-                          description: The section of the action.
-                        createdAt:
-                          type: string
-                          description: The date the action was created.
-                        updatedAt:
-                          type: string
-                          description: The date the action was last updated.
-                        innovation:
-                          type: object
-                          properties:
-                            id:
-                              type: string
-                              description: The id of the innovation.
-                            name:
-                              type: string
-                              description: The name of the innovation.
-                        notifications:
-                          type: object
-                          properties:
-                            count:
-                              type: integer
-                              description: The number of notifications for the action.
-        "400":
-          description: The request is invalid.
-        "401":
-          description: The user is not authenticated.
-        "403":
-          description: The user is not authorized to access this resource.
-        "500":
-          description: An error occurred while processing the request.
   "/v1/{innovationId}/activities":
     get:
       operationId: v1-innovation-activities-log-list
@@ -2711,7 +2385,7 @@ paths:
                         - - NEEDS_ASSESSMENT
                           - INNOVATION
                           - SUPPORT
-                          - ACTION
+                          - TASK
                           - THREAD
                           - DATA_SHARING
                           - COMMENT
@@ -3199,9 +2873,8 @@ paths:
               type: string
               enum:
                 - SECTIONS_SUBMITTED_COUNTER
-                - ACTIONS_TO_SUBMIT_COUNTER
+                - TASKS_OPEN_COUNTER
                 - UNREAD_MESSAGES_COUNTER
-                - ACTIONS_TO_REVIEW_COUNTER
                 - SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER
                 - SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER
                 - UNREAD_MESSAGES_THREADS_INITIATED_BY_COUNTER
@@ -3714,6 +3387,332 @@ paths:
                               type: string
                             url:
                               type: string
+        "400":
+          description: The request is invalid.
+        "401":
+          description: The user is not authenticated.
+        "403":
+          description: The user is not authorized to access this resource.
+        "500":
+          description: An error occurred while processing the request.
+  "/v1/{innovationId}/tasks":
+    post:
+      description: Create a new innovation task.
+      operationId: v1-innovation-task-create
+      tags:
+        - "[v1] Innovation Tasks"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The innovation task to create.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                section:
+                  type: string
+                  enum:
+                    - INNOVATION_DESCRIPTION
+                    - UNDERSTANDING_OF_NEEDS
+                    - EVIDENCE_OF_EFFECTIVENESS
+                    - MARKET_RESEARCH
+                    - CURRENT_CARE_PATHWAY
+                    - TESTING_WITH_USERS
+                    - REGULATIONS_AND_STANDARDS
+                    - INTELLECTUAL_PROPERTY
+                    - REVENUE_MODEL
+                    - COST_OF_INNOVATION
+                    - DEPLOYMENT
+                  description: The section key.
+                description:
+                  type: string
+                  maxLength: 500
+                  description: The description of the task.
+              required:
+                - section
+                - description
+              additionalProperties: false
+      responses:
+        "200":
+          description: The innovation task has been created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The innovation task id.
+                    example: c0a80121-7ac0-464e-b8f6-27b88b0cda7f
+                required:
+                  - id
+        "400":
+          description: The innovation task could not be created.
+        "401":
+          description: The user is not authorized to create an innovation task.
+        "403":
+          description: The user is not allowed to create an innovation task.
+        "404":
+          description: The innovation could not be found.
+        "500":
+          description: An unexpected error occurred while creating the innovation task.
+  "/v1/{innovationId}/tasks/{taskId}":
+    get:
+      description: Get an innovation task.
+      operationId: v1-innovation-task-info
+      tags:
+        - "[v1] Innovation Tasks"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: The innovation task.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  displayId:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                      - DRAFT
+                      - SUBMITTED
+                      - APPROVED
+                      - REJECTED
+                  description:
+                    type: string
+                  section:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+                  createdBy:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      organisationUnit:
+                        type: string
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+    put:
+      description: Update an innovation task.
+      operationId: v1-innovation-task-update
+      tags:
+        - "[v1] Innovation Tasks"
+      parameters:
+        - name: innovationId
+          in: path
+          description: The innovation id.
+          required: true
+          schema:
+            type: string
+        - name: taskId
+          in: path
+          description: The innovation task id.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The innovation task data.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: The name of the task.
+                description:
+                  type: string
+                  description: The description of the task.
+                status:
+                  type: string
+                  description: The status of the task.
+                assignee:
+                  type: string
+                  description: The assignee of the task.
+                dueDate:
+                  type: string
+                  description: The due date of the task.
+                comment:
+                  type: string
+                  description: The comment of the task.
+      responses:
+        "200":
+          description: The innovation task has been updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The innovation task id.
+                  name:
+                    type: string
+                    description: The name of the task.
+                  description:
+                    type: string
+                    description: The description of the task.
+                  status:
+                    type: string
+                    description: The status of the task.
+                  assignee:
+                    type: string
+                    description: The assignee of the task.
+                  dueDate:
+                    type: string
+                    description: The due date of the task.
+                  comment:
+                    type: string
+                    description: The comment of the task.
+                  createdAt:
+                    type: string
+                    description: The date when the task was created.
+                  updatedAt:
+                    type: string
+                    description: The date when the task was updated.
+        "400":
+          description: The innovation task data is invalid.
+        "401":
+          description: The user is not authorized to update the innovation task.
+        "404":
+          description: The innovation task does not exist.
+        "500":
+          description: An error occurred while updating the innovation task.
+  /v1/tasks:
+    get:
+      description: Get a list of innovation tasks.
+      operationId: v1-innovation-tasks-list
+      tags:
+        - "[v1] Innovation Tasks"
+      parameters:
+        - name: skip
+          in: query
+          required: false
+          description: The number of records to skip.
+          schema:
+            type: integer
+            minimum: 0
+        - name: take
+          in: query
+          required: false
+          description: The number of records to take.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: order
+          in: query
+          required: false
+          description: The order of the records.
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          description: The status of the task.
+          schema:
+            type: string
+        - name: section
+          in: query
+          required: false
+          description: The section of the task.
+          schema:
+            type: string
+        - name: innovationId
+          in: query
+          required: false
+          description: The innovation id of the task.
+          schema:
+            type: string
+        - name: innovationName
+          in: query
+          required: false
+          description: The innovation name of the task.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The list of innovation tasks.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    description: The total number of records.
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: The id of the task.
+                        displayId:
+                          type: string
+                          description: The display id of the task.
+                        status:
+                          type: string
+                          description: The status of the task.
+                        description:
+                          type: string
+                          description: The description of the task.
+                        section:
+                          type: string
+                          description: The section of the task.
+                        createdAt:
+                          type: string
+                          description: The date the task was created.
+                        updatedAt:
+                          type: string
+                          description: The date the task was last updated.
+                        innovation:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: The id of the innovation.
+                            name:
+                              type: string
+                              description: The name of the innovation.
+                        notifications:
+                          type: object
+                          properties:
+                            count:
+                              type: integer
+                              description: The number of notifications for the task.
         "400":
           description: The request is invalid.
         "401":

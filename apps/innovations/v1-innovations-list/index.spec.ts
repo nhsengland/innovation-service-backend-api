@@ -96,7 +96,7 @@ const expected = {
       ],
       notifications: randNumber(),
       statistics: {
-        actions: randNumber(),
+        tasks: randNumber(),
         messages: randNumber()
       }
     }

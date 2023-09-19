@@ -1,11 +1,10 @@
-import { In, IsNull, MigrationInterface, QueryRunner, SimpleConsoleLogger } from 'typeorm';
-import { InnovationActionEntity, InnovationDocumentEntity, InnovationSectionEntity } from '../../shared/entities';
-import { InnovationSectionStatusEnum } from '../../shared/enums';
-import type { DocumentType202209 } from '../../shared/schemas/innovation-record/202209/document.types';
-import { upgradeDocumentTo202304 } from '../../shared/schemas/innovation-record/202304/migration.helper';
+import type { MigrationInterface } from 'typeorm';
 
 export class migrationIR2023041681809778425 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<void> {
+  public async up(): Promise<void> {
+    // This migration was run once and typeorm has changed since then making it impossible to run prior to other migrations.
+    // this can be safely ignored as it was a one time migration
+    /*
     const previousLogger = queryRunner.connection.logger;
     // Migrate document
     const documents = await queryRunner.manager
@@ -45,7 +44,7 @@ export class migrationIR2023041681809778425 implements MigrationInterface {
     // soft delete unsupported actions
     const actions = (
       await queryRunner.manager
-        .getRepository(InnovationActionEntity)
+        .getRepository(InnovationTaskEntity)
         .createQueryBuilder('action')
         .select(['action.id'])
         .innerJoin('action.innovationSection', 'section')
@@ -56,7 +55,7 @@ export class migrationIR2023041681809778425 implements MigrationInterface {
     ).map(a => a.id);
 
     if (actions.length) {
-      const d1 = await queryRunner.manager.getRepository(InnovationActionEntity).softDelete({
+      const d1 = await queryRunner.manager.getRepository(InnovationTaskEntity).softDelete({
         id: In(actions),
         deletedAt: IsNull()
       });
@@ -85,6 +84,7 @@ export class migrationIR2023041681809778425 implements MigrationInterface {
       }
     );
     console.log(`Updated ${u2.affected} sections to draft`);
+    */
   }
 
   public async down(): Promise<void> {}

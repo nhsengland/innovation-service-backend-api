@@ -1,15 +1,19 @@
 import { container } from '../_config';
 
+import { InnovationEntity, InnovationSupportEntity, InnovationTaskEntity } from '@users/shared/entities';
+import {
+  InnovationSupportLogTypeEnum,
+  InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
+  ServiceRoleEnum
+} from '@users/shared/enums';
+import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
-import SYMBOLS from './symbols';
+import { InnovationSupportLogBuilder } from '@users/shared/tests/builders/innovation-support-log.builder';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
 import type { StatisticsService } from './statistics.service';
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
-import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
-import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
-import type { DomainContextType } from '@users/shared/types';
-import { InnovationSupportLogBuilder } from '@users/shared/tests/builders/innovation-support-log.builder';
+import SYMBOLS from './symbols';
 
 describe('Users / _services / statistics service suite', () => {
   let sut: StatisticsService;
@@ -40,7 +44,6 @@ describe('Users / _services / statistics service suite', () => {
     });
 
     it('should count the innovations with overdue assesments', async () => {
-
       const resultBefore = await sut.waitingAssessment(em);
 
       expect(resultBefore.overdue).toBe(0);
@@ -122,59 +125,35 @@ describe('Users / _services / statistics service suite', () => {
     });
   });
 
-  describe('actionsToReview', () => {
-    it('should get the number of actions to review', async () => {
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
+  describe('tasksOpen', () => {
+    it('should get the number of tasks open by my organisation', async () => {
+      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), em);
 
       expect(result.count).toBe(1);
     });
 
-    it('should get the total number of actions requested and to review', async () => {
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
+    it('should get the total number of tasks open', async () => {
+      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), em);
 
       expect(result.total).toBe(2);
     });
 
-    it('should get the date of the last action submission', async () => {
-      const action = scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice;
+    it('should get the date of the last task submission by me', async () => {
+      const task = scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAlice;
       const nowDate = new Date();
-      await em.getRepository(InnovationActionEntity).update({ id: action.id }, { updatedAt: nowDate });
+      await em
+        .getRepository(InnovationTaskEntity)
+        .update({ id: task.id }, { updatedAt: nowDate, status: InnovationTaskStatusEnum.OPEN });
 
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
+      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), em);
 
       expect(result.lastSubmittedAt).toStrictEqual(new Date(nowDate));
     });
 
-    it('should return lastSubmittedAt as null when there is no action submitted', async () => {
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.scottQualifyingAccessor)
-      );
+    it('should return lastSubmittedAt as null when there is no task submitted', async () => {
+      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.scottQualifyingAccessor));
 
       expect(result.lastSubmittedAt).toBeNull();
-    });
-
-    it.each([
-      [ServiceRoleEnum.ACCESSOR, scenario.users.samAccessor],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, scenario.users.aliceQualifyingAccessor]
-    ])('it should throw an error when the user is %s and has no organisation unit', async () => {
-      await expect(() =>
-        sut.actionsToReview(
-          {
-            ...DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-            organisation: undefined
-          } as DomainContextType,
-          em
-        )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
     });
   });
 

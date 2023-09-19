@@ -10,7 +10,7 @@ export const actionsToReviewStatisticsHandler = async (
 ): Promise<UserStatisticsTemplateType[UserStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]> => {
   const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
-  const supports = await statisticsService.actionsToReview(domainContext);
+  const supports = await statisticsService.tasksOpen(domainContext);
 
   return {
     count: supports.count,

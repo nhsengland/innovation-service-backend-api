@@ -3,24 +3,24 @@ import type { DataSource } from 'typeorm';
 
 import { randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   InnovationTransferStatusEnum
 } from '../../enums/innovation.enums';
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
-import { InnovationActionBuilder } from '../builders/innovation-action.builder';
 import { InnovationAssessmentBuilder } from '../builders/innovation-assessment.builder';
 import { InnovationCollaboratorBuilder } from '../builders/innovation-collaborator.builder';
 import { InnovationExportRequestBuilder } from '../builders/innovation-export-request.builder';
 import { InnovationFileBuilder } from '../builders/innovation-file.builder';
 import { InnovationSupportLogBuilder } from '../builders/innovation-support-log.builder';
 import { InnovationSupportBuilder } from '../builders/innovation-support.builder';
+import { InnovationTaskBuilder } from '../builders/innovation-task.builder';
 import { InnovationThreadBuilder } from '../builders/innovation-thread.builder';
 import { InnovationTransferBuilder } from '../builders/innovation-transfer.builder';
 import { InnovationBuilder } from '../builders/innovation.builder';
@@ -271,37 +271,39 @@ export class CompleteScenarioBuilder {
         .setSupportStatus(InnovationSupportStatusEnum.UNASSIGNED)
         .save();
 
-      // action on johnInnovation created by Alice (QA)
-      const johnInnovationActionByAlice = await new InnovationActionBuilder(entityManager)
+      // task on johnInnovation created by Alice (QA)
+      const johnInnovationTaskByAlice = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
         .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setUpdatedBy(aliceQualifyingAccessor.id)
         .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .setSupport(johnInnovationSupportByHealthOrgUnit.id)
+        .setStatus(InnovationTaskStatusEnum.DONE)
         .save();
 
-      const johnInnovationActionByAliceSubmitted = await new InnovationActionBuilder(entityManager)
+      const johnInnovationTaskByAliceOpen = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
         .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
         .setUpdatedBy(johnInnovator.id)
         .setUpdatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .setSupport(johnInnovationSupportByHealthOrgUnit.id)
-        .setStatus(InnovationActionStatusEnum.SUBMITTED)
+        .setStatus(InnovationTaskStatusEnum.OPEN)
         .save();
 
-      // action on johnInnovation created by Paul (NA)
-      const johnInnovationActionByPaul = await new InnovationActionBuilder(entityManager)
+      // task on johnInnovation created by Paul (NA)
+      const johnInnovationTaskByPaul = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(paulNeedsAssessor.id)
         .setCreatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
         .setUpdatedBy(paulNeedsAssessor.id)
         .setUpdatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
+        .setStatus(InnovationTaskStatusEnum.OPEN)
         .save();
 
-      // action on johnInnovation created by Bart (QA)
-      const johnInnovationActionByBart = await new InnovationActionBuilder(entityManager)
+      // task on johnInnovation created by Bart (QA)
+      const johnInnovationTaskByBart = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(bartQualifyingAccessor.id)
         .setCreatedByUserRole(bartQualifyingAccessor.roles['qaRole']!.id)
         .setUpdatedBy(bartQualifyingAccessor.id)
@@ -578,7 +580,7 @@ export class CompleteScenarioBuilder {
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
 
-      const adamInnovationActionBySean = await new InnovationActionBuilder(entityManager)
+      const adamInnovationTaskBySean = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(seanNeedsAssessor.id)
         .setCreatedByUserRole(seanNeedsAssessor.roles['assessmentRole']!.id)
         .setUpdatedBy(seanNeedsAssessor.id)
@@ -586,14 +588,14 @@ export class CompleteScenarioBuilder {
         .setInnovationSection(adamInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .save();
 
-      const adamInnovationCompletedActionByAlice = await new InnovationActionBuilder(entityManager)
+      const adamInnovationDoneTask = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
         .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
-        .setUpdatedBy(aliceQualifyingAccessor.id)
-        .setUpdatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setUpdatedBy(adamInnovator.id)
+        .setUpdatedByUserRole(adamInnovator.roles['innovatorRole']!.id)
         .setInnovationSection(adamInnovation.sections.get('COST_OF_INNOVATION')!.id)
         .setSupport(adamInnovationSupportByHealthOrgUnit.id)
-        .setStatus(InnovationActionStatusEnum.COMPLETED)
+        .setStatus(InnovationTaskStatusEnum.DONE)
         .save();
 
       // Otto Innovator specs:
@@ -668,11 +670,11 @@ export class CompleteScenarioBuilder {
                   assignedTo: paulNeedsAssessor,
                   suggestedOrganisationUnits: { healthOrgUnit }
                 },
-                actions: {
-                  actionByAlice: johnInnovationActionByAlice,
-                  actionByAliceSubmitted: johnInnovationActionByAliceSubmitted,
-                  actionByBart: johnInnovationActionByBart,
-                  actionByPaul: johnInnovationActionByPaul
+                tasks: {
+                  taskByAlice: johnInnovationTaskByAlice,
+                  taskByAliceOpen: johnInnovationTaskByAliceOpen,
+                  taskByBart: johnInnovationTaskByBart,
+                  taskByPaul: johnInnovationTaskByPaul
                 },
                 threads: {
                   threadByAliceQA: {
@@ -768,9 +770,9 @@ export class CompleteScenarioBuilder {
               adamInnovation: {
                 ...adamInnovation,
                 transfer: adamInnovationTransferToJane,
-                actions: {
-                  adamInnovationActionByPaul: adamInnovationActionBySean,
-                  adamInnovationCompletedActionByAlice
+                tasks: {
+                  adamInnovationTaskBySean: adamInnovationTaskBySean,
+                  adamInnovationDoneTask: adamInnovationDoneTask
                 },
                 supports: {
                   adamInnovationSupportByHealthOrgUnit: adamInnovationSupportByHealthOrgUnit

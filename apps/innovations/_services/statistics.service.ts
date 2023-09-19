@@ -1,22 +1,22 @@
 import {
-  InnovationActionEntity,
   InnovationAssessmentEntity,
   InnovationExportRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   InnovationThreadMessageEntity,
   NotificationEntity,
   NotificationUserEntity
 } from '@innovations/shared/entities';
 import {
-  InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@innovations/shared/errors';
+import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { DomainContextType } from '@innovations/shared/types';
 import { injectable } from 'inversify';
@@ -29,25 +29,25 @@ export class StatisticsService extends BaseService {
     super();
   }
 
-  async getActions(
+  async getTasks(
     innovationId: string,
-    statuses: InnovationActionStatusEnum[],
+    statuses: InnovationTaskStatusEnum[],
     entityManager?: EntityManager
   ): Promise<{ updatedAt: Date; section: CurrentCatalogTypes.InnovationSections }[]> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const openActions = await connection
-      .createQueryBuilder(InnovationActionEntity, 'action')
-      .innerJoin('action.innovationSection', 'section')
+    const openTasks = await connection
+      .createQueryBuilder(InnovationTaskEntity, 'task')
+      .innerJoin('task.innovationSection', 'section')
       .innerJoin('section.innovation', 'innovation')
-      .select('action.updatedAt', 'updatedAt')
+      .select('task.updatedAt', 'updatedAt')
       .addSelect('section.section', 'section')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('action.status IN(:...statuses)', { statuses })
-      .orderBy('action.createdAt', 'DESC')
+      .andWhere('task.status IN(:...statuses)', { statuses })
+      .orderBy('task.createdAt', 'DESC')
       .getRawMany();
 
-    return openActions;
+    return openTasks;
   }
 
   async getSubmittedSections(
@@ -100,39 +100,6 @@ export class StatisticsService extends BaseService {
       .getRawOne();
 
     return unreadMessages;
-  }
-
-  async actionsToReview(
-    innovationId: string,
-    domainContext: DomainContextType,
-    entityManager?: EntityManager
-  ): Promise<{ count: number; lastSubmittedSection: null | string; lastSubmittedAt: null | Date }> {
-    const connection = entityManager ?? this.sqlConnection.manager;
-
-    const organisationUnit = domainContext.organisation?.organisationUnit?.id;
-
-    if (!organisationUnit) {
-      throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-    }
-
-    const baseQuery = connection
-      .createQueryBuilder(InnovationActionEntity, 'actions')
-      .innerJoin('actions.innovationSupport', 'innovationSupport')
-      .innerJoin('actions.innovationSection', 'section')
-      .select('actions.updatedAt', 'updatedAt')
-      .addSelect('section.section', 'section')
-      .where('innovationSupport.organisation_unit_id = :organisationUnit', { organisationUnit })
-      .andWhere('innovationSupport.innovation_id = :innovationId', { innovationId })
-      .andWhere('actions.status = :status', { status: InnovationActionStatusEnum.SUBMITTED })
-      .orderBy('actions.createdAt', 'DESC');
-
-    const actions = await baseQuery.getRawMany();
-
-    return {
-      count: actions.length,
-      lastSubmittedSection: actions.length > 0 ? actions[0].section : null,
-      lastSubmittedAt: actions.length > 0 ? actions[0].updatedAt : null
-    };
   }
 
   async getSubmittedSectionsSinceSupportStart(

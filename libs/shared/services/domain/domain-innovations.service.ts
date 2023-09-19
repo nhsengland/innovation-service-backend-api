@@ -3,13 +3,13 @@ import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import type { UserEntity } from 'libs/shared/entities';
 import { EXPIRATION_DATES } from '../../constants';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
-import { InnovationActionEntity } from '../../entities/innovation/innovation-action.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
 import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
 import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
+import { InnovationTaskEntity } from '../../entities/innovation/innovation-task.entity';
 import { InnovationThreadEntity } from '../../entities/innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
@@ -21,13 +21,13 @@ import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovati
 import {
   ActivityEnum,
   ActivityTypeEnum,
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -311,17 +311,17 @@ export class DomainInnovationsService {
         // Close opened actions, and deleted them all afterwards, hence 2 querys needed for both operations.
         await em
           .createQueryBuilder()
-          .update(InnovationActionEntity)
-          .set({ status: InnovationActionStatusEnum.DECLINED })
-          .where('innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)', {
+          .update(InnovationTaskEntity)
+          .set({ status: InnovationTaskStatusEnum.DECLINED })
+          .where('innovation_section_id IN (:...sectionsIds) AND status = :innovationActionStatus', {
             sectionsIds,
-            innovationActionStatus: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+            innovationActionStatus: InnovationTaskStatusEnum.OPEN
           })
           .execute();
 
         await em
           .createQueryBuilder()
-          .update(InnovationActionEntity)
+          .update(InnovationTaskEntity)
           .set({ updatedBy: userId, updatedByUserRole: roleId, deletedAt: new Date() })
           .where('innovation_section_id IN (:...sectionsIds)', { sectionsIds })
           .execute();
@@ -779,13 +779,12 @@ export class DomainInnovationsService {
       case ActivityEnum.THREAD_MESSAGE_CREATION:
         return ActivityTypeEnum.THREADS;
 
-      case ActivityEnum.ACTION_CREATION:
-      case ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_DECLINED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE:
-        return ActivityTypeEnum.ACTIONS;
+      case ActivityEnum.TASK_CREATION:
+      case ActivityEnum.TASK_STATUS_DONE_UPDATE:
+      case ActivityEnum.TASK_STATUS_DECLINED_UPDATE:
+      case ActivityEnum.TASK_STATUS_OPEN_UPDATE:
+      case ActivityEnum.TASK_STATUS_CANCELLED_UPDATE:
+        return ActivityTypeEnum.TASKS;
 
       default:
         throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_INVALID_ITEM);

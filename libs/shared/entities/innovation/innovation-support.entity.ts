@@ -12,8 +12,8 @@ import {
 import { BaseEntity } from '../base.entity';
 
 import { OrganisationUnitEntity } from '../organisation/organisation-unit.entity';
+import { InnovationTaskEntity } from './innovation-task.entity';
 import { InnovationEntity } from './innovation.entity';
-import { InnovationActionEntity } from './innovation-action.entity';
 
 import { InnovationSupportStatusEnum } from '../../enums/innovation.enums';
 import { UserRoleEntity } from '../user/user-role.entity';
@@ -50,8 +50,8 @@ export class InnovationSupportEntity extends BaseEntity {
   })
   userRoles: UserRoleEntity[];
 
-  @OneToMany(() => InnovationActionEntity, record => record.innovationSupport, { lazy: true })
-  actions: Promise<InnovationActionEntity[]>;
+  @OneToMany(() => InnovationTaskEntity, record => record.innovationSupport, { lazy: true })
+  tasks: Promise<InnovationTaskEntity[]>;
 
   static new(data: Partial<InnovationSupportEntity>): InnovationSupportEntity {
     const instance = new InnovationSupportEntity();

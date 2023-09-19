@@ -8,7 +8,7 @@ export { TermsOfUseEntity } from './general/terms-of-use.entity';
 
 // Innovation.
 import { ActivityLogEntity } from './innovation/activity-log.entity';
-import { InnovationActionEntity } from './innovation/innovation-action.entity';
+import { InnovationTaskEntity } from './innovation/innovation-task.entity';
 import { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDocumentEntity } from './innovation/innovation-document.entity';
@@ -26,7 +26,7 @@ import { InnovationTransferEntity } from './innovation/innovation-transfer.entit
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
 export { ActivityLogEntity } from './innovation/activity-log.entity';
-export { InnovationActionEntity } from './innovation/innovation-action.entity';
+export { InnovationTaskEntity } from './innovation/innovation-task.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
@@ -80,7 +80,6 @@ export { LastSupportStatusViewEntity } from './views/last-support-status.view.en
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
 export const INNOVATION_ENTITIES = [
   ActivityLogEntity,
-  InnovationActionEntity,
   InnovationAssessmentEntity,
   InnovationCollaboratorEntity,
   InnovationDocumentEntity,
@@ -92,6 +91,7 @@ export const INNOVATION_ENTITIES = [
   InnovationSectionEntity,
   InnovationSupportLogEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   InnovationThreadMessageEntity,
   InnovationThreadEntity,
   InnovationTransferEntity,

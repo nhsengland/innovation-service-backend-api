@@ -13,7 +13,7 @@ describe('Actions To Review Statistics Handler Suite', () => {
     total: randNumber(),
     lastSubmittedAt: randPastDate()
   };
-  const mock = jest.spyOn(StatisticsService.prototype, 'actionsToReview').mockResolvedValue(expected);
+  const mock = jest.spyOn(StatisticsService.prototype, 'tasksOpen').mockResolvedValue(expected);
 
   it('should return statistics', async () => {
     const res = await actionsToReviewStatisticsHandler(

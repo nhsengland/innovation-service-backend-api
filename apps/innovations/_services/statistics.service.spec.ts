@@ -2,9 +2,9 @@ import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 import {
-  InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
+  InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
@@ -40,23 +40,23 @@ describe('Innovations / _services / innovation transfer suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('getActions', () => {
-    it('should get actions for the given innovation and status', async () => {
+  describe('getTasks', () => {
+    it('should get tasks for the given innovation and status', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const actions = await sut.getActions(innovation.id, [InnovationActionStatusEnum.REQUESTED], em);
+      const tasks = await sut.getTasks(innovation.id, [InnovationTaskStatusEnum.OPEN], em);
 
-      expect(actions).toMatchObject([
+      expect(tasks).toMatchObject([
         {
-          updatedAt: new Date(innovation.actions.actionByBart.updatedAt),
-          section: innovation.actions.actionByBart.section
+          updatedAt: new Date(innovation.tasks.taskByBart.updatedAt),
+          section: innovation.tasks.taskByBart.section
         },
         {
-          updatedAt: new Date(innovation.actions.actionByPaul.updatedAt),
-          section: innovation.actions.actionByPaul.section
+          updatedAt: new Date(innovation.tasks.taskByPaul.updatedAt),
+          section: innovation.tasks.taskByPaul.section
         },
         {
-          updatedAt: new Date(innovation.actions.actionByAlice.updatedAt),
-          section: innovation.actions.actionByAlice.section
+          updatedAt: new Date(innovation.tasks.taskByAliceOpen.updatedAt),
+          section: innovation.tasks.taskByAliceOpen.section
         }
       ]);
     });
@@ -77,25 +77,6 @@ describe('Innovations / _services / innovation transfer suite', () => {
           section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section
         }
       ]);
-    });
-  });
-
-  describe('actionsToReview', () => {
-    it('should get actions to review for given innovation', async () => {
-      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const action = innovation.actions.actionByAliceSubmitted;
-
-      const actions = await sut.actionsToReview(
-        innovation.id,
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
-
-      expect(actions).toMatchObject({
-        count: 1,
-        lastSubmittedSection: innovation.sections.INNOVATION_DESCRIPTION.section,
-        lastSubmittedAt: new Date(action.updatedAt)
-      });
     });
   });
 

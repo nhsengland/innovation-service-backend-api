@@ -47,7 +47,7 @@ class V1InnovationSectionsList {
                 isOwner: section.submittedBy.isOwner
               }
             : null,
-          openActionsCount: section.openActionsCount
+          openTasksCount: section.openTasksCount
         }))
       );
       return;

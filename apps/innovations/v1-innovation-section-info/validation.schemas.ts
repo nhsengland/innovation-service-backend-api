@@ -15,8 +15,8 @@ export const ParamsSchema = Joi.object<ParamsType>({
 }).required();
 
 export type QueryParamsType = {
-  fields?: 'actions'[];
+  fields?: 'tasks'[];
 };
 export const QueryParamsSchema = Joi.object({
-  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('actions'))
+  fields: JoiHelper.AppCustomJoi().stringArray().items(Joi.string().valid('tasks'))
 });

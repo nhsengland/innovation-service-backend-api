@@ -1,19 +1,18 @@
 import { injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationSupportEntity, InnovationTaskEntity } from '@users/shared/entities';
 import {
-  InnovationActionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
-  ServiceRoleEnum,
+  InnovationTaskStatusEnum,
   UserStatusEnum
 } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DomainContextType } from '@users/shared/types';
 
-import { BaseService } from './base.service';
 import type { EntityManager } from 'typeorm';
+import { BaseService } from './base.service';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -136,7 +135,7 @@ export class StatisticsService extends BaseService {
     };
   }
 
-  async actionsToReview(
+  async tasksOpen(
     domainContext: DomainContextType,
     entityManager?: EntityManager
   ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
@@ -145,45 +144,33 @@ export class StatisticsService extends BaseService {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const myActionsQuery = em
-      .createQueryBuilder(InnovationActionEntity, 'actions')
-      .select('actions.status', 'status')
+      .createQueryBuilder(InnovationTaskEntity, 'tasks')
+      .select('orgUnit.id', 'orgUnitId')
       .addSelect('count(*)', 'count')
-      .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
-      .innerJoin('actions.innovationSupport', 'innovationSupport')
+      .addSelect('MAX(tasks.updated_at)', 'lastSubmittedAt')
+      .innerJoin('tasks.innovationSupport', 'innovationSupport')
       .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
-      .where('actions.created_by = :userId', { userId: domainContext.id })
-      .andWhere('actions.status IN (:...status)', {
-        status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED]
+      .where('tasks.status = :status', {
+        status: InnovationTaskStatusEnum.OPEN
       });
 
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      if (!organisationUnit) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
+    const myTasksCount = await myActionsQuery.groupBy('orgUnit.id').getRawMany();
+
+    const res = {
+      count: 0,
+      total: 0,
+      lastSubmittedAt: null as Date | null
+    };
+
+    for (const action of myTasksCount) {
+      if (action.orgUnitId === organisationUnit) {
+        res.count += action.count;
+        res.lastSubmittedAt = action.lastSubmittedAt;
       }
-      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit });
+      res.total += action.count;
     }
 
-    const myActionsCount = await myActionsQuery.groupBy('actions.status').getRawMany();
-
-    const actions: Record<string, any> = {
-      SUBMITTED: { count: 0, lastSubmittedAt: null },
-      REQUESTED: { count: 0, lastSubmittedAt: null }
-    };
-    for (const action of myActionsCount) {
-      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt };
-    }
-
-    return {
-      count: actions['SUBMITTED'].count,
-      total: actions['SUBMITTED'].count + actions['REQUESTED'].count,
-      lastSubmittedAt:
-        Object.values(actions)
-          .map(_ => _.lastSubmittedAt)
-          .sort((a, b) => b - a)[0] || null
-    };
+    return res;
   }
 
   async innovationsToReview(

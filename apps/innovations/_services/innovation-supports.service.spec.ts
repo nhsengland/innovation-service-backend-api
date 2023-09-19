@@ -2,17 +2,17 @@
 import { container } from '../_config';
 
 import {
-  InnovationActionEntity,
   InnovationFileEntity,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
+  InnovationTaskEntity,
   InnovationThreadEntity
 } from '@innovations/shared/entities';
 import {
-  InnovationActionStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
 import {
@@ -72,7 +72,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         return Promise.resolve(
           contextIds.map(contextId => ({
             contextId,
-            contextType: NotificationContextTypeEnum.ACTION,
+            contextType: NotificationContextTypeEnum.TASK,
             id: randUuid(),
             params: {}
           }))
@@ -152,8 +152,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           engagingAccessors: [
             {
               id: scenario.users.aliceQualifyingAccessor.id,
-              userRoleId:
-                scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
+              userRoleId: scenario.users.aliceQualifyingAccessor.roles.qaRole.id,
               name: scenario.users.aliceQualifyingAccessor.name
             },
             {
@@ -194,8 +193,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           engagingAccessors: [
             {
               id: scenario.users.samAccessor.id,
-              userRoleId:
-                scenario.users.samAccessor.roles.accessorRole.id,
+              userRoleId: scenario.users.samAccessor.roles.accessorRole.id,
               name: scenario.users.samAccessor.name
             }
           ]
@@ -253,8 +251,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           accessors: [
             {
               id: scenario.users.jamieMadroxAccessor.id,
-              userRoleId:
-                scenario.users.jamieMadroxAccessor.roles.aiRole.id
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.aiRole.id
             }
           ]
         },
@@ -600,8 +597,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           accessors: [
             {
               id: scenario.users.ingridAccessor.id,
-              userRoleId:
-                scenario.users.ingridAccessor.roles.accessorRole.id
+              userRoleId: scenario.users.ingridAccessor.roles.accessorRole.id
             }
           ]
         },
@@ -619,9 +615,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .where('support.id = :supportId', { supportId: support.id })
         .getOne();
 
-      expect(dbSupport?.userRoles.map(u => u.id)).toContain(
-        scenario.users.ingridAccessor.roles.accessorRole.id
-      );
+      expect(dbSupport?.userRoles.map(u => u.id)).toContain(scenario.users.ingridAccessor.roles.accessorRole.id);
     });
 
     it.each([
@@ -638,7 +632,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.WAITING],
       [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.WITHDRAWN]
     ])(
-      'should clear any open actions when status is changed from %s to %s',
+      'should clear any open tasks when status is changed from %s to %s',
       async (previousStatus: InnovationSupportStatusEnum, newStatus: InnovationSupportStatusEnum) => {
         let scenarioSupport:
           | typeof innovation.supports.supportByHealthOrgUnit
@@ -663,16 +657,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
           id: support.id
         });
 
-        const dbActions = await em
-          .createQueryBuilder(InnovationActionEntity, 'action')
-          .innerJoin('action.innovationSupport', 'support')
+        const dbTasks = await em
+          .createQueryBuilder(InnovationTaskEntity, 'task')
+          .innerJoin('task.innovationSupport', 'support')
           .where('support.id = :supportId', { supportId: support.id })
-          .andWhere('action.status IN (:...actionStatusActive)', {
-            actionStatusActive: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+          .andWhere('task.status IN (:...taskStatusActive)', {
+            taskStatusActive: [InnovationTaskStatusEnum.OPEN]
           })
           .getCount();
 
-        expect(dbActions).toBe(0);
+        expect(dbTasks).toBe(0);
       }
     );
 

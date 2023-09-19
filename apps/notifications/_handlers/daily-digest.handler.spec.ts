@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { DailyDigestHandler } from './daily-digest.handler';
 
-import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
-import { RecipientType, RecipientsService } from '../_services/recipients.service';
-import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
 import { randNumber } from '@ngneat/falso';
+import { CompleteScenarioType, MocksHelper, TestsHelper } from '@notifications/shared/tests';
+import { DTOsHelper } from '@notifications/shared/tests/helpers/dtos.helper';
 import { EmailTypeEnum } from '../_config';
+import { RecipientType, RecipientsService } from '../_services/recipients.service';
 
 describe('Notifications / _handlers / daily-digest handler suite', () => {
   let testsHelper: TestsHelper;
@@ -17,7 +17,7 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
     string,
     {
       recipient: RecipientType;
-      actionsCount: number;
+      tasksCount: number;
       messagesCount: number;
       supportsCount: number;
     }
@@ -29,14 +29,14 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
 
     recipients['john'] = {
       recipient: DTOsHelper.getRecipientUser(scenario.users.johnInnovator, 'innovatorRole'),
-      actionsCount: randNumber(),
+      tasksCount: randNumber(),
       messagesCount: randNumber(),
       supportsCount: randNumber()
     };
 
     recipients['alice'] = {
       recipient: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
-      actionsCount: randNumber(),
+      tasksCount: randNumber(),
       messagesCount: randNumber(),
       supportsCount: randNumber()
     };
@@ -64,7 +64,7 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
       notificationPreferenceType: null,
       params: {
         messages_count: recipients['john']?.messagesCount.toString(),
-        actions_count: recipients['john']?.actionsCount.toString(),
+        actions_count: recipients['john']?.tasksCount.toString(),
         supports_count: recipients['john']?.supportsCount.toString()
       }
     });
@@ -79,7 +79,7 @@ describe('Notifications / _handlers / daily-digest handler suite', () => {
       notificationPreferenceType: null,
       params: {
         messages_count: recipients['alice']?.messagesCount.toString(),
-        actions_count: recipients['alice']?.actionsCount.toString(),
+        actions_count: recipients['alice']?.tasksCount.toString(),
         supports_count: recipients['alice']?.supportsCount.toString()
       }
     });

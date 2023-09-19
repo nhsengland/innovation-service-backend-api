@@ -57,9 +57,9 @@ describe('v1-innovation-section-info Suite', () => {
       expect(mock).toHaveBeenCalledTimes(1);
     });
 
-    it('should return the action ids if there are any', async () => {
-      const actionsIds = [randUuid(), randUuid()];
-      mock.mockResolvedValueOnce({ ...expected, actionsIds });
+    it('should return the task ids if there are any', async () => {
+      const taskIds = [randUuid(), randUuid()];
+      mock.mockResolvedValueOnce({ ...expected, tasksIds: taskIds });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
         .setParams<ParamsType>({
@@ -68,7 +68,7 @@ describe('v1-innovation-section-info Suite', () => {
         })
         .call<ResponseDTO>(azureFunction);
 
-      expect(result.body.actionsIds).toStrictEqual(actionsIds);
+      expect(result.body.tasksIds).toStrictEqual(taskIds);
     });
   });
 

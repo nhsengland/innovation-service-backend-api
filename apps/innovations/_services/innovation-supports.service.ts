@@ -2,21 +2,21 @@ import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, In } from 'typeorm';
 
 import {
-  InnovationActionEntity,
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
+  InnovationTaskEntity,
   OrganisationUnitEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
-  InnovationActionStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationSupportSummaryTypeEnum,
+  InnovationTaskStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   ThreadContextTypeEnum,
@@ -87,7 +87,7 @@ export class InnovationSupportsService extends BaseService {
         acronym: string | null;
         unit: { id: string; name: string; acronym: string | null };
       };
-      engagingAccessors?: { id: string; userRoleId: string; name: string, isActive: boolean }[];
+      engagingAccessors?: { id: string; userRoleId: string; name: string; isActive: boolean }[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -129,7 +129,8 @@ export class InnovationSupportsService extends BaseService {
     }
 
     return innovationSupports.map(support => {
-      let engagingAccessors: { id: string; userRoleId: string; name: string, isActive: boolean }[] | undefined = undefined;
+      let engagingAccessors: { id: string; userRoleId: string; name: string; isActive: boolean }[] | undefined =
+        undefined;
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.userRoles
@@ -517,11 +518,11 @@ export class InnovationSupportsService extends BaseService {
         if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
           await transaction
             .createQueryBuilder()
-            .update(InnovationActionEntity)
-            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: domainContext.id })
+            .update(InnovationTaskEntity)
+            .set({ status: InnovationTaskStatusEnum.CANCELLED, updatedBy: domainContext.id })
             .where({
               innovationSupport: dbSupport.id,
-              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
+              status: In([InnovationTaskStatusEnum.OPEN])
             })
             .execute();
         }

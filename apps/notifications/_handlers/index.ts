@@ -1,6 +1,4 @@
 export { AccessorUnitChangeHandler } from './accessor-unit-change.handler';
-export { ActionCreationHandler } from './action-creation.handler';
-export { ActionUpdateHandler } from './action-update.handler';
 export { BaseHandler } from './base.handler';
 export { DailyDigestHandler } from './daily-digest.handler';
 export { IdleInnovatorsHandler } from './idle-innovators.handler';
@@ -16,7 +14,6 @@ export { InnovationStopSharingHandler } from './innovation-stop-sharing.handler'
 export { InnovationSubmittedHandler } from './innovation-submitted.handler';
 export { InnovationSupportStatusChangeRequestHandler } from './innovation-support-status-change-request.handler';
 export { InnovationSupportStatusUpdateHandler } from './innovation-support-status-update.handler';
-export { SupportSummaryUpdateHandler } from './support-summary-update.handler';
 export { InnovationTransferOwnershipCompletedHandler } from './innovation-transfer-ownership-completed.handler';
 export { InnovationTransferOwnershipCreationHandler } from './innovation-transfer-ownership-creation.handler';
 export { InnovationTransferOwnershipExpirationHandler } from './innovation-transfer-ownership-expiration.handler';
@@ -27,6 +24,9 @@ export { LockUserHandler } from './lock-user.handler';
 export { NeedsAssessmentAssessorUpdateHandler } from './needs-assessment-assessor-update.handler';
 export { NeedsAssessmentCompletedHandler } from './needs-assessment-completed.handler';
 export { NeedsAssessmentStartedHandler } from './needs-assessment-started.handler';
+export { SupportSummaryUpdateHandler } from './support-summary-update.handler';
+export { TaskCreationHandler as ActionCreationHandler } from './task-creation.handler';
+export { TaskUpdateHandler as ActionUpdateHandler } from './task-update.handler';
 export { ThreadCreationHandler } from './thread-creation.handler';
 export { ThreadMessageCreationHandler } from './thread-message-creation.handler';
 export { UnitInactivationSupportStatusCompletedHandler } from './unit-inactivation-support-status-completed.handler';

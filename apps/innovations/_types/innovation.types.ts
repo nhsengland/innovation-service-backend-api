@@ -1,9 +1,9 @@
 import type {
-  InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   MaturityLevelCatalogueType,
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
@@ -14,7 +14,7 @@ export interface InnovationSectionModel {
   id: string | null;
   section: CurrentCatalogTypes.InnovationSections | null;
   status: InnovationSectionStatusEnum | null;
-  actionStatus: InnovationActionStatusEnum | null;
+  taskStatus: InnovationTaskStatusEnum | null;
   updatedAt: Date | null;
   submittedAt: Date | null;
 }

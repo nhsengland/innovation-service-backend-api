@@ -35,7 +35,7 @@ const expected = [
       name: randText(),
       isOwner: undefined
     },
-    openActionsCount: randNumber()
+    openTasksCount: randNumber()
   },
   {
     id: randUuid(),
@@ -46,7 +46,7 @@ const expected = [
       name: randText(),
       isOwner: true
     },
-    openActionsCount: randNumber()
+    openTasksCount: randNumber()
   },
   {
     id: randUuid(),
@@ -54,7 +54,7 @@ const expected = [
     status: InnovationSectionStatusEnum.DRAFT,
     submittedAt: null,
     submittedBy: null,
-    openActionsCount: randNumber()
+    openTasksCount: randNumber()
   }
 ];
 const mock = jest.spyOn(InnovationSectionsService.prototype, 'getInnovationSectionsList').mockResolvedValue(expected);

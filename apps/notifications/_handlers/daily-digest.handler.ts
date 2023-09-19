@@ -3,8 +3,8 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 
 import { EmailTypeEnum } from '../_config';
 
-import { BaseHandler } from './base.handler';
 import type { Context } from '@azure/functions';
+import { BaseHandler } from './base.handler';
 
 export class DailyDigestHandler extends BaseHandler<
   NotifierTypeEnum.DAILY_DIGEST,
@@ -15,7 +15,7 @@ export class DailyDigestHandler extends BaseHandler<
     requestUser: DomainContextType,
     data: NotifierTemplatesType[NotifierTypeEnum.DAILY_DIGEST],
     azureContext: Context
-) {
+  ) {
     super(requestUser, data, azureContext);
   }
 
@@ -39,7 +39,7 @@ export class DailyDigestHandler extends BaseHandler<
         params: {
           // display_name: '', // This will be filled by the email-listener function.
           messages_count: user.messagesCount.toString(),
-          actions_count: user.actionsCount.toString(),
+          actions_count: user.tasksCount.toString(),
           supports_count: user.supportsCount.toString()
         }
       });

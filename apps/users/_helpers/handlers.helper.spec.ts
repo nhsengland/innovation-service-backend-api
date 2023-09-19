@@ -14,14 +14,12 @@ describe('Handlers Helper Suite', () => {
     jest.clearAllMocks();
   });
 
-  const actionsToReview = {
+  const tasksOpen = {
     count: randNumber(),
     total: randNumber(),
     lastSubmittedAt: randPastDate()
   };
-  const actionsToReviewMock = jest
-    .spyOn(StatisticsService.prototype, 'actionsToReview')
-    .mockResolvedValue(actionsToReview);
+  const actionsToReviewMock = jest.spyOn(StatisticsService.prototype, 'tasksOpen').mockResolvedValue(tasksOpen);
   const assignedInnovations = {
     count: randNumber(),
     total: randNumber(),
@@ -40,7 +38,7 @@ describe('Handlers Helper Suite', () => {
       expect(actionsToReviewMock).toBeCalledTimes(1);
       expect(assignedInnovationsMock).toBeCalledTimes(0);
       expect(res).toStrictEqual({
-        ACTIONS_TO_REVIEW_COUNTER: actionsToReview
+        ACTIONS_TO_REVIEW_COUNTER: tasksOpen
       });
     });
 
@@ -52,7 +50,7 @@ describe('Handlers Helper Suite', () => {
       expect(actionsToReviewMock).toBeCalledTimes(1);
       expect(assignedInnovationsMock).toBeCalledTimes(1);
       expect(res).toStrictEqual({
-        ACTIONS_TO_REVIEW_COUNTER: actionsToReview,
+        ACTIONS_TO_REVIEW_COUNTER: tasksOpen,
         ASSIGNED_INNOVATIONS_COUNTER: assignedInnovations
       });
     });

@@ -11,5 +11,5 @@ export type ResponseDTO = {
     isOwner?: boolean;
   };
   data: null | { [key: string]: any };
-  actionsIds?: string[];
+  tasksIds?: string[];
 };
