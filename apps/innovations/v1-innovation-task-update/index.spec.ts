@@ -2,7 +2,7 @@ import { InnovationTaskStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randUuid } from '@ngneat/falso';
+import { randText, randUuid } from '@ngneat/falso';
 import { default as v1InnovationTaskUpdate } from '.';
 import { InnovationTasksService } from '../_services/innovation-tasks.service';
 import type { ResponseDTO } from './transformation.dtos';
@@ -51,7 +51,7 @@ describe('v1-innovation-task-update Suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           taskId: randUuid()
         })
-        .setBody<BodyType>({ status: InnovationTaskStatusEnum.OPEN })
+        .setBody<BodyType>({ status: InnovationTaskStatusEnum.OPEN, message: randText() })
         .call<ResponseDTO>(v1InnovationTaskUpdate);
 
       expect(result.body).toMatchObject(expected);
@@ -76,7 +76,7 @@ describe('v1-innovation-task-update Suite', () => {
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           taskId: randUuid()
         })
-        .setBody<BodyType>({ status: InnovationTaskStatusEnum.OPEN })
+        .setBody<BodyType>({ status: InnovationTaskStatusEnum.OPEN, message: randText() })
         .call<ErrorResponseType>(v1InnovationTaskUpdate);
 
       expect(result.status).toBe(status);

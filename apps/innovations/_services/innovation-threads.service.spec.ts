@@ -1,17 +1,14 @@
 import { container } from '../_config';
 
+import { InnovationThreadEntity, UserRoleEntity } from '@innovations/shared/entities';
+import { BadRequestError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 import { NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
+import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
+import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 import type { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
-import {
-  InnovationThreadEntity,
-  UserRoleEntity
-} from '@innovations/shared/entities';
-import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
-import { randUuid } from '@ngneat/falso';
-import { NotFoundError, BadRequestError, InnovationErrorsEnum } from '@innovations/shared/errors';
 
 describe('Innovations / _services / innovation-threads suite', () => {
   let sut: InnovationThreadsService;
@@ -62,13 +59,9 @@ describe('Innovations / _services / innovation-threads suite', () => {
 
     it(`should throw an error if the thread doesn't exist`, async () => {
       await expect(
-        sut.addFollowersToThread(
-          randUuid(),
-          [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
-          em
-        )
+        sut.addFollowersToThread(randUuid(), [scenario.users.aliceQualifyingAccessor.roles.qaRole.id], em)
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
-    })
+    });
   });
 
   describe('unfollowThread', () => {
@@ -78,9 +71,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
       // ensure user is a follower
       await em.getRepository(InnovationThreadEntity).save({
         id: thread.id,
-        followers: [
-          UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })
-        ]
+        followers: [UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })]
       });
 
       const result = await sut.unfollowThread(
@@ -97,39 +88,24 @@ describe('Innovations / _services / innovation-threads suite', () => {
 
       expect(result).toMatchObject({ threadId: thread.id });
       expect(dbThread?.followers).toMatchObject([]);
-
-    })
+    });
 
     it('should throw an error if the user is not a follower', async () => {
       await expect(
-        sut.unfollowThread(
-          DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor),
-          thread.id,
-          em
-        )
+        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor), thread.id, em)
       ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_USER_IS_NOT_FOLLOWER));
-
-    })
+    });
 
     it('should throw an error if the user is an innovator', async () => {
       await expect(
-        sut.unfollowThread(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-          thread.id,
-          em
-        )
+        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), thread.id, em)
       ).rejects.toThrowError(new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_INNOVATORS_CANNOT_UNFOLLOW));
-
-    })
+    });
 
     it(`should throw an error if the thread doesn't exist`, async () => {
       await expect(
-        sut.unfollowThread(
-          DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
-          randUuid(),
-          em
-        )
+        sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
-    })
-  })
+    });
+  });
 });

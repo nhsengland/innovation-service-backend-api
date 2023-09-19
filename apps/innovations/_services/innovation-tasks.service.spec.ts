@@ -6,7 +6,6 @@ import {
   InnovationEntity,
   InnovationTaskEntity,
   InnovationThreadEntity,
-  InnovationThreadMessageEntity,
   UserEntity
 } from '@innovations/shared/entities';
 import {
@@ -31,7 +30,7 @@ import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randNumber, randText, randUuid } from '@ngneat/falso';
 import { EntityManager } from 'typeorm';
-import type { InnovationTasksService } from './innovation-tasks.service';
+import { InnovationTasksService } from './innovation-tasks.service';
 import { InnovationThreadsService } from './innovation-threads.service';
 import SYMBOLS from './symbols';
 
@@ -47,6 +46,11 @@ describe('Innovation Tasks Suite', () => {
   const activityLogSpy = jest.spyOn(DomainInnovationsService.prototype, 'addActivityLog');
   const notifierSendSpy = jest.spyOn(NotifierService.prototype, 'send').mockResolvedValue(true);
 
+  // Only spying the methods but not the implementation since there's an interdependency between the two
+  const createThreadOrMessageSpy = jest.spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage');
+  const createThreadMessage = jest.spyOn(InnovationThreadsService.prototype, 'createThreadMessage');
+  const linkMessageSpy = jest.spyOn(InnovationTasksService.prototype as any, 'linkMessage');
+
   beforeAll(async () => {
     sut = container.get<InnovationTasksService>(SYMBOLS.InnovationTasksService);
     await testsHelper.init();
@@ -60,6 +64,9 @@ describe('Innovation Tasks Suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
     activityLogSpy.mockReset();
     notifierSendSpy.mockReset();
+    createThreadOrMessageSpy.mockReset();
+    createThreadMessage.mockReset();
+    linkMessageSpy.mockReset();
   });
 
   describe('createTask', () => {
@@ -145,6 +152,32 @@ describe('Innovation Tasks Suite', () => {
           role: context.currentRole.role
         }
       );
+    });
+
+    it('should create thread and message', async () => {
+      const context = DTOsHelper.getUserRequestContext(accessor);
+      const description = randText();
+      const task = await sut.createTask(
+        context,
+        innovation.id,
+        {
+          description,
+          section: 'INNOVATION_DESCRIPTION'
+        },
+        em
+      );
+
+      // TODO this can be improved when we link the message to the task
+      const thread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .innerJoinAndSelect('thread.messages', 'message')
+        .where('thread.contextId = :taskId', { taskId: task.id })
+        .getMany();
+      expect(thread).toHaveLength(1);
+      expect(await thread[0]?.messages).toHaveLength(1);
+
+      const link = await em.query('SELECT * FROM innovation_task_message WHERE innovation_task_id = @0', [task.id]);
+      expect(link).toHaveLength(1);
     });
 
     it.each([
@@ -777,7 +810,8 @@ describe('Innovation Tasks Suite', () => {
         innovation.id,
         task.id,
         {
-          status: InnovationTaskStatusEnum.CANCELLED
+          status: InnovationTaskStatusEnum.CANCELLED,
+          message: randText()
         },
         em
       );
@@ -791,6 +825,8 @@ describe('Innovation Tasks Suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateTask.id).toBe(task.id);
       expect(dbtask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
+
+      expect(linkMessageSpy).not.toHaveBeenCalled();
     });
 
     it('should update task from status DONE to OPEN', async () => {
@@ -801,7 +837,8 @@ describe('Innovation Tasks Suite', () => {
         innovation.id,
         task.id,
         {
-          status: InnovationTaskStatusEnum.OPEN
+          status: InnovationTaskStatusEnum.OPEN,
+          message: randText()
         },
         em
       );
@@ -815,12 +852,15 @@ describe('Innovation Tasks Suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateTask.id).toBe(task.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.OPEN);
+
+      expect(linkMessageSpy).toHaveBeenCalled();
     });
 
     it("should not update if task doesn't exist", async () => {
       await expect(() =>
         sut.updateTaskAsAccessor(DTOsHelper.getUserRequestContext(accessor), innovation.id, randUuid(), {
-          status: InnovationTaskStatusEnum.OPEN
+          status: InnovationTaskStatusEnum.OPEN,
+          message: randText()
         })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
@@ -838,7 +878,8 @@ describe('Innovation Tasks Suite', () => {
           innovation.id,
           task.id,
           {
-            status: InnovationTaskStatusEnum.OPEN
+            status: InnovationTaskStatusEnum.OPEN,
+            message: randText()
           },
           em
         )
@@ -853,7 +894,8 @@ describe('Innovation Tasks Suite', () => {
         innovation.id,
         task.id,
         {
-          status: InnovationTaskStatusEnum.CANCELLED
+          status: InnovationTaskStatusEnum.CANCELLED,
+          message: randText()
         },
         em
       );
@@ -868,7 +910,8 @@ describe('Innovation Tasks Suite', () => {
           innovation.id,
           task.id,
           {
-            status: InnovationTaskStatusEnum.CANCELLED
+            status: InnovationTaskStatusEnum.CANCELLED,
+            message: randText()
           },
           em
         )
@@ -889,7 +932,8 @@ describe('Innovation Tasks Suite', () => {
         innovation.id,
         task.id,
         {
-          status: InnovationTaskStatusEnum.CANCELLED
+          status: InnovationTaskStatusEnum.CANCELLED,
+          message: randText()
         },
         em
       );
@@ -903,6 +947,8 @@ describe('Innovation Tasks Suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateTask.id).toBe(task.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
+
+      expect(linkMessageSpy).not.toHaveBeenCalled();
     });
 
     it('should update task from status DONE to OPEN', async () => {
@@ -913,7 +959,8 @@ describe('Innovation Tasks Suite', () => {
         innovation.id,
         task.id,
         {
-          status: InnovationTaskStatusEnum.OPEN
+          status: InnovationTaskStatusEnum.OPEN,
+          message: randText()
         },
         em
       );
@@ -927,6 +974,8 @@ describe('Innovation Tasks Suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
       expect(updateTask.id).toBe(task.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.OPEN);
+
+      expect(linkMessageSpy).toHaveBeenCalled();
     });
 
     it('should update task from status OPEN to CANCELLED OPEN by other NA', async () => {
@@ -937,7 +986,8 @@ describe('Innovation Tasks Suite', () => {
         innovation.id,
         task.id,
         {
-          status: InnovationTaskStatusEnum.CANCELLED
+          status: InnovationTaskStatusEnum.CANCELLED,
+          message: randText()
         },
         em
       );
@@ -956,7 +1006,8 @@ describe('Innovation Tasks Suite', () => {
     it("should not update if task doesn't exist", async () => {
       await expect(() =>
         sut.updateTaskAsNeedsAccessor(DTOsHelper.getUserRequestContext(na), innovation.id, randUuid(), {
-          status: InnovationTaskStatusEnum.OPEN
+          status: InnovationTaskStatusEnum.OPEN,
+          message: randText()
         })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
@@ -970,7 +1021,8 @@ describe('Innovation Tasks Suite', () => {
           innovation.id,
           task.id,
           {
-            status: InnovationTaskStatusEnum.OPEN
+            status: InnovationTaskStatusEnum.OPEN,
+            message: randText()
           },
           em
         )
@@ -988,7 +1040,8 @@ describe('Innovation Tasks Suite', () => {
           innovation.id,
           task.id,
           {
-            status: InnovationTaskStatusEnum.CANCELLED
+            status: InnovationTaskStatusEnum.CANCELLED,
+            message: randText()
           },
           em
         )
@@ -1004,7 +1057,8 @@ describe('Innovation Tasks Suite', () => {
           innovation.id,
           innovation.tasks.taskByAlice.id,
           {
-            status: InnovationTaskStatusEnum.CANCELLED
+            status: InnovationTaskStatusEnum.CANCELLED,
+            message: randText()
           }
         )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
@@ -1012,17 +1066,6 @@ describe('Innovation Tasks Suite', () => {
   });
 
   describe('updateTaskAsInnovator', () => {
-    const createThreadOrMessageSpy = jest
-      .spyOn(InnovationThreadsService.prototype, 'createThreadOrMessage')
-      .mockResolvedValue({
-        thread: new InnovationThreadEntity(),
-        message: new InnovationThreadMessageEntity()
-      });
-
-    afterEach(() => {
-      createThreadOrMessageSpy.mockReset();
-    });
-
     const innovator = scenario.users.johnInnovator;
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
     const naTask = innovation.tasks.taskByPaul;
@@ -1049,12 +1092,14 @@ describe('Innovation Tasks Suite', () => {
 
       expect(activityLogSpy).toHaveBeenCalled();
       expect(notifierSendSpy).toHaveBeenCalled();
-      expect(createThreadOrMessageSpy).toHaveBeenCalled();
+      expect(createThreadMessage).toHaveBeenCalled();
       expect(updateTask.id).toBe(naTask.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.DECLINED);
+
+      expect(linkMessageSpy).not.toHaveBeenCalled();
     });
 
-    it('should update task from status REQUESTED to DECLINED from a QA task', async () => {
+    it('should update task from status OPEN to DECLINED from a QA task', async () => {
       await em.update(InnovationTaskEntity, { id: qaTask.id }, { status: InnovationTaskStatusEnum.OPEN });
 
       const updateTask = await sut.updateTaskAsInnovator(
@@ -1075,9 +1120,11 @@ describe('Innovation Tasks Suite', () => {
 
       expect(activityLogSpy).toHaveBeenCalled();
       expect(notifierSendSpy).toHaveBeenCalled();
-      expect(createThreadOrMessageSpy).toHaveBeenCalled();
+      expect(createThreadMessage).toHaveBeenCalled();
       expect(updateTask.id).toBe(qaTask.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.DECLINED);
+
+      expect(linkMessageSpy).not.toHaveBeenCalled();
     });
 
     it("should not update if task doesn't exist", async () => {
@@ -1089,7 +1136,7 @@ describe('Innovation Tasks Suite', () => {
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
 
-    it('should not be updated if the task is not in the REQUESTED status', async () => {
+    it('should not be updated if the task is not in the DONE status', async () => {
       await em.update(InnovationTaskEntity, { id: qaTask.id }, { status: InnovationTaskStatusEnum.DECLINED });
       await expect(() =>
         sut.updateTaskAsInnovator(
@@ -1105,6 +1152,32 @@ describe('Innovation Tasks Suite', () => {
       ).rejects.toThrowError(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
       );
+    });
+  });
+
+  describe('getSaveTaskSubject', () => {
+    const displayId = `T${randNumber()}`;
+    it.each([
+      ['INNOVATION_DESCRIPTION' as const, `TASK (${displayId}) update section 1.1 (Description of innovation)`],
+      [
+        'UNDERSTANDING_OF_NEEDS' as const,
+        `TASK (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`
+      ],
+      ['EVIDENCE_OF_EFFECTIVENESS' as const, `TASK (${displayId}) update section 2.2 (Evidence of impact and benefit)`],
+      ['MARKET_RESEARCH' as const, `TASK (${displayId}) update section 3.1 (Market research)`],
+      ['CURRENT_CARE_PATHWAY' as const, `TASK (${displayId}) update section 3.2 (Current care pathway)`],
+      ['TESTING_WITH_USERS' as const, `TASK (${displayId}) update section 4.1 (Testing with users)`],
+      [
+        'REGULATIONS_AND_STANDARDS' as const,
+        `TASK (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`
+      ],
+      ['INTELLECTUAL_PROPERTY' as const, `TASK (${displayId}) update section 5.2 (Intellectual property)`],
+      ['REVENUE_MODEL' as const, `TASK (${displayId}) update section 6.1 (Revenue model)`],
+      ['COST_OF_INNOVATION' as const, `TASK (${displayId}) update section 7.1 (Cost of your innovation)`],
+      ['DEPLOYMENT' as const, `TASK (${displayId}) update section 8.1 (Cost of your innovation)`]
+    ])('should return the correct subject for %s', async (section, expected) => {
+      const res = sut['getSaveTaskSubject'](displayId, section as any);
+      expect(res).toBe(expected);
     });
   });
 });

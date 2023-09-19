@@ -47,7 +47,7 @@ class V1InnovationTaskUpdate {
           domainContext,
           params.innovationId,
           params.taskId,
-          { status: body.status }
+          { status: body.status, message: body.message }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: accessorResult.id });
@@ -59,7 +59,7 @@ class V1InnovationTaskUpdate {
           domainContext,
           params.innovationId,
           params.taskId,
-          { status: body.status }
+          { status: body.status, message: body.message }
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: assessmentResult.id });
@@ -71,7 +71,7 @@ class V1InnovationTaskUpdate {
           domainContext,
           params.innovationId,
           params.taskId,
-          { status: body.status, message: body.message ?? '' } // Joi will make sure that message is never empty for an innovator.
+          { status: body.status, message: body.message ?? '' } // joi validates message is required
         );
 
         context.res = ResponseHelper.Ok<ResponseDTO>({ id: innovatorResult.id });

@@ -12,37 +12,25 @@ export const ParamsSchema = Joi.object<ParamsType>({
   taskId: Joi.string().guid().required()
 }).required();
 
-export type BodyType = {
-  status: InnovationTaskStatusEnum;
-  message?: string;
-};
+export type BodyType =
+  | {
+      status: InnovationTaskStatusEnum.OPEN | InnovationTaskStatusEnum.DONE | InnovationTaskStatusEnum.DECLINED;
+      message: string;
+    }
+  | {
+      status: InnovationTaskStatusEnum.CANCELLED;
+      message?: string;
+    };
 
-// TODO: CHECK IF JOI ALLOWS ARRAYS IN THE 'IS' CONDITION.
 export const BodySchema = Joi.object<BodyType>({
-  // TODO: UPDATE FE TO SEND userRole parameter instead of userType.
   status: Joi.when('$userRole', {
-    is: ServiceRoleEnum.ACCESSOR,
-    then: Joi.string().valid(InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.CANCELLED).required()
+    is: [ServiceRoleEnum.ACCESSOR, ServiceRoleEnum.QUALIFYING_ACCESSOR, ServiceRoleEnum.ASSESSMENT],
+    then: Joi.string().valid(InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.CANCELLED).required(),
+    otherwise: Joi.string().valid(InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED).required()
+  }),
+  message: Joi.when('status', {
+    is: InnovationTaskStatusEnum.CANCELLED,
+    then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).optional(),
+    otherwise: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
   })
-    .when('$userRole', {
-      is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      then: Joi.string().valid(InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.CANCELLED).required()
-    })
-    .when('$userRole', {
-      is: ServiceRoleEnum.INNOVATOR,
-      then: Joi.string().valid(InnovationTaskStatusEnum.DECLINED).required()
-    }),
-
-  message: Joi.when('$userRole', {
-    is: ServiceRoleEnum.ACCESSOR,
-    then: Joi.forbidden()
-  })
-    .when('$userRole', {
-      is: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-      then: Joi.forbidden()
-    })
-    .when('$userRole', {
-      is: ServiceRoleEnum.INNOVATOR,
-      then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
-    })
-}).required();
+});

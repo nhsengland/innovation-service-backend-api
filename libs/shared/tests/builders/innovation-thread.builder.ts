@@ -7,6 +7,7 @@ import {
   UserEntity,
   UserRoleEntity
 } from '../../entities';
+import { ThreadContextTypeEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 
 export type TestInnovationThreadMessageType = {
@@ -39,9 +40,24 @@ export class InnovationThreadBuilder extends BaseBuilder {
     return this;
   }
 
+  setContextType(contextType: ThreadContextTypeEnum): this {
+    this.thread.contextType = contextType;
+    return this;
+  }
+
+  setContextId(contextId: string): this {
+    this.thread.contextId = contextId;
+    return this;
+  }
+
   setAuthor(userId: string, roleId: string): this {
     this.thread.author = UserEntity.new({ id: userId });
     this.thread.authorUserRole = UserRoleEntity.new({ id: roleId });
+    return this;
+  }
+
+  setSubject(subject: string): this {
+    this.thread.subject = subject;
     return this;
   }
 
@@ -71,6 +87,13 @@ export class InnovationThreadBuilder extends BaseBuilder {
         message: savedMessage.message,
         createdAt: savedMessage.createdAt
       };
+      // special case for tasks
+      if (this.thread.contextType == ThreadContextTypeEnum.TASK && this.thread.contextId) {
+        await this.getEntityManager().query('INSERT INTO innovation_task_message VALUES ($1, $2)', [
+          this.thread.contextId,
+          savedMessage.id
+        ]);
+      }
     });
 
     const result = await this.getEntityManager()

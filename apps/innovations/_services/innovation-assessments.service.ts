@@ -175,9 +175,7 @@ export class InnovationAssessmentsService extends BaseService {
         })
       );
 
-      const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.threadService.createThreadOrMessage(
-        user,
         domainContext,
         innovationId,
         'Initial needs assessment',

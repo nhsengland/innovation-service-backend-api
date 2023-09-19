@@ -6,6 +6,7 @@ import {
   InnovationSectionEntity,
   InnovationSupportEntity,
   InnovationTaskEntity,
+  InnovationThreadMessageEntity,
   UserRoleEntity
 } from '@innovations/shared/entities';
 import {
@@ -24,6 +25,7 @@ import {
   ForbiddenError,
   InnovationErrorsEnum,
   NotFoundError,
+  NotImplementedError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
@@ -503,6 +505,21 @@ export class InnovationTasksService extends BaseService {
     const result = await connection.transaction(async transaction => {
       const taskResult = await transaction.save<InnovationTaskEntity>(taskObj);
 
+      const { message } = await this.innovationThreadsService.createThreadOrMessage(
+        domainContext,
+        innovationId,
+        this.getSaveTaskSubject(taskResult.displayId, data.section),
+        data.description,
+        taskResult.id,
+        ThreadContextTypeEnum.TASK,
+        transaction,
+        false
+      );
+
+      if (message) {
+        await this.linkMessage(taskResult.id, message.id, transaction);
+      }
+
       await this.domainService.innovations.addActivityLog(
         transaction,
         { innovationId: innovation.id, activity: ActivityEnum.TASK_CREATION, domainContext },
@@ -529,7 +546,7 @@ export class InnovationTasksService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     taskId: string,
-    data: { status: InnovationTaskStatusEnum },
+    data: { status: InnovationTaskStatusEnum; message?: string },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -585,7 +602,7 @@ export class InnovationTasksService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     taskId: string,
-    data: { status: InnovationTaskStatusEnum },
+    data: { status: InnovationTaskStatusEnum; message?: string },
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -673,20 +690,38 @@ export class InnovationTasksService extends BaseService {
 
   /**
    * returns ths task subject according to the status
-   * @param dbTask the task to get the subject from
-   * @param status the status to get the subject from
+   * @param displayId the display id of the task
+   * @param section the section of the task
    * @returns the task subject according to the status
    */
-  private getSaveTaskSubject(dbTask: InnovationTaskEntity, status: InnovationTaskStatusEnum): string {
-    // TODO 'Task thread creation not implemented yet, threads will be create only once when task is created but need to be updated when task is reopened'
-
-    switch (status) {
-      case InnovationTaskStatusEnum.DECLINED:
-        return `Action ${dbTask.displayId} declined`;
-      // TODO this should be reviewed as this never happens in current implementation
-      /* c8 ignore next 2 */
-      default:
-        return `Action ${dbTask.displayId} updated`;
+  private getSaveTaskSubject(displayId: string, section: CurrentCatalogTypes.InnovationSections): string {
+    switch (section) {
+      case 'INNOVATION_DESCRIPTION':
+        return `TASK (${displayId}) update section 1.1 (Description of innovation)`;
+      case 'UNDERSTANDING_OF_NEEDS':
+        return `TASK (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`;
+      case 'EVIDENCE_OF_EFFECTIVENESS':
+        return `TASK (${displayId}) update section 2.2 (Evidence of impact and benefit)`;
+      case 'MARKET_RESEARCH':
+        return `TASK (${displayId}) update section 3.1 (Market research)`;
+      case 'CURRENT_CARE_PATHWAY':
+        return `TASK (${displayId}) update section 3.2 (Current care pathway)`;
+      case 'TESTING_WITH_USERS':
+        return `TASK (${displayId}) update section 4.1 (Testing with users)`;
+      case 'REGULATIONS_AND_STANDARDS':
+        return `TASK (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`;
+      case 'INTELLECTUAL_PROPERTY':
+        return `TASK (${displayId}) update section 5.2 (Intellectual property)`;
+      case 'REVENUE_MODEL':
+        return `TASK (${displayId}) update section 6.1 (Revenue model)`;
+      case 'COST_OF_INNOVATION':
+        return `TASK (${displayId}) update section 7.1 (Cost of your innovation)`;
+      case 'DEPLOYMENT':
+        return `TASK (${displayId}) update section 8.1 (Cost of your innovation)`;
+      default: {
+        const s: never = section;
+        throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND, { details: s });
+      }
     }
   }
 
@@ -700,20 +735,25 @@ export class InnovationTasksService extends BaseService {
     const user = { id: domainContext.id, identityId: domainContext.identityId };
 
     return entityManager.transaction(async transaction => {
-      let thread;
+      let threadMessage: InnovationThreadMessageEntity | null = null;
 
       if (data.message) {
-        thread = await this.innovationThreadsService.createThreadOrMessage(
-          { id: user.id, identityId: user.identityId },
-          domainContext,
-          innovationId,
-          this.getSaveTaskSubject(dbTask, data.status),
-          data.message,
-          dbTask.id,
-          ThreadContextTypeEnum.TASK,
-          transaction,
-          true
-        );
+        threadMessage = (
+          await this.innovationThreadsService.createThreadMessageByContextId(
+            domainContext,
+            ThreadContextTypeEnum.TASK,
+            dbTask.id,
+            data.message,
+            false,
+            false,
+            transaction
+          )
+        ).threadMessage;
+
+        // reopened tasks should add a message link
+        if (data.status === InnovationTaskStatusEnum.OPEN) {
+          await this.linkMessage(dbTask.id, threadMessage.id, transaction);
+        }
       }
 
       if (data.status === InnovationTaskStatusEnum.DECLINED) {
@@ -723,7 +763,7 @@ export class InnovationTasksService extends BaseService {
           {
             taskId: dbTask.id,
             interveningUserId: dbTask.createdBy,
-            comment: { id: thread?.message?.id || '', value: thread?.message?.message || '' }
+            comment: { id: threadMessage?.id || '', value: data.message ?? '' }
           }
         );
       }
@@ -758,5 +798,26 @@ export class InnovationTasksService extends BaseService {
 
       return transaction.save(InnovationTaskEntity, dbTask);
     });
+  }
+
+  /**
+   * links a thread message to a task
+   *
+   * This is used by open and reopen tasks in order to link the message to the task
+   * @param taskId
+   * @param messageId
+   * @param transaction
+   */
+  private async linkMessage(taskId: string, messageId: string, transaction: EntityManager): Promise<void> {
+    await transaction
+      .createQueryBuilder()
+      .insert()
+      .orIgnore()
+      .into('innovation_task_message')
+      .values({
+        innovation_task_id: taskId,
+        innovation_thread_message_id: messageId
+      })
+      .execute();
   }
 }

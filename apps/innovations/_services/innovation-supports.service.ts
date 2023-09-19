@@ -336,7 +336,6 @@ export class InnovationSupportsService extends BaseService {
 
       const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        user,
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
@@ -534,7 +533,6 @@ export class InnovationSupportsService extends BaseService {
       const savedSupport = await transaction.save(InnovationSupportEntity, dbSupport);
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: domainContext.id, identityId: domainContext.identityId },
         domainContext,
         innovationId,
         InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,

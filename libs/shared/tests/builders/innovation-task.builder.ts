@@ -13,7 +13,7 @@ export type TestInnovationActionType = {
   updatedAt: Date;
 };
 
-// TODO fix description, add builder support threads
+// TODO fix description
 
 export class InnovationTaskBuilder extends BaseBuilder {
   innovationAction: DeepPartial<InnovationTaskEntity>;

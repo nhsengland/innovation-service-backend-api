@@ -42,7 +42,6 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createThreadOrMessage(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     subject: string,
@@ -55,16 +54,10 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity;
     message: InnovationThreadMessageEntity | undefined;
   }> {
-    const threadQuery = transaction
-      .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .where('thread.context_id = :contextId', { contextId })
-      .andWhere('thread.context_type = :contextType', { contextType });
-
-    const thread = await threadQuery.getOne();
+    const thread = await this.getThreadByContextId(contextType, contextId, transaction);
 
     if (!thread) {
       const t = await this.createThread(
-        requestUser,
         domainContext,
         innovationId,
         subject,
@@ -85,7 +78,6 @@ export class InnovationThreadsService extends BaseService {
     }
 
     const result = await this.createThreadMessage(
-      requestUser,
       domainContext,
       thread.id,
       message,
@@ -133,7 +125,6 @@ export class InnovationThreadsService extends BaseService {
     }
 
     const thread = await this.createThread(
-      requestUser,
       domainContext,
       innovationId,
       subject,
@@ -221,13 +212,12 @@ export class InnovationThreadsService extends BaseService {
       .from('innovation_thread_follower')
       .where('innovation_thread_id = :threadId', { threadId: dbThread.id })
       .andWhere('user_role_id = :userRoleId', { userRoleId: domainContext.currentRole.id })
-      .execute()
+      .execute();
 
     return { threadId };
   }
 
   async createThread(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     subject: string,
@@ -244,7 +234,6 @@ export class InnovationThreadsService extends BaseService {
     if (!transaction) {
       return this.sqlConnection.transaction(t =>
         this.createThread(
-          requestUser,
           domainContext,
           innovationId,
           subject,
@@ -263,7 +252,6 @@ export class InnovationThreadsService extends BaseService {
     }
 
     const result = await this.createThreadWithTransaction(
-      requestUser,
       domainContext,
       innovationId,
       subject,
@@ -278,17 +266,15 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createEditableMessage(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     threadId: string,
     message: string,
     sendNotification: boolean
   ): Promise<{ threadMessage: InnovationThreadMessageEntity }> {
-    return this.createThreadMessage(requestUser, domainContext, threadId, message, sendNotification, true);
+    return this.createThreadMessage(domainContext, threadId, message, sendNotification, true);
   }
 
   async createThreadMessage(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     threadId: string,
     message: string,
@@ -306,7 +292,7 @@ export class InnovationThreadsService extends BaseService {
 
     const author = await connection
       .createQueryBuilder(UserEntity, 'user')
-      .where('user.id = :userId', { userId: requestUser.id })
+      .where('user.id = :userId', { userId: domainContext.id })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
@@ -338,7 +324,6 @@ export class InnovationThreadsService extends BaseService {
 
     const threadMessage: InnovationThreadMessageEntity = await this.createThreadMessageTransaction(
       threadMessageObj,
-      requestUser,
       domainContext,
       thread,
       connection
@@ -351,6 +336,23 @@ export class InnovationThreadsService extends BaseService {
     return {
       threadMessage
     };
+  }
+
+  async createThreadMessageByContextId(
+    domainContext: DomainContextType,
+    contextType: ThreadContextTypeEnum,
+    contextId: string,
+    message: string,
+    sendNotification: boolean,
+    isEditable = false,
+    transaction: EntityManager
+  ): ReturnType<InnovationThreadsService['createThreadMessage']> {
+    const thread = await this.getThreadByContextId(contextType, contextId, transaction);
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    return this.createThreadMessage(domainContext, thread.id, message, sendNotification, isEditable, transaction);
   }
 
   async updateThreadMessage(
@@ -728,11 +730,22 @@ export class InnovationThreadsService extends BaseService {
   /*+
    * Private methods
    */
+  private async getThreadByContextId(
+    contextType: ThreadContextTypeEnum,
+    contextId: string,
+    transaction: EntityManager
+  ): Promise<InnovationThreadEntity | null> {
+    const threadQuery = transaction
+      .createQueryBuilder(InnovationThreadEntity, 'thread')
+      .where('thread.context_id = :contextId', { contextId })
+      .andWhere('thread.context_type = :contextType', { contextType });
+
+    return threadQuery.getOne();
+  }
 
   private async threadCreateTransaction(
     transaction: EntityManager,
     threadObj: InnovationThreadEntity,
-    requestUser: { id: string },
     domainContext: DomainContextType,
     innovation: InnovationEntity
   ): Promise<InnovationThreadEntity> {
@@ -757,7 +770,7 @@ export class InnovationThreadsService extends BaseService {
       );
     } catch (error) {
       this.logger.error(
-        `An error has occured while creating activity log from ${requestUser.id} for the Activity ${ActivityEnum.THREAD_CREATION}`,
+        `An error has occured while creating activity log from ${domainContext.id} for the Activity ${ActivityEnum.THREAD_CREATION}`,
         error
       );
       throw error;
@@ -768,7 +781,6 @@ export class InnovationThreadsService extends BaseService {
 
   private async createThreadMessageTransaction(
     threadMessageObj: InnovationThreadMessageEntity,
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
     transaction: EntityManager
@@ -792,7 +804,7 @@ export class InnovationThreadsService extends BaseService {
       );
     } catch (error) {
       this.logger.error(
-        `An error has occured while creating activity log from ${requestUser.id} for the Activity ${ActivityEnum.THREAD_MESSAGE_CREATION}`,
+        `An error has occured while creating activity log from ${domainContext.id} for the Activity ${ActivityEnum.THREAD_MESSAGE_CREATION}`,
         error
       );
       throw error;
@@ -802,7 +814,6 @@ export class InnovationThreadsService extends BaseService {
   }
 
   private async createThreadWithTransaction(
-    requestUser: { id: string; identityId: string },
     domainContext: DomainContextType,
     innovationId: string,
     subject: string,
@@ -817,7 +828,7 @@ export class InnovationThreadsService extends BaseService {
   }> {
     const author = await transaction
       .createQueryBuilder(UserEntity, 'users')
-      .where('users.id = :userId', { userId: requestUser.id })
+      .where('users.id = :userId', { userId: domainContext.id })
       .andWhere('users.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOneOrFail();
 
@@ -848,7 +859,7 @@ export class InnovationThreadsService extends BaseService {
       authorUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
     });
 
-    const thread = await this.threadCreateTransaction(transaction, threadObj, requestUser, domainContext, innovation);
+    const thread = await this.threadCreateTransaction(transaction, threadObj, domainContext, innovation);
 
     // add thread author as follower
     if (domainContext.currentRole.role !== ServiceRoleEnum.INNOVATOR) {

@@ -10,7 +10,8 @@ import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
-  InnovationTransferStatusEnum
+  InnovationTransferStatusEnum,
+  ThreadContextTypeEnum
 } from '../../enums/innovation.enums';
 import { NotificationContextDetailEnum, NotificationContextTypeEnum } from '../../enums/notification.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
@@ -282,6 +283,14 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationTaskStatusEnum.DONE)
         .save();
 
+      await new InnovationThreadBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.TASK)
+        .setContextId(johnInnovationTaskByAlice.id)
+        .setSubject('johnInnovationTaskByAlice')
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .save();
+
       const johnInnovationTaskByAliceOpen = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id)
         .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
@@ -292,6 +301,14 @@ export class CompleteScenarioBuilder {
         .setStatus(InnovationTaskStatusEnum.OPEN)
         .save();
 
+      await new InnovationThreadBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.TASK)
+        .setContextId(johnInnovationTaskByAliceOpen.id)
+        .setSubject('johnInnovationTaskByAliceOpen')
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .save();
+
       // task on johnInnovation created by Paul (NA)
       const johnInnovationTaskByPaul = await new InnovationTaskBuilder(entityManager)
         .setCreatedBy(paulNeedsAssessor.id)
@@ -300,6 +317,15 @@ export class CompleteScenarioBuilder {
         .setUpdatedByUserRole(paulNeedsAssessor.roles['assessmentRole']!.id)
         .setInnovationSection(johnInnovation.sections.get('INNOVATION_DESCRIPTION')!.id)
         .setStatus(InnovationTaskStatusEnum.OPEN)
+        .save();
+
+      // the thread message for the open task
+      await new InnovationThreadBuilder(entityManager)
+        .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.TASK)
+        .setContextId(johnInnovationTaskByPaul.id)
+        .setSubject('johnInnovationTaskByPaul')
+        .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
         .save();
 
       // task on johnInnovation created by Bart (QA)
