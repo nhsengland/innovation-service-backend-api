@@ -3498,10 +3498,10 @@ paths:
                   status:
                     type: string
                     enum:
-                      - DRAFT
-                      - SUBMITTED
-                      - APPROVED
-                      - REJECTED
+                      - OPEN
+                      - DONE
+                      - CANCELED
+                      - DECLINED
                   description:
                     type: string
                   section:

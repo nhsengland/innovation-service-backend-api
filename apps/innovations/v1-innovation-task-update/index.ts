@@ -36,7 +36,7 @@ class V1InnovationTaskUpdate {
       const domainContext = auth.getContext();
 
       const body = JoiHelper.Validate<BodyType>(BodySchema, request.body, {
-        userRole: domainContext.currentRole
+        userRole: domainContext.currentRole.role
       });
 
       if (
