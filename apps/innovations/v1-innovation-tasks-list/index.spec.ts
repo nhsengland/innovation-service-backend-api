@@ -26,7 +26,6 @@ const expected = {
     {
       id: randUuid(),
       displayId: randText(),
-      description: randText(),
       innovation: { id: randText(), name: randText() },
       status: InnovationTaskStatusEnum.DONE,
       section: 'INNOVATION_DESCRIPTION' as const,
@@ -40,7 +39,6 @@ const expected = {
     {
       id: randUuid(),
       displayId: randText(),
-      description: randText(),
       innovation: { id: randText(), name: randText() },
       status: InnovationTaskStatusEnum.DONE,
       section: 'INNOVATION_DESCRIPTION' as const,

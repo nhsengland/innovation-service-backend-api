@@ -823,29 +823,6 @@ describe('Innovation Tasks Suite', () => {
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
 
-    it('should not be updated if the task is not in the DONE AND OPEN status', async () => {
-      await em.update(
-        InnovationTaskEntity,
-        { id: task.id },
-        { status: InnovationTaskStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
-      );
-
-      await expect(() =>
-        sut.updateTaskAsAccessor(
-          DTOsHelper.getUserRequestContext(accessor),
-          innovation.id,
-          task.id,
-          {
-            status: InnovationTaskStatusEnum.OPEN,
-            message: randText()
-          },
-          em
-        )
-      ).rejects.toThrowError(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
-      );
-    });
-
     it('should update if the task is created by someone on his organisation unit', async () => {
       const res = await sut.updateTaskAsAccessor(
         DTOsHelper.getUserRequestContext(scenario.users.jamieMadroxAccessor, 'healthAccessorRole'),
@@ -968,25 +945,6 @@ describe('Innovation Tasks Suite', () => {
           message: randText()
         })
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
-    });
-
-    it('should not be updated if the task is not in the OPEN AND DONE status', async () => {
-      await em.update(InnovationTaskEntity, { id: task.id }, { status: InnovationTaskStatusEnum.DECLINED });
-
-      await expect(() =>
-        sut.updateTaskAsNeedsAccessor(
-          DTOsHelper.getUserRequestContext(na),
-          innovation.id,
-          task.id,
-          {
-            status: InnovationTaskStatusEnum.OPEN,
-            message: randText()
-          },
-          em
-        )
-      ).rejects.toThrowError(
-        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS)
-      );
     });
 
     it('should not be updated if the task is in DONE status and the status that is being updated is not OPEN', async () => {

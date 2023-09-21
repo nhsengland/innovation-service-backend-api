@@ -44,14 +44,17 @@ describe('v1-innovation-task-update Suite', () => {
       ['QUALIFYING_ACCESSOR', scenario.users.aliceQualifyingAccessor, updateTaskAccessor],
       ['NEEDS_ASSESSOR', scenario.users.paulNeedsAssessor, updateTaskNA],
       ['INNOVATOR', scenario.users.johnInnovator, updateTaskInnovator]
-    ])('should update an task as %s', async (_label, user, mock) => {
+    ])('should update an task as %s', async (role, user, mock) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           taskId: randUuid()
         })
-        .setBody<BodyType>({ status: InnovationTaskStatusEnum.OPEN, message: randText() })
+        .setBody<BodyType>({
+          status: role === 'INNOVATOR' ? InnovationTaskStatusEnum.DONE : InnovationTaskStatusEnum.OPEN,
+          message: randText()
+        })
         .call<ResponseDTO>(v1InnovationTaskUpdate);
 
       expect(result.body).toMatchObject(expected);
@@ -69,14 +72,17 @@ describe('v1-innovation-task-update Suite', () => {
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
       ['NA', 200, scenario.users.paulNeedsAssessor],
       ['Innovator', 200, scenario.users.johnInnovator]
-    ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
+    ])('access with user %s should give %i', async (role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
           innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
           taskId: randUuid()
         })
-        .setBody<BodyType>({ status: InnovationTaskStatusEnum.OPEN, message: randText() })
+        .setBody<BodyType>({
+          status: role === 'Innovator' ? InnovationTaskStatusEnum.DONE : InnovationTaskStatusEnum.OPEN,
+          message: randText()
+        })
         .call<ErrorResponseType>(v1InnovationTaskUpdate);
 
       expect(result.status).toBe(status);
