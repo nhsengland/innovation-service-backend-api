@@ -289,6 +289,10 @@ export class CompleteScenarioBuilder {
         .setContextId(johnInnovationTaskByAlice.id)
         .setSubject('johnInnovationTaskByAlice')
         .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'taskMessage'
+        )
         .save();
 
       const johnInnovationTaskByAliceOpen = await new InnovationTaskBuilder(entityManager)
@@ -307,6 +311,10 @@ export class CompleteScenarioBuilder {
         .setContextId(johnInnovationTaskByAliceOpen.id)
         .setSubject('johnInnovationTaskByAliceOpen')
         .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'taskMessage'
+        )
         .save();
 
       // task on johnInnovation created by Paul (NA)
@@ -326,6 +334,7 @@ export class CompleteScenarioBuilder {
         .setContextId(johnInnovationTaskByPaul.id)
         .setSubject('johnInnovationTaskByPaul')
         .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+        .addMessage({ id: paulNeedsAssessor.id, roleId: paulNeedsAssessor.roles['assessmentRole']!.id }, 'taskMessage')
         .save();
 
       // task on johnInnovation created by Bart (QA)
@@ -338,48 +347,39 @@ export class CompleteScenarioBuilder {
         .setSupport(johnInnovationSupportByHealthOrgAIUnit.id)
         .save();
 
-      const johnInnovationThreadByAlice = await (
-        await new InnovationThreadBuilder(entityManager)
-          .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
-          .setInnovation(johnInnovation.id)
-          .addMessage(
-            { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
-            'aliceMessage'
-          )
-      ).save();
+      const johnInnovationThreadByAlice = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .addMessage(
+          { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
+          'aliceMessage'
+        )
+        .save();
 
-      const johnInnovationThreadByIngrid = await (
-        await new InnovationThreadBuilder(entityManager)
-          .setAuthor(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
-          .setInnovation(johnInnovation.id)
-          .addMessage({ id: ingridAccessor.id, roleId: ingridAccessor.roles['accessorRole']!.id }, 'ingridMessage')
-      ).save();
+      const johnInnovationThreadByIngrid = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .addMessage({ id: ingridAccessor.id, roleId: ingridAccessor.roles['accessorRole']!.id }, 'ingridMessage')
+        .save();
 
-      const johnInnovationThreadByPaul = await (
-        await (
-          await new InnovationThreadBuilder(entityManager)
-            .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
-            .setInnovation(johnInnovation.id)
-            .addMessage(
-              { id: paulNeedsAssessor.id, roleId: paulNeedsAssessor.roles['assessmentRole']!.id },
-              'paulMessage'
-            )
-        ).addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
-      ).save();
+      const johnInnovationThreadByPaul = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(paulNeedsAssessor.id, paulNeedsAssessor.roles['assessmentRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .addMessage({ id: paulNeedsAssessor.id, roleId: paulNeedsAssessor.roles['assessmentRole']!.id }, 'paulMessage')
+        .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
+        .save();
 
-      const johnInnovationThreadByJane = await (
-        await new InnovationThreadBuilder(entityManager)
-          .setAuthor(janeInnovator.id, janeInnovator.roles['innovatorRole']!.id)
-          .setInnovation(johnInnovation.id)
-          .addMessage({ id: janeInnovator.id, roleId: janeInnovator.roles['innovatorRole']!.id }, 'janeMessage')
-      ).save();
+      const johnInnovationThreadByJane = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(janeInnovator.id, janeInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .addMessage({ id: janeInnovator.id, roleId: janeInnovator.roles['innovatorRole']!.id }, 'janeMessage')
+        .save();
 
-      const johnInnovationThreadByJohn = await (
-        await new InnovationThreadBuilder(entityManager)
-          .setAuthor(johnInnovator.id, johnInnovator.roles['innovatorRole']!.id)
-          .setInnovation(johnInnovation.id)
-          .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
-      ).save();
+      const johnInnovationThreadByJohn = await new InnovationThreadBuilder(entityManager)
+        .setAuthor(johnInnovator.id, johnInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .addMessage({ id: johnInnovator.id, roleId: johnInnovator.roles['innovatorRole']!.id }, 'johnMessage')
+        .save();
 
       const johnInnovationExportRequestByAlice = await new InnovationExportRequestBuilder(entityManager)
         .setCreatedBy(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)

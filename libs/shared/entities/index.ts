@@ -73,8 +73,10 @@ export { UserEntity } from './user/user.entity';
 // Views
 import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
+import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
+export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 
 // Entities lists.
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
@@ -113,4 +115,4 @@ export const USER_ENTITIES = [
   UserRoleEntity,
   UserEntity
 ];
-export const VIEW_ENTITIES = [InnovationGroupedStatusViewEntity, LastSupportStatusViewEntity];
+export const VIEW_ENTITIES = [InnovationGroupedStatusViewEntity, InnovationTaskDescriptionsViewEntity, LastSupportStatusViewEntity];

@@ -2,7 +2,6 @@
 import { container } from '../_config';
 
 import {
-  ActivityLogEntity,
   InnovationEntity,
   InnovationTaskEntity,
   InnovationThreadEntity,
@@ -10,7 +9,6 @@ import {
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
-  ActivityTypeEnum,
   InnovationStatusEnum,
   InnovationTaskStatusEnum,
   NotificationContextTypeEnum,
@@ -24,6 +22,7 @@ import {
   NotFoundError,
   UnprocessableEntityError
 } from '@innovations/shared/errors';
+import { TranslationHelper } from '@innovations/shared/helpers';
 import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { DomainInnovationsService, NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
@@ -296,42 +295,44 @@ describe('Innovation Tasks Suite', () => {
       );
 
       expect(tasks.count).toBe(2);
-      expect(tasks.data).toEqual(
-        expect.arrayContaining([
-          {
-            id: naTask.id,
-            displayId: naTask.displayId,
-            description: expect.any(String),
-            innovation: { id: innovation.id, name: innovation.name },
-            status: naTask.status,
-            section: naTask.section,
-            createdAt: expect.any(Date),
-            updatedAt: expect.any(Date),
-            updatedBy: { name: scenario.users.paulNeedsAssessor.name, role: ServiceRoleEnum.ASSESSMENT },
-            createdBy: {
-              id: scenario.users.paulNeedsAssessor.id,
-              name: scenario.users.paulNeedsAssessor.name,
-              role: ServiceRoleEnum.ASSESSMENT
-            }
+      expect(tasks.data).toMatchObject([
+        {
+          id: naTask2.id,
+          displayId: naTask2.displayId,
+          innovation: { id: innovation2.id, name: innovation2.name },
+          status: naTask2.status,
+          section: naTask2.section,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          updatedBy: {
+            name: scenario.users.seanNeedsAssessor.name,
+            displayTag: TranslationHelper.translate('TEAMS.ASSESSMENT')
           },
-          {
-            id: naTask2.id,
-            displayId: naTask2.displayId,
-            description: expect.any(String),
-            innovation: { id: innovation2.id, name: innovation2.name },
-            status: naTask2.status,
-            section: naTask2.section,
-            createdAt: expect.any(Date),
-            updatedAt: expect.any(Date),
-            updatedBy: { name: scenario.users.seanNeedsAssessor.name, role: ServiceRoleEnum.ASSESSMENT },
-            createdBy: {
-              id: scenario.users.seanNeedsAssessor.id,
-              name: scenario.users.seanNeedsAssessor.name,
-              role: ServiceRoleEnum.ASSESSMENT
-            }
-          }
-        ])
-      );
+          createdBy: {
+            name: scenario.users.seanNeedsAssessor.name,
+            displayTag: TranslationHelper.translate('TEAMS.ASSESSMENT')
+          },
+          sameOrganisation: true
+        },
+        {
+          id: naTask.id,
+          displayId: naTask.displayId,
+          innovation: { id: innovation.id, name: innovation.name },
+          status: naTask.status,
+          section: naTask.section,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          updatedBy: {
+            name: scenario.users.paulNeedsAssessor.name,
+            displayTag: TranslationHelper.translate('TEAMS.ASSESSMENT')
+          },
+          createdBy: {
+            name: scenario.users.paulNeedsAssessor.name,
+            displayTag: TranslationHelper.translate('TEAMS.ASSESSMENT')
+          },
+          sameOrganisation: true
+        }
+      ]);
     });
 
     it('should list all tasks created by NA and QA/A as a NA', async () => {
@@ -352,46 +353,38 @@ describe('Innovation Tasks Suite', () => {
         {
           id: task.id,
           displayId: task.displayId,
-          description: expect.any(String),
           innovation: { id: innovation.id, name: innovation.name },
           status: task.status,
           section: task.section,
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
-          updatedBy: { name: scenario.users.aliceQualifyingAccessor.name, role: ServiceRoleEnum.QUALIFYING_ACCESSOR },
-          createdBy: {
-            id: scenario.users.aliceQualifyingAccessor.id,
+          updatedBy: {
             name: scenario.users.aliceQualifyingAccessor.name,
-            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            organisationUnit: {
-              id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              acronym:
-                scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym,
-              name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
-            }
-          }
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          },
+          createdBy: {
+            name: scenario.users.aliceQualifyingAccessor.name,
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          },
+          sameOrganisation: true
         },
         {
           id: task2.id,
           displayId: task2.displayId,
-          description: expect.any(String),
           innovation: { id: innovation2.id, name: innovation2.name },
           status: task2.status,
           section: task2.section,
           createdAt: expect.any(Date),
           updatedAt: expect.any(Date),
-          updatedBy: { name: scenario.users.adamInnovator.name, role: ServiceRoleEnum.INNOVATOR },
+          updatedBy: { name: scenario.users.adamInnovator.name, displayTag: 'Owner' },
           createdBy: {
-            id: scenario.users.aliceQualifyingAccessor.id,
             name: scenario.users.aliceQualifyingAccessor.name,
-            role: ServiceRoleEnum.QUALIFYING_ACCESSOR,
-            organisationUnit: {
-              id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              acronym:
-                scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym,
-              name: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
-            }
-          }
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          },
+          sameOrganisation: true
         }
       ];
 
@@ -506,7 +499,10 @@ describe('Innovation Tasks Suite', () => {
       expect(tasks.data).toMatchObject([
         {
           id: expected.id,
-          createdBy: { id: scenario.users.paulNeedsAssessor.id, role: ServiceRoleEnum.ASSESSMENT }
+          createdBy: {
+            name: scenario.users.paulNeedsAssessor.name,
+            displayTag: TranslationHelper.translate('TEAMS.ASSESSMENT')
+          }
         }
       ]);
     });
@@ -521,9 +517,27 @@ describe('Innovation Tasks Suite', () => {
 
       expect(tasks.count).toBe(3);
       expect(tasks.data).toMatchObject([
-        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
-        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } },
-        { createdBy: { id: scenario.users.aliceQualifyingAccessor.id, role: ServiceRoleEnum.QUALIFYING_ACCESSOR } }
+        {
+          createdBy: {
+            name: scenario.users.aliceQualifyingAccessor.name,
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          }
+        },
+        {
+          createdBy: {
+            name: scenario.users.aliceQualifyingAccessor.name,
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          }
+        },
+        {
+          createdBy: {
+            name: scenario.users.aliceQualifyingAccessor.name,
+            displayTag:
+              scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.name
+          }
+        }
       ]);
     });
 
@@ -686,36 +700,43 @@ describe('Innovation Tasks Suite', () => {
       [ServiceRoleEnum.ASSESSMENT, innovation.tasks.taskByPaul, scenario.users.paulNeedsAssessor]
     ])('should return information about a task created by %s', async (role, task, user) => {
       const res = await sut.getTaskInfo(task.id, em);
+      const displayTag =
+        role === ServiceRoleEnum.ASSESSMENT
+          ? TranslationHelper.translate('TEAMS.ASSESSMENT')
+          : scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name;
 
       expect(res).toMatchObject({
         id: task.id,
         displayId: task.displayId,
         status: task.status,
         section: 'INNOVATION_DESCRIPTION',
-        description: expect.any(String),
+        descriptions: [
+          {
+            createdAt: expect.any(Date),
+            description: expect.any(String),
+            displayTag: displayTag,
+            name: user.name
+          }
+        ],
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
-        updatedBy: { name: user.name, role: role },
-        createdBy: {
-          id: user.id,
+        updatedBy: {
           name: user.name,
-          ...(role !== ServiceRoleEnum.ASSESSMENT && {
-            organisationUnit: {
-              id: user.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
-              name: user.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
-              acronym: user.organisations.healthOrg.organisationUnits.healthOrgUnit.acronym
-            }
-          })
+          displayTag: displayTag
+        },
+        createdBy: {
+          name: user.name,
+          displayTag: displayTag
         }
       });
     });
 
-    it('should return updatedBy isOwner is true if status is SUBMITTED by owner', async () => {
+    it('should return updatedBy Owner if status is SUBMITTED by owner', async () => {
       const res = await sut.getTaskInfo(innovation.tasks.taskByAliceOpen.id, em);
-      expect(res.updatedBy.isOwner).toBe(true);
+      expect(res.updatedBy.displayTag).toBe('Owner');
     });
 
-    it('should return updatedBy isOwner is false if status is SUBMITTED by other innovator', async () => {
+    it('should return updatedBy Collaborator if status is SUBMITTED by other innovator', async () => {
       await em.getRepository(InnovationTaskEntity).update(
         { id: innovation.tasks.taskByAliceOpen.id },
         {
@@ -724,70 +745,7 @@ describe('Innovation Tasks Suite', () => {
         }
       );
       const res = await sut.getTaskInfo(innovation.tasks.taskByAliceOpen.id, em);
-      expect(res.updatedBy.isOwner).toBe(false);
-    });
-
-    it('should return declineReason of a task in status DECLINED', async () => {
-      const task = innovation.tasks.taskByPaul;
-      await em.update(
-        InnovationTaskEntity,
-        { id: task.id },
-        { status: InnovationTaskStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
-      );
-
-      const declineReason = randText();
-      await em.getRepository(ActivityLogEntity).save({
-        type: ActivityTypeEnum.INNOVATION_RECORD,
-        activity: ActivityEnum.TASK_STATUS_DECLINED_UPDATE,
-        userRole: { id: scenario.users.johnInnovator.roles.innovatorRole.id },
-        param: {
-          comment: { value: declineReason },
-          taskId: task.id
-        },
-        innovation: { id: innovation.id }
-      });
-
-      const res = await sut.getTaskInfo(task.id, em);
-
-      expect(res).toMatchObject({
-        id: task.id,
-        displayId: task.displayId,
-        status: InnovationTaskStatusEnum.DECLINED,
-        section: 'INNOVATION_DESCRIPTION',
-        description: expect.any(String),
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-        updatedBy: { name: scenario.users.paulNeedsAssessor.name, role: ServiceRoleEnum.ASSESSMENT },
-        createdBy: {
-          id: scenario.users.paulNeedsAssessor.id,
-          name: scenario.users.paulNeedsAssessor.name,
-          role: ServiceRoleEnum.ASSESSMENT
-        },
-        declineReason
-      });
-    });
-
-    it("shouldn't return declineReason of a task in status DECLINED but reason was not provided", async () => {
-      const task = innovation.tasks.taskByPaul;
-      await em.update(
-        InnovationTaskEntity,
-        { id: task.id },
-        { status: InnovationTaskStatusEnum.DECLINED, updatedBy: scenario.users.johnInnovator.id }
-      );
-
-      await em.getRepository(ActivityLogEntity).save({
-        type: ActivityTypeEnum.INNOVATION_RECORD,
-        activity: ActivityEnum.TASK_STATUS_DECLINED_UPDATE,
-        userRole: { id: scenario.users.johnInnovator.roles.innovatorRole.id },
-        param: {
-          taskId: task.id
-        },
-        innovation: { id: innovation.id }
-      });
-
-      const res = await sut.getTaskInfo(task.id, em);
-
-      expect(res.declineReason).toBeUndefined();
+      expect(res.updatedBy.displayTag).toBe('Collaborator');
     });
 
     it("should return error when taskId doesn't exist", async () => {

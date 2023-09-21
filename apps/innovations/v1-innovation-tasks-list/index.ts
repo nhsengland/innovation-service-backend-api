@@ -45,17 +45,14 @@ class V1InnovationTasksList {
           id: item.id,
           displayId: item.displayId,
           status: item.status,
-          description: item.description,
           innovation: { id: item.innovation.id, name: item.innovation.name },
           section: item.section,
           createdAt: item.createdAt,
           updatedAt: item.updatedAt,
-          updatedBy: {
-            name: item.updatedBy.name,
-            role: item.updatedBy.role
-          },
-          createdBy: { ...item.createdBy },
-          ...(item.notifications === undefined ? {} : { notifications: item.notifications })
+          updatedBy: { name: item.updatedBy.name, displayTag: item.updatedBy.displayTag },
+          createdBy: { name: item.createdBy.name, displayTag: item.createdBy.displayTag },
+          sameOrganisation: item.sameOrganisation,
+          ...(item.notifications && { notifications: item.notifications })
         }))
       });
       return;

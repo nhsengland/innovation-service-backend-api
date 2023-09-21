@@ -38,17 +38,18 @@ class V1InnovationTaskInfo {
         id: result.id,
         displayId: result.displayId,
         status: result.status,
-        description: result.description,
+        descriptions: result.descriptions,
         section: result.section,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
         updatedBy: {
           name: result.updatedBy.name,
-          role: result.updatedBy.role,
-          ...(result.updatedBy.isOwner !== undefined && { isOwner: result.updatedBy.isOwner })
+          displayTag: result.updatedBy.displayTag
         },
-        createdBy: { ...result.createdBy },
-        ...(result.declineReason ? { declineReason: result.declineReason } : {})
+        createdBy: {
+          name: result.createdBy.name,
+          displayTag: result.createdBy.displayTag
+        }
       });
       return;
     } catch (error) {

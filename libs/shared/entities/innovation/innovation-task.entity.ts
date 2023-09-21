@@ -1,9 +1,10 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
 import { InnovationTaskStatusEnum } from '../../enums/innovation.enums';
 import { UserRoleEntity } from '../user/user-role.entity';
+import { InnovationTaskDescriptionsViewEntity } from '../views/innovation-task-descriptions.view.entity';
 import { InnovationSectionEntity } from './innovation-section.entity';
 import { InnovationSupportEntity } from './innovation-support.entity';
 
@@ -14,8 +15,6 @@ export class InnovationTaskEntity extends BaseEntity {
 
   @Column({ name: 'display_id', length: 5 })
   displayId: string;
-
-  // TODO missing messages
 
   @Column({ type: 'simple-enum', enum: InnovationTaskStatusEnum, nullable: false })
   status: InnovationTaskStatusEnum;
@@ -35,6 +34,9 @@ export class InnovationTaskEntity extends BaseEntity {
   @ManyToOne(() => UserRoleEntity)
   @JoinColumn({ name: 'updated_by_user_role_id' })
   updatedByUserRole: UserRoleEntity;
+
+  @OneToMany(() => InnovationTaskDescriptionsViewEntity, description => description.task)
+  descriptions: InnovationTaskDescriptionsViewEntity[];
 
   static new(data: Partial<InnovationTaskEntity>): InnovationTaskEntity {
     const instance = new InnovationTaskEntity();

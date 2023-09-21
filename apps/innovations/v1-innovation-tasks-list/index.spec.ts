@@ -32,12 +32,10 @@ const expected = {
       section: 'INNOVATION_DESCRIPTION' as const,
       createdAt: new Date(),
       updatedAt: new Date(),
-      updatedBy: { name: randFullName() },
-      createdBy: {
-        id: randUuid(),
-        name: randFullName()
-      },
-      notifications: randNumber()
+      updatedBy: { name: randFullName(), displayTag: randText() },
+      createdBy: { name: randFullName(), displayTag: randText() },
+      notifications: randNumber(),
+      sameOrganisation: true
     },
     {
       id: randUuid(),
@@ -48,11 +46,9 @@ const expected = {
       section: 'INNOVATION_DESCRIPTION' as const,
       createdAt: new Date(),
       updatedAt: new Date(),
-      updatedBy: { name: randFullName() },
-      createdBy: {
-        id: randUuid(),
-        name: randFullName()
-      }
+      updatedBy: { name: randFullName(), displayTag: randText() },
+      createdBy: { name: randFullName(), displayTag: randText() },
+      sameOrganisation: true
     }
   ]
 };

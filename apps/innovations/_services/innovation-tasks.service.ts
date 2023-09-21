@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 
 import {
-  ActivityLogEntity,
   InnovationEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
@@ -30,7 +29,7 @@ import {
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
-import { ActivityLogListParamsType, DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
+import { DomainContextType, isAccessorDomainContextType } from '@innovations/shared/types';
 
 import { CurrentCatalogTypes, CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-record';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -73,19 +72,14 @@ export class InnovationTasksService extends BaseService {
     data: {
       id: string;
       displayId: string;
-      description: string;
       innovation: { id: string; name: string };
       status: InnovationTaskStatusEnum;
       section: CurrentCatalogTypes.InnovationSections;
       createdAt: Date;
+      createdBy: { name: string; displayTag: string };
       updatedAt: Date;
-      updatedBy: { name: string; role?: ServiceRoleEnum | undefined };
-      createdBy: {
-        id: string;
-        name: string;
-        role?: ServiceRoleEnum | undefined;
-        organisationUnit?: { id: string; name: string; acronym?: string };
-      };
+      updatedBy: { name: string; displayTag: string };
+      sameOrganisation: boolean;
       notifications?: number;
     }[];
   }> {
@@ -280,34 +274,31 @@ export class InnovationTasksService extends BaseService {
     const data = tasks.map(task => ({
       id: task.id,
       displayId: task.displayId,
-      description: 'TODO descriptions',
       innovation: {
         id: task.innovationSection.innovation.id,
         name: task.innovationSection.innovation.name
       },
       status: task.status,
       section: task.innovationSection.section,
+      sameOrganisation:
+        domainContext.currentRole.role === task.createdByUserRole.role &&
+        domainContext.organisation?.organisationUnit?.id === task.innovationSupport?.organisationUnit.id,
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       updatedBy: {
         name:
           (task.updatedByUserRole && usersInfo.get(task.updatedByUserRole.user.identityId)?.displayName) ??
           '[deleted account]',
-        role: task.updatedByUserRole?.role
+        displayTag: this.domainService.users.getDisplayTag(task.updatedByUserRole.role, {
+          unitName: task.innovationSupport?.organisationUnit?.name,
+          isOwner: task.innovationSection.innovation.owner?.id === task.updatedByUserRole.user.id
+        })
       },
       createdBy: {
-        id: task.createdByUserRole.user.id,
         name: usersInfo.get(task.createdByUserRole.user.identityId)?.displayName ?? '[deleted account]',
-        role: task.createdByUserRole?.role,
-        ...(task.innovationSupport
-          ? {
-              organisationUnit: {
-                id: task.innovationSupport?.organisationUnit?.id,
-                name: task.innovationSupport?.organisationUnit?.name,
-                acronym: task.innovationSupport?.organisationUnit?.acronym
-              }
-            }
-          : {})
+        displayTag: this.domainService.users.getDisplayTag(task.createdByUserRole.role, {
+          unitName: task.innovationSupport?.organisationUnit?.name
+        })
       },
       ...(!filters.fields?.includes('notifications')
         ? {}
@@ -327,17 +318,16 @@ export class InnovationTasksService extends BaseService {
     displayId: string;
     status: InnovationTaskStatusEnum;
     section: CurrentCatalogTypes.InnovationSections;
-    description: string;
+    descriptions: {
+      description: string;
+      createdAt: Date;
+      name: string;
+      displayTag: string;
+    }[];
     createdAt: Date;
     updatedAt: Date;
-    updatedBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean };
-    createdBy: {
-      id: string;
-      name: string;
-      role: ServiceRoleEnum;
-      organisationUnit?: { id: string; name: string; acronym?: string };
-    };
-    declineReason?: string;
+    updatedBy: { name: string; displayTag: string };
+    createdBy: { name: string; displayTag: string };
   }> {
     const em = entityManager ?? this.sqlConnection.manager;
 
@@ -351,16 +341,17 @@ export class InnovationTasksService extends BaseService {
         'task.updatedAt',
         'task.createdBy',
         'task.updatedBy',
-        'innovationSection.id',
+        'descriptions.description',
+        'descriptions.createdAt',
+        'descriptions.createdByIdentityId',
+        'descriptions.createdByRole',
+        'descriptions.createdByOrganisationUnitName',
         'innovationSection.section',
         'innovation.id',
         'owner.id',
         'owner.status',
-        'createdByUserRole.id',
         'createdByUserRole.role',
-        'createdByUserOrganisationUnit.id',
         'createdByUserOrganisationUnit.name',
-        'createdByUserOrganisationUnit.acronym',
         'createdByUser.id',
         'createdByUser.identityId',
         'createdByUser.status',
@@ -371,6 +362,7 @@ export class InnovationTasksService extends BaseService {
         'updatedByUser.status'
       ])
       .innerJoin('task.innovationSection', 'innovationSection')
+      .innerJoin('task.descriptions', 'descriptions')
       .innerJoin('innovationSection.innovation', 'innovation')
       .leftJoin('innovation.owner', 'owner')
       .leftJoin('task.createdByUserRole', 'createdByUserRole')
@@ -384,64 +376,55 @@ export class InnovationTasksService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
     }
 
-    // TODO check how this ends up with the new tasks, strange to go fetch this from the activityLog
-    let declineReason: string | null = null;
-    if (dbTask.status === InnovationTaskStatusEnum.DECLINED) {
-      const activityLogDeclineReason = await em
-        .createQueryBuilder(ActivityLogEntity, 'activityLog')
-        .where('activityLog.innovation_id = :innovationId', {
-          innovationId: dbTask.innovationSection.innovation.id
-        })
-        .andWhere('activity = :activity', { activity: ActivityEnum.TASK_STATUS_DECLINED_UPDATE })
-        .andWhere("JSON_VALUE(param, '$.taskId') = :taskId", { taskId: taskId })
-        .getOne();
-
-      if (activityLogDeclineReason?.param) {
-        const params = activityLogDeclineReason.param as ActivityLogListParamsType;
-        declineReason = params.comment?.value ?? null;
-      }
-    }
+    // The view already filters deleted users
+    const users = [
+      dbTask.createdByUserRole.user.identityId,
+      dbTask.updatedByUserRole?.user.identityId,
+      ...dbTask.descriptions.map(d => d.createdByIdentityId)
+    ].filter((s): s is string => !!s);
+    const usersMap = await this.identityProviderService.getUsersMap(users);
 
     let createdByUserName = '[deleted user]';
     if (dbTask.createdByUserRole.user.status !== UserStatusEnum.DELETED) {
-      createdByUserName = (await this.identityProviderService.getUserInfo(dbTask.createdByUserRole.user.identityId))
-        .displayName;
+      createdByUserName = usersMap.get(dbTask.createdByUserRole.user.identityId)?.displayName ?? '';
     }
 
     let lastUpdatedByUserName = '[deleted user]';
     if (dbTask.updatedByUserRole && dbTask.updatedByUserRole.user.status !== UserStatusEnum.DELETED) {
-      lastUpdatedByUserName = (await this.identityProviderService.getUserInfo(dbTask.updatedByUserRole.user.identityId))
-        .displayName;
+      lastUpdatedByUserName = usersMap.get(dbTask.updatedByUserRole.user.identityId)?.displayName ?? '';
     }
+
+    // Tasks only have one unit so using this shortcut
+    const unitName = dbTask.createdByUserRole.organisationUnit?.name;
 
     return {
       id: dbTask.id,
       displayId: dbTask.displayId,
       status: dbTask.status,
-      description: 'TODO descriptions',
+      descriptions: dbTask.descriptions.map(d => ({
+        description: d.description,
+        createdAt: d.createdAt,
+        name: usersMap.get(d.createdByIdentityId ?? '')?.displayName ?? 'deleted user',
+        displayTag: this.domainService.users.getDisplayTag(d.createdByRole, {
+          unitName: d.createdByOrganisationUnitName
+        })
+      })),
       section: dbTask.innovationSection.section,
       createdAt: dbTask.createdAt,
       updatedAt: dbTask.updatedAt,
       updatedBy: {
         name: lastUpdatedByUserName,
-        role: dbTask.updatedByUserRole?.role,
-        ...(dbTask.updatedByUserRole?.role === ServiceRoleEnum.INNOVATOR && {
+        displayTag: this.domainService.users.getDisplayTag(dbTask.updatedByUserRole.role, {
+          unitName,
           isOwner: dbTask.innovationSection.innovation.owner?.id === dbTask.updatedByUserRole.user.id
         })
       },
       createdBy: {
-        id: dbTask.createdByUserRole.user.id,
         name: createdByUserName,
-        role: dbTask.createdByUserRole.role,
-        ...(dbTask.createdByUserRole.organisationUnit && {
-          organisationUnit: {
-            id: dbTask.createdByUserRole.organisationUnit.id,
-            name: dbTask.createdByUserRole.organisationUnit.name,
-            acronym: dbTask.createdByUserRole.organisationUnit.acronym
-          }
+        displayTag: this.domainService.users.getDisplayTag(dbTask.updatedByUserRole.role, {
+          unitName
         })
-      },
-      ...(declineReason ? { declineReason } : {})
+      }
     };
   }
 

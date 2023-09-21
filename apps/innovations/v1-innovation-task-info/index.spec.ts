@@ -1,12 +1,11 @@
 import v1InnovationTaskInfo from '.';
 
-import { InnovationTaskStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationTaskStatusEnum } from '@innovations/shared/enums';
 import { GenericErrorsEnum } from '@innovations/shared/errors';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
-import { cloneDeep } from 'lodash';
 import { InnovationTasksService } from '../_services/innovation-tasks.service';
 import type { ResponseDTO } from './transformation.dtos';
 import type { ParamsType } from './validation.schemas';
@@ -29,16 +28,18 @@ const exampleTask = {
   displayId: 'UC01',
   status: InnovationTaskStatusEnum.DONE,
   section: 'INNOVATION_DESCRIPTION' as const,
-  description: 'description 1',
+  descriptions: [
+    {
+      description: 'description 1',
+      createdAt: new Date(),
+      name: 'name 1',
+      displayTag: 'orgUnit1'
+    }
+  ],
   createdAt: new Date(),
   updatedAt: new Date(),
-  updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
-  createdBy: {
-    id: randomUUID(),
-    name: 'name 1',
-    role: ServiceRoleEnum.ACCESSOR,
-    organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
-  }
+  updatedBy: { name: 'name 1', displayTag: 'NHS Innovation Service' },
+  createdBy: { name: 'name 1', displayTag: 'NHS Innovation Service' }
 };
 const mock = jest.spyOn(InnovationTasksService.prototype, 'getTaskInfo').mockResolvedValue(exampleTask);
 
@@ -58,54 +59,6 @@ describe('v1-innovation-task-info Suite', () => {
         .call<ResponseDTO>(v1InnovationTaskInfo);
 
       expect(result.body).toMatchObject(exampleTask);
-      expect(result.status).toBe(200);
-    });
-
-    it('should return an decline reason when task status is DECLINED', async () => {
-      const expected = {
-        id: randomUUID(),
-        displayId: 'UC01',
-        status: InnovationTaskStatusEnum.DECLINED,
-        section: 'IMPLEMENTATION_PLAN',
-        description: 'description 1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        updatedBy: { name: 'name 1', role: ServiceRoleEnum.ACCESSOR },
-        createdBy: {
-          id: randomUUID(),
-          name: 'name 1',
-          role: ServiceRoleEnum.ACCESSOR,
-          organisationUnit: { id: randomUUID(), name: 'NHS Innovation Service', acronym: 'NHS-IS' }
-        },
-        declineReason: 'this was rejected'
-      };
-
-      mock.mockResolvedValueOnce(expected as any);
-
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.johnInnovator)
-        .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          taskId: exampleTask.id
-        })
-        .call<ResponseDTO>(v1InnovationTaskInfo);
-
-      expect(result.body).toMatchObject(expected);
-      expect(result.status).toBe(200);
-    });
-
-    it('should return isOwner = true when updatedBy is the owner of the innovation', async () => {
-      const mockRes = cloneDeep({ ...exampleTask, updatedBy: { ...exampleTask.updatedBy, isOwner: true } });
-      mock.mockResolvedValueOnce(mockRes);
-      const result = await new AzureHttpTriggerBuilder()
-        .setAuth(scenario.users.johnInnovator)
-        .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          taskId: mockRes.id
-        })
-        .call<ResponseDTO>(v1InnovationTaskInfo);
-
-      expect(result.body).toMatchObject(mockRes);
       expect(result.status).toBe(200);
     });
   });

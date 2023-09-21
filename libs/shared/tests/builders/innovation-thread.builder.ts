@@ -61,7 +61,7 @@ export class InnovationThreadBuilder extends BaseBuilder {
     return this;
   }
 
-  async addMessage(author: { id: string; roleId: string }, key: string, message?: string): Promise<this> {
+  addMessage(author: { id: string; roleId: string }, key: string, message?: string): this {
     const messageText = message ?? randText({ charCount: 20 });
     this.messagesToAdd[key] = { author, message: messageText };
     return this;
@@ -76,7 +76,9 @@ export class InnovationThreadBuilder extends BaseBuilder {
         .getRepository(InnovationThreadMessageEntity)
         .save(
           InnovationThreadMessageEntity.new({
+            message: messageToAdd[1].message,
             author: UserEntity.new({ id: messageToAdd[1].author.id }),
+            createdBy: messageToAdd[1].author.id,
             authorUserRole: UserRoleEntity.new({ id: messageToAdd[1].author.roleId }),
             thread: savedThread
           })
@@ -89,7 +91,7 @@ export class InnovationThreadBuilder extends BaseBuilder {
       };
       // special case for tasks
       if (this.thread.contextType == ThreadContextTypeEnum.TASK && this.thread.contextId) {
-        await this.getEntityManager().query('INSERT INTO innovation_task_message VALUES ($1, $2)', [
+        await this.getEntityManager().query('INSERT INTO innovation_task_message VALUES (@0, @1)', [
           this.thread.contextId,
           savedMessage.id
         ]);

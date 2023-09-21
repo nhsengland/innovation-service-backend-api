@@ -7,7 +7,13 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '../../enums';
-import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
+import {
+  GenericErrorsEnum,
+  InternalServerError,
+  NotFoundError,
+  NotImplementedError,
+  UserErrorsEnum
+} from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { DomainContextType, RoleType } from '../../types';
 
@@ -459,6 +465,7 @@ export class DomainUsersService {
     return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
   }
 
+  // try to deprecate
   getDisplayRoleInformation(userId: string, role: ServiceRoleEnum, innovationOwnerId?: string): string | undefined {
     if (role !== ServiceRoleEnum.INNOVATOR) {
       return TranslationHelper.translate(`SERVICE_ROLES.${role}`);
@@ -471,6 +478,7 @@ export class DomainUsersService {
     return;
   }
 
+  // try to deprecate
   getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string): string | undefined {
     if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
       return unitName;
@@ -481,6 +489,26 @@ export class DomainUsersService {
     }
 
     return;
+  }
+
+  // in the future improve this with other "template" requirements, but keep it a standard
+  // this function is supposed to be the standard display of additional info for the users and should
+  // adjust the output according to the data passed, the invoker controls what's shown by passing the data
+  // but the same data will always produce the same output
+  getDisplayTag(role: ServiceRoleEnum, data: { unitName?: string | null; isOwner?: boolean }): string {
+    switch (role) {
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return data.unitName ?? '';
+      case ServiceRoleEnum.ASSESSMENT:
+      case ServiceRoleEnum.ADMIN:
+        return TranslationHelper.translate(`TEAMS.${role}`);
+      case ServiceRoleEnum.INNOVATOR:
+        return data.isOwner === undefined ? 'Innovator' : data.isOwner ? 'Owner' : 'Collaborator';
+      default:
+        const r: never = role;
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
+    }
   }
 
   private async getUserIdentityIdByEmail(email: string): Promise<string> {
