@@ -28,13 +28,13 @@ const expected = {
       type: ActivityTypeEnum.TASKS,
       activity: ActivityEnum.TASK_CREATION,
       date: new Date(),
-      params: { taskUserName: randUserName() }
+      params: { actionUserName: randUserName() }
     },
     {
       type: ActivityTypeEnum.TASKS,
       activity: ActivityEnum.TASK_CREATION,
       date: new Date(),
-      params: { taskUserName: randUserName() }
+      params: { actionUserName: randUserName() }
     }
   ]
 };

@@ -222,7 +222,7 @@ export type ActivityLogDBParamsType = {
   assessmentId?: string;
   sectionId?: CurrentCatalogTypes.InnovationSections;
   taskId?: string;
-  taskUserRole?: ServiceRoleEnum;
+  actionUserRole?: ServiceRoleEnum;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
   organisations?: string[]; // This holds the name, not id's.
@@ -247,7 +247,7 @@ export type ActivityLogDBParamsType = {
 
 // // This is the type of the list of activities.
 export type ActivityLogListParamsType = ActivityLogDBParamsType & {
-  taskUserName: string;
+  actionUserName: string;
   interveningUserName?: string;
 };
 
