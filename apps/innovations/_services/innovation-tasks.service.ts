@@ -556,8 +556,7 @@ export class InnovationTasksService extends BaseService {
     if (
       ![InnovationTaskStatusEnum.CANCELLED, InnovationTaskStatusEnum.OPEN].includes(data.status) ||
       (data.status === InnovationTaskStatusEnum.CANCELLED && dbTask.status !== InnovationTaskStatusEnum.OPEN) ||
-      (data.status === InnovationTaskStatusEnum.OPEN &&
-        ![InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED].includes(dbTask.status))
+      (data.status === InnovationTaskStatusEnum.OPEN && dbTask.status === InnovationTaskStatusEnum.OPEN)
     ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS);
     }
@@ -607,8 +606,7 @@ export class InnovationTasksService extends BaseService {
     if (
       ![InnovationTaskStatusEnum.CANCELLED, InnovationTaskStatusEnum.OPEN].includes(data.status) ||
       (data.status === InnovationTaskStatusEnum.CANCELLED && dbTask.status !== InnovationTaskStatusEnum.OPEN) ||
-      (data.status === InnovationTaskStatusEnum.OPEN &&
-        ![InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.DECLINED].includes(dbTask.status))
+      (data.status === InnovationTaskStatusEnum.OPEN && dbTask.status === InnovationTaskStatusEnum.OPEN)
     ) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_TASK_WITH_UNPROCESSABLE_STATUS);
     }
