@@ -751,10 +751,10 @@ export class InnovationTasksService extends BaseService {
         );
       }
 
-      if (data.status === InnovationTaskStatusEnum.OPEN) {
+      if (data.status === InnovationTaskStatusEnum.DONE) {
         await this.domainService.innovations.addActivityLog(
           transaction,
-          { innovationId, activity: ActivityEnum.TASK_STATUS_OPEN_UPDATE, domainContext },
+          { innovationId, activity: ActivityEnum.TASK_STATUS_DONE_UPDATE, domainContext },
           { taskId: dbTask.id }
         );
       }

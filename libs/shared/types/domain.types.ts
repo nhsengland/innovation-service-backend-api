@@ -302,7 +302,7 @@ export type ActivityLogTemplatesType = {
     };
   };
   [ActivityEnum.TASK_STATUS_DONE_UPDATE]: {
-    params: { sectionId: CurrentCatalogTypes.InnovationSections; totalTasks: number };
+    params: { taskId: string };
   };
   [ActivityEnum.TASK_STATUS_OPEN_UPDATE]: {
     params: { taskId: string };

@@ -5,8 +5,7 @@ import {
   InnovationEntity,
   InnovationSectionEntity,
   InnovationTaskEntity,
-  UserEntity,
-  UserRoleEntity
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -14,12 +13,11 @@ import {
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationTaskStatusEnum,
-  NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -44,7 +42,6 @@ export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
@@ -431,15 +428,6 @@ export class InnovationSectionsService extends BaseService {
       dbSection.submittedAt = now;
       dbSection.submittedBy = UserEntity.new({ id: domainContext.id });
 
-      // Update section tasks.
-      // TODO this will likely change during this sprint
-      const openTasks = (await dbSection.tasks).filter(task => task.status === InnovationTaskStatusEnum.OPEN);
-      for (const task of openTasks) {
-        task.status = InnovationTaskStatusEnum.DONE;
-        task.updatedBy = domainContext.id;
-        task.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
-      }
-
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
 
       // Update document snapshot
@@ -463,29 +451,6 @@ export class InnovationSectionsService extends BaseService {
           },
           { sectionId: savedSection.section }
         );
-      }
-
-      if (openTasks.length > 0) {
-        await this.domainService.innovations.addActivityLog(
-          transaction,
-          {
-            innovationId: dbInnovation.id,
-            activity: ActivityEnum.TASK_STATUS_DONE_UPDATE,
-            domainContext
-          },
-          { sectionId: savedSection.section, totalTasks: openTasks.length }
-        );
-
-        for (const task of openTasks) {
-          await this.notifierService.send(domainContext, NotifierTypeEnum.TASK_UPDATE, {
-            innovationId: dbInnovation.id,
-            task: {
-              id: task.id,
-              section: savedSection.section,
-              status: InnovationTaskStatusEnum.DONE
-            }
-          });
-        }
       }
 
       return { id: savedSection.id };
