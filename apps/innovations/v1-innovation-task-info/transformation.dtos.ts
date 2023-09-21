@@ -12,6 +12,7 @@ export type ResponseDTO = {
     name: string;
     displayTag: string;
   }[];
+  sameOrganisation: boolean;
   createdAt: Date;
   updatedAt: Date;
   updatedBy: { name: string; displayTag: string };

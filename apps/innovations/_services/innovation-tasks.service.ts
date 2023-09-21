@@ -280,9 +280,10 @@ export class InnovationTasksService extends BaseService {
       },
       status: task.status,
       section: task.innovationSection.section,
-      sameOrganisation:
-        domainContext.currentRole.role === task.createdByUserRole.role &&
-        domainContext.organisation?.organisationUnit?.id === task.innovationSupport?.organisationUnit.id,
+      sameOrganisation: this.isSameOrganisation(domainContext, {
+        role: task.createdByUserRole.role,
+        unitId: task.innovationSupport?.organisationUnit.id
+      }),
       createdAt: task.createdAt,
       updatedAt: task.updatedAt,
       updatedBy: {
@@ -311,6 +312,7 @@ export class InnovationTasksService extends BaseService {
   }
 
   async getTaskInfo(
+    domainContext: DomainContextType,
     taskId: string,
     entityManager?: EntityManager
   ): Promise<{
@@ -324,6 +326,7 @@ export class InnovationTasksService extends BaseService {
       name: string;
       displayTag: string;
     }[];
+    sameOrganisation: boolean;
     createdAt: Date;
     updatedAt: Date;
     updatedBy: { name: string; displayTag: string };
@@ -351,6 +354,7 @@ export class InnovationTasksService extends BaseService {
         'owner.id',
         'owner.status',
         'createdByUserRole.role',
+        'createdByUserOrganisationUnit.id',
         'createdByUserOrganisationUnit.name',
         'createdByUser.id',
         'createdByUser.identityId',
@@ -410,6 +414,10 @@ export class InnovationTasksService extends BaseService {
         })
       })),
       section: dbTask.innovationSection.section,
+      sameOrganisation: this.isSameOrganisation(domainContext, {
+        role: dbTask.createdByUserRole.role,
+        unitId: dbTask.createdByUserRole.organisationUnit?.id
+      }),
       createdAt: dbTask.createdAt,
       updatedAt: dbTask.updatedAt,
       updatedBy: {
@@ -421,7 +429,7 @@ export class InnovationTasksService extends BaseService {
       },
       createdBy: {
         name: createdByUserName,
-        displayTag: this.domainService.users.getDisplayTag(dbTask.updatedByUserRole.role, {
+        displayTag: this.domainService.users.getDisplayTag(dbTask.createdByUserRole.role, {
           unitName
         })
       }
@@ -804,5 +812,15 @@ export class InnovationTasksService extends BaseService {
         innovation_thread_message_id: messageId
       })
       .execute();
+  }
+
+  private isSameOrganisation(
+    domainContext: DomainContextType,
+    createdBy: { role: ServiceRoleEnum; unitId: string | undefined }
+  ): boolean {
+    return (
+      domainContext.currentRole.role === createdBy.role &&
+      domainContext.organisation?.organisationUnit?.id === createdBy.unitId
+    );
   }
 }

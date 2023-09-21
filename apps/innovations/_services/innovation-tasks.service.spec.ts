@@ -699,7 +699,7 @@ describe('Innovation Tasks Suite', () => {
       [ServiceRoleEnum.QUALIFYING_ACCESSOR, innovation.tasks.taskByAlice, scenario.users.aliceQualifyingAccessor],
       [ServiceRoleEnum.ASSESSMENT, innovation.tasks.taskByPaul, scenario.users.paulNeedsAssessor]
     ])('should return information about a task created by %s', async (role, task, user) => {
-      const res = await sut.getTaskInfo(task.id, em);
+      const res = await sut.getTaskInfo(DTOsHelper.getUserRequestContext(user), task.id, em);
       const displayTag =
         role === ServiceRoleEnum.ASSESSMENT
           ? TranslationHelper.translate('TEAMS.ASSESSMENT')
@@ -718,6 +718,7 @@ describe('Innovation Tasks Suite', () => {
             name: user.name
           }
         ],
+        sameOrganisation: true,
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         updatedBy: {
@@ -732,7 +733,11 @@ describe('Innovation Tasks Suite', () => {
     });
 
     it('should return updatedBy Owner if status is SUBMITTED by owner', async () => {
-      const res = await sut.getTaskInfo(innovation.tasks.taskByAliceOpen.id, em);
+      const res = await sut.getTaskInfo(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.tasks.taskByAliceOpen.id,
+        em
+      );
       expect(res.updatedBy.displayTag).toBe('Owner');
     });
 
@@ -744,14 +749,18 @@ describe('Innovation Tasks Suite', () => {
           updatedByUserRole: { id: scenario.users.adamInnovator.roles.innovatorRole.id }
         }
       );
-      const res = await sut.getTaskInfo(innovation.tasks.taskByAliceOpen.id, em);
+      const res = await sut.getTaskInfo(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.tasks.taskByAliceOpen.id,
+        em
+      );
       expect(res.updatedBy.displayTag).toBe('Collaborator');
     });
 
     it("should return error when taskId doesn't exist", async () => {
-      await expect(() => sut.getTaskInfo(randUuid())).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND)
-      );
+      await expect(() =>
+        sut.getTaskInfo(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid())
+      ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND));
     });
   });
 

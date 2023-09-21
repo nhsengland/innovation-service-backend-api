@@ -36,6 +36,7 @@ const exampleTask = {
       displayTag: 'orgUnit1'
     }
   ],
+  sameOrganisation: true,
   createdAt: new Date(),
   updatedAt: new Date(),
   updatedBy: { name: 'name 1', displayTag: 'NHS Innovation Service' },

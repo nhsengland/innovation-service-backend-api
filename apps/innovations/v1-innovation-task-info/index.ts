@@ -23,7 +23,7 @@ class V1InnovationTaskInfo {
     try {
       const params = JoiHelper.Validate<ParamsType>(ParamsSchema, request.params);
 
-      await authorizationService
+      const auth = await authorizationService
         .validate(context)
         .setInnovation(params.innovationId)
         .checkAccessorType()
@@ -33,13 +33,16 @@ class V1InnovationTaskInfo {
         .checkInnovation()
         .verify();
 
-      const result = await innovationTasksService.getTaskInfo(params.taskId);
+      const domainContext = auth.getContext();
+
+      const result = await innovationTasksService.getTaskInfo(domainContext, params.taskId);
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         displayId: result.displayId,
         status: result.status,
         descriptions: result.descriptions,
         section: result.section,
+        sameOrganisation: result.sameOrganisation,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,
         updatedBy: {
