@@ -992,7 +992,7 @@ export class InnovationsService extends BaseService {
               lastLoginAt: ownerInfo?.lastLoginAt ?? null,
               organisations: [
                 {
-                  name: innovation.owner.serviceRoles[0]?.organisation?.name || '', 
+                  name: innovation.owner.serviceRoles[0]?.organisation?.name || '',
                   size: innovation.owner.serviceRoles[0]?.organisation?.size || ''
                 }
               ]
@@ -1524,13 +1524,13 @@ export class InnovationsService extends BaseService {
       data: dbActivities.map(item => {
         const params = item.param as ActivityLogListParamsType;
 
-        params.taskUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
+        params.actionUserName = usersInfo.get(item.createdBy)?.displayName ?? '[deleted account]';
 
         if (params.interveningUserId) {
           params.interveningUserName = usersInfo.get(params.interveningUserId)?.displayName ?? '[deleted account]';
         }
 
-        params.taskUserRole = item.userRole.role;
+        params.actionUserRole = item.userRole.role;
 
         return {
           activity: item.activity,
