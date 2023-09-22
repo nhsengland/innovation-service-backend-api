@@ -25,7 +25,8 @@ import {
   InnovationErrorsEnum,
   NotFoundError,
   NotImplementedError,
-  UnprocessableEntityError
+  UnprocessableEntityError,
+  UserErrorsEnum
 } from '@innovations/shared/errors';
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
@@ -821,9 +822,18 @@ export class InnovationTasksService extends BaseService {
     domainContext: DomainContextType,
     createdBy: { role: ServiceRoleEnum; unitId: string | undefined }
   ): boolean {
-    return (
-      domainContext.currentRole.role === createdBy.role &&
-      domainContext.organisation?.organisationUnit?.id === createdBy.unitId
-    );
+    switch (domainContext.currentRole.role) {
+      case ServiceRoleEnum.INNOVATOR:
+      case ServiceRoleEnum.ADMIN:
+      case ServiceRoleEnum.ASSESSMENT:
+        return domainContext.currentRole.role === createdBy.role;
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return domainContext.organisation?.organisationUnit?.id === createdBy.unitId;
+      default: {
+        const r: never = domainContext.currentRole;
+        throw new NotImplementedError(UserErrorsEnum.USER_ROLE_NOT_FOUND, { details: r });
+      }
+    }
   }
 }

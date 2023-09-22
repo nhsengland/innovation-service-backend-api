@@ -803,20 +803,18 @@ export class DomainInnovationsService {
 
     if (filters.myTeam) {
       if (domainContext.organisation?.organisationUnit?.id) {
+        query.andWhere('createdByUserRole.organisation_unit_id = :organisationUnitId', {
+          organisationUnitId: domainContext.organisation?.organisationUnit?.id
+        });
+      } else {
         query
           .andWhere('createdByUserRole.role = :role', { role: domainContext.currentRole.role })
-          .andWhere('createdByUserRole.organisation_unit_id = :organisationUnitId', {
-            organisationUnitId: domainContext.organisation?.organisationUnit?.id
-          });
-      } else {
-        query.andWhere('createdByUserRole.organisation_unit_id IS NULL');
+          .andWhere('createdByUserRole.organisation_unit_id IS NULL');
       }
     }
 
     if (filters.mine) {
-      query
-        .andWhere('createdByUserRole.role = :role', { role: domainContext.currentRole.role })
-        .andWhere('createdByUserRole.id = :roleId', { roleId: domainContext.currentRole.id });
+      query.andWhere('createdByUserRole.id = :roleId', { roleId: domainContext.currentRole.id });
     }
 
     const res = (

@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { randBoolean, randFullName, randPhoneNumber, randText, randUuid } from '@ngneat/falso';
+import { randBoolean, randFullName, randText, randUuid } from '@ngneat/falso';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@users/shared/tests';
 import type { TestUserType } from '@users/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@users/shared/types';
@@ -67,7 +67,7 @@ describe('v1-me-update Suite', () => {
     it('should update other fields as innovator', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
-        .setBody<InnovatorBodyType>({ ...innovatorBody, mobilePhone: randPhoneNumber() })
+        .setBody<InnovatorBodyType>({ ...innovatorBody, mobilePhone: '1234' })
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual(expected);
