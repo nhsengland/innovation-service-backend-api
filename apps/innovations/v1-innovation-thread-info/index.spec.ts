@@ -1,5 +1,6 @@
 import azureFunction from '.';
 
+import { ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
@@ -27,6 +28,10 @@ beforeAll(async () => {
 const expected = {
   id: randUuid(),
   subject: randText(),
+  context: {
+    type: ThreadContextTypeEnum.TASK,
+    id: randUuid()
+  },
   createdAt: randPastDate(),
   createdBy: {
     id: randUuid(),

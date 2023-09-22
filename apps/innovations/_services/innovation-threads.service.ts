@@ -393,6 +393,10 @@ export class InnovationThreadsService extends BaseService {
   async getThreadInfo(threadId: string): Promise<{
     id: string;
     subject: string;
+    context?: {
+      type: ThreadContextTypeEnum;
+      id: string;
+    };
     createdAt: Date;
     createdBy: {
       id: string;
@@ -401,7 +405,16 @@ export class InnovationThreadsService extends BaseService {
   }> {
     const thread = await this.sqlConnection
       .createQueryBuilder(InnovationThreadEntity, 'thread')
-      .select(['thread.id', 'thread.subject', 'thread.createdAt', 'author.id', 'author.identityId', 'author.status'])
+      .select([
+        'thread.id',
+        'thread.subject',
+        'thread.createdAt',
+        'thread.contextType',
+        'thread.contextId',
+        'author.id',
+        'author.identityId',
+        'author.status'
+      ])
       .leftJoin('thread.author', 'author')
       .where('thread.id = :threadId', { threadId })
       .getOne();
@@ -417,6 +430,7 @@ export class InnovationThreadsService extends BaseService {
     return {
       id: thread.id,
       subject: thread.subject,
+      ...(thread.contextId && thread.contextType && { context: { type: thread.contextType, id: thread.contextId } }),
       createdAt: thread.createdAt,
       createdBy: {
         id: thread.author.id,
