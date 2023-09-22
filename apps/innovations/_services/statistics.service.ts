@@ -18,14 +18,16 @@ import {
 } from '@innovations/shared/enums';
 import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
+import type { DomainService } from '@innovations/shared/services';
+import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType } from '@innovations/shared/types';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
 export class StatisticsService extends BaseService {
-  constructor() {
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
     super();
   }
 
@@ -48,6 +50,16 @@ export class StatisticsService extends BaseService {
       .getRawMany();
 
     return openTasks;
+  }
+
+  // using type inference
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  async getTasksCounter<T extends InnovationTaskStatusEnum[]>(
+    domainContext: DomainContextType,
+    innovationId: string,
+    statuses: T
+  ) {
+    return this.domainService.innovations.getTasksCounter(domainContext, statuses, { innovationId, myTeam: true });
   }
 
   async getSubmittedSections(

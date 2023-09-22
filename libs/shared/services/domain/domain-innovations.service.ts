@@ -34,7 +34,13 @@ import {
   ServiceRoleEnum,
   UserStatusEnum
 } from '../../enums';
-import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
+import {
+  BadRequestError,
+  GenericErrorsEnum,
+  InnovationErrorsEnum,
+  NotFoundError,
+  UnprocessableEntityError
+} from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
@@ -747,6 +753,95 @@ export class DomainInnovationsService {
     EXEC('ALTER TABLE innovation_document SET ( SYSTEM_VERSIONING = ON (HISTORY_TABLE = dbo.innovation_document_history, History_retention_period = 7 YEAR))');
     COMMIT TRANSACTION;
     `);
+  }
+
+  /*****
+   * MOVE THESE TO A STATISTIC SERVICE SHARED PROBABLY
+   */
+
+  /**
+   * returns tasks counters
+   * @param domainContext
+   * @param statuses task statuses to count
+   * @param filters (all optional)
+   *  - innovationId tasks for this innovation
+   *  - statuses counters for these statuses
+   *  - organisationUnitId tasks for this organisation unit
+   *  - mine
+   * @param entityManager optional entity manager
+   * @returns counters for each status and lastUpdatedAt
+   */
+  async getTasksCounter<T extends InnovationTaskStatusEnum[]>(
+    domainContext: DomainContextType,
+    statuses: T,
+    filters: { innovationId?: string; myTeam?: boolean; mine?: boolean },
+    entityManager?: EntityManager
+  ): Promise<
+    {
+      [k in T[number]]: number;
+    } & { lastUpdatedAt: Date | null }
+  > {
+    if (!statuses.length) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+    }
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
+      .createQueryBuilder(InnovationTaskEntity, 'task')
+      .select('task.status', 'status')
+      .addSelect('count(*)', 'count')
+      .addSelect('max(task.updated_at)', 'lastUpdatedAt')
+      .groupBy('task.status')
+      .innerJoin('task.createdByUserRole', 'createdByUserRole')
+      .where('task.status IN (:...statuses)', { statuses });
+
+    if (filters.innovationId) {
+      query
+        .innerJoin('task.innovationSection', 'innovationSection')
+        .andWhere('innovationSection.innovation_id = :innovationId', { innovationId: filters.innovationId });
+    }
+
+    if (filters.myTeam) {
+      if (domainContext.organisation?.organisationUnit?.id) {
+        query
+          .andWhere('createdByUserRole.role = :role', { role: domainContext.currentRole.role })
+          .andWhere('createdByUserRole.organisation_unit_id = :organisationUnitId', {
+            organisationUnitId: domainContext.organisation?.organisationUnit?.id
+          });
+      } else {
+        query.andWhere('createdByUserRole.organisation_unit_id IS NULL');
+      }
+    }
+
+    if (filters.mine) {
+      query
+        .andWhere('createdByUserRole.role = :role', { role: domainContext.currentRole.role })
+        .andWhere('createdByUserRole.id = :roleId', { roleId: domainContext.currentRole.id });
+    }
+
+    const res = (
+      await query.getRawMany<{
+        count: number;
+        lastUpdatedAt: Date;
+        status: InnovationTaskStatusEnum;
+      }>()
+    ).reduce(
+      (acc, cur) => {
+        acc[cur.status] = cur.count;
+        acc.lastUpdatedAt =
+          acc.lastUpdatedAt && acc.lastUpdatedAt > cur.lastUpdatedAt ? acc.lastUpdatedAt : cur.lastUpdatedAt;
+        return acc;
+      },
+      {} as { [k in InnovationTaskStatusEnum]: number } & { lastUpdatedAt: Date | null }
+    );
+
+    statuses.forEach(status => {
+      if (!res[status]) {
+        res[status] = 0;
+      }
+    });
+
+    return res;
   }
 
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {

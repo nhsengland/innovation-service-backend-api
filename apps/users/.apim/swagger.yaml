@@ -697,7 +697,7 @@ paths:
               - WAITING_ASSESSMENT_COUNTER
               - ASSIGNED_INNOVATIONS_COUNTER
               - INNOVATIONS_ASSIGNED_TO_ME_COUNTER
-              - ACTIONS_TO_REVIEW_COUNTER
+              - TASKS_RESPONDED_COUNTER
               - INNOVATIONS_TO_REVIEW_COUNTER
       responses:
         "200":

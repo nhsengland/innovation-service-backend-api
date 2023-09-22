@@ -2874,6 +2874,7 @@ paths:
               enum:
                 - SECTIONS_SUBMITTED_COUNTER
                 - TASKS_OPEN_COUNTER
+                - TASKS_RESPONDED_COUNTER
                 - UNREAD_MESSAGES_COUNTER
                 - SECTIONS_SUBMITTED_SINCE_SUPPORT_START_COUNTER
                 - SECTIONS_SUBMITTED_SINCE_ASSESSMENT_START_COUNTER

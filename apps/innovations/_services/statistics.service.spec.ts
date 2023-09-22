@@ -8,7 +8,7 @@ import {
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
 import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
@@ -59,6 +59,50 @@ describe('Innovations / _services / innovation transfer suite', () => {
           section: innovation.tasks.taskByAliceOpen.section
         }
       ]);
+    });
+  });
+
+  describe('getTasksCounter', () => {
+    it.each([
+      [
+        'QA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.CANCELLED],
+        scenario.users.aliceQualifyingAccessor, // has two tasks one open and one done
+        { OPEN: 1, DONE: 1, CANCELLED: 0 }
+      ],
+      [
+        'NA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE],
+        scenario.users.seanNeedsAssessor, // has 0 task and paulNA has 1
+        { OPEN: 1, DONE: 0 }
+      ]
+    ])(
+      'as %s should get my organisation tasks counter for the given innovation and $s',
+      async (_label, statuses, user, res) => {
+        const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+        const tasksCounter = await sut.getTasksCounter(DTOsHelper.getUserRequestContext(user), innovation.id, statuses);
+
+        expect(tasksCounter).toEqual({ ...res, lastUpdatedAt: expect.any(Date) });
+      }
+    );
+
+    it("shouldn't return status that wasn't requested", async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const tasksCounter = await sut.getTasksCounter(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        [InnovationTaskStatusEnum.OPEN] // alice also has a done task
+      );
+
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.CANCELLED]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DONE]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DECLINED]).toBeUndefined();
+    });
+
+    it('should throw bad request if status missing', async () => {
+      await expect(() =>
+        sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid(), [])
+      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 

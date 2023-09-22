@@ -1,6 +1,6 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
-import { InnovationEntity, InnovationSupportEntity, InnovationTaskEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import {
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
@@ -11,12 +11,14 @@ import {
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DomainContextType } from '@users/shared/types';
 
+import type { DomainService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
 import { BaseService } from './base.service';
 
 @injectable()
 export class StatisticsService extends BaseService {
-  constructor() {
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
     super();
   }
 
@@ -135,42 +137,10 @@ export class StatisticsService extends BaseService {
     };
   }
 
-  async tasksOpen(
-    domainContext: DomainContextType,
-    entityManager?: EntityManager
-  ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
-    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
-
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const myActionsQuery = em
-      .createQueryBuilder(InnovationTaskEntity, 'tasks')
-      .select('orgUnit.id', 'orgUnitId')
-      .addSelect('count(*)', 'count')
-      .addSelect('MAX(tasks.updated_at)', 'lastSubmittedAt')
-      .innerJoin('tasks.innovationSupport', 'innovationSupport')
-      .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
-      .where('tasks.status = :status', {
-        status: InnovationTaskStatusEnum.OPEN
-      });
-
-    const myTasksCount = await myActionsQuery.groupBy('orgUnit.id').getRawMany();
-
-    const res = {
-      count: 0,
-      total: 0,
-      lastSubmittedAt: null as Date | null
-    };
-
-    for (const action of myTasksCount) {
-      if (action.orgUnitId === organisationUnit) {
-        res.count += action.count;
-        res.lastSubmittedAt = action.lastSubmittedAt;
-      }
-      res.total += action.count;
-    }
-
-    return res;
+  // using type inference
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  async getTasksCounter<T extends InnovationTaskStatusEnum[]>(domainContext: DomainContextType, statuses: T) {
+    return this.domainService.innovations.getTasksCounter(domainContext, statuses, { mine: true });
   }
 
   async innovationsToReview(

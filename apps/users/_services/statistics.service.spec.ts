@@ -1,13 +1,18 @@
 import { container } from '../_config';
 
-import { InnovationEntity, InnovationSupportEntity, InnovationTaskEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationTaskStatusEnum,
   ServiceRoleEnum
 } from '@users/shared/enums';
-import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
+import {
+  BadRequestError,
+  GenericErrorsEnum,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
 import { InnovationSupportLogBuilder } from '@users/shared/tests/builders/innovation-support-log.builder';
 import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
@@ -125,35 +130,44 @@ describe('Users / _services / statistics service suite', () => {
     });
   });
 
-  describe('tasksOpen', () => {
-    it('should get the number of tasks open by my organisation', async () => {
-      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), em);
+  describe('getTasksCounter', () => {
+    it.each([
+      [
+        'QA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.CANCELLED],
+        scenario.users.aliceQualifyingAccessor,
+        { OPEN: 1, DONE: 2, CANCELLED: 0 }
+      ],
+      [
+        'NA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE],
+        scenario.users.seanNeedsAssessor,
+        { OPEN: 1, DONE: 0 }
+      ]
+    ])(
+      'as %s should get my organisation tasks counter for the given innovation and $s',
+      async (_label, statuses, user, res) => {
+        const tasksCounter = await sut.getTasksCounter(DTOsHelper.getUserRequestContext(user), statuses);
 
-      expect(result.count).toBe(1);
+        expect(tasksCounter).toEqual({ ...res, lastUpdatedAt: expect.any(Date) });
+      }
+    );
+
+    it("shouldn't return status that wasn't requested", async () => {
+      const tasksCounter = await sut.getTasksCounter(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        [InnovationTaskStatusEnum.OPEN] // alice also has a done task
+      );
+
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.CANCELLED]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DONE]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DECLINED]).toBeUndefined();
     });
 
-    it('should get the total number of tasks open', async () => {
-      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), em);
-
-      expect(result.total).toBe(2);
-    });
-
-    it('should get the date of the last task submission by me', async () => {
-      const task = scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByAlice;
-      const nowDate = new Date();
-      await em
-        .getRepository(InnovationTaskEntity)
-        .update({ id: task.id }, { updatedAt: nowDate, status: InnovationTaskStatusEnum.OPEN });
-
-      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), em);
-
-      expect(result.lastSubmittedAt).toStrictEqual(new Date(nowDate));
-    });
-
-    it('should return lastSubmittedAt as null when there is no task submitted', async () => {
-      const result = await sut.tasksOpen(DTOsHelper.getUserRequestContext(scenario.users.scottQualifyingAccessor));
-
-      expect(result.lastSubmittedAt).toBeNull();
+    it('should throw bad request if status missing', async () => {
+      await expect(() =>
+        sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), [])
+      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 
