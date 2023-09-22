@@ -30,7 +30,7 @@ export const BodySchema = Joi.object<BodyType>({
   }),
   message: Joi.when('status', {
     is: InnovationTaskStatusEnum.CANCELLED,
-    then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).optional(),
-    otherwise: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).required()
+    then: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
+    otherwise: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).required()
   })
 });

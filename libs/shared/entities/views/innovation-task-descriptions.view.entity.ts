@@ -8,6 +8,13 @@ export class InnovationTaskDescriptionsViewEntity {
   @JoinColumn({ name: 'task_id' })
   task: InnovationTaskEntity;
 
+  // thread_id and message_id can become relations to the thread and message entities if required
+  @ViewColumn({ name: 'thread_id' })
+  threadId: string;
+
+  @ViewColumn({ name: 'message_id' })
+  messageId: string;
+
   @ViewColumn()
   description: string;
 

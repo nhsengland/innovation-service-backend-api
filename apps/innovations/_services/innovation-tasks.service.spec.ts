@@ -719,6 +719,7 @@ describe('Innovation Tasks Suite', () => {
           }
         ],
         sameOrganisation: true,
+        threadId: expect.any(String), // not persisting the thread id in the scenario
         createdAt: expect.any(Date),
         updatedAt: expect.any(Date),
         updatedBy: {

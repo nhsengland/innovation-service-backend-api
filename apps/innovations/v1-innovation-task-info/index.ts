@@ -42,6 +42,7 @@ class V1InnovationTaskInfo {
         status: result.status,
         descriptions: result.descriptions,
         section: result.section,
+        threadId: result.threadId,
         sameOrganisation: result.sameOrganisation,
         createdAt: result.createdAt,
         updatedAt: result.updatedAt,

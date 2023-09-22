@@ -13,6 +13,7 @@ export type ResponseDTO = {
     displayTag: string;
   }[];
   sameOrganisation: boolean;
+  threadId: string;
   createdAt: Date;
   updatedAt: Date;
   updatedBy: { name: string; displayTag: string };

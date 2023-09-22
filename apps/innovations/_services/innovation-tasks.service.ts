@@ -327,6 +327,7 @@ export class InnovationTasksService extends BaseService {
       displayTag: string;
     }[];
     sameOrganisation: boolean;
+    threadId: string;
     createdAt: Date;
     updatedAt: Date;
     updatedBy: { name: string; displayTag: string };
@@ -349,6 +350,7 @@ export class InnovationTasksService extends BaseService {
         'descriptions.createdByIdentityId',
         'descriptions.createdByRole',
         'descriptions.createdByOrganisationUnitName',
+        'descriptions.threadId',
         'innovationSection.section',
         'innovation.id',
         'owner.id',
@@ -418,6 +420,7 @@ export class InnovationTasksService extends BaseService {
         role: dbTask.createdByUserRole.role,
         unitId: dbTask.createdByUserRole.organisationUnit?.id
       }),
+      threadId: dbTask.descriptions[0]?.threadId ?? '', // All the threads have a description so we can use the first one
       createdAt: dbTask.createdAt,
       updatedAt: dbTask.updatedAt,
       updatedBy: {

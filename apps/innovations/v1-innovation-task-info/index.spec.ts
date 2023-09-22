@@ -37,6 +37,7 @@ const exampleTask = {
     }
   ],
   sameOrganisation: true,
+  threadId: randomUUID(),
   createdAt: new Date(),
   updatedAt: new Date(),
   updatedBy: { name: 'name 1', displayTag: 'NHS Innovation Service' },
