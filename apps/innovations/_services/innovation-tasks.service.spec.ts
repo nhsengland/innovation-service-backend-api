@@ -794,7 +794,7 @@ describe('Innovation Tasks Suite', () => {
       expect(updateTask.id).toBe(task.id);
       expect(dbtask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
 
-      expect(linkMessageSpy).not.toHaveBeenCalled();
+      expect(linkMessageSpy).toHaveBeenCalled();
     });
 
     it('should update task from status DONE to OPEN', async () => {
@@ -893,7 +893,7 @@ describe('Innovation Tasks Suite', () => {
       expect(updateTask.id).toBe(task.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.CANCELLED);
 
-      expect(linkMessageSpy).not.toHaveBeenCalled();
+      expect(linkMessageSpy).toHaveBeenCalled();
     });
 
     it('should update task from status DONE to OPEN', async () => {
@@ -1022,7 +1022,7 @@ describe('Innovation Tasks Suite', () => {
       expect(updateTask.id).toBe(naTask.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.DECLINED);
 
-      expect(linkMessageSpy).not.toHaveBeenCalled();
+      expect(linkMessageSpy).toHaveBeenCalled();
     });
 
     it('should update task from status OPEN to DECLINED from a QA task', async () => {
@@ -1050,7 +1050,7 @@ describe('Innovation Tasks Suite', () => {
       expect(updateTask.id).toBe(qaTask.id);
       expect(dbTask!.status).toBe(InnovationTaskStatusEnum.DECLINED);
 
-      expect(linkMessageSpy).not.toHaveBeenCalled();
+      expect(linkMessageSpy).toHaveBeenCalled();
     });
 
     it("should not update if task doesn't exist", async () => {

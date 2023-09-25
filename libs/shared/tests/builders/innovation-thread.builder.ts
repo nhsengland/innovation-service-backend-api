@@ -7,7 +7,7 @@ import {
   UserEntity,
   UserRoleEntity
 } from '../../entities';
-import { ThreadContextTypeEnum } from '../../enums';
+import { InnovationTaskStatusEnum, ThreadContextTypeEnum } from '../../enums';
 import { BaseBuilder } from './base.builder';
 
 export type TestInnovationThreadMessageType = {
@@ -89,11 +89,12 @@ export class InnovationThreadBuilder extends BaseBuilder {
         message: savedMessage.message,
         createdAt: savedMessage.createdAt
       };
-      // special case for tasks
+      // special case for tasks (only creating open tasks for now)
       if (this.thread.contextType == ThreadContextTypeEnum.TASK && this.thread.contextId) {
-        await this.getEntityManager().query('INSERT INTO innovation_task_message VALUES (@0, @1)', [
+        await this.getEntityManager().query('INSERT INTO innovation_task_message VALUES (@0, @1, @2)', [
           this.thread.contextId,
-          savedMessage.id
+          savedMessage.id,
+          InnovationTaskStatusEnum.OPEN
         ]);
       }
     });

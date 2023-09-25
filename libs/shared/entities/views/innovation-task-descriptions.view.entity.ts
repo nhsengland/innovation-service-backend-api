@@ -1,5 +1,5 @@
 import { JoinColumn, ManyToOne, ViewColumn, ViewEntity } from 'typeorm';
-import type { ServiceRoleEnum } from '../../enums';
+import type { InnovationTaskStatusEnum, ServiceRoleEnum } from '../../enums';
 import { InnovationTaskEntity } from '../innovation/innovation-task.entity';
 
 @ViewEntity('innovation_task_descriptions_view')
@@ -7,6 +7,9 @@ export class InnovationTaskDescriptionsViewEntity {
   @ManyToOne(() => InnovationTaskEntity)
   @JoinColumn({ name: 'task_id' })
   task: InnovationTaskEntity;
+
+  @ViewColumn({ name: 'task_message_status' })
+  status: InnovationTaskStatusEnum;
 
   // thread_id and message_id can become relations to the thread and message entities if required
   @ViewColumn({ name: 'thread_id' })

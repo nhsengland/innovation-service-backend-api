@@ -5,7 +5,7 @@ export class migrateActionsToTasks1694772974537 implements MigrationInterface {
     await queryRunner.query(`
       CREATE TABLE "innovation_task" (
         "id" uniqueidentifier NOT NULL CONSTRAINT "df_innovation_task_id" DEFAULT NEWSEQUENTIALID(), 
-        "status" nvarchar(255) CHECK( status IN ('OPEN', 'DONE', 'DECLINED', 'CANCELLED') ) NOT NULL, 
+        "status" nvarchar(255) CONSTRAINT ck_innovation_task_status CHECK( status IN ('OPEN', 'DONE', 'DECLINED', 'CANCELLED') ) NOT NULL, 
         "innovation_section_id" uniqueidentifier NOT NULL,
         "innovation_support_id" uniqueidentifier,
         "display_id" nvarchar(5) NOT NULL,

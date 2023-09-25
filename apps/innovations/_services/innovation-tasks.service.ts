@@ -378,6 +378,7 @@ export class InnovationTasksService extends BaseService {
       .leftJoin('task.updatedByUserRole', 'updatedByUserRole')
       .leftJoin('updatedByUserRole.user', 'updatedByUser')
       .where('task.id = :taskId', { taskId })
+      .andWhere('descriptions.status = :descriptionStatus', { descriptionStatus: InnovationTaskStatusEnum.OPEN }) // descriptions only fetch open messages
       .getOne();
     if (!dbTask) {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
@@ -512,7 +513,7 @@ export class InnovationTasksService extends BaseService {
       );
 
       if (message) {
-        await this.linkMessage(taskResult.id, message.id, transaction);
+        await this.linkMessage(taskResult.id, message.id, InnovationTaskStatusEnum.OPEN, transaction);
       }
 
       await this.domainService.innovations.addActivityLog(
@@ -747,10 +748,7 @@ export class InnovationTasksService extends BaseService {
           )
         ).threadMessage;
 
-        // reopened tasks should add a message link
-        if (data.status === InnovationTaskStatusEnum.OPEN) {
-          await this.linkMessage(dbTask.id, threadMessage.id, transaction);
-        }
+        await this.linkMessage(dbTask.id, threadMessage.id, data.status, transaction);
       }
 
       if (data.status === InnovationTaskStatusEnum.DECLINED) {
@@ -803,9 +801,15 @@ export class InnovationTasksService extends BaseService {
    * This is used by open and reopen tasks in order to link the message to the task
    * @param taskId
    * @param messageId
+   * @param status
    * @param transaction
    */
-  private async linkMessage(taskId: string, messageId: string, transaction: EntityManager): Promise<void> {
+  private async linkMessage(
+    taskId: string,
+    messageId: string,
+    status: InnovationTaskStatusEnum,
+    transaction: EntityManager
+  ): Promise<void> {
     await transaction
       .createQueryBuilder()
       .insert()
@@ -813,7 +817,8 @@ export class InnovationTasksService extends BaseService {
       .into('innovation_task_message')
       .values({
         innovation_task_id: taskId,
-        innovation_thread_message_id: messageId
+        innovation_thread_message_id: messageId,
+        status: status
       })
       .execute();
   }

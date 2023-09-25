@@ -1,11 +1,12 @@
 import type { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class createViewInnovationTaskDescriptions1695376115206 implements MigrationInterface {
+export class createViewInnovationTaskDescriptions1695381567882 implements MigrationInterface {
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     CREATE OR ALTER VIEW [innovation_task_descriptions_view] AS
     SELECT 
       t.id as task_id,
+      tm.status as task_message_status,
       m.id as message_id,
 	    m.innovation_thread_id as thread_id,
       m.message as description,
