@@ -13,6 +13,8 @@ trigger:
     exclude:
       - apps
 
+pr: none
+
 variables:
   appName: users
 
