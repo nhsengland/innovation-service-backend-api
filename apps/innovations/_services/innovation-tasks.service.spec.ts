@@ -1084,23 +1084,23 @@ describe('Innovation Tasks Suite', () => {
   describe('getSaveTaskSubject', () => {
     const displayId = `T${randNumber()}`;
     it.each([
-      ['INNOVATION_DESCRIPTION' as const, `TASK (${displayId}) update section 1.1 (Description of innovation)`],
+      ['INNOVATION_DESCRIPTION' as const, `Task (${displayId}) update section 1.1 (Description of innovation)`],
       [
         'UNDERSTANDING_OF_NEEDS' as const,
-        `TASK (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`
+        `Task (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`
       ],
-      ['EVIDENCE_OF_EFFECTIVENESS' as const, `TASK (${displayId}) update section 2.2 (Evidence of impact and benefit)`],
-      ['MARKET_RESEARCH' as const, `TASK (${displayId}) update section 3.1 (Market research)`],
-      ['CURRENT_CARE_PATHWAY' as const, `TASK (${displayId}) update section 3.2 (Current care pathway)`],
-      ['TESTING_WITH_USERS' as const, `TASK (${displayId}) update section 4.1 (Testing with users)`],
+      ['EVIDENCE_OF_EFFECTIVENESS' as const, `Task (${displayId}) update section 2.2 (Evidence of impact and benefit)`],
+      ['MARKET_RESEARCH' as const, `Task (${displayId}) update section 3.1 (Market research)`],
+      ['CURRENT_CARE_PATHWAY' as const, `Task (${displayId}) update section 3.2 (Current care pathway)`],
+      ['TESTING_WITH_USERS' as const, `Task (${displayId}) update section 4.1 (Testing with users)`],
       [
         'REGULATIONS_AND_STANDARDS' as const,
-        `TASK (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`
+        `Task (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`
       ],
-      ['INTELLECTUAL_PROPERTY' as const, `TASK (${displayId}) update section 5.2 (Intellectual property)`],
-      ['REVENUE_MODEL' as const, `TASK (${displayId}) update section 6.1 (Revenue model)`],
-      ['COST_OF_INNOVATION' as const, `TASK (${displayId}) update section 7.1 (Cost of your innovation)`],
-      ['DEPLOYMENT' as const, `TASK (${displayId}) update section 8.1 (Cost of your innovation)`]
+      ['INTELLECTUAL_PROPERTY' as const, `Task (${displayId}) update section 5.2 (Intellectual property)`],
+      ['REVENUE_MODEL' as const, `Task (${displayId}) update section 6.1 (Revenue model)`],
+      ['COST_OF_INNOVATION' as const, `Task (${displayId}) update section 7.1 (Cost of your innovation)`],
+      ['DEPLOYMENT' as const, `Task (${displayId}) update section 8.1 (Cost of your innovation)`]
     ])('should return the correct subject for %s', async (section, expected) => {
       const res = sut['getSaveTaskSubject'](displayId, section as any);
       expect(res).toBe(expected);
