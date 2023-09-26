@@ -10,6 +10,8 @@ trigger:
     include:
       - libs/data-access/migrations
 
+pr: none
+
 name: FA_Migrations_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:r)
 
 pool:

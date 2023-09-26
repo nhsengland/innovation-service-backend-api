@@ -71,16 +71,13 @@ export class TaskUpdateHandler extends BaseHandler<
             await this.prepareConfirmationInApp(task);
           }
 
-          if (innovation.owner) {
+          // if task was submitted or declined by a collaborator notify owner
+          if (innovation.owner && this.requestUser.currentRole.id !== innovation.owner.roleId) {
             await this.prepareInAppForInnovationOwner({ id: innovation.id, owner: innovation.owner }, task);
-
-            // if task was submitted or declined by a collaborator notify owner
-            if (this.requestUser.currentRole.id !== innovation.owner.roleId) {
-              await this.prepareEmailForInnovationOwnerFromCollaborator(
-                { id: innovation.id, owner: innovation.owner },
-                task
-              );
-            }
+            await this.prepareEmailForInnovationOwnerFromCollaborator(
+              { id: innovation.id, owner: innovation.owner },
+              task
+            );
           }
         }
         break;
