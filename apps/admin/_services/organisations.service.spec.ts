@@ -175,11 +175,11 @@ describe('Admin / _services / organisations service suite', () => {
       });
     });
 
-    describe.each([InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED])(
+    describe.each([InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING])(
       '%s supports of unit',
       status => {
         const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgAiUnit;
-        it('should complete the support', async () => {
+        it('should close the support', async () => {
           //prepare support
           await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { status: status });
 
@@ -190,7 +190,7 @@ describe('Admin / _services / organisations service suite', () => {
             .where('support.id = :supportId', { supportId: support.id })
             .getOne();
 
-          expect(dbSupport?.status).toBe(InnovationSupportStatusEnum.COMPLETE);
+          expect(dbSupport?.status).toBe(InnovationSupportStatusEnum.CLOSED);
         });
 
         it('should clear all related notifications', async () => {

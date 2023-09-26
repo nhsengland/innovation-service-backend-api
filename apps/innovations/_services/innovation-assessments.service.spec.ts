@@ -308,7 +308,7 @@ describe('Innovation Assessments Suite', () => {
       await em.update(
         InnovationSupportEntity,
         { innovation: { id: innovationWithAssessment.id } },
-        { status: InnovationSupportStatusEnum.COMPLETE }
+        { status: InnovationSupportStatusEnum.CLOSED }
       );
       const innovationReassessment = await sut.createInnovationReassessment(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -359,7 +359,7 @@ describe('Innovation Assessments Suite', () => {
         await em.update(
           InnovationSupportEntity,
           { innovation: { id: innovationWithAssessment.id } },
-          { status: InnovationSupportStatusEnum.COMPLETE }
+          { status: InnovationSupportStatusEnum.CLOSED }
         );
         const innovationReassessment = await sut.createInnovationReassessment(
           DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),

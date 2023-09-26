@@ -513,8 +513,8 @@ export class InnovationSupportsService extends BaseService {
 
         dbSupport.userRoles = [];
 
-        // Cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
-        if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
+        // Cleanup tasks if the status is not ENGAGING or WAITING
+        if (data.status !== InnovationSupportStatusEnum.WAITING) {
           await transaction
             .createQueryBuilder()
             .update(InnovationTaskEntity)
@@ -636,7 +636,7 @@ export class InnovationSupportsService extends BaseService {
     for (const support of unitsSupportInformationMap.values()) {
       suggestedIds.add(support.unitId);
 
-      if (this.isStatusEngaging(support.status)) {
+      if (support.status === InnovationSupportStatusEnum.ENGAGING) {
         engaging.push({
           id: support.unitId,
           name: support.unitName,
@@ -846,7 +846,7 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    if (!this.isStatusEngaging(support.status)) {
+    if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
     }
 
@@ -1050,7 +1050,7 @@ export class InnovationSupportsService extends BaseService {
           SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support
           FOR SYSTEM_TIME ALL
-          WHERE innovation_id = @0 AND (status IN ('ENGAGING','FURTHER_INFO_REQUIRED'))
+          WHERE innovation_id = @0 AND (status IN ('ENGAGING'))
           GROUP BY id
       ) t ON t.id = s.id
       WHERE innovation_id = @0
@@ -1059,12 +1059,6 @@ export class InnovationSupportsService extends BaseService {
     );
 
     return new Map(unitsSupportInformation.map(support => [support.unitId, support]));
-  }
-
-  private isStatusEngaging(status: InnovationSupportStatusEnum): boolean {
-    return (
-      status === InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED || status === InnovationSupportStatusEnum.ENGAGING
-    );
   }
 
   private sortByStartDate(units: SuggestedUnitType[]): SuggestedUnitType[] {

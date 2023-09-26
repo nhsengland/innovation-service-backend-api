@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { ServiceRoleEnum } from '@innovations/shared/enums';
+import { InnovationSupportStatusEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
@@ -85,7 +85,7 @@ export default openApi(
               properties: {
                 status: {
                   type: 'string',
-                  enum: ['ENGAGING', 'FURTHER_INFO_REQUIRED', 'WAITING', 'NOT_YET', 'UNSUITABLE', 'COMPLETE']
+                  enum: Object.values(InnovationSupportStatusEnum)
                 },
                 message: {
                   type: 'string',

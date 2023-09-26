@@ -79,7 +79,7 @@ const expected = {
       supports: [
         {
           id: randUuid(),
-          status: InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
+          status: InnovationSupportStatusEnum.WAITING,
           updatedAt: randPastDate(),
           organisation: {
             id: randUuid(),

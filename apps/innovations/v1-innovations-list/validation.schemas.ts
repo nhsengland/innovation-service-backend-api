@@ -85,7 +85,7 @@ export const QueryParamsSchema = JoiHelper.PaginationJoiSchema({
       is: 'ACCESSOR',
       then: JoiHelper.AppCustomJoi()
         .stringArray()
-        .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE))
+        .items(Joi.string().valid(InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED))
         .optional(),
       otherwise: JoiHelper.AppCustomJoi()
         .stringArray()
