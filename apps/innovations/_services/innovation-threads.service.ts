@@ -860,6 +860,7 @@ export class InnovationThreadsService extends BaseService {
       contextType,
       messages: [
         InnovationThreadMessageEntity.new({
+          createdBy: author.id,
           author,
           authorOrganisationUnit: domainContext.organisation?.organisationUnit?.id
             ? OrganisationUnitEntity.new({ id: domainContext.organisation.organisationUnit.id })
