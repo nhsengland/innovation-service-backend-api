@@ -50,7 +50,8 @@ export type InnovationStatisticsTemplateType = {
   [InnovationStatisticsEnum.TASKS_RESPONDED_COUNTER]: {
     count: number;
     total: number;
-    lastSubmittedAt: null | Date;
+    lastUpdatedSection: null | string;
+    lastUpdatedAt: null | Date;
   };
   [InnovationStatisticsEnum.SECTIONS_SUBMITTED_COUNTER]: {
     count: number;

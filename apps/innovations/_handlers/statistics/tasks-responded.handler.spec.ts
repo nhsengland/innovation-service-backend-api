@@ -1,12 +1,13 @@
 import { TasksRespondedStatisticsHandler } from './tasks-responded.handler';
 
 import { InnovationTaskStatusEnum } from '@innovations/shared/enums';
+import { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import { TestsHelper } from '@innovations/shared/tests';
 import { DTOsHelper } from '@innovations/shared/tests/helpers/dtos.helper';
 import { randPastDate, randUuid } from '@ngneat/falso';
 import { StatisticsService } from '../../_services/statistics.service';
 
-describe('Actions To Submit Statistics Handler Suite', () => {
+describe('Tasks To Submit Statistics Handler Suite', () => {
   const testsHelper = new TestsHelper();
   const scenario = testsHelper.getCompleteScenario();
 
@@ -14,13 +15,23 @@ describe('Actions To Submit Statistics Handler Suite', () => {
     await testsHelper.init();
   });
 
-  const expected = {
+  const expectedGetTasksCounter = {
     [InnovationTaskStatusEnum.DONE]: 3,
     [InnovationTaskStatusEnum.CANCELLED]: 2,
     [InnovationTaskStatusEnum.OPEN]: 1,
     lastUpdatedAt: randPastDate()
   };
-  const mock = jest.spyOn(StatisticsService.prototype, 'getTasksCounter').mockResolvedValue(expected);
+  const expectedGetLastUpdatedTask = {
+    id: randUuid(),
+    updatedAt: randPastDate(),
+    section: CurrentCatalogTypes.InnovationSections[0]
+  };
+  const mockGetTasksCounter = jest
+    .spyOn(StatisticsService.prototype, 'getTasksCounter')
+    .mockResolvedValue(expectedGetTasksCounter);
+  const mockGetLastUpdatedTask = jest
+    .spyOn(StatisticsService.prototype, 'getLastUpdatedTask')
+    .mockResolvedValue(expectedGetLastUpdatedTask);
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -36,9 +47,11 @@ describe('Actions To Submit Statistics Handler Suite', () => {
       expect(res).toStrictEqual({
         count: 3 + 2,
         total: 3 + 2 + 1,
-        lastSubmittedAt: expected.lastUpdatedAt
+        lastUpdatedAt: expectedGetLastUpdatedTask.updatedAt,
+        lastUpdatedSection: expectedGetLastUpdatedTask.section
       });
-      expect(mock).toBeCalledTimes(1);
+      expect(mockGetTasksCounter).toBeCalledTimes(1);
+      expect(mockGetLastUpdatedTask).toBeCalledTimes(1);
     });
   });
 });
