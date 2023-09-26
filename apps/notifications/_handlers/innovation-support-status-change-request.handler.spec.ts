@@ -63,7 +63,7 @@ describe('Notifications / _handlers / innovation-support-status-change-request h
         params: {
           innovation_name: innovation.name,
           accessor_name: scenario.users.ingridAccessor.name,
-          proposed_status: 'completed',
+          proposed_status: 'closed',
           request_status_update_comment: requestComment,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId/support/:supportId')
@@ -105,7 +105,7 @@ describe('Notifications / _handlers / innovation-support-status-change-request h
         params: {
           innovation_name: innovation.name,
           accessor_name: 'user',
-          proposed_status: 'completed',
+          proposed_status: 'closed',
           request_status_update_comment: requestComment,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId/support/:supportId')
