@@ -13,6 +13,8 @@ trigger:
     exclude:
       - apps
 
+pr: none
+
 name: FA_Innovations_$(SourceBranchName)_$(Date:yyyyMMdd)_$(Rev:r)
 
 pool:
