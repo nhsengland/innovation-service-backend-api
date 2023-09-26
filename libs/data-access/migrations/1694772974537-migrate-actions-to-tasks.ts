@@ -54,7 +54,7 @@ export class migrateActionsToTasks1694772974537 implements MigrationInterface {
     -- add the thread records
     INSERT INTO innovation_thread (created_at, created_by, updated_at, innovation_id, author_id, context_type, context_id, author_user_role_id, subject)
     SELECT t.created_at, t.created_by, t.updated_at, s.innovation_id, t.created_by, 'TASK', t.id, t.created_by_user_role_id, 
-    CONCAT('TASK (', t.display_id, ') update section ', 
+    CONCAT('Task (', t.display_id, ') update section ', 
     CASE s.section
     WHEN 'INNOVATION_DESCRIPTION' THEN '1.1 (Description of innovation)'
     WHEN 'UNDERSTANDING_OF_NEEDS' THEN '2.1 (Detailed understanding of needs and benefits)'
