@@ -21,16 +21,26 @@ export class TasksRespondedStatisticsHandler extends InnovationsStatisticsHandle
   async run(): Promise<InnovationStatisticsTemplateType[InnovationStatisticsEnum.TASKS_RESPONDED_COUNTER]> {
     const statisticsService = container.get<StatisticsService>(SYMBOLS.StatisticsService);
 
-    const tasks = await statisticsService.getTasksCounter(this.domainContext, this.data.innovationId, [
+    const tasksStatus = [
       InnovationTaskStatusEnum.OPEN,
       InnovationTaskStatusEnum.CANCELLED,
       InnovationTaskStatusEnum.DONE
-    ]);
+    ];
+
+    const tasks = await statisticsService.getTasksCounter(this.domainContext, this.data.innovationId, tasksStatus);
+
+    const lastUpdatedTask = await statisticsService.getLastUpdatedTask(
+      this.domainContext,
+      this.data.innovationId,
+      tasksStatus,
+      { myTeam: true }
+    );
 
     return {
       count: tasks.DONE + tasks.CANCELLED,
       total: tasks.DONE + tasks.CANCELLED + tasks.OPEN,
-      lastSubmittedAt: tasks.lastUpdatedAt
+      lastUpdatedAt: lastUpdatedTask?.updatedAt ?? null,
+      lastUpdatedSection: lastUpdatedTask?.section ?? null
     };
   }
 }
