@@ -45,11 +45,55 @@ export class StatisticsService extends BaseService {
       .select('task.updatedAt', 'updatedAt')
       .addSelect('section.section', 'section')
       .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('task.status IN(:...statuses)', { statuses })
+      .andWhere('task.status IN (:...statuses)', { statuses })
       .orderBy('task.createdAt', 'DESC')
       .getRawMany();
 
     return openTasks;
+  }
+
+  /**
+   * This is the same logic as in getTasksCounter. If any chances are made here
+   * it probably should be done on the other.
+   */
+  async getLastUpdatedTask(
+    domainContext: DomainContextType,
+    innovationId: string,
+    statuses: InnovationTaskStatusEnum[],
+    filters: { myTeam?: boolean; mine?: boolean },
+    entityManager?: EntityManager
+  ): Promise<{ id: string; updatedAt: Date; section: CurrentCatalogTypes.InnovationSections } | null> {
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
+      .createQueryBuilder(InnovationTaskEntity, 'task')
+      .innerJoin('task.innovationSection', 'section')
+      .innerJoin('section.innovation', 'innovation')
+      .innerJoin('task.createdByUserRole', 'createdByUserRole')
+      .select('task.id', 'id')
+      .addSelect('task.updatedAt', 'updatedAt')
+      .addSelect('section.section', 'section')
+      .where('innovation.id = :innovationId', { innovationId })
+      .andWhere('task.status IN (:...statuses)', { statuses })
+      .orderBy('task.updatedAt', 'DESC');
+
+    if (filters.myTeam) {
+      if (domainContext.organisation?.organisationUnit?.id) {
+        query.andWhere('createdByUserRole.organisation_unit_id = :organisationUnitId', {
+          organisationUnitId: domainContext.organisation?.organisationUnit?.id
+        });
+      } else {
+        query
+          .andWhere('createdByUserRole.role = :role', { role: domainContext.currentRole.role })
+          .andWhere('createdByUserRole.organisation_unit_id IS NULL');
+      }
+    }
+
+    if (filters.mine) {
+      query.andWhere('createdByUserRole.id = :roleId', { roleId: domainContext.currentRole.id });
+    }
+
+    return (await query.getRawOne()) ?? null;
   }
 
   // using type inference

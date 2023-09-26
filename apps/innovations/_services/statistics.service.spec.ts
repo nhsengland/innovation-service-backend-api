@@ -106,6 +106,68 @@ describe('Innovations / _services / innovation transfer suite', () => {
     });
   });
 
+  describe('getLastUpdatedTask', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const taskStatus = [
+      InnovationTaskStatusEnum.OPEN,
+      InnovationTaskStatusEnum.DONE,
+      InnovationTaskStatusEnum.CANCELLED
+    ];
+
+    it('should return the last updated task from my unit', async () => {
+      const task = innovation.tasks.taskByAliceOpen;
+
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        taskStatus,
+        { myTeam: true },
+        em
+      );
+
+      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+    });
+
+    it('should return the last updated task from my team', async () => {
+      const task = innovation.tasks.taskByPaul;
+
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        taskStatus,
+        { myTeam: true },
+        em
+      );
+
+      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+    });
+
+    it('should return the last updated task by me', async () => {
+      const task = innovation.tasks.taskByPaul;
+
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        taskStatus,
+        { mine: true },
+        em
+      );
+
+      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+    });
+
+    it('should return null if no task is found', async () => {
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        randUuid(),
+        taskStatus,
+        { mine: true },
+        em
+      );
+      expect(lastUpdatedByTask).toBeNull();
+    });
+  });
+
   describe('getSubmittedSections', () => {
     it('should get submitted sections for the given innovation', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
