@@ -547,8 +547,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it.each([
       InnovationSupportStatusEnum.CLOSED,
-      InnovationSupportStatusEnum.ENGAGING,
-      InnovationSupportStatusEnum.UNASSIGNED,
       InnovationSupportStatusEnum.UNSUITABLE,
       InnovationSupportStatusEnum.WAITING
     ])('should update the support status to %s', async (status: InnovationSupportStatusEnum) => {
@@ -556,16 +554,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         innovation.id,
         innovation.supports.supportByHealthOrgUnit.id,
-        {
-          status: status,
-          message: randText({ charCount: 10 })
-        },
+        { status: status, message: randText({ charCount: 10 }) },
         em
       );
 
-      expect(support).toMatchObject({
-        id: support.id
-      });
+      expect(support).toMatchObject({ id: support.id });
 
       expect(activityLogSpy).toHaveBeenCalled();
       expect(supportLogSpy).toHaveBeenCalled();
@@ -581,16 +574,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should add new assigned accessors when status is changed to ENGAGING', async () => {
       const support = await sut.updateInnovationSupport(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        DTOsHelper.getUserRequestContext(scenario.users.sarahQualifyingAccessor),
         innovation.id,
-        innovation.supports.supportByHealthOrgUnit.id,
+        innovation.supports.supportByHealthOrgAiUnit.id,
         {
           status: InnovationSupportStatusEnum.ENGAGING,
           message: randText({ charCount: 10 }),
           accessors: [
             {
-              id: scenario.users.ingridAccessor.id,
-              userRoleId: scenario.users.ingridAccessor.roles.accessorRole.id
+              id: scenario.users.jamieMadroxAccessor.id,
+              userRoleId: scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
             }
           ]
         },
@@ -608,25 +601,52 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .where('support.id = :supportId', { supportId: support.id })
         .getOne();
 
-      expect(dbSupport?.userRoles.map(u => u.id)).toContain(scenario.users.ingridAccessor.roles.accessorRole.id);
+      expect(dbSupport?.userRoles.map(u => u.id)).toContain(
+        scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+      );
+    });
+
+    it('should add the QA that made the request as assigned accessor when status is changed to WAITING', async () => {
+      const support = await sut.updateInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        innovation.supports.supportByHealthOrgUnit.id,
+        {
+          status: InnovationSupportStatusEnum.WAITING,
+          message: randText({ charCount: 10 })
+        },
+        em
+      );
+
+      expect(support).toMatchObject({ id: support.id });
+
+      const dbSupport = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .select(['support.id', 'userRole.id'])
+        .innerJoin('support.userRoles', 'userRole')
+        .where('support.id = :supportId', { supportId: support.id })
+        .getOne();
+
+      expect(dbSupport?.userRoles.map(u => u.id)).toContain(scenario.users.aliceQualifyingAccessor.roles.qaRole.id);
+      expect(dbSupport?.userRoles).toHaveLength(1);
     });
 
     it.each([
       [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED],
-      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNASSIGNED],
       [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE],
       [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED],
-      [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.UNASSIGNED],
       [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.UNSUITABLE]
     ])(
       'should clear any open tasks when status is changed from %s to %s',
       async (previousStatus: InnovationSupportStatusEnum, newStatus: InnovationSupportStatusEnum) => {
-        let scenarioSupport:
-          | typeof innovation.supports.supportByHealthOrgUnit
-          | typeof innovation.supports.supportByHealthOrgAiUnit = innovation.supports.supportByHealthOrgUnit;
+        let scenarioSupport = innovation.supports.supportByHealthOrgUnit;
 
         if (previousStatus === InnovationSupportStatusEnum.WAITING) {
-          scenarioSupport = innovation.supports.supportByHealthOrgAiUnit;
+          await em.update(
+            InnovationSupportEntity,
+            { id: scenarioSupport.id },
+            { status: InnovationSupportStatusEnum.WAITING }
+          );
         }
 
         const support = await sut.updateInnovationSupport(
@@ -657,12 +677,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       }
     );
 
-    it.each([
-      InnovationSupportStatusEnum.CLOSED,
-      InnovationSupportStatusEnum.UNASSIGNED,
-      InnovationSupportStatusEnum.UNSUITABLE,
-      InnovationSupportStatusEnum.WAITING // TODO: this test will probably change since the QA will be always assigned in this status
-    ])(
+    it.each([InnovationSupportStatusEnum.CLOSED, InnovationSupportStatusEnum.UNSUITABLE])(
       'should remove all assigned accessors when status is changed to %s',
       async (status: InnovationSupportStatusEnum) => {
         const support = await sut.updateInnovationSupport(
@@ -731,6 +746,20 @@ describe('Innovations / _services / innovation-supports suite', () => {
           em
         )
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND));
+    });
+
+    it(`should throw a UnprocessableEntityError when trying to update to UNASSIGNED`, async () => {
+      await expect(() =>
+        sut.updateInnovationSupport(
+          DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+          innovation.id,
+          innovation.supports.supportByHealthOrgUnit.id,
+          { status: InnovationSupportStatusEnum.UNASSIGNED, message: randText({ charCount: 10 }) },
+          em
+        )
+      ).rejects.toThrowError(
+        new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS)
+      );
     });
   });
 
@@ -921,6 +950,90 @@ describe('Innovations / _services / innovation-supports suite', () => {
       ).rejects.toThrowError(
         new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_SUMMARY_PROGRESS_DELETE_MUST_BE_FROM_UNIT)
       );
+    });
+  });
+
+  describe('getValidSupportStatuses', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const supportThatWasEngaged = innovation.supports.supportByHealthOrgUnit;
+    const supportThatWasNotEngaged = innovation.supports.supportByHealthOrgAiUnit;
+
+    it.each([
+      [
+        InnovationSupportStatusEnum.UNASSIGNED,
+        true,
+        [
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.ENGAGING
+        ]
+      ],
+      [
+        InnovationSupportStatusEnum.WAITING,
+        true,
+        [
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.ENGAGING,
+          InnovationSupportStatusEnum.CLOSED
+        ]
+      ],
+      [
+        InnovationSupportStatusEnum.WAITING,
+        false,
+        [InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.ENGAGING]
+      ],
+      [
+        InnovationSupportStatusEnum.UNSUITABLE,
+        true,
+        [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
+      ],
+      [
+        InnovationSupportStatusEnum.UNSUITABLE,
+        false,
+        [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
+      ],
+      [
+        InnovationSupportStatusEnum.ENGAGING,
+        true,
+        [
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.CLOSED,
+          InnovationSupportStatusEnum.UNSUITABLE
+        ]
+      ]
+    ])(
+      'when status is %s and wasEngaged=%s it should return %s',
+      async (
+        currentStatus: InnovationSupportStatusEnum,
+        wasEngaged: boolean,
+        expected: InnovationSupportStatusEnum[]
+      ) => {
+        const supportId = wasEngaged ? supportThatWasEngaged.id : supportThatWasNotEngaged.id;
+        await em.getRepository(InnovationSupportEntity).update({ id: supportId }, { status: currentStatus });
+
+        const validSupportStatuses = await sut.getValidSupportStatuses(
+          innovation.id,
+          supportId === supportThatWasEngaged.id
+            ? scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.id
+            : scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.id,
+          em
+        );
+
+        expect(validSupportStatuses).toEqual(expect.arrayContaining(expected));
+      }
+    );
+
+    it.each([
+      [
+        [
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.ENGAGING
+        ]
+      ]
+    ])("should return %s if support doesn't exist", async (expected: InnovationSupportStatusEnum[]) => {
+      const validSupportStatuses = await sut.getValidSupportStatuses(innovation.id, randUuid(), em);
+      expect(validSupportStatuses).toEqual(expect.arrayContaining(expected));
     });
   });
 });
