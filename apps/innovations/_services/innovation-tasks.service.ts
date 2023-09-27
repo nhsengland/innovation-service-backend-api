@@ -695,27 +695,27 @@ export class InnovationTasksService extends BaseService {
   private getSaveTaskSubject(displayId: string, section: CurrentCatalogTypes.InnovationSections): string {
     switch (section) {
       case 'INNOVATION_DESCRIPTION':
-        return `TASK (${displayId}) update section 1.1 (Description of innovation)`;
+        return `Task (${displayId}) update section 1.1 (Description of innovation)`;
       case 'UNDERSTANDING_OF_NEEDS':
-        return `TASK (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`;
+        return `Task (${displayId}) update section 2.1 (Detailed understanding of needs and benefits)`;
       case 'EVIDENCE_OF_EFFECTIVENESS':
-        return `TASK (${displayId}) update section 2.2 (Evidence of impact and benefit)`;
+        return `Task (${displayId}) update section 2.2 (Evidence of impact and benefit)`;
       case 'MARKET_RESEARCH':
-        return `TASK (${displayId}) update section 3.1 (Market research)`;
+        return `Task (${displayId}) update section 3.1 (Market research)`;
       case 'CURRENT_CARE_PATHWAY':
-        return `TASK (${displayId}) update section 3.2 (Current care pathway)`;
+        return `Task (${displayId}) update section 3.2 (Current care pathway)`;
       case 'TESTING_WITH_USERS':
-        return `TASK (${displayId}) update section 4.1 (Testing with users)`;
+        return `Task (${displayId}) update section 4.1 (Testing with users)`;
       case 'REGULATIONS_AND_STANDARDS':
-        return `TASK (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`;
+        return `Task (${displayId}) update section 5.1 (Regulatory approvals, standards and certifications)`;
       case 'INTELLECTUAL_PROPERTY':
-        return `TASK (${displayId}) update section 5.2 (Intellectual property)`;
+        return `Task (${displayId}) update section 5.2 (Intellectual property)`;
       case 'REVENUE_MODEL':
-        return `TASK (${displayId}) update section 6.1 (Revenue model)`;
+        return `Task (${displayId}) update section 6.1 (Revenue model)`;
       case 'COST_OF_INNOVATION':
-        return `TASK (${displayId}) update section 7.1 (Cost of your innovation)`;
+        return `Task (${displayId}) update section 7.1 (Cost of your innovation)`;
       case 'DEPLOYMENT':
-        return `TASK (${displayId}) update section 8.1 (Cost of your innovation)`;
+        return `Task (${displayId}) update section 8.1 (Cost of your innovation)`;
       default: {
         const s: never = section;
         throw new NotImplementedError(InnovationErrorsEnum.INNOVATION_SECTION_NOT_FOUND, { details: s });
