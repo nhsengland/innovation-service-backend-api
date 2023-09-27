@@ -17,7 +17,7 @@ describe('Tasks To Submit Statistics Handler Suite', () => {
 
   const expectedGetTasksCounter = {
     [InnovationTaskStatusEnum.DONE]: 3,
-    [InnovationTaskStatusEnum.CANCELLED]: 2,
+    [InnovationTaskStatusEnum.DECLINED]: 2,
     [InnovationTaskStatusEnum.OPEN]: 1,
     lastUpdatedAt: randPastDate()
   };
