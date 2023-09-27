@@ -2,8 +2,8 @@ import { injectable } from 'inversify';
 
 import { InnovationEntity } from '@admin/shared/entities';
 import { InnovationSupportStatusEnum } from '@admin/shared/enums';
-import { BaseService } from './base.service';
 import type { EntityManager } from 'typeorm';
+import { BaseService } from './base.service';
 
 @injectable()
 export class StatisticsService extends BaseService {
@@ -14,7 +14,7 @@ export class StatisticsService extends BaseService {
    *       might or might not be relevant to distinguish them.
    *
    * @param organisationUnitId the organisation unit
-   * @param onlyOpen if true, only returns the number of innovations with open statuses (ENGAGING, FURTHER_INFO_REQUIRED)
+   * @param onlyOpen if true, only returns the number of innovations with open statuses (ENGAGING)
    * @returns dictionary of status and number of innovations
    */
   async getOrganisationUnitInnovationCounters(
@@ -35,9 +35,7 @@ export class StatisticsService extends BaseService {
       });
 
     if (onlyOpen) {
-      query.andWhere('supports.status IN (:...statuses)', {
-        statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
-      });
+      query.andWhere('supports.status = :engageStatus', { engageStatus: InnovationSupportStatusEnum.ENGAGING });
     }
 
     query.groupBy('supports.status');
@@ -47,9 +45,12 @@ export class StatisticsService extends BaseService {
         count: number;
         status: InnovationSupportStatusEnum;
       }>()
-    ).reduce((acc, cur) => {
-      acc[cur.status] = cur.count;
-      return acc;
-    }, {} as { [k in InnovationSupportStatusEnum]?: number });
+    ).reduce(
+      (acc, cur) => {
+        acc[cur.status] = cur.count;
+        return acc;
+      },
+      {} as { [k in InnovationSupportStatusEnum]?: number }
+    );
   }
 }

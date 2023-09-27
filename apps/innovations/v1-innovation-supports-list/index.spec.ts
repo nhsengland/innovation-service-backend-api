@@ -28,7 +28,7 @@ beforeAll(async () => {
 const expected = [
   {
     id: randUuid(),
-    status: InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
+    status: InnovationSupportStatusEnum.WAITING,
     organisation: {
       id: randUuid(),
       name: randCompanyName(),

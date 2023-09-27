@@ -5,9 +5,7 @@ import { StatisticsService } from '../../_services/statistics.service';
 
 describe('Actions To Review Statistics Handler Suite', () => {
   // const testsHelper = new TestsHelper();
-  const expected = {
-    COMPLETE: randNumber()
-  };
+  const expected = { CLOSED: randNumber() };
   const mock = jest
     .spyOn(StatisticsService.prototype, 'getOrganisationUnitInnovationCounters')
     .mockResolvedValue(expected);

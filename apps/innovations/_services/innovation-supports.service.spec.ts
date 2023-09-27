@@ -356,14 +356,6 @@ describe('Innovations / _services / innovation-supports suite', () => {
         },
         {
           id: expect.any(String),
-          name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
-          support: {
-            status: innovation.supports.supportByHealthOrgAiUnit.status,
-            start: expect.any(Date)
-          }
-        },
-        {
-          id: expect.any(String),
           name: scenario.organisations.medTechOrg.organisationUnits.medTechOrgUnit.name,
           support: {
             status: innovation.supports.supportByMedTechOrgUnit.status,
@@ -381,19 +373,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
     it('should return units that had been engaged', async () => {
       await em
         .getRepository(InnovationSupportEntity)
-        .update(
-          { id: innovation.supports.supportByHealthOrgAiUnit.id },
-          { status: InnovationSupportStatusEnum.COMPLETE }
-        );
+        .update({ id: innovation.supports.supportByHealthOrgUnit.id }, { status: InnovationSupportStatusEnum.CLOSED });
 
       const supportSummaryList = await sut.getSupportSummaryList(innovation.id, em);
 
       expect(supportSummaryList.BEEN_ENGAGED).toMatchObject([
         {
           id: expect.any(String),
-          name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+          name: scenario.organisations.healthOrg.organisationUnits.healthOrgUnit.name,
           support: {
-            status: InnovationSupportStatusEnum.COMPLETE,
+            status: InnovationSupportStatusEnum.CLOSED,
             start: expect.any(Date),
             end: expect.any(Date)
           }
@@ -403,7 +392,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it('should return suggested units', async () => {
       await new InnovationSupportBuilder(em)
-        .setStatus(InnovationSupportStatusEnum.NOT_YET)
+        .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(innovation.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
         .save();
@@ -412,9 +401,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(supportSummaryList.SUGGESTED).toMatchObject([
         {
           id: expect.any(String),
+          name: scenario.organisations.healthOrg.organisationUnits.healthOrgAiUnit.name,
+          support: {
+            status: InnovationSupportStatusEnum.WAITING
+          }
+        },
+        {
+          id: expect.any(String),
           name: scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.name,
           support: {
-            status: InnovationSupportStatusEnum.NOT_YET
+            status: InnovationSupportStatusEnum.WAITING
           }
         },
         {
@@ -550,14 +546,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it.each([
-      InnovationSupportStatusEnum.COMPLETE,
+      InnovationSupportStatusEnum.CLOSED,
       InnovationSupportStatusEnum.ENGAGING,
-      InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-      InnovationSupportStatusEnum.NOT_YET,
       InnovationSupportStatusEnum.UNASSIGNED,
       InnovationSupportStatusEnum.UNSUITABLE,
-      InnovationSupportStatusEnum.WAITING,
-      InnovationSupportStatusEnum.WITHDRAWN
+      InnovationSupportStatusEnum.WAITING
     ])('should update the support status to %s', async (status: InnovationSupportStatusEnum) => {
       const support = await sut.updateInnovationSupport(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
@@ -619,18 +612,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
     });
 
     it.each([
-      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE],
-      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.NOT_YET],
+      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED],
       [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNASSIGNED],
       [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE],
-      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING],
-      [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WITHDRAWN],
-      [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.COMPLETE],
-      [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.NOT_YET],
-      [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.UNASSIGNED],
-      [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.UNSUITABLE],
-      [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.WAITING],
-      [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, InnovationSupportStatusEnum.WITHDRAWN]
+      [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED],
+      [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.UNASSIGNED],
+      [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.UNSUITABLE]
     ])(
       'should clear any open tasks when status is changed from %s to %s',
       async (previousStatus: InnovationSupportStatusEnum, newStatus: InnovationSupportStatusEnum) => {
@@ -638,7 +625,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           | typeof innovation.supports.supportByHealthOrgUnit
           | typeof innovation.supports.supportByHealthOrgAiUnit = innovation.supports.supportByHealthOrgUnit;
 
-        if (previousStatus === InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
+        if (previousStatus === InnovationSupportStatusEnum.WAITING) {
           scenarioSupport = innovation.supports.supportByHealthOrgAiUnit;
         }
 
@@ -671,13 +658,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
     );
 
     it.each([
-      InnovationSupportStatusEnum.COMPLETE,
-      InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
-      InnovationSupportStatusEnum.NOT_YET,
+      InnovationSupportStatusEnum.CLOSED,
       InnovationSupportStatusEnum.UNASSIGNED,
       InnovationSupportStatusEnum.UNSUITABLE,
-      InnovationSupportStatusEnum.WAITING,
-      InnovationSupportStatusEnum.WITHDRAWN
+      InnovationSupportStatusEnum.WAITING // TODO: this test will probably change since the QA will be always assigned in this status
     ])(
       'should remove all assigned accessors when status is changed to %s',
       async (status: InnovationSupportStatusEnum) => {
@@ -714,7 +698,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           innovation.id,
           randUuid(),
           {
-            status: InnovationSupportStatusEnum.COMPLETE,
+            status: InnovationSupportStatusEnum.CLOSED,
             message: randText({ charCount: 10 })
           },
           em
@@ -741,7 +725,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           innovation.id,
           innovation.supports.supportByHealthOrgUnit.id,
           {
-            status: InnovationSupportStatusEnum.COMPLETE,
+            status: InnovationSupportStatusEnum.CLOSED,
             message: randText({ charCount: 10 })
           },
           em
@@ -857,7 +841,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
       await em.update(
         InnovationSupportEntity,
         { id: scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit.id },
-        { status: InnovationSupportStatusEnum.NOT_YET }
+        { status: InnovationSupportStatusEnum.WAITING }
       );
 
       await expect(() =>

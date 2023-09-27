@@ -767,9 +767,7 @@ export class RecipientsService extends BaseService {
 
       // only active supports
       .andWhere('innovation.status != :innovationStatus', { innovationStatus: InnovationStatusEnum.PAUSED })
-      .andWhere('supports.status IN (:...statuses)', {
-        statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
-      })
+      .andWhere('supports.status = :engagingStatus', { engagingStatus: InnovationSupportStatusEnum.ENGAGING })
 
       .andWhere('userRole.organisation_unit_id IS NOT NULL') // only A/QAs activity
       .andWhere('qas.role = :role', { role: ServiceRoleEnum.QUALIFYING_ACCESSOR }) // only notify QAs

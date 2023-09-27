@@ -1517,19 +1517,16 @@ paths:
                   type: string
                   enum:
                     - ENGAGING
-                    - COMPLETE
+                    - CLOSED
               - type: array
                 items:
                   type: string
                   enum:
                     - UNASSIGNED
-                    - FURTHER_INFO_REQUIRED
-                    - WAITING
-                    - NOT_YET
                     - ENGAGING
+                    - WAITING
                     - UNSUITABLE
-                    - WITHDRAWN
-                    - COMPLETE
+                    - CLOSED
         - name: groupedStatuses
           in: query
           required: false
@@ -2984,12 +2981,11 @@ paths:
                 status:
                   type: string
                   enum:
+                    - UNASSIGNED
                     - ENGAGING
-                    - FURTHER_INFO_REQUIRED
                     - WAITING
-                    - NOT_YET
                     - UNSUITABLE
-                    - COMPLETE
+                    - CLOSED
                 message:
                   type: string
                   maxLength: 400
@@ -3100,12 +3096,11 @@ paths:
                 status:
                   type: string
                   enum:
+                    - UNASSIGNED
                     - ENGAGING
-                    - FURTHER_INFO_REQUIRED
                     - WAITING
-                    - NOT_YET
                     - UNSUITABLE
-                    - COMPLETE
+                    - CLOSED
                 message:
                   type: string
                   maxLength: 400
@@ -3191,13 +3186,10 @@ paths:
                           type: string
                           enum:
                             - UNASSIGNED
-                            - FURTHER_INFO_REQUIRED
-                            - WAITING
-                            - NOT_YET
                             - ENGAGING
+                            - WAITING
                             - UNSUITABLE
-                            - WITHDRAWN
-                            - COMPLETE
+                            - CLOSED
                         start:
                           type: string
                         end:
@@ -3366,13 +3358,10 @@ paths:
                           type: string
                           enum:
                             - UNASSIGNED
-                            - FURTHER_INFO_REQUIRED
-                            - WAITING
-                            - NOT_YET
                             - ENGAGING
+                            - WAITING
                             - UNSUITABLE
-                            - WITHDRAWN
-                            - COMPLETE
+                            - CLOSED
                         message:
                           type: string
                         title:

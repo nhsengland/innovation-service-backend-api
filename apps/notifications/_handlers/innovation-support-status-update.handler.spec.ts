@@ -194,7 +194,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
             innovationId: innovation.id,
             innovationSupport: {
               id: support.id,
-              status: InnovationSupportStatusEnum.COMPLETE,
+              status: InnovationSupportStatusEnum.CLOSED,
               statusChanged: false,
               message: '',
               organisationUnitId:
@@ -212,7 +212,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
   });
 
   describe.each([
-    [InnovationSupportStatusEnum.COMPLETE, 'completed'],
+    [InnovationSupportStatusEnum.CLOSED, 'closed'],
     [InnovationSupportStatusEnum.UNSUITABLE, 'unsuitable'],
     [InnovationSupportStatusEnum.UNASSIGNED, 'unassigned'],
     [InnovationSupportStatusEnum.ENGAGING, 'engaging']
@@ -350,12 +350,7 @@ describe('Notifications / _handlers / innovation-support-status-update suite', (
     }
   );
 
-  describe.each([
-    [InnovationSupportStatusEnum.NOT_YET, 'not yet'],
-    [InnovationSupportStatusEnum.WAITING, 'waiting'],
-    [InnovationSupportStatusEnum.WITHDRAWN, 'withdrawn'],
-    [InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED, 'further info']
-  ])(
+  describe.each([[InnovationSupportStatusEnum.WAITING, 'waiting']])(
     'Innovation support status updated to %s',
     (supportStatus: InnovationSupportStatusEnum, statusEmailText: string) => {
       let innovation: CompleteScenarioType['users']['johnInnovator']['innovations']['johnInnovation'];
