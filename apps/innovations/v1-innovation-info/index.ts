@@ -60,7 +60,7 @@ class V1InnovationInfo {
                 id: result.owner.id,
                 name: result.owner.name,
                 isActive: result.owner.isActive,
-                organisations: result.owner.organisations.length > 0 ? result.owner.organisations : null,
+                organisation: result.owner.organisation,
                 // Contact details only sent to Assessment and Admin users.
                 ...([ServiceRoleEnum.ASSESSMENT, ServiceRoleEnum.ADMIN].includes(
                   domainContext.currentRole.role as ServiceRoleEnum
@@ -76,7 +76,7 @@ class V1InnovationInfo {
                   : {}),
                 ...([ServiceRoleEnum.ADMIN].includes(domainContext.currentRole.role as ServiceRoleEnum)
                   ? { lastLoginAt: result.owner.lastLoginAt }
-                  : {}),
+                  : {})
               }
             }),
         lastEndSupportAt: result.lastEndSupportAt,

@@ -173,10 +173,10 @@ describe('v1-innovation-info Suite', () => {
     });
 
     it('should include owner organisations if he has', async () => {
-      const organisations = [{ name: randFullName(), size: null }];
+      const organisation = { name: randFullName(), size: null };
       mock.mockResolvedValueOnce({
         ...expectedWithOwner,
-        owner: { ...expectedWithOwner.owner, organisations }
+        owner: { ...expectedWithOwner.owner, organisation }
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -189,7 +189,7 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         owner: {
           ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
-          organisations
+          organisation
         }
       });
     });
