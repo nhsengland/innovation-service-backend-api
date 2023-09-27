@@ -23,7 +23,7 @@ export class TasksRespondedStatisticsHandler extends InnovationsStatisticsHandle
 
     const tasksStatus = [
       InnovationTaskStatusEnum.OPEN,
-      InnovationTaskStatusEnum.CANCELLED,
+      InnovationTaskStatusEnum.DECLINED,
       InnovationTaskStatusEnum.DONE
     ];
 
@@ -37,8 +37,8 @@ export class TasksRespondedStatisticsHandler extends InnovationsStatisticsHandle
     );
 
     return {
-      count: tasks.DONE + tasks.CANCELLED,
-      total: tasks.DONE + tasks.CANCELLED + tasks.OPEN,
+      count: tasks.DONE + tasks.DECLINED,
+      total: tasks.DONE + tasks.DECLINED + tasks.OPEN,
       lastUpdatedAt: lastUpdatedTask?.updatedAt ?? null,
       lastUpdatedSection: lastUpdatedTask?.section ?? null
     };
