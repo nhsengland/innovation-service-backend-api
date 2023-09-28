@@ -384,10 +384,15 @@ export class InnovationTasksService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
     }
 
-    // The view already filters deleted users
+    // The view already filters deleted users but we need to filter the others from the b2c request
+    // This function name resolution logic can probably be improved but this was a quick fix
     const users = [
-      dbTask.createdByUserRole.user.identityId,
-      dbTask.updatedByUserRole?.user.identityId,
+      ...(dbTask.createdByUserRole.user.status !== UserStatusEnum.DELETED
+        ? [dbTask.createdByUserRole.user.identityId]
+        : []),
+      ...(dbTask.updatedByUserRole.user.status !== UserStatusEnum.DELETED
+        ? [dbTask.updatedByUserRole.user.identityId]
+        : []),
       ...dbTask.descriptions.map(d => d.createdByIdentityId)
     ].filter((s): s is string => !!s);
     const usersMap = await this.identityProviderService.getUsersMap(users);
