@@ -810,7 +810,7 @@ export class InnovationsService extends BaseService {
       mobilePhone: null | string;
       isActive: boolean;
       lastLoginAt?: null | Date;
-      organisations: { name: string; size: null | string }[];
+      organisation?: { name: string; size: null | string };
     };
     lastEndSupportAt: null | Date;
     assessment?: null | {
@@ -841,6 +841,7 @@ export class InnovationsService extends BaseService {
         'innovationOwner.id',
         'innovationOwner.status',
         'innovationOwnerUserRole.id',
+        'innovationOwnerOrganisation.isShadow',
         'innovationOwnerOrganisation.name',
         'innovationOwnerOrganisation.size',
         'reassessmentRequests.id',
@@ -990,12 +991,14 @@ export class InnovationsService extends BaseService {
               mobilePhone: ownerInfo?.mobilePhone ?? '',
               isActive: !!ownerInfo?.isActive,
               lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-              organisations: [
-                {
-                  name: innovation.owner.serviceRoles[0]?.organisation?.name || '',
-                  size: innovation.owner.serviceRoles[0]?.organisation?.size || ''
-                }
-              ]
+              // shadow innovator organisations shouldn't be displayed
+              ...(innovation.owner.serviceRoles[0]?.organisation &&
+                !innovation.owner.serviceRoles[0].organisation.isShadow && {
+                  organisation: {
+                    name: innovation.owner.serviceRoles[0].organisation.name,
+                    size: innovation.owner.serviceRoles[0].organisation.size
+                  }
+                })
             }
           }
         : {}),

@@ -91,7 +91,6 @@ describe('v1-innovation-info Suite', () => {
         email: randEmail(),
         contactDetails: randPhoneNumber(),
         mobilePhone: randPhoneNumber(),
-        organisations: [],
         isActive: randBoolean(),
         lastLoginAt: randPastDate()
       }
@@ -110,7 +109,7 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         owner: {
           ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
-          organisations: null
+          organisation: undefined
         }
       });
     });
@@ -138,7 +137,7 @@ describe('v1-innovation-info Suite', () => {
             'contactByPhoneTimeframe',
             'contactDetails'
           ]),
-          organisations: null
+          organisation: undefined
         }
       });
     });
@@ -167,16 +166,16 @@ describe('v1-innovation-info Suite', () => {
             'contactDetails',
             'lastLoginAt'
           ]),
-          organisations: null
+          organisation: undefined
         }
       });
     });
 
     it('should include owner organisations if he has', async () => {
-      const organisations = [{ name: randFullName(), size: null }];
+      const organisation = { name: randFullName(), size: null };
       mock.mockResolvedValueOnce({
         ...expectedWithOwner,
-        owner: { ...expectedWithOwner.owner, organisations }
+        owner: { ...expectedWithOwner.owner, organisation }
       });
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.johnInnovator)
@@ -189,7 +188,7 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         owner: {
           ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
-          organisations
+          organisation
         }
       });
     });
