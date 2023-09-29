@@ -559,6 +559,16 @@ export class InnovationSupportsService extends BaseService {
         throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
       }
 
+      // Update thread followers with the new assigned users
+      if (data.status === InnovationSupportStatusEnum.ENGAGING) {
+        await this.innovationThreadsService.removeFollowers(thread.thread.id, [...previousUsersRoleIds], transaction);
+        await this.innovationThreadsService.addFollowersToThread(
+          thread.thread.id,
+          (data.accessors ?? []).map(a => a.userRoleId),
+          transaction
+        );
+      }
+
       await this.domainService.innovations.addActivityLog(
         transaction,
         { innovationId: innovationId, activity: ActivityEnum.SUPPORT_STATUS_UPDATE, domainContext },

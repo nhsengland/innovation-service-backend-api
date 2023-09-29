@@ -157,7 +157,7 @@ export class InnovationThreadsService extends BaseService {
     threadId: string,
     followerUserRoleIds: string[],
     entityManager?: EntityManager
-  ): Promise<{ threadId: string }> {
+  ): Promise<void> {
     const em = entityManager ?? this.sqlConnection.manager;
 
     const dbThread = await em
@@ -170,22 +170,20 @@ export class InnovationThreadsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    //remove duplicates
-    const uniqueFollowerRoleIds = [...new Set(followerUserRoleIds)];
+    // Remove duplicates
+    const uniqueFollowerRoleIds = [...new Set([...followerUserRoleIds, ...dbThread.followers.map(f => f.id)])];
 
     await em.save(InnovationThreadEntity, {
       ...dbThread,
-      followers: [...dbThread.followers, ...uniqueFollowerRoleIds.map(urId => UserRoleEntity.new({ id: urId }))]
+      followers: uniqueFollowerRoleIds.map(urId => UserRoleEntity.new({ id: urId }))
     });
-
-    return { threadId: dbThread.id };
   }
 
   async unfollowThread(
     domainContext: DomainContextType,
     threadId: string,
     entityManager?: EntityManager
-  ): Promise<{ threadId: string }> {
+  ): Promise<void> {
     const manager = entityManager ?? this.sqlConnection.manager;
 
     const dbThread = await manager
@@ -206,15 +204,23 @@ export class InnovationThreadsService extends BaseService {
       throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_INNOVATORS_CANNOT_UNFOLLOW);
     }
 
+    await this.removeFollowers(dbThread.id, [domainContext.currentRole.id], manager);
+  }
+
+  async removeFollowers(threadId: string, unfollowersRolesIds: string[], entityManager?: EntityManager): Promise<void> {
+    const manager = entityManager ?? this.sqlConnection.manager;
+
+    if (unfollowersRolesIds.length === 0) {
+      return;
+    }
+
     await manager
       .createQueryBuilder()
       .delete()
       .from('innovation_thread_follower')
-      .where('innovation_thread_id = :threadId', { threadId: dbThread.id })
-      .andWhere('user_role_id = :userRoleId', { userRoleId: domainContext.currentRole.id })
+      .where('innovation_thread_id = :threadId', { threadId })
+      .andWhere('user_role_id IN (:...userRoleIds)', { userRoleIds: unfollowersRolesIds })
       .execute();
-
-    return { threadId };
   }
 
   async createThread(

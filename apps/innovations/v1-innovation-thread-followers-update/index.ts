@@ -10,11 +10,10 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
-import type { ResponseDTO } from './transformation.dtos';
-import type { ParamsType } from './validation.schemas';
-import { BodySchema, BodyType, ParamsSchema } from './validation.schemas';
 import type { InnovationThreadsService } from '../_services/innovation-threads.service';
 import SYMBOLS from '../_services/symbols';
+import type { ParamsType } from './validation.schemas';
+import { BodySchema, BodyType, ParamsSchema } from './validation.schemas';
 
 class V1InnovationThreadFollowersUpdate {
   @JwtDecoder()
@@ -36,11 +35,9 @@ class V1InnovationThreadFollowersUpdate {
         .checkInnovation()
         .verify();
 
-      const result = await threadsService.addFollowersToThread(pathParams.threadId, body.followerUserRoleIds);
+      await threadsService.addFollowersToThread(pathParams.threadId, body.followerUserRoleIds);
 
-      context.res = ResponseHelper.Ok<ResponseDTO>({
-        threadId: result.threadId
-      });
+      context.res = ResponseHelper.NoContent();
       return;
     } catch (error) {
       context.res = ResponseHelper.Error(context, error);
@@ -61,58 +58,11 @@ export default openApi(
       parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       requestBody: SwaggerHelper.bodyJ2S(BodySchema),
       responses: {
-        200: {
-          description: 'Success',
-          content: {
-            'application/json': {
-              schema: {
-                type: 'object',
-                properties: {
-                  participants: {
-                    type: 'array',
-                    items: {
-                      type: 'object',
-                      properties: {
-                        id: {
-                          type: 'string'
-                        },
-                        name: {
-                          type: 'string'
-                        },
-                        type: {
-                          type: 'string'
-                        },
-                        organisationUnit: {
-                          type: 'object',
-                          properties: {
-                            id: {
-                              type: 'string'
-                            },
-                            acronym: {
-                              type: 'string'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        401: {
-          description: 'Unauthorized'
-        },
-        403: {
-          description: 'Forbidden'
-        },
-        404: {
-          description: 'Not Found'
-        },
-        500: {
-          description: 'Internal Server Error'
-        }
+        204: { description: 'Success' },
+        401: { description: 'Unauthorized' },
+        403: { description: 'Forbidden' },
+        404: { description: 'Not Found' },
+        500: { description: 'Internal Server Error' }
       }
     }
   }

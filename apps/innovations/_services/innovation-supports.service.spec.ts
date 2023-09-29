@@ -590,9 +590,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
         em
       );
 
-      expect(support).toMatchObject({
-        id: support.id
-      });
+      expect(support).toMatchObject({ id: support.id });
 
       const dbSupport = await em
         .createQueryBuilder(InnovationSupportEntity, 'support')
@@ -602,6 +600,16 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .getOne();
 
       expect(dbSupport?.userRoles.map(u => u.id)).toContain(
+        scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
+      );
+
+      const dbThread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .leftJoinAndSelect('thread.followers', 'followers')
+        .where('thread.contextId = :contextId', { contextId: support.id })
+        .getOne();
+
+      expect(dbThread?.followers.map(f => f.id)).toContain(
         scenario.users.jamieMadroxAccessor.roles.healthAccessorRole.id
       );
     });
