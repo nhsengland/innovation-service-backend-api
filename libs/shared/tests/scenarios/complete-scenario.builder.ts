@@ -239,9 +239,9 @@ export class CompleteScenarioBuilder {
         .setAccessors([aliceQualifyingAccessor, jamieMadroxAccessor])
         .save();
 
-      // support on johnInnovation by HealthOrgAIUnit in status FURTHER_INFO
+      // support on johnInnovation by HealthOrgAIUnit in status WAITING
       const johnInnovationSupportByHealthOrgAIUnit = await new InnovationSupportBuilder(entityManager)
-        .setStatus(InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED)
+        .setStatus(InnovationSupportStatusEnum.WAITING)
         .setInnovation(johnInnovation.id)
         .setOrganisationUnit(healthOrgAiUnit.id)
         .save();
@@ -249,12 +249,12 @@ export class CompleteScenarioBuilder {
       await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation.id)
         .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
-        .setSupportStatus(InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED)
+        .setSupportStatus(InnovationSupportStatusEnum.WAITING)
         .save();
       await new InnovationSupportLogBuilder(entityManager)
         .setInnovation(johnInnovation.id)
         .setCreatedBy(aliceQualifyingAccessor, aliceQualifyingAccessor.roles['qaRole']!)
-        .setSupportStatus(InnovationSupportStatusEnum.COMPLETE)
+        .setSupportStatus(InnovationSupportStatusEnum.CLOSED)
         .save();
 
       // support on johnInnovation by MedTechOrgUnit accessor (sam)

@@ -160,10 +160,7 @@ export class InnovationTasksService extends BaseService {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
-          accessorSupportsSupportStatuses01: [
-            InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.COMPLETE
-          ]
+          accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
         // query.andWhere('accessorSupports.organisation_unit_id = :organisationUnitId ', { organisationUnitId: user.organisationUnitId });
       }

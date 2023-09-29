@@ -20,7 +20,7 @@ export type BodyType = {
 export const BodySchema = Joi.object<BodyType>({
   status: Joi.string()
     .valid(...Object.values(InnovationSupportStatusEnum))
-    .disallow(InnovationSupportStatusEnum.UNASSIGNED, InnovationSupportStatusEnum.WITHDRAWN)
+    .disallow(InnovationSupportStatusEnum.UNASSIGNED)
     .required(),
   message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required()
 }).required();

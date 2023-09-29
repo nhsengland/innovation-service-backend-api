@@ -4,9 +4,9 @@ import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randText, randUuid } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
-import type { BodyType, ParamsType } from './validation.schemas';
+import type { ResponseDTO } from './transformation.dtos';
+import type { ParamsType } from './validation.schemas';
 
 jest.mock('@innovations/shared/decorators', () => ({
   JwtDecoder: jest.fn().mockImplementation(() => (_: any, __: string, descriptor: PropertyDescriptor) => {
@@ -24,29 +24,30 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = { id: randUuid() };
-const mock = jest.spyOn(InnovationSupportsService.prototype, 'updateInnovationSupport').mockResolvedValue(expected);
+const expected = [
+  InnovationSupportStatusEnum.UNSUITABLE,
+  InnovationSupportStatusEnum.WAITING,
+  InnovationSupportStatusEnum.ENGAGING
+];
+const mock = jest.spyOn(InnovationSupportsService.prototype, 'getValidSupportStatuses').mockResolvedValue(expected);
 
 afterEach(() => {
   jest.clearAllMocks();
 });
 
-describe('v1-innovation-support-update', () => {
+describe('v1-innovation-support-available-status', () => {
   describe('200', () => {
-    it('should update an innovation support', async () => {
+    it('should return the available status from support', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
         .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          supportId: randUuid()
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
-        .setBody<BodyType>({
-          message: randText(),
-          status: InnovationSupportStatusEnum.WAITING
-        })
-        .call<never>(azureFunction);
+        .call<ResponseDTO>(azureFunction);
 
-      expect(result.body).toStrictEqual(expected);
+      expect(result.body).toStrictEqual({
+        availableStatus: expected
+      });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);
     });
@@ -56,7 +57,7 @@ describe('v1-innovation-support-update', () => {
     it.each([
       ['Admin', 403, scenario.users.allMighty],
       ['QA', 200, scenario.users.aliceQualifyingAccessor],
-      ['A', 403, scenario.users.ingridAccessor],
+      ['A', 200, scenario.users.ingridAccessor],
       ['NA', 403, scenario.users.paulNeedsAssessor],
       ['Innovator owner', 403, scenario.users.johnInnovator],
       ['Innovator collaborator', 403, scenario.users.janeInnovator],
@@ -65,12 +66,7 @@ describe('v1-innovation-support-update', () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
         .setParams<ParamsType>({
-          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id,
-          supportId: randUuid()
-        })
-        .setBody<BodyType>({
-          message: randText(),
-          status: InnovationSupportStatusEnum.WAITING
+          innovationId: scenario.users.johnInnovator.innovations.johnInnovation.id
         })
         .call<ErrorResponseType>(azureFunction);
 

@@ -42,7 +42,8 @@ describe('v1-innovation-support-change-request Suite', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
+          status: InnovationSupportStatusEnum.ENGAGING,
+          accessors: [{ id: randUuid(), userRoleId: randUuid() }]
         })
         .call<ResponseDTO>(azureFunction);
 
@@ -69,7 +70,8 @@ describe('v1-innovation-support-change-request Suite', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
+          status: InnovationSupportStatusEnum.ENGAGING,
+          accessors: [{ id: randUuid(), userRoleId: randUuid() }]
         })
         .call<ErrorResponseType>(azureFunction);
 

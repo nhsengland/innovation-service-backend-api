@@ -264,10 +264,7 @@ export class InnovationsService extends BaseService {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
-          accessorSupportsSupportStatuses01: [
-            InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.COMPLETE
-          ]
+          accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
       }
 

@@ -177,9 +177,7 @@ export class StatisticsService extends BaseService {
       .innerJoin('innovationSupport.organisationUnit', 'organisationUnit')
       .where('innovation.id = :innovationId', { innovationId })
       .andWhere('organisationUnit.id = :organisationUnit', { organisationUnit })
-      .andWhere('innovationSupport.status IN (:...status)', {
-        status: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
-      })
+      .andWhere('innovationSupport.status = :engagingStatus', { engagingStatus: InnovationSupportStatusEnum.ENGAGING })
       .getOne();
 
     const supportStartedAt = innovationSupport?.updatedAt;

@@ -9,6 +9,7 @@ import type { CustomContextType } from '@innovations/shared/types';
 
 import { container } from '../_config';
 
+import { InnovationSupportStatusEnum } from '@innovations/shared/enums';
 import type { InnovationSupportsService } from '../_services/innovation-supports.service';
 import SYMBOLS from '../_services/symbols';
 import type { ResponseDTO } from './transformation.dtos';
@@ -82,7 +83,7 @@ export default openApi(
               properties: {
                 status: {
                   type: 'string',
-                  enum: ['ENGAGING', 'FURTHER_INFO_REQUIRED', 'WAITING', 'NOT_YET', 'UNSUITABLE', 'COMPLETE']
+                  enum: Object.values(InnovationSupportStatusEnum)
                 },
                 message: {
                   type: 'string',

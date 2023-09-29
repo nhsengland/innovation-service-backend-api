@@ -14,9 +14,9 @@ import type { DomainContextType, NotifierTemplatesType } from '@notifications/sh
 import { container, EmailTypeEnum, ENV } from '../_config';
 
 import type { Context } from '@azure/functions';
+import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 import type { RecipientType } from '../_services/recipients.service';
 import { BaseHandler } from './base.handler';
-import { NotFoundError, OrganisationErrorsEnum } from '@notifications/shared/errors';
 
 export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE,
@@ -54,7 +54,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     if (!this.requestUser.organisation.organisationUnit) {
       throw new NotFoundError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
     }
-    
+
     const requestUserInfo = await this.identityProviderService.getUserInfo(this.requestUser.identityId);
 
     const innovation = await this.recipientsService.innovationInfo(this.inputData.innovationId);
@@ -91,17 +91,17 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
     }
 
     if (this.inputData.innovationSupport.statusChanged) {
-      await this.prepareEmailForInnovators(innovatorRecipients, this.data.innovation, this.data.requestUserAdditionalInfo.organisation);
-      await this.prepareInAppForInnovators(innovatorRecipients.map(i => i.roleId), this.data.requestUserAdditionalInfo.organisationUnit);
+      await this.prepareEmailForInnovators(
+        innovatorRecipients,
+        this.data.innovation,
+        this.data.requestUserAdditionalInfo.organisation
+      );
+      await this.prepareInAppForInnovators(
+        innovatorRecipients.map(i => i.roleId),
+        this.data.requestUserAdditionalInfo.organisationUnit
+      );
 
-      if (
-        [
-          InnovationSupportStatusEnum.NOT_YET,
-          InnovationSupportStatusEnum.WAITING,
-          InnovationSupportStatusEnum.WITHDRAWN,
-          InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
-        ].includes(this.inputData.innovationSupport.status)
-      ) {
+      if (this.inputData.innovationSupport.status === InnovationSupportStatusEnum.WAITING) {
         await this.prepareInAppForAssessmentWhenWaitingStatus(this.data.requestUserAdditionalInfo.organisationUnit);
       }
     }
@@ -115,7 +115,11 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
   }
 
   // Private methods.
-  private async prepareEmailForInnovators(recipients: RecipientType[], innovation: { name: string }, organisation: { name: string }): Promise<void> {
+  private async prepareEmailForInnovators(
+    recipients: RecipientType[],
+    innovation: { name: string },
+    organisation: { name: string }
+  ): Promise<void> {
     // Send email only to user if email preference INSTANTLY (NotifierTypeEnum.SUPPORT).
     for (const recipient of recipients) {
       this.emails.push({
@@ -157,7 +161,7 @@ export class InnovationSupportStatusUpdateHandler extends BaseHandler<
         notificationPreferenceType: 'SUPPORT',
         to: recipient,
         params: {
-          qa_name: requestUserInfo.displayName, 
+          qa_name: requestUserInfo.displayName,
           innovation_url: new UrlModel(ENV.webBaseTransactionalUrl)
             .addPath('accessor/innovations/:innovationId')
             .setPathParams({ innovationId: this.inputData.innovationId })

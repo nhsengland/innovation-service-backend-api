@@ -502,6 +502,15 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
+    const validSupportStatus = await this.getValidSupportStatuses(
+      innovationId,
+      dbSupport.organisationUnit.id,
+      connection
+    );
+    if (!validSupportStatus.includes(data.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
+    }
+
     const previousUsersRoleIds = new Set(dbSupport.userRoles.map(item => item.id));
     const previousStatus = dbSupport.status;
 
@@ -513,8 +522,8 @@ export class InnovationSupportsService extends BaseService {
 
         dbSupport.userRoles = [];
 
-        // Cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
-        if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
+        // Cleanup tasks if the status is not ENGAGING or WAITING
+        if (data.status !== InnovationSupportStatusEnum.WAITING) {
           await transaction
             .createQueryBuilder()
             .update(InnovationTaskEntity)
@@ -524,6 +533,9 @@ export class InnovationSupportsService extends BaseService {
               status: In([InnovationTaskStatusEnum.OPEN])
             })
             .execute();
+        } else {
+          // In waiting status the QA is automatically assigned
+          dbSupport.userRoles = [UserRoleEntity.new({ id: domainContext.currentRole.id })];
         }
       }
 
@@ -636,7 +648,7 @@ export class InnovationSupportsService extends BaseService {
     for (const support of unitsSupportInformationMap.values()) {
       suggestedIds.add(support.unitId);
 
-      if (this.isStatusEngaging(support.status)) {
+      if (support.status === InnovationSupportStatusEnum.ENGAGING) {
         engaging.push({
           id: support.unitId,
           name: support.unitName,
@@ -846,7 +858,7 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    if (!this.isStatusEngaging(support.status)) {
+    if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
     }
 
@@ -926,6 +938,68 @@ export class InnovationSupportsService extends BaseService {
         { updatedAt: now, deletedAt: now, updatedBy: domainContext.id }
       );
     });
+  }
+
+  async getValidSupportStatuses(
+    innovationId: string,
+    unitId: string,
+    entityManager?: EntityManager
+  ): Promise<InnovationSupportStatusEnum[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    let [support] = await em.query<{ status: InnovationSupportStatusEnum; engagedCount: number }[]>(
+      `
+        SELECT s.[status], (
+          SELECT COUNT(*) FROM innovation_support FOR SYSTEM_TIME ALL WHERE id = s.id AND [status] = 'ENGAGING'
+        ) as engagedCount
+        FROM innovation_support s
+        WHERE s.innovation_id = @0 AND organisation_unit_id = @1
+      `,
+      [innovationId, unitId]
+    );
+
+    if (!support) {
+      support = { status: InnovationSupportStatusEnum.UNASSIGNED, engagedCount: 0 };
+    }
+
+    const beenEngaged = support.engagedCount > 0;
+
+    switch (support.status) {
+      case InnovationSupportStatusEnum.UNASSIGNED:
+      case InnovationSupportStatusEnum.CLOSED:
+        return [
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.ENGAGING
+        ];
+
+      case InnovationSupportStatusEnum.WAITING:
+        if (beenEngaged) {
+          return [
+            InnovationSupportStatusEnum.UNSUITABLE,
+            InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.CLOSED
+          ];
+        }
+        return [InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.ENGAGING];
+
+      case InnovationSupportStatusEnum.ENGAGING:
+        return [
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.CLOSED
+        ];
+
+      case InnovationSupportStatusEnum.UNSUITABLE:
+        if (beenEngaged) {
+          return [
+            InnovationSupportStatusEnum.WAITING,
+            InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.CLOSED
+          ];
+        }
+        return [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING];
+    }
   }
 
   private async fetchSupportLogs(
@@ -1050,7 +1124,7 @@ export class InnovationSupportsService extends BaseService {
           SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support
           FOR SYSTEM_TIME ALL
-          WHERE innovation_id = @0 AND (status IN ('ENGAGING','FURTHER_INFO_REQUIRED'))
+          WHERE innovation_id = @0 AND (status IN ('ENGAGING'))
           GROUP BY id
       ) t ON t.id = s.id
       WHERE innovation_id = @0
@@ -1059,12 +1133,6 @@ export class InnovationSupportsService extends BaseService {
     );
 
     return new Map(unitsSupportInformation.map(support => [support.unitId, support]));
-  }
-
-  private isStatusEngaging(status: InnovationSupportStatusEnum): boolean {
-    return (
-      status === InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED || status === InnovationSupportStatusEnum.ENGAGING
-    );
   }
 
   private sortByStartDate(units: SuggestedUnitType[]): SuggestedUnitType[] {
