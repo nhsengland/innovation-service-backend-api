@@ -58,7 +58,7 @@ type UnitSupportInformationType = {
 type SuggestedUnitType = {
   id: string;
   name: string;
-  support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date };
+  support: { status: InnovationSupportStatusEnum; start?: Date; end?: Date; suggestedAt?: Date };
 };
 
 @injectable()
@@ -661,7 +661,8 @@ export class InnovationSupportsService extends BaseService {
           name: support.unitName,
           support: {
             status: support.status,
-            start: support.updatedAt
+            start: support.updatedAt,
+            suggestedAt: suggestedUnitsInfoMap.get(support.unitId)?.updatedAt
           }
         });
       }
@@ -675,7 +676,8 @@ export class InnovationSupportsService extends BaseService {
           id: u.id,
           name: u.name,
           support: {
-            status: InnovationSupportStatusEnum.UNASSIGNED
+            status: InnovationSupportStatusEnum.UNASSIGNED,
+            suggestedAt: u.updatedAt
           }
         }))
     );
@@ -976,16 +978,38 @@ export class InnovationSupportsService extends BaseService {
     return files.data[0];
   }
 
+  /**
+   * gets  the suggested units with latest suggestion
+   * @param innovationId the innovation id
+   * @param em the transactional entity manager
+   * @returns
+   */
   private async getSuggestedUnitsInfoMap(
     innovationId: string,
     em: EntityManager
-  ): Promise<Map<string, { id: string; name: string }>> {
-    const suggestedUnitsInfo: { id: string; name: string }[] = [
-      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({ id: u.id, name: u.name })),
+  ): Promise<Map<string, { id: string; name: string; updatedAt: Date }>> {
+    const suggestedUnitsInfo: { id: string; name: string; updatedAt: Date }[] = [
+      ...(await this.getSuggestedUnitsByNA(innovationId, em)).map(u => ({
+        id: u.id,
+        name: u.name,
+        updatedAt: u.updatedAt
+      })),
       ...(await this.getSuggestedUnitsByQA(innovationId, em))
     ];
 
-    return new Map(suggestedUnitsInfo.map(u => [u.id, u]));
+    const res = new Map<string, { id: string; name: string; updatedAt: Date }>();
+
+    for (const unit of suggestedUnitsInfo) {
+      if (res.has(unit.id)) {
+        // We want the most recent updated at for each unit
+        if (unit.updatedAt > res.get(unit.id)!.updatedAt) {
+          res.get(unit.id)!.updatedAt = unit.updatedAt;
+        }
+      } else {
+        res.set(unit.id, unit);
+      }
+    }
+    return res;
   }
 
   /**
@@ -1021,10 +1045,10 @@ export class InnovationSupportsService extends BaseService {
   private async getSuggestedUnitsByQA(
     innovationId: string,
     em: EntityManager
-  ): Promise<{ id: string; name: string }[]> {
+  ): Promise<{ id: string; name: string; updatedAt: Date }[]> {
     const suggestedByQA = await em
       .createQueryBuilder(InnovationSupportLogEntity, 'log')
-      .select(['log.id', 'suggestedUnits.id', 'suggestedUnits.name'])
+      .select(['log.id', 'log.updatedAt', 'suggestedUnits.id', 'suggestedUnits.name'])
       .leftJoin('log.suggestedOrganisationUnits', 'suggestedUnits')
       .where('log.innovation_id = :innovationId', { innovationId })
       .andWhere('log.type = :suggestionStatus', {
@@ -1033,7 +1057,9 @@ export class InnovationSupportsService extends BaseService {
       .getMany();
 
     return suggestedByQA
-      .map(log => (log.suggestedOrganisationUnits ?? []).map(u => ({ id: u.id, name: u.name })))
+      .map(log =>
+        (log.suggestedOrganisationUnits ?? []).map(u => ({ id: u.id, name: u.name, updatedAt: log.updatedAt }))
+      )
       .flat();
   }
 
