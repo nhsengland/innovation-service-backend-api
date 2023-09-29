@@ -91,7 +91,6 @@ describe('v1-innovation-info Suite', () => {
         email: randEmail(),
         contactDetails: randPhoneNumber(),
         mobilePhone: randPhoneNumber(),
-        organisations: [],
         isActive: randBoolean(),
         lastLoginAt: randPastDate()
       }
@@ -110,7 +109,7 @@ describe('v1-innovation-info Suite', () => {
         ...expectedWithOwner,
         owner: {
           ...pick(expectedWithOwner.owner, ['id', 'name', 'isActive']),
-          organisations: null
+          organisation: undefined
         }
       });
     });
@@ -138,7 +137,7 @@ describe('v1-innovation-info Suite', () => {
             'contactByPhoneTimeframe',
             'contactDetails'
           ]),
-          organisations: null
+          organisation: undefined
         }
       });
     });
@@ -167,7 +166,7 @@ describe('v1-innovation-info Suite', () => {
             'contactDetails',
             'lastLoginAt'
           ]),
-          organisations: null
+          organisation: undefined
         }
       });
     });
