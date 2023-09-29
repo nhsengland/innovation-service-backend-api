@@ -338,7 +338,7 @@ export class InnovationSupportsService extends BaseService {
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{Unit}}', organisationUnit.name),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
@@ -535,7 +535,7 @@ export class InnovationSupportsService extends BaseService {
       const thread = await this.innovationThreadsService.createThreadOrMessage(
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{Unit}}', dbSupport.organisationUnit.name),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
