@@ -343,7 +343,10 @@ describe('Innovations / _services / innovation-supports suite', () => {
     const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
 
     it('should return currently engaging units', async () => {
-      const supportSummaryList = await sut.getSupportSummaryList(innovation.id);
+      const supportSummaryList = await sut.getSupportSummaryList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id
+      );
 
       expect(supportSummaryList.ENGAGING).toMatchObject([
         {
@@ -375,7 +378,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .getRepository(InnovationSupportEntity)
         .update({ id: innovation.supports.supportByHealthOrgUnit.id }, { status: InnovationSupportStatusEnum.CLOSED });
 
-      const supportSummaryList = await sut.getSupportSummaryList(innovation.id, em);
+      const supportSummaryList = await sut.getSupportSummaryList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        em
+      );
 
       expect(supportSummaryList.BEEN_ENGAGED).toMatchObject([
         {
@@ -396,7 +403,11 @@ describe('Innovations / _services / innovation-supports suite', () => {
         .setInnovation(innovation.id)
         .setOrganisationUnit(scenario.organisations.innovTechOrg.organisationUnits.innovTechHeavyOrgUnit.id)
         .save();
-      const supportSummaryList = await sut.getSupportSummaryList(innovation.id, em);
+      const supportSummaryList = await sut.getSupportSummaryList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        em
+      );
 
       expect(supportSummaryList.SUGGESTED).toMatchObject([
         {
@@ -425,6 +436,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
 
     it("should return everything empty for innovations that haven't been on NA", async () => {
       const supportSummaryList = await sut.getSupportSummaryList(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
         scenario.users.johnInnovator.innovations.johnInnovationEmpty.id,
         em
       );
@@ -647,7 +659,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
     ])(
       'should clear any open tasks when status is changed from %s to %s',
       async (previousStatus: InnovationSupportStatusEnum, newStatus: InnovationSupportStatusEnum) => {
-        let scenarioSupport = innovation.supports.supportByHealthOrgUnit;
+        const scenarioSupport = innovation.supports.supportByHealthOrgUnit;
 
         if (previousStatus === InnovationSupportStatusEnum.WAITING) {
           await em.update(

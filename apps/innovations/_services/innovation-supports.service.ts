@@ -633,6 +633,7 @@ export class InnovationSupportsService extends BaseService {
 
   // Innovation Support Summary
   async getSupportSummaryList(
+    domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
   ): Promise<
@@ -657,11 +658,11 @@ export class InnovationSupportsService extends BaseService {
 
     for (const support of unitsSupportInformationMap.values()) {
       suggestedIds.add(support.unitId);
-
       if (support.status === InnovationSupportStatusEnum.ENGAGING) {
         engaging.push({
           id: support.unitId,
           name: support.unitName,
+          ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
             status: support.status,
             start: support.startSupport ?? undefined
@@ -671,6 +672,7 @@ export class InnovationSupportsService extends BaseService {
         beenEngaged.push({
           id: support.unitId,
           name: support.unitName,
+          ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
             status: support.status,
             start: support.startSupport,
@@ -681,6 +683,7 @@ export class InnovationSupportsService extends BaseService {
         suggested.push({
           id: support.unitId,
           name: support.unitName,
+          ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
             status: support.status,
             start: support.updatedAt
