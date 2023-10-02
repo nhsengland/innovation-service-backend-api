@@ -159,7 +159,7 @@ describe('Notifications / _handlers / task-update suite', () => {
               declined_TASK_reason: declinedReason
             }),
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath(':basePath/innovations/:innovationId/task-tracker/:taskId')
+              .addPath(':basePath/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 basePath,
                 innovationId: innovation.id,
@@ -181,7 +181,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             accessor_name: task.owner.name,
             unit_name: taskOwnerUnitName,
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 innovationId: innovation.id,
                 taskId: task.task.id
@@ -325,7 +325,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             accessor_name: task.owner.name,
             unit_name: taskOwnerUnitName,
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 innovationId: innovation.id,
                 taskId: task.task.id
@@ -444,7 +444,7 @@ describe('Notifications / _handlers / task-update suite', () => {
             accessor_name: task.owner.name,
             unit_name: requestUserUnitName,
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 innovationId: innovation.id,
                 taskId: task.task.id

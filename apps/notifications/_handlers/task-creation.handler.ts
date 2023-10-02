@@ -71,7 +71,7 @@ export class TaskCreationHandler extends BaseHandler<
           accessor_name: requestInfo.displayName,
           unit_name: unitName,
           action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-            .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+            .addPath('innovator/innovations/:innovationId/tasks/:taskId')
             .setPathParams({
               innovationId: this.inputData.innovationId,
               taskId: this.inputData.task.id

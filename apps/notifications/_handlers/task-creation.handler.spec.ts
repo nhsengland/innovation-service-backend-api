@@ -139,7 +139,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
             accessor_name: requestUser.name,
             unit_name: unitName,
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 innovationId: innovation.id,
                 taskId: task.id
@@ -164,7 +164,7 @@ describe('Notifications / _handlers / task-creation suite', () => {
             accessor_name: requestUser.name,
             unit_name: unitName,
             action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-              .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+              .addPath('innovator/innovations/:innovationId/tasks/:taskId')
               .setPathParams({
                 innovationId: innovation.id,
                 taskId: task.id
