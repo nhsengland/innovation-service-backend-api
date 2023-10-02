@@ -39,11 +39,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
     const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
 
     it('should add followers to a thread', async () => {
-      const result = await sut.addFollowersToThread(
-        thread.id,
-        [scenario.users.aliceQualifyingAccessor.roles.qaRole.id],
-        em
-      );
+      await sut.addFollowersToThread(thread.id, [scenario.users.aliceQualifyingAccessor.roles.qaRole.id], em);
 
       const dbThread = await em
         .createQueryBuilder(InnovationThreadEntity, 'thread')
@@ -51,7 +47,6 @@ describe('Innovations / _services / innovation-threads suite', () => {
         .where('thread.id = :threadId', { threadId: thread.id })
         .getOne();
 
-      expect(result).toMatchObject({ threadId: thread.id });
       expect(dbThread?.followers).toMatchObject([
         UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })
       ]);
@@ -74,11 +69,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
         followers: [UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id })]
       });
 
-      const result = await sut.unfollowThread(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        thread.id,
-        em
-      );
+      await sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), thread.id, em);
 
       const dbThread = await em
         .createQueryBuilder(InnovationThreadEntity, 'thread')
@@ -86,7 +77,6 @@ describe('Innovations / _services / innovation-threads suite', () => {
         .where('thread.id = :threadId', { threadId: thread.id })
         .getOne();
 
-      expect(result).toMatchObject({ threadId: thread.id });
       expect(dbThread?.followers).toMatchObject([]);
     });
 
@@ -106,6 +96,48 @@ describe('Innovations / _services / innovation-threads suite', () => {
       await expect(
         sut.unfollowThread(DTOsHelper.getUserRequestContext(scenario.users.johnInnovator), randUuid(), em)
       ).rejects.toThrowError(new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND));
+    });
+  });
+
+  describe('removeFollowers', () => {
+    const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
+
+    beforeEach(async () => {
+      await em.getRepository(InnovationThreadEntity).save({
+        id: thread.id,
+        followers: [
+          UserRoleEntity.new({ id: scenario.users.aliceQualifyingAccessor.roles.qaRole.id }),
+          UserRoleEntity.new({ id: scenario.users.ingridAccessor.roles.accessorRole.id })
+        ]
+      });
+    });
+
+    it('should remove users as followers from threads', async () => {
+      await sut.removeFollowers(
+        thread.id,
+        [scenario.users.aliceQualifyingAccessor.roles.qaRole.id, scenario.users.ingridAccessor.roles.accessorRole.id],
+        em
+      );
+
+      const dbThread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .leftJoinAndSelect('thread.followers', 'followers')
+        .where('thread.id = :threadId', { threadId: thread.id })
+        .getOne();
+
+      expect(dbThread?.followers).toHaveLength(0);
+    });
+
+    it('should not remove users as followers from threads when an empty array is passed', async () => {
+      await sut.removeFollowers(thread.id, [], em);
+
+      const dbThread = await em
+        .createQueryBuilder(InnovationThreadEntity, 'thread')
+        .leftJoinAndSelect('thread.followers', 'followers')
+        .where('thread.id = :threadId', { threadId: thread.id })
+        .getOne();
+
+      expect(dbThread?.followers).toHaveLength(2);
     });
   });
 });
