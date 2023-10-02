@@ -132,8 +132,8 @@ export class TaskUpdateHandler extends BaseHandler<
 
     const path =
       task.owner.role === ServiceRoleEnum.ASSESSMENT
-        ? 'assessment/innovations/:innovationId/task-tracker/:taskId'
-        : 'accessor/innovations/:innovationId/task-tracker/:taskId';
+        ? 'assessment/innovations/:innovationId/tasks/:taskId'
+        : 'accessor/innovations/:innovationId/tasks/:taskId';
 
     this.emails.push({
       templateId: templateId,
@@ -189,7 +189,7 @@ export class TaskUpdateHandler extends BaseHandler<
         accessor_name: accessor_name,
         unit_name: unit_name,
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+          .addPath('innovator/innovations/:innovationId/tasks/:taskId')
           .setPathParams({
             innovationId: innovation.id,
             taskId: task.id
@@ -229,7 +229,7 @@ export class TaskUpdateHandler extends BaseHandler<
         accessor_name: taskOwnerInfo?.displayName ?? 'user', // Review what should happen if user is not found
         unit_name: taskOwnerUnitName,
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+          .addPath('innovator/innovations/:innovationId/tasks/:taskId')
           .setPathParams({
             innovationId: innovation.id,
             taskId: task.id
@@ -272,7 +272,7 @@ export class TaskUpdateHandler extends BaseHandler<
         unit_name:
           task.owner.role === ServiceRoleEnum.ASSESSMENT ? 'needs assessment' : task.organisationUnit?.name || '',
         action_url: new UrlModel(ENV.webBaseTransactionalUrl)
-          .addPath('innovator/innovations/:innovationId/task-tracker/:taskId')
+          .addPath('innovator/innovations/:innovationId/tasks/:taskId')
           .setPathParams({
             innovationId: this.inputData.innovationId,
             taskId: task.id
