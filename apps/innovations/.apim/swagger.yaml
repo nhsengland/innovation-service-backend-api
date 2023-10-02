@@ -2956,6 +2956,47 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+  "/v1/{innovationId}/supports/available-status":
+    get:
+      description: Get available status for a support
+      operationId: v1-innovation-support-available-status
+      tags:
+        - "[v1] Innovation Support"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  availableStatus:
+                    type: array
+                    items:
+                      type: string
+                      enum:
+                        - UNASSIGNED
+                        - ENGAGING
+                        - WAITING
+                        - UNSUITABLE
+                        - CLOSED
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
   "/v1/{innovationId}/supports/{supportId}/change-request":
     post:
       description: Request Change Support for a given innovation.
