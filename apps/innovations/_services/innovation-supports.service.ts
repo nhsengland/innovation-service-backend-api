@@ -981,37 +981,37 @@ export class InnovationSupportsService extends BaseService {
       case InnovationSupportStatusEnum.UNASSIGNED:
       case InnovationSupportStatusEnum.CLOSED:
         return [
-          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.ENGAGING,
           InnovationSupportStatusEnum.WAITING,
-          InnovationSupportStatusEnum.ENGAGING
+          InnovationSupportStatusEnum.UNSUITABLE
         ];
 
       case InnovationSupportStatusEnum.WAITING:
         if (beenEngaged) {
           return [
-            InnovationSupportStatusEnum.UNSUITABLE,
             InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.UNSUITABLE,
             InnovationSupportStatusEnum.CLOSED
           ];
         }
-        return [InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.ENGAGING];
+        return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE];
 
       case InnovationSupportStatusEnum.ENGAGING:
         return [
-          InnovationSupportStatusEnum.UNSUITABLE,
           InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.UNSUITABLE,
           InnovationSupportStatusEnum.CLOSED
         ];
 
       case InnovationSupportStatusEnum.UNSUITABLE:
         if (beenEngaged) {
           return [
-            InnovationSupportStatusEnum.WAITING,
             InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.WAITING,
             InnovationSupportStatusEnum.CLOSED
           ];
         }
-        return [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING];
+        return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING];
     }
   }
 
