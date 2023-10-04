@@ -122,7 +122,11 @@ export class InnovationSupportsService extends BaseService {
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
-        .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
+        .filter(
+          support =>
+            support.status === InnovationSupportStatusEnum.ENGAGING ||
+            support.status === InnovationSupportStatusEnum.WAITING
+        )
         .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
