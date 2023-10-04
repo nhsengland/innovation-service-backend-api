@@ -515,19 +515,16 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
     }
 
-    const previousUsersRoleIds = new Set(dbSupport.userRoles.map(item => item.id));
     const previousStatus = dbSupport.status;
 
     const result = await connection.transaction(async transaction => {
+      let assignedAccessors: string[] = [];
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
-        dbSupport.userRoles = (data.accessors || []).map(item => UserRoleEntity.new({ id: item.userRoleId }));
+        assignedAccessors = data.accessors?.map(item => item.userRoleId) ?? [];
       } else {
-        // In the case that previous support was ENGAGING, cleanup several relations!
-
-        dbSupport.userRoles = [];
-
         // Cleanup tasks if the status is not ENGAGING or WAITING
         if (data.status !== InnovationSupportStatusEnum.WAITING) {
+          assignedAccessors = [];
           await transaction
             .createQueryBuilder()
             .update(InnovationTaskEntity)
@@ -539,7 +536,7 @@ export class InnovationSupportsService extends BaseService {
             .execute();
         } else {
           // In waiting status the QA is automatically assigned
-          dbSupport.userRoles = [UserRoleEntity.new({ id: domainContext.currentRole.id })];
+          assignedAccessors = [domainContext.currentRole.id];
         }
       }
 
@@ -561,16 +558,6 @@ export class InnovationSupportsService extends BaseService {
 
       if (!thread.message) {
         throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
-      }
-
-      // Update thread followers with the new assigned users
-      if (data.status === InnovationSupportStatusEnum.ENGAGING) {
-        await this.innovationThreadsService.removeFollowers(thread.thread.id, [...previousUsersRoleIds], transaction);
-        await this.innovationThreadsService.addFollowersToThread(
-          thread.thread.id,
-          (data.accessors ?? []).map(a => a.userRoleId),
-          transaction
-        );
       }
 
       await this.domainService.innovations.addActivityLog(
@@ -595,7 +582,14 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      return { id: savedSupport.id };
+      const newAssignedAccessors = await this.assignAccessors(
+        savedSupport,
+        assignedAccessors,
+        thread.thread.id,
+        transaction
+      );
+
+      return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors) };
     });
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
@@ -609,13 +603,65 @@ export class InnovationSupportsService extends BaseService {
         newAssignedAccessors:
           data.status === InnovationSupportStatusEnum.ENGAGING
             ? (data.accessors ?? [])
-                .filter(item => !previousUsersRoleIds.has(item.userRoleId))
+                .filter(item => result.newAssignedAccessors.has(item.userRoleId))
                 .map(item => ({ id: item.id }))
             : []
       }
     });
 
     return result;
+  }
+
+  /**
+   * assigns accessors to a support, adding them to the thread followers if the support is ENGAGING
+   * @param support the support entity or id
+   * @param accessorRoleIds the list of assigned accessors role ids
+   * @param entityManager transactional entity manager
+   * @returns the list of new assigned accessors role ids
+   */
+  private async assignAccessors(
+    support: string | InnovationSupportEntity,
+    accessorRoleIds: string[],
+    threadId: string, // this will likely become optional in the future
+    entityManager?: EntityManager
+  ): Promise<string[]> {
+    // Force a transaction if one not present
+    if (!entityManager) {
+      return this.sqlConnection.transaction(async transaction => {
+        return this.assignAccessors(support, accessorRoleIds, threadId, transaction);
+      });
+    }
+
+    if (typeof support === 'string') {
+      const dbSupport = await entityManager
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
+        .leftJoinAndSelect('support.userRoles', 'userRole')
+        .where('support.id = :supportId ', { support })
+        .getOne();
+
+      if (!dbSupport) {
+        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+      }
+      support = dbSupport;
+    }
+
+    const previousUsersRoleIds = new Set(support.userRoles.map(item => item.id));
+    const newAssignedAccessors = accessorRoleIds.filter(item => !previousUsersRoleIds.has(item));
+
+    await entityManager.save(InnovationSupportEntity, {
+      id: support.id,
+      userRoles: accessorRoleIds.map(id => ({ id }))
+    });
+
+    // Add followers logic
+    // Update thread followers with the new assigned users only when the support is ENGAGING
+    if (support.status === InnovationSupportStatusEnum.ENGAGING) {
+      await this.innovationThreadsService.removeFollowers(threadId, [...previousUsersRoleIds], entityManager);
+      await this.innovationThreadsService.addFollowersToThread(threadId, accessorRoleIds, entityManager);
+    }
+
+    return newAssignedAccessors;
   }
 
   async changeInnovationSupportStatusRequest(
