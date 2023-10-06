@@ -113,42 +113,26 @@ export type InnovationAllSectionsType = {
 }[];
 
 export type InnovationSuggestionsType = {
-  accessors?: InnovationSuggestionAccessor[];
-  assessment?: {
-    id?: string;
-    suggestedOrganisationUnits?: {
+  accessors: InnovationSuggestionAccessor[];
+  assessment: {
+    suggestedOrganisations: {
       id: string;
       name: string;
       acronym: string | null;
-      organisation: {
-        id: string;
-        name: string;
-        acronym: string | null;
-      };
     }[];
   };
 };
 
 export type InnovationSuggestionAccessor = {
-  organisationUnit: null | {
+  organisation: {
     id: string;
     name: string;
     acronym: string | null;
-    organisation: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    };
   };
-  suggestedOrganisationUnits?: {
+  suggestedOrganisations: {
     id: string;
     name: string;
     acronym: string | null;
-    organisation: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    };
   }[];
 };
 

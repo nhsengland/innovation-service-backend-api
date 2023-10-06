@@ -165,76 +165,40 @@ export class InnovationSupportsService extends BaseService {
     });
   }
 
+  /**
+   * returns a list of suggested organisations by assessment and assessors ordered by name
+   * @param innovationId the innovation id
+   * @returns suggested organisations by both assessors and accessors
+   */
   async getInnovationSuggestions(innovationId: string): Promise<InnovationSuggestionsType> {
-    const supportLogs = await this.fetchSupportLogs(innovationId, InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION);
+    const supportLogs = await this.fetchAccessorsSuggestedOrganisationUnits(innovationId);
 
     const assessmentQuery = this.sqlConnection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
-      .leftJoinAndSelect('assessments.organisationUnits', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .select(['assessments.id', 'organisationUnit.id', 'organisation.id', 'organisation.name', 'organisation.acronym'])
+      .leftJoin('assessments.organisationUnits', 'organisationUnit')
+      .leftJoin('organisationUnit.organisation', 'organisation')
       .where('assessments.innovation_id = :innovationId', { innovationId })
       .andWhere('organisationUnit.inactivated_at IS NULL');
 
     const innovationAssessment = await assessmentQuery.getOne();
 
     const result: InnovationSuggestionsType = {
-      assessment: {},
-      accessors: []
+      accessors: [],
+      assessment: { suggestedOrganisations: [] }
     };
 
     if (innovationAssessment) {
-      const assessmentOrganisationUnits = [...new Set(innovationAssessment.organisationUnits)];
-
       result.assessment = {
-        id: innovationAssessment.id,
-        suggestedOrganisationUnits:
-          assessmentOrganisationUnits.length > 0
-            ? assessmentOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
-                id: orgUnit.id,
-                name: orgUnit.name,
-                acronym: orgUnit.acronym,
-                organisation: {
-                  id: orgUnit.organisation.id,
-                  name: orgUnit.organisation.name,
-                  acronym: orgUnit.organisation.acronym
-                }
-              }))
-            : []
+        suggestedOrganisations: [
+          // remove duplicates
+          ...new Map(innovationAssessment.organisationUnits.map(ou => [ou.organisation.id, ou.organisation])).values()
+        ].sort((a, b) => a.name.localeCompare(b.name)) // sort by org name
       };
     }
 
-    if (supportLogs && supportLogs.length > 0) {
-      result.accessors = supportLogs.map(log => {
-        const rec: InnovationSuggestionAccessor = {
-          organisationUnit: log.organisationUnit
-            ? {
-                id: log.organisationUnit.id,
-                name: log.organisationUnit.name,
-                acronym: log.organisationUnit.acronym,
-                organisation: {
-                  id: log.organisationUnit.organisation.id,
-                  name: log.organisationUnit.organisation.name,
-                  acronym: log.organisationUnit.organisation.acronym
-                }
-              }
-            : null
-        };
-
-        if (log.suggestedOrganisationUnits && log.suggestedOrganisationUnits.length > 0) {
-          rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
-            id: orgUnit.id,
-            name: orgUnit.name,
-            acronym: orgUnit.acronym,
-            organisation: {
-              id: orgUnit.organisation.id,
-              name: orgUnit.organisation.name,
-              acronym: orgUnit.organisation.acronym
-            }
-          }));
-        }
-
-        return rec;
-      });
+    if (supportLogs.length) {
+      result.accessors = supportLogs;
     }
 
     return result;
@@ -1065,27 +1029,50 @@ export class InnovationSupportsService extends BaseService {
     }
   }
 
-  private async fetchSupportLogs(
+  private async fetchAccessorsSuggestedOrganisationUnits(
     innovationId: string,
-    type?: InnovationSupportLogTypeEnum
-  ): Promise<InnovationSupportLogEntity[]> {
-    const supportQuery = this.sqlConnection
-      .createQueryBuilder(InnovationSupportLogEntity, 'supports')
-      .leftJoinAndSelect('supports.innovation', 'innovation')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
-      .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
-      .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('suggestedOrganisation.inactivated_at IS NULL');
+    entityManager?: EntityManager
+  ): Promise<InnovationSuggestionAccessor[]> {
+    const res = new Map<string, InnovationSuggestionAccessor>();
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    if (type) {
-      supportQuery.andWhere('supports.type = :type', { type });
+    const query = em
+      .createQueryBuilder()
+      .from(InnovationSupportLogEntity, 'sl')
+      .select(['whom.id', 'whom.name', 'whom.acronym', 'suggested.id', 'suggested.name', 'suggested.acronym'])
+      .innerJoin('innovation_support_log_organisation_unit', 'slou', 'slou.innovation_support_log_id = sl.id')
+      .innerJoin('organisation_unit', 'whom_unit', 'whom_unit.id = sl.organisation_unit_id')
+      .innerJoin('organisation', 'whom', 'whom.id = whom_unit.organisation_id')
+      .innerJoin('organisation_unit', 'suggested_unit', 'suggested_unit.id = slou.organisation_unit_id')
+      .innerJoin('organisation', 'suggested', 'suggested.id = suggested_unit.organisation_id')
+      .where('sl.innovation_id = :innovationId', { innovationId })
+      .andWhere('sl.type = :type', { type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
+      .groupBy('whom.id')
+      .addGroupBy('whom.name')
+      .addGroupBy('whom.acronym')
+      .addGroupBy('suggested.id')
+      .addGroupBy('suggested.name')
+      .addGroupBy('suggested.acronym')
+      .orderBy('whom.name', 'ASC')
+      .addOrderBy('suggested.name', 'ASC');
+
+    const rows = await query.getRawMany();
+
+    for (const row of rows) {
+      if (!res.has(row.whom_id)) {
+        res.set(row.whom_id, {
+          organisation: { id: row.whom_id, name: row.whom_name, acronym: row.whom_acronym },
+          suggestedOrganisations: []
+        });
+      }
+      res.get(row.whom_id)?.suggestedOrganisations.push({
+        id: row.suggested_id,
+        name: row.suggested_name,
+        acronym: row.suggested_acronym
+      });
     }
 
-    supportQuery.orderBy('supports.createdAt', 'ASC');
-
-    return await supportQuery.getMany();
+    return [...res.values()];
   }
 
   private async getProgressUpdateFile(
