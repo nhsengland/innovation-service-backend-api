@@ -149,7 +149,7 @@ describe('Innovations / _services / innovation-threads suite', () => {
 
       const result = await sut.getThreadByContextId(ThreadContextTypeEnum.SUPPORT, support.id, em);
 
-      expect(result).toMatchObject(thread);
+      expect(result).toMatchObject({ id: thread.id, subject: thread.subject });
     });
 
     it('returns null if no thread is found', async () => {

@@ -814,7 +814,7 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity,
     transaction: EntityManager
   ): Promise<InnovationThreadMessageEntity> {
-    const result = await this.sqlConnection
+    const result = await transaction
       .getRepository<InnovationThreadMessageEntity>(InnovationThreadMessageEntity)
       .save(threadMessageObj);
 
