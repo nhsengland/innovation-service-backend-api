@@ -747,10 +747,16 @@ export class InnovationThreadsService extends BaseService {
     };
   }
 
-  /*+
-   * Private methods
+  /**
+   * retrieves the thread for a give context type/id
+   *
+   * ie: return the thread for a given support
+   * @param contextType the thread context type
+   * @param contextId the thread context id
+   * @param transaction the transaction entity manager
+   * @returns the thread
    */
-  private async getThreadByContextId(
+  async getThreadByContextId(
     contextType: ThreadContextTypeEnum,
     contextId: string,
     transaction: EntityManager
@@ -763,6 +769,9 @@ export class InnovationThreadsService extends BaseService {
     return threadQuery.getOne();
   }
 
+  /*
+   * Private methods
+   */
   private async threadCreateTransaction(
     transaction: EntityManager,
     threadObj: InnovationThreadEntity,
@@ -805,7 +814,7 @@ export class InnovationThreadsService extends BaseService {
     thread: InnovationThreadEntity,
     transaction: EntityManager
   ): Promise<InnovationThreadMessageEntity> {
-    const result = await this.sqlConnection
+    const result = await transaction
       .getRepository<InnovationThreadMessageEntity>(InnovationThreadMessageEntity)
       .save(threadMessageObj);
 

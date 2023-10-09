@@ -23,6 +23,8 @@ import {
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
+  BadRequestError,
+  GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
@@ -574,6 +576,80 @@ export class InnovationSupportsService extends BaseService {
     });
 
     return result;
+  }
+
+  /**
+   * updates the innovation support accessors and creates a thread message if a message is provided
+   *
+   * This only works for ENGAGING supports
+   * @param domainContext the domain context
+   * @param innovationId the innovation id
+   * @param supportId the support id
+   * @param data list of accessors and optional message
+   * @param entityManager optional transaction
+   */
+  async updateInnovationSupportAccessors(
+    domainContext: DomainContextType,
+    innovationId: string,
+    supportId: string,
+    data: {
+      message?: string;
+      accessors: { id: string; userRoleId: string }[];
+    },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    // joi validates this but just in case
+    if (!data.accessors.length) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+    }
+
+    if (!entityManager) {
+      return this.sqlConnection.transaction(async transaction => {
+        return this.updateInnovationSupportAccessors(domainContext, innovationId, supportId, data, transaction);
+      });
+    }
+
+    // We're already fetching extra data for the assign accessors to avoid extra queries
+    const support = await entityManager
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
+      .where('support.id = :supportId', { supportId })
+      .andWhere('support.innovation_id = :innovationId', { innovationId })
+      .getOne();
+    if (!support) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+    }
+    if (support.status !== InnovationSupportStatusEnum.ENGAGING) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
+    }
+
+    const thread = await this.innovationThreadsService.getThreadByContextId(
+      ThreadContextTypeEnum.SUPPORT,
+      supportId,
+      entityManager
+    );
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    await this.assignAccessors(
+      support,
+      data.accessors.map(item => item.userRoleId),
+      thread.id,
+      entityManager
+    );
+
+    if (data.message) {
+      await this.innovationThreadsService.createThreadMessage(
+        domainContext,
+        thread.id,
+        data.message,
+        false,
+        false,
+        entityManager
+      );
+    }
   }
 
   /**

@@ -2997,6 +2997,68 @@ paths:
           description: Not found
         "500":
           description: Internal server error
+  "/v1/{innovationId}/supports/{supportId}/accessors":
+    put:
+      description: Assigns accessors to a support.
+      operationId: v1-innovation-support-change-accessors
+      tags:
+        - "[v1] Innovation Support"
+      parameters:
+        - name: innovationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: supportId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: The accessors to be assigned.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+                  maxLength: 2000
+                accessors:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                      userRoleId:
+                        type: string
+                        format: uuid
+                    required:
+                      - id
+                      - userRoleId
+                    additionalProperties: false
+                  minItems: 1
+              required:
+                - accessors
+              additionalProperties: false
+      responses:
+        "200":
+          description: Innovation ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                required:
+                  - id
   "/v1/{innovationId}/supports/{supportId}/change-request":
     post:
       description: Request Change Support for a given innovation.

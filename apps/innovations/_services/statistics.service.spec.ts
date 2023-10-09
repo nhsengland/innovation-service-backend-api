@@ -19,7 +19,7 @@ import { container } from '../_config';
 import type { StatisticsService } from './statistics.service';
 import SYMBOLS from './symbols';
 
-describe('Innovations / _services / innovation transfer suite', () => {
+describe('Innovations / _services / innovation statistics suite', () => {
   let sut: StatisticsService;
 
   let em: EntityManager;
