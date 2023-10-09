@@ -267,6 +267,26 @@ describe('Innovations / _services / innovation-supports suite', () => {
       expect(notifierSendSpy).toHaveBeenCalled();
     });
 
+    it('should assign QA that created as accessor when status is WAITING', async () => {
+      const support = await sut.createInnovationSupport(
+        DTOsHelper.getUserRequestContext(scenario.users.bartQualifyingAccessor),
+        scenario.users.adamInnovator.innovations.adamInnovation.id,
+        {
+          status: InnovationSupportStatusEnum.WAITING,
+          message: randText({ charCount: 10 })
+        },
+        em
+      );
+
+      const dbSupport = await em
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .leftJoinAndSelect('support.userRoles', 'roles')
+        .where('support.id = :supportId', { supportId: support.id })
+        .getOneOrFail();
+      expect(dbSupport.userRoles).toHaveLength(1);
+      expect(dbSupport.userRoles[0]?.id).toBe(scenario.users.bartQualifyingAccessor.roles.qaRole.id);
+    });
+
     it('should throw an unprocessable entity error if the domain context has an invalid organisation unit id', async () => {
       await expect(() =>
         sut.createInnovationSupport(
