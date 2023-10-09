@@ -836,6 +836,12 @@ describe('Innovations / _services / innovation-supports suite', () => {
       );
     });
 
+    it("shouldn't add a message to the thread if one not provided", async () => {
+      await sut.updateInnovationSupportAccessors(context, innovation.id, support.id, { accessors: newAccessors }, em);
+
+      expect(threadMessageMock).toHaveBeenCalledTimes(0);
+    });
+
     it('should fail with not found if support not found', async () => {
       await expect(
         sut.updateInnovationSupportAccessors(context, innovation.id, randUuid(), { accessors: newAccessors }, em)

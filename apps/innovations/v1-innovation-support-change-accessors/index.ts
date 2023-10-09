@@ -60,7 +60,7 @@ export default openApi(
         description: 'The accessors to be assigned.'
       }),
       responses: {
-        '200': {
+        '204': {
           description: 'Innovation ID',
           content: {
             'application/json': {
