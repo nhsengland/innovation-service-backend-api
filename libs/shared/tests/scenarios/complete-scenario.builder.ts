@@ -350,6 +350,8 @@ export class CompleteScenarioBuilder {
       const johnInnovationThreadByAlice = await new InnovationThreadBuilder(entityManager)
         .setAuthor(aliceQualifyingAccessor.id, aliceQualifyingAccessor.roles['qaRole']!.id)
         .setInnovation(johnInnovation.id)
+        .setContextType(ThreadContextTypeEnum.SUPPORT)
+        .setContextId(johnInnovationSupportByHealthOrgUnit.id)
         .addMessage(
           { id: aliceQualifyingAccessor.id, roleId: aliceQualifyingAccessor.roles['qaRole']!.id },
           'aliceMessage'

@@ -1,6 +1,7 @@
 import { container } from '../_config';
 
 import { InnovationThreadEntity, UserRoleEntity } from '@innovations/shared/entities';
+import { ThreadContextTypeEnum } from '@innovations/shared/enums';
 import { BadRequestError, InnovationErrorsEnum, NotFoundError } from '@innovations/shared/errors';
 import { NotifierService } from '@innovations/shared/services';
 import { TestsHelper } from '@innovations/shared/tests';
@@ -138,6 +139,22 @@ describe('Innovations / _services / innovation-threads suite', () => {
         .getOne();
 
       expect(dbThread?.followers).toHaveLength(2);
+    });
+  });
+
+  describe('getThreadByContextId', () => {
+    it('returns a thread by context id', async () => {
+      const thread = scenario.users.johnInnovator.innovations.johnInnovation.threads.threadByAliceQA;
+      const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgUnit;
+
+      const result = await sut.getThreadByContextId(ThreadContextTypeEnum.SUPPORT, support.id, em);
+
+      expect(result).toMatchObject(thread);
+    });
+
+    it('returns null if no thread is found', async () => {
+      const result = await sut.getThreadByContextId(ThreadContextTypeEnum.SUPPORT, randUuid(), em);
+      expect(result).toBeNull();
     });
   });
 });
