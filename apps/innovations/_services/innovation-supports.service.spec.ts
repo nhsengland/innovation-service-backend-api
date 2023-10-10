@@ -1071,42 +1071,46 @@ describe('Innovations / _services / innovation-supports suite', () => {
         InnovationSupportStatusEnum.UNASSIGNED,
         true,
         [
-          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.ENGAGING,
           InnovationSupportStatusEnum.WAITING,
-          InnovationSupportStatusEnum.ENGAGING
+          InnovationSupportStatusEnum.UNSUITABLE
         ]
       ],
       [
         InnovationSupportStatusEnum.WAITING,
         true,
         [
-          InnovationSupportStatusEnum.UNSUITABLE,
           InnovationSupportStatusEnum.ENGAGING,
+          InnovationSupportStatusEnum.UNSUITABLE,
           InnovationSupportStatusEnum.CLOSED
         ]
       ],
       [
         InnovationSupportStatusEnum.WAITING,
         false,
-        [InnovationSupportStatusEnum.UNSUITABLE, InnovationSupportStatusEnum.ENGAGING]
+        [
+          InnovationSupportStatusEnum.ENGAGING,
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.CLOSED
+        ]
       ],
       [
         InnovationSupportStatusEnum.UNSUITABLE,
         true,
-        [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
+        [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED]
       ],
       [
         InnovationSupportStatusEnum.UNSUITABLE,
         false,
-        [InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.ENGAGING]
+        [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING, InnovationSupportStatusEnum.CLOSED]
       ],
       [
         InnovationSupportStatusEnum.ENGAGING,
         true,
         [
           InnovationSupportStatusEnum.WAITING,
-          InnovationSupportStatusEnum.CLOSED,
-          InnovationSupportStatusEnum.UNSUITABLE
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.CLOSED
         ]
       ]
     ])(
@@ -1127,7 +1131,7 @@ describe('Innovations / _services / innovation-supports suite', () => {
           em
         );
 
-        expect(validSupportStatuses).toEqual(expect.arrayContaining(expected));
+        expect(validSupportStatuses).toMatchObject(expected);
       }
     );
 
