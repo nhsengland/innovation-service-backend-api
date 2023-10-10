@@ -1071,7 +1071,9 @@ export class InnovationSupportsService extends BaseService {
       support = { status: InnovationSupportStatusEnum.UNASSIGNED, engagedCount: 0 };
     }
 
-    const beenEngaged = support.engagedCount > 0;
+    // currently this is not considered for closing, if this remains the query can be changed
+    // const beenEngaged = support.engagedCount > 0;
+    const beenEngaged = true;
 
     switch (support.status) {
       case InnovationSupportStatusEnum.UNASSIGNED:
