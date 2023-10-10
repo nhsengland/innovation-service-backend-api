@@ -7,8 +7,7 @@ import {
   InnovationSupportEntity,
   InnovationSupportLogEntity,
   InnovationTaskEntity,
-  OrganisationUnitEntity,
-  UserRoleEntity
+  OrganisationUnitEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
@@ -264,7 +263,7 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
+    const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnitId) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
@@ -292,6 +291,11 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS);
     }
 
+    // If status is waiting assigned QA as accessor automatically
+    const accessors =
+      data.accessors?.map(item => item.userRoleId) ??
+      (data.status === InnovationSupportStatusEnum.WAITING ? [domainContext.currentRole.id] : []);
+
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
         status: data.status,
@@ -299,7 +303,7 @@ export class InnovationSupportsService extends BaseService {
         updatedBy: domainContext.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
-        userRoles: (data.accessors || []).map(item => UserRoleEntity.new({ id: item.userRoleId }))
+        userRoles: [] // this will be setup later but we need to create the support first
       });
 
       const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
@@ -337,6 +341,8 @@ export class InnovationSupportsService extends BaseService {
           unitId: organisationUnitId
         }
       );
+
+      await this.assignAccessors(savedSupport, accessors, thread.thread.id, transaction);
 
       return { id: savedSupport.id };
     });
