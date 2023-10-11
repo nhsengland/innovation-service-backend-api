@@ -1,6 +1,6 @@
 import azureFunction from '.';
 
-import { InnovationThreadEntity } from '@innovations/shared/entities';
+import { InnovationThreadEntity, InnovationThreadMessageEntity } from '@innovations/shared/entities';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
@@ -32,7 +32,9 @@ const expected = {
     createdBy: randUuid(),
     createdAt: randPastDate()
   }),
-  messageCount: 1
+  message: InnovationThreadMessageEntity.new({
+    id: randUuid()
+  })
 };
 const mock = jest.spyOn(InnovationThreadsService.prototype, 'createEditableThread').mockResolvedValue(expected);
 
@@ -56,7 +58,7 @@ describe('v1-innovation-thread-create Suite', () => {
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toStrictEqual({
-          id: expected.thread.id,
+        id: expected.thread.id
       });
       expect(result.status).toBe(200);
       expect(mock).toHaveBeenCalledTimes(1);

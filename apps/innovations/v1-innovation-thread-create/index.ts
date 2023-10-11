@@ -39,21 +39,12 @@ class V1InnovationThreadCreate {
         .checkInnovation()
         .verify();
 
-      const requestUser = auth.getUserInfo();
       const domainContext = auth.getContext();
 
-      const result = await threadsService.createEditableThread(
-        requestUser,
-        domainContext,
-        pathParams.innovationId,
-        body.subject,
-        body.message,
-        true,
-        body.followerUserRoleIds
-      );
+      const result = await threadsService.createEditableThread(domainContext, pathParams.innovationId, body, true);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
-          id: result.thread.id,
+        id: result.thread.id
       });
       return;
     } catch (error) {

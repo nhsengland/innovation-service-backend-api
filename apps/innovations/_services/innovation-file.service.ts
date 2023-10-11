@@ -325,8 +325,8 @@ export class InnovationFileService extends BaseService {
   async createFile(
     domainContext: DomainContextType,
     innovationId: string,
-    innovationStatus: InnovationStatusEnum,
     data: InnovationDocumentTypeWithContext,
+    innovationStatus?: InnovationStatusEnum,
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;

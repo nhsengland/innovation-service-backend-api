@@ -36,8 +36,8 @@ class V1InnovationFileCreate {
       const result = await innovationFilesService.createFile(
         auth.getContext(),
         params.innovationId,
-        auth.getInnovationInfo().status,
-        body
+        body,
+        auth.getInnovationInfo().status
       );
 
       context.res = ResponseHelper.Ok<ResponseDTO>({ id: result.id });

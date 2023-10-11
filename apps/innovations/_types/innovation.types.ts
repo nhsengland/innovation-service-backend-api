@@ -147,6 +147,15 @@ export type InnovationDocumentType = {
   };
 };
 
+export type InnovationDocumentFileType = InnovationDocumentType['file'];
+
+export type InnovationDocumentFileOutputType = {
+  name: string;
+  size: number | null;
+  extension: string;
+  url: string;
+};
+
 export type InnovationDocumentTypeWithContext = InnovationDocumentType & {
   context: { id: string; type: InnovationFileContextTypeEnum };
 };

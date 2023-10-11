@@ -653,6 +653,7 @@ export class InnovationSupportsService extends BaseService {
         data.message,
         false,
         false,
+        undefined,
         entityManager
       );
     }
@@ -989,7 +990,6 @@ export class InnovationSupportsService extends BaseService {
         await this.innovationFileService.createFile(
           domainContext,
           innovationId,
-          support.innovation.status,
           {
             ...data.document,
             context: {
@@ -997,6 +997,7 @@ export class InnovationSupportsService extends BaseService {
               type: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
             }
           },
+          support.innovation.status,
           transaction
         );
       }

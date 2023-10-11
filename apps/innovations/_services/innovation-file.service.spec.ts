@@ -677,8 +677,8 @@ describe('Services / Innovation File service suite', () => {
           const file = await sut.createFile(
             DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
-            innovation.status,
             data,
+            innovation.status,
             em
           );
 
@@ -717,8 +717,8 @@ describe('Services / Innovation File service suite', () => {
           sut.createFile(
             DTOsHelper.getUserRequestContext(scenario.users.johnInnovator, 'innovatorRole'),
             innovation.id,
-            InnovationStatusEnum.CREATED,
             data,
+            InnovationStatusEnum.CREATED,
             em
           )
         ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_FILE_FORBIDDEN_SECTION));
@@ -744,7 +744,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        const file = await sut.createFile(naDomainContext, innovation.id, innovation.status, data, em);
+        const file = await sut.createFile(naDomainContext, innovation.id, data, innovation.status, em);
 
         const dbFile = await em
           .createQueryBuilder(InnovationFileEntity, 'file')
@@ -777,7 +777,7 @@ describe('Services / Innovation File service suite', () => {
         };
 
         await expect(() =>
-          sut.createFile(naDomainContext, innovation.id, innovation.status, data, em)
+          sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)
         ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
@@ -798,7 +798,7 @@ describe('Services / Innovation File service suite', () => {
         };
 
         await expect(() =>
-          sut.createFile(naDomainContext, innovation.id, innovation.status, data, em)
+          sut.createFile(naDomainContext, innovation.id, data, innovation.status, em)
         ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
@@ -827,7 +827,7 @@ describe('Services / Innovation File service suite', () => {
           }
         };
 
-        const file = await sut.createFile(qaDomainContext, innovation.id, innovation.status, data, em);
+        const file = await sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em);
 
         const dbFile = await em
           .createQueryBuilder(InnovationFileEntity, 'file')
@@ -860,7 +860,7 @@ describe('Services / Innovation File service suite', () => {
         };
 
         await expect(() =>
-          sut.createFile(qaDomainContext, innovation.id, innovation.status, data, em)
+          sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)
         ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_SECTION_MUST_BE_UPLOADED_BY_INNOVATOR
@@ -881,7 +881,7 @@ describe('Services / Innovation File service suite', () => {
         };
 
         await expect(() =>
-          sut.createFile(qaDomainContext, innovation.id, innovation.status, data, em)
+          sut.createFile(qaDomainContext, innovation.id, data, innovation.status, em)
         ).rejects.toThrowError(
           new UnprocessableEntityError(
             InnovationErrorsEnum.INNOVATION_FILE_ON_INNOVATION_EVIDENCE_MUST_BE_UPLOADED_BY_INNOVATOR
@@ -919,8 +919,8 @@ describe('Services / Innovation File service suite', () => {
         sut.createFile(
           DTOsHelper.getUserRequestContext(johnInnovator, 'innovatorRole'),
           innovation.id,
-          innovation.status,
           data,
+          innovation.status,
           em
         )
       ).rejects.toThrowError(new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_MAX_ALLOWED_FILES_REACHED));
