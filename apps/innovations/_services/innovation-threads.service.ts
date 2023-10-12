@@ -38,7 +38,7 @@ import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@i
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { InnovationDocumentFileOutputType, InnovationDocumentFileType } from '../_types/innovation.types';
+import type { InnovationFileDocumentOutputType, InnovationFileDocumentType } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -113,7 +113,7 @@ export class InnovationThreadsService extends BaseService {
     data: {
       subject: string;
       message: string;
-      file?: InnovationDocumentFileType;
+      file?: InnovationFileDocumentType;
       followerUserRoleIds: string[];
     },
     sendNotification: boolean,
@@ -160,8 +160,9 @@ export class InnovationThreadsService extends BaseService {
         domainContext,
         innovationId,
         {
-          file: file,
           name: file.name,
+          description: file.description,
+          file: file.file,
           context: {
             id: thread.message.id,
             type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
@@ -302,7 +303,7 @@ export class InnovationThreadsService extends BaseService {
     threadId: string,
     data: {
       message: string;
-      file?: InnovationDocumentFileType;
+      file?: InnovationFileDocumentType;
     },
     sendNotification: boolean
   ): Promise<{ threadMessage: InnovationThreadMessageEntity }> {
@@ -315,7 +316,7 @@ export class InnovationThreadsService extends BaseService {
     message: string,
     sendNotification: boolean,
     isEditable = false,
-    file?: InnovationDocumentFileType,
+    file?: InnovationFileDocumentType,
     transaction?: EntityManager
   ): Promise<{
     threadMessage: InnovationThreadMessageEntity;
@@ -515,7 +516,7 @@ export class InnovationThreadsService extends BaseService {
     messages: {
       id: string;
       message: string;
-      file?: InnovationDocumentFileOutputType;
+      file?: InnovationFileDocumentOutputType;
       createdAt: Date;
       isNew: boolean;
       isEditable: boolean;
@@ -878,7 +879,7 @@ export class InnovationThreadsService extends BaseService {
     threadMessageObj: InnovationThreadMessageEntity,
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
-    file: InnovationDocumentFileType | undefined,
+    file: InnovationFileDocumentType | undefined,
     transaction: EntityManager
   ): Promise<InnovationThreadMessageEntity> {
     const result = await transaction
@@ -890,8 +891,9 @@ export class InnovationThreadsService extends BaseService {
         domainContext,
         thread.innovation.id,
         {
-          file: file,
           name: file.name,
+          description: file.description,
+          file: file.file,
           context: {
             id: result.id,
             type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE

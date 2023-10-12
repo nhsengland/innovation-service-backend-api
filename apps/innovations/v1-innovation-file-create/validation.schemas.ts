@@ -1,7 +1,7 @@
 import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import { InnovationFileContextTypeEnum } from '@innovations/shared/enums';
 import Joi from 'joi';
-import type { InnovationDocumentFileType } from '../_types/innovation.types';
+import type { InnovationFileDocumentType } from '../_types/innovation.types';
 
 export type ParamsType = {
   innovationId: string;
@@ -14,7 +14,7 @@ export type BodyType = {
   context: { id: string; type: InnovationFileContextTypeEnum };
   name: string;
   description?: string;
-  file: InnovationDocumentFileType;
+  file: InnovationFileDocumentType['file'];
 };
 export const BodySchema = Joi.object<BodyType>({
   context: Joi.object<BodyType['context']>({

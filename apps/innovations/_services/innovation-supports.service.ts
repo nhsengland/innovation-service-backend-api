@@ -34,7 +34,7 @@ import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
-  InnovationDocumentType,
+  InnovationFileDocumentType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -945,7 +945,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       title: string;
       description: string;
-      document?: InnovationDocumentType;
+      document?: InnovationFileDocumentType;
     },
     entityManager?: EntityManager
   ): Promise<void> {

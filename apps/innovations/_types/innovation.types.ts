@@ -1,3 +1,4 @@
+import { TEXTAREA_LENGTH_LIMIT } from '@innovations/shared/constants';
 import type {
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
@@ -9,6 +10,7 @@ import type {
 } from '@innovations/shared/enums';
 import type { CurrentCatalogTypes } from '@innovations/shared/schemas/innovation-record';
 import type { OrganisationWithUnitsType } from '@innovations/shared/types';
+import Joi from 'joi';
 
 export interface InnovationSectionModel {
   id: string | null;
@@ -136,7 +138,7 @@ export type InnovationSuggestionAccessor = {
   }[];
 };
 
-export type InnovationDocumentType = {
+export type InnovationFileDocumentType = {
   name: string;
   description?: string;
   file: {
@@ -147,15 +149,24 @@ export type InnovationDocumentType = {
   };
 };
 
-export type InnovationDocumentFileType = InnovationDocumentType['file'];
+export const InnovationFileDocumentSchema = Joi.object<InnovationFileDocumentType>({
+  name: Joi.string().max(100).required(),
+  description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
+  file: Joi.object({
+    id: Joi.string().max(100).required(),
+    name: Joi.string().max(100).required(),
+    size: Joi.number().required(),
+    extension: Joi.string().max(4).required()
+  }).required()
+});
 
-export type InnovationDocumentFileOutputType = {
+export type InnovationFileDocumentOutputType = {
   name: string;
   size: number | null;
   extension: string;
   url: string;
 };
 
-export type InnovationDocumentTypeWithContext = InnovationDocumentType & {
+export type InnovationDocumentTypeWithContext = InnovationFileDocumentType & {
   context: { id: string; type: InnovationFileContextTypeEnum };
 };
