@@ -2,27 +2,28 @@ import { inject, injectable } from 'inversify';
 import { Brackets, EntityManager, In } from 'typeorm';
 
 import {
-  InnovationActionEntity,
   InnovationAssessmentEntity,
   InnovationEntity,
   InnovationSupportEntity,
   InnovationSupportLogEntity,
-  OrganisationUnitEntity,
-  UserRoleEntity
+  InnovationTaskEntity,
+  OrganisationUnitEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
-  InnovationActionStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
   InnovationSupportSummaryTypeEnum,
+  InnovationTaskStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   ThreadContextTypeEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
 import {
+  BadRequestError,
+  GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
   OrganisationErrorsEnum,
@@ -87,7 +88,7 @@ export class InnovationSupportsService extends BaseService {
         acronym: string | null;
         unit: { id: string; name: string; acronym: string | null };
       };
-      engagingAccessors?: { id: string; userRoleId: string; name: string }[];
+      engagingAccessors?: { id: string; userRoleId: string; name: string; isActive: boolean }[];
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -122,21 +123,27 @@ export class InnovationSupportsService extends BaseService {
 
     if (filters.fields.includes('engagingAccessors')) {
       const assignedAccessorsIds = innovationSupports
-        .filter(support => support.status === InnovationSupportStatusEnum.ENGAGING)
+        .filter(
+          support =>
+            support.status === InnovationSupportStatusEnum.ENGAGING ||
+            support.status === InnovationSupportStatusEnum.WAITING
+        )
         .flatMap(support => support.userRoles.filter(item => item.isActive).map(item => item.user.id));
 
       usersInfo = await this.domainService.users.getUsersList({ userIds: assignedAccessorsIds });
     }
 
     return innovationSupports.map(support => {
-      let engagingAccessors: { id: string; userRoleId: string; name: string }[] | undefined = undefined;
+      let engagingAccessors: { id: string; userRoleId: string; name: string; isActive: boolean }[] | undefined =
+        undefined;
 
       if (filters.fields.includes('engagingAccessors')) {
         engagingAccessors = support.userRoles
           .map(supportUserRole => ({
             id: supportUserRole.user.id,
             userRoleId: supportUserRole.id,
-            name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || ''
+            name: usersInfo.find(item => item.id === supportUserRole.user.id)?.displayName || '',
+            isActive: supportUserRole.isActive
           }))
           .filter(authUser => authUser.name);
       }
@@ -159,76 +166,40 @@ export class InnovationSupportsService extends BaseService {
     });
   }
 
+  /**
+   * returns a list of suggested organisations by assessment and assessors ordered by name
+   * @param innovationId the innovation id
+   * @returns suggested organisations by both assessors and accessors
+   */
   async getInnovationSuggestions(innovationId: string): Promise<InnovationSuggestionsType> {
-    const supportLogs = await this.fetchSupportLogs(innovationId, InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION);
+    const supportLogs = await this.fetchAccessorsSuggestedOrganisationUnits(innovationId);
 
     const assessmentQuery = this.sqlConnection
       .createQueryBuilder(InnovationAssessmentEntity, 'assessments')
-      .leftJoinAndSelect('assessments.organisationUnits', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
+      .select(['assessments.id', 'organisationUnit.id', 'organisation.id', 'organisation.name', 'organisation.acronym'])
+      .leftJoin('assessments.organisationUnits', 'organisationUnit')
+      .leftJoin('organisationUnit.organisation', 'organisation')
       .where('assessments.innovation_id = :innovationId', { innovationId })
       .andWhere('organisationUnit.inactivated_at IS NULL');
 
     const innovationAssessment = await assessmentQuery.getOne();
 
     const result: InnovationSuggestionsType = {
-      assessment: {},
-      accessors: []
+      accessors: [],
+      assessment: { suggestedOrganisations: [] }
     };
 
     if (innovationAssessment) {
-      const assessmentOrganisationUnits = [...new Set(innovationAssessment.organisationUnits)];
-
       result.assessment = {
-        id: innovationAssessment.id,
-        suggestedOrganisationUnits:
-          assessmentOrganisationUnits.length > 0
-            ? assessmentOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
-                id: orgUnit.id,
-                name: orgUnit.name,
-                acronym: orgUnit.acronym,
-                organisation: {
-                  id: orgUnit.organisation.id,
-                  name: orgUnit.organisation.name,
-                  acronym: orgUnit.organisation.acronym
-                }
-              }))
-            : []
+        suggestedOrganisations: [
+          // remove duplicates
+          ...new Map(innovationAssessment.organisationUnits.map(ou => [ou.organisation.id, ou.organisation])).values()
+        ].sort((a, b) => a.name.localeCompare(b.name)) // sort by org name
       };
     }
 
-    if (supportLogs && supportLogs.length > 0) {
-      result.accessors = supportLogs.map(log => {
-        const rec: InnovationSuggestionAccessor = {
-          organisationUnit: log.organisationUnit
-            ? {
-                id: log.organisationUnit.id,
-                name: log.organisationUnit.name,
-                acronym: log.organisationUnit.acronym,
-                organisation: {
-                  id: log.organisationUnit.organisation.id,
-                  name: log.organisationUnit.organisation.name,
-                  acronym: log.organisationUnit.organisation.acronym
-                }
-              }
-            : null
-        };
-
-        if (log.suggestedOrganisationUnits && log.suggestedOrganisationUnits.length > 0) {
-          rec.suggestedOrganisationUnits = log.suggestedOrganisationUnits.map((orgUnit: OrganisationUnitEntity) => ({
-            id: orgUnit.id,
-            name: orgUnit.name,
-            acronym: orgUnit.acronym,
-            organisation: {
-              id: orgUnit.organisation.id,
-              name: orgUnit.organisation.name,
-              acronym: orgUnit.organisation.acronym
-            }
-          }));
-        }
-
-        return rec;
-      });
+    if (supportLogs.length) {
+      result.accessors = supportLogs;
     }
 
     return result;
@@ -292,7 +263,7 @@ export class InnovationSupportsService extends BaseService {
   ): Promise<{ id: string }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
-    const organisationUnitId = domainContext.organisation?.organisationUnit?.id || '';
+    const organisationUnitId = domainContext.organisation?.organisationUnit?.id;
 
     if (!organisationUnitId) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_WITH_UNPROCESSABLE_ORGANISATION_UNIT);
@@ -320,6 +291,11 @@ export class InnovationSupportsService extends BaseService {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_CANNOT_HAVE_ASSIGNED_ASSESSORS);
     }
 
+    // If status is waiting assigned QA as accessor automatically
+    const accessors =
+      data.accessors?.map(item => item.userRoleId) ??
+      (data.status === InnovationSupportStatusEnum.WAITING ? [domainContext.currentRole.id] : []);
+
     const result = await connection.transaction(async transaction => {
       const newSupport = InnovationSupportEntity.new({
         status: data.status,
@@ -327,17 +303,16 @@ export class InnovationSupportsService extends BaseService {
         updatedBy: domainContext.id,
         innovation: InnovationEntity.new({ id: innovationId }),
         organisationUnit: OrganisationUnitEntity.new({ id: organisationUnit.id }),
-        userRoles: (data.accessors || []).map(item => UserRoleEntity.new({ id: item.userRoleId }))
+        userRoles: [] // this will be setup later but we need to create the support first
       });
 
       const savedSupport = await transaction.save(InnovationSupportEntity, newSupport);
 
       const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        user,
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{Unit}}', organisationUnit.name),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
@@ -366,6 +341,8 @@ export class InnovationSupportsService extends BaseService {
           unitId: organisationUnitId
         }
       );
+
+      await this.assignAccessors(savedSupport, accessors, thread.thread.id, transaction);
 
       return { id: savedSupport.id };
     });
@@ -501,28 +478,37 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    const previousUsersRoleIds = new Set(dbSupport.userRoles.map(item => item.id));
+    const validSupportStatus = await this.getValidSupportStatuses(
+      innovationId,
+      dbSupport.organisationUnit.id,
+      connection
+    );
+    if (!validSupportStatus.includes(data.status)) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
+    }
+
     const previousStatus = dbSupport.status;
 
     const result = await connection.transaction(async transaction => {
+      let assignedAccessors: string[] = [];
       if (data.status === InnovationSupportStatusEnum.ENGAGING) {
-        dbSupport.userRoles = (data.accessors || []).map(item => UserRoleEntity.new({ id: item.userRoleId }));
+        assignedAccessors = data.accessors?.map(item => item.userRoleId) ?? [];
       } else {
-        // In the case that previous support was ENGAGING, cleanup several relations!
-
-        dbSupport.userRoles = [];
-
-        // Cleanup actions if the status is not ENGAGING or FURTHER_INFO_REQUIRED
-        if (data.status !== InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED) {
+        // Cleanup tasks if the status is not ENGAGING or WAITING
+        if (data.status !== InnovationSupportStatusEnum.WAITING) {
+          assignedAccessors = [];
           await transaction
             .createQueryBuilder()
-            .update(InnovationActionEntity)
-            .set({ status: InnovationActionStatusEnum.DELETED, updatedBy: domainContext.id })
+            .update(InnovationTaskEntity)
+            .set({ status: InnovationTaskStatusEnum.CANCELLED, updatedBy: domainContext.id })
             .where({
               innovationSupport: dbSupport.id,
-              status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
+              status: In([InnovationTaskStatusEnum.OPEN])
             })
             .execute();
+        } else {
+          // In waiting status the QA is automatically assigned
+          assignedAccessors = [domainContext.currentRole.id];
         }
       }
 
@@ -532,10 +518,9 @@ export class InnovationSupportsService extends BaseService {
       const savedSupport = await transaction.save(InnovationSupportEntity, dbSupport);
 
       const thread = await this.innovationThreadsService.createThreadOrMessage(
-        { id: domainContext.id, identityId: domainContext.identityId },
         domainContext,
         innovationId,
-        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE,
+        InnovationThreadSubjectEnum.INNOVATION_SUPPORT_UPDATE.replace('{{Unit}}', dbSupport.organisationUnit.name),
         data.message,
         savedSupport.id,
         ThreadContextTypeEnum.SUPPORT,
@@ -569,7 +554,14 @@ export class InnovationSupportsService extends BaseService {
         }
       );
 
-      return { id: savedSupport.id };
+      const newAssignedAccessors = await this.assignAccessors(
+        savedSupport,
+        assignedAccessors,
+        thread.thread.id,
+        transaction
+      );
+
+      return { id: savedSupport.id, newAssignedAccessors: new Set(newAssignedAccessors) };
     });
 
     await this.notifierService.send(domainContext, NotifierTypeEnum.INNOVATION_SUPPORT_STATUS_UPDATE, {
@@ -583,13 +575,145 @@ export class InnovationSupportsService extends BaseService {
         newAssignedAccessors:
           data.status === InnovationSupportStatusEnum.ENGAGING
             ? (data.accessors ?? [])
-                .filter(item => !previousUsersRoleIds.has(item.userRoleId))
+                .filter(item => result.newAssignedAccessors.has(item.userRoleId))
                 .map(item => ({ id: item.id }))
             : []
       }
     });
 
     return result;
+  }
+
+  /**
+   * updates the innovation support accessors and creates a thread message if a message is provided
+   *
+   * This only works for ENGAGING supports
+   * @param domainContext the domain context
+   * @param innovationId the innovation id
+   * @param supportId the support id
+   * @param data list of accessors and optional message
+   * @param entityManager optional transaction
+   */
+  async updateInnovationSupportAccessors(
+    domainContext: DomainContextType,
+    innovationId: string,
+    supportId: string,
+    data: {
+      message?: string;
+      accessors: { id: string; userRoleId: string }[];
+    },
+    entityManager?: EntityManager
+  ): Promise<void> {
+    // joi validates this but just in case
+    if (!data.accessors.length) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+    }
+
+    if (!entityManager) {
+      return this.sqlConnection.transaction(async transaction => {
+        return this.updateInnovationSupportAccessors(domainContext, innovationId, supportId, data, transaction);
+      });
+    }
+
+    // We're already fetching extra data for the assign accessors to avoid extra queries
+    const support = await entityManager
+      .createQueryBuilder(InnovationSupportEntity, 'support')
+      .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
+      .leftJoinAndSelect('support.userRoles', 'userRole')
+      .where('support.id = :supportId', { supportId })
+      .andWhere('support.innovation_id = :innovationId', { innovationId })
+      .getOne();
+    if (!support) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+    }
+    if (support.status !== InnovationSupportStatusEnum.ENGAGING) {
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UPDATE_WITH_UNPROCESSABLE_STATUS);
+    }
+
+    const thread = await this.innovationThreadsService.getThreadByContextId(
+      ThreadContextTypeEnum.SUPPORT,
+      supportId,
+      entityManager
+    );
+    if (!thread) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
+    }
+
+    await this.assignAccessors(
+      support,
+      data.accessors.map(item => item.userRoleId),
+      thread.id,
+      entityManager
+    );
+
+    if (data.message) {
+      await this.innovationThreadsService.createThreadMessage(
+        domainContext,
+        thread.id,
+        data.message,
+        false,
+        false,
+        entityManager
+      );
+    }
+  }
+
+  /**
+   * assigns accessors to a support, adding them to the thread followers if the support is ENGAGING
+   * @param support the support entity or id
+   * @param accessorRoleIds the list of assigned accessors role ids
+   * @param entityManager transactional entity manager
+   * @returns the list of new assigned accessors role ids
+   */
+  private async assignAccessors(
+    support: string | InnovationSupportEntity,
+    accessorRoleIds: string[],
+    threadId: string, // this will likely become optional in the future
+    entityManager?: EntityManager
+  ): Promise<string[]> {
+    // Force a transaction if one not present
+    if (!entityManager) {
+      return this.sqlConnection.transaction(async transaction => {
+        return this.assignAccessors(support, accessorRoleIds, threadId, transaction);
+      });
+    }
+
+    if (typeof support === 'string') {
+      const dbSupport = await entityManager
+        .createQueryBuilder(InnovationSupportEntity, 'support')
+        .innerJoinAndSelect('support.organisationUnit', 'organisationUnit')
+        .leftJoinAndSelect('support.userRoles', 'userRole')
+        .where('support.id = :supportId ', { support })
+        .getOne();
+
+      if (!dbSupport) {
+        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
+      }
+      support = dbSupport;
+    }
+
+    const previousUsersRoleIds = new Set(support.userRoles.map(item => item.id));
+    const newAssignedAccessors = accessorRoleIds.filter(item => !previousUsersRoleIds.has(item));
+
+    await entityManager.save(InnovationSupportEntity, {
+      id: support.id,
+      userRoles: accessorRoleIds.map(id => ({ id }))
+    });
+
+    // Add followers logic
+    // Update thread followers with the new assigned users only when the support is ENGAGING
+    if (support.status === InnovationSupportStatusEnum.ENGAGING) {
+      // If we want to remove only the previous assigned users we can use this
+      // await this.innovationThreadsService.removeFollowers(threadId, [...previousUsersRoleIds], entityManager);
+      await this.innovationThreadsService.removeOrganisationUnitFollowers(
+        threadId,
+        support.organisationUnit.id,
+        entityManager
+      );
+      await this.innovationThreadsService.addFollowersToThread(threadId, accessorRoleIds, entityManager);
+    }
+
+    return newAssignedAccessors;
   }
 
   async changeInnovationSupportStatusRequest(
@@ -611,6 +735,7 @@ export class InnovationSupportsService extends BaseService {
 
   // Innovation Support Summary
   async getSupportSummaryList(
+    domainContext: DomainContextType,
     innovationId: string,
     entityManager?: EntityManager
   ): Promise<
@@ -635,11 +760,11 @@ export class InnovationSupportsService extends BaseService {
 
     for (const support of unitsSupportInformationMap.values()) {
       suggestedIds.add(support.unitId);
-
-      if (this.isStatusEngaging(support.status)) {
+      if (support.status === InnovationSupportStatusEnum.ENGAGING) {
         engaging.push({
           id: support.unitId,
           name: support.unitName,
+          ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
             status: support.status,
             start: support.startSupport ?? undefined
@@ -649,6 +774,7 @@ export class InnovationSupportsService extends BaseService {
         beenEngaged.push({
           id: support.unitId,
           name: support.unitName,
+          ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
             status: support.status,
             start: support.startSupport,
@@ -659,6 +785,7 @@ export class InnovationSupportsService extends BaseService {
         suggested.push({
           id: support.unitId,
           name: support.unitName,
+          ...(support.unitId === domainContext.organisation?.organisationUnit?.id && { sameOrganisation: true }),
           support: {
             status: support.status,
             start: support.updatedAt
@@ -846,7 +973,7 @@ export class InnovationSupportsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_SUPPORT_NOT_FOUND);
     }
 
-    if (!this.isStatusEngaging(support.status)) {
+    if (!(support.status === InnovationSupportStatusEnum.ENGAGING)) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_SUPPORT_UNIT_NOT_ENGAGING);
     }
 
@@ -928,27 +1055,114 @@ export class InnovationSupportsService extends BaseService {
     });
   }
 
-  private async fetchSupportLogs(
+  async getValidSupportStatuses(
     innovationId: string,
-    type?: InnovationSupportLogTypeEnum
-  ): Promise<InnovationSupportLogEntity[]> {
-    const supportQuery = this.sqlConnection
-      .createQueryBuilder(InnovationSupportLogEntity, 'supports')
-      .leftJoinAndSelect('supports.innovation', 'innovation')
-      .leftJoinAndSelect('supports.organisationUnit', 'organisationUnit')
-      .leftJoinAndSelect('organisationUnit.organisation', 'organisation')
-      .leftJoinAndSelect('supports.suggestedOrganisationUnits', 'suggestedOrganisationUnits')
-      .leftJoinAndSelect('suggestedOrganisationUnits.organisation', 'suggestedOrganisation')
-      .where('innovation.id = :innovationId', { innovationId })
-      .andWhere('suggestedOrganisation.inactivated_at IS NULL');
+    unitId: string,
+    entityManager?: EntityManager
+  ): Promise<InnovationSupportStatusEnum[]> {
+    const em = entityManager ?? this.sqlConnection.manager;
 
-    if (type) {
-      supportQuery.andWhere('supports.type = :type', { type });
+    let [support] = await em.query<{ status: InnovationSupportStatusEnum; engagedCount: number }[]>(
+      `
+        SELECT s.[status], (
+          SELECT COUNT(*) FROM innovation_support FOR SYSTEM_TIME ALL WHERE id = s.id AND [status] = 'ENGAGING'
+        ) as engagedCount
+        FROM innovation_support s
+        WHERE s.innovation_id = @0 AND organisation_unit_id = @1
+      `,
+      [innovationId, unitId]
+    );
+
+    if (!support) {
+      support = { status: InnovationSupportStatusEnum.UNASSIGNED, engagedCount: 0 };
     }
 
-    supportQuery.orderBy('supports.createdAt', 'ASC');
+    // currently this is not considered for closing, if this remains the query can be changed
+    // const beenEngaged = support.engagedCount > 0;
+    const beenEngaged = true;
 
-    return await supportQuery.getMany();
+    switch (support.status) {
+      case InnovationSupportStatusEnum.UNASSIGNED:
+      case InnovationSupportStatusEnum.CLOSED:
+        return [
+          InnovationSupportStatusEnum.ENGAGING,
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.UNSUITABLE
+        ];
+
+      case InnovationSupportStatusEnum.WAITING:
+        if (beenEngaged) {
+          return [
+            InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.UNSUITABLE,
+            InnovationSupportStatusEnum.CLOSED
+          ];
+        }
+        return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.UNSUITABLE];
+
+      case InnovationSupportStatusEnum.ENGAGING:
+        return [
+          InnovationSupportStatusEnum.WAITING,
+          InnovationSupportStatusEnum.UNSUITABLE,
+          InnovationSupportStatusEnum.CLOSED
+        ];
+
+      case InnovationSupportStatusEnum.UNSUITABLE:
+        if (beenEngaged) {
+          return [
+            InnovationSupportStatusEnum.ENGAGING,
+            InnovationSupportStatusEnum.WAITING,
+            InnovationSupportStatusEnum.CLOSED
+          ];
+        }
+        return [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING];
+    }
+  }
+
+  private async fetchAccessorsSuggestedOrganisationUnits(
+    innovationId: string,
+    entityManager?: EntityManager
+  ): Promise<InnovationSuggestionAccessor[]> {
+    const res = new Map<string, InnovationSuggestionAccessor>();
+    const em = entityManager ?? this.sqlConnection.manager;
+
+    const query = em
+      .createQueryBuilder()
+      .from(InnovationSupportLogEntity, 'sl')
+      .select(['whom.id', 'whom.name', 'whom.acronym', 'suggested.id', 'suggested.name', 'suggested.acronym'])
+      .innerJoin('innovation_support_log_organisation_unit', 'slou', 'slou.innovation_support_log_id = sl.id')
+      .innerJoin('organisation_unit', 'whom_unit', 'whom_unit.id = sl.organisation_unit_id')
+      .innerJoin('organisation', 'whom', 'whom.id = whom_unit.organisation_id')
+      .innerJoin('organisation_unit', 'suggested_unit', 'suggested_unit.id = slou.organisation_unit_id')
+      .innerJoin('organisation', 'suggested', 'suggested.id = suggested_unit.organisation_id')
+      .where('sl.innovation_id = :innovationId', { innovationId })
+      .andWhere('sl.type = :type', { type: InnovationSupportLogTypeEnum.ACCESSOR_SUGGESTION })
+      .groupBy('whom.id')
+      .addGroupBy('whom.name')
+      .addGroupBy('whom.acronym')
+      .addGroupBy('suggested.id')
+      .addGroupBy('suggested.name')
+      .addGroupBy('suggested.acronym')
+      .orderBy('whom.name', 'ASC')
+      .addOrderBy('suggested.name', 'ASC');
+
+    const rows = await query.getRawMany();
+
+    for (const row of rows) {
+      if (!res.has(row.whom_id)) {
+        res.set(row.whom_id, {
+          organisation: { id: row.whom_id, name: row.whom_name, acronym: row.whom_acronym },
+          suggestedOrganisations: []
+        });
+      }
+      res.get(row.whom_id)?.suggestedOrganisations.push({
+        id: row.suggested_id,
+        name: row.suggested_name,
+        acronym: row.suggested_acronym
+      });
+    }
+
+    return [...res.values()];
   }
 
   private async getProgressUpdateFile(
@@ -1050,7 +1264,7 @@ export class InnovationSupportsService extends BaseService {
           SELECT id, MIN(valid_from) as startSupport, MAX(valid_to) as endSupport
           FROM innovation_support
           FOR SYSTEM_TIME ALL
-          WHERE innovation_id = @0 AND (status IN ('ENGAGING','FURTHER_INFO_REQUIRED'))
+          WHERE innovation_id = @0 AND (status IN ('ENGAGING'))
           GROUP BY id
       ) t ON t.id = s.id
       WHERE innovation_id = @0
@@ -1059,12 +1273,6 @@ export class InnovationSupportsService extends BaseService {
     );
 
     return new Map(unitsSupportInformation.map(support => [support.unitId, support]));
-  }
-
-  private isStatusEngaging(status: InnovationSupportStatusEnum): boolean {
-    return (
-      status === InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED || status === InnovationSupportStatusEnum.ENGAGING
-    );
   }
 
   private sortByStartDate(units: SuggestedUnitType[]): SuggestedUnitType[] {

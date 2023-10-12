@@ -221,14 +221,14 @@ export type ActivityLogDBParamsType = {
 
   assessmentId?: string;
   sectionId?: CurrentCatalogTypes.InnovationSections;
-  actionId?: string;
+  taskId?: string;
   actionUserRole?: ServiceRoleEnum;
   innovationSupportStatus?: InnovationSupportStatusEnum;
 
   organisations?: string[]; // This holds the name, not id's.
   organisationUnit?: string; // This holds the name, not id.
-  comment?: { id?: string; value: string }; // Some descriptions (ex: actions), are stored as a comment, hence, without an id.
-  totalActions?: number;
+  comment?: { id?: string; value: string }; // Some descriptions (ex: tasks), are stored as a comment, hence, without an id.
+  totalTasks?: number;
 
   thread?: {
     id: string;
@@ -293,28 +293,25 @@ export type ActivityLogTemplatesType = {
       comment: { id: string; value: string };
     };
   };
-  [ActivityEnum.ACTION_CREATION]: {
+  [ActivityEnum.TASK_CREATION]: {
     params: {
       sectionId: CurrentCatalogTypes.InnovationSections;
-      actionId: string;
+      taskId: string;
       comment: { value: string };
       role: ServiceRoleEnum;
     };
   };
-  [ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE]: {
-    params: { sectionId: CurrentCatalogTypes.InnovationSections; totalActions: number };
+  [ActivityEnum.TASK_STATUS_DONE_UPDATE]: {
+    params: { taskId: string };
   };
-  [ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE]: {
-    params: { actionId: string };
+  [ActivityEnum.TASK_STATUS_OPEN_UPDATE]: {
+    params: { taskId: string };
   };
-  [ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE]: {
-    params: { actionId: string };
+  [ActivityEnum.TASK_STATUS_CANCELLED_UPDATE]: {
+    params: { taskId: string };
   };
-  [ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE]: {
-    params: { actionId: string };
-  };
-  [ActivityEnum.ACTION_STATUS_DECLINED_UPDATE]: {
-    params: { actionId: string; interveningUserId: string; comment: { id: string; value: string } };
+  [ActivityEnum.TASK_STATUS_DECLINED_UPDATE]: {
+    params: { taskId: string; interveningUserId: string; comment: { id: string; value: string } };
   };
   [ActivityEnum.COMMENT_CREATION]: {
     params: { comment: { id: string; value: string } };

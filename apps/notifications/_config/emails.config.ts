@@ -18,15 +18,17 @@ export enum EmailTypeEnum {
 
   SUPPORT_SUMMARY_UPDATE_TO_INNOVATOR = 'd8f936de-7a0f-4823-a6a3-0a3ce5c3919a',
 
-  ACTION_CREATION_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
-  ACTION_REQUESTED_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
-  ACTION_CANCELLED_TO_INNOVATOR = '1bac0f02-25b1-42c1-843d-c97d58ad3db2',
-  ACTION_COMPLETED_TO_INNOVATOR = '354466bd-1dfc-43d2-a739-82f835875c83',
-  ACTION_DECLINED_CONFIRMATION = '3ac886c6-8352-4047-874f-66183d2d2d82',
-  ACTION_SUBMITTED_CONFIRMATION = '5e9f8648-c1ea-4e07-8225-ac0481428be9',
-  ACTION_DECLINED_TO_ACCESSOR_OR_ASSESSMENT = '8e1aba67-18a2-439c-8787-38435e73e6b5',
-  ACTION_SUBMITTED_TO_ACCESSOR_OR_ASSESSMENT = '382c29d3-2263-43dd-b7d7-1e6be73ea098',
-  ACTION_RESPONDED_BY_COLLABORATOR_TO_OWNER = 'e79e24e3-ee1f-45c5-b892-99c99fe91ef1',
+  TASK_CREATION_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
+  TASK_OPEN_TO_INNOVATOR = '384ab7ad-6c0c-4e5d-9b0c-e4502bf07c7e',
+  TASK_CANCELLED_TO_INNOVATOR = '1bac0f02-25b1-42c1-843d-c97d58ad3db2',
+  //TASK_COMPLETED_TO_INNOVATOR = '354466bd-1dfc-43d2-a739-82f835875c83',
+  TASK_DECLINED_CONFIRMATION = '3ac886c6-8352-4047-874f-66183d2d2d82',
+  //TASK_SUBMITTED_CONFIRMATION = '5e9f8648-c1ea-4e07-8225-ac0481428be9',
+  TASK_DONE_CONFIRMATION = '5e9f8648-c1ea-4e07-8225-ac0481428be9',
+  TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT = '8e1aba67-18a2-439c-8787-38435e73e6b5',
+  //TASK_SUBMITTED_TO_ACCESSOR_OR_ASSESSMENT = '382c29d3-2263-43dd-b7d7-1e6be73ea098',
+  TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT = '382c29d3-2263-43dd-b7d7-1e6be73ea098',
+  TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER = 'e79e24e3-ee1f-45c5-b892-99c99fe91ef1',
 
   THREAD_CREATION_TO_INNOVATOR_FROM_ASSIGNED_USER = '193601d9-4e46-4129-8f79-0f45e015410d',
   THREAD_CREATION_TO_INNOVATOR_FROM_INNOVATOR = '9016c786-c857-4e96-95d2-15ad18e756da',
@@ -159,57 +161,51 @@ export type EmailTemplatesType = {
     unit_name: string;
     support_summary_url: string;
   };
-  [EmailTypeEnum.ACTION_CREATION_TO_INNOVATOR]: {
+  [EmailTypeEnum.TASK_CREATION_TO_INNOVATOR]: {
     display_name?: string;
     accessor_name: string;
     unit_name: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_REQUESTED_TO_INNOVATOR]: {
+  [EmailTypeEnum.TASK_OPEN_TO_INNOVATOR]: {
     display_name?: string;
     accessor_name: string;
     unit_name: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_COMPLETED_TO_INNOVATOR]: {
+  [EmailTypeEnum.TASK_CANCELLED_TO_INNOVATOR]: {
     display_name?: string;
     accessor_name: string;
     unit_name: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_CANCELLED_TO_INNOVATOR]: {
+  [EmailTypeEnum.TASK_DECLINED_CONFIRMATION]: {
     display_name?: string;
     accessor_name: string;
     unit_name: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_DECLINED_CONFIRMATION]: {
+  [EmailTypeEnum.TASK_DONE_CONFIRMATION]: {
     display_name?: string;
     accessor_name: string;
     unit_name: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_SUBMITTED_CONFIRMATION]: {
-    display_name?: string;
-    accessor_name: string;
-    unit_name: string;
-    action_url: string;
-  };
-  [EmailTypeEnum.ACTION_RESPONDED_BY_COLLABORATOR_TO_OWNER]: {
+  [EmailTypeEnum.TASK_RESPONDED_BY_COLLABORATOR_TO_OWNER]: {
     display_name?: string;
     collaborator_name: string;
     accessor_name: string;
     unit_name: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_DECLINED_TO_ACCESSOR_OR_ASSESSMENT]: {
+  [EmailTypeEnum.TASK_DECLINED_TO_ACCESSOR_OR_ASSESSMENT]: {
     display_name?: string;
     innovator_name: string;
     innovation_name: string;
     declined_action_reason: string;
     action_url: string;
   };
-  [EmailTypeEnum.ACTION_SUBMITTED_TO_ACCESSOR_OR_ASSESSMENT]: {
+  [EmailTypeEnum.TASK_DONE_TO_ACCESSOR_OR_ASSESSMENT]: {
     display_name?: string;
     innovator_name: string;
     innovation_name: string;
@@ -316,13 +312,13 @@ export type EmailTemplatesType = {
   };
   [EmailTypeEnum.ACCESSOR_DAILY_DIGEST]: {
     display_name?: string;
-    actions_count: string;
+    actions_count: string; // TODO rename template
     messages_count: string;
     supports_count: string;
   };
   [EmailTypeEnum.INNOVATOR_DAILY_DIGEST]: {
     display_name?: string;
-    actions_count: string;
+    actions_count: string; // TODO rename template
     messages_count: string;
     supports_count: string;
   };

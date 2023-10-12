@@ -1,15 +1,19 @@
 import type { DataSource, EntityManager, Repository } from 'typeorm';
 
 import {
-  AccessorOrganisationRoleEnum,
   InnovationCollaboratorStatusEnum,
-  InnovatorOrganisationRoleEnum,
   NotifierTypeEnum,
   PhoneUserPreferenceEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '../../enums';
-import { InternalServerError, NotFoundError, UserErrorsEnum } from '../../errors';
+import {
+  GenericErrorsEnum,
+  InternalServerError,
+  NotFoundError,
+  NotImplementedError,
+  UserErrorsEnum
+} from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { DomainContextType, RoleType } from '../../types';
 
@@ -52,7 +56,6 @@ export class DomainUsersService {
       id: string;
       name: string;
       acronym: null | string;
-      role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
       isShadow: boolean;
       size: null | string;
       description: null | string;
@@ -61,7 +64,6 @@ export class DomainUsersService {
         id: string;
         name: string;
         acronym: string;
-        organisationUnitUser: { id: string };
       }[];
     }[];
   }> {
@@ -93,26 +95,11 @@ export class DomainUsersService {
       .where('user.status <> :userDeleted', { userDeleted: UserStatusEnum.DELETED });
 
     if (filters?.organisations) {
-      query
-        .leftJoin('user.userOrganisations', 'userOrganisations')
-        .leftJoin('userOrganisations.organisation', 'organisation')
-        .leftJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-        .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit');
-
       query.addSelect([
-        'userOrganisations.id',
-        'userOrganisations.role',
-        'organisation.id',
-        'organisation.name',
-        'organisation.acronym',
-        'organisation.size',
-        'organisation.isShadow',
-        'organisation.description',
-        'organisation.registrationNumber',
-        'userOrganisationUnits.id',
-        'organisationUnit.id',
-        'organisationUnit.name',
-        'organisationUnit.acronym'
+        'roleOrganisation.size',
+        'roleOrganisation.isShadow',
+        'roleOrganisation.description',
+        'roleOrganisation.registrationNumber'
       ]);
     }
 
@@ -130,6 +117,50 @@ export class DomainUsersService {
       throw new NotFoundError(UserErrorsEnum.USER_SQL_NOT_FOUND);
     }
 
+    const organisationsMap: Map<
+      string,
+      {
+        id: string;
+        name: string;
+        acronym: null | string;
+        isShadow: boolean;
+        size: null | string;
+        description: null | string;
+        registrationNumber: null | string;
+        organisationUnits: {
+          id: string;
+          name: string;
+          acronym: string;
+        }[];
+      }
+    > = new Map();
+
+    if (filters?.organisations) {
+      dbUser.serviceRoles.forEach(userRole => {
+        if (userRole.organisation) {
+          if (!organisationsMap.has(userRole.organisationId)) {
+            organisationsMap.set(userRole.organisationId, {
+              id: userRole.organisation.id,
+              name: userRole.organisation.name,
+              acronym: userRole.organisation.acronym,
+              isShadow: userRole.organisation.isShadow,
+              description: userRole.organisation.description,
+              registrationNumber: userRole.organisation.registrationNumber,
+              size: userRole.organisation.size,
+              organisationUnits: []
+            });
+          }
+          if (userRole.organisationUnit) {
+            organisationsMap.get(userRole.organisationId)!.organisationUnits.push({
+              id: userRole.organisationUnit.id,
+              name: userRole.organisationUnit.name,
+              acronym: userRole.organisationUnit.acronym
+            });
+          }
+        }
+      });
+    }
+
     const user = await this.identityProviderService.getUserInfo(dbUser.identityId);
 
     return {
@@ -143,31 +174,7 @@ export class DomainUsersService {
       lockedAt: dbUser.lockedAt,
       passwordResetAt: user.passwordResetAt,
       firstTimeSignInAt: dbUser.firstTimeSignInAt,
-      ...(filters?.organisations && {
-        organisations: (await dbUser.userOrganisations).map(userOrganisation => {
-          const organisation = userOrganisation.organisation;
-          const organisationUnits = userOrganisation.userOrganisationUnits;
-
-          return {
-            id: organisation.id,
-            name: organisation.name,
-            acronym: organisation.acronym,
-            size: organisation.size,
-            role: userOrganisation.role,
-            isShadow: organisation.isShadow,
-            description: organisation.description,
-            registrationNumber: organisation.registrationNumber,
-            organisationUnits: organisationUnits.map(item => ({
-              id: item.organisationUnit.id,
-              acronym: item.organisationUnit.acronym,
-              name: item.organisationUnit.name,
-              organisationUnitUser: {
-                id: item.id
-              }
-            }))
-          };
-        })
-      })
+      ...(filters?.organisations && { organisations: [...organisationsMap.values()] })
     };
   }
 
@@ -458,6 +465,7 @@ export class DomainUsersService {
     return dbUserRole ? roleEntity2RoleType(dbUserRole) : null;
   }
 
+  // try to deprecate
   getDisplayRoleInformation(userId: string, role: ServiceRoleEnum, innovationOwnerId?: string): string | undefined {
     if (role !== ServiceRoleEnum.INNOVATOR) {
       return TranslationHelper.translate(`SERVICE_ROLES.${role}`);
@@ -470,6 +478,7 @@ export class DomainUsersService {
     return;
   }
 
+  // try to deprecate
   getDisplayTeamInformation(role: ServiceRoleEnum, unitName?: string): string | undefined {
     if (role === ServiceRoleEnum.ACCESSOR || role === ServiceRoleEnum.QUALIFYING_ACCESSOR) {
       return unitName;
@@ -480,6 +489,26 @@ export class DomainUsersService {
     }
 
     return;
+  }
+
+  // in the future improve this with other "template" requirements, but keep it a standard
+  // this function is supposed to be the standard display of additional info for the users and should
+  // adjust the output according to the data passed, the invoker controls what's shown by passing the data
+  // but the same data will always produce the same output
+  getDisplayTag(role: ServiceRoleEnum, data: { unitName?: string | null; isOwner?: boolean }): string {
+    switch (role) {
+      case ServiceRoleEnum.ACCESSOR:
+      case ServiceRoleEnum.QUALIFYING_ACCESSOR:
+        return data.unitName ?? '';
+      case ServiceRoleEnum.ASSESSMENT:
+      case ServiceRoleEnum.ADMIN:
+        return TranslationHelper.translate(`TEAMS.${role}`);
+      case ServiceRoleEnum.INNOVATOR:
+        return data.isOwner === undefined ? 'Innovator' : data.isOwner ? 'Owner' : 'Collaborator';
+      default:
+        const r: never = role;
+        throw new NotImplementedError(GenericErrorsEnum.NOT_IMPLEMENTED_ERROR, { details: r });
+    }
   }
 
   private async getUserIdentityIdByEmail(email: string): Promise<string> {

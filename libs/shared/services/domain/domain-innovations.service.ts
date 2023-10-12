@@ -3,13 +3,13 @@ import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import type { UserEntity } from 'libs/shared/entities';
 import { EXPIRATION_DATES } from '../../constants';
 import { ActivityLogEntity } from '../../entities/innovation/activity-log.entity';
-import { InnovationActionEntity } from '../../entities/innovation/innovation-action.entity';
 import { InnovationAssessmentEntity } from '../../entities/innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from '../../entities/innovation/innovation-collaborator.entity';
 import { InnovationExportRequestEntity } from '../../entities/innovation/innovation-export-request.entity';
 import { InnovationSectionEntity } from '../../entities/innovation/innovation-section.entity';
 import { InnovationSupportLogEntity } from '../../entities/innovation/innovation-support-log.entity';
 import { InnovationSupportEntity } from '../../entities/innovation/innovation-support.entity';
+import { InnovationTaskEntity } from '../../entities/innovation/innovation-task.entity';
 import { InnovationThreadEntity } from '../../entities/innovation/innovation-thread.entity';
 import { InnovationTransferEntity } from '../../entities/innovation/innovation-transfer.entity';
 import { InnovationEntity } from '../../entities/innovation/innovation.entity';
@@ -21,20 +21,26 @@ import { InnovationGroupedStatusViewEntity } from '../../entities/views/innovati
 import {
   ActivityEnum,
   ActivityTypeEnum,
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationGroupedStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '../../enums';
-import { InnovationErrorsEnum, NotFoundError, UnprocessableEntityError } from '../../errors';
+import {
+  BadRequestError,
+  GenericErrorsEnum,
+  InnovationErrorsEnum,
+  NotFoundError,
+  UnprocessableEntityError
+} from '../../errors';
 import { TranslationHelper } from '../../helpers';
 import type { ActivitiesParamsType, DomainContextType, IdentityUserInfo, SupportLogParams } from '../../types';
 import type { IdentityProviderService } from '../integrations/identity-provider.service';
@@ -311,17 +317,17 @@ export class DomainInnovationsService {
         // Close opened actions, and deleted them all afterwards, hence 2 querys needed for both operations.
         await em
           .createQueryBuilder()
-          .update(InnovationActionEntity)
-          .set({ status: InnovationActionStatusEnum.DECLINED })
-          .where('innovation_section_id IN (:...sectionsIds) AND status IN (:...innovationActionStatus)', {
+          .update(InnovationTaskEntity)
+          .set({ status: InnovationTaskStatusEnum.DECLINED })
+          .where('innovation_section_id IN (:...sectionsIds) AND status = :innovationActionStatus', {
             sectionsIds,
-            innovationActionStatus: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+            innovationActionStatus: InnovationTaskStatusEnum.OPEN
           })
           .execute();
 
         await em
           .createQueryBuilder()
-          .update(InnovationActionEntity)
+          .update(InnovationTaskEntity)
           .set({ updatedBy: userId, updatedByUserRole: roleId, deletedAt: new Date() })
           .where('innovation_section_id IN (:...sectionsIds)', { sectionsIds })
           .execute();
@@ -749,6 +755,93 @@ export class DomainInnovationsService {
     `);
   }
 
+  /*****
+   * MOVE THESE TO A STATISTIC SERVICE SHARED PROBABLY
+   */
+
+  /**
+   * returns tasks counters
+   * @param domainContext
+   * @param statuses task statuses to count
+   * @param filters (all optional)
+   *  - innovationId tasks for this innovation
+   *  - statuses counters for these statuses
+   *  - organisationUnitId tasks for this organisation unit
+   *  - mine
+   * @param entityManager optional entity manager
+   * @returns counters for each status and lastUpdatedAt
+   */
+  async getTasksCounter<T extends InnovationTaskStatusEnum[]>(
+    domainContext: DomainContextType,
+    statuses: T,
+    filters: { innovationId?: string; myTeam?: boolean; mine?: boolean },
+    entityManager?: EntityManager
+  ): Promise<
+    {
+      [k in T[number]]: number;
+    } & { lastUpdatedAt: Date | null }
+  > {
+    if (!statuses.length) {
+      throw new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD);
+    }
+    const connection = entityManager ?? this.sqlConnection.manager;
+
+    const query = connection
+      .createQueryBuilder(InnovationTaskEntity, 'task')
+      .select('task.status', 'status')
+      .addSelect('count(*)', 'count')
+      .addSelect('max(task.updated_at)', 'lastUpdatedAt')
+      .groupBy('task.status')
+      .innerJoin('task.createdByUserRole', 'createdByUserRole')
+      .where('task.status IN (:...statuses)', { statuses });
+
+    if (filters.innovationId) {
+      query
+        .innerJoin('task.innovationSection', 'innovationSection')
+        .andWhere('innovationSection.innovation_id = :innovationId', { innovationId: filters.innovationId });
+    }
+
+    if (filters.myTeam) {
+      if (domainContext.organisation?.organisationUnit?.id) {
+        query.andWhere('createdByUserRole.organisation_unit_id = :organisationUnitId', {
+          organisationUnitId: domainContext.organisation?.organisationUnit?.id
+        });
+      } else {
+        query
+          .andWhere('createdByUserRole.role = :role', { role: domainContext.currentRole.role })
+          .andWhere('createdByUserRole.organisation_unit_id IS NULL');
+      }
+    }
+
+    if (filters.mine) {
+      query.andWhere('createdByUserRole.id = :roleId', { roleId: domainContext.currentRole.id });
+    }
+
+    const res = (
+      await query.getRawMany<{
+        count: number;
+        lastUpdatedAt: Date;
+        status: InnovationTaskStatusEnum;
+      }>()
+    ).reduce(
+      (acc, cur) => {
+        acc[cur.status] = cur.count;
+        acc.lastUpdatedAt =
+          acc.lastUpdatedAt && acc.lastUpdatedAt > cur.lastUpdatedAt ? acc.lastUpdatedAt : cur.lastUpdatedAt;
+        return acc;
+      },
+      {} as { [k in InnovationTaskStatusEnum]: number } & { lastUpdatedAt: Date | null }
+    );
+
+    statuses.forEach(status => {
+      if (!res[status]) {
+        res[status] = 0;
+      }
+    });
+
+    return res;
+  }
+
   private getActivityLogType(activity: ActivityEnum): ActivityTypeEnum {
     switch (activity) {
       case ActivityEnum.INNOVATION_CREATION:
@@ -779,13 +872,12 @@ export class DomainInnovationsService {
       case ActivityEnum.THREAD_MESSAGE_CREATION:
         return ActivityTypeEnum.THREADS;
 
-      case ActivityEnum.ACTION_CREATION:
-      case ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_DECLINED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_COMPLETED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_REQUESTED_UPDATE:
-      case ActivityEnum.ACTION_STATUS_CANCELLED_UPDATE:
-        return ActivityTypeEnum.ACTIONS;
+      case ActivityEnum.TASK_CREATION:
+      case ActivityEnum.TASK_STATUS_DONE_UPDATE:
+      case ActivityEnum.TASK_STATUS_DECLINED_UPDATE:
+      case ActivityEnum.TASK_STATUS_OPEN_UPDATE:
+      case ActivityEnum.TASK_STATUS_CANCELLED_UPDATE:
+        return ActivityTypeEnum.TASKS;
 
       default:
         throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_ACTIVITY_LOG_INVALID_ITEM);

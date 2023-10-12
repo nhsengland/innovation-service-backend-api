@@ -28,15 +28,15 @@ export type ResponseDTO = {
     contactByPhone?: boolean;
     contactByPhoneTimeframe?: PhoneUserPreferenceEnum | null;
     mobilePhone?: null | string;
-    organisations: null | { name: string; size: null | string }[];
     lastLoginAt?: null | Date;
+    organisation?: { name: string; size: null | string };
   };
   lastEndSupportAt: null | Date;
   assessment?: null | {
     id: string;
     createdAt: Date;
     finishedAt: null | Date;
-    assignedTo?: { id: string; name: string, userRoleId: string };
+    assignedTo?: { id: string; name: string; userRoleId: string };
     reassessmentCount: number;
   };
   supports?: null | { id: string; status: InnovationSupportStatusEnum; organisationUnitId: string }[];

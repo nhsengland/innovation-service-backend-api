@@ -42,7 +42,7 @@ describe('Innovation Sections Suite', () => {
         em
       );
 
-      const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
+      const actionCount = sectionsList.map(s => s.openTasksCount).reduce((a, b) => a + b, 0);
 
       expect(sectionsList).toBeDefined();
       expect(actionCount).toEqual(3);
@@ -55,10 +55,10 @@ describe('Innovation Sections Suite', () => {
         em
       );
 
-      const actionCount = sectionsList.map(s => s.openActionsCount).reduce((a, b) => a + b, 0);
+      const actionCount = sectionsList.map(s => s.openTasksCount).reduce((a, b) => a + b, 0);
 
       expect(sectionsList).toBeDefined();
-      expect(actionCount).toEqual(1);
+      expect(actionCount).toEqual(0);
     });
   });
 

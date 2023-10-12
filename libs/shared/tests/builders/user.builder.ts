@@ -2,16 +2,10 @@
 import { randAbbreviation, randCompanyName, randEmail, randFullName, randPastDate, randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
-import { OrganisationUnitUserEntity } from '../../entities';
-import { OrganisationUserEntity } from '../../entities/organisation/organisation-user.entity';
 import { OrganisationEntity } from '../../entities/organisation/organisation.entity';
 import { UserRoleEntity } from '../../entities/user/user-role.entity';
 import { UserEntity } from '../../entities/user/user.entity';
-import {
-  AccessorOrganisationRoleEnum,
-  InnovatorOrganisationRoleEnum,
-  OrganisationTypeEnum
-} from '../../enums/organisation.enums';
+import { OrganisationTypeEnum } from '../../enums/organisation.enums';
 import { ServiceRoleEnum, UserStatusEnum } from '../../enums/user.enums';
 import type { RoleType } from '../../types';
 
@@ -22,7 +16,6 @@ export type TestUserOrganisationUnitType = {
   id: string;
   acronym: string;
   name: string;
-  organisationUnitUser: { id: string };
 };
 
 export type TestUserOrganisationsType = {
@@ -32,7 +25,6 @@ export type TestUserOrganisationsType = {
   isShadow: boolean;
   description: string | null;
   registrationNumber: string | null;
-  role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
   size: string | null;
   organisationUnits: { [key: string]: TestUserOrganisationUnitType };
 };
@@ -134,7 +126,6 @@ export class UserBuilder extends BaseBuilder {
 
     for (const [orgId, values] of Object.entries(rolesPerOrg)) {
       let dbOrganisationId: string | undefined = orgId !== 'undefined' ? orgId : undefined;
-      let dbOrganisationUserId: string | undefined;
 
       // Create the innovator organisation if one was not given
       const isInnovator = values.some(v => v.role === ServiceRoleEnum.INNOVATOR);
@@ -156,30 +147,7 @@ export class UserBuilder extends BaseBuilder {
         ).id;
       }
 
-      // Create the organisation user
-      if (dbOrganisationId) {
-        dbOrganisationUserId = (
-          await this.getEntityManager().save(OrganisationUserEntity, {
-            organisation: { id: dbOrganisationId },
-            user,
-            role: isInnovator
-              ? InnovatorOrganisationRoleEnum.INNOVATOR_OWNER
-              : values.some(v => v.role === ServiceRoleEnum.QUALIFYING_ACCESSOR)
-              ? AccessorOrganisationRoleEnum.QUALIFYING_ACCESSOR
-              : AccessorOrganisationRoleEnum.ACCESSOR
-          })
-        ).id;
-      }
-
       for (const role of values) {
-        // Create the organisation unit user
-        if (role.organisationUnitId && dbOrganisationUserId) {
-          await this.getEntityManager().save(OrganisationUnitUserEntity, {
-            organisationUnit: { id: role.organisationUnitId },
-            organisationUser: { id: dbOrganisationUserId }
-          });
-        }
-
         //save role
         await this.getEntityManager().save(UserRoleEntity, {
           user: user,
@@ -214,29 +182,11 @@ export class UserBuilder extends BaseBuilder {
         'roleOrganisation.acronym',
         'roleOrganisationUnit.id',
         'roleOrganisationUnit.name',
-        'roleOrganisationUnit.acronym',
-
-        'userOrganisations.id',
-        'userOrganisations.role',
-        'organisation.id',
-        'organisation.name',
-        'organisation.acronym',
-        'organisation.size',
-        'organisation.isShadow',
-        'organisation.description',
-        'organisation.registrationNumber',
-        'userOrganisationUnits.id',
-        'organisationUnit.id',
-        'organisationUnit.name',
-        'organisationUnit.acronym'
+        'roleOrganisationUnit.acronym'
       ])
       .innerJoin('user.serviceRoles', 'roles')
       .leftJoin('roles.organisation', 'roleOrganisation')
       .leftJoin('roles.organisationUnit', 'roleOrganisationUnit')
-      .leftJoin('user.userOrganisations', 'userOrganisations')
-      .leftJoin('userOrganisations.organisation', 'organisation')
-      .leftJoin('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-      .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
       .where('user.id = :userId', { userId: dbUser.id })
       .getOne();
 
@@ -253,6 +203,8 @@ export class UserBuilder extends BaseBuilder {
         organisationUnit?: { id: string; name: string; acronym: string };
       };
     } = {};
+
+    const userOrganisations: Record<string, TestUserOrganisationsType> = {};
 
     this.rolesToAdd.forEach(r => {
       const foundRole = result.serviceRoles.find(sR => {
@@ -298,53 +250,28 @@ export class UserBuilder extends BaseBuilder {
           }
         })
       };
-    });
 
-    const organisations: {
-      [key: string]: {
-        id: string;
-        name: string;
-        acronym: string | null;
-        size: string | null;
-        role: InnovatorOrganisationRoleEnum | AccessorOrganisationRoleEnum;
-        isShadow: boolean;
-        description: string | null;
-        registrationNumber: string | null;
-        organisationUnits: {
-          [key: string]: {
-            id: string;
-            acronym: string;
-            name: string;
-            organisationUnitUser: { id: string };
+      if (foundRole.organisation) {
+        if (!userOrganisations[foundRole.organisation.name]) {
+          userOrganisations[foundRole.organisation.name] = {
+            id: foundRole.organisation.id,
+            name: foundRole.organisation.name,
+            acronym: foundRole.organisation.acronym,
+            isShadow: foundRole.organisation.isShadow,
+            description: foundRole.organisation.description,
+            registrationNumber: foundRole.organisation.registrationNumber,
+            size: foundRole.organisation.size,
+            organisationUnits: {}
           };
-        };
-      };
-    } = {};
-
-    (await result.userOrganisations).map(userOrganisation => {
-      const organisation = userOrganisation.organisation;
-      const organisationUnits = userOrganisation.userOrganisationUnits;
-
-      organisations[organisation.name] = {
-        id: organisation.id,
-        name: organisation.name,
-        acronym: organisation.acronym,
-        size: organisation.size,
-        role: userOrganisation.role,
-        isShadow: organisation.isShadow,
-        description: organisation.description,
-        registrationNumber: organisation.registrationNumber,
-        organisationUnits: {}
-      };
-
-      organisationUnits.map(item => {
-        organisations[organisation.name]!.organisationUnits[item.organisationUnit.name] = {
-          id: item.organisationUnit.id,
-          acronym: item.organisationUnit.acronym,
-          name: item.organisationUnit.name,
-          organisationUnitUser: { id: item.id }
-        };
-      });
+        }
+        if (foundRole.organisationUnit) {
+          userOrganisations[foundRole.organisation.name]!.organisationUnits[foundRole.organisationUnit.name] = {
+            id: foundRole.organisationUnit.id,
+            name: foundRole.organisationUnit.name,
+            acronym: foundRole.organisationUnit.acronym || ''
+          };
+        }
+      }
     });
 
     return {
@@ -357,7 +284,7 @@ export class UserBuilder extends BaseBuilder {
       lockedAt: result.lockedAt,
       createdAt: result.createdAt,
       roles: userRoles,
-      organisations: organisations
+      organisations: userOrganisations
     };
   }
 }

@@ -12,8 +12,8 @@ import {
 
 import { BaseEntity } from '../base.entity';
 
-import { InnovationActionEntity } from './innovation-action.entity';
 import { InnovationFileLegacyEntity } from './innovation-file-legacy.entity';
+import { InnovationTaskEntity } from './innovation-task.entity';
 import { InnovationEntity } from './innovation.entity';
 
 import { CurrentCatalogTypes } from '../../../shared/schemas/innovation-record';
@@ -52,11 +52,11 @@ export class InnovationSectionEntity extends BaseEntity {
   })
   files: InnovationFileLegacyEntity[];
 
-  @OneToMany(() => InnovationActionEntity, record => record.innovationSection, {
+  @OneToMany(() => InnovationTaskEntity, record => record.innovationSection, {
     lazy: true,
     cascade: ['insert', 'update']
   })
-  actions: Promise<InnovationActionEntity[]>;
+  tasks: Promise<InnovationTaskEntity[]>;
 
   static new(data: Partial<InnovationSectionEntity>): InnovationSectionEntity {
     const instance = new InnovationSectionEntity();

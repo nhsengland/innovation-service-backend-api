@@ -24,7 +24,7 @@ beforeAll(async () => {
 });
 
 const expected = [
-  { preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'ACTION' as const },
+  { preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'TASK' as const },
   { preference: EmailNotificationPreferenceEnum.INSTANTLY, notificationType: 'SUPPORT' as const }
 ];
 const mock = jest.spyOn(NotificationsService.prototype, 'getUserRoleEmailPreferences').mockResolvedValue(expected);

@@ -42,7 +42,7 @@ describe('v1-innovation-support-update', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.NOT_YET
+          status: InnovationSupportStatusEnum.WAITING
         })
         .call<never>(azureFunction);
 
@@ -70,7 +70,7 @@ describe('v1-innovation-support-update', () => {
         })
         .setBody<BodyType>({
           message: randText(),
-          status: InnovationSupportStatusEnum.NOT_YET
+          status: InnovationSupportStatusEnum.WAITING
         })
         .call<ErrorResponseType>(azureFunction);
 

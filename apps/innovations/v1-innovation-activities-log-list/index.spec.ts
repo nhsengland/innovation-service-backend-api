@@ -25,14 +25,14 @@ const expected = {
   count: 2,
   data: [
     {
-      type: ActivityTypeEnum.ACTIONS,
-      activity: ActivityEnum.ACTION_CREATION,
+      type: ActivityTypeEnum.TASKS,
+      activity: ActivityEnum.TASK_CREATION,
       date: new Date(),
       params: { actionUserName: randUserName() }
     },
     {
-      type: ActivityTypeEnum.ACTIONS,
-      activity: ActivityEnum.ACTION_CREATION,
+      type: ActivityTypeEnum.TASKS,
+      activity: ActivityEnum.TASK_CREATION,
       date: new Date(),
       params: { actionUserName: randUserName() }
     }

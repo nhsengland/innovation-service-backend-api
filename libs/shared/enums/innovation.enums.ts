@@ -20,14 +20,10 @@ export enum InnovationGroupedStatusEnum {
   WITHDRAWN = 'WITHDRAWN'
 }
 
-export enum InnovationActionStatusEnum {
-  REQUESTED = 'REQUESTED',
-  // STARTED = 'STARTED',
-  // CONTINUE = 'CONTINUE',
-  SUBMITTED = 'SUBMITTED',
-  DELETED = 'DELETED',
+export enum InnovationTaskStatusEnum {
+  OPEN = 'OPEN',
+  DONE = 'DONE',
   DECLINED = 'DECLINED',
-  COMPLETED = 'COMPLETED',
   CANCELLED = 'CANCELLED'
 }
 
@@ -39,13 +35,10 @@ export enum InnovationSectionStatusEnum {
 
 export enum InnovationSupportStatusEnum {
   UNASSIGNED = 'UNASSIGNED',
-  FURTHER_INFO_REQUIRED = 'FURTHER_INFO_REQUIRED',
-  WAITING = 'WAITING',
-  NOT_YET = 'NOT_YET',
   ENGAGING = 'ENGAGING',
+  WAITING = 'WAITING',
   UNSUITABLE = 'UNSUITABLE',
-  WITHDRAWN = 'WITHDRAWN',
-  COMPLETE = 'COMPLETE'
+  CLOSED = 'CLOSED'
 }
 
 export enum InnovationTransferStatusEnum {
@@ -66,7 +59,7 @@ export enum InnovationSupportLogTypeEnum {
 export enum ThreadContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   SUPPORT = 'SUPPORT',
-  ACTION = 'ACTION'
+  TASK = 'TASK'
 }
 
 export enum InnovationExportRequestStatusEnum {

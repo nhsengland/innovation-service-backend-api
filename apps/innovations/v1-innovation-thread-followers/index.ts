@@ -40,9 +40,9 @@ class V1InnovationThreadFollowers {
         followers: result.map(follower => ({
           id: follower.id,
           name: follower?.name ?? '',
-          type: follower.userRole.role,
           isLocked: follower.locked,
           isOwner: follower.isOwner,
+          role: { id: follower.userRole.id, role: follower.userRole.role },
           organisationUnit: follower.organisationUnit
             ? {
                 id: follower.organisationUnit.id,

@@ -26,9 +26,9 @@ pool:
 trigger: none
 
 # Azure Devops doesn't support triggers and needs to be setup via policies
-# pr:
-# - develop
-# - master
+pr:
+- develop
+- master
 
 services:
   mssql: mssql

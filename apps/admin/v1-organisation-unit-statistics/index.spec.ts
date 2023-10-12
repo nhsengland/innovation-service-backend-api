@@ -23,7 +23,7 @@ beforeAll(async () => {
   await testsHelper.init();
 });
 
-const expected = { COMPLETE: randNumber() };
+const expected = { CLOSED: randNumber() };
 const mock = jest
   .spyOn(StatisticsService.prototype, 'getOrganisationUnitInnovationCounters')
   .mockResolvedValue(expected);

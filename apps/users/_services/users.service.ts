@@ -5,7 +5,6 @@ import {
   InnovationCollaboratorEntity,
   InnovationTransferEntity,
   OrganisationEntity,
-  OrganisationUserEntity,
   TermsOfUseEntity,
   TermsOfUseUserEntity,
   UserEntity,
@@ -15,7 +14,6 @@ import {
 import {
   InnovationCollaboratorStatusEnum,
   InnovationTransferStatusEnum,
-  InnovatorOrganisationRoleEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
   PhoneUserPreferenceEnum,
@@ -106,16 +104,6 @@ export class UsersService extends BaseService {
           type: OrganisationTypeEnum.INNOVATOR,
           size: null,
           isShadow: true,
-          createdBy: dbUser.id,
-          updatedBy: dbUser.id
-        })
-      );
-
-      await transactionManager.save(
-        OrganisationUserEntity.new({
-          organisation: dbOrganisation,
-          user: dbUser,
-          role: InnovatorOrganisationRoleEnum.INNOVATOR_OWNER,
           createdBy: dbUser.id,
           updatedBy: dbUser.id
         })
@@ -279,7 +267,6 @@ export class UsersService extends BaseService {
       lockedAt: Date | null;
       roles: UserRoleEntity[];
       email?: string;
-      organisationUnitUserId?: string;
     }[];
   }> {
     const fieldSet = new Set(fields);
@@ -299,11 +286,7 @@ export class UsersService extends BaseService {
     if (filters.organisationUnitId) {
       query
         .leftJoin('serviceRoles.organisationUnit', 'roleOrganisationUnit')
-        .leftJoinAndSelect('user.userOrganisations', 'userOrganisations')
-        .leftJoin('userOrganisations.organisation', 'organisation')
-        .leftJoinAndSelect('userOrganisations.userOrganisationUnits', 'userOrganisationUnits')
-        .leftJoin('userOrganisationUnits.organisationUnit', 'organisationUnit')
-        .andWhere('roleOrganisationUnit.id = :organisationUnitId AND organisationUnit.id = :organisationUnitId', {
+        .andWhere('roleOrganisationUnit.id = :organisationUnitId', {
           organisationUnitId: filters.organisationUnitId
         });
     }
@@ -346,12 +329,7 @@ export class UsersService extends BaseService {
           roles: dbUser.serviceRoles,
           name: identityUser.displayName ?? 'N/A',
           lockedAt: dbUser.lockedAt,
-          ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {}),
-          ...(filters.organisationUnitId
-            ? {
-                organisationUnitUserId: (await dbUser.userOrganisations)[0]?.userOrganisationUnits[0]?.id ?? ''
-              }
-            : {})
+          ...(fieldSet.has('email') ? { email: identityUser?.email ?? 'N/A' } : {})
         };
       })
     );

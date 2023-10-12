@@ -14,14 +14,13 @@ describe('Handlers Helper Suite', () => {
     jest.clearAllMocks();
   });
 
-  const actionsToReview = {
-    count: randNumber(),
-    total: randNumber(),
-    lastSubmittedAt: randPastDate()
+  const tasksOpen = {
+    OPEN: 1,
+    DECLINED: 3,
+    DONE: 5,
+    lastUpdatedAt: randPastDate()
   };
-  const actionsToReviewMock = jest
-    .spyOn(StatisticsService.prototype, 'actionsToReview')
-    .mockResolvedValue(actionsToReview);
+  const actionsToReviewMock = jest.spyOn(StatisticsService.prototype, 'getTasksCounter').mockResolvedValue(tasksOpen);
   const assignedInnovations = {
     count: randNumber(),
     total: randNumber(),
@@ -35,24 +34,32 @@ describe('Handlers Helper Suite', () => {
     it('should call one handler', async () => {
       const res = await StatisticsHandlersHelper.runHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        [UserStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]
+        [UserStatisticsEnum.TASKS_RESPONDED_COUNTER]
       );
       expect(actionsToReviewMock).toBeCalledTimes(1);
       expect(assignedInnovationsMock).toBeCalledTimes(0);
       expect(res).toStrictEqual({
-        ACTIONS_TO_REVIEW_COUNTER: actionsToReview
+        TASKS_RESPONDED_COUNTER: {
+          count: 8,
+          total: 9,
+          lastSubmittedAt: tasksOpen.lastUpdatedAt
+        }
       });
     });
 
     it('should handle multiple handlers', async () => {
       const res = await StatisticsHandlersHelper.runHandler(
         DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        [UserStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER, UserStatisticsEnum.ASSIGNED_INNOVATIONS_COUNTER]
+        [UserStatisticsEnum.TASKS_RESPONDED_COUNTER, UserStatisticsEnum.ASSIGNED_INNOVATIONS_COUNTER]
       );
       expect(actionsToReviewMock).toBeCalledTimes(1);
       expect(assignedInnovationsMock).toBeCalledTimes(1);
       expect(res).toStrictEqual({
-        ACTIONS_TO_REVIEW_COUNTER: actionsToReview,
+        TASKS_RESPONDED_COUNTER: {
+          count: 8,
+          total: 9,
+          lastSubmittedAt: tasksOpen.lastUpdatedAt
+        },
         ASSIGNED_INNOVATIONS_COUNTER: assignedInnovations
       });
     });

@@ -2,7 +2,7 @@ export enum NotificationContextTypeEnum {
   NEEDS_ASSESSMENT = 'NEEDS_ASSESSMENT',
   INNOVATION = 'INNOVATION',
   SUPPORT = 'SUPPORT',
-  ACTION = 'ACTION',
+  TASK = 'TASK',
   THREAD = 'THREAD',
   DATA_SHARING = 'DATA_SHARING',
   COMMENT = 'COMMENT' // TODO: Deprecated!
@@ -14,8 +14,8 @@ export enum NotificationContextDetailEnum {
   THREAD_MESSAGE_CREATION = 'THREAD_MESSAGE_CREATION',
   COMMENT_CREATION = 'COMMENT_CREATION', // TODO: Deprecated!
   COMMENT_REPLY = 'COMMENT_REPLY', // TODO: Deprecated!
-  ACTION_CREATION = 'ACTION_CREATION',
-  ACTION_UPDATE = 'ACTION_UPDATE',
+  TASK_CREATION = 'TASK_CREATION',
+  TASK_UPDATE = 'TASK_UPDATE',
   NEEDS_ASSESSMENT_STARTED = 'NEEDS_ASSESSMENT_STARTED',
   NEEDS_ASSESSMENT_COMPLETED = 'NEEDS_ASSESSMENT_COMPLETED',
   NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR = 'NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR',
@@ -37,8 +37,8 @@ export enum NotificationContextDetailEnum {
 }
 
 // TODO MJS this is no longer a enum so move it out of here
-export const EmailNotificationType = ['ACTION', 'MESSAGE', 'SUPPORT'] as const;
-export type EmailNotificationType = typeof EmailNotificationType[number];
+export const EmailNotificationType = ['TASK', 'MESSAGE', 'SUPPORT'] as const;
+export type EmailNotificationType = (typeof EmailNotificationType)[number];
 
 export enum EmailNotificationPreferenceEnum {
   NEVER = 'NEVER',

@@ -1,10 +1,9 @@
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
 import { BaseEntity } from '../base.entity';
 
 import { InnovationAssessmentEntity } from '../innovation/innovation-assessment.entity';
 import { InnovationSupportLogEntity } from '../innovation/innovation-support-log.entity';
-import { OrganisationUnitUserEntity } from './organisation-unit-user.entity';
 import { OrganisationEntity } from './organisation.entity';
 
 @Entity('organisation_unit')
@@ -40,9 +39,6 @@ export class OrganisationUnitEntity extends BaseEntity {
     lazy: true
   })
   innovationSupportLogs: Promise<InnovationSupportLogEntity[]>;
-
-  @OneToMany(() => OrganisationUnitUserEntity, record => record.organisationUnit, { lazy: true })
-  organisationUnitUsers: Promise<OrganisationUnitUserEntity[]>;
 
   static new(data: Partial<OrganisationUnitEntity>): OrganisationUnitEntity {
     const instance = new OrganisationUnitEntity();

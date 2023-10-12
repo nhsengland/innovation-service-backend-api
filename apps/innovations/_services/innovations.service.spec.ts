@@ -1,17 +1,17 @@
 import {
-  InnovationActionEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   NotificationUserEntity
 } from '@innovations/shared/entities';
 import { ActivityEnum, ActivityTypeEnum, NotifierTypeEnum, ServiceRoleEnum } from '@innovations/shared/enums';
 import {
-  InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
-  InnovationSupportStatusEnum
+  InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum
 } from '@innovations/shared/enums/innovation.enums';
 import {
   InnovationErrorsEnum,
@@ -231,7 +231,7 @@ describe('Innovations / _services / innovations suite', () => {
       expect(activityLogSpy).toHaveBeenCalled();
     });
 
-    it('should set all open actions from removed organisations to DECLINED', async () => {
+    it('should set all open tasks from removed organisations to DECLINED', async () => {
       // remove all existing shares and add share with innovTechOrg
       await sut.updateInnovationShares(
         DTOsHelper.getUserRequestContext(scenario.users.johnInnovator),
@@ -240,21 +240,21 @@ describe('Innovations / _services / innovations suite', () => {
         em
       );
 
-      const dbActions = await em
-        .createQueryBuilder(InnovationActionEntity, 'action')
-        .where('action.innovation_support_id IN (:...innovationSupportIds)', {
+      const dbTasks = await em
+        .createQueryBuilder(InnovationTaskEntity, 'task')
+        .where('task.innovation_support_id IN (:...innovationSupportIds)', {
           innovationSupportIds: [
             innovation.supports.supportByHealthOrgAiUnit.id,
             innovation.supports.supportByHealthOrgUnit.id,
             innovation.supports.supportByMedTechOrgUnit.id
           ]
         })
-        .andWhere('action.status IN (:...actionStatus)', {
-          actionStatus: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+        .andWhere('task.status IN (:...taskStatus)', {
+          taskStatus: [InnovationTaskStatusEnum.OPEN]
         })
         .getMany();
 
-      expect(dbActions).toHaveLength(0);
+      expect(dbTasks).toHaveLength(0);
     });
 
     it('should set all ongoing supports from removed organisations to UNASSIGNED', async () => {
@@ -469,27 +469,27 @@ describe('Innovations / _services / innovations suite', () => {
       });
     });
 
-    it('should change status of open actions to DECLINED', async () => {
-      const dbPreviouslyOpenActions = await em
-        .createQueryBuilder(InnovationActionEntity, 'action')
-        .select(['action.status', 'action.id'])
-        .innerJoin('action.innovationSection', 'innovationSection')
+    it('should change status of open tasks to DECLINED', async () => {
+      const dbPreviouslyOpenTasks = await em
+        .createQueryBuilder(InnovationTaskEntity, 'task')
+        .select(['task.status', 'task.id'])
+        .innerJoin('task.innovationSection', 'innovationSection')
         .innerJoin('innovationSection.innovation', 'innovation')
         .where('innovation.id = :innovationId', { innovationId: innovation.id })
-        .andWhere('action.status IN (:...openActionStatuses)', {
-          openActionStatuses: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+        .andWhere('task.status IN (:...openTaskStatuses)', {
+          openTaskStatuses: [InnovationTaskStatusEnum.OPEN]
         })
         .getMany();
 
       await sut.pauseInnovation(context, innovation.id, { message: message }, em);
 
-      const dbDeclinedActions = await em
-        .createQueryBuilder(InnovationActionEntity, 'action')
-        .select(['action.status'])
-        .where('action.id IN (:...actionIds)', { actionIds: dbPreviouslyOpenActions.map(a => a.id) })
+      const dbDeclinedTasks = await em
+        .createQueryBuilder(InnovationTaskEntity, 'task')
+        .select(['task.status'])
+        .where('task.id IN (:...taskIds)', { taskIds: dbPreviouslyOpenTasks.map(a => a.id) })
         .getMany();
 
-      expect(dbDeclinedActions.filter(a => a.status !== InnovationActionStatusEnum.DECLINED)).toHaveLength(0);
+      expect(dbDeclinedTasks.filter(a => a.status !== InnovationTaskStatusEnum.DECLINED)).toHaveLength(0);
     });
 
     it('should change all ongoing supports to UNASSIGNED', async () => {
@@ -541,8 +541,8 @@ describe('Innovations / _services / innovations suite', () => {
 
     beforeEach(async () => {
       activityLogOld = await new ActivityLogBuilder(em)
-        .setType(ActivityTypeEnum.ACTIONS)
-        .setActivity(ActivityEnum.ACTION_CREATION)
+        .setType(ActivityTypeEnum.TASKS)
+        .setActivity(ActivityEnum.TASK_CREATION)
         .setInnovation(innovation.id)
         .setCreatedAt(new Date('10/10/2015'))
         .setCreatedBy(scenario.users.aliceQualifyingAccessor)
@@ -625,7 +625,7 @@ describe('Innovations / _services / innovations suite', () => {
       const result = await sut.getInnovationActivitiesLog(
         innovation.id,
         {
-          activityTypes: [ActivityTypeEnum.ACTIONS]
+          activityTypes: [ActivityTypeEnum.TASKS]
         },
         {
           skip: 0,

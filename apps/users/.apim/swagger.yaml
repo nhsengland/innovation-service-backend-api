@@ -25,7 +25,7 @@ paths:
                       type: string
                       description: The type of notification
                       enum:
-                        - ACTION
+                        - TASK
                         - MESSAGE
                         - SUPPORT
                     preference:
@@ -52,7 +52,7 @@ paths:
                   notificationType:
                     type: string
                     enum:
-                      - ACTION
+                      - TASK
                       - MESSAGE
                       - SUPPORT
                   preference:
@@ -407,7 +407,7 @@ paths:
                       - NEEDS_ASSESSMENT
                       - INNOVATION
                       - SUPPORT
-                      - ACTION
+                      - TASK
                       - THREAD
                       - DATA_SHARING
                       - COMMENT
@@ -475,7 +475,7 @@ paths:
                 - NEEDS_ASSESSMENT
                 - INNOVATION
                 - SUPPORT
-                - ACTION
+                - TASK
                 - THREAD
                 - DATA_SHARING
                 - COMMENT
@@ -535,7 +535,7 @@ paths:
                             - NEEDS_ASSESSMENT
                             - INNOVATION
                             - SUPPORT
-                            - ACTION
+                            - TASK
                             - THREAD
                             - DATA_SHARING
                             - COMMENT
@@ -548,8 +548,8 @@ paths:
                             - THREAD_MESSAGE_CREATION
                             - COMMENT_CREATION
                             - COMMENT_REPLY
-                            - ACTION_CREATION
-                            - ACTION_UPDATE
+                            - TASK_CREATION
+                            - TASK_UPDATE
                             - NEEDS_ASSESSMENT_STARTED
                             - NEEDS_ASSESSMENT_COMPLETED
                             - NEEDS_ASSESSMENT_COMPLETED_TO_INNOVATOR
@@ -697,7 +697,7 @@ paths:
               - WAITING_ASSESSMENT_COUNTER
               - ASSIGNED_INNOVATIONS_COUNTER
               - INNOVATIONS_ASSIGNED_TO_ME_COUNTER
-              - ACTIONS_TO_REVIEW_COUNTER
+              - TASKS_RESPONDED_COUNTER
               - INNOVATIONS_TO_REVIEW_COUNTER
       responses:
         "200":

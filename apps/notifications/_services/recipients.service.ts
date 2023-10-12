@@ -1,9 +1,9 @@
 import {
   ActivityLogEntity,
-  InnovationActionEntity,
   InnovationEntity,
   InnovationExportRequestEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   InnovationThreadEntity,
   InnovationTransferEntity,
   NotificationEntity,
@@ -16,11 +16,11 @@ import {
   ActivityTypeEnum,
   EmailNotificationPreferenceEnum,
   EmailNotificationType,
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   InnovationTransferStatusEnum,
   NotificationContextTypeEnum,
   OrganisationTypeEnum,
@@ -324,19 +324,19 @@ export class RecipientsService extends BaseService {
     return res;
   }
 
-  async actionInfoWithOwner(actionId: string): Promise<{
+  async taskInfoWithOwner(taskId: string): Promise<{
     id: string;
     displayId: string;
-    status: InnovationActionStatusEnum;
+    status: InnovationTaskStatusEnum;
     organisationUnit?: { id: string; name: string; acronym: string };
     owner: RecipientType; // maybe just output the roleId but this is not used in many places so left the shortcut
   }> {
-    const dbAction = await this.sqlConnection
-      .createQueryBuilder(InnovationActionEntity, 'action')
+    const dbTask = await this.sqlConnection
+      .createQueryBuilder(InnovationTaskEntity, 'task')
       .select([
-        'action.id',
-        'action.displayId',
-        'action.status',
+        'task.id',
+        'task.displayId',
+        'task.status',
         'user.id',
         'user.identityId',
         'user.status',
@@ -347,36 +347,36 @@ export class RecipientsService extends BaseService {
         'unit.name',
         'unit.acronym'
       ])
-      // Review we are inner joining with user / role and the createdBy might have been deleted, for actions I don't
+      // Review we are inner joining with user / role and the createdBy might have been deleted, for tasks I don't
       // think it's too much of an error to not send notifications in those cases
-      .innerJoin('action.createdByUser', 'user')
-      .innerJoin('action.createdByUserRole', 'role')
+      .innerJoin('task.createdByUserRole', 'role')
+      .innerJoin('role.user', 'user')
       .leftJoin('role.organisationUnit', 'unit')
-      .where(`action.id = :actionId`, { actionId })
+      .where(`task.id = :taskId`, { taskId: taskId })
       .andWhere('user.status = :userActive', { userActive: UserStatusEnum.ACTIVE })
       .getOne();
 
-    if (!dbAction) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND);
+    if (!dbTask) {
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND);
     }
 
     return {
-      id: dbAction.id,
-      displayId: dbAction.displayId,
-      status: dbAction.status,
-      ...(dbAction.createdByUserRole.organisationUnit && {
+      id: dbTask.id,
+      displayId: dbTask.displayId,
+      status: dbTask.status,
+      ...(dbTask.createdByUserRole.organisationUnit && {
         organisationUnit: {
-          id: dbAction.createdByUserRole.organisationUnit.id,
-          name: dbAction.createdByUserRole.organisationUnit.name,
-          acronym: dbAction.createdByUserRole.organisationUnit.acronym
+          id: dbTask.createdByUserRole.organisationUnit.id,
+          name: dbTask.createdByUserRole.organisationUnit.name,
+          acronym: dbTask.createdByUserRole.organisationUnit.acronym
         }
       }),
       owner: {
-        userId: dbAction.createdByUser.id,
-        identityId: dbAction.createdByUser.identityId,
-        roleId: dbAction.createdByUserRole.id,
-        role: dbAction.createdByUserRole.role,
-        isActive: dbAction.createdByUserRole.isActive && dbAction.createdByUser.status === UserStatusEnum.ACTIVE
+        userId: dbTask.createdByUserRole.user.id,
+        identityId: dbTask.createdByUserRole.user.identityId,
+        roleId: dbTask.createdByUserRole.id,
+        role: dbTask.createdByUserRole.role,
+        isActive: dbTask.createdByUserRole.isActive && dbTask.createdByUserRole.user.status === UserStatusEnum.ACTIVE
       }
     };
   }
@@ -595,12 +595,12 @@ export class RecipientsService extends BaseService {
   }
 
   /**
-   * Fetch daily digest users, this means users with notification preferences DAILY group by notification type (Actions, comments or support).
+   * Fetch daily digest users, this means users with notification preferences DAILY group by notification type (Tasks, comments or support).
    */
   async dailyDigestUsersWithCounts(): Promise<
     {
       recipient: RecipientType;
-      actionsCount: number;
+      tasksCount: number;
       messagesCount: number;
       supportsCount: number;
     }[]
@@ -619,7 +619,7 @@ export class RecipientsService extends BaseService {
       userIdentityId: string;
       userRole: ServiceRoleEnum;
       userRoleId: string;
-      actionsCount: number;
+      tasksCount: number;
       messagesCount: number;
       supportsCount: number;
     }[] =
@@ -630,8 +630,8 @@ export class RecipientsService extends BaseService {
         .addSelect('userRole.role', 'userRole')
         .addSelect('userRole.id', 'userRoleId')
         .addSelect(
-          `COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.ACTION}' then 1 else null end)`,
-          'actionsCount'
+          `COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.TASK}' then 1 else null end)`,
+          'tasksCount'
         )
         .addSelect(
           `COUNT(CASE WHEN notification.context_type = '${NotificationContextTypeEnum.THREAD}' then 1 else null end)`,
@@ -666,7 +666,7 @@ export class RecipientsService extends BaseService {
         .getRawMany()) || [];
 
     return dbUsers
-      .filter(item => item.actionsCount + item.messagesCount + item.supportsCount > 0)
+      .filter(item => item.tasksCount + item.messagesCount + item.supportsCount > 0)
       .map(item => ({
         id: item.userId,
         identityId: item.userIdentityId,
@@ -678,7 +678,7 @@ export class RecipientsService extends BaseService {
           role: item.userRole,
           isActive: true
         },
-        actionsCount: item.actionsCount,
+        tasksCount: item.tasksCount,
         messagesCount: item.messagesCount,
         supportsCount: item.supportsCount
       }));
@@ -762,14 +762,12 @@ export class RecipientsService extends BaseService {
 
       // Conditions
       .where('activityLog.type IN (:...types)', {
-        types: [ActivityTypeEnum.ACTIONS, ActivityTypeEnum.THREADS, ActivityTypeEnum.SUPPORT]
+        types: [ActivityTypeEnum.TASKS, ActivityTypeEnum.THREADS, ActivityTypeEnum.SUPPORT]
       })
 
       // only active supports
       .andWhere('innovation.status != :innovationStatus', { innovationStatus: InnovationStatusEnum.PAUSED })
-      .andWhere('supports.status IN (:...statuses)', {
-        statuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
-      })
+      .andWhere('supports.status = :engagingStatus', { engagingStatus: InnovationSupportStatusEnum.ENGAGING })
 
       .andWhere('userRole.organisation_unit_id IS NOT NULL') // only A/QAs activity
       .andWhere('qas.role = :role', { role: ServiceRoleEnum.QUALIFYING_ACCESSOR }) // only notify QAs

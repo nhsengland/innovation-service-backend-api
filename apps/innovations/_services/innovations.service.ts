@@ -3,7 +3,6 @@ import { Brackets, EntityManager, In, ObjectLiteral } from 'typeorm';
 
 import {
   ActivityLogEntity,
-  InnovationActionEntity,
   InnovationAssessmentEntity,
   InnovationDocumentEntity,
   InnovationEntity,
@@ -11,6 +10,7 @@ import {
   InnovationReassessmentRequestEntity,
   InnovationSectionEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   LastSupportStatusViewEntity,
   NotificationEntity,
   NotificationUserEntity,
@@ -21,13 +21,13 @@ import {
 import {
   ActivityEnum,
   ActivityTypeEnum,
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationGroupedStatusEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
@@ -141,7 +141,7 @@ export class InnovationsService extends BaseService {
         };
       }[];
       notifications?: number;
-      statistics?: { actions: number; messages: number };
+      statistics?: { tasks: number; messages: number };
     }[];
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -264,10 +264,7 @@ export class InnovationsService extends BaseService {
 
       if (domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         innovationFetchQuery.andWhere('accessorSupports.status IN (:...accessorSupportsSupportStatuses01)', {
-          accessorSupportsSupportStatuses01: [
-            InnovationSupportStatusEnum.ENGAGING,
-            InnovationSupportStatusEnum.COMPLETE
-          ]
+          accessorSupportsSupportStatuses01: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
       }
 
@@ -611,7 +608,7 @@ export class InnovationsService extends BaseService {
 
     //#region notifications
     // Notifications.
-    const notificationsMap = new Map<string, { notificationsUnread: number; actions: number; messages: number }>(); // not exactly NotificationEntity, but just the required fields
+    const notificationsMap = new Map<string, { notificationsUnread: number; tasks: number; messages: number }>(); // not exactly NotificationEntity, but just the required fields
     if (filters.fields?.includes('notifications') || filters.fields?.includes('statistics')) {
       const notificationsQuery = connection
         .createQueryBuilder(NotificationEntity, 'notifications')
@@ -648,7 +645,7 @@ export class InnovationsService extends BaseService {
         if (!notificationsMap.has(n.innovation.id)) {
           notificationsMap.set(n.innovation.id, {
             notificationsUnread: 0,
-            actions: 0,
+            tasks: 0,
             messages: 0
           });
         }
@@ -661,11 +658,11 @@ export class InnovationsService extends BaseService {
             notificationCounter.messages++;
           }
           if (
-            n.contextDetail === NotificationContextDetailEnum.ACTION_CREATION ||
-            (n.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE &&
-              n.params['actionStatus'] === InnovationActionStatusEnum.REQUESTED)
+            n.contextDetail === NotificationContextDetailEnum.TASK_CREATION ||
+            (n.contextDetail === NotificationContextDetailEnum.TASK_UPDATE &&
+              n.params['actionStatus'] === InnovationTaskStatusEnum.OPEN)
           ) {
-            notificationCounter.actions++;
+            notificationCounter.tasks++;
           }
         }
       });
@@ -771,7 +768,7 @@ export class InnovationsService extends BaseService {
             // Add statistics
             ...(filters.fields?.includes('statistics') && {
               statistics: {
-                actions: notificationsMap.get(innovation.id)?.actions ?? 0,
+                tasks: notificationsMap.get(innovation.id)?.tasks ?? 0,
                 messages: notificationsMap.get(innovation.id)?.messages ?? 0
               }
             })
@@ -808,9 +805,9 @@ export class InnovationsService extends BaseService {
       contactByPhoneTimeframe: PhoneUserPreferenceEnum | null;
       contactDetails: string | null;
       mobilePhone: null | string;
-      organisations: { name: string; size: null | string }[];
       isActive: boolean;
       lastLoginAt?: null | Date;
+      organisation?: { name: string; size: null | string };
     };
     lastEndSupportAt: null | Date;
     assessment?: null | {
@@ -840,17 +837,17 @@ export class InnovationsService extends BaseService {
         'innovation.createdAt',
         'innovationOwner.id',
         'innovationOwner.status',
-        'userOrganisations.id',
-        'organisation.isShadow',
-        'organisation.name',
-        'organisation.size',
+        'innovationOwnerUserRole.id',
+        'innovationOwnerOrganisation.isShadow',
+        'innovationOwnerOrganisation.name',
+        'innovationOwnerOrganisation.size',
         'reassessmentRequests.id',
         'innovationGroupedStatus.groupedStatus',
         'collaborator.id'
       ])
       .leftJoin('innovation.owner', 'innovationOwner')
-      .leftJoin('innovationOwner.userOrganisations', 'userOrganisations')
-      .leftJoin('userOrganisations.organisation', 'organisation')
+      .leftJoin('innovationOwner.serviceRoles', 'innovationOwnerUserRole')
+      .leftJoin('innovationOwnerUserRole.organisation', 'innovationOwnerOrganisation')
       .leftJoin('innovation.reassessmentRequests', 'reassessmentRequests')
       .innerJoin('innovation.innovationGroupedStatus', 'innovationGroupedStatus')
       .leftJoin(
@@ -991,12 +988,14 @@ export class InnovationsService extends BaseService {
               mobilePhone: ownerInfo?.mobilePhone ?? '',
               isActive: !!ownerInfo?.isActive,
               lastLoginAt: ownerInfo?.lastLoginAt ?? null,
-              organisations: ((await innovation.owner?.userOrganisations) ?? [])
-                .filter(item => !item.organisation.isShadow)
-                .map(item => ({
-                  name: item.organisation.name,
-                  size: item.organisation.size
-                }))
+              // shadow innovator organisations shouldn't be displayed
+              ...(innovation.owner.serviceRoles[0]?.organisation &&
+                !innovation.owner.serviceRoles[0].organisation.isShadow && {
+                  organisation: {
+                    name: innovation.owner.serviceRoles[0].organisation.name,
+                    size: innovation.owner.serviceRoles[0].organisation.size
+                  }
+                })
             }
           }
         : {}),
@@ -1198,17 +1197,17 @@ export class InnovationsService extends BaseService {
 
         const supportIds = supports.map(support => support.id);
         if (supportIds.length > 0) {
-          // Decline all actions for the deleted shares supports
+          // Decline all tasks for the deleted shares supports
           await transaction
-            .getRepository(InnovationActionEntity)
+            .getRepository(InnovationTaskEntity)
             .createQueryBuilder()
             .update()
             .where('innovation_support_id IN (:...ids)', { ids: supportIds })
             .andWhere('status IN (:...status)', {
-              status: [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED]
+              status: [InnovationTaskStatusEnum.OPEN]
             })
             .set({
-              status: InnovationActionStatusEnum.DECLINED,
+              status: InnovationTaskStatusEnum.DECLINED,
               updatedBy: domainContext.id,
               updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
             })
@@ -1371,14 +1370,14 @@ export class InnovationsService extends BaseService {
         .where('section.innovation_id = :innovationId', { innovationId })
         .getMany();
 
-      // Decline all actions for all innovation supports.
-      await transaction.getRepository(InnovationActionEntity).update(
+      // Decline all tasks for all innovation supports.
+      await transaction.getRepository(InnovationTaskEntity).update(
         {
           innovationSection: In(sections.map(section => section.id)),
-          status: In([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])
+          status: In([InnovationTaskStatusEnum.OPEN])
         },
         {
-          status: InnovationActionStatusEnum.DECLINED,
+          status: InnovationTaskStatusEnum.DECLINED,
           updatedBy: domainContext.id,
           updatedByUserRole: UserRoleEntity.new({ id: domainContext.currentRole.id })
         }
@@ -1676,7 +1675,7 @@ export class InnovationsService extends BaseService {
         status: section.status,
         updatedAt: section.updatedAt,
         submittedAt: section.submittedAt,
-        actionStatus: null
+        taskStatus: null
       };
     } else {
       result = {
@@ -1685,7 +1684,7 @@ export class InnovationsService extends BaseService {
         status: InnovationSectionStatusEnum.NOT_STARTED,
         updatedAt: null,
         submittedAt: null,
-        actionStatus: null
+        taskStatus: null
       };
     }
 
@@ -1708,7 +1707,7 @@ export class InnovationsService extends BaseService {
         statistics.messages++;
       }
 
-      if (notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationActionStatusEnum.REQUESTED)) {
+      if (notification.contextDetail === NotificationContextDetailEnum.ACTION_CREATION || (notification.contextDetail === NotificationContextDetailEnum.ACTION_UPDATE && JSON.parse(notification.params).actionStatus === InnovationTaskStatusEnum.REQUESTED)) {
         statistics.actions++;
       }
 

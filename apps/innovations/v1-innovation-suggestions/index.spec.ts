@@ -3,7 +3,6 @@ import azureFunction from '.';
 import { AzureHttpTriggerBuilder, TestsHelper } from '@innovations/shared/tests';
 import type { TestUserType } from '@innovations/shared/tests/builders/user.builder';
 import type { ErrorResponseType } from '@innovations/shared/types';
-import { randUuid } from '@ngneat/falso';
 import { InnovationSupportsService } from '../_services/innovation-supports.service';
 import type { InnovationSuggestionsType } from '../_types/innovation.types';
 import type { ResponseDTO } from './transformation.dtos';
@@ -27,8 +26,7 @@ beforeAll(async () => {
 
 const expected: InnovationSuggestionsType = {
   assessment: {
-    id: randUuid(),
-    suggestedOrganisationUnits: []
+    suggestedOrganisations: []
   },
   accessors: []
 };

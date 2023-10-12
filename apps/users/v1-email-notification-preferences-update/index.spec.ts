@@ -35,7 +35,7 @@ describe('v1-email-notification-preferences-update Suite', () => {
     it('should return the email notification preferences info', async () => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(scenario.users.aliceQualifyingAccessor)
-        .setBody<BodyType>([{ preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'ACTION' }])
+        .setBody<BodyType>([{ preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'TASK' }])
         .call<ResponseDTO>(azureFunction);
 
       expect(result.body).toBeUndefined();
@@ -54,7 +54,7 @@ describe('v1-email-notification-preferences-update Suite', () => {
     ])('access with user %s should give %i', async (_role: string, status: number, user: TestUserType) => {
       const result = await new AzureHttpTriggerBuilder()
         .setAuth(user)
-        .setBody<BodyType>([{ preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'ACTION' }])
+        .setBody<BodyType>([{ preference: EmailNotificationPreferenceEnum.DAILY, notificationType: 'TASK' }])
         .call<ErrorResponseType>(azureFunction);
 
       expect(result.status).toBe(status);

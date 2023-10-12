@@ -2,8 +2,8 @@ import { inject, injectable } from 'inversify';
 import { EntityManager, In } from 'typeorm';
 
 import {
-  InnovationActionEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   NotificationEntity,
   NotificationUserEntity,
   OrganisationEntity,
@@ -12,9 +12,9 @@ import {
   UserRoleEntity
 } from '@admin/shared/entities';
 import {
-  InnovationActionStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotifierTypeEnum,
   OrganisationTypeEnum,
   ServiceRoleEnum,
@@ -78,28 +78,22 @@ export class OrganisationsService extends BaseService {
         .getRawMany()
     ).map(ur => ({ id: ur.userId as string, identityId: ur.identityId as string }));
 
-    // only want to clear actions with these statuses
-    const actionStatusToClear = [InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED];
-
     //get id of actions to clear issued by the unit users
-    const actionsToClear = (
+    const tasksToClear = (
       await em
-        .createQueryBuilder(InnovationActionEntity, 'action')
+        .createQueryBuilder(InnovationTaskEntity, 'action')
         .leftJoinAndSelect('action.innovationSupport', 'support')
         .leftJoinAndSelect('support.organisationUnit', 'unit')
         .where('unit.id = :unitId', { unitId })
-        .andWhere('action.status IN (:...actionStatusToClear)', { actionStatusToClear })
+        .andWhere('action.status = :openTaskStatus', { openTaskStatus: InnovationTaskStatusEnum.OPEN })
         .getMany()
     ).map(a => a.id);
 
     //only want to complete the support of innovations with these statuses
-    const supportStatusToComplete = [
-      InnovationSupportStatusEnum.ENGAGING,
-      InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED
-    ];
+    const supportStatusToComplete = [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING];
 
     //get supports to complete
-    const supportsToComplete = await em
+    const supportsToClose = await em
       .createQueryBuilder(InnovationSupportEntity, 'support')
       .leftJoinAndSelect('support.organisationUnit', 'unit')
       .leftJoinAndSelect('support.innovation', 'innovation')
@@ -108,7 +102,7 @@ export class OrganisationsService extends BaseService {
       .andWhere('support.status IN (:...supportStatusToComplete)', { supportStatusToComplete })
       .getMany();
 
-    const contexts = [...actionsToClear, ...supportsToComplete.map(s => s.id)];
+    const contexts = [...tasksToClear, ...supportsToClose.map(s => s.id)];
 
     let notificationsToMarkAsRead: NotificationEntity[] = [];
 
@@ -128,24 +122,22 @@ export class OrganisationsService extends BaseService {
       await transaction.update(OrganisationUnitEntity, { id: unitId }, { inactivatedAt: now });
 
       // Clear actions issued by unit
-      if (actionsToClear.length > 0) {
+      if (tasksToClear.length > 0) {
         await transaction.update(
-          InnovationActionEntity,
-          { id: In(actionsToClear) },
-          { status: InnovationActionStatusEnum.DELETED }
+          InnovationTaskEntity,
+          { id: In(tasksToClear) },
+          { status: InnovationTaskStatusEnum.CANCELLED }
         );
       }
 
-      // Complete supports of unit
-      if (supportsToComplete.length > 0) {
-        const supportIds = supportsToComplete.map(s => s.id);
+      // Close supports of unit
+      if (supportsToClose.length > 0) {
+        const supportIds = supportsToClose.map(s => s.id);
 
         await transaction.update(
           InnovationSupportEntity,
           { id: In(supportIds) },
-          {
-            status: InnovationSupportStatusEnum.COMPLETE
-          }
+          { status: InnovationSupportStatusEnum.CLOSED }
         );
 
         await transaction
@@ -195,7 +187,7 @@ export class OrganisationsService extends BaseService {
         await transaction.update(OrganisationEntity, { id: organisationId }, { inactivatedAt: now });
       }
 
-      for (const support of supportsToComplete) {
+      for (const support of supportsToClose) {
         await this.domainService.innovations.addSupportLog(
           transaction,
           { id: domainContext.id, roleId: domainContext.currentRole.id },
@@ -217,7 +209,7 @@ export class OrganisationsService extends BaseService {
     });
 
     // lock users in identity provider asynchronously
-    // using idendity-ops-queue
+    // using identity-ops-queue
     if (usersToLock.length > 0) {
       for (const user of usersToLock) {
         await this.identityProviderService.updateUserAsync(user.identityId, {
@@ -286,7 +278,7 @@ export class OrganisationsService extends BaseService {
         { inactivatedAt: null, updatedAt: now, updatedBy: domainContext.id }
       );
 
-      // activate organistion to whom unit belongs if it is inactivated
+      // activate organisation to whom unit belongs if it is inactivated
       if (unit.organisation.inactivatedAt !== null) {
         await transaction.update(
           OrganisationEntity,

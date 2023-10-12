@@ -1,23 +1,24 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
+import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
 import {
-  InnovationActionStatusEnum,
   InnovationStatusEnum,
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
-  ServiceRoleEnum,
+  InnovationTaskStatusEnum,
   UserStatusEnum
 } from '@users/shared/enums';
 import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
 import type { DomainContextType } from '@users/shared/types';
 
-import { BaseService } from './base.service';
+import type { DomainService } from '@users/shared/services';
+import SHARED_SYMBOLS from '@users/shared/services/symbols';
 import type { EntityManager } from 'typeorm';
+import { BaseService } from './base.service';
 
 @injectable()
 export class StatisticsService extends BaseService {
-  constructor() {
+  constructor(@inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService) {
     super();
   }
 
@@ -136,54 +137,10 @@ export class StatisticsService extends BaseService {
     };
   }
 
-  async actionsToReview(
-    domainContext: DomainContextType,
-    entityManager?: EntityManager
-  ): Promise<{ count: number; total: number; lastSubmittedAt: null | Date }> {
-    const organisationUnit = domainContext?.organisation?.organisationUnit?.id;
-
-    const em = entityManager ?? this.sqlConnection.manager;
-
-    const myActionsQuery = em
-      .createQueryBuilder(InnovationActionEntity, 'actions')
-      .select('actions.status', 'status')
-      .addSelect('count(*)', 'count')
-      .addSelect('MAX(actions.updated_at)', 'lastSubmittedAt')
-      .innerJoin('actions.innovationSupport', 'innovationSupport')
-      .innerJoin('innovationSupport.organisationUnit', 'orgUnit')
-      .where('actions.created_by = :userId', { userId: domainContext.id })
-      .andWhere('actions.status IN (:...status)', {
-        status: [InnovationActionStatusEnum.SUBMITTED, InnovationActionStatusEnum.REQUESTED]
-      });
-
-    if (
-      domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-      domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-    ) {
-      if (!organisationUnit) {
-        throw new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND);
-      }
-      myActionsQuery.andWhere('orgUnit.id = :orgUnitId', { orgUnitId: organisationUnit });
-    }
-
-    const myActionsCount = await myActionsQuery.groupBy('actions.status').getRawMany();
-
-    const actions: Record<string, any> = {
-      SUBMITTED: { count: 0, lastSubmittedAt: null },
-      REQUESTED: { count: 0, lastSubmittedAt: null }
-    };
-    for (const action of myActionsCount) {
-      actions[action.status] = { count: action.count, lastSubmittedAt: action.lastSubmittedAt };
-    }
-
-    return {
-      count: actions['SUBMITTED'].count,
-      total: actions['SUBMITTED'].count + actions['REQUESTED'].count,
-      lastSubmittedAt:
-        Object.values(actions)
-          .map(_ => _.lastSubmittedAt)
-          .sort((a, b) => b - a)[0] || null
-    };
+  // using type inference
+  // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+  async getTasksCounter<T extends InnovationTaskStatusEnum[]>(domainContext: DomainContextType, statuses: T) {
+    return this.domainService.innovations.getTasksCounter(domainContext, statuses, { mine: true });
   }
 
   async innovationsToReview(

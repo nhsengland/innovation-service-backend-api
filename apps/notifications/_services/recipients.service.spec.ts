@@ -405,32 +405,32 @@ describe('Notifications / _services / recipients service suite', () => {
     });
   });
 
-  describe('actionInfoWithOwner', () => {
-    it('Should get action info without organisationUnit for Assessment Team', async () => {
+  describe('taskInfoWithOwner', () => {
+    it('Should get task info without organisationUnit for Assessment Team', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const dbAction = dbInnovation.actions.actionByPaul;
+      const dbTask = dbInnovation.tasks.taskByPaul;
 
-      const actionInfo = await sut.actionInfoWithOwner(dbAction.id);
+      const taskInfo = await sut.taskInfoWithOwner(dbTask.id);
 
-      expect(actionInfo).toMatchObject({
-        id: dbAction.id,
-        displayId: dbAction.displayId,
-        status: dbAction.status,
+      expect(taskInfo).toMatchObject({
+        id: dbTask.id,
+        displayId: dbTask.displayId,
+        status: dbTask.status,
         owner: DTOsHelper.getRecipientUser(scenario.users.paulNeedsAssessor, 'assessmentRole')
       });
-      expect(actionInfo.organisationUnit).toBeUndefined();
+      expect(taskInfo.organisationUnit).toBeUndefined();
     });
 
-    it('Should get action info with organisationUnit for supporting organisation', async () => {
+    it('Should get task info with organisationUnit for supporting organisation', async () => {
       const dbInnovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const dbAction = dbInnovation.actions.actionByAlice;
+      const dbTask = dbInnovation.tasks.taskByAlice;
 
-      const actionInfo = await sut.actionInfoWithOwner(dbAction.id);
+      const taskInfo = await sut.taskInfoWithOwner(dbTask.id);
 
-      expect(actionInfo).toMatchObject({
-        id: dbAction.id,
-        displayId: dbAction.displayId,
-        status: dbAction.status,
+      expect(taskInfo).toMatchObject({
+        id: dbTask.id,
+        displayId: dbTask.displayId,
+        status: dbTask.status,
         owner: DTOsHelper.getRecipientUser(scenario.users.aliceQualifyingAccessor, 'qaRole'),
         organisationUnit: {
           id: scenario.users.aliceQualifyingAccessor.organisations.healthOrg.organisationUnits.healthOrgUnit.id,
@@ -441,9 +441,9 @@ describe('Notifications / _services / recipients service suite', () => {
       });
     });
 
-    it('Should fail to get non-existent action info', async () => {
-      await expect(() => sut.actionInfoWithOwner(randUuid())).rejects.toThrowError(
-        new NotFoundError(InnovationErrorsEnum.INNOVATION_ACTION_NOT_FOUND)
+    it('Should fail to get non-existent task info', async () => {
+      await expect(() => sut.taskInfoWithOwner(randUuid())).rejects.toThrowError(
+        new NotFoundError(InnovationErrorsEnum.INNOVATION_TASK_NOT_FOUND)
       );
     });
   });
@@ -1094,7 +1094,7 @@ describe('Notifications / _services / recipients service suite', () => {
     beforeEach(async () => {
       await em.getRepository(NotificationPreferenceEntity).save([
         {
-          notificationType: 'ACTION',
+          notificationType: 'TASK',
           userRoleId: scenario.users.johnInnovator.roles.innovatorRole.id,
           preference: EmailNotificationPreferenceEnum.DAILY,
           createdAt: new Date(),
@@ -1115,7 +1115,7 @@ describe('Notifications / _services / recipients service suite', () => {
           updatedAt: new Date()
         },
         {
-          notificationType: 'ACTION',
+          notificationType: 'TASK',
           userRoleId: scenario.users.adamInnovator.roles.innovatorRole.id,
           preference: EmailNotificationPreferenceEnum.NEVER,
           createdAt: new Date(),
@@ -1128,7 +1128,7 @@ describe('Notifications / _services / recipients service suite', () => {
       const res = await sut.getEmailPreferences([scenario.users.johnInnovator.roles.innovatorRole.id], em);
       expect(res.size).toBe(1);
       expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toMatchObject({
-        ACTION: EmailNotificationPreferenceEnum.DAILY,
+        TASK: EmailNotificationPreferenceEnum.DAILY,
         MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
         SUPPORT: EmailNotificationPreferenceEnum.NEVER
       });
@@ -1141,12 +1141,12 @@ describe('Notifications / _services / recipients service suite', () => {
       );
       expect(res.size).toBe(2);
       expect(res.get(scenario.users.johnInnovator.roles.innovatorRole.id)).toEqual({
-        ACTION: EmailNotificationPreferenceEnum.DAILY,
+        TASK: EmailNotificationPreferenceEnum.DAILY,
         MESSAGE: EmailNotificationPreferenceEnum.INSTANTLY,
         SUPPORT: EmailNotificationPreferenceEnum.NEVER
       });
       expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
-        ACTION: EmailNotificationPreferenceEnum.NEVER
+        TASK: EmailNotificationPreferenceEnum.NEVER
       });
     });
 
@@ -1157,7 +1157,7 @@ describe('Notifications / _services / recipients service suite', () => {
       );
       expect(res.size).toBe(1);
       expect(res.get(scenario.users.adamInnovator.roles.innovatorRole.id)).toEqual({
-        ACTION: EmailNotificationPreferenceEnum.NEVER
+        TASK: EmailNotificationPreferenceEnum.NEVER
       });
     });
 

@@ -175,9 +175,7 @@ export class InnovationAssessmentsService extends BaseService {
         })
       );
 
-      const user = { id: domainContext.id, identityId: domainContext.identityId };
       const thread = await this.threadService.createThreadOrMessage(
-        user,
         domainContext,
         innovationId,
         'Initial needs assessment',
@@ -407,9 +405,7 @@ export class InnovationAssessmentsService extends BaseService {
       .andWhere('innovation.status = :innovationStatus', {
         innovationStatus: InnovationStatusEnum.IN_PROGRESS
       })
-      .andWhere('supports.status IN (:...supportStatus)', {
-        supportStatus: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED]
-      })
+      .andWhere('supports.status = :engagingStatus', { engagingStatus: InnovationSupportStatusEnum.ENGAGING })
       .getCount();
     if (hasOngoingSupports > 0) {
       throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_CANNOT_REQUEST_REASSESSMENT);

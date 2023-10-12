@@ -179,11 +179,11 @@ export class IdentityProviderService {
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
    *
-   * @param entityIds the user identities
+   * @param identityIds the user identities
    * @returns list of users
    */
-  async getUsersList(entityIds: string[]): Promise<IdentityUserInfo[]> {
-    const uniqueUserIds = [...new Set(entityIds)]; // Remove duplicated entries.
+  async getUsersList(identityIds: string[]): Promise<IdentityUserInfo[]> {
+    const uniqueUserIds = [...new Set(identityIds)]; // Remove duplicated entries.
 
     const res = await this.cache.getMany(uniqueUserIds);
     if (res.length !== uniqueUserIds.length) {
@@ -200,11 +200,11 @@ export class IdentityProviderService {
   /**
    * this function checks the cache for the users and if they are not found it will fetch them from the identity provider
    *
-   * @param entityIds the user identities
+   * @param identityIds the user identities
    * @returns list of users as a map
    */
-  async getUsersMap(entityIds: string[]): Promise<Map<string, IdentityUserInfo>> {
-    const users = await this.getUsersList(entityIds);
+  async getUsersMap(identityIds: string[]): Promise<Map<string, IdentityUserInfo>> {
+    const users = await this.getUsersList(identityIds);
     return new Map(users.map(u => [u.identityId, u]));
   }
 

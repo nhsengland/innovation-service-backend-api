@@ -1,32 +1,32 @@
 import { TestsHelper } from '@admin/shared/tests';
 
-import { container } from '../_config';
-import SYMBOLS from './symbols';
-import { EntityManager } from 'typeorm';
 import {
-  InnovationActionStatusEnum,
+  InnovationSupportEntity,
+  InnovationTaskEntity,
+  NotificationUserEntity,
+  OrganisationEntity,
+  OrganisationUnitEntity,
+  UserEntity,
+  UserRoleEntity
+} from '@admin/shared/entities';
+import {
   InnovationSupportLogTypeEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum,
   NotifierTypeEnum,
   UserStatusEnum
 } from '@admin/shared/enums';
-import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
-import {
-  InnovationActionEntity,
-  InnovationSupportEntity,
-  NotificationUserEntity,
-  OrganisationEntity,
-  OrganisationUnitEntity,
-  UserEntity
-} from '@admin/shared/entities';
-import { UserRoleEntity } from '@admin/shared/entities';
-import { NotificationBuilder } from '@admin/shared/tests/builders/notification.builder';
-import { DomainInnovationsService, NotifierService } from '@admin/shared/services';
-import { randAlpha, randCompanyName, randPastDate, randUuid } from '@ngneat/falso';
 import { NotFoundError, OrganisationErrorsEnum, UnprocessableEntityError } from '@admin/shared/errors';
+import { DomainInnovationsService, NotifierService } from '@admin/shared/services';
+import { NotificationBuilder } from '@admin/shared/tests/builders/notification.builder';
+import { DTOsHelper } from '@admin/shared/tests/helpers/dtos.helper';
+import { randAlpha, randCompanyName, randPastDate, randUuid } from '@ngneat/falso';
+import { EntityManager } from 'typeorm';
+import { container } from '../_config';
 import type { OrganisationsService } from './organisations.service';
+import SYMBOLS from './symbols';
 
 describe('Admin / _services / organisations service suite', () => {
   let sut: OrganisationsService;
@@ -133,58 +133,53 @@ describe('Admin / _services / organisations service suite', () => {
       expect(orgToInactivate?.inactivatedAt).toBeTruthy();
     });
 
-    describe.each([InnovationActionStatusEnum.REQUESTED, InnovationActionStatusEnum.SUBMITTED])(
-      '%s actions by accessors of unit',
-      status => {
-        const action = scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByBart;
+    describe.each([InnovationTaskStatusEnum.OPEN])('%s tasks by accessors of unit', status => {
+      const task = scenario.users.johnInnovator.innovations.johnInnovation.tasks.taskByBart;
 
-        it('should delete actions', async () => {
-          // prepare action
-          await em.getRepository(InnovationActionEntity).update({ id: action.id }, { status: status });
+      it('should cancel tasks', async () => {
+        await em.getRepository(InnovationTaskEntity).update({ id: task.id }, { status: status });
+        await sut.inactivateUnit(domainContext, unit.id, em);
 
-          await sut.inactivateUnit(domainContext, unit.id, em);
+        const dbTask = await em
+          .createQueryBuilder(InnovationTaskEntity, 'task')
+          .withDeleted()
+          .where('task.id = :taskId', { taskId: task.id })
+          .getOne();
 
-          const dbAction = await em
-            .createQueryBuilder(InnovationActionEntity, 'action')
-            .withDeleted()
-            .where('action.id = :actionId', { actionId: action.id })
-            .getOne();
+        expect(dbTask?.status).toBe(InnovationTaskStatusEnum.CANCELLED);
+      });
 
-          expect(dbAction?.status).toBe(InnovationActionStatusEnum.DELETED);
-        });
+      it('should clear all related notifications', async () => {
+        // prepare task
+        await em.getRepository(InnovationTaskEntity).update({ id: task.id }, { status: status });
 
-        it('should clear all related notifications', async () => {
-          // prepare action
-          await em.getRepository(InnovationActionEntity).update({ id: action.id }, { status: status });
+        // create related notification
+        const notification = await new NotificationBuilder(em)
+          .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
+          .addNotificationUser(scenario.users.bartQualifyingAccessor)
+          .setContext(NotificationContextTypeEnum.TASK, NotificationContextDetailEnum.TASK_CREATION, task.id)
+          .save();
 
-          // create related notification
-          const notification = await new NotificationBuilder(em)
-            .setInnovation(scenario.users.johnInnovator.innovations.johnInnovation.id)
-            .addNotificationUser(scenario.users.bartQualifyingAccessor)
-            .setContext(NotificationContextTypeEnum.ACTION, NotificationContextDetailEnum.ACTION_CREATION, action.id)
-            .save();
+        await sut.inactivateUnit(domainContext, unit.id, em);
 
-          await sut.inactivateUnit(domainContext, unit.id, em);
+        const dbNotificationUser = await em
+          .createQueryBuilder(NotificationUserEntity, 'notification_user')
+          .where('notification_user.id = :notificationUserId', {
+            notificationUserId: notification.notificationUsers.get(
+              scenario.users.bartQualifyingAccessor.roles.qaRole.id
+            )?.id
+          })
+          .getOne();
 
-          const dbNotificationUser = await em
-            .createQueryBuilder(NotificationUserEntity, 'notification_user')
-            .where('notification_user.id = :notificationUserId', {
-              notificationUserId: notification.notificationUsers.get(
-                scenario.users.bartQualifyingAccessor.roles.qaRole.id
-              )?.id
-            })
-            .getOne();
+        expect(dbNotificationUser?.readAt).toBeTruthy();
+      });
+    });
 
-          expect(dbNotificationUser?.readAt).toBeTruthy();
-        });
-      }
-    );
-
-    describe.each([InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED])(
+    describe.each([InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.WAITING])(
       '%s supports of unit',
       status => {
         const support = scenario.users.johnInnovator.innovations.johnInnovation.supports.supportByHealthOrgAiUnit;
-        it('should complete the support', async () => {
+        it('should close the support', async () => {
           //prepare support
           await em.getRepository(InnovationSupportEntity).update({ id: support.id }, { status: status });
 
@@ -195,7 +190,7 @@ describe('Admin / _services / organisations service suite', () => {
             .where('support.id = :supportId', { supportId: support.id })
             .getOne();
 
-          expect(dbSupport?.status).toBe(InnovationSupportStatusEnum.COMPLETE);
+          expect(dbSupport?.status).toBe(InnovationSupportStatusEnum.CLOSED);
         });
 
         it('should clear all related notifications', async () => {

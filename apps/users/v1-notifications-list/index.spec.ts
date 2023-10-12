@@ -36,8 +36,8 @@ const expected = {
         status: InnovationStatusEnum.CREATED,
         ownerName: randFullName()
       },
-      contextType: NotificationContextTypeEnum.ACTION,
-      contextDetail: NotificationContextDetailEnum.ACTION_CREATION,
+      contextType: NotificationContextTypeEnum.TASK,
+      contextDetail: NotificationContextDetailEnum.TASK_CREATION,
       contextId: randUuid(),
       createdAt: randPastDate(),
       readAt: null,

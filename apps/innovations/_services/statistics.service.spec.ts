@@ -2,13 +2,13 @@ import { randUuid } from '@ngneat/falso';
 import type { EntityManager } from 'typeorm';
 
 import {
-  InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationSectionStatusEnum,
+  InnovationTaskStatusEnum,
   NotificationContextDetailEnum,
   NotificationContextTypeEnum
 } from '@innovations/shared/enums';
-import { NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
+import { BadRequestError, GenericErrorsEnum, NotFoundError, OrganisationErrorsEnum } from '@innovations/shared/errors';
 import { TestsHelper } from '@innovations/shared/tests';
 import { InnovationAssessmentBuilder } from '@innovations/shared/tests/builders/innovation-assessment.builder';
 import { InnovationSectionBuilder } from '@innovations/shared/tests/builders/innovation-section.builder';
@@ -19,7 +19,7 @@ import { container } from '../_config';
 import type { StatisticsService } from './statistics.service';
 import SYMBOLS from './symbols';
 
-describe('Innovations / _services / innovation transfer suite', () => {
+describe('Innovations / _services / innovation statistics suite', () => {
   let sut: StatisticsService;
 
   let em: EntityManager;
@@ -40,25 +40,131 @@ describe('Innovations / _services / innovation transfer suite', () => {
     await testsHelper.releaseQueryRunnerEntityManager();
   });
 
-  describe('getActions', () => {
-    it('should get actions for the given innovation and status', async () => {
+  describe('getTasks', () => {
+    it('should get tasks for the given innovation and status', async () => {
       const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const actions = await sut.getActions(innovation.id, [InnovationActionStatusEnum.REQUESTED], em);
+      const tasks = await sut.getTasks(innovation.id, [InnovationTaskStatusEnum.OPEN], em);
 
-      expect(actions).toMatchObject([
+      expect(tasks).toMatchObject([
         {
-          updatedAt: new Date(innovation.actions.actionByBart.updatedAt),
-          section: innovation.actions.actionByBart.section
+          updatedAt: new Date(innovation.tasks.taskByBart.updatedAt),
+          section: innovation.tasks.taskByBart.section
         },
         {
-          updatedAt: new Date(innovation.actions.actionByPaul.updatedAt),
-          section: innovation.actions.actionByPaul.section
+          updatedAt: new Date(innovation.tasks.taskByPaul.updatedAt),
+          section: innovation.tasks.taskByPaul.section
         },
         {
-          updatedAt: new Date(innovation.actions.actionByAlice.updatedAt),
-          section: innovation.actions.actionByAlice.section
+          updatedAt: new Date(innovation.tasks.taskByAliceOpen.updatedAt),
+          section: innovation.tasks.taskByAliceOpen.section
         }
       ]);
+    });
+  });
+
+  describe('getTasksCounter', () => {
+    it.each([
+      [
+        'QA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.CANCELLED],
+        scenario.users.aliceQualifyingAccessor, // has two tasks one open and one done
+        { OPEN: 1, DONE: 1, CANCELLED: 0 }
+      ],
+      [
+        'NA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE],
+        scenario.users.seanNeedsAssessor, // has 0 task and paulNA has 1
+        { OPEN: 1, DONE: 0 }
+      ]
+    ])(
+      'as %s should get my organisation tasks counter for the given innovation and $s',
+      async (_label, statuses, user, res) => {
+        const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+        const tasksCounter = await sut.getTasksCounter(DTOsHelper.getUserRequestContext(user), innovation.id, statuses);
+
+        expect(tasksCounter).toEqual({ ...res, lastUpdatedAt: expect.any(Date) });
+      }
+    );
+
+    it("shouldn't return status that wasn't requested", async () => {
+      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+      const tasksCounter = await sut.getTasksCounter(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        [InnovationTaskStatusEnum.OPEN] // alice also has a done task
+      );
+
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.CANCELLED]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DONE]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DECLINED]).toBeUndefined();
+    });
+
+    it('should throw bad request if status missing', async () => {
+      await expect(() =>
+        sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), randUuid(), [])
+      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
+    });
+  });
+
+  describe('getLastUpdatedTask', () => {
+    const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
+    const taskStatus = [
+      InnovationTaskStatusEnum.OPEN,
+      InnovationTaskStatusEnum.DONE,
+      InnovationTaskStatusEnum.CANCELLED
+    ];
+
+    it('should return the last updated task from my unit', async () => {
+      const task = innovation.tasks.taskByAliceOpen;
+
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        innovation.id,
+        taskStatus,
+        { myTeam: true },
+        em
+      );
+
+      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+    });
+
+    it('should return the last updated task from my team', async () => {
+      const task = innovation.tasks.taskByPaul;
+
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        taskStatus,
+        { myTeam: true },
+        em
+      );
+
+      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+    });
+
+    it('should return the last updated task by me', async () => {
+      const task = innovation.tasks.taskByPaul;
+
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        innovation.id,
+        taskStatus,
+        { mine: true },
+        em
+      );
+
+      expect(lastUpdatedByTask).toEqual({ id: task.id, updatedAt: expect.any(Date), section: task.section });
+    });
+
+    it('should return null if no task is found', async () => {
+      const lastUpdatedByTask = await sut.getLastUpdatedTask(
+        DTOsHelper.getUserRequestContext(scenario.users.paulNeedsAssessor),
+        randUuid(),
+        taskStatus,
+        { mine: true },
+        em
+      );
+      expect(lastUpdatedByTask).toBeNull();
     });
   });
 
@@ -77,25 +183,6 @@ describe('Innovations / _services / innovation transfer suite', () => {
           section: innovation.sections.EVIDENCE_OF_EFFECTIVENESS.section
         }
       ]);
-    });
-  });
-
-  describe('actionsToReview', () => {
-    it('should get actions to review for given innovation', async () => {
-      const innovation = scenario.users.johnInnovator.innovations.johnInnovation;
-      const action = innovation.actions.actionByAliceSubmitted;
-
-      const actions = await sut.actionsToReview(
-        innovation.id,
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
-
-      expect(actions).toMatchObject({
-        count: 1,
-        lastSubmittedSection: innovation.sections.INNOVATION_DESCRIPTION.section,
-        lastSubmittedAt: new Date(action.updatedAt)
-      });
     });
   });
 

@@ -66,9 +66,9 @@ describe('v1-innovation-thread-followers Suite', () => {
         followers: expected.map(follower => ({
           id: follower.id,
           name: follower?.name ?? '',
-          type: follower.userRole.role,
           ...(follower.isOwner !== undefined && { isOwner: follower.isOwner }),
           isLocked: follower.locked,
+          role: follower.userRole,
           organisationUnit: follower.organisationUnit
             ? {
                 id: follower.organisationUnit.id,

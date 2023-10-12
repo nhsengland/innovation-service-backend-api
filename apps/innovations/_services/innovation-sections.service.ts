@@ -1,25 +1,23 @@
 import { inject, injectable } from 'inversify';
 
 import {
-  InnovationActionEntity,
   InnovationDocumentEntity,
   InnovationEntity,
   InnovationSectionEntity,
-  UserEntity,
-  UserRoleEntity
+  InnovationTaskEntity,
+  UserEntity
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
-  InnovationActionStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationStatusEnum,
-  NotifierTypeEnum,
+  InnovationTaskStatusEnum,
   ServiceRoleEnum,
   UserStatusEnum
 } from '@innovations/shared/enums';
 import { ConflictError, InnovationErrorsEnum, InternalServerError, NotFoundError } from '@innovations/shared/errors';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import type { DomainService, IdentityProviderService } from '@innovations/shared/services';
 
 import { BaseService } from './base.service';
 
@@ -44,7 +42,6 @@ export class InnovationSectionsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityService: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
     @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
@@ -64,7 +61,7 @@ export class InnovationSectionsService extends BaseService {
         name: string;
         isOwner?: boolean;
       };
-      openActionsCount: number;
+      openTasksCount: number;
     }[]
   > {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -93,44 +90,22 @@ export class InnovationSectionsService extends BaseService {
 
     const sections = innovation.sections;
 
-    let openActions: { section: string; actionsCount: number }[] = [];
+    let openTasks: { section: string; tasksCount: number }[] = [];
 
-    if (sections.length > 0) {
-      const actionStatus = [
-        ServiceRoleEnum.ACCESSOR,
-        ServiceRoleEnum.QUALIFYING_ACCESSOR,
-        ServiceRoleEnum.ASSESSMENT
-      ].includes(domainContext.currentRole.role as ServiceRoleEnum)
-        ? InnovationActionStatusEnum.SUBMITTED
-        : InnovationActionStatusEnum.REQUESTED;
-
+    if (sections.length > 0 && domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       const query = connection
-        .createQueryBuilder(InnovationActionEntity, 'actions')
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
         .select('sections.section', 'section')
-        .addSelect('COUNT(actions.id)', 'actionsCount')
-        .innerJoin('actions.innovationSection', 'sections')
+        .addSelect('COUNT(tasks.id)', 'tasksCount')
+        .innerJoin('tasks.innovationSection', 'sections')
         .where('sections.innovation_id = :innovationId', { innovationId })
         .andWhere(`sections.id IN (:...sectionIds)`, {
           sectionIds: sections.map(item => item.id)
         })
-        .andWhere('actions.status = :actionStatus', { actionStatus })
+        .andWhere('tasks.status = :taskStatus', { taskStatus: InnovationTaskStatusEnum.OPEN })
         .groupBy('sections.section');
 
-      switch (domainContext.currentRole.role) {
-        case ServiceRoleEnum.ACCESSOR:
-        case ServiceRoleEnum.QUALIFYING_ACCESSOR:
-          query.innerJoin('actions.innovationSupport', 'supports');
-          query.andWhere('supports.organisationUnit = :orgUnitId', {
-            orgUnitId: domainContext.organisation?.organisationUnit?.id
-          });
-          break;
-        case ServiceRoleEnum.ASSESSMENT:
-          query.andWhere('actions.innovationSupport IS NULL');
-          break;
-        default: // do nothing
-      }
-
-      openActions = await query.getRawMany();
+      openTasks = await query.getRawMany();
     }
 
     const innovators = sections
@@ -143,7 +118,7 @@ export class InnovationSectionsService extends BaseService {
       const section = sections.find(item => item.section === sectionKey);
 
       if (section) {
-        const openActionsCount = openActions.find(item => item.section === sectionKey)?.actionsCount ?? 0;
+        const openTasksCount = openTasks.find(item => item.section === sectionKey)?.tasksCount ?? 0;
 
         const submittedByName = section.submittedBy && innovatorNames.get(section.submittedBy.identityId)?.displayName;
 
@@ -160,7 +135,7 @@ export class InnovationSectionsService extends BaseService {
                 })
               }
             : null,
-          openActionsCount
+          openTasksCount: openTasksCount
         };
       } else {
         return {
@@ -169,7 +144,7 @@ export class InnovationSectionsService extends BaseService {
           status: InnovationSectionStatusEnum.NOT_STARTED,
           submittedAt: null,
           submittedBy: null,
-          openActionsCount: 0
+          openTasksCount: 0
         };
       }
     });
@@ -179,7 +154,7 @@ export class InnovationSectionsService extends BaseService {
     domainContext: DomainContextType,
     innovationId: string,
     sectionKey: CurrentCatalogTypes.InnovationSections,
-    filters: { fields?: 'actions'[] },
+    filters: { fields?: 'tasks'[] },
     entityManager?: EntityManager
   ): Promise<{
     id: null | string;
@@ -191,7 +166,7 @@ export class InnovationSectionsService extends BaseService {
       isOwner?: boolean;
     };
     data: null | { [key: string]: any };
-    actionsIds?: string[];
+    tasksIds?: string[];
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
 
@@ -234,31 +209,14 @@ export class InnovationSectionsService extends BaseService {
       .andWhere('section.section = :sectionKey', { sectionKey })
       .getOne();
 
-    let actions: null | InnovationActionEntity[] = null;
-    if (filters.fields?.includes('actions')) {
-      const requestedStatus = [
-        ServiceRoleEnum.ACCESSOR,
-        ServiceRoleEnum.QUALIFYING_ACCESSOR,
-        ServiceRoleEnum.ASSESSMENT
-      ].includes(domainContext.currentRole.role as ServiceRoleEnum)
-        ? InnovationActionStatusEnum.SUBMITTED
-        : InnovationActionStatusEnum.REQUESTED;
+    let tasks: null | InnovationTaskEntity[] = null;
+    if (filters.fields?.includes('tasks')) {
+      const tasksQuery = connection
+        .createQueryBuilder(InnovationTaskEntity, 'tasks')
+        .where('tasks.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
+        .andWhere('tasks.status = :requestedStatus', { requestedStatus: InnovationTaskStatusEnum.OPEN });
 
-      const actionsQuery = connection
-        .createQueryBuilder(InnovationActionEntity, 'actions')
-        .where('actions.innovation_section_id = :sectionId', { sectionId: dbSection?.id })
-        .andWhere('actions.status = :requestedStatus', { requestedStatus });
-
-      if (domainContext.currentRole.role === ServiceRoleEnum.ASSESSMENT) {
-        actionsQuery.andWhere('actions.innovation_support_id IS NULL');
-      } else if (
-        domainContext.currentRole.role === ServiceRoleEnum.ACCESSOR ||
-        domainContext.currentRole.role === ServiceRoleEnum.QUALIFYING_ACCESSOR
-      ) {
-        actionsQuery.andWhere('actions.innovation_support_id IS NOT NULL');
-      }
-
-      actions = await actionsQuery.orderBy('actions.updated_at', 'DESC').getMany();
+      tasks = await tasksQuery.orderBy('tasks.updated_at', 'DESC').getMany();
     }
 
     let submittedBy: null | string;
@@ -291,7 +249,7 @@ export class InnovationSectionsService extends BaseService {
           }
         : null,
       data: !sectionHidden ? sectionData : null,
-      ...(filters.fields?.includes('actions') && actions ? { actionsIds: actions?.map(action => action.id) } : {})
+      ...(filters.fields?.includes('tasks') && tasks ? { tasksIds: tasks?.map(task => task.id) } : {})
     };
   }
 
@@ -470,16 +428,6 @@ export class InnovationSectionsService extends BaseService {
       dbSection.submittedAt = now;
       dbSection.submittedBy = UserEntity.new({ id: domainContext.id });
 
-      // Update section actions.
-      const requestedStatusActions = (await dbSection.actions).filter(
-        action => action.status === InnovationActionStatusEnum.REQUESTED
-      );
-      for (const action of requestedStatusActions) {
-        action.status = InnovationActionStatusEnum.SUBMITTED;
-        action.updatedBy = domainContext.id;
-        action.updatedByUserRole = UserRoleEntity.new({ id: domainContext.currentRole.id });
-      }
-
       const savedSection = await transaction.save(InnovationSectionEntity, dbSection);
 
       // Update document snapshot
@@ -503,29 +451,6 @@ export class InnovationSectionsService extends BaseService {
           },
           { sectionId: savedSection.section }
         );
-      }
-
-      if (requestedStatusActions.length > 0) {
-        await this.domainService.innovations.addActivityLog(
-          transaction,
-          {
-            innovationId: dbInnovation.id,
-            activity: ActivityEnum.ACTION_STATUS_SUBMITTED_UPDATE,
-            domainContext
-          },
-          { sectionId: savedSection.section, totalActions: requestedStatusActions.length }
-        );
-
-        for (const action of requestedStatusActions) {
-          await this.notifierService.send(domainContext, NotifierTypeEnum.ACTION_UPDATE, {
-            innovationId: dbInnovation.id,
-            action: {
-              id: action.id,
-              section: savedSection.section,
-              status: InnovationActionStatusEnum.SUBMITTED
-            }
-          });
-        }
       }
 
       return { id: savedSection.id };

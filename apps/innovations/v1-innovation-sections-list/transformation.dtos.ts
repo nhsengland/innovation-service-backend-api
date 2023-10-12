@@ -10,5 +10,5 @@ export type ResponseDTO = {
     name: string;
     isOwner?: boolean;
   };
-  openActionsCount: number;
+  openTasksCount: number;
 }[];

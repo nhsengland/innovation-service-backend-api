@@ -440,7 +440,7 @@ export class AuthorizationValidationModel {
       if (context.currentRole.role === ServiceRoleEnum.ACCESSOR) {
         query.innerJoin('innovation.innovationSupports', 'innovationSupports');
         query.andWhere('innovationSupports.status IN (:...supportStatuses)', {
-          supportStatuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.COMPLETE]
+          supportStatuses: [InnovationSupportStatusEnum.ENGAGING, InnovationSupportStatusEnum.CLOSED]
         });
         query.andWhere('innovationSupports.organisation_unit_id = :organisationUnitId ', {
           organisationUnitId: context.organisation.organisationUnit.id

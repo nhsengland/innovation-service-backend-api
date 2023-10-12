@@ -8,5 +8,6 @@ export type ResponseDTO = {
     role?: string;
     email?: string;
     status: InnovationCollaboratorStatusEnum;
+    isActive?: boolean;
   }[];
 };

@@ -4,9 +4,9 @@ export type ResponseDTO = {
   followers: {
     id: string;
     name: string;
-    type: ServiceRoleEnum | undefined;
     isLocked: boolean;
     isOwner?: boolean;
+    role: { id: string; role: ServiceRoleEnum }
     organisationUnit: { id: string; acronym: string } | null;
   }[];
 };

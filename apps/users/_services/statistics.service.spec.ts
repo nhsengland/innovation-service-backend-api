@@ -1,15 +1,24 @@
 import { container } from '../_config';
 
+import { InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
+import {
+  InnovationSupportLogTypeEnum,
+  InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
+  ServiceRoleEnum
+} from '@users/shared/enums';
+import {
+  BadRequestError,
+  GenericErrorsEnum,
+  OrganisationErrorsEnum,
+  UnprocessableEntityError
+} from '@users/shared/errors';
 import { TestsHelper } from '@users/shared/tests';
-import SYMBOLS from './symbols';
+import { InnovationSupportLogBuilder } from '@users/shared/tests/builders/innovation-support-log.builder';
+import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
 import type { EntityManager } from 'typeorm';
 import type { StatisticsService } from './statistics.service';
-import { InnovationActionEntity, InnovationEntity, InnovationSupportEntity } from '@users/shared/entities';
-import { DTOsHelper } from '@users/shared/tests/helpers/dtos.helper';
-import { OrganisationErrorsEnum, UnprocessableEntityError } from '@users/shared/errors';
-import { InnovationSupportLogTypeEnum, InnovationSupportStatusEnum, ServiceRoleEnum } from '@users/shared/enums';
-import type { DomainContextType } from '@users/shared/types';
-import { InnovationSupportLogBuilder } from '@users/shared/tests/builders/innovation-support-log.builder';
+import SYMBOLS from './symbols';
 
 describe('Users / _services / statistics service suite', () => {
   let sut: StatisticsService;
@@ -40,7 +49,6 @@ describe('Users / _services / statistics service suite', () => {
     });
 
     it('should count the innovations with overdue assesments', async () => {
-
       const resultBefore = await sut.waitingAssessment(em);
 
       expect(resultBefore.overdue).toBe(0);
@@ -122,59 +130,44 @@ describe('Users / _services / statistics service suite', () => {
     });
   });
 
-  describe('actionsToReview', () => {
-    it('should get the number of actions to review', async () => {
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
-
-      expect(result.count).toBe(1);
-    });
-
-    it('should get the total number of actions requested and to review', async () => {
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
-
-      expect(result.total).toBe(2);
-    });
-
-    it('should get the date of the last action submission', async () => {
-      const action = scenario.users.johnInnovator.innovations.johnInnovation.actions.actionByAlice;
-      const nowDate = new Date();
-      await em.getRepository(InnovationActionEntity).update({ id: action.id }, { updatedAt: nowDate });
-
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-        em
-      );
-
-      expect(result.lastSubmittedAt).toStrictEqual(new Date(nowDate));
-    });
-
-    it('should return lastSubmittedAt as null when there is no action submitted', async () => {
-      const result = await sut.actionsToReview(
-        DTOsHelper.getUserRequestContext(scenario.users.scottQualifyingAccessor)
-      );
-
-      expect(result.lastSubmittedAt).toBeNull();
-    });
-
+  describe('getTasksCounter', () => {
     it.each([
-      [ServiceRoleEnum.ACCESSOR, scenario.users.samAccessor],
-      [ServiceRoleEnum.QUALIFYING_ACCESSOR, scenario.users.aliceQualifyingAccessor]
-    ])('it should throw an error when the user is %s and has no organisation unit', async () => {
+      [
+        'QA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE, InnovationTaskStatusEnum.CANCELLED],
+        scenario.users.aliceQualifyingAccessor,
+        { OPEN: 1, DONE: 2, CANCELLED: 0 }
+      ],
+      [
+        'NA',
+        [InnovationTaskStatusEnum.OPEN, InnovationTaskStatusEnum.DONE],
+        scenario.users.seanNeedsAssessor,
+        { OPEN: 1, DONE: 0 }
+      ]
+    ])(
+      'as %s should get my organisation tasks counter for the given innovation and $s',
+      async (_label, statuses, user, res) => {
+        const tasksCounter = await sut.getTasksCounter(DTOsHelper.getUserRequestContext(user), statuses);
+
+        expect(tasksCounter).toEqual({ ...res, lastUpdatedAt: expect.any(Date) });
+      }
+    );
+
+    it("shouldn't return status that wasn't requested", async () => {
+      const tasksCounter = await sut.getTasksCounter(
+        DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
+        [InnovationTaskStatusEnum.OPEN] // alice also has a done task
+      );
+
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.CANCELLED]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DONE]).toBeUndefined();
+      expect((tasksCounter as any)[InnovationTaskStatusEnum.DECLINED]).toBeUndefined();
+    });
+
+    it('should throw bad request if status missing', async () => {
       await expect(() =>
-        sut.actionsToReview(
-          {
-            ...DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor),
-            organisation: undefined
-          } as DomainContextType,
-          em
-        )
-      ).rejects.toThrowError(new UnprocessableEntityError(OrganisationErrorsEnum.ORGANISATION_UNIT_NOT_FOUND));
+        sut.getTasksCounter(DTOsHelper.getUserRequestContext(scenario.users.aliceQualifyingAccessor), [])
+      ).rejects.toThrowError(new BadRequestError(GenericErrorsEnum.INVALID_PAYLOAD));
     });
   });
 

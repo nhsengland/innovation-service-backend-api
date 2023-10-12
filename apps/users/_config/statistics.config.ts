@@ -1,8 +1,8 @@
 import { UserStatisticsEnum } from '../_enums/user.enums';
-import { actionsToReviewStatisticsHandler } from '../_handlers/statistics/actions-to-review.handler';
 import { assignedInnovationsStatisticsHandler } from '../_handlers/statistics/assigned-innovations.handler';
 import { innovationsAssignedToMeStatisticsHandler } from '../_handlers/statistics/innovations-assigned-to-me.handler';
 import { innovationsToReviewStatisticsHandler } from '../_handlers/statistics/innovations-to-review.handler';
+import { tasksRespondedStatisticsHandler } from '../_handlers/statistics/tasks-responded.handler';
 import { waitingAssessmentStatisticsHandler } from '../_handlers/statistics/waiting-assessment.handler';
 
 export const USER_STATISTICS_CONFIG: Record<
@@ -22,8 +22,8 @@ export const USER_STATISTICS_CONFIG: Record<
     handler: innovationsAssignedToMeStatisticsHandler
   },
 
-  [UserStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: {
-    handler: actionsToReviewStatisticsHandler
+  [UserStatisticsEnum.TASKS_RESPONDED_COUNTER]: {
+    handler: tasksRespondedStatisticsHandler
   },
 
   [UserStatisticsEnum.INNOVATIONS_TO_REVIEW_COUNTER]: {
@@ -43,7 +43,7 @@ export type UserStatisticsTemplateType = {
     total: number;
     lastSubmittedAt: null | Date;
   };
-  [UserStatisticsEnum.ACTIONS_TO_REVIEW_COUNTER]: {
+  [UserStatisticsEnum.TASKS_RESPONDED_COUNTER]: {
     count: number;
     total: number;
     lastSubmittedAt: null | Date;

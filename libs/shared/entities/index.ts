@@ -8,7 +8,7 @@ export { TermsOfUseEntity } from './general/terms-of-use.entity';
 
 // Innovation.
 import { ActivityLogEntity } from './innovation/activity-log.entity';
-import { InnovationActionEntity } from './innovation/innovation-action.entity';
+import { InnovationTaskEntity } from './innovation/innovation-task.entity';
 import { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 import { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 import { InnovationDocumentEntity } from './innovation/innovation-document.entity';
@@ -26,7 +26,7 @@ import { InnovationTransferEntity } from './innovation/innovation-transfer.entit
 import { InnovationUserTestEntity } from './innovation/innovation-user-test.entity';
 import { InnovationEntity } from './innovation/innovation.entity';
 export { ActivityLogEntity } from './innovation/activity-log.entity';
-export { InnovationActionEntity } from './innovation/innovation-action.entity';
+export { InnovationTaskEntity } from './innovation/innovation-task.entity';
 export { InnovationAssessmentEntity } from './innovation/innovation-assessment.entity';
 export { InnovationCollaboratorEntity } from './innovation/innovation-collaborator.entity';
 export { InnovationDocumentEntity } from './innovation/innovation-document.entity';
@@ -45,13 +45,9 @@ export { InnovationUserTestEntity } from './innovation/innovation-user-test.enti
 export { InnovationEntity } from './innovation/innovation.entity';
 
 // Organisation.
-import { OrganisationUnitUserEntity } from './organisation/organisation-unit-user.entity';
 import { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
-import { OrganisationUserEntity } from './organisation/organisation-user.entity';
 import { OrganisationEntity } from './organisation/organisation.entity';
-export { OrganisationUnitUserEntity } from './organisation/organisation-unit-user.entity';
 export { OrganisationUnitEntity } from './organisation/organisation-unit.entity';
-export { OrganisationUserEntity } from './organisation/organisation-user.entity';
 export { OrganisationEntity } from './organisation/organisation.entity';
 
 // User.
@@ -77,14 +73,15 @@ export { UserEntity } from './user/user.entity';
 // Views
 import { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 import { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
+import { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 export { InnovationGroupedStatusViewEntity } from './views/innovation-grouped-status.view.entity';
 export { LastSupportStatusViewEntity } from './views/last-support-status.view.entity';
+export { InnovationTaskDescriptionsViewEntity } from './views/innovation-task-descriptions.view.entity';
 
 // Entities lists.
 export const GENERAL_ENTITIES = [AuditEntity, TermsOfUseEntity, TermsOfUseUserEntity];
 export const INNOVATION_ENTITIES = [
   ActivityLogEntity,
-  InnovationActionEntity,
   InnovationAssessmentEntity,
   InnovationCollaboratorEntity,
   InnovationDocumentEntity,
@@ -96,6 +93,7 @@ export const INNOVATION_ENTITIES = [
   InnovationSectionEntity,
   InnovationSupportLogEntity,
   InnovationSupportEntity,
+  InnovationTaskEntity,
   InnovationThreadMessageEntity,
   InnovationThreadEntity,
   InnovationTransferEntity,
@@ -103,9 +101,7 @@ export const INNOVATION_ENTITIES = [
   InnovationEntity
 ];
 export const ORGANISATION_ENTITIES = [
-  OrganisationUnitUserEntity,
   OrganisationUnitEntity,
-  OrganisationUserEntity,
   OrganisationEntity
 ];
 export const USER_ENTITIES = [
@@ -119,4 +115,4 @@ export const USER_ENTITIES = [
   UserRoleEntity,
   UserEntity
 ];
-export const VIEW_ENTITIES = [InnovationGroupedStatusViewEntity, LastSupportStatusViewEntity];
+export const VIEW_ENTITIES = [InnovationGroupedStatusViewEntity, InnovationTaskDescriptionsViewEntity, LastSupportStatusViewEntity];

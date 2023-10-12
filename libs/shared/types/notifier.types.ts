@@ -1,8 +1,8 @@
 import type { ServiceRoleEnum } from '../enums';
 import type {
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
-  InnovationSupportStatusEnum
+  InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum
 } from '../enums/innovation.enums';
 import type { NotifierTypeEnum } from '../enums/notifier.enums';
 import type { CurrentCatalogTypes } from '../schemas/innovation-record';
@@ -66,17 +66,17 @@ export type NotifierTemplatesType = {
     organisationUnitIds: string[]; // Suggested organisation units.
   };
 
-  [NotifierTypeEnum.ACTION_CREATION]: {
+  [NotifierTypeEnum.TASK_CREATION]: {
     innovationId: string;
-    action: { id: string; section: CurrentCatalogTypes.InnovationSections };
+    task: { id: string; section: CurrentCatalogTypes.InnovationSections };
   };
 
-  [NotifierTypeEnum.ACTION_UPDATE]: {
+  [NotifierTypeEnum.TASK_UPDATE]: {
     innovationId: string;
-    action: {
+    task: {
       id: string;
       section: CurrentCatalogTypes.InnovationSections;
-      status: InnovationActionStatusEnum;
+      status: InnovationTaskStatusEnum;
       previouslyUpdatedByUserRole?: { id: string; role: ServiceRoleEnum };
     };
     comment?: string;

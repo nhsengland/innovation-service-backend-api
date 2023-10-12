@@ -1,9 +1,9 @@
 import type {
-  InnovationActionStatusEnum,
   InnovationExportRequestStatusEnum,
   InnovationFileContextTypeEnum,
   InnovationSectionStatusEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   MaturityLevelCatalogueType,
   YesPartiallyNoCatalogueType
 } from '@innovations/shared/enums';
@@ -14,7 +14,7 @@ export interface InnovationSectionModel {
   id: string | null;
   section: CurrentCatalogTypes.InnovationSections | null;
   status: InnovationSectionStatusEnum | null;
-  actionStatus: InnovationActionStatusEnum | null;
+  taskStatus: InnovationTaskStatusEnum | null;
   updatedAt: Date | null;
   submittedAt: Date | null;
 }
@@ -113,42 +113,26 @@ export type InnovationAllSectionsType = {
 }[];
 
 export type InnovationSuggestionsType = {
-  accessors?: InnovationSuggestionAccessor[];
-  assessment?: {
-    id?: string;
-    suggestedOrganisationUnits?: {
+  accessors: InnovationSuggestionAccessor[];
+  assessment: {
+    suggestedOrganisations: {
       id: string;
       name: string;
       acronym: string | null;
-      organisation: {
-        id: string;
-        name: string;
-        acronym: string | null;
-      };
     }[];
   };
 };
 
 export type InnovationSuggestionAccessor = {
-  organisationUnit: null | {
+  organisation: {
     id: string;
     name: string;
     acronym: string | null;
-    organisation: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    };
   };
-  suggestedOrganisationUnits?: {
+  suggestedOrganisations: {
     id: string;
     name: string;
     acronym: string | null;
-    organisation: {
-      id: string;
-      name: string;
-      acronym: string | null;
-    };
   }[];
 };
 

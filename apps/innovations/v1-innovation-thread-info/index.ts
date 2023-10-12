@@ -41,6 +41,7 @@ class V1InnovationThreadInfo {
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
         subject: result.subject,
+        context: result.context,
         createdAt: result.createdAt,
         createdBy: {
           id: result.createdBy.id,

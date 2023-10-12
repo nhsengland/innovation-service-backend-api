@@ -3,9 +3,9 @@ import Joi from 'joi';
 
 import { TEXTAREA_LENGTH_LIMIT } from '@notifications/shared/constants';
 import {
-  InnovationActionStatusEnum,
   InnovationCollaboratorStatusEnum,
   InnovationSupportStatusEnum,
+  InnovationTaskStatusEnum,
   NotifierTypeEnum,
   ServiceRoleEnum
 } from '@notifications/shared/enums';
@@ -41,10 +41,10 @@ import {
   NeedsAssessmentAssessorUpdateHandler,
   NeedsAssessmentCompletedHandler,
   NeedsAssessmentStartedHandler,
+  SupportSummaryUpdateHandler,
   ThreadCreationHandler,
   ThreadMessageCreationHandler,
-  UnitInactivationSupportStatusCompletedHandler,
-  SupportSummaryUpdateHandler 
+  UnitInactivationSupportStatusCompletedHandler
 } from '../_handlers';
 import type { EmailTypeEnum } from './emails.config';
 
@@ -153,11 +153,11 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.ACTION_CREATION]: {
+  [NotifierTypeEnum.TASK_CREATION]: {
     handler: ActionCreationHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION]>({
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]>({
       innovationId: Joi.string().guid().required(),
-      action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_CREATION]['action']>({
+      task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_CREATION]['task']>({
         id: Joi.string().guid().required(),
         section: Joi.string()
           .valid(...CurrentCatalogTypes.InnovationSections)
@@ -166,17 +166,17 @@ export const NOTIFICATIONS_CONFIG: {
     }).required()
   },
 
-  [NotifierTypeEnum.ACTION_UPDATE]: {
+  [NotifierTypeEnum.TASK_UPDATE]: {
     handler: ActionUpdateHandler,
-    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]>({
+    joiDefinition: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]>({
       innovationId: Joi.string().guid().required(),
-      action: Joi.object<NotifierTemplatesType[NotifierTypeEnum.ACTION_UPDATE]['action']>({
+      task: Joi.object<NotifierTemplatesType[NotifierTypeEnum.TASK_UPDATE]['task']>({
         id: Joi.string().guid().required(),
         section: Joi.string()
           .valid(...CurrentCatalogTypes.InnovationSections)
           .required(),
         status: Joi.string()
-          .valid(...Object.values(InnovationActionStatusEnum))
+          .valid(...Object.values(InnovationTaskStatusEnum))
           .required(),
         previouslyUpdatedByUserRole: Joi.object({
           id: Joi.string().guid().required(),

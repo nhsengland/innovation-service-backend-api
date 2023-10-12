@@ -21,11 +21,9 @@ export const BodySchema = Joi.object<BodyType>({
   status: Joi.string()
     .valid(
       InnovationSupportStatusEnum.ENGAGING,
-      InnovationSupportStatusEnum.FURTHER_INFO_REQUIRED,
       InnovationSupportStatusEnum.WAITING,
-      InnovationSupportStatusEnum.NOT_YET,
       InnovationSupportStatusEnum.UNSUITABLE,
-      InnovationSupportStatusEnum.COMPLETE
+      InnovationSupportStatusEnum.CLOSED
     )
     .required(),
   message: Joi.string().max(TEXTAREA_LENGTH_LIMIT.xl).trim().required(),

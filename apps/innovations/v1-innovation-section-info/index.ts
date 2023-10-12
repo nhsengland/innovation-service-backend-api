@@ -49,7 +49,7 @@ class GetInnovationSectionInfo {
         submittedAt: result.submittedAt,
         submittedBy: result.submittedBy,
         data: result.data,
-        ...(result.actionsIds ? { actionsIds: result.actionsIds } : {})
+        ...(result.tasksIds ? { tasksIds: result.tasksIds } : {})
       });
       return;
     } catch (error) {

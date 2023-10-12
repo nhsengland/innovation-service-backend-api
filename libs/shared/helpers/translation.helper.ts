@@ -7,14 +7,11 @@ const TRANSLATIONS = {
     }
   },
   SUPPORT_STATUS: {
-    ENGAGING: 'Engaging',
-    FURTHER_INFO_REQUIRED: 'Further info',
-    COMPLETE: 'Completed',
-    WAITING: 'Waiting',
-    NOT_YET: 'Not yet',
     UNASSIGNED: 'Unassigned',
+    ENGAGING: 'Engaging',
+    WAITING: 'Waiting',
     UNSUITABLE: 'Unsuitable',
-    WITHDRAWN: 'Withdrawn'
+    CLOSED: 'Closed'
   },
   EVIDENCE_SUBMIT_TYPES: {
     CLINICAL_OR_CARE: 'Evidence of clinical or care outcomes',
