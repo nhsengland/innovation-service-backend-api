@@ -39,6 +39,7 @@ const expected = {
     {
       id: randUuid(),
       message: randText(),
+      file: undefined,
       createdAt: randPastDate(),
       isNew: randBoolean(),
       isEditable: randBoolean(),
@@ -55,6 +56,7 @@ const expected = {
     {
       id: randUuid(),
       message: randText(),
+      file: undefined,
       createdAt: randPastDate(),
       isNew: randBoolean(),
       isEditable: randBoolean(),
@@ -71,6 +73,7 @@ const expected = {
     {
       id: randUuid(),
       message: randText(),
+      file: undefined,
       createdAt: randPastDate(),
       isNew: randBoolean(),
       isEditable: randBoolean(),
