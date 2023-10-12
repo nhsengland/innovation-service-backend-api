@@ -3027,6 +3027,7 @@ paths:
                 message:
                   type: string
                   maxLength: 2000
+                  nullable: true
                 accessors:
                   type: array
                   items:
@@ -3047,7 +3048,7 @@ paths:
                 - accessors
               additionalProperties: false
       responses:
-        "200":
+        "204":
           description: Innovation ID
           content:
             application/json:
