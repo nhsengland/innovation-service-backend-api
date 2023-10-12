@@ -223,7 +223,7 @@ export class RecipientsService extends BaseService {
    * returns the innovation assigned recipients to an innovation/support.
    * @param innovationId the innovation id
    * @param entityManager optionally pass an entity manager
-   * @returns a list of users with their email notification preferences
+   * @returns a list of user recipients
    * @throws {NotFoundError} if the support is not found when using innovationSupportId
    */
   async innovationAssignedRecipients(innovationId: string, entityManager?: EntityManager): Promise<RecipientType[]> {

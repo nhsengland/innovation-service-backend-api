@@ -612,7 +612,7 @@ export class InnovationThreadsService extends BaseService {
     const messageIds = messages.map(m => m.id);
     const files = await em
       .createQueryBuilder(InnovationFileEntity, 'file')
-      .select()
+      .select(['file.name', 'file.extension', 'file.filesize', 'file.storageId', 'file.filename', 'file.contextId'])
       .where('file.contextId IN(:...messageIds)', { messageIds })
       .andWhere('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
       .getMany();
