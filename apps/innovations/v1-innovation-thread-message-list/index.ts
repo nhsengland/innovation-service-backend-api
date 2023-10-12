@@ -2,7 +2,7 @@ import { mapOpenApi3 as openApi } from '@aaronpowell/azure-functions-nodejs-open
 import type { AzureFunction, HttpRequest } from '@azure/functions';
 
 import { JwtDecoder } from '@innovations/shared/decorators';
-import { JoiHelper, ResponseHelper } from '@innovations/shared/helpers';
+import { JoiHelper, ResponseHelper, SwaggerHelper } from '@innovations/shared/helpers';
 import type { AuthorizationService } from '@innovations/shared/services';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { CustomContextType } from '@innovations/shared/types';
@@ -55,6 +55,7 @@ class V1InnovationThreadMessageList {
         count: result.count,
         messages: result.messages.map(message => ({
           id: message.id,
+          file: message.file,
           createdAt: message.createdAt,
           createdBy: {
             id: message.createdBy.id,
@@ -96,54 +97,7 @@ export default openApi(
       description: 'Get a list of messages from a thread',
       operationId: 'v1-innovation-thread-message-list',
       tags: ['[v1] Innovation Threads'],
-      parameters: [
-        {
-          name: 'innovationId',
-          in: 'path',
-          description: 'Innovation ID',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'threadId',
-          in: 'path',
-          description: 'Thread ID',
-          required: true,
-          schema: {
-            type: 'string'
-          }
-        },
-        {
-          name: 'skip',
-          in: 'query',
-          description: 'Number of records to skip',
-          required: false,
-          schema: {
-            type: 'number'
-          }
-        },
-        {
-          name: 'take',
-          in: 'query',
-          description: 'Number of records to take',
-          required: false,
-          schema: {
-            type: 'number'
-          }
-        },
-        {
-          name: 'order',
-          in: 'query',
-          description: 'Order of the records',
-          required: false,
-          schema: {
-            type: 'string',
-            enum: ['ASC', 'DESC']
-          }
-        }
-      ],
+      parameters: SwaggerHelper.paramJ2S({ path: ParamsSchema }),
       responses: {
         200: {
           description: 'Returns a list of messages from a thread',
@@ -217,6 +171,16 @@ export default openApi(
                         },
                         message: {
                           type: 'string'
+                        },
+                        file: {
+                          type: 'object',
+                          properties: {
+                            id: { type: 'string', description: 'Storage Id' },
+                            name: { type: 'string' },
+                            size: { type: 'number' },
+                            extension: { type: 'string' },
+                            url: { type: 'string' }
+                          }
                         },
                         updatedAt: {
                           type: 'string'

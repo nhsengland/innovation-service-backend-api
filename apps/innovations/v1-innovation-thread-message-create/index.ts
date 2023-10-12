@@ -37,7 +37,7 @@ class V1InnovationThreadMessageCreate {
 
       const domainContext = auth.getContext();
 
-      const result = await threadsService.createEditableMessage(domainContext, pathParams.threadId, body.message, true);
+      const result = await threadsService.createEditableMessage(domainContext, pathParams.threadId, body, true);
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         threadMessage: {

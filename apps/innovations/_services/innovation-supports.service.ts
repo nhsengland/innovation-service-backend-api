@@ -34,7 +34,7 @@ import type { DomainContextType } from '@innovations/shared/types';
 
 import { InnovationThreadSubjectEnum } from '../_enums/innovation.enums';
 import type {
-  InnovationDocumentType,
+  InnovationFileDocumentType,
   InnovationSuggestionAccessor,
   InnovationSuggestionsType
 } from '../_types/innovation.types';
@@ -653,6 +653,7 @@ export class InnovationSupportsService extends BaseService {
         data.message,
         false,
         false,
+        undefined,
         entityManager
       );
     }
@@ -950,7 +951,7 @@ export class InnovationSupportsService extends BaseService {
     data: {
       title: string;
       description: string;
-      document?: InnovationDocumentType;
+      document?: InnovationFileDocumentType;
     },
     entityManager?: EntityManager
   ): Promise<void> {
@@ -995,7 +996,6 @@ export class InnovationSupportsService extends BaseService {
         await this.innovationFileService.createFile(
           domainContext,
           innovationId,
-          support.innovation.status,
           {
             ...data.document,
             context: {
@@ -1003,6 +1003,7 @@ export class InnovationSupportsService extends BaseService {
               type: InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
             }
           },
+          support.innovation.status,
           transaction
         );
       }

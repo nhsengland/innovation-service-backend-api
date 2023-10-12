@@ -1916,9 +1916,10 @@ paths:
                       type: string
                       enum:
                         - INNOVATION
-                        - INNOVATION_SECTION
                         - INNOVATION_EVIDENCE
+                        - INNOVATION_MESSAGE
                         - INNOVATION_PROGRESS_UPDATE
+                        - INNOVATION_SECTION
                   required:
                     - id
                     - type
@@ -2043,9 +2044,10 @@ paths:
               type: string
               enum:
                 - INNOVATION
-                - INNOVATION_SECTION
                 - INNOVATION_EVIDENCE
+                - INNOVATION_MESSAGE
                 - INNOVATION_PROGRESS_UPDATE
+                - INNOVATION_SECTION
         - name: contextId
           in: query
           required: false
@@ -2117,9 +2119,10 @@ paths:
                               type: string
                               enum:
                                 - INNOVATION
-                                - INNOVATION_SECTION
                                 - INNOVATION_EVIDENCE
+                                - INNOVATION_MESSAGE
                                 - INNOVATION_PROGRESS_UPDATE
+                                - INNOVATION_SECTION
                         name:
                           type: string
                         description:
@@ -2234,9 +2237,10 @@ paths:
                         type: string
                         enum:
                           - INNOVATION
-                          - INNOVATION_SECTION
                           - INNOVATION_EVIDENCE
+                          - INNOVATION_MESSAGE
                           - INNOVATION_PROGRESS_UPDATE
+                          - INNOVATION_SECTION
                   name:
                     type: string
                   description:
@@ -3344,23 +3348,36 @@ paths:
                     file:
                       type: object
                       properties:
-                        id:
-                          type: string
-                          maxLength: 100
                         name:
                           type: string
                           maxLength: 100
-                        size:
-                          type: number
-                          format: float
-                        extension:
+                        description:
                           type: string
-                          maxLength: 4
+                          maxLength: 500
+                        file:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              maxLength: 100
+                            name:
+                              type: string
+                              maxLength: 100
+                            size:
+                              type: number
+                              format: float
+                            extension:
+                              type: string
+                              maxLength: 4
+                          required:
+                            - id
+                            - name
+                            - size
+                            - extension
+                          additionalProperties: false
                       required:
-                        - id
                         - name
-                        - size
-                        - extension
+                        - file
                       additionalProperties: false
                   required:
                     - name
@@ -4216,37 +4233,16 @@ paths:
       parameters:
         - name: innovationId
           in: path
-          description: Innovation ID
           required: true
           schema:
             type: string
+            format: uuid
         - name: threadId
           in: path
-          description: Thread ID
           required: true
           schema:
             type: string
-        - name: skip
-          in: query
-          description: Number of records to skip
-          required: false
-          schema:
-            type: number
-        - name: take
-          in: query
-          description: Number of records to take
-          required: false
-          schema:
-            type: number
-        - name: order
-          in: query
-          description: Order of the records
-          required: false
-          schema:
-            type: string
-            enum:
-              - ASC
-              - DESC
+            format: uuid
       responses:
         "200":
           description: Returns a list of messages from a thread
@@ -4303,6 +4299,20 @@ paths:
                           type: boolean
                         message:
                           type: string
+                        file:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              description: Storage Id
+                            name:
+                              type: string
+                            size:
+                              type: number
+                            extension:
+                              type: string
+                            url:
+                              type: string
                         updatedAt:
                           type: string
         "400":

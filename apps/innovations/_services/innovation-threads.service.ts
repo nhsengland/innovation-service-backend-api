@@ -3,6 +3,7 @@ import type { EntityManager, SelectQueryBuilder } from 'typeorm';
 
 import {
   InnovationEntity,
+  InnovationFileEntity,
   InnovationThreadEntity,
   InnovationThreadMessageEntity,
   NotificationEntity,
@@ -12,6 +13,7 @@ import {
 } from '@innovations/shared/entities';
 import {
   ActivityEnum,
+  InnovationFileContextTypeEnum,
   NotifierTypeEnum,
   ServiceRoleEnum,
   ThreadContextTypeEnum,
@@ -19,24 +21,36 @@ import {
 } from '@innovations/shared/enums';
 import {
   BadRequestError,
+  ForbiddenError,
   GenericErrorsEnum,
   InnovationErrorsEnum,
   NotFoundError,
+  UnprocessableEntityError,
   UserErrorsEnum
 } from '@innovations/shared/errors';
-import type { DomainService, IdentityProviderService, NotifierService } from '@innovations/shared/services';
+import type {
+  DomainService,
+  FileStorageService,
+  IdentityProviderService,
+  NotifierService
+} from '@innovations/shared/services';
 import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@innovations/shared/types';
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
+import type { InnovationFileDocumentOutputType, InnovationFileDocumentType } from '../_types/innovation.types';
 import { BaseService } from './base.service';
+import type { InnovationFileService } from './innovation-file.service';
+import SYMBOLS from './symbols';
 
 @injectable()
 export class InnovationThreadsService extends BaseService {
   constructor(
     @inject(SHARED_SYMBOLS.DomainService) private domainService: DomainService,
     @inject(SHARED_SYMBOLS.IdentityProviderService) private identityProvider: IdentityProviderService,
-    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService
+    @inject(SHARED_SYMBOLS.FileStorageService) private fileStorageService: FileStorageService,
+    @inject(SHARED_SYMBOLS.NotifierService) private notifierService: NotifierService,
+    @inject(SYMBOLS.InnovationFileService) private innovationFileService: InnovationFileService
   ) {
     super();
   }
@@ -83,6 +97,7 @@ export class InnovationThreadsService extends BaseService {
       message,
       sendNotification,
       false,
+      undefined, // automatic threads don't have files
       transaction
     );
 
@@ -93,34 +108,28 @@ export class InnovationThreadsService extends BaseService {
   }
 
   async createEditableThread(
-    requestUser: DomainUserInfoType,
     domainContext: DomainContextType,
     innovationId: string,
-    subject: string,
-    message: string,
+    data: {
+      subject: string;
+      message: string;
+      file?: InnovationFileDocumentType;
+      followerUserRoleIds: string[];
+    },
     sendNotification: boolean,
-    followerUserRoleIds: string[],
     entityManager?: EntityManager
   ): Promise<{
     thread: InnovationThreadEntity;
-    messageCount: number;
+    message: InnovationThreadMessageEntity;
   }> {
+    const { subject, message, followerUserRoleIds, file } = data;
     if (!followerUserRoleIds.length && domainContext.currentRole.role === ServiceRoleEnum.INNOVATOR) {
       throw new BadRequestError(InnovationErrorsEnum.INNOVATION_THREAD_WITHOUT_FOLLOWERS);
     }
 
     if (!entityManager) {
       return this.sqlConnection.transaction(t =>
-        this.createEditableThread(
-          requestUser,
-          domainContext,
-          innovationId,
-          subject,
-          message,
-          sendNotification,
-          followerUserRoleIds,
-          t
-        )
+        this.createEditableThread(domainContext, innovationId, data, sendNotification, t)
       );
     }
 
@@ -145,6 +154,24 @@ export class InnovationThreadsService extends BaseService {
     }
 
     await this.addFollowersToThread(thread.thread.id, followerUserRoleIds, entityManager);
+
+    if (file) {
+      await this.innovationFileService.createFile(
+        domainContext,
+        innovationId,
+        {
+          name: file.name,
+          description: file.description,
+          file: file.file,
+          context: {
+            id: thread.message.id,
+            type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
+          }
+        },
+        undefined,
+        entityManager
+      );
+    }
 
     if (sendNotification) {
       await this.sendThreadCreateNotification(domainContext, thread.thread, entityManager);
@@ -256,7 +283,7 @@ export class InnovationThreadsService extends BaseService {
     editableMessage = false
   ): Promise<{
     thread: InnovationThreadEntity;
-    messageCount: number;
+    message: InnovationThreadMessageEntity;
   }> {
     if (!transaction) {
       return this.sqlConnection.transaction(t =>
@@ -295,10 +322,13 @@ export class InnovationThreadsService extends BaseService {
   async createEditableMessage(
     domainContext: DomainContextType,
     threadId: string,
-    message: string,
+    data: {
+      message: string;
+      file?: InnovationFileDocumentType;
+    },
     sendNotification: boolean
   ): Promise<{ threadMessage: InnovationThreadMessageEntity }> {
-    return this.createThreadMessage(domainContext, threadId, message, sendNotification, true);
+    return this.createThreadMessage(domainContext, threadId, data.message, sendNotification, true, data.file);
   }
 
   async createThreadMessage(
@@ -307,6 +337,7 @@ export class InnovationThreadsService extends BaseService {
     message: string,
     sendNotification: boolean,
     isEditable = false,
+    file?: InnovationFileDocumentType,
     transaction?: EntityManager
   ): Promise<{
     threadMessage: InnovationThreadMessageEntity;
@@ -353,6 +384,7 @@ export class InnovationThreadsService extends BaseService {
       threadMessageObj,
       domainContext,
       thread,
+      file,
       connection
     );
 
@@ -379,7 +411,15 @@ export class InnovationThreadsService extends BaseService {
       throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_NOT_FOUND);
     }
 
-    return this.createThreadMessage(domainContext, thread.id, message, sendNotification, isEditable, transaction);
+    return this.createThreadMessage(
+      domainContext,
+      thread.id,
+      message,
+      sendNotification,
+      isEditable,
+      undefined,
+      transaction
+    );
   }
 
   async updateThreadMessage(
@@ -397,15 +437,15 @@ export class InnovationThreadsService extends BaseService {
       .getOne();
 
     if (!message) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
     }
 
     if (message.isEditable === false) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_EDITABLE);
+      throw new UnprocessableEntityError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_EDITABLE);
     }
 
     if (message.author.id !== requestUser.id) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_EDIT_UNAUTHORIZED);
+      throw new ForbiddenError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_EDIT_UNAUTHORIZED);
     }
 
     message.message = payload.message;
@@ -497,6 +537,7 @@ export class InnovationThreadsService extends BaseService {
     messages: {
       id: string;
       message: string;
+      file?: InnovationFileDocumentOutputType;
       createdAt: Date;
       isNew: boolean;
       isEditable: boolean;
@@ -554,6 +595,14 @@ export class InnovationThreadsService extends BaseService {
 
     const [messages, count] = await threadMessageQuery.getManyAndCount();
 
+    // This will never happen at least for now that threads create message but it's a failsafe
+    if (!count) {
+      return {
+        count,
+        messages: []
+      };
+    }
+
     const threadMessagesAuthors = messages
       .filter(tm => tm.author && tm.author.status !== UserStatusEnum.DELETED)
       .map(tm => tm.author.identityId);
@@ -564,7 +613,7 @@ export class InnovationThreadsService extends BaseService {
 
     const notifications = new Set(
       (
-        await this.sqlConnection
+        await em
           .createQueryBuilder(NotificationEntity, 'notification')
           .select(['notification.params'])
           .innerJoin('notification.notificationUsers', 'notificationUsers')
@@ -581,13 +630,31 @@ export class InnovationThreadsService extends BaseService {
         .map(n => n.params['messageId'])
     );
 
+    const messageIds = messages.map(m => m.id);
+    const files = await em
+      .createQueryBuilder(InnovationFileEntity, 'file')
+      .select(['file.name', 'file.extension', 'file.filesize', 'file.storageId', 'file.filename', 'file.contextId'])
+      .where('file.contextId IN(:...messageIds)', { messageIds })
+      .andWhere('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
+      .getMany();
+    const filesMap = new Map(files.map(f => [f.contextId, f]));
+
     const messageResult = messages.map(tm => {
       const organisationUnit = tm.authorOrganisationUnit ?? undefined;
       const organisation = tm.authorOrganisationUnit?.organisation;
+      const file = filesMap.get(tm.id);
 
       return {
         id: tm.id,
         message: tm.message,
+        ...(file && {
+          file: {
+            name: file.name,
+            extension: file.extension,
+            size: file.filesize,
+            url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
+          }
+        }),
         createdAt: tm.createdAt,
         isNew: notifications.has(tm.id),
         isEditable: tm.isEditable,
@@ -805,7 +872,7 @@ export class InnovationThreadsService extends BaseService {
       const messages = await result.messages;
       const message = messages.find((_: any) => true);
       if (!message) {
-        throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+        throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
       }
 
       const messageId = message.id; // all threads have at least one message
@@ -833,11 +900,30 @@ export class InnovationThreadsService extends BaseService {
     threadMessageObj: InnovationThreadMessageEntity,
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
+    file: InnovationFileDocumentType | undefined,
     transaction: EntityManager
   ): Promise<InnovationThreadMessageEntity> {
     const result = await transaction
       .getRepository<InnovationThreadMessageEntity>(InnovationThreadMessageEntity)
       .save(threadMessageObj);
+
+    if (file) {
+      await this.innovationFileService.createFile(
+        domainContext,
+        thread.innovation.id,
+        {
+          name: file.name,
+          description: file.description,
+          file: file.file,
+          context: {
+            id: result.id,
+            type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
+          }
+        },
+        undefined,
+        transaction
+      );
+    }
 
     try {
       await this.domainService.innovations.addActivityLog(
@@ -874,7 +960,7 @@ export class InnovationThreadsService extends BaseService {
     editableMessage = false
   ): Promise<{
     thread: InnovationThreadEntity;
-    messageCount: number;
+    message: InnovationThreadMessageEntity;
   }> {
     const author = await transaction
       .createQueryBuilder(UserEntity, 'users')
@@ -920,7 +1006,7 @@ export class InnovationThreadsService extends BaseService {
     const messages = await thread.messages;
     return {
       thread,
-      messageCount: messages.length
+      message: messages[0]! // threads always create with one message
     };
   }
 
@@ -942,7 +1028,7 @@ export class InnovationThreadsService extends BaseService {
     const firstMessage = sortedMessagesAsc.find((_: any) => true); // a thread always have at least 1 message
 
     if (!firstMessage) {
-      throw new Error(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
+      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_THREAD_MESSAGE_NOT_FOUND);
     }
     await this.notifierService.send(domainContext, NotifierTypeEnum.THREAD_CREATION, {
       threadId: thread.id,
