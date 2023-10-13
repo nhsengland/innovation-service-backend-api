@@ -38,7 +38,7 @@ import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@i
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { InnovationFileDocumentOutputType, InnovationFileDocumentType } from '../_types/innovation.types';
+import type { InnovationFileDocumentType } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -537,7 +537,7 @@ export class InnovationThreadsService extends BaseService {
     messages: {
       id: string;
       message: string;
-      file?: InnovationFileDocumentOutputType;
+      file?: { id: string; name: string; url: string };
       createdAt: Date;
       isNew: boolean;
       isEditable: boolean;
@@ -649,9 +649,8 @@ export class InnovationThreadsService extends BaseService {
         message: tm.message,
         ...(file && {
           file: {
+            id: file.id,
             name: file.name,
-            extension: file.extension,
-            size: file.filesize,
             url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
           }
         }),
