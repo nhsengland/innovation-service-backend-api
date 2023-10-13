@@ -31,9 +31,9 @@ import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
 import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type {
-  InnovationDocumentTypeWithContext,
-  InnovationFileDocumentOutputContextType,
-  InnovationFileDocumentOutputType
+  InnovationFileOutputContextType,
+  InnovationFileOutputType,
+  InnovationFileTypeWithContext
 } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 
@@ -68,12 +68,12 @@ export class InnovationFileService extends BaseService {
     data: {
       id: string;
       storageId: string;
-      context: InnovationFileDocumentOutputContextType;
+      context: InnovationFileOutputContextType;
       name: string;
       description?: string;
       createdAt: Date;
       createdBy: { name: string; role: ServiceRoleEnum; isOwner?: boolean; orgUnitName?: string };
-      file: InnovationFileDocumentOutputType;
+      file: InnovationFileOutputType;
     }[];
   }> {
     const connection = entityManager ?? this.sqlConnection.manager;
@@ -239,7 +239,7 @@ export class InnovationFileService extends BaseService {
   ): Promise<{
     id: string;
     storageId: string;
-    context: InnovationFileDocumentOutputContextType;
+    context: InnovationFileOutputContextType;
     name: string;
     description?: string;
     createdAt: Date;
@@ -329,7 +329,7 @@ export class InnovationFileService extends BaseService {
   async createFile(
     domainContext: DomainContextType,
     innovationId: string,
-    data: InnovationDocumentTypeWithContext,
+    data: InnovationFileTypeWithContext,
     innovationStatus?: InnovationStatusEnum,
     entityManager?: EntityManager
   ): Promise<{ id: string }> {
@@ -494,10 +494,10 @@ export class InnovationFileService extends BaseService {
    * @returns a map of contextType:contextId -> context output for each file
    */
   private async files2ResolvedContexts(
-    files: InnovationFileEntity[],
+    files: { id: string; contextType: InnovationFileContextTypeEnum; contextId: string }[],
     innovationId: string,
     entityManager: EntityManager
-  ): Promise<Map<string, InnovationFileDocumentOutputContextType>> {
+  ): Promise<Map<string, InnovationFileOutputContextType>> {
     const contextTypeIDsMap = files.reduce((acc, file) => {
       if (!acc.has(file.contextType)) {
         acc.set(file.contextType, new Set<string>());
@@ -507,7 +507,7 @@ export class InnovationFileService extends BaseService {
     }, new Map<InnovationFileContextTypeEnum, Set<string>>());
 
     // This is a map of contextType:contextId -> context output
-    const res = new Map<string, InnovationFileDocumentOutputContextType>();
+    const res = new Map<string, InnovationFileOutputContextType>();
 
     for (const [type, ids] of contextTypeIDsMap.entries()) {
       const resolved = await this.contextMapper[type]([...ids], innovationId, entityManager);
