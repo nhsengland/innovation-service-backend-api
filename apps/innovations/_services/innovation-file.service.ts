@@ -239,7 +239,7 @@ export class InnovationFileService extends BaseService {
   ): Promise<{
     id: string;
     storageId: string;
-    context: { id: string; type: InnovationFileContextTypeEnum; name?: string };
+    context: InnovationFileDocumentOutputContextType;
     name: string;
     description?: string;
     createdAt: Date;
@@ -290,16 +290,12 @@ export class InnovationFileService extends BaseService {
       createdByUser = await this.identityProviderService.getUserInfo(file.createdByUserRole.user.identityId);
     }
 
-    let contextName: undefined | string;
-    if (file.contextType === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE) {
-      const evidenceNamesMap = await this.getEvidencesNamesMap([file.contextId], innovationId, connection);
-      contextName = evidenceNamesMap.get(file.contextId);
-    }
+    const [fileContext] = await this.contextMapper[file.contextType]([file.contextId], innovationId, connection);
 
     return {
       id: file.id,
       storageId: file.storageId,
-      context: { id: file.contextId, type: file.contextType, name: contextName },
+      context: fileContext ?? { type: file.contextType as any, id: file.contextId }, // this should never happen
       name: file.name,
       description: file.description ?? undefined,
       createdAt: file.createdAt,
@@ -486,36 +482,6 @@ export class InnovationFileService extends BaseService {
       default:
         return false;
     }
-  }
-
-  private async getEvidencesNamesMap(
-    evidenceIds: string[],
-    innovationId: string,
-    em: EntityManager
-  ): Promise<Map<string, string>> {
-    const innovationDocument = await em
-      .createQueryBuilder(InnovationDocumentEntity, 'document')
-      .where('document.id = :innovationId', { innovationId })
-      .andWhere('document.version = :version', { version: CurrentDocumentConfig.version })
-      .getOne();
-
-    if (!innovationDocument) {
-      throw new NotFoundError(InnovationErrorsEnum.INNOVATION_NOT_FOUND);
-    }
-
-    const evidencesMap = new Map<string, string>();
-    if (innovationDocument.document.version === CurrentDocumentConfig.version) {
-      for (const evidence of innovationDocument.document.evidences ?? []) {
-        if (evidenceIds.includes(evidence.id)) {
-          evidencesMap.set(
-            evidence.id,
-            evidence.description ?? TranslationHelper.translate(`EVIDENCE_SUBMIT_TYPES.${evidence.evidenceSubmitType}`)
-          );
-        }
-      }
-    }
-
-    return evidencesMap;
   }
 
   /**

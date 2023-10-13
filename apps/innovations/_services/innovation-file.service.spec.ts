@@ -573,7 +573,7 @@ describe('Services / Innovation File service suite', () => {
             storageId: file.storageId,
             name: file.name,
             description: file.description,
-            context: file.context,
+            context: file.context as any,
             file: {
               name: file.file.name,
               size: file.file.size,
@@ -627,7 +627,7 @@ describe('Services / Innovation File service suite', () => {
             storageId: file.storageId,
             name: file.name,
             description: file.description,
-            context: file.context,
+            context: file.context as any,
             file: {
               name: file.file.name,
               size: file.file.size,
