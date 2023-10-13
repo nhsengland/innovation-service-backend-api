@@ -4291,12 +4291,7 @@ paths:
                           properties:
                             id:
                               type: string
-                              description: Storage Id
                             name:
-                              type: string
-                            size:
-                              type: number
-                            extension:
                               type: string
                             url:
                               type: string
