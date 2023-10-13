@@ -24,7 +24,7 @@ import { CurrentDocumentConfig } from '@innovations/shared/schemas/innovation-re
 import { allowFileUploads } from '@innovations/shared/schemas/innovation-record/202304/document.config';
 import type { DocumentType202304 } from '@innovations/shared/schemas/innovation-record/202304/document.types';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { DomainContextType } from '@innovations/shared/types';
+import type { DomainContextType, IdentityUserInfo } from '@innovations/shared/types';
 import { randomUUID } from 'crypto';
 import type {
   InnovationFileDocumentOutputContextType,
@@ -187,18 +187,18 @@ export class InnovationFileService extends BaseService {
       .filter((u): u is string => u !== undefined);
     const usersInfo = await this.identityProviderService.getUsersMap(usersIds);
 
-    const evidenceNamesMap = await this.getEvidencesNamesMap(
-      files.filter(f => f.contextType === InnovationFileContextTypeEnum.INNOVATION_EVIDENCE).map(f => f.contextId),
-      innovationId,
-      connection
-    );
+    const contextMap = this.x(files);
 
     return {
       count,
       data: files.map(file => ({
         id: file.id,
         storageId: file.storageId,
-        context: { id: file.contextId, type: file.contextType, name: evidenceNamesMap.get(file.contextId) },
+        // The context map will surely have all the context types and ids but adding a failsafe just in case
+        context: contextMap.get(this.contextTypeId2Key(file.contextType, file.contextId)) ?? {
+          type: file.contextType as any,
+          id: file.contextId
+        },
         name: file.name,
         ...(filters.fields?.includes('description') && { description: file.description ?? undefined }),
         createdAt: file.createdAt,
@@ -218,54 +218,12 @@ export class InnovationFileService extends BaseService {
         },
         file: {
           name: file.filename,
-          size: file.filesize ?? undefined,
+          size: file.filesize ?? null,
           extension: file.extension,
           url: this.fileStorageService.getDownloadUrl(file.storageId, file.filename)
         }
       }))
     };
-  }
-
-  private x1 =
-    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[]) => {
-      return ids.map(id => ({ id, type: contextType }));
-    };
-  private x2 =
-    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[]) => {
-      return ids.map(id => ({ id, type: contextType, name: 'TODO' }));
-    };
-  private x3 =
-    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
-    (ids: string[]) => {
-      return ids.map(id => ({ id, type: contextType, name: 'TODO', threadId: 'TODO' }));
-    };
-
-  contextMapper = {
-    [InnovationFileContextTypeEnum.INNOVATION]: this.x1(InnovationFileContextTypeEnum.INNOVATION),
-    [InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE]: this.x1(
-      InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
-    ),
-    [InnovationFileContextTypeEnum.INNOVATION_SECTION]: this.x1(InnovationFileContextTypeEnum.INNOVATION_SECTION),
-    [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.x2(InnovationFileContextTypeEnum.INNOVATION_EVIDENCE),
-    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.x3(InnovationFileContextTypeEnum.INNOVATION_MESSAGE)
-  };
-  x(files: InnovationFileEntity[]): InnovationFileDocumentOutputContextType {
-    const contextTypeIDsMap = files.reduce((acc, file) => {
-      if (!acc.has(file.contextType)) {
-        acc.set(file.contextType, new Set<string>());
-      }
-      acc.get(file.contextType)?.add(file.contextId);
-      return acc;
-    }, new Map<InnovationFileContextTypeEnum, Set<string>>());
-
-    const resolvedContextIDsMap = [...contextTypeIDsMap.entries()].reduce((acc, [contextType, ids]) => {
-      const x: InnovationFileDocumentOutputContextType[] = this.contextMapper[contextType]([...ids]);
-      acc.set(contextType, new Map());
-      return acc;
-    }, new Map<InnovationFileContextTypeEnum, Map<string, InnovationFileDocumentOutputContextType>>());
-    throw new Error('');
   }
 
   async getFileInfo(
@@ -554,4 +512,58 @@ export class InnovationFileService extends BaseService {
 
     return evidencesMap;
   }
+
+  /**
+   * This function resolves the different file types and returns a map of contextType:contextId -> context output
+   * specific for each file type.
+   *
+   * @param files the document files
+   * @returns a map of contextType:contextId -> context output for each file
+   */
+  x(files: InnovationFileEntity[]): Map<string, InnovationFileDocumentOutputContextType> {
+    const contextTypeIDsMap = files.reduce((acc, file) => {
+      if (!acc.has(file.contextType)) {
+        acc.set(file.contextType, new Set<string>());
+      }
+      acc.get(file.contextType)?.add(file.contextId);
+      return acc;
+    }, new Map<InnovationFileContextTypeEnum, Set<string>>());
+
+    // This is a map of contextType:contextId -> context output
+    return new Map(
+      [...contextTypeIDsMap.entries()].flatMap(([type, ids]) =>
+        this.contextMapper[type]([...ids]).map(ct => [this.contextTypeId2Key(type, ct.id), ct])
+      )
+    );
+  }
+
+  // Helper mapper function for each file types
+  private x1 =
+    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
+    (ids: string[]) => {
+      return ids.map(id => ({ id, type: contextType }));
+    };
+  private x2 =
+    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
+    (ids: string[]) => {
+      return ids.map(id => ({ id, type: contextType, name: 'TODO' }));
+    };
+  private x3 =
+    <T extends InnovationFileContextTypeEnum>(contextType: T) =>
+    (ids: string[]) => {
+      return ids.map(id => ({ id, type: contextType, name: 'TODO', threadId: 'TODO' }));
+    };
+
+  private contextTypeId2Key = (type: InnovationFileContextTypeEnum, id: string): string => `${type}:${id}`;
+
+  // Helper mapper for each file types to map the contextType and contextId -> context output
+  contextMapper = {
+    [InnovationFileContextTypeEnum.INNOVATION]: this.x1(InnovationFileContextTypeEnum.INNOVATION),
+    [InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE]: this.x1(
+      InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE
+    ),
+    [InnovationFileContextTypeEnum.INNOVATION_SECTION]: this.x1(InnovationFileContextTypeEnum.INNOVATION_SECTION),
+    [InnovationFileContextTypeEnum.INNOVATION_EVIDENCE]: this.x2(InnovationFileContextTypeEnum.INNOVATION_EVIDENCE),
+    [InnovationFileContextTypeEnum.INNOVATION_MESSAGE]: this.x3(InnovationFileContextTypeEnum.INNOVATION_MESSAGE)
+  };
 }
