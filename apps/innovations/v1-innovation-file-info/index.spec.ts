@@ -40,7 +40,7 @@ beforeAll(async () => {
 const expected = {
   id: randUuid(),
   storageId: randText(),
-  context: { id: randUuid(), type: InnovationFileContextTypeEnum.INNOVATION, name: randText() },
+  context: { id: randUuid(), type: InnovationFileContextTypeEnum.INNOVATION as const },
   name: randText(),
   description: randText(),
   createdAt: randRecentDate(),

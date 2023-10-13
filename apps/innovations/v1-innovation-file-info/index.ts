@@ -38,7 +38,7 @@ class V1InnovationFileInfo {
 
       context.res = ResponseHelper.Ok<ResponseDTO>({
         id: result.id,
-        context: { id: result.context.id, type: result.context.type, name: result.context.name },
+        context: result.context,
         name: result.name,
         description: result.description,
         createdAt: result.createdAt,

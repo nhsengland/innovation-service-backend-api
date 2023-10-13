@@ -71,7 +71,7 @@ export class InnovationThreadBuilder extends BaseBuilder {
     const savedThread = await this.getEntityManager().getRepository(InnovationThreadEntity).save(this.thread);
 
     const savedMessages: Record<string, TestInnovationThreadMessageType> = {};
-    Object.entries(this.messagesToAdd).forEach(async messageToAdd => {
+    for (const messageToAdd of Object.entries(this.messagesToAdd)) {
       const savedMessage = await this.getEntityManager()
         .getRepository(InnovationThreadMessageEntity)
         .save(
@@ -97,7 +97,7 @@ export class InnovationThreadBuilder extends BaseBuilder {
           InnovationTaskStatusEnum.OPEN
         ]);
       }
-    });
+    }
 
     const result = await this.getEntityManager()
       .createQueryBuilder(InnovationThreadEntity, 'thread')

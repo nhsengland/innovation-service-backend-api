@@ -38,7 +38,7 @@ import type { DomainContextType, DomainUserInfoType, IdentityUserInfo } from '@i
 
 import type { PaginationQueryParamsType } from '@innovations/shared/helpers';
 import SHARED_SYMBOLS from '@innovations/shared/services/symbols';
-import type { InnovationFileDocumentType } from '../_types/innovation.types';
+import type { InnovationFileType } from '../_types/innovation.types';
 import { BaseService } from './base.service';
 import type { InnovationFileService } from './innovation-file.service';
 import SYMBOLS from './symbols';
@@ -113,7 +113,7 @@ export class InnovationThreadsService extends BaseService {
     data: {
       subject: string;
       message: string;
-      file?: InnovationFileDocumentType;
+      file?: InnovationFileType;
       followerUserRoleIds: string[];
     },
     sendNotification: boolean,
@@ -324,7 +324,7 @@ export class InnovationThreadsService extends BaseService {
     threadId: string,
     data: {
       message: string;
-      file?: InnovationFileDocumentType;
+      file?: InnovationFileType;
     },
     sendNotification: boolean
   ): Promise<{ threadMessage: InnovationThreadMessageEntity }> {
@@ -337,7 +337,7 @@ export class InnovationThreadsService extends BaseService {
     message: string,
     sendNotification: boolean,
     isEditable = false,
-    file?: InnovationFileDocumentType,
+    file?: InnovationFileType,
     transaction?: EntityManager
   ): Promise<{
     threadMessage: InnovationThreadMessageEntity;
@@ -633,7 +633,7 @@ export class InnovationThreadsService extends BaseService {
     const messageIds = messages.map(m => m.id);
     const files = await em
       .createQueryBuilder(InnovationFileEntity, 'file')
-      .select(['file.name', 'file.extension', 'file.filesize', 'file.storageId', 'file.filename', 'file.contextId'])
+      .select(['file.id', 'file.name', 'file.storageId', 'file.filename', 'file.contextId'])
       .where('file.contextId IN(:...messageIds)', { messageIds })
       .andWhere('file.contextType = :contextType', { contextType: InnovationFileContextTypeEnum.INNOVATION_MESSAGE })
       .getMany();
@@ -899,7 +899,7 @@ export class InnovationThreadsService extends BaseService {
     threadMessageObj: InnovationThreadMessageEntity,
     domainContext: DomainContextType,
     thread: InnovationThreadEntity,
-    file: InnovationFileDocumentType | undefined,
+    file: InnovationFileType | undefined,
     transaction: EntityManager
   ): Promise<InnovationThreadMessageEntity> {
     const result = await transaction

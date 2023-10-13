@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import type { DataSource } from 'typeorm';
 
-import { randSoonDate, randText, randUuid } from '@ngneat/falso';
+import { randProductDescription, randSoonDate, randText, randUuid } from '@ngneat/falso';
 import {
   InnovationCollaboratorStatusEnum,
   InnovationExportRequestStatusEnum,
@@ -185,6 +185,15 @@ export class CompleteScenarioBuilder {
         .shareWith([healthOrg, medTechOrg])
         .addSection('INNOVATION_DESCRIPTION')
         .addSection('EVIDENCE_OF_EFFECTIVENESS')
+        .withEvidences([
+          {
+            id: randUuid(),
+            evidenceSubmitType: 'CLINICAL_OR_CARE',
+            summary: randText(),
+            evidenceType: 'CONFERENCE',
+            description: randProductDescription()
+          }
+        ])
         .save();
 
       // Innovation owner by johnInnovator with nothing
@@ -358,6 +367,15 @@ export class CompleteScenarioBuilder {
         )
         .save();
 
+      const johnInnovationMessageFileByAlice = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovationThreadByAlice.messages['aliceMessage']!.id,
+          type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE
+        })
+        .setCreatedByUserRole(aliceQualifyingAccessor.roles['qaRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
       const johnInnovationThreadByIngrid = await new InnovationThreadBuilder(entityManager)
         .setAuthor(ingridAccessor.id, ingridAccessor.roles['accessorRole']!.id)
         .setInnovation(johnInnovation.id)
@@ -421,6 +439,15 @@ export class CompleteScenarioBuilder {
           type: InnovationFileContextTypeEnum.INNOVATION_SECTION
         })
         .setName('AAAAAAAAAAAAAA')
+        .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
+        .setInnovation(johnInnovation.id)
+        .save();
+
+      const johnInnovationEvidenceFileByJohn = await new InnovationFileBuilder(entityManager)
+        .setContext({
+          id: johnInnovation.evidences![0]!.id,
+          type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE
+        })
         .setCreatedByUserRole(johnInnovator.roles['innovatorRole']!.id)
         .setInnovation(johnInnovation.id)
         .save();
@@ -756,7 +783,9 @@ export class CompleteScenarioBuilder {
                   innovationFileByJamieWithAiRole: johnInnovationInnovationFileUploadedByJamieWithAiRole,
                   innovationFileByDeletedUser: johnInnovationInnovationFileUploadedBySebastiaoDeletedUser,
                   innovationFileUploadedAfterToday: johnInnovationInnovationFileUploadedAfterTodayByJohn,
-                  progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid
+                  progressUpdateFileByIngrid: johnInnovationProgressUpdateFileUploadedByIngrid,
+                  evidenceFileByJohn: johnInnovationEvidenceFileByJohn,
+                  messageFileByAlice: johnInnovationMessageFileByAlice
                 },
                 transfer: johnInnovationTransferToJane,
                 notifications: {

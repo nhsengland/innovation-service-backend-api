@@ -138,7 +138,7 @@ export type InnovationSuggestionAccessor = {
   }[];
 };
 
-export type InnovationFileDocumentType = {
+export type InnovationFileType = {
   name: string;
   description?: string;
   file: {
@@ -149,7 +149,11 @@ export type InnovationFileDocumentType = {
   };
 };
 
-export const InnovationFileDocumentSchema = Joi.object<InnovationFileDocumentType>({
+export type InnovationFileTypeWithContext = InnovationFileType & {
+  context: { id: string; type: InnovationFileContextTypeEnum };
+};
+
+export const InnovationFileSchema = Joi.object<InnovationFileType>({
   name: Joi.string().max(100).required(),
   description: Joi.string().max(TEXTAREA_LENGTH_LIMIT.s).optional(),
   file: Joi.object({
@@ -160,13 +164,29 @@ export const InnovationFileDocumentSchema = Joi.object<InnovationFileDocumentTyp
   }).required()
 });
 
-export type InnovationFileDocumentOutputType = {
+export type InnovationFileOutputType = {
   name: string;
-  size: number | null;
+  size?: number;
   extension: string;
   url: string;
 };
 
-export type InnovationDocumentTypeWithContext = InnovationFileDocumentType & {
-  context: { id: string; type: InnovationFileContextTypeEnum };
-};
+export type InnovationFileOutputContextType =
+  | {
+      id: string;
+      type:
+        | InnovationFileContextTypeEnum.INNOVATION
+        | InnovationFileContextTypeEnum.INNOVATION_SECTION
+        | InnovationFileContextTypeEnum.INNOVATION_PROGRESS_UPDATE;
+    }
+  | {
+      id: string;
+      type: InnovationFileContextTypeEnum.INNOVATION_EVIDENCE;
+      name: string;
+    }
+  | {
+      id: string;
+      type: InnovationFileContextTypeEnum.INNOVATION_MESSAGE;
+      name: string;
+      threadId: string;
+    };
